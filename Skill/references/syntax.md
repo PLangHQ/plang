@@ -258,6 +258,9 @@ GoalName
     write to %answer%
 ```
 
+`%answer%` holds the posted form fields. `call back data` comes back as top level variables of its
+own, so `call back data: {"orderId": "%id%"}` is read as `%orderId%`, not `%answer.orderId%`.
+
 ## LLM Integration
 
 ### Basic LLM Call

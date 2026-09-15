@@ -170,8 +170,13 @@ ConfirmAction
     call back data: orderId=%orderId%
     write to %confirmation%
 - if %confirmation.confirmed% then
-    - call goal ExecuteAction
+    - call goal ExecuteAction orderId=%orderId%
 ```
+
+`%confirmation%` holds the posted form fields. The callback data comes back beside it as its own
+variables, so it is `%orderId%` and never `%confirmation.orderId%`. Everything the steps below the
+ask need must travel in `call back data`, because on the web the request that drew the form is gone.
+See [ui-interactions.md](ui-interactions.md) and [AskUser.md](../../Documentation/AskUser.md).
 
 ### Progressive Enhancement
 

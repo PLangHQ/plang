@@ -14,7 +14,7 @@ A user can define multiple actions, user:`render 'product.html' to #main, replac
 Level: trace|debug|info|warning|error|critical. info is default. when user defines a level without a channel, assume channel=log
 Channel: default|log|audit|security|metric or custom defined by user
 Actor: user|system => user is the default actor when Channel=default, for other channels use system as actor unless defined by user.
-CallbackData: %variables% that are sent with the form
+CallbackData: %variables% that are sent with the form. They come back as top level variables when the user answers, they are not part of the answer, e.g. CallbackData:{orderId:""%order.id%""} is read as %orderId% and never as %answer.orderId%
 OnCallback: Goal to call after recieving an answer.
 ")]
 public sealed record AskMessage(

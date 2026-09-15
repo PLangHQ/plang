@@ -32,6 +32,30 @@ User interaction, navigation, dialogs, and notifications.
     write to %result%
 ```
 
+### Where the answer lands
+
+The answer and the callback data are two separate things, and they arrive as two separate
+variables. This is by design.
+
+- **The posted form fields** become the variable you wrote the answer to. A field named `email`
+  is `%answer.email%`.
+- **`call back data` becomes top level variables.** It is decrypted and written straight to the
+  memory stack, so `call back data: {"orderId": "%order.id%"}` comes back as `%orderId%`.
+  **There is no `%answer.orderId%`.**
+
+```plang
+- [output] ask user template "confirm.html"
+    call back data: {"orderId": "%order.id%"}
+    write to %answer%
+
+- write out "order %orderId%, note %answer.note%"     / NOT %answer.orderId%
+```
+
+You need the callback data because on the web `ask user` is stateless: the request that drew the
+form is gone, and with it every variable the steps above it produced. Only what travels in
+`call back data`, plus what arrives with the request itself (route parameters, query string,
+identity), is there when the user answers. See [AskUser.md](../../Documentation/AskUser.md).
+
 ### Form Template Example
 
 ```html
@@ -57,7 +81,7 @@ ConfirmDelete
     call back data: itemId=%item.id%
     write to %confirmation%
 - if %confirmation.confirmed% then
-    - call goal DeleteItem itemId=%item.id%
+    - call goal DeleteItem itemId=%itemId%
 ```
 
 ```html
