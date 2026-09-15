@@ -175,7 +175,13 @@ namespace PLang.Services.OpenAi
 					var parts = item["content"] as Newtonsoft.Json.Linq.JArray;
 					if (parts != null)
 					{
-						text = string.Join("", parts.Where(p => p["type"]?.ToString() == "output_text").Select(p => p["text"]?.ToString()));
+						// A turn can hold more than one message item, and a trailing one is often empty.
+						// Assigning here would let that empty item wipe the answer, so text accumulates.
+						var partText = string.Join("", parts.Where(p => p["type"]?.ToString() == "output_text").Select(p => p["text"]?.ToString()));
+						if (!string.IsNullOrEmpty(partText))
+						{
+							text = string.IsNullOrEmpty(text) ? partText : text + "\n" + partText;
+						}
 					}
 				}
 			}
