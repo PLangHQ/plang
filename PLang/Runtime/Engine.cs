@@ -605,7 +605,31 @@ namespace PLang.Runtime
 
 		private async Task DisposeGoal(Goal goal)
 		{
-			
+
+		}
+
+		// A callback resumes the goal at the ask step. When that step sits inside an if block, the
+		// if itself does not run again, so the steps it had enabled after the ask stay disabled and
+		// the goal continues at the top level with whatever those steps were meant to load.
+		// The condition was true in the original request (we reached the ask), so enable the
+		// steps that follow on the same level, follow the level out as blocks close, and leave
+		// deeper blocks to their own if. Top-level steps run on their own.
+		private void EnableStepsAfterCallback(Goal goal, int stepIndex, PLangContext context)
+		{
+			int indent = goal.GoalSteps[stepIndex].Indent;
+			if (indent == 0) return;
+
+			for (int i = stepIndex + 1; i < goal.GoalSteps.Count; i++)
+			{
+				var step = goal.GoalSteps[i];
+				if (step.Indent == 0) return;
+				if (step.Indent < indent) indent = step.Indent;
+				if (step.Indent == indent)
+				{
+					step.Execute = true;
+					context.CallStack.CurrentFrame.SetStepEnabled(i, true);
+				}
+			}
 		}
 
 		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, PLangContext context, int stepIndex = 0)
@@ -624,6 +648,7 @@ namespace PLang.Runtime
 				}
 				goal.GoalSteps[stepIndex].Execute = true;
 				context.CallStack.CurrentFrame.SetStepEnabled(stepIndex, true);
+				EnableStepsAfterCallback(goal, stepIndex, context);
 			}
 
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
