@@ -821,6 +821,10 @@ Be concise"));
 		{
 			if (!UseInMemoryDataSource && !IsBuilder) throw new Exception("Should not be called");
 
+			// Only sqlite can be mirrored into an in memory database. Handing a sqlite connection
+			// string to another provider fails, e.g. MySqlConnector says "Option 'mode' not supported".
+			if (dataSource.TypeFullName != typeof(SqliteConnection).ToString()) return dataSource;
+
 			dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;", LocalPath = $"file:{dataSource.Name}?mode=memory&cache=shared" };
 			if (string.IsNullOrEmpty(dataSource.NameInStep))
 			{

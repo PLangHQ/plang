@@ -1336,6 +1336,13 @@ Reason:{error.Message}", step,
 
 
 
+		// Sql is validated by running it against an in memory sqlite mirror of the schema.
+		// Only sqlite can be mirrored, so for any other provider the sql is taken as written.
+		if (dataSource.TypeFullName != typeof(Microsoft.Data.Sqlite.SqliteConnection).ToString())
+		{
+			return (true, dataSource.Name, null);
+		}
+
 		var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
 		if (!anchors.ContainsKey(dataSource.Name))
 		{
