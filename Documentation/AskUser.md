@@ -51,8 +51,9 @@ Confirm
     call back data: {"orderId": "%order.id%"}
     write to %answer%
 
-# from here down we are in the second request, everything above is gone
-- select * from orders where id=%answer.orderId%, return 1 row, write to %order%
+# from here down we are in the second request, everything above is gone.
+# %orderId% comes back from the call back data, %answer% holds the form fields.
+- select * from orders where id=%orderId%, return 1 row, write to %order%
 - update orders set confirmed=1 where id=%order.id%
 - [ui] render "order.html", cssSelector: "#order-%order.id%", action: "replace"
 ```
@@ -74,10 +75,17 @@ The template gets two variables from the `ask user` step:
 
 `callback` is base64 JSON holding `CallbackInfo(GoalName, GoalHash, StepIndex)` plus a signature
 bound to the browser's identity. On the POST the server verifies the signature, finds the goal by
-its hash, and sets the step index, so execution resumes at the `ask user` step. The posted form
-fields plus `call back data` come back as the variable you wrote the answer to.
+its hash, and sets the step index, so execution resumes at the `ask user` step.
 
-Three consequences:
+**The two halves arrive separately, and this catches people out:**
+
+- **The posted form fields** become the variable you wrote the answer to. A field named `email`
+  is `%answer.email%`.
+- **`call back data` becomes top level variables**, not part of that answer. It is decrypted and
+  written straight to the memory stack, so `call back data: {"orderId": "%order.id%"}` comes back
+  as `%orderId%`. There is no `%answer.orderId%`.
+
+Four consequences:
 
 - **The route must accept POST.** The form posts to the url it was rendered from. A `GET` only
   route gives `Routing not found`.
