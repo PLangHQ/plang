@@ -346,12 +346,13 @@ namespace PLang.Building.Parsers
 
 				goal.IsSetup = GoalHelper.IsSetup(goal);
 				goal.IsEvent = GoalHelper.IsEvent(goal);
-				if (!goal.IsEvent)
+
+				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
+				if (!goal.IsEvent || prevBuildGoal == null)
 				{
 					goal.HasChanged = true;
 				}
 
-				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
 				if (prevBuildGoal != null)
 				{
 
