@@ -99,22 +99,24 @@ build through grep and read only the last line. Three checks actually prove a ch
 That third check is the one that catches a step which built into a different method than you meant,
 which is the failure mode that costs the most time later.
 
-## Building one file
+## Building one file or a folder from a running app
 
 `plang build` from the command line builds the whole app. A running app can build a single goal
-file instead, through `PlangModule`, which is what a dev agent or an in app editor wants:
+file, or a folder of them, through `PlangModule`, which is what a dev agent or an in app editor
+wants:
 
 ```plang
 - [plang] get goals in "/admin/crm/Vendor.goal", parser: "goal", visibility: "public_and_private"
     write to %goals%
-- [plang] build plang code %goals[0]%, write to %buildErrors%
+- [plang] build plang code %goals%, on error call HandleError, write to %buildErrors%
 - if %buildErrors% is empty then
     - write out "built"
 ```
 
-`parser: "goal"` parses the `.goal` file on disk, so it also sees a file that did not exist when
-the app started. `parser: "pr"` reads what is already built, so it returns nothing for a new file.
-`build plang code` takes one goal, but it compiles the whole file that goal came from.
+Point `get goals` at a `.goal` file for one, or at a folder to build every `.goal` under it. Pass
+the whole `%goals%` list to `build plang code`; it compiles each distinct file among them. `parser:
+"goal"` parses what is on disk, so it also sees a file that did not exist when the app started.
+`parser: "pr"` reads what is already built, so it returns nothing for a new file.
 
 What a targeted build deliberately does not do:
 

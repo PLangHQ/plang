@@ -22,7 +22,7 @@ namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null);
+		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null);
 	}
 	public class Builder : IBuilder
 	{
@@ -58,7 +58,7 @@ namespace PLang.Building
 		}
 
 
-		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null)
+		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null)
 		{
 			IError? error;
 			// The switch is process wide and half the runtime reads it: BaseProgram sets IsBuilder from
@@ -83,7 +83,8 @@ namespace PLang.Building
 				// since then is missing, the absoluteGoalPath filter below then matches nothing, and the
 				// build returns no errors while having built nothing. Naming a goal path means a targeted
 				// rebuild of what is on disk now, so reload for that case.
-				var goals = goalParser.GetGoalFilesToBuild(force: absoluteGoalPath != null);
+				bool targeted = absoluteGoalPaths != null && absoluteGoalPaths.Count > 0;
+				var goals = goalParser.GetGoalFilesToBuild(force: targeted);
 				logger.LogTrace($"Done loading goal files now Init folder - {stopwatch.ElapsedMilliseconds}");
 
 				InitFolders();
@@ -100,9 +101,10 @@ namespace PLang.Building
 				// the setup loop, so a targeted build still rebuilt every setup goal: slow, and inside a
 				// running app it fails, because setup sql is validated against an anchor db that is only
 				// populated by the create-table steps of that same build.
-				if (absoluteGoalPath != null)
+				if (targeted)
 				{
-					goals = goals.Where(p => p.AbsoluteGoalPath.Equals(absoluteGoalPath)).ToList();
+					var wanted = new HashSet<string>(absoluteGoalPaths!, StringComparer.OrdinalIgnoreCase);
+					goals = goals.Where(p => wanted.Contains(p.AbsoluteGoalPath)).ToList();
 				}
 
 				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));
@@ -205,7 +207,7 @@ namespace PLang.Building
 				// whose .goal file is gone. A targeted build was asked about one file and knows nothing
 				// about the rest, and it typically runs inside a live app, where sweeping on a stale
 				// view of the repo deletes build output the app is still serving from.
-				if (absoluteGoalPath == null)
+				if (!targeted)
 				{
 					logger.LogDebug($"Cleaning up goal files - {stopwatch.ElapsedMilliseconds}");
 					CleanGoalFiles();

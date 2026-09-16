@@ -561,7 +561,7 @@ namespace PLang.Modules.PlangModule
 			}
 
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, BuildContext(), step.Goal.AbsoluteGoalPath);
+			var error = await builder.Start(Container, BuildContext(), new[] { step.Goal.AbsoluteGoalPath });
 
 			var goals = prParser.ForceLoadAllGoals();
 			var goal = goals.FirstOrDefault(p => p.AbsolutePrFilePath == step.Goal.AbsolutePrFilePath);
@@ -580,11 +580,20 @@ namespace PLang.Modules.PlangModule
 			return (newStep, error);
 		}
 
-		[Description("Builds(compiles) a goal in plang code")]
-		public async Task<List<IBuilderError>?> BuildPlangCode(Goal goal)
+		[Description("Builds(compiles) one or more goals in plang code. Pass a single goal or a list of goals, e.g. from 'get goals in \"/folder\"'. Every distinct .goal file among them is compiled. Returns the builder errors, or null when all built.")]
+		public async Task<List<IBuilderError>?> BuildPlangCode(List<Goal> goals)
 		{
+			if (goals == null || goals.Count == 0) return null;
+
+			// One .goal file can hold several goals, so build by distinct file, not per goal.
+			var paths = goals.Where(g => g?.AbsoluteGoalPath != null)
+							 .Select(g => g.AbsoluteGoalPath)
+							 .Distinct(StringComparer.OrdinalIgnoreCase)
+							 .ToList();
+			if (paths.Count == 0) return null;
+
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, BuildContext(), goal.AbsoluteGoalPath);
+			var error = await builder.Start(Container, BuildContext(), paths);
 
 			prParser.ForceLoadAllGoals();
 			return error;
