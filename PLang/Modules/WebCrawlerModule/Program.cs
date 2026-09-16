@@ -934,11 +934,22 @@ return result;");
 
 			throw new InvalidOperationException("Profile info not found in Local State file.");
 		}
+		private static void AddSandboxArgsIfNeeded(List<string> args)
+		{
+			var noSandbox = Environment.GetEnvironmentVariable("PLANG_NO_SANDBOX");
+			if (!string.IsNullOrEmpty(noSandbox) && (noSandbox == "1" || noSandbox.Equals("true", StringComparison.OrdinalIgnoreCase)))
+			{
+				args.Add("--no-sandbox");
+				args.Add("--disable-dev-shm-usage");
+			}
+		}
+
 		private BrowserTypeLaunchOptions GetChromeIcognitoOptions(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
 		{
 			BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
 			options.Headless = headless;
 			List<string> args = new();
+			AddSandboxArgsIfNeeded(args);
 			if (hideTestingMode)
 			{
 				args.Add("--disable-blink-features=AutomationControlled");
@@ -970,6 +981,7 @@ return result;");
 			options.Headless = headless;
 
 			List<string> args = new();
+			AddSandboxArgsIfNeeded(args);
 
 			if (kioskMode)
 			{
@@ -992,6 +1004,7 @@ return result;");
 			options.Headless = headless;
 
 			List<string> args = new();
+			AddSandboxArgsIfNeeded(args);
 
 			if (kioskMode)
 			{

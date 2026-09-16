@@ -284,6 +284,8 @@ namespace PLang.Modules.PlangModule
 		[Description("Runs a method on a runtime module by name at runtime, e.g. moduleName=PLang.Modules.FileModule, method=ReadTextFile, parameters={path:\"file.txt\"}. Parameter names must match the method's parameter names. Relative paths resolve from the app root when fromAppRoot is true, otherwise from the calling goal's folder. Returns what the method returns")]
 		public async Task<(object? Result, IError? Error)> RunModule(string moduleName, string method, Dictionary<string, object?>? parameters = null, bool fromAppRoot = false)
 		{
+			try
+			{
 			var programType = typeHelper.GetRuntimeType(moduleName);
 			if (programType == null)
 			{
@@ -332,6 +334,11 @@ namespace PLang.Modules.PlangModule
 			genericFunction.Instruction = instruction;
 
 			return await program.RunFunction(genericFunction);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Method {method} on {moduleName} threw: {ex.Message}", goalStep, Key: "MethodInvocationError", StatusCode: 500));
+			}
 		}
 
 		public async Task<(Dictionary<string, object>?, IError?)> GetStepProperties(string moduleName, string methodName)
