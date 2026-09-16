@@ -122,9 +122,10 @@ What a targeted build deliberately does not do:
   it is the file you named.
 - It does not run the orphan sweep that deletes `.pr` folders whose `.goal` file is gone. That
   sweep needs a view of the whole repo, and a running app does not have one.
-- It does not run setup and it does not reload routes. A new table still has to be created by
-  running the setup goal, and a new route only takes effect when the webserver starts, because
-  `add route` is only valid on webserver start.
+- It does not run setup, and it does not register routes. A new table still has to be created by
+  running its setup goal. A new route needs `- [webserver] reload routes` after the routes file is
+  built, which runs the webserver's on start goal again; `add route` is only valid from there, so
+  building the file alone changes nothing.
 
 ## Do not delete `.build`
 

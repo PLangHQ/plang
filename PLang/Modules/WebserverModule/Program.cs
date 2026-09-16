@@ -101,6 +101,44 @@ public class Program : BaseProgram, IDisposable
 		return (webserverInfo, null);
 	}
 
+	[Description("Registers the routes of a running webserver again, by running its on start goal a second time. Use it after adding, changing or removing a route in a running app, instead of restarting the webserver. The goal files that add the routes have to be built first, because the on start goal runs from its .pr")]
+	public async Task<IError?> ReloadRoutes(string webserverName = "default")
+	{
+		var webserverInfo = listeners.FirstOrDefault(p => p.Name == webserverName);
+		if (webserverInfo == null)
+		{
+			return new ProgramError($"Webserver named '{webserverName}' is not running", goalStep);
+		}
+
+		if (webserverInfo.OnStart == null)
+		{
+			return new ProgramError($"Webserver '{webserverName}' has no on start goal, so there is nothing to reload", goalStep,
+				FixSuggestion: @"Routes are added from the goal named in `on start`, e.g.
+```plang
+- start webserver, on start call AddRoutes
+```");
+		}
+
+		// AddRoute reads the webserver off the current call stack frame, which is how it is reached at
+		// startup. Put it on this frame so the on start goal can register into it from here as well.
+		context.CallStack.CurrentFrame.AddVariable(webserverInfo);
+
+		// The on start goal calls AddRoute for each route, so it needs an empty list to fill. Swapping
+		// the reference means a request that is already matching keeps reading the old list, but a
+		// request that arrives while the goal is running can see a half filled one and miss a route.
+		var previous = webserverInfo.Routings;
+		webserverInfo.Routings = new List<Routing>();
+
+		var (_, error) = await engine.RunGoal(webserverInfo.OnStart, goal, context);
+		if (error != null)
+		{
+			webserverInfo.Routings = previous;
+			return error;
+		}
+
+		return null;
+	}
+
 	public async Task<(WebserverProperties?, IError?)> RestartWebserver(string webserverName = "default")
 	{
 		var (webserverInfo, error) = await ShutdownWebserver(webserverName);
