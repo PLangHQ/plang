@@ -820,6 +820,13 @@ namespace PLang.Modules.WebserverModule
 
 
 
+		private static bool HasCallback(HttpRequest request)
+		{
+			if (request.Headers.ContainsKey("X-Callback")) return true;
+			if (request.HasFormContentType && !string.IsNullOrEmpty(request.Form["callback"])) return true;
+			return false;
+		}
+
 		private (bool, List<ObjectValue>?, IError?) TryMatch(Routing routing, HttpRequest request)
 		{
 
@@ -849,7 +856,13 @@ namespace PLang.Modules.WebserverModule
 			var methods = routing.RequestProperties.Methods ?? ["GET"];
 
 			//todo: just temp, should be in build
-			if (request.Method != "HEAD")
+			// A request carrying a callback is resuming a goal that an `ask user` on this very route
+			// paused. The form posts back to the url it was rendered from, and that url is often a GET
+			// only route. The callback is signed by the server, so it is proof this exact continuation
+			// is allowed, and the route's declared methods do not apply to it. Without this, every
+			// route that renders a form has to be declared [get, post] or the submit 404s, which is a
+			// trap that bites repeatedly.
+			if (request.Method != "HEAD" && !HasCallback(request))
 			{
 				var method = methods.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
 				if (method == null) return (false, null, null);
