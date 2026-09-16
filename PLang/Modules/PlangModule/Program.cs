@@ -561,7 +561,7 @@ namespace PLang.Modules.PlangModule
 			}
 
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, context, step.Goal.AbsoluteGoalPath);
+			var error = await builder.Start(Container, BuildContext(), step.Goal.AbsoluteGoalPath);
 
 			var goals = prParser.ForceLoadAllGoals();
 			var goal = goals.FirstOrDefault(p => p.AbsolutePrFilePath == step.Goal.AbsolutePrFilePath);
@@ -584,10 +584,22 @@ namespace PLang.Modules.PlangModule
 		public async Task<List<IBuilderError>?> BuildPlangCode(Goal goal)
 		{
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, context, goal.AbsoluteGoalPath);
+			var error = await builder.Start(Container, BuildContext(), goal.AbsoluteGoalPath);
 
 			prParser.ForceLoadAllGoals();
 			return error;
+		}
+
+		// The builder mutates the context it is given: it nulls the datasource and, while validating
+		// sql, resolves sqlite datasources to in memory copies. From the cli that context dies with the
+		// process. From a running app it is the request's own context, and the steps after the build
+		// then hit an empty in memory "dev" instead of the real database. So the builder gets a context
+		// of its own, with an empty memory stack, and the request keeps what it had.
+		private PLangContext BuildContext()
+		{
+			var buildContext = context.Clone(MemoryStack.New(Container, engine), engine);
+			buildContext.CallStack.EnterGoal(goal);
+			return buildContext;
 		}
 
 		public async Task StartCSharpDebugger()
