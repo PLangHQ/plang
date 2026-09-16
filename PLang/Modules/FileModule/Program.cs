@@ -764,6 +764,43 @@ namespace PLang.Modules.FileModule
 
 
 
+		[Description("Replaces an exact piece of text in a file with another, like a coding assistant's targeted edit. oldText must match the file content exactly and must appear exactly once, otherwise it errors, so it never changes more than intended. Include enough surrounding text to make oldText unique. Returns 1 on success.")]
+		public async Task<(int Replacements, IError? Error)> ReplaceInFile(string path, string oldText, string newText, string encoding = "utf-8")
+		{
+			if (string.IsNullOrEmpty(path)) return (0, new ProgramError("Path cannot be empty.", goalStep));
+			if (string.IsNullOrEmpty(oldText)) return (0, new ProgramError("oldText cannot be empty.", goalStep));
+
+			var absolutePath = GetPath(path);
+			if (!fileSystem.File.Exists(absolutePath))
+			{
+				return (0, new ProgramError($"File not found: {path}", goalStep, Key: "FileNotFound"));
+			}
+
+			var content = await fileSystem.File.ReadAllTextAsync(absolutePath, FileHelper.GetEncoding(encoding));
+
+			int count = 0;
+			int idx = 0;
+			while ((idx = content.IndexOf(oldText, idx, StringComparison.Ordinal)) != -1)
+			{
+				count++;
+				idx += oldText.Length;
+			}
+
+			if (count == 0)
+			{
+				return (0, new ProgramError($"The text to replace was not found in {path}. It must match the file content exactly.", goalStep, Key: "TextNotFound"));
+			}
+			if (count > 1)
+			{
+				return (0, new ProgramError($"The text appears {count} times in {path}. Add surrounding context so it is unique.", goalStep, Key: "TextNotUnique"));
+			}
+
+			var updated = content.Replace(oldText, newText);
+			await fileSystem.File.WriteAllTextAsync(absolutePath, updated, FileHelper.GetEncoding(encoding));
+
+			return (1, null);
+		}
+
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
