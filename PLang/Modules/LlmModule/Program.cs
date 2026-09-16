@@ -121,7 +121,16 @@ public class Program : BaseProgram
 					if (toolError != null)
 					{
 						toolErrors++;
+						// The model, and whoever reads the log, needs to know which step failed, not just why.
 						output = "Error: " + FirstLine(toolError.Message);
+						if (toolError.Step != null)
+						{
+							output += $" (in step \"{FirstLine(toolError.Step.Text)}\" of {toolError.Step.Goal?.RelativeGoalPath ?? toolError.Step.Goal?.GoalName})";
+						}
+						if (toolError.Exception != null)
+						{
+							logger.LogWarning(toolError.Exception, "Tool {Tool} failed: {Message}", call.Name, toolError.Message);
+						}
 					}
 					else
 					{

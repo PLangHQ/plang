@@ -61,6 +61,11 @@ namespace PLang.Building
 		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null)
 		{
 			IError? error;
+			// The switch is process wide and half the runtime reads it: BaseProgram sets IsBuilder from
+			// it, and DbModule then resolves every sqlite datasource to an empty in memory copy. From the
+			// cli the process ends with the build, but a build run from inside a running app left the
+			// switch on, and every request after it failed with "no such table". Put it back on exit.
+			AppContext.TryGetSwitch("Builder", out bool wasBuilder);
 			try
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
@@ -271,6 +276,10 @@ namespace PLang.Building
 					}
 				}
 
+			}
+			finally
+			{
+				AppContext.SetSwitch("Builder", wasBuilder);
 			}
 			return null;
 		}
