@@ -119,6 +119,15 @@ namespace PLang.Modules.WebCrawlerModule
 				return browserInstance;
 			}
 
+			if (!headless
+				&& !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+				&& !RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+				&& string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY"))
+				&& string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")))
+			{
+				throw new ExceptionWrapper(new ProgramError("Cannot start a headed browser: there is no display (DISPLAY is not set), so a visible browser window would crash. Call this method with headless set to true.", goalStep, Key: "NoDisplayForHeadedBrowser"));
+			}
+
 			var playwright = await Playwright.CreateAsync();
 			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
 
@@ -370,7 +379,7 @@ namespace PLang.Modules.WebCrawlerModule
 				pageGotoOptions.Timeout = timeoutInSeconds.Value * 1000;
 			}
 
-			var browser = GetBrowserInstance(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSeconds, hideTestingMode, onRequest, onResponse);
+			var browser = await GetBrowserInstance(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSeconds, hideTestingMode, onRequest, onResponse);
 			IPage page = await GetPage(pageIndex);
 			BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
 					onConsoleOutput, onWorker,
