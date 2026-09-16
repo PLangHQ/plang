@@ -580,23 +580,32 @@ namespace PLang.Modules.PlangModule
 			return (newStep, error);
 		}
 
-		[Description("Builds(compiles) one or more goals in plang code. Pass a single goal or a list of goals, e.g. from 'get goals in \"/folder\"'. Every distinct .goal file among them is compiled. Returns the builder errors, or null when all built.")]
-		public async Task<List<IBuilderError>?> BuildPlangCode(List<Goal> goals)
+		[Description("Builds(compiles) one or more goals in plang code. Pass a single goal or a list of goals, e.g. from 'get goals in \"/folder\"'. Every distinct .goal file among them is compiled. Returns an error when any step failed to build, so 'on error' fires; returns nothing when all built.")]
+		public async Task<(object?, IError?)> BuildPlangCode(List<Goal> goals)
 		{
-			if (goals == null || goals.Count == 0) return null;
+			if (goals == null || goals.Count == 0) return (null, null);
 
 			// One .goal file can hold several goals, so build by distinct file, not per goal.
 			var paths = goals.Where(g => g?.AbsoluteGoalPath != null)
 							 .Select(g => g.AbsoluteGoalPath)
 							 .Distinct(StringComparer.OrdinalIgnoreCase)
 							 .ToList();
-			if (paths.Count == 0) return null;
+			if (paths.Count == 0) return (null, null);
 
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, BuildContext(), paths);
+			var errors = await builder.Start(Container, BuildContext(), paths);
 
 			prParser.ForceLoadAllGoals();
-			return error;
+
+			// A failed build is a failure, not a value to inspect: raise it so `on error` catches it.
+			if (errors != null && errors.Count > 0)
+			{
+				var multiple = new MultipleError(errors[0], Key: "BuildError");
+				for (int i = 1; i < errors.Count; i++) multiple.Add(errors[i]);
+				return (null, multiple);
+			}
+
+			return (null, null);
 		}
 
 		// The builder mutates the context it is given: it nulls the datasource and, while validating
