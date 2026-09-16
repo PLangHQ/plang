@@ -99,6 +99,33 @@ build through grep and read only the last line. Three checks actually prove a ch
 That third check is the one that catches a step which built into a different method than you meant,
 which is the failure mode that costs the most time later.
 
+## Building one file
+
+`plang build` from the command line builds the whole app. A running app can build a single goal
+file instead, through `PlangModule`, which is what a dev agent or an in app editor wants:
+
+```plang
+- [plang] get goals in "/admin/crm/Vendor.goal", parser: "goal", visibility: "public_and_private"
+    write to %goals%
+- [plang] build plang code %goals[0]%, write to %buildErrors%
+- if %buildErrors% is empty then
+    - write out "built"
+```
+
+`parser: "goal"` parses the `.goal` file on disk, so it also sees a file that did not exist when
+the app started. `parser: "pr"` reads what is already built, so it returns nothing for a new file.
+`build plang code` takes one goal, but it compiles the whole file that goal came from.
+
+What a targeted build deliberately does not do:
+
+- It does not build the other goal files, including setup goals. A setup file is built only when
+  it is the file you named.
+- It does not run the orphan sweep that deletes `.pr` folders whose `.goal` file is gone. That
+  sweep needs a view of the whole repo, and a running app does not have one.
+- It does not run setup and it does not reload routes. A new table still has to be created by
+  running the setup goal, and a new route only takes effect when the webserver starts, because
+  `add route` is only valid on webserver start.
+
 ## Do not delete `.build`
 
 The builder detects changed goals itself. Deleting `.build` throws away every mapping decision and

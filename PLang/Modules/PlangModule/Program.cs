@@ -87,11 +87,25 @@ namespace PLang.Modules.PlangModule
 
 			} else if (parser == "goal")
 			{
-				var fileProgram = GetProgramModule<FileModule.Program>();
-				var files = await fileProgram.GetFilePathsInDirectory(fileOrFolderPath, includeSubfolders: true, searchPattern: "*.goal");
-				foreach (var file in files)
+				// The description says file or folder, but the folder walk below returns nothing for a
+				// file path, so parsing one named .goal file gave an empty list. A caller that names a
+				// single file is the normal case for a targeted build, so parse that file directly.
+				if (path.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
 				{
-					goals.AddRange(goalParser.ParseGoalFile(file.AbsolutePath));
+					if (!fileSystem.File.Exists(path))
+					{
+						return (null, new ProgramError($"The goal file {fileOrFolderPath} could not be found, searched for it at {path}"));
+					}
+					goals = goalParser.ParseGoalFile(path);
+				}
+				else
+				{
+					var fileProgram = GetProgramModule<FileModule.Program>();
+					var files = await fileProgram.GetFilePathsInDirectory(fileOrFolderPath, includeSubfolders: true, searchPattern: "*.goal");
+					foreach (var file in files)
+					{
+						goals.AddRange(goalParser.ParseGoalFile(file.AbsolutePath));
+					}
 				}
 			}
 

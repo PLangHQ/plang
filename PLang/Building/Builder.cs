@@ -72,7 +72,13 @@ namespace PLang.Building
 				engine.Context.CallStack.SetCurrentStep(new GoalStep() { Name = "Step", RelativeGoalPath = goal.RelativeGoalPath, Goal = goal }, 0);
 
 				logger.LogTrace($"Loading goal files - {stopwatch.ElapsedMilliseconds}");
-				var goals = goalParser.GetGoalFilesToBuild();
+				// GoalParser caches the parsed goal files for the life of the process. The cli builds in a
+				// fresh process so the cache is always current, but a build asked for from inside a running
+				// app (PlangModule.BuildPlangCode) sees the list as it was at startup: a goal file written
+				// since then is missing, the absoluteGoalPath filter below then matches nothing, and the
+				// build returns no errors while having built nothing. Naming a goal path means a targeted
+				// rebuild of what is on disk now, so reload for that case.
+				var goals = goalParser.GetGoalFilesToBuild(force: absoluteGoalPath != null);
 				logger.LogTrace($"Done loading goal files now Init folder - {stopwatch.ElapsedMilliseconds}");
 
 				InitFolders();
@@ -84,7 +90,16 @@ namespace PLang.Building
 				if (error != null) return [new BuilderError(error)];
 
 				logger.LogTrace($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
-				
+
+				// Naming a goal path means build that file and nothing else. The filter used to sit after
+				// the setup loop, so a targeted build still rebuilt every setup goal: slow, and inside a
+				// running app it fails, because setup sql is validated against an anchor db that is only
+				// populated by the create-table steps of that same build.
+				if (absoluteGoalPath != null)
+				{
+					goals = goals.Where(p => p.AbsoluteGoalPath.Equals(absoluteGoalPath)).ToList();
+				}
+
 				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));
 				foreach (var setupGoal in setupGoals)
 				{
@@ -104,10 +119,6 @@ namespace PLang.Building
 				}
 				context.DataSource = null;
 
-				if (absoluteGoalPath != null)
-				{
-					goals = goals.Where(p => p.AbsoluteGoalPath.Equals(absoluteGoalPath)).ToList();
-				}
 				logger.LogDebug($"Start building BuildEvents - {stopwatch.ElapsedMilliseconds}");
 				error = await eventBuilder.BuildEventsPr();
 				if (error != null) return [new BuilderError(error)];
@@ -185,8 +196,15 @@ namespace PLang.Building
 					logger.LogDebug($"Done building goal {goalToBuild.GoalName} took {buildGoalTime.ElapsedMilliseconds} - Total build time: {stopwatch.ElapsedMilliseconds}");
 				}
 
-				logger.LogDebug($"Cleaning up goal files - {stopwatch.ElapsedMilliseconds}");
-				CleanGoalFiles();
+				// The orphan sweep is a whole repo operation: it deletes the .pr folder of every goal
+				// whose .goal file is gone. A targeted build was asked about one file and knows nothing
+				// about the rest, and it typically runs inside a live app, where sweeping on a stale
+				// view of the repo deletes build output the app is still serving from.
+				if (absoluteGoalPath == null)
+				{
+					logger.LogDebug($"Cleaning up goal files - {stopwatch.ElapsedMilliseconds}");
+					CleanGoalFiles();
+				}
 
 				(_, eventError) = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, goal, true);
 				if (eventError != null)
