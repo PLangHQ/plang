@@ -44,6 +44,9 @@ AskSystem
 			}
 			else if (goalResult.Error != null)
 			{
+				// Every ask in plang comes through here. If the ask goal itself cannot run, its own
+				// failure says nothing about why anyone was being asked; the question does, so keep it.
+				goalResult.Error.ErrorChain.Add(new Error($"Could not ask the user this question: {question}", Key: "AskFailed"));
 				return (null, goalResult.Error);
 			}
 			return (null, null);
