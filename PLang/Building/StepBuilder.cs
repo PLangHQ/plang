@@ -46,9 +46,7 @@ public class StepBuilder : IStepBuilder
 	private readonly IGoalParser goalParser;
 	private readonly IBuilderDecider decider;
 
-	// Below this the decider's pick is not trusted and the step falls back to the llm, which also
-	// writes the step name and intent the way it always has.
-	private const double DeciderConfidenceThreshold = 0.7;
+	private const double DeciderConfidenceThreshold = BuilderDecider.ConfidenceThreshold;
 	private IMemoryStackAccessor memoryStackAccessor;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
@@ -323,7 +321,7 @@ public class StepBuilder : IStepBuilder
 		// First attempt goes to the decider. A retry (prevError set) means the decider's module did
 		// not build, so the retry takes the llm path, which upgrades the model for exactly that case.
 		var deciderSetting = AppContext.GetData("decider") as string;
-		if (deciderSetting != "off" && prevError == null)
+		if (deciderSetting != "off" && prevError == null && !goal.IsSystem)
 		{
 			var (choice, deciderError) = await decider.ChooseModule(step.Text, typeHelper.GetModulesDictionary(excludeModules));
 			if (deciderError != null)

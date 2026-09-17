@@ -9,5 +9,17 @@ namespace PLang.Building
 	public interface IBuilderDecider
 	{
 		Task<(ModuleChoice? Choice, IError? Error)> ChooseModule(string stepText, Dictionary<string, string> modules);
+		Task<(MethodChoice? Choice, IError? Error)> ChooseMethod(string stepText, string module, Dictionary<string, string> methods);
+	}
+
+	public static class BuilderDecider
+	{
+		// Below this the decider's pick is not trusted and the step falls back to the llm.
+		public const double ConfidenceThreshold = 0.7;
+
+		public static bool IsOn()
+		{
+			return (AppContext.GetData("decider") as string) != "off";
+		}
 	}
 }

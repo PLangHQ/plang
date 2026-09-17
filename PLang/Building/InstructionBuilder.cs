@@ -54,11 +54,12 @@ namespace PLang.Building
 		private readonly IGoalParser goalParser;
 		private readonly PrParser prParser;
 		private readonly MethodHelper methodHelper;
+		private readonly IBuilderDecider decider;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
 			IMemoryStackAccessor memoryStackAccessor, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, ISettings settings,
-			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
+			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper, IBuilderDecider decider)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
@@ -73,6 +74,7 @@ namespace PLang.Building
 			this.goalParser = goalParser;
 			this.prParser = prParser;
 			this.methodHelper = methodHelper;
+			this.decider = decider;
 		}
 		public Dictionary<string, List<IBuilderError>> ErrorCount { get; set; } = new();
 
@@ -136,7 +138,7 @@ namespace PLang.Building
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug("Building instruction");
 			var classInstance = builderFactory.Create(step.ModuleType);
-			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider);
 
 			string logInfo = (previousBuildError != null) ? "Retrying to build" : "Build";
 			logger.LogInformation(@$"  - {logInfo} using {step.ModuleType}");
@@ -289,7 +291,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			var classInstance = builderFactory.Create(goalStep.ModuleType);
 			logger.LogDebug($"    - Have instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
 
-			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider);
 
 			if (isValidatedMethod != null)
 			{

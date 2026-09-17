@@ -43,6 +43,7 @@ namespace PLang.Modules
 		protected PLangContext context;
 		private VariableHelper variableHelper;
 		private IContentExtractor contentExtractor;
+		private PLang.Building.IBuilderDecider? decider;
 		protected GoalStep GoalStep;
 
 
@@ -55,9 +56,10 @@ namespace PLang.Modules
 
 		[Init]
 		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger)
+			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
+			this.decider = decider;
 			logger.LogDebug($"        - Start InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
 			this.GoalStep = goalStep;
 			this.module = goalStep.ModuleType;
@@ -151,6 +153,10 @@ namespace PLang.Modules
 
 			if (responseType == null) responseType = typeof(GenericFunction);
 
+			if (classDescription == null)
+			{
+				classDescription = await NarrowToDecidedMethod(step, previousBuildError);
+			}
 			var question = GetLlmRequest(step, responseType, previousBuildError, classDescription);
 
 			try
@@ -298,6 +304,60 @@ Make sure to use the information in <error> to return valid JSON response"
 			this.model = model;
 		}
 		[Method]
+		// The decider picks the method; the llm then only fills that method's parameters instead of
+		// guessing the method as well. A caller that already narrowed the description (a module
+		// builder) is left alone, and a retry goes back to the full list so the llm can correct a
+		// wrong pick. All overloads of the chosen name are kept so the llm still picks the right one.
+		private async Task<ClassDescription?> NarrowToDecidedMethod(GoalStep step, IBuilderError? previousBuildError)
+		{
+			if (decider == null || previousBuildError != null || step.Goal?.IsSystem == true || !PLang.Building.BuilderDecider.IsOn()) return null;
+
+			var programType = typeHelper.GetRuntimeType(module);
+			if (programType == null) return null;
+
+			var (classDescription, error) = new ClassDescriptionHelper().GetClassDescription(programType);
+			if (error != null || classDescription == null) return null;
+			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) return null;
+
+			var (choice, deciderError) = await decider.ChooseMethod(step.Text, module, MethodCriteria(classDescription));
+			if (deciderError != null)
+			{
+				logger.LogWarning($"{step.LineNumber}: Decider could not choose a method, llm picks from all methods: {deciderError.Message}");
+				return null;
+			}
+
+			var overloads = classDescription.Methods.Where(m => m.MethodName == choice?.Method).ToList();
+			if (choice == null || overloads.Count == 0 || choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+			{
+				logger.LogInformation($"{step.LineNumber}: Decider method {choice?.Method} ({choice?.Confidence:0.00}) not trusted, llm picks from all methods");
+				return null;
+			}
+
+			logger.LogInformation($"{step.LineNumber}: Decider chose method {choice.Method} ({choice.Confidence:0.00}) for {step.Text.Trim(['\n', '\r', '\t'])}");
+			return new ClassDescription
+			{
+				Description = classDescription.Description,
+				ExampleInformation = classDescription.ExampleInformation,
+				Methods = overloads,
+				SupportingObjects = classDescription.SupportingObjects
+			};
+		}
+
+		// The option key is the method name (what the decider hands back); the description is the
+		// signature plus the method's own description, so lookalike methods can be told apart.
+		private static Dictionary<string, string> MethodCriteria(ClassDescription classDescription)
+		{
+			var criteria = new Dictionary<string, string>();
+			foreach (var method in classDescription.Methods)
+			{
+				if (criteria.ContainsKey(method.MethodName)) continue;
+				var parameters = string.Join(", ", (method.Parameters ?? new()).Select(p => $"{p.Name}: {p.Type}"));
+				var description = string.IsNullOrWhiteSpace(method.Description) ? "" : " " + method.Description;
+				criteria[method.MethodName] = $"{method.MethodName}({parameters}){description}";
+			}
+			return criteria;
+		}
+
 		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null, ClassDescription? classDescription = null)
 		{
 			var promptMessage = new List<LlmMessage>();
