@@ -329,7 +329,7 @@ public class StepBuilder : IStepBuilder
 			// A module the developer named is not a decision, so it is not worth asking about.
 			if (GetUserRequestedModule(step).Count == 1) continue;
 			questions[QuestionKey(step)] = new DeciderQuestion(
-				$"Step {step.Number + 1} of this goal is `{step.Text.Trim()}`. Which plang module implements what step {step.Number + 1} does?",
+				$"Step {step.LineNumber} of this goal is `{step.Text.Trim()}`. Which plang module implements what step {step.LineNumber} does?",
 				modules);
 		}
 		if (questions.Count == 0) return;
@@ -347,12 +347,73 @@ public class StepBuilder : IStepBuilder
 		{
 			var step = goal.GoalSteps[index];
 			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
-			cached.Modules[step.Number] = new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+			cached.Modules[step.LineNumber] = new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities);
 		}
 		logger.Value.LogDebug($"Decider chose modules for {cached.Modules.Count} steps of {goal.GoalName} in one request");
+
+		await PrefetchMethods(goal, stepIndexes, cached);
 	}
 
-	private static string QuestionKey(GoalStep step) => "step" + step.Number;
+	// With the modules known, every step's method goes in a second request. Each question carries
+	// its own module's method list, which is what makes one request possible at all: the options
+	// are per question, only the state is shared.
+	private async Task PrefetchMethods(Goal goal, IReadOnlyList<int> stepIndexes, GoalDeciderAnswers cached)
+	{
+		var questions = new Dictionary<string, DeciderQuestion>();
+		var descriptions = new Dictionary<string, ClassDescription>();
+
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			var module = ModuleForStep(step, cached);
+			if (module == null) continue;
+
+			if (!descriptions.TryGetValue(module, out var classDescription))
+			{
+				var programType = typeHelper.GetRuntimeType(module);
+				if (programType == null) continue;
+				var (described, error) = new ClassDescriptionHelper().GetClassDescription(programType);
+				if (error != null || described == null) continue;
+				descriptions[module] = classDescription = described;
+			}
+			// One method means there is nothing to choose, same rule as NarrowToDecidedMethod.
+			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) continue;
+
+			questions[QuestionKey(step)] = new DeciderQuestion(
+				$"Step {step.LineNumber} of this goal is `{step.Text.Trim()}`. It uses the module {module}. Which method of that module does step {step.LineNumber} call?",
+				MethodCriteria(classDescription));
+		}
+		if (questions.Count == 0) return;
+
+		var (answers, error2) = await decider.Choose(GoalState(goal), questions);
+		if (error2 != null || answers == null)
+		{
+			logger.Value.LogWarning($"Decider could not choose methods for {goal.GoalName} in one request, each step will ask on its own: {error2?.Message}");
+			return;
+		}
+
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
+			cached.Methods[step.LineNumber] = new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+		}
+		logger.Value.LogDebug($"Decider chose methods for {cached.Methods.Count} steps of {goal.GoalName} in one request");
+	}
+
+	// The module a step will end up on, when that is already known without asking the llm: either
+	// the developer named it, or the decider just chose it with enough confidence.
+	private string? ModuleForStep(GoalStep step, GoalDeciderAnswers cached)
+	{
+		var requested = GetUserRequestedModule(step);
+		if (requested.Count == 1) return requested[0];
+
+		if (!cached.Modules.TryGetValue(step.LineNumber, out var choice)) return null;
+		if (choice.Confidence < DeciderConfidenceThreshold) return null;
+		return typeHelper.GetRuntimeType(choice.Module) == null ? null : choice.Module;
+	}
+
+	private static string QuestionKey(GoalStep step) => "step" + step.LineNumber;
 
 	// Every step of the goal, so a question about one step is answered knowing the rest, even when
 	// only a few steps are being rebuilt.
@@ -361,7 +422,7 @@ public class StepBuilder : IStepBuilder
 		var text = new StringBuilder($"This is a plang goal called {goal.GoalName}. Its steps are numbered.\n\n");
 		foreach (var step in goal.GoalSteps)
 		{
-			text.AppendLine($"step {step.Number + 1}: {step.Text.Trim()}");
+			text.AppendLine($"step {step.LineNumber}: {step.Text.Trim()}");
 		}
 		return text.ToString();
 	}
@@ -389,7 +450,7 @@ public class StepBuilder : IStepBuilder
 			// Answers from an excludeModules retry are never cached, because prevError is set then.
 			ModuleChoice? choice;
 			IError? deciderError = null;
-			if (deciderCache.ForGoal(goal).Modules.TryGetValue(step.Number, out var cachedChoice))
+			if (deciderCache.ForGoal(goal).Modules.TryGetValue(step.LineNumber, out var cachedChoice))
 			{
 				choice = cachedChoice;
 			}

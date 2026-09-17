@@ -44,6 +44,7 @@ namespace PLang.Modules
 		private VariableHelper variableHelper;
 		private IContentExtractor contentExtractor;
 		private PLang.Building.IBuilderDecider? decider;
+		private PLang.Building.IBuilderDeciderCache? deciderCache;
 		protected GoalStep GoalStep;
 
 
@@ -56,10 +57,11 @@ namespace PLang.Modules
 
 		[Init]
 		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null)
+			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null, PLang.Building.IBuilderDeciderCache? deciderCache = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			this.decider = decider;
+			this.deciderCache = deciderCache;
 			logger.LogDebug($"        - Start InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
 			this.GoalStep = goalStep;
 			this.module = goalStep.ModuleType;
@@ -345,7 +347,18 @@ Make sure to use the information in <error> to return valid JSON response"
 			if (error != null || classDescription == null) return null;
 			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) return null;
 
-			var (choice, deciderError) = await decider.ChooseMethod(step.Text, module, MethodCriteria(classDescription));
+			// Usually already answered for the whole goal in one request by StepBuilder's prefetch.
+			MethodChoice? choice;
+			IError? deciderError = null;
+			var prefetched = deciderCache?.ForGoal(step.Goal!).Methods;
+			if (prefetched != null && prefetched.TryGetValue(step.LineNumber, out var cachedChoice))
+			{
+				choice = cachedChoice;
+			}
+			else
+			{
+				(choice, deciderError) = await decider.ChooseMethod(step.Text, module, MethodCriteria(classDescription));
+			}
 			if (deciderError != null)
 			{
 				logger.LogWarning($"{step.LineNumber}: Decider could not choose a method, llm picks from all methods: {deciderError.Message}");
@@ -372,7 +385,9 @@ Make sure to use the information in <error> to return valid JSON response"
 
 		// The option key is the method name (what the decider hands back); the description is the
 		// signature plus the method's own description, so lookalike methods can be told apart.
-		private static Dictionary<string, string> MethodCriteria(ClassDescription classDescription)
+		// Shared with StepBuilder's prefetch so the batched question and the per step question can
+		// never offer different options for the same method choice.
+		internal static Dictionary<string, string> MethodCriteria(ClassDescription classDescription)
 		{
 			var criteria = new Dictionary<string, string>();
 			foreach (var method in classDescription.Methods)
