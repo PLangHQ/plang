@@ -406,6 +406,125 @@ public class StepBuilder : IStepBuilder
 			cached.SetMethod(step, new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities));
 		}
 		logger.Value.LogDebug($"Decider chose methods for {cached.MethodCount} steps of {goal.GoalName} in one request");
+
+		await PrefetchParameters(goal, stepIndexes, cached, descriptions);
+	}
+
+	// The last two requests. Each step's parameter questions are built by the same code the per step
+	// path uses, then merged into one request with the step's index on the front of every key.
+	// Returns go first and on their own, because a parameter may depend on whether the step captures
+	// a result, and questions in one request cannot see each other's answers.
+	private async Task PrefetchParameters(Goal goal, IReadOnlyList<int> stepIndexes, GoalDeciderAnswers cached,
+		Dictionary<string, ClassDescription> descriptions)
+	{
+		var plans = new Dictionary<int, ParameterPlan>();
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			var method = cached.Method(step);
+			if (method == null || method.Confidence < DeciderConfidenceThreshold) continue;
+
+			var module = ModuleForStep(step, cached);
+			if (module == null || !descriptions.TryGetValue(module, out var classDescription)) continue;
+
+			// DecideParameters only runs on a single method, so anything with overloads is left alone.
+			var overloads = classDescription.Methods.Where(m => m.MethodName == method.Method).ToList();
+			if (overloads.Count != 1) continue;
+
+			var narrowed = new ClassDescription { Methods = overloads, Description = classDescription.Description };
+			var plan = BuildParameterPlan(step, narrowed, variableHelper, memoryStack);
+			if (plan.GiveUpReason != null) continue;
+			if (plan.Questions.Count == 0 && !plan.HasReturn) continue;
+
+			plans[index] = plan;
+		}
+		if (plans.Count == 0) return;
+
+		var state = GoalState(goal);
+		var answersByStep = plans.ToDictionary(p => p.Key, _ => new Dictionary<string, ParameterChoice>());
+
+		// Returns for every step, one request.
+		var returnQuestions = new Dictionary<string, DeciderQuestion>();
+		foreach (var (index, plan) in plans)
+		{
+			if (!plan.HasReturn) continue;
+			var step = goal.GoalSteps[index];
+			returnQuestions[$"{QuestionKey(step)}__return__"] = Ask(step, plan.Method.MethodName, "__return__", plan.ReturnQuestion["__return__"], null);
+		}
+		if (returnQuestions.Count > 0)
+		{
+			var (returnAnswers, returnError) = await decider.Choose(state, returnQuestions);
+			if (returnError != null || returnAnswers == null)
+			{
+				logger.Value.LogWarning($"Decider could not choose return variables for {goal.GoalName} in one request, each step will ask on its own: {returnError?.Message}");
+				return;
+			}
+			foreach (var (index, plan) in plans)
+			{
+				if (!plan.HasReturn) continue;
+				var step = goal.GoalSteps[index];
+				if (!returnAnswers.TryGetValue($"{QuestionKey(step)}__return__", out var answer)) continue;
+				answersByStep[index]["__return__"] = new ParameterChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+			}
+		}
+
+		// Then every parameter of every step, one request. The return outcome rides on each
+		// question's own instructions, because the state is shared by all of them.
+		var questions = new Dictionary<string, DeciderQuestion>();
+		foreach (var (index, plan) in plans)
+		{
+			var step = goal.GoalSteps[index];
+			answersByStep[index].TryGetValue("__return__", out var returnChoice);
+			var returnFact = !plan.HasReturn ? null
+				: returnChoice == null ? null
+				: returnChoice.Choice == "__none__"
+					? "This step does not write its result into any variable."
+					: $"This step writes its result into the variable {returnChoice.Choice}.";
+
+			foreach (var (name, question) in plan.Questions)
+			{
+				questions[$"{QuestionKey(step)}.{name}"] = Ask(step, plan.Method.MethodName, name, question, returnFact);
+			}
+		}
+		if (questions.Count > 0)
+		{
+			var (answers, error) = await decider.Choose(state, questions);
+			if (error != null || answers == null)
+			{
+				logger.Value.LogWarning($"Decider could not choose parameters for {goal.GoalName} in one request, each step will ask on its own: {error?.Message}");
+				return;
+			}
+			foreach (var (index, plan) in plans)
+			{
+				var step = goal.GoalSteps[index];
+				foreach (var name in plan.Questions.Keys)
+				{
+					if (!answers.TryGetValue($"{QuestionKey(step)}.{name}", out var answer)) continue;
+					answersByStep[index][name] = new ParameterChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+				}
+			}
+		}
+
+		foreach (var (index, answers) in answersByStep)
+		{
+			if (answers.Count == 0) continue;
+			cached.SetParameters(goal.GoalSteps[index], answers);
+		}
+		logger.Value.LogDebug($"Decider chose parameters for {cached.ParameterStepCount} steps of {goal.GoalName} in two requests");
+	}
+
+	// Same wording the per step path uses, with the step named so one request can hold many steps.
+	private static DeciderQuestion Ask(GoalStep step, string method, string parameterName, ParameterQuestion question, string? returnFact)
+	{
+		// Two things this must not drop. The step number has to be the one GoalState lists the steps
+		// by, or a question names a step the state does not contain. And the parameter's name has to
+		// be in the text: without it `set %greeting% = "hello"` was asked twice for "a required
+		// string" with no way to tell key from value, and the engine put the literal in key at 0.99.
+		var instructions = $"Step {step.LineNumber} of this goal is `{step.Text.Trim()}`. It calls {method}."
+			+ (returnFact == null ? "" : " " + returnFact)
+			+ $" Parameter '{parameterName}': {question.Description}"
+			+ $" Which of these is the value of '{parameterName}' in step {step.LineNumber}?";
+		return new DeciderQuestion(instructions, question.Candidates);
 	}
 
 	// The module a step will end up on, when that is already known without asking the llm: either

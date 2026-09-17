@@ -88,7 +88,7 @@ namespace PLang.Services.Typesafe
 			var choices = new Dictionary<string, ParameterChoice>();
 			foreach (var answer in answers)
 			{
-				choices[answer.Key] = new ParameterChoice(answer.Value.Choice, answer.Value.Confidence);
+				choices[answer.Key] = new ParameterChoice(answer.Value.Choice, answer.Value.Confidence, answer.Value.Probabilities);
 			}
 			return (choices, null);
 		}

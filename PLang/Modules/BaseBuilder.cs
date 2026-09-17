@@ -414,69 +414,40 @@ Make sure to use the information in <error> to return valid JSON response"
 				return null;
 			}
 
-			var method = decided.Methods[0];
-			// Paths come back without their %; the runtime only treats a value as a variable when it
-			// is wrapped, so wrap here or a decided variable would be written as a literal string.
-			var variables = variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
-			var literals = QuotedLiterals(step.Text);
-			var numbers = Numbers(step.Text);
-
-			var questions = new Dictionary<string, ParameterQuestion>();
-			var recordFields = new Dictionary<string, List<PrimitiveDescription>>();
-			foreach (var parameter in method.Parameters ?? new())
+			var plan = BuildParameterPlan(step, decided, variableHelper, memoryStack);
+			if (plan.GiveUpReason != null)
 			{
-				if (LeaveUnset(parameter, step.Text)) continue;
-				var candidates = ParameterCandidates(parameter, variables, literals, numbers);
-				if (candidates == null)
-				{
-					// A record of simple fields (TextMessage is one) is decided field by field, the same
-					// way a method is decided parameter by parameter: required fields are asked, fields
-					// with a constructor default that the step never mentions keep that default.
-					var fields = RecordFields(parameter, step.Text);
-					if (fields == null)
-					{
-						logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
-						return null;
-					}
-					foreach (var field in fields)
-					{
-						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers);
-						if (fieldCandidates == null)
-						{
-							logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
-							return null;
-						}
-						if (fieldCandidates.Count == 0) continue;
-						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
-					}
-					recordFields[parameter.Name] = fields;
-					continue;
-				}
-				if (candidates.Count == 0) continue;
-				questions[parameter.Name] = new ParameterQuestion(Describe(parameter, null), candidates);
+				logger.LogInformation($"{step.LineNumber}: {plan.GiveUpReason}");
+				return null;
 			}
 
-			// Whether the step captures its result is settled first, on its own, because other
-			// parameters depend on it and questions in one request cannot see each other's answers:
-			// RenderTemplate's RenderToOutputstream has to be true exactly when nothing is captured,
-			// and asked blind it stayed unset, which renders the page and sends nothing. The answer
-			// is added to the state so the rest of the parameters are decided knowing it.
-			var returnType = method.ReturnValue?.Type;
-			bool hasReturn = !string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase);
-			var state = step.Text;
+			var method = plan.Method;
+			var variables = plan.Variables;
+			var literals = plan.Literals;
+			var numbers = plan.Numbers;
+			var questions = plan.Questions;
+			var recordFields = plan.RecordFields;
+			var returnType = plan.ReturnType;
+			bool hasReturn = plan.HasReturn;
+
+			// Usually every step of the goal already had both of these answered, in one request each,
+			// by StepBuilder's prefetch. A miss means this step asks for itself, as it did before.
+			var prefetched = deciderCache?.ForGoal(step.Goal!).Parameters(step);
+
+			// The goal, not just the step. The questions are still about this one step, but the steps
+			// around it are what make the engine decisive about a flag the step says nothing of:
+			// asked with only its own text, `loadVariables` came back unsure at 0.18.
+			var state = GoalStateFor(step);
 			ParameterChoice? returnChoice = null;
 
 			if (hasReturn)
 			{
-				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
-				targets[NoneOption] = "the result is not written to a variable";
-				var returnQuestion = new Dictionary<string, ParameterQuestion>
+				if (prefetched != null)
 				{
-					["__return__"] = new ParameterQuestion("The variable the method's result is written into, when the step names one (write to %x%, into %x%, -> %x%).", targets)
-				};
-
-				var (returnAnswer, returnError) = await decider.ChooseParameters(state, method.MethodName, returnQuestion);
-				if (returnError != null || returnAnswer == null || !returnAnswer.TryGetValue("__return__", out returnChoice))
+					prefetched.TryGetValue("__return__", out returnChoice);
+				}
+				var returnError = returnChoice != null ? null : await AskReturn(step, method, plan, state, r => returnChoice = r);
+				if (returnChoice == null)
 				{
 					logger.LogWarning($"{step.LineNumber}: Decider could not choose the return variable, llm fills parameters: {returnError?.Message}");
 					return null;
@@ -503,7 +474,12 @@ Make sure to use the information in <error> to return valid JSON response"
 				return BuildDecided(step, method, new(), onlyReturn, question);
 			}
 
-			var (choices, error) = await decider.ChooseParameters(state, method.MethodName, questions);
+			Dictionary<string, ParameterChoice>? choices = prefetched;
+			IError? error = null;
+			if (choices == null)
+			{
+				(choices, error) = await decider.ChooseParameters(state, method.MethodName, questions);
+			}
 			if (error != null || choices == null)
 			{
 				logger.LogWarning($"{step.LineNumber}: Decider could not choose parameters, llm fills them: {error?.Message}");
@@ -525,14 +501,15 @@ Make sure to use the information in <error> to return valid JSON response"
 						// Nothing in the step could fill it, so it was never asked and keeps its default.
 						if (!questions.ContainsKey(fieldKey)) continue;
 						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return null;
-						if (fieldChoice.Choice == NoneOption && !field.IsRequired)
+						if (!field.IsRequired && MeansLeaveAlone(field, fieldChoice.Choice))
 						{
-							if (fieldChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+							var sure = ConfidenceInLeavingUnset(field, fieldChoice);
+							if (sure < PLang.Building.BuilderDecider.ConfidenceThreshold)
 							{
-								logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {fieldKey} unset ({fieldChoice.Confidence:0.00}), llm fills parameters");
+								logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {fieldKey} unset ({sure:0.00}), llm fills parameters");
 								return null;
 							}
-							logger.LogDebug($"{step.LineNumber}: Decider leaves {fieldKey} unset ({fieldChoice.Confidence:0.00})");
+							logger.LogDebug($"{step.LineNumber}: Decider leaves {fieldKey} unset ({sure:0.00})");
 							continue;
 						}
 						if (fieldChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
@@ -573,11 +550,12 @@ Make sure to use the information in <error> to return valid JSON response"
 				// page that renders and sends nothing. The engine is decisive when it knows: the
 				// unsets that are right come back at 0.91 to 1.00.
 				if (!choices.TryGetValue(parameter.Name, out var choice)) return null;
-				if (choice.Choice == NoneOption && !parameter.IsRequired)
+				if (!parameter.IsRequired && MeansLeaveAlone(parameter, choice.Choice))
 				{
-					if (choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+					var sure = ConfidenceInLeavingUnset(parameter, choice);
+					if (sure < PLang.Building.BuilderDecider.ConfidenceThreshold)
 					{
-						logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {parameter.Name} unset ({choice.Confidence:0.00}), llm fills parameters");
+						logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {parameter.Name} unset ({sure:0.00}), llm fills parameters");
 						return null;
 					}
 					continue;
@@ -626,6 +604,35 @@ Make sure to use the information in <error> to return valid JSON response"
 		// 0.95 and as the render target at 0.31. A value written once in a step belongs to one
 		// parameter, so the surest claim keeps it and the rest fall back to unset, which the loops
 		// below then reject for a required parameter and accept for an optional one.
+		// Choosing an optional parameter's own default value and leaving it unset are the same
+		// instruction, so both mean leave it alone.
+		private static bool MeansLeaveAlone(IPropertyDescription parameter, string choice)
+		{
+			if (choice == NoneOption) return true;
+			return parameter.DefaultValue != null
+				&& string.Equals(choice, parameter.DefaultValue.ToString(), StringComparison.OrdinalIgnoreCase);
+		}
+
+		// How sure the engine is that a parameter should be left alone. Leaving it unset and choosing
+		// its default value are the same instruction, so the probability of both counts: asked about
+		// loadVariables, whose default is false, the engine answered `__none__` at 0.27 while also
+		// giving `false` 0.5, and reading only the first made a settled answer look like doubt.
+		private static double ConfidenceInLeavingUnset(IPropertyDescription parameter, ParameterChoice choice)
+		{
+			if (choice.Probabilities == null || parameter.DefaultValue == null) return choice.Confidence;
+
+			var asDefault = parameter.DefaultValue.ToString();
+			double total = 0;
+			foreach (var probability in choice.Probabilities)
+			{
+				if (probability.Key == NoneOption || string.Equals(probability.Key, asDefault, StringComparison.OrdinalIgnoreCase))
+				{
+					total += probability.Value;
+				}
+			}
+			return Math.Max(choice.Confidence, total);
+		}
+
 		// Only a value the step actually writes can belong to one parameter. true and false are not
 		// values taken from the step, they are the whole option set of every bool, so two bools
 		// answering false are not competing for anything and neither claim should be dropped.
@@ -689,6 +696,100 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			logger.LogInformation($"{step.LineNumber}: Decider found no parameter for {string.Join(", ", unplaced)} in the step, llm builds it");
 			return false;
+		}
+
+		// Every step of the goal, with the one being decided named, so the answers are given in
+		// context. Falls back to the step alone when the goal is not loaded.
+		private static string GoalStateFor(GoalStep step)
+		{
+			var steps = step.Goal?.GoalSteps;
+			if (steps == null || steps.Count < 2) return step.Text;
+
+			var text = new System.Text.StringBuilder($"This is a plang goal called {step.Goal!.GoalName}. Its steps are numbered.\n\n");
+			foreach (var other in steps)
+			{
+				text.AppendLine($"step {other.LineNumber}: {other.Text.Trim()}");
+			}
+			text.AppendLine($"\nThe questions below are all about step {step.LineNumber}: {step.Text.Trim()}");
+			return text.ToString();
+		}
+
+		private async Task<IError?> AskReturn(GoalStep step, MethodDescription method, ParameterPlan plan, string state, Action<ParameterChoice?> keep)
+		{
+			var (answer, error) = await decider!.ChooseParameters(state, method.MethodName, plan.ReturnQuestion);
+			if (error != null || answer == null || !answer.TryGetValue("__return__", out var choice)) return error;
+			keep(choice);
+			return null;
+		}
+
+		// What the decider will be asked about one step, built once and used by both callers: the
+		// per step path here, and StepBuilder's prefetch, which merges the plans of every step in a
+		// goal into one request. Two callers building their own questions would drift.
+		internal record ParameterPlan(
+			MethodDescription Method,
+			Dictionary<string, ParameterQuestion> Questions,
+			Dictionary<string, ParameterQuestion> ReturnQuestion,
+			Dictionary<string, List<PrimitiveDescription>> RecordFields,
+			List<string> Variables, List<string> Literals, List<string> Numbers,
+			string? ReturnType, string? GiveUpReason)
+		{
+			public bool HasReturn => ReturnQuestion.Count > 0;
+		}
+
+		internal static ParameterPlan BuildParameterPlan(GoalStep step, ClassDescription decided, VariableHelper variableHelper, MemoryStack memoryStack)
+		{
+			var method = decided.Methods[0];
+			// Paths come back without their %; the runtime only treats a value as a variable when it
+			// is wrapped, so wrap here or a decided variable would be written as a literal string.
+			var variables = variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
+			var literals = QuotedLiterals(step.Text);
+			var numbers = Numbers(step.Text);
+
+			var questions = new Dictionary<string, ParameterQuestion>();
+			var recordFields = new Dictionary<string, List<PrimitiveDescription>>();
+
+			ParameterPlan GiveUp(string reason) => new(method, questions, new(), recordFields, variables, literals, numbers, null, reason);
+
+			foreach (var parameter in method.Parameters ?? new())
+			{
+				if (LeaveUnset(parameter, step.Text)) continue;
+				var candidates = ParameterCandidates(parameter, variables, literals, numbers);
+				if (candidates == null)
+				{
+					// A record of simple fields (TextMessage is one) is decided field by field, the same
+					// way a method is decided parameter by parameter: required fields are asked, fields
+					// with a constructor default that the step never mentions keep that default.
+					var fields = RecordFields(parameter, step.Text);
+					if (fields == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+
+					foreach (var field in fields)
+					{
+						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers);
+						if (fieldCandidates == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
+						if (fieldCandidates.Count == 0) continue;
+						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
+					}
+					recordFields[parameter.Name] = fields;
+					continue;
+				}
+				if (candidates.Count == 0) continue;
+				questions[parameter.Name] = new ParameterQuestion(Describe(parameter, null), candidates);
+			}
+
+			// Whether the step captures its result is settled on its own, before the rest, because
+			// other parameters depend on it and questions in one request cannot see each other's
+			// answers: RenderTemplate's RenderToOutputstream has to be true exactly when nothing is
+			// captured, and asked blind it stayed unset, which renders the page and sends nothing.
+			var returnType = method.ReturnValue?.Type;
+			var returnQuestion = new Dictionary<string, ParameterQuestion>();
+			if (!string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase))
+			{
+				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
+				targets[NoneOption] = "the result is not written to a variable";
+				returnQuestion["__return__"] = new ParameterQuestion("The variable the method's result is written into, when the step names one (write to %x%, into %x%, -> %x%).", targets);
+			}
+
+			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, returnType, null);
 		}
 
 		private Instruction BuildDecided(GoalStep step, MethodDescription method, List<Parameter> parameters, List<ReturnValue> returnValues, LlmRequest question)

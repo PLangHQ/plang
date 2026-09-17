@@ -18,12 +18,18 @@ namespace PLang.Building
 	{
 		private readonly ConcurrentDictionary<int, (string Text, ModuleChoice Choice)> modules = new();
 		private readonly ConcurrentDictionary<int, (string Text, MethodChoice Choice)> methods = new();
+		private readonly ConcurrentDictionary<int, (string Text, Dictionary<string, ParameterChoice> Choices)> parameters = new();
 
 		public int ModuleCount => modules.Count;
 		public int MethodCount => methods.Count;
+		public int ParameterStepCount => parameters.Count;
 
 		public void SetModule(GoalStep step, ModuleChoice choice) => modules[step.Index] = (step.Text, choice);
 		public void SetMethod(GoalStep step, MethodChoice choice) => methods[step.Index] = (step.Text, choice);
+		public void SetParameters(GoalStep step, Dictionary<string, ParameterChoice> choices) => parameters[step.Index] = (step.Text, choices);
+
+		public Dictionary<string, ParameterChoice>? Parameters(GoalStep step)
+			=> parameters.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choices : null;
 
 		public ModuleChoice? Module(GoalStep step)
 			=> modules.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
@@ -37,6 +43,7 @@ namespace PLang.Building
 		{
 			modules.Clear();
 			methods.Clear();
+			parameters.Clear();
 		}
 	}
 
