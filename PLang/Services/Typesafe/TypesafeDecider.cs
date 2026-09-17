@@ -117,6 +117,33 @@ namespace PLang.Services.Typesafe
 		// options are its criteria, and each answer is the option key plus how sure the model is.
 		// Nothing thrown in here may reach the builder: every failure comes back as an error that
 		// names itself, and the builder falls back to the llm for the step.
+		private static readonly int[] RetryableStatuses = [408, 429, 500, 502, 503, 504, 529];
+
+		private async Task<(HttpResponseMessage Response, string Body)> SendWithRetry(Dictionary<string, object> body, string key)
+		{
+			var json = JsonConvert.SerializeObject(body);
+			HttpResponseMessage? response = null;
+			string responseBody = "";
+
+			for (int attempt = 0; attempt < 4; attempt++)
+			{
+				if (attempt > 0) await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+
+				using var request = new HttpRequestMessage(HttpMethod.Post, Url);
+				request.Headers.UserAgent.ParseAdd("plang v0.1");
+				request.Headers.Add("Authorization", $"Bearer {key}");
+				request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+				response?.Dispose();
+				response = await httpClient.SendAsync(request);
+				responseBody = await response.Content.ReadAsStringAsync();
+				if (response.IsSuccessStatusCode || !RetryableStatuses.Contains((int)response.StatusCode)) break;
+
+				logger.LogDebug("Typesafe returned {Status}, retrying", (int)response.StatusCode);
+			}
+			return (response!, responseBody);
+		}
+
 		public async Task<(Dictionary<string, DeciderAnswer>? Answers, IError? Error)> Choose(string state, Dictionary<string, DeciderQuestion> questions)
 		{
 			if (questions.Count == 0)
@@ -153,13 +180,12 @@ namespace PLang.Services.Typesafe
 
 				DumpRequest(body);
 
-				using var request = new HttpRequestMessage(HttpMethod.Post, Url);
-				request.Headers.UserAgent.ParseAdd("plang v0.1");
-				request.Headers.Add("Authorization", $"Bearer {key}");
-				request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-
-				using var response = await httpClient.SendAsync(request);
-				var responseBody = await response.Content.ReadAsStringAsync();
+				// A busy or briefly unavailable service is not an answer, it is a wait. Seen in one
+				// build: every step of every goal fell back to the llm on 503 model_unavailable, which
+				// is correct behaviour but throws away a whole build's worth of decisions for
+				// something that clears in seconds. Only the statuses that mean "try again" retry;
+				// anything else, a bad key or a malformed request, comes straight back.
+				var (response, responseBody) = await SendWithRetry(body, key);
 				if (!response.IsSuccessStatusCode)
 				{
 					return (null, new ServiceError($"Typesafe returned {(int)response.StatusCode}: {responseBody}", this.GetType(), StatusCode: (int)response.StatusCode));

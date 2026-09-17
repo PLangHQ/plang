@@ -536,11 +536,16 @@ public class StepBuilder : IStepBuilder
 	// Same wording the per step path uses, with the step named so one request can hold many steps.
 	private static DeciderQuestion Ask(GoalStep step, string method, string parameterName, ParameterQuestion question, string? returnFact)
 	{
+		// The step's text is not repeated here. The state already lists every step by number, and a
+		// goal's parameter questions are the many: repeating the text in each of 86 questions bought
+		// nothing. Measured against sending it, the answers were identical 75 out of 75 while the
+		// request went about a fifth smaller.
+		//
 		// Two things this must not drop. The step number has to be the one GoalState lists the steps
 		// by, or a question names a step the state does not contain. And the parameter's name has to
 		// be in the text: without it `set %greeting% = "hello"` was asked twice for "a required
 		// string" with no way to tell key from value, and the engine put the literal in key at 0.99.
-		var instructions = $"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. It calls {method}."
+		var instructions = $"Step {step.Index + 1} calls {method}."
 			+ (returnFact == null ? "" : " " + returnFact)
 			+ $" Parameter '{parameterName}': {question.Description}"
 			+ $" Which of these is the value of '{parameterName}' in step {step.Index + 1}?";
