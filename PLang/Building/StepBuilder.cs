@@ -44,14 +44,20 @@ public class StepBuilder : IStepBuilder
 	private readonly IEngine engine;
 	private readonly PrParser prParser;
 	private readonly IGoalParser goalParser;
+	private readonly IBuilderDecider decider;
+
+	// Below this the decider's pick is not trusted and the step falls back to the llm, which also
+	// writes the step name and intent the way it always has.
+	private const double DeciderConfidenceThreshold = 0.7;
 	private IMemoryStackAccessor memoryStackAccessor;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
 				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine,
-				PrParser prParser, IGoalParser goalParser)
+				PrParser prParser, IGoalParser goalParser, IBuilderDecider decider)
 	{
+		this.decider = decider;
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
 		this.logger = logger;
@@ -104,9 +110,9 @@ public class StepBuilder : IStepBuilder
 			(step, error) = await BuildStepProperties(goal, step, instruction);
 			if (error != null) return error;
 
-			if (step.Confidence == "Low" || step.Confidence == "Medium")
+			if (step.Confidence != null && step.Confidence < DeciderConfidenceThreshold)
 			{
-				logger.Value.LogWarning($"{step.Confidence} confidence");
+				logger.Value.LogWarning($"{step.Confidence:0.00} confidence");
 			}
 
 			if (!string.IsNullOrEmpty(step.Inconsistency))
@@ -303,6 +309,38 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<(GoalStep Step, IBuilderError? Error)> BuildStepInformation(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, IBuilderError? prevError = null)
 	{
+		// A module the user named in the step ([db], [ui]) is not a decision, it is an instruction.
+		var userRequestedModule = GetUserRequestedModule(step);
+		if (excludeModules != null)
+		{
+			foreach (var excludedModule in excludeModules) userRequestedModule.Remove(excludedModule);
+		}
+		if (userRequestedModule.Count == 1)
+		{
+			return (ApplyDerivedStep(goal, step, stepIndex, userRequestedModule[0], 1.0), null);
+		}
+
+		// First attempt goes to the decider. A retry (prevError set) means the decider's module did
+		// not build, so the retry takes the llm path, which upgrades the model for exactly that case.
+		var deciderSetting = AppContext.GetData("decider") as string;
+		if (deciderSetting != "off" && prevError == null)
+		{
+			var (choice, deciderError) = await decider.ChooseModule(step.Text, typeHelper.GetModulesDictionary(excludeModules));
+			if (deciderError != null)
+			{
+				logger.Value.LogWarning($"{step.LineNumber}: Decider failed, falling back to llm: {deciderError.Message}");
+			}
+			else if (choice != null && choice.Confidence >= DeciderConfidenceThreshold && typeHelper.GetRuntimeType(choice.Module) != null)
+			{
+				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
+				return (ApplyDerivedStep(goal, step, stepIndex, choice.Module, choice.Confidence), null);
+			}
+			else if (choice != null)
+			{
+				logger.Value.LogInformation($"{step.LineNumber}: Decider confidence {choice.Confidence:0.00} for {choice.Module} is below {DeciderConfidenceThreshold}, falling back to llm");
+			}
+		}
+
 		LlmRequest llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules, prevError);
 
 		logger.Value.LogInformation($"{step.LineNumber}: Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
@@ -331,7 +369,7 @@ public class StepBuilder : IStepBuilder
 
 		step.ModuleType = module;
 		step.Name = stepInformation.StepName;
-		step.Confidence = stepInformation.Confidence;
+		step.Confidence = PLang.Utils.JsonConverters.ConfidenceConverter.Parse(stepInformation.Confidence);
 		step.Inconsistency = stepInformation.Inconsistency;
 		step.UserIntent = stepInformation.ExplainUserIntent;
 		step.Description = stepInformation.StepDescription;
@@ -385,6 +423,36 @@ Builder will continue on other steps but not this one: ({step.Text}).
 	{
 		var strStepNr = (stepIndex + 1).ToString().PadLeft(2, '0');
 		return strStepNr + ". " + stepName + ".pr";
+	}
+
+	// The decider only answers "which module". The name, description and intent the llm used to
+	// write are derived instead: the name from the step text, the description is the step, and the
+	// intent is left empty so the method builder does not present the raw step as disambiguated.
+	private GoalStep ApplyDerivedStep(Goal goal, GoalStep step, int stepIndex, string module, double confidence)
+	{
+		step.ModuleType = module;
+		step.Confidence = confidence;
+		step.Inconsistency = null;
+		step.UserIntent = null;
+		step.Name = DeriveStepName(step.Text);
+		step.Description = step.Text.Trim();
+		step.PrFileName = GetPrFileName(stepIndex, step.Name);
+		step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
+		step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
+		step.LlmRequest = null;
+		step.Number = stepIndex;
+		step.RunOnce = GoalHelper.RunOnce(goal);
+		return step;
+	}
+
+	// The step number prefix already makes the .pr file name unique, so the name only needs to be
+	// readable and safe on every file system: ascii words from the step, a handful of them.
+	private static string DeriveStepName(string text)
+	{
+		var cleaned = System.Text.RegularExpressions.Regex.Replace(text ?? "", "[^a-zA-Z0-9]+", " ").Trim().ToLowerInvariant();
+		var name = string.Join("_", cleaned.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(6));
+		if (name.Length > 40) name = name.Substring(0, 40).TrimEnd('_');
+		return string.IsNullOrEmpty(name) ? "step" : name;
 	}
 
 

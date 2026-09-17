@@ -85,6 +85,24 @@ namespace PLang.Utils
 				AppContext.SetData("llmservice", serviceName);
 			}
 
+			// The decider picks the module for each step on build; the llm service above still does
+			// the generation. Default is on, so a build with no flag uses Typesafe for that decision.
+			var decider = args.FirstOrDefault(p => p.ToLower().StartsWith("--decider")) ?? Environment.GetEnvironmentVariable("PLangDecider");
+			if (!string.IsNullOrEmpty(decider))
+			{
+				var deciderName = decider.ToLower();
+				if (decider.IndexOf("=") != -1)
+				{
+					deciderName = decider.Substring(decider.IndexOf("=") + 1).ToLower();
+				}
+
+				if (deciderName != "typesafe" && deciderName != "off")
+				{
+					throw new RuntimeException("Parameter --decider can only be 'typesafe' or 'off'. For example --decider=off");
+				}
+				AppContext.SetData("decider", deciderName);
+			}
+
 			var parallel = args.FirstOrDefault(p => p.StartsWith("--buildparallel", StringComparison.OrdinalIgnoreCase));
 			int buildParallel = DefaultBuildParallel;
 			if (parallel != null)

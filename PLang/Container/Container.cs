@@ -312,6 +312,7 @@ namespace PLang.Container
 			});
 			container.Register<IGoalBuilder, GoalBuilder>();
 			container.Register<IStepBuilder, StepBuilder>();
+			container.Register<IBuilderDecider, PLang.Services.Typesafe.TypesafeDecider>();
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 
 			container.Register<LlmCaching, LlmCaching>();

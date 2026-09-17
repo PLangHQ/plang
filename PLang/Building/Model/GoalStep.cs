@@ -59,7 +59,8 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public bool RunOnce { get; set; }
 		[LlmIgnore]
-		public string Confidence { get; set; }
+		[Newtonsoft.Json.JsonConverter(typeof(PLang.Utils.JsonConverters.ConfidenceConverter))]
+		public double? Confidence { get; set; }
 		[LlmIgnore]
 		public string Inconsistency { get; set; }
 
