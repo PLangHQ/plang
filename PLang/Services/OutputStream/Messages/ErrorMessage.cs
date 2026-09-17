@@ -4,7 +4,7 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream.Messages;
 
-[Description(@"Content can be a filename or a text that will be written to stream. 
+[Description(@"Content is what gets rendered or written: the name of a template file, or the text itself. It is never the variable the step writes its result into, and never a css selector or an action name. 
 Target defines where in the UI to write the content. It is a css selector such as #main or #ideaChat, which a step writes as cssSelector: #main or as `to #main`. This can be null and will be controlled by external system
 Actions are actions executed on the content, built in actions are: 'replace, replaceSelf, append, prepend, appendOrReplace, prependOrReplace, scrollToTop, scrollIntoView, focus, highlight, show, hide, notify, alert, vibrate, navigate, replaceState, reload, open, close'. 
 A user can define multiple actions, user:`render 'product.html' to #main, replace the content, navigate and scroll into view => Actions:[""replace"", ""navigate"", ""scrollIntoView""]

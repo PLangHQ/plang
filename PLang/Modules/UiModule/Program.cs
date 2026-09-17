@@ -223,11 +223,11 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			string LayoutName = "default",
 			[property: Description("true when the step does not write the result into a variable, because the rendered content must then be sent to the user, e.g. `render 'page.html' to #main`. false only when the step captures the result, e.g. `render 'row.html', write to %html%` or `into %html%`. Getting this wrong on a step with no variable renders the page and sends nothing")]
 			bool RenderToOutputstream = false,
-			[property: Description("true when the content must not be wrapped in the page layout: the step says 'without main layout', or it renders a fragment or a modal into an element that is not the layout's main render area. false when rendering into the main area, where the layout is drawn around the content")]
+			[property: Description("true when the content must not be wrapped in the page layout, which is the case whenever the step says 'without main layout', and whenever it renders into any element other than the page's main render area, normally #main. So a step naming #main is false, a step naming any other selector such as #ideaChat is true")]
 			bool DontRenderMainLayout = false,
 			[property: Description("set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
 			bool? IsTemplateFile = null,
-			[property: Description("css selector, normally body, when the user wants the whole page redrawn inside the layout, e.g. 'render whole page', 'replace whole body', 'redraw the page'")]
+			[property: Description("Only for redrawing the whole page inside the layout, and then it is normally body, e.g. 'render whole page', 'replace whole body', 'redraw the page'. A cssSelector the step names is the Target of the content, not this, so leave this unset unless the step asks for the whole page")]
 			string? LayoutTarget = null)
 		{
 
