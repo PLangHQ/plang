@@ -388,30 +388,46 @@ public class StepBuilder : IStepBuilder
 		{
 			var step = goal.GoalSteps[index];
 
-			// The return variable is asked for every step, before anything about the module or the
-			// method is known, because it needs neither. Steps whose module the llm still has to
-			// pick were otherwise left out and each asked for itself afterwards, one request apiece.
+			var module = ModuleForStep(step, cached);
+			ClassDescription? classDescription = null;
+			if (module != null && !descriptions.TryGetValue(module, out classDescription))
+			{
+				var programType = typeHelper.GetRuntimeType(module);
+				var (described, error) = programType == null ? (null, null) : new ClassDescriptionHelper().GetClassDescription(programType);
+				if (error == null && described != null) descriptions[module] = classDescription = described;
+			}
+
+			// The return variable is asked for every step, including steps whose module the llm will
+			// pick, which would otherwise each ask for themselves afterwards, one request apiece.
+			//
+			// It cannot see the method answer, they are in this same request and answered in
+			// isolation, but it does not have to: the module's method list is here, and a method
+			// marked ReturnRequired always writes its result somewhere. When every method of the
+			// module is one of those, "nowhere" is not offered at all; when only some are, they are
+			// named. Without this, `add {...} to list %chat%` split between %chat% and an answer that
+			// AddToList makes illegal, and settled at 0.65.
 			var variables = StepVariables(step);
 			if (variables.Count > 0)
 			{
 				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
-				targets["__none__"] = "the result is not written to a variable";
-				questions[QuestionKey(step) + "__return__"] = new DeciderQuestion(
-					$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. Which variable does step {step.Index + 1} write its result into, if it captures the result at all? Choose none when the step does not keep the result in a variable.",
-					targets);
+				var methods = classDescription?.Methods ?? new();
+				var alwaysReturn = methods.Where(m => m.ReturnRequired).Select(m => m.MethodName).Distinct().ToList();
+				bool everyMethodReturns = methods.Count > 0 && alwaysReturn.Count == methods.Select(m => m.MethodName).Distinct().Count();
+
+				var instructions = $"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. Which variable does step {step.Index + 1} write its result into?";
+				if (!everyMethodReturns)
+				{
+					targets["__none__"] = "the result is not written to a variable";
+					instructions += " Choose none when the step does not keep the result in a variable.";
+				}
+				if (alwaysReturn.Count > 0 && !everyMethodReturns)
+				{
+					instructions += $" These always write their result into a variable, so if step {step.Index + 1} is one of them it has one: {string.Join(", ", alwaysReturn)}.";
+				}
+				questions[QuestionKey(step) + "__return__"] = new DeciderQuestion(instructions, targets);
 			}
 
-			var module = ModuleForStep(step, cached);
-			if (module == null) continue;
-
-			if (!descriptions.TryGetValue(module, out var classDescription))
-			{
-				var programType = typeHelper.GetRuntimeType(module);
-				if (programType == null) continue;
-				var (described, error) = new ClassDescriptionHelper().GetClassDescription(programType);
-				if (error != null || described == null) continue;
-				descriptions[module] = classDescription = described;
-			}
+			if (module == null || classDescription == null) continue;
 			// One method means there is nothing to choose, same rule as NarrowToDecidedMethod.
 			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) continue;
 
