@@ -4,7 +4,7 @@ using System.ComponentModel;
 namespace PLang.Services.OutputStream.Messages;
 
 [Description(@"Content can be a filename or a text that will be written to stream. 
-Target defines where in the UI to write the content, this can be null and will be controlled by external system
+Target defines where in the UI to write the content. It is a css selector such as #main or #ideaChat, which a step writes as cssSelector: #main or as `to #main`. This can be null and will be controlled by external system
 Actions are actions executed on the content, built in actions are: 'replace, replaceSelf, append, prepend, appendOrReplace, prependOrReplace, scrollToTop, scrollIntoView, focus, highlight, show, hide, showDialog, hideDialog, showModal, hideModal, notify, alert, vibrate, navigate, replaceState, reload, open, close'. 
 A user can define multiple actions, user:`render 'product.html' to #main, replace the content, navigate and scroll into view => Actions:[""replace"", ""navigate"", ""scrollIntoView""]
 Level: trace|debug|info|warning|error|critical. info is default. when user defines a level without a channel, assume channel=log

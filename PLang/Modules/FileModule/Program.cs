@@ -165,12 +165,14 @@ namespace PLang.Modules.FileModule
 			return base64;
 		}
 		public async Task<(object?, IError?)> ReadJson(string path, bool throwErrorOnNotFound = true,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", bool allowReadingFromSystem = false)
+			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", [Description("true only when the step asks to read from plang's own system folder. false for any path in the app")] bool allowReadingFromSystem = false)
 		{
 			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, null, allowReadingFromSystem);
 		}
 		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = true,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, bool allowReadingFromSystem = false)
+			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, [Description("true only when the step asks to read from plang's own system folder. false for any path in the app")] bool allowReadingFromSystem = false)
 		{
 			newLineSymbol ??= Environment.NewLine;
 			var result = await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol, allowReadingFromSystem);
@@ -197,7 +199,8 @@ namespace PLang.Modules.FileModule
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
 		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, bool allowReadingFromSystem = false)
+			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, [Description("true only when the step asks to read from plang's own system folder. false for any path in the app")] bool allowReadingFromSystem = false)
 		{
 			var absolutePath = GetPath(path);
 
@@ -716,6 +719,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
 		public async Task<IError?> WriteToFile(string path, object content, bool overwrite = false,
+			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			if (string.IsNullOrEmpty(path))
@@ -802,7 +806,8 @@ namespace PLang.Modules.FileModule
 		}
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
-				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+				[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);
 			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);

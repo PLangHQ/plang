@@ -326,7 +326,7 @@ namespace PLang.Modules.VariableModule
 
 
 		[Description(@"Set one variable to a text value written in single/double quotes in the step, e.g. set %name% = ""John"". The wrapping quotes are not part of the value. If the value is a %variable%, an object or json, use SetVariable instead. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
+		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
 
@@ -338,7 +338,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set json variable. Make sure value is valid json")]
-		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, [HandlesVariable] object? defaultValue = null)
+		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [HandlesVariable] object? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
 
@@ -483,7 +483,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set one variable to a value that is not a quoted text: another %variable% such as set %question% = %answer.text%, an object, a list or json. A value written in quotes belongs to SetStringVariable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
+		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"         - Start SetVariable (key:{key} | value:{value}) - {stopwatch.ElapsedMilliseconds}");
@@ -539,7 +539,7 @@ pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|tota
 		}
 
 		[Description(@"Set two or more variables in one step where at least one of them has a default value, e.g. set %page% = %request.query.page% ?? 1, %size% = 20. When no variable has a default, SetValuesOnVariables is the method. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
@@ -547,7 +547,7 @@ pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|tota
 			}
 		}
 		[Description(@"Set two or more variables in one step, none of them with a default value, e.g. set %page% = %request.body.page%, %note% = %request.body.note%. If any variable has a default, SetVariables is the method. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
@@ -566,7 +566,7 @@ Example:
 Bad (dont use for):
 `set default %page% = %request.query.page% ?? 1` => use:SetValueOnVariablesOrDefaultIfValueIsEmpty
 ")]
-		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
@@ -608,7 +608,7 @@ Bad (dont use for):
 		[Example(@"set %day% = %request.query.day%, default is """"", @"keyValues.key=""%day%"", value=[""%request.query.day%"", """"]")]
 		[Example(@"set %goals% = %q.goals%, default is []", @"keyValues.key=""%goals%"", value=[""%q.goals%"", []]")]
 		[Example(@"set %target% = %request.body.target%, default is ""#body""", @"keyValues.key=""%target%"", value=[""%request.body.target%"", ""#body""]")]
-		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var variable in variables)
 			{

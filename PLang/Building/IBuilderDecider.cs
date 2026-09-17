@@ -8,6 +8,12 @@ namespace PLang.Building
 	// against a step fits here. Generation (SQL, code, templates) stays on ILlmService.
 	public interface IBuilderDecider
 	{
+		// The engine's own shape: one state, any number of questions, answered together. Everything
+		// below is a caller of this. A whole goal's steps go in one request this way, which is both
+		// far fewer round trips and more accurate, because each question is answered with the rest
+		// of the goal visible as context.
+		Task<(Dictionary<string, DeciderAnswer>? Answers, IError? Error)> Choose(string state, Dictionary<string, DeciderQuestion> questions);
+
 		Task<(ModuleChoice? Choice, IError? Error)> ChooseModule(string stepText, Dictionary<string, string> modules);
 		Task<(MethodChoice? Choice, IError? Error)> ChooseMethod(string stepText, string module, Dictionary<string, string> methods);
 

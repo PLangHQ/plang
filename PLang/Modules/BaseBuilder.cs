@@ -436,34 +436,70 @@ Make sure to use the information in <error> to return valid JSON response"
 							logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
 							return null;
 						}
+						if (fieldCandidates.Count == 0) continue;
 						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
 					}
 					recordFields[parameter.Name] = fields;
 					continue;
 				}
+				if (candidates.Count == 0) continue;
 				questions[parameter.Name] = new ParameterQuestion(Describe(parameter, null), candidates);
 			}
 
+			// Whether the step captures its result is settled first, on its own, because other
+			// parameters depend on it and questions in one request cannot see each other's answers:
+			// RenderTemplate's RenderToOutputstream has to be true exactly when nothing is captured,
+			// and asked blind it stayed unset, which renders the page and sends nothing. The answer
+			// is added to the state so the rest of the parameters are decided knowing it.
 			var returnType = method.ReturnValue?.Type;
 			bool hasReturn = !string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase);
+			var state = step.Text;
+			ParameterChoice? returnChoice = null;
+
 			if (hasReturn)
 			{
 				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
 				targets[NoneOption] = "the result is not written to a variable";
-				questions["__return__"] = new ParameterQuestion("The variable the method's result is written into, when the step names one (write to %x%, into %x%, -> %x%).", targets);
-			}
-			if (questions.Count == 0)
-			{
-				if (!EveryValuePlaced(step, variables, literals, numbers, new(), new())) return null;
-				return BuildDecided(step, method, new(), new(), question);
+				var returnQuestion = new Dictionary<string, ParameterQuestion>
+				{
+					["__return__"] = new ParameterQuestion("The variable the method's result is written into, when the step names one (write to %x%, into %x%, -> %x%).", targets)
+				};
+
+				var (returnAnswer, returnError) = await decider.ChooseParameters(state, method.MethodName, returnQuestion);
+				if (returnError != null || returnAnswer == null || !returnAnswer.TryGetValue("__return__", out returnChoice))
+				{
+					logger.LogWarning($"{step.LineNumber}: Decider could not choose the return variable, llm fills parameters: {returnError?.Message}");
+					return null;
+				}
+				state += returnChoice.Choice == NoneOption
+					? "\n\nThis step does not write its result into any variable."
+					: $"\n\nThis step writes its result into the variable {returnChoice.Choice}.";
 			}
 
-			var (choices, error) = await decider.ChooseParameters(step.Text, method.MethodName, questions);
+			if (questions.Count == 0)
+			{
+				// Nothing to fill, but the return variable was still decided above and must be kept.
+				var onlyReturn = new List<ReturnValue>();
+				if (returnChoice != null && returnChoice.Choice != NoneOption)
+				{
+					if (returnChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+					{
+						logger.LogInformation($"{step.LineNumber}: Decider return target {returnChoice.Choice} ({returnChoice.Confidence:0.00}) not trusted, llm fills parameters");
+						return null;
+					}
+					onlyReturn.Add(new ReturnValue(returnType!, returnChoice.Choice));
+				}
+				if (!EveryValuePlaced(step, variables, literals, numbers, new(), onlyReturn)) return null;
+				return BuildDecided(step, method, new(), onlyReturn, question);
+			}
+
+			var (choices, error) = await decider.ChooseParameters(state, method.MethodName, questions);
 			if (error != null || choices == null)
 			{
 				logger.LogWarning($"{step.LineNumber}: Decider could not choose parameters, llm fills them: {error?.Message}");
 				return null;
 			}
+			if (returnChoice != null) choices["__return__"] = returnChoice;
 
 			choices = DropDuplicateClaims(step, choices);
 
@@ -476,8 +512,19 @@ Make sure to use the information in <error> to return valid JSON response"
 					foreach (var field in fields)
 					{
 						var fieldKey = $"{parameter.Name}.{field.Name}";
+						// Nothing in the step could fill it, so it was never asked and keeps its default.
+						if (!questions.ContainsKey(fieldKey)) continue;
 						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return null;
-						if (fieldChoice.Choice == NoneOption && !field.IsRequired) continue;
+						if (fieldChoice.Choice == NoneOption && !field.IsRequired)
+						{
+							if (fieldChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+							{
+								logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {fieldKey} unset ({fieldChoice.Confidence:0.00}), llm fills parameters");
+								return null;
+							}
+							logger.LogDebug($"{step.LineNumber}: Decider leaves {fieldKey} unset ({fieldChoice.Confidence:0.00})");
+							continue;
+						}
 						if (fieldChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 						{
 							logger.LogInformation($"{step.LineNumber}: Decider field {fieldKey}={fieldChoice.Choice} ({fieldChoice.Confidence:0.00}, {(field.IsRequired ? "required" : "optional")}) not trusted, llm fills parameters");
@@ -510,11 +557,21 @@ Make sure to use the information in <error> to return valid JSON response"
 				// Never asked about, so nothing to trust or distrust: the parameter stays unset.
 				if (!questions.ContainsKey(parameter.Name)) continue;
 
-				// Unset is the default for an optional parameter, the llm leaves it out just the same,
-				// so that answer is taken at any confidence; a value the step carries that should have
-				// gone here is caught by EveryValuePlaced. Only an assignment has to be sure.
+				// Leaving a parameter unset is an answer like any other and has to be as sure as an
+				// assignment. Taking it at any confidence was how a flag the module documents as
+				// "true when the step captures no result" stayed false at 0.37 confidence and built a
+				// page that renders and sends nothing. The engine is decisive when it knows: the
+				// unsets that are right come back at 0.91 to 1.00.
 				if (!choices.TryGetValue(parameter.Name, out var choice)) return null;
-				if (choice.Choice == NoneOption && !parameter.IsRequired) continue;
+				if (choice.Choice == NoneOption && !parameter.IsRequired)
+				{
+					if (choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+					{
+						logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {parameter.Name} unset ({choice.Confidence:0.00}), llm fills parameters");
+						return null;
+					}
+					continue;
+				}
 				if (choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 				{
 					logger.LogInformation($"{step.LineNumber}: Decider parameter {parameter.Name}={choice.Choice} ({choice.Confidence:0.00}) not trusted, llm fills parameters");
@@ -658,10 +715,19 @@ Make sure to use the information in <error> to return valid JSON response"
 				return null;
 			}
 
-			if (candidates.Count == 0) return null;
+			// Nothing in the step could fill it. A required parameter then has to go to the llm, but an
+			// optional one simply keeps its default: RenderMessage.StatusCode is an int and most steps
+			// write no number at all, which was being reported as "not a choice" and gave up the step.
+			// An empty set of candidates, as opposed to null, tells the caller to leave it unset.
+			if (candidates.Count == 0) return parameter.IsRequired ? null : candidates;
+			// Saying what unset means matters: choosing between "true" and "leave it unset" is only a
+			// real choice when the engine knows unset is false. RenderToOutputstream stayed unset on
+			// steps whose description said it should be true, because "its default applies" named no
+			// value to compare against.
+			var unsetMeans = parameter.DefaultValue == null ? "" : $", which means {parameter.Name} = {parameter.DefaultValue}";
 			candidates[NoneOption] = parameter.IsRequired
 				? "none of these, the value is something else"
-				: "none of these, leave the parameter unset so its default applies";
+				: $"none of these, leave the parameter unset so its default applies{unsetMeans}";
 			return candidates;
 		}
 
@@ -712,11 +778,10 @@ Make sure to use the information in <error> to return valid JSON response"
 					Name = path,
 					Type = fieldType.FullName ?? "",
 					IsRequired = !field.HasDefaultValue,
+					DefaultValue = field.HasDefaultValue ? field.DefaultValue : null,
 					Description = string.Join(" ", new[]
 					{
-						string.Join(" ", System.Reflection.CustomAttributeExtensions
-							.GetCustomAttributes(field, typeof(System.ComponentModel.DescriptionAttribute))
-							.Cast<System.ComponentModel.DescriptionAttribute>().Select(a => a.Description)),
+						FieldDescription(type!, field),
 						perField.GetValueOrDefault(field.Name!)
 					}.Where(text => !string.IsNullOrWhiteSpace(text)))
 				};
@@ -730,6 +795,27 @@ Make sure to use the information in <error> to return valid JSON response"
 				if (!CollectRecordFields(description.Type, path, stepText, fields, depth + 1)) return false;
 			}
 			return true;
+		}
+
+		// A record's fields are documented in two places and both have to be read. On a positional
+		// record the attribute is usually written [property: Description(...)], which lands on the
+		// generated property, not on the constructor parameter: RenderToOutputstream carried a
+		// description saying exactly when it must be true, the parameter had none, and the decider
+		// left the flag unset and rendered pages that sent nothing.
+		private static string FieldDescription(Type type, System.Reflection.ParameterInfo field)
+		{
+			var descriptions = System.Reflection.CustomAttributeExtensions
+				.GetCustomAttributes(field, typeof(System.ComponentModel.DescriptionAttribute))
+				.Cast<System.ComponentModel.DescriptionAttribute>().Select(a => a.Description).ToList();
+
+			var property = type.GetProperty(field.Name!);
+			if (property != null)
+			{
+				descriptions.AddRange(System.Reflection.CustomAttributeExtensions
+					.GetCustomAttributes(property, typeof(System.ComponentModel.DescriptionAttribute))
+					.Cast<System.ComponentModel.DescriptionAttribute>().Select(a => a.Description));
+			}
+			return string.Join(" ", descriptions.Where(d => !string.IsNullOrWhiteSpace(d)).Distinct());
 		}
 
 		// A record description is written a line per field ("Content can be...", "Target defines...").
@@ -838,9 +924,13 @@ Make sure to use the information in <error> to return valid JSON response"
 		private static string Describe(IPropertyDescription parameter, string? role)
 		{
 			var type = (parameter.Type ?? "").Replace("System.Nullable`1[", "").Replace("System.", "").TrimEnd(']');
+			// Nothing here may argue for a particular answer. This used to end "left unset unless the
+			// step clearly gives it a value", which overrode the parameter's own documentation: a flag
+			// the module says must be true when the step captures no result stayed unset, because the
+			// step never writes the word true. What unset means is said once, on that option itself.
 			var text = parameter.IsRequired
 				? $"required, type {type}."
-				: $"optional, type {type}, left unset unless the step clearly gives it a value.";
+				: $"optional, type {type}.";
 			if (role != null) text = role + ", " + text;
 			if (!string.IsNullOrWhiteSpace(parameter.Description)) text += " " + parameter.Description.Trim();
 			return text;

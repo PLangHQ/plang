@@ -132,6 +132,11 @@ namespace PLang.Building
 				indexesToBuild.Add(i);
 			}
 
+			// One request decides the module for every step about to be built, before any of them
+			// build. Each step then reads its answer. A failure here leaves the cache empty and every
+			// step asks for itself, which is what happened before this existed.
+			await stepBuilder.PrefetchModules(goal, indexesToBuild);
+
 			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1)
 			{
 				var errorsByIndex = new System.Collections.Concurrent.ConcurrentDictionary<int, IBuilderError>();

@@ -217,8 +217,14 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
 
 
-		public record RenderTemplateOptions(RenderMessage RenderMessage, bool ReRender = true, string LayoutName = "default", 
-			bool RenderToOutputstream = false, bool DontRenderMainLayout = false,
+		public record RenderTemplateOptions(RenderMessage RenderMessage,
+			[property: Description("true is the normal case and is sent to the client with the content. Set false only when the step explicitly says the target should not be re-rendered")]
+			bool ReRender = true,
+			string LayoutName = "default",
+			[property: Description("true when the step does not write the result into a variable, because the rendered content must then be sent to the user, e.g. `render 'page.html' to #main`. false only when the step captures the result, e.g. `render 'row.html', write to %html%` or `into %html%`. Getting this wrong on a step with no variable renders the page and sends nothing")]
+			bool RenderToOutputstream = false,
+			[property: Description("true when the content must not be wrapped in the page layout: the step says 'without main layout', or it renders a fragment or a modal into an element that is not the layout's main render area. false when rendering into the main area, where the layout is drawn around the content")]
+			bool DontRenderMainLayout = false,
 			[property: Description("set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
 			bool? IsTemplateFile = null,
 			[property: Description("css selector, normally body, when the user wants the whole page redrawn inside the layout, e.g. 'render whole page', 'replace whole body', 'redraw the page'")]
