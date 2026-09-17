@@ -539,6 +539,16 @@ Make sure to use the information in <error> to return valid JSON response"
 						}
 						if (fieldChoice.Choice == NoneOption)
 						{
+							// A required field of an optional record with nothing to put in it does not
+							// fail the step, it means the record itself is not set. `run agent, messages:
+							// %messages%, tools: %tools%` says nothing of onToolCall, and its required
+							// name was being demanded of a record the step never asked for.
+							if (!parameter.IsRequired)
+							{
+								logger.LogDebug($"{step.LineNumber}: Decider leaves {parameter.Name} unset, the step gives no {field.Name}");
+								record.Clear();
+								break;
+							}
 							logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required field {fieldKey}, llm fills parameters");
 							return null;
 						}
@@ -551,6 +561,10 @@ Make sure to use the information in <error> to return valid JSON response"
 						logger.LogInformation($"{step.LineNumber}: Decider set {fieldKey} = {fieldChoice.Choice} ({fieldChoice.Confidence:0.00})");
 						record[field.Name] = fieldValue;
 					}
+					// Cleared above: the record is optional and the step gives it nothing, so it is left
+					// out entirely rather than built empty.
+					if (record.Count == 0 && !parameter.IsRequired) continue;
+
 					var recordValue = RecordValue(parameter, record);
 					if (recordValue == null)
 					{
@@ -808,7 +822,6 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			foreach (var parameter in method.Parameters ?? new())
 			{
-				if (LeaveUnset(parameter)) continue;
 				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans);
 				if (candidates == null)
 				{
@@ -819,9 +832,16 @@ Make sure to use the information in <error> to return valid JSON response"
 					if (fields == null)
 					{
 						// Not a choice and not a record to take apart, but the step may still name a
-						// variable holding the value, or write it inline.
+						// variable holding the value, or write it inline. This used to be unreachable
+						// for an optional parameter, which was skipped before it got here: the tools of
+						// `run agent, messages: %messages%, tools: %tools%` were never asked about, and
+						// the step then died because %tools% had landed nowhere.
 						var complex = ComplexCandidates(parameter, variables, jsonSpans);
-						if (complex == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+						if (complex == null)
+						{
+							if (!parameter.IsRequired) continue;
+							return GiveUp($"Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+						}
 
 						questions[parameter.Name] = new ParameterQuestion(Describe(parameter, null), complex);
 						continue;
