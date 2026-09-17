@@ -348,14 +348,9 @@ Make sure to use the information in <error> to return valid JSON response"
 			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) return null;
 
 			// Usually already answered for the whole goal in one request by StepBuilder's prefetch.
-			MethodChoice? choice;
+			var choice = deciderCache?.ForGoal(step.Goal!).Method(step);
 			IError? deciderError = null;
-			var prefetched = deciderCache?.ForGoal(step.Goal!).Methods;
-			if (prefetched != null && prefetched.TryGetValue(step.Index, out var cachedChoice))
-			{
-				choice = cachedChoice;
-			}
-			else
+			if (choice == null)
 			{
 				(choice, deciderError) = await decider.ChooseMethod(step.Text, module, MethodCriteria(classDescription));
 			}
@@ -631,10 +626,19 @@ Make sure to use the information in <error> to return valid JSON response"
 		// 0.95 and as the render target at 0.31. A value written once in a step belongs to one
 		// parameter, so the surest claim keeps it and the rest fall back to unset, which the loops
 		// below then reject for a required parameter and accept for an optional one.
+		// Only a value the step actually writes can belong to one parameter. true and false are not
+		// values taken from the step, they are the whole option set of every bool, so two bools
+		// answering false are not competing for anything and neither claim should be dropped.
+		private static bool IsShareableConstant(string choice)
+		{
+			return choice.Equals("true", StringComparison.OrdinalIgnoreCase)
+				|| choice.Equals("false", StringComparison.OrdinalIgnoreCase);
+		}
+
 		private Dictionary<string, ParameterChoice> DropDuplicateClaims(GoalStep step, Dictionary<string, ParameterChoice> choices)
 		{
 			var winners = choices
-				.Where(c => c.Value.Choice != NoneOption)
+				.Where(c => c.Value.Choice != NoneOption && !IsShareableConstant(c.Value.Choice))
 				.GroupBy(c => c.Value.Choice)
 				.Where(g => g.Count() > 1)
 				.Select(g => g.OrderByDescending(c => c.Value.Confidence).First().Key)
@@ -644,7 +648,8 @@ Make sure to use the information in <error> to return valid JSON response"
 			var deduped = new Dictionary<string, ParameterChoice>();
 			foreach (var choice in choices)
 			{
-				bool contested = choices.Any(other => other.Key != choice.Key && other.Value.Choice == choice.Value.Choice);
+				bool contested = !IsShareableConstant(choice.Value.Choice)
+					&& choices.Any(other => other.Key != choice.Key && other.Value.Choice == choice.Value.Choice);
 				if (choice.Value.Choice != NoneOption && contested && !winners.Contains(choice.Key))
 				{
 					logger.LogInformation($"{step.LineNumber}: Decider gives {choice.Value.Choice} to another parameter, {choice.Key} is left unset");

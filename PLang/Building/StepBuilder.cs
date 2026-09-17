@@ -319,7 +319,15 @@ public class StepBuilder : IStepBuilder
 	public async Task PrefetchModules(Goal goal, IReadOnlyList<int> stepIndexes)
 	{
 		if ((AppContext.GetData("decider") as string) == "off" || goal.IsSystem) return;
-		if (stepIndexes.Count < 2) return;
+		// Worth doing even for a single changed step. It is the same one request, and the state is
+		// the whole goal, so an edited step is decided knowing the steps around it, which is where
+		// the accuracy came from: 11 answers rose above the threshold on that context alone.
+		if (stepIndexes.Count == 0) return;
+
+		// A goal built a second time, after a retry or after a running app edited it, must not read
+		// the previous build's answers.
+		var cached = deciderCache.ForGoal(goal);
+		cached.Clear();
 
 		var modules = typeHelper.GetModulesDictionary(null);
 		var questions = new Dictionary<string, DeciderQuestion>();
@@ -342,14 +350,13 @@ public class StepBuilder : IStepBuilder
 			return;
 		}
 
-		var cached = deciderCache.ForGoal(goal);
 		foreach (var index in stepIndexes)
 		{
 			var step = goal.GoalSteps[index];
 			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
-			cached.Modules[step.Index] = new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+			cached.SetModule(step, new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities));
 		}
-		logger.Value.LogDebug($"Decider chose modules for {cached.Modules.Count} steps of {goal.GoalName} in one request");
+		logger.Value.LogDebug($"Decider chose modules for {cached.ModuleCount} steps of {goal.GoalName} in one request");
 
 		await PrefetchMethods(goal, stepIndexes, cached);
 	}
@@ -396,9 +403,9 @@ public class StepBuilder : IStepBuilder
 		{
 			var step = goal.GoalSteps[index];
 			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
-			cached.Methods[step.Index] = new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+			cached.SetMethod(step, new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities));
 		}
-		logger.Value.LogDebug($"Decider chose methods for {cached.Methods.Count} steps of {goal.GoalName} in one request");
+		logger.Value.LogDebug($"Decider chose methods for {cached.MethodCount} steps of {goal.GoalName} in one request");
 	}
 
 	// The module a step will end up on, when that is already known without asking the llm: either
@@ -408,8 +415,8 @@ public class StepBuilder : IStepBuilder
 		var requested = GetUserRequestedModule(step);
 		if (requested.Count == 1) return requested[0];
 
-		if (!cached.Modules.TryGetValue(step.Index, out var choice)) return null;
-		if (choice.Confidence < DeciderConfidenceThreshold) return null;
+		var choice = cached.Module(step);
+		if (choice == null || choice.Confidence < DeciderConfidenceThreshold) return null;
 		return typeHelper.GetRuntimeType(choice.Module) == null ? null : choice.Module;
 	}
 
@@ -450,11 +457,8 @@ public class StepBuilder : IStepBuilder
 			// Answers from an excludeModules retry are never cached, because prevError is set then.
 			ModuleChoice? choice;
 			IError? deciderError = null;
-			if (deciderCache.ForGoal(goal).Modules.TryGetValue(step.Index, out var cachedChoice))
-			{
-				choice = cachedChoice;
-			}
-			else
+			choice = deciderCache.ForGoal(goal).Module(step);
+			if (choice == null)
 			{
 				(choice, deciderError) = await decider.ChooseModule(step.Text, typeHelper.GetModulesDictionary(excludeModules));
 			}

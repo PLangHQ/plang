@@ -6,14 +6,38 @@ namespace PLang.Building
 	// The decider's answers for one goal, fetched in one request per phase before the goal's steps
 	// are built. A step then reads its answer instead of asking for it.
 	//
-	// Keyed by GoalStep.Index, the 0 based position the parser assigns and nothing overwrites.
-	// Not Number, which is the 1 based number a person reads and which StepBuilder rewrites while
-	// building: keying on it handed every step the answer belonging to its neighbour. Not the step
-	// text either, because a goal may hold the same step twice, and Idea.goal does.
+	// An answer is stored under GoalStep.Index and handed back only when the step text still
+	// matches. Index alone is not enough, because this cache outlives a single build: the same
+	// process builds a goal again when a step fails and retries, and again every time a running app
+	// rebuilds a goal it has just edited. Insert a step at index 3 and every later step would be
+	// handed the answer belonging to its neighbour. Text alone is not enough either, since a goal
+	// may hold the same step twice, and Idea.goal does, writing the same file in two places.
+	// Together they are exact, and it is how StepHasBeenBuild already decides whether a step is
+	// still the one that was built.
 	public class GoalDeciderAnswers
 	{
-		public ConcurrentDictionary<int, ModuleChoice> Modules { get; } = new();
-		public ConcurrentDictionary<int, MethodChoice> Methods { get; } = new();
+		private readonly ConcurrentDictionary<int, (string Text, ModuleChoice Choice)> modules = new();
+		private readonly ConcurrentDictionary<int, (string Text, MethodChoice Choice)> methods = new();
+
+		public int ModuleCount => modules.Count;
+		public int MethodCount => methods.Count;
+
+		public void SetModule(GoalStep step, ModuleChoice choice) => modules[step.Index] = (step.Text, choice);
+		public void SetMethod(GoalStep step, MethodChoice choice) => methods[step.Index] = (step.Text, choice);
+
+		public ModuleChoice? Module(GoalStep step)
+			=> modules.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
+
+		public MethodChoice? Method(GoalStep step)
+			=> methods.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
+
+		// A goal that is built again starts from nothing, so a prefetch that fails or is skipped can
+		// never leave an earlier build's answers in place for the new one to read.
+		public void Clear()
+		{
+			modules.Clear();
+			methods.Clear();
+		}
 	}
 
 	// Goals build in parallel (Builder.Start), so answers are held per goal and never in one
@@ -21,7 +45,6 @@ namespace PLang.Building
 	public interface IBuilderDeciderCache
 	{
 		GoalDeciderAnswers ForGoal(Goal goal);
-		void Clear(Goal goal);
 	}
 
 	public class BuilderDeciderCache : IBuilderDeciderCache
@@ -31,7 +54,5 @@ namespace PLang.Building
 		private static string Key(Goal goal) => goal.AbsolutePrFilePath ?? goal.AbsoluteGoalPath ?? goal.GoalName;
 
 		public GoalDeciderAnswers ForGoal(Goal goal) => byGoal.GetOrAdd(Key(goal), _ => new GoalDeciderAnswers());
-
-		public void Clear(Goal goal) => byGoal.TryRemove(Key(goal), out _);
 	}
 }
