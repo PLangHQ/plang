@@ -465,6 +465,8 @@ Make sure to use the information in <error> to return valid JSON response"
 				return null;
 			}
 
+			choices = DropDuplicateClaims(step, choices);
+
 			var parameters = new List<Parameter>();
 			foreach (var parameter in method.Parameters ?? new())
 			{
@@ -552,6 +554,36 @@ Make sure to use the information in <error> to return valid JSON response"
 			return BuildDecided(step, method, parameters, returnValues, question);
 		}
 
+		// Every question is answered on its own, so one value in the step can be claimed by several
+		// parameters at once: `render "x.html", write to %html%` had %html% as the return variable at
+		// 0.95 and as the render target at 0.31. A value written once in a step belongs to one
+		// parameter, so the surest claim keeps it and the rest fall back to unset, which the loops
+		// below then reject for a required parameter and accept for an optional one.
+		private Dictionary<string, ParameterChoice> DropDuplicateClaims(GoalStep step, Dictionary<string, ParameterChoice> choices)
+		{
+			var winners = choices
+				.Where(c => c.Value.Choice != NoneOption)
+				.GroupBy(c => c.Value.Choice)
+				.Where(g => g.Count() > 1)
+				.Select(g => g.OrderByDescending(c => c.Value.Confidence).First().Key)
+				.ToHashSet();
+			if (winners.Count == 0) return choices;
+
+			var deduped = new Dictionary<string, ParameterChoice>();
+			foreach (var choice in choices)
+			{
+				bool contested = choices.Any(other => other.Key != choice.Key && other.Value.Choice == choice.Value.Choice);
+				if (choice.Value.Choice != NoneOption && contested && !winners.Contains(choice.Key))
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider gives {choice.Value.Choice} to another parameter, {choice.Key} is left unset");
+					deduped[choice.Key] = choice.Value with { Choice = NoneOption };
+					continue;
+				}
+				deduped[choice.Key] = choice.Value;
+			}
+			return deduped;
+		}
+
 		// The step's own values, its variables, quoted texts and numbers, must all have landed in a
 		// parameter or the return variable; one left over means the step carries something the
 		// decided method has no place for, and the llm has to read it. This is what stops a step
@@ -616,6 +648,11 @@ Make sure to use the information in <error> to return valid JSON response"
 				foreach (var number in numbers) candidates[number] = $"the number {number} written in the step";
 				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
 			}
+			else if (IsStringList(type))
+			{
+				foreach (var literal in literals) candidates[literal] = $"a list holding only \"{literal}\"";
+				foreach (var variable in variables) candidates[variable] = $"a list holding only the variable {variable}";
+			}
 			else
 			{
 				return null;
@@ -633,19 +670,112 @@ Make sure to use the information in <error> to return valid JSON response"
 		// type cannot be resolved or has no constructor to read.
 		private static List<PrimitiveDescription>? RecordFields(IPropertyDescription parameter, string stepText)
 		{
-			var type = ResolveType(parameter.Type ?? "");
-			var constructor = type?.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
-			if (constructor == null || constructor.GetParameters().Length == 0) return null;
-
 			var fields = new List<PrimitiveDescription>();
+			return CollectRecordFields(parameter.Type ?? "", "", stepText, fields, 0) ? fields : null;
+		}
+
+		// Walks a record's constructor and collects the leaves that can be decided, naming each by
+		// its dotted path. A record inside a record is walked too: `render` takes a
+		// RenderTemplateOptions holding a RenderMessage, so the questions are
+		// options.RenderMessage.Content and options.RenderMessage.Target. Depth is capped because a
+		// type graph can be deep or cyclic, and a leaf that is neither a choice nor a record it can
+		// walk gives up on the whole step.
+		private static bool CollectRecordFields(string typeName, string prefix, string stepText, List<PrimitiveDescription> fields, int depth)
+		{
+			if (depth > 2) return false;
+
+			var type = ResolveType(typeName);
+			var constructor = type?.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+			if (constructor == null || constructor.GetParameters().Length == 0) return false;
+
+			// The record's own [Description] is what explains its fields ("Content can be a filename
+			// or a text that will be written to stream"), and without it a field is just a name and a
+			// type: RenderMessage.Content scored 0.35 on the only file path in the step. Each field
+			// gets the lines about itself, not the whole text: handing all seven fields' worth of
+			// TextMessage prose to a question about Content dropped it from 0.79 to 0.66.
+			// GetCustomAttribute, singular, throws AmbiguousMatchException when a type carries its own
+			// [Description] and inherits one, which RenderMessage does through OutMessage. Join them,
+			// the way TypeHelper joins a module's descriptions.
+			var recordDescription = string.Join("\n", System.Reflection.CustomAttributeExtensions
+				.GetCustomAttributes(type!, typeof(System.ComponentModel.DescriptionAttribute))
+				.Cast<System.ComponentModel.DescriptionAttribute>().Select(a => a.Description));
+			var perField = SplitDescriptionByField(recordDescription, constructor.GetParameters().Select(p => p.Name!).ToList());
+
 			foreach (var field in constructor.GetParameters())
 			{
+				if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(PLang.Attributes.LlmIgnoreAttribute)) != null) continue;
+
 				var fieldType = Nullable.GetUnderlyingType(field.ParameterType) ?? field.ParameterType;
-				var description = new PrimitiveDescription { Name = field.Name!, Type = fieldType.FullName ?? "", IsRequired = !field.HasDefaultValue };
+				var path = prefix.Length == 0 ? field.Name! : $"{prefix}.{field.Name}";
+				var description = new PrimitiveDescription
+				{
+					Name = path,
+					Type = fieldType.FullName ?? "",
+					IsRequired = !field.HasDefaultValue,
+					Description = string.Join(" ", new[]
+					{
+						string.Join(" ", System.Reflection.CustomAttributeExtensions
+							.GetCustomAttributes(field, typeof(System.ComponentModel.DescriptionAttribute))
+							.Cast<System.ComponentModel.DescriptionAttribute>().Select(a => a.Description)),
+						perField.GetValueOrDefault(field.Name!)
+					}.Where(text => !string.IsNullOrWhiteSpace(text)))
+				};
+
 				if (LeaveUnset(description, stepText)) continue;
-				fields.Add(description);
+				if (IsChoiceType(description.Type))
+				{
+					fields.Add(description);
+					continue;
+				}
+				if (!CollectRecordFields(description.Type, path, stepText, fields, depth + 1)) return false;
 			}
-			return fields;
+			return true;
+		}
+
+		// A record description is written a line per field ("Content can be...", "Target defines...").
+		// Split it back up: a line opening with a field name starts that field's text, and the lines
+		// under it belong to it too, which is how the list of built in Actions stays with Actions.
+		private static Dictionary<string, string> SplitDescriptionByField(string? description, List<string> fieldNames)
+		{
+			var perField = new Dictionary<string, List<string>>();
+			if (string.IsNullOrWhiteSpace(description)) return new();
+
+			string? current = null;
+			foreach (var line in description.Split('\n'))
+			{
+				var text = line.Trim();
+				if (text.Length == 0) continue;
+
+				var opener = fieldNames.FirstOrDefault(name =>
+					text.StartsWith(name, StringComparison.OrdinalIgnoreCase)
+					&& (text.Length == name.Length || !char.IsLetterOrDigit(text[name.Length])));
+				if (opener != null) current = opener;
+				if (current == null) continue;
+
+				if (!perField.TryGetValue(current, out var lines)) perField[current] = lines = new();
+				lines.Add(text);
+			}
+			return perField.ToDictionary(p => p.Key, p => string.Join(" ", p.Value));
+		}
+
+		// Whether a type can be answered by choosing, without needing the step's values to know.
+		private static bool IsChoiceType(string type)
+		{
+			return type == "System.Boolean" || type == "System.Nullable`1[System.Boolean]"
+				|| type == "System.String" || type == "System.Object"
+				|| IsNumeric(type) || IsStringList(type)
+				|| (ResolveType(type) is Type enumType && enumType.IsEnum);
+		}
+
+		// A list of strings, e.g. the Actions of a render message. One option is chosen and becomes a
+		// one element list; a step naming several (`replace the content, navigate and scroll`) leaves
+		// the others unplaced, and EveryValuePlaced then hands the step to the llm.
+		private static bool IsStringList(string type)
+		{
+			return (type.StartsWith("System.Collections.Generic.List`1[")
+				|| type.StartsWith("System.Collections.Generic.IReadOnlyList`1[")
+				|| type.StartsWith("System.Collections.Generic.IList`1["))
+				&& type.Contains("System.String");
 		}
 
 		// The runtime fills a record parameter property by property, never through its constructor,
@@ -655,25 +785,45 @@ Make sure to use the information in <error> to return valid JSON response"
 		// which is the same complete shape the llm writes.
 		private static object? RecordValue(IPropertyDescription parameter, Dictionary<string, object?> decided)
 		{
-			var type = ResolveType(parameter.Type ?? "");
+			var instance = ConstructRecord(parameter.Type ?? "", "", decided);
+			return instance == null ? null : Newtonsoft.Json.Linq.JObject.FromObject(instance);
+		}
+
+		private static object? ConstructRecord(string typeName, string prefix, Dictionary<string, object?> decided)
+		{
+			var type = ResolveType(typeName);
 			var constructor = type?.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
 			if (constructor == null) return null;
 
 			var arguments = new List<object?>();
 			foreach (var field in constructor.GetParameters())
 			{
-				if (decided.TryGetValue(field.Name!, out var value) && value != null)
+				var path = prefix.Length == 0 ? field.Name! : $"{prefix}.{field.Name}";
+				var fieldType = Nullable.GetUnderlyingType(field.ParameterType) ?? field.ParameterType;
+
+				if (decided.TryGetValue(path, out var value) && value != null)
 				{
-					var fieldType = Nullable.GetUnderlyingType(field.ParameterType) ?? field.ParameterType;
-					arguments.Add(fieldType.IsEnum ? Enum.Parse(fieldType, value.ToString()!) : Convert.ChangeType(value, fieldType, System.Globalization.CultureInfo.InvariantCulture));
+					arguments.Add(CoerceToFieldType(value, fieldType));
+				}
+				else if (decided.Keys.Any(key => key.StartsWith(path + ".", StringComparison.Ordinal)))
+				{
+					var nested = ConstructRecord(fieldType.FullName ?? "", path, decided);
+					if (nested == null) return null;
+					arguments.Add(nested);
 				}
 				else
 				{
 					arguments.Add(field.HasDefaultValue ? field.DefaultValue : null);
 				}
 			}
-			var instance = constructor.Invoke(arguments.ToArray());
-			return Newtonsoft.Json.Linq.JObject.FromObject(instance);
+			return constructor.Invoke(arguments.ToArray());
+		}
+
+		private static object? CoerceToFieldType(object value, Type fieldType)
+		{
+			if (fieldType.IsEnum) return Enum.Parse(fieldType, value.ToString()!);
+			if (IsStringList(fieldType.FullName ?? "")) return value is string single ? new List<string> { single } : value;
+			return Convert.ChangeType(value, fieldType, System.Globalization.CultureInfo.InvariantCulture);
 		}
 
 		// An optional parameter the step never names is left unset, so its default applies, unless
@@ -696,18 +846,28 @@ Make sure to use the information in <error> to return valid JSON response"
 			return text;
 		}
 
+		// Anything that can be answered by choosing is always asked, even when the step never names
+		// it: a step says "without main layout", not "DontRenderMainLayout", and skipping the bool
+		// because its name is absent built a render step with DontRenderMainLayout false where the
+		// llm set it true. That is the one failure worse than falling back, a step that builds and
+		// then quietly does the wrong thing. An unsure answer only costs a fallback, now that unset
+		// is accepted at any confidence.
+		//
+		// What is still skipped is an optional parameter of a type that is not a choice at all, an
+		// object or a list of objects the step never mentions. That is safe only because
+		// EveryValuePlaced refuses the step when a value written in it found no home.
 		private static bool LeaveUnset(IPropertyDescription parameter, string stepText)
 		{
 			if (parameter.IsRequired) return false;
-			if (stepText.IndexOf(parameter.Name, StringComparison.OrdinalIgnoreCase) >= 0) return false;
-
-			var type = parameter.Type ?? "";
-			bool fromStep = type == "System.String" || type == "System.Object" || IsNumeric(type);
-			return !fromStep;
+			if (IsChoiceType(parameter.Type ?? "")) return false;
+			return stepText.IndexOf(parameter.Name, StringComparison.OrdinalIgnoreCase) < 0;
 		}
 
 		private static object? ToValue(IPropertyDescription parameter, string choice)
 		{
+			var listType = parameter.Type ?? "";
+			if (IsStringList(listType)) return new List<string> { choice };
+
 			if (choice.StartsWith("%") && choice.EndsWith("%")) return choice;
 
 			var type = parameter.Type ?? "";
