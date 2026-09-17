@@ -360,13 +360,28 @@ Make sure to use the information in <error> to return valid JSON response"
 		// wrong pick. All overloads of the chosen name are kept so the llm still picks the right one.
 		private async Task<ClassDescription?> NarrowToDecidedMethod(GoalStep step, IBuilderError? previousBuildError)
 		{
-			if (decider == null || previousBuildError != null || step.Goal?.IsSystem == true || !PLang.Building.BuilderDecider.IsOn()) return null;
+			if (decider == null || previousBuildError != null || step.Goal?.IsSystem == true || !PLang.Building.BuilderDecider.IsOn())
+			{
+				lastDeciderReason = decider == null ? "no decider" : previousBuildError != null ? "this is a retry, the llm gets the second attempt" : step.Goal?.IsSystem == true ? "system goal" : "decider is off";
+				return null;
+			}
 
 			var programType = typeHelper.GetRuntimeType(module);
-			if (programType == null) return null;
+			if (programType == null)
+			{
+				lastDeciderReason = $"No runtime type for {module}, llm builds the step";
+				return null;
+			}
 
 			var (classDescription, error) = new ClassDescriptionHelper().GetClassDescription(programType);
-			if (error != null || classDescription == null) return null;
+			if (error != null || classDescription == null)
+			{
+				// Silent until now, and it is the single biggest reason steps go to the llm in this
+				// app: 57 of them, every one an `if ... then`, because the module's own description
+				// could not be built and nobody said so.
+				lastDeciderReason = $"Could not describe {module}, llm builds the step: {error?.Message?.ReplaceLineEndings(" ").Trim().MaxLength(140)}";
+				return null;
+			}
 			// One method is not a decision, but it is an answer: the method is known without asking,
 			// and its parameters can still be decided. Giving up here sent every `call goal X` to the
 			// llm over a choice that had already been made.
@@ -584,6 +599,22 @@ Make sure to use the information in <error> to return valid JSON response"
 						// Nothing in the step could fill it, so it was never asked and keeps its default.
 						if (!questions.ContainsKey(fieldKey)) continue;
 						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return FellBack(step, $"Decider got no answer for {fieldKey}, llm fills parameters");
+
+						// A word that names no goal in the app is not a goal name, whatever the engine's
+						// confidence in it, so that is settled before confidence is looked at. An `if x is
+						// empty then` with a block under it calls no goal at all, and the engine was
+						// picking the word "if" out of the step and the step was going to the llm over it.
+						if (field.ValueSource == "goal" && !fieldChoice.Choice.StartsWith("%") && fieldChoice.Choice != NoneOption
+							&& goalNames != null && goalNames.Count > 0
+							&& !goalNames.Any(g => g.Equals(fieldChoice.Choice, StringComparison.OrdinalIgnoreCase)
+								|| fieldChoice.Choice.EndsWith("/" + g, StringComparison.OrdinalIgnoreCase)))
+						{
+							if (parameter.IsRequired) return FellBack(step, $"Decider chose {fieldChoice.Choice} for {fieldKey}, which is no goal in this app, llm fills parameters");
+
+							logger.LogDebug($"{step.LineNumber}: {fieldChoice.Choice} is no goal in this app, so {parameter.Name} is left unset");
+							record.Clear();
+							break;
+						}
 						if (!field.IsRequired && MeansLeaveAlone(field, fieldChoice.Choice))
 						{
 							var sure = ConfidenceInLeavingUnset(field, fieldChoice);
@@ -596,8 +627,7 @@ Make sure to use the information in <error> to return valid JSON response"
 						}
 						if (fieldChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 						{
-							logger.LogInformation($"{step.LineNumber}: Decider field {fieldKey}={fieldChoice.Choice} ({fieldChoice.Confidence:0.00}, {(field.IsRequired ? "required" : "optional")}) not trusted, llm fills parameters");
-							return null;
+							return FellBack(step, $"Decider field {fieldKey}={fieldChoice.Choice} ({fieldChoice.Confidence:0.00}, {(field.IsRequired ? "required" : "optional")}) not trusted, llm fills parameters");
 						}
 						if (fieldChoice.Choice == NoneOption)
 						{
@@ -613,16 +643,6 @@ Make sure to use the information in <error> to return valid JSON response"
 							}
 							return FellBack(step, $"Decider found no value in the step for required field {fieldKey}, llm fills parameters");
 						}
-						// The app's goals check the answer rather than supply it: a word the engine picked
-						// that names no goal is not a goal name, and the llm should have the step.
-						if (field.ValueSource == "goal" && goalNames != null && goalNames.Count > 0
-							&& !fieldChoice.Choice.StartsWith("%")
-							&& !goalNames.Any(g => g.Equals(fieldChoice.Choice, StringComparison.OrdinalIgnoreCase)
-								|| fieldChoice.Choice.EndsWith("/" + g, StringComparison.OrdinalIgnoreCase)))
-						{
-							return FellBack(step, $"Decider chose {fieldChoice.Choice} for {fieldKey}, which is no goal in this app, llm fills parameters");
-						}
-
 						var fieldValue = ToValue(field, fieldChoice.Choice);
 						if (fieldValue == null)
 						{
