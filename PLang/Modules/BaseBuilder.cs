@@ -512,6 +512,32 @@ Make sure to use the information in <error> to return valid JSON response"
 			var parameters = new List<Parameter>();
 			foreach (var parameter in method.Parameters ?? new())
 			{
+				if (plan.Dictionaries.TryGetValue(parameter.Name, out var keys))
+				{
+					var entries = new Newtonsoft.Json.Linq.JObject();
+					foreach (var key in keys)
+					{
+						if (!choices.TryGetValue($"{parameter.Name}#{key}", out var entry)) return null;
+						// Every answer has to be sure, the nones too: an unsure none silently drops an
+						// assignment the step asked for, and the step would build and do less than it says.
+						if (entry.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+						{
+							logger.LogInformation($"{step.LineNumber}: Decider unsure what {key} is set to ({entry.Confidence:0.00}), llm fills parameters");
+							return null;
+						}
+						if (entry.Choice == NoneOption) continue;
+						entries[key] = entry.Choice;
+					}
+					if (entries.Count == 0)
+					{
+						logger.LogInformation($"{step.LineNumber}: Decider found nothing set by the step for {parameter.Name}, llm fills parameters");
+						return null;
+					}
+					logger.LogInformation($"{step.LineNumber}: Decider set {parameter.Name} = {entries.ToString(Newtonsoft.Json.Formatting.None)}");
+					parameters.Add(new Parameter(parameter.Type, parameter.Name, entries));
+					continue;
+				}
+
 				if (recordFields.TryGetValue(parameter.Name, out var fields))
 				{
 					var record = new Dictionary<string, object?>();
@@ -800,6 +826,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			Dictionary<string, ParameterQuestion> ReturnQuestion,
 			Dictionary<string, List<PrimitiveDescription>> RecordFields,
 			List<string> Variables, List<string> Literals, List<string> Numbers, List<string> JsonSpans,
+			Dictionary<string, List<string>> Dictionaries,
 			string? ReturnType, string? GiveUpReason)
 		{
 			public bool HasReturn => ReturnQuestion.Count > 0;
@@ -817,11 +844,23 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			var questions = new Dictionary<string, ParameterQuestion>();
 			var recordFields = new Dictionary<string, List<PrimitiveDescription>>();
+			var dictionaries = new Dictionary<string, List<string>>();
 
-			ParameterPlan GiveUp(string reason) => new(method, questions, new(), recordFields, variables, literals, numbers, jsonSpans, null, reason);
+			ParameterPlan GiveUp(string reason) => new(method, questions, new(), recordFields, variables, literals, numbers, jsonSpans, dictionaries, null, reason);
 
 			foreach (var parameter in method.Parameters ?? new())
 			{
+				if (IsSimpleDictionary(parameter.Type ?? "") && variables.Count > 0)
+				{
+					var entries = DictionaryQuestions(parameter, step.Text, method.MethodName, variables, literals);
+					if (entries.Count > 0)
+					{
+						foreach (var entry in entries) questions[$"{parameter.Name}#{entry.Key}"] = entry.Value;
+						dictionaries[parameter.Name] = entries.Keys.ToList();
+						continue;
+					}
+				}
+
 				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans);
 				if (candidates == null)
 				{
@@ -886,7 +925,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				returnQuestion["__return__"] = new ParameterQuestion(description, targets);
 			}
 
-			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, jsonSpans, returnType, null);
+			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, jsonSpans, dictionaries, returnType, null);
 		}
 
 		private Instruction BuildDecided(GoalStep step, MethodDescription method, List<Parameter> parameters, List<ReturnValue> returnValues, LlmRequest question)
@@ -1350,6 +1389,40 @@ Make sure to use the information in <error> to return valid JSON response"
 				}
 			}
 			return spans;
+		}
+
+		// A dictionary of values taken from the step, e.g. the keyValues of
+		// `set %messages% = %stored.messages%, %chat% = %stored.log%`. It cannot be chosen as one
+		// option because it is built rather than picked, but it decomposes into choices: ask, for
+		// every variable the step writes, what that variable is set to. The answers that are not
+		// none are the entries. No counting and no reading of the step, and one request still.
+		private static bool IsSimpleDictionary(string type)
+		{
+			return type.StartsWith("System.Collections.Generic.Dictionary`2[")
+				&& type.Contains("System.String")
+				&& (type.Contains("System.Object") || type.Contains("System.String"));
+		}
+
+		private static Dictionary<string, ParameterQuestion> DictionaryQuestions(IPropertyDescription parameter, string stepText,
+			string method, List<string> variables, List<string> literals)
+		{
+			var questions = new Dictionary<string, ParameterQuestion>();
+			var tokens = variables.Concat(literals).ToList();
+
+			foreach (var key in variables)
+			{
+				var candidates = new Dictionary<string, string>();
+				foreach (var other in tokens)
+				{
+					if (other == key) continue;
+					candidates[other] = other.StartsWith("%") ? $"{key} is set to the variable {other}" : $"{key} is set to the text \"{other}\"";
+				}
+				if (candidates.Count == 0) continue;
+
+				candidates[NoneOption] = $"the step does not set {key}: it is a value being read, or not involved";
+				questions[key] = new ParameterQuestion($"The step calls {method}, which sets several values at once. What does the step assign to {key}?", candidates);
+			}
+			return questions;
 		}
 
 		// What can be offered for a parameter whose type is not a choice and which is not a record
