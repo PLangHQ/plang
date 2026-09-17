@@ -112,6 +112,7 @@ namespace PLang.Utils
 				MethodName = method.Name,
 				Parameters = paramsDesc.ParameterDescriptions!,
 				ReturnValue = returnValueInfo,
+				ReturnRequired = method.GetCustomAttributes(typeof(PLang.Attributes.ReturnRequired), true).Any(),
 			};
 
 			var exampleAttributes =

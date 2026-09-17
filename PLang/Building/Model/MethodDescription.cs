@@ -23,6 +23,10 @@ public class MethodDescription
 	public string MethodName { get; set; }
 	public List<IPropertyDescription>? Parameters { get; set; }
 	public ReturnValue ReturnValue { get; set; }
+
+	// The method is declared [ReturnRequired]: its result has to be written into a variable, so
+	// "the step keeps no result" is not a legal answer for it.
+	public bool ReturnRequired { get; set; }
 	public List<string>? Examples { get; set; } = null;
 }
 

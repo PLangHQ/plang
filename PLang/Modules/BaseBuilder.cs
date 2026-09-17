@@ -461,6 +461,15 @@ Make sure to use the information in <error> to return valid JSON response"
 					logger.LogWarning($"{step.LineNumber}: Decider could not choose the return variable, llm fills parameters: {returnError?.Message}");
 					return null;
 				}
+				// The batched question is asked beside the method, before the method is known, so it
+				// still offers "nowhere" even for a method that must return. Catch that here: an
+				// answer that cannot be legal is not an answer.
+				if (method.ReturnRequired && returnChoice.Choice == NoneOption)
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider left {method.MethodName} without a return variable, which it requires, llm fills parameters");
+					return null;
+				}
+
 				state += returnChoice.Choice == NoneOption
 					? "\n\nThis step does not write its result into any variable."
 					: $"\n\nThis step writes its result into the variable {returnChoice.Choice}.";
@@ -710,9 +719,15 @@ Make sure to use the information in <error> to return valid JSON response"
 			var placed = new List<string>();
 			foreach (var parameter in parameters)
 			{
-				if (parameter.Value is Newtonsoft.Json.Linq.JObject record)
+				if (parameter.Value is Newtonsoft.Json.Linq.JToken token)
 				{
-					placed.AddRange(record.Properties().Select(p => p.Value.ToString()));
+					// The whole json, so anything written inside it counts as placed, not only the
+					// values: a record built field by field has its fields here too.
+					placed.Add(token.ToString(Newtonsoft.Json.Formatting.None));
+					if (token is Newtonsoft.Json.Linq.JObject record)
+					{
+						placed.AddRange(record.Properties().Select(p => p.Value.ToString()));
+					}
 				}
 				else if (parameter.Value != null)
 				{
@@ -774,7 +789,8 @@ Make sure to use the information in <error> to return valid JSON response"
 			// Paths come back without their %; the runtime only treats a value as a variable when it
 			// is wrapped, so wrap here or a decided variable would be written as a literal string.
 			var variables = variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
-			var literals = QuotedLiterals(step.Text);
+			var jsonSpans = JsonSpans(step.Text);
+			var literals = QuotedLiterals(step.Text, jsonSpans);
 			var numbers = Numbers(step.Text);
 
 			var questions = new Dictionary<string, ParameterQuestion>();
@@ -785,18 +801,27 @@ Make sure to use the information in <error> to return valid JSON response"
 			foreach (var parameter in method.Parameters ?? new())
 			{
 				if (LeaveUnset(parameter)) continue;
-				var candidates = ParameterCandidates(parameter, variables, literals, numbers);
+				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans);
 				if (candidates == null)
 				{
 					// A record of simple fields (TextMessage is one) is decided field by field, the same
 					// way a method is decided parameter by parameter: required fields are asked, fields
 					// with a constructor default that the step never mentions keep that default.
 					var fields = RecordFields(parameter);
-					if (fields == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+					if (fields == null)
+					{
+						// Not a choice and not a record to take apart, but the step may still name a
+						// variable holding the value, or write it inline.
+						var complex = ComplexCandidates(parameter, variables, jsonSpans);
+						if (complex == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+
+						questions[parameter.Name] = new ParameterQuestion(Describe(parameter, null), complex);
+						continue;
+					}
 
 					foreach (var field in fields)
 					{
-						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers);
+						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans);
 						if (fieldCandidates == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
 						if (fieldCandidates.Count == 0) continue;
 						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
@@ -820,8 +845,17 @@ Make sure to use the information in <error> to return valid JSON response"
 			if (variables.Count > 0 && !string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase))
 			{
 				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
-				targets[NoneOption] = "the result is not written to a variable";
-				returnQuestion["__return__"] = new ParameterQuestion("The variable this step writes its result into, if the step captures the result at all. Choose none when the step does not keep the result in a variable.", targets);
+
+				// A method declared [ReturnRequired] always writes its result somewhere, so "nowhere"
+				// is not one of the answers. AddToList is one, and offering it anyway left the engine
+				// splitting between the right variable and an answer that was never legal.
+				var description = "The variable this step writes its result into.";
+				if (!method.ReturnRequired)
+				{
+					targets[NoneOption] = "the result is not written to a variable";
+					description += " Choose none when the step does not keep the result in a variable.";
+				}
+				returnQuestion["__return__"] = new ParameterQuestion(description, targets);
 			}
 
 			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, returnType, null);
@@ -837,7 +871,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		// The finite options for one parameter, keyed by the text the decider hands back. Null
 		// means the type is not something the step can answer by choosing, so the step goes to
 		// the llm.
-		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers)
+		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers, List<string> jsonSpans)
 		{
 			var type = parameter.Type ?? "";
 			var candidates = new Dictionary<string, string>();
@@ -855,6 +889,10 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				foreach (var literal in literals) candidates[literal] = $"the text \"{literal}\" written in the step";
 				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+				if (type == "System.Object")
+				{
+					foreach (var span in jsonSpans) candidates[span] = $"the value {span} written in the step";
+				}
 			}
 			else if (IsNumeric(type))
 			{
@@ -1144,6 +1182,22 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			if (choice.StartsWith("%") && choice.EndsWith("%")) return choice;
 
+			// A value written inline goes in as the object it is, not as the text of it, because that
+			// is what the llm writes and what the runtime reads. Newtonsoft is lenient enough for the
+			// approximate json a step may hold, `[{name:john}]`, but when it cannot read the span the
+			// decider declines rather than writing something the runtime would choke on.
+			if ((choice.StartsWith("{") && choice.EndsWith("}")) || (choice.StartsWith("[") && choice.EndsWith("]")))
+			{
+				try
+				{
+					return Newtonsoft.Json.Linq.JToken.Parse(choice);
+				}
+				catch (Exception)
+				{
+					return null;
+				}
+			}
+
 			var type = parameter.Type ?? "";
 			if (type == "System.Boolean" || type == "System.Nullable`1[System.Boolean]")
 			{
@@ -1180,15 +1234,85 @@ Make sure to use the information in <error> to return valid JSON response"
 			return null;
 		}
 
-		private static List<string> QuotedLiterals(string text)
+		// The quoted texts a step writes, leaving out anything inside a {...} or [...] span. The keys
+		// and values of `add {"who": "advisor", "text": "halló"} to list` are part of that one value,
+		// not four values of their own: offered separately they are noise, and the rule that every
+		// value must find a parameter then failed the step over the word "text".
+		private static List<string> QuotedLiterals(string text, List<string>? jsonSpans = null)
 		{
 			var literals = new List<string>();
 			foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(text ?? "", "\"([^\"]*)\"|'([^']*)'"))
 			{
+				if (InsideSpan(text ?? "", match.Index, jsonSpans)) continue;
+
 				var literal = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
 				if (!literals.Contains(literal)) literals.Add(literal);
 			}
 			return literals;
+		}
+
+		private static bool InsideSpan(string text, int index, List<string>? spans)
+		{
+			if (spans == null) return false;
+
+			foreach (var span in spans)
+			{
+				int at = text.IndexOf(span, StringComparison.Ordinal);
+				while (at >= 0)
+				{
+					if (index > at && index < at + span.Length) return true;
+					at = text.IndexOf(span, at + 1, StringComparison.Ordinal);
+				}
+			}
+			return false;
+		}
+
+		// The balanced {...} and [...] spans written in a step, taken whole and unexamined. A step may
+		// hold something that is only approximately json, `set %list% = [{name:john}]`, so nothing
+		// here validates or interprets it: it is a token, like a quoted string or a number, and it
+		// looks the same whatever language the step is written in.
+		private static List<string> JsonSpans(string text)
+		{
+			var spans = new List<string>();
+			if (string.IsNullOrEmpty(text)) return spans;
+
+			for (int i = 0; i < text.Length; i++)
+			{
+				if (text[i] != '{' && text[i] != '[') continue;
+
+				var close = text[i] == '{' ? '}' : ']';
+				int depth = 0;
+				for (int j = i; j < text.Length; j++)
+				{
+					if (text[j] == text[i]) depth++;
+					else if (text[j] == close) depth--;
+					if (depth != 0) continue;
+
+					var span = text.Substring(i, j - i + 1);
+					if (span.Length > 2 && !spans.Contains(span)) spans.Add(span);
+					i = j;
+					break;
+				}
+			}
+			return spans;
+		}
+
+		// What can be offered for a parameter whose type is not a choice and which is not a record
+		// this builder can take apart: a list of objects, a dictionary. The step cannot spell such a
+		// value out option by option, but it can name a variable holding one, or write it inline, and
+		// both of those are a choice. Without this, `run agent, tools: %tools%` was abandoned over a
+		// parameter whose whole value is the word %tools%.
+		private static Dictionary<string, string>? ComplexCandidates(IPropertyDescription parameter, List<string> variables, List<string> jsonSpans)
+		{
+			var candidates = new Dictionary<string, string>();
+			foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+			foreach (var span in jsonSpans) candidates[span] = $"the value {span} written in the step";
+			if (candidates.Count == 0) return null;
+
+			candidates[NoneOption] = parameter.IsRequired
+				? "none of these, the value is something else"
+				: "none of these, leave the parameter unset so its default applies";
+			return candidates;
 		}
 
 		private static List<string> Numbers(string text)
