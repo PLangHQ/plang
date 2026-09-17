@@ -98,7 +98,9 @@ namespace PLang.Services.Typesafe
 			foreach (var parameter in parameters)
 			{
 				questions[parameter.Key] = new DeciderQuestion(
-					$"This is one step of plang code that calls the method {method}. Parameter '{parameter.Key}': {parameter.Value.Description} Which of these is its value in this step?",
+					parameter.Value.Standalone
+						? $"This is one step of plang code that calls the method {method}. {parameter.Value.Description}"
+						: $"This is one step of plang code that calls the method {method}. Parameter '{parameter.Key}': {parameter.Value.Description} Which of these is its value in this step?",
 					parameter.Value.Candidates);
 			}
 
@@ -201,6 +203,23 @@ namespace PLang.Services.Typesafe
 				foreach (var question in questions)
 				{
 					var answer = answersJson[question.Key];
+
+					// A noul gives the probability of yes and nothing else. Read it as the side it lands
+					// on and how far from the middle it is: 0.9 is a sure yes, 0.1 a sure no, 0.5 the
+					// only real doubt.
+					if (question.Value.YesNo)
+					{
+						var probability = answer?["noul"]?.Value<double>() ?? answer?["probability"]?.Value<double>();
+						if (probability == null)
+						{
+							return (null, new ServiceError($"Typesafe gave no '{question.Key}' answer: {responseBody}", this.GetType()));
+						}
+						var yes = probability >= 0.5;
+						answers[question.Key] = new DeciderAnswer(yes ? "yes" : "no", yes ? probability.Value : 1 - probability.Value, new());
+						logger.LogDebug("Typesafe answered {Choice} for {Question} at {P}", yes ? "yes" : "no", question.Key, probability);
+						continue;
+					}
+
 					var choice = answer?["choice"]?.ToString();
 					if (string.IsNullOrEmpty(choice))
 					{

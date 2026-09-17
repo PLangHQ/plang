@@ -456,6 +456,7 @@ Make sure to use the information in <error> to return valid JSON response"
 
 		private const string NoneOption = "__none__";
 		private const string EmptyListOption = "__empty_list__";
+		private const string PassedThroughOption = "__passed__";
 
 		private static bool IsList(string type)
 		{
@@ -579,14 +580,20 @@ Make sure to use the information in <error> to return valid JSON response"
 					var entries = new Newtonsoft.Json.Linq.JObject();
 					foreach (var key in keys)
 					{
-						if (!choices.TryGetValue($"{parameter.Name}#{key}", out var entry)) return FellBack(step, $"Decider got no answer for what {key} is set to, llm fills parameters");
-						// Every answer has to be sure, the nones too: an unsure none silently drops an
-						// assignment the step asked for, and the step would build and do less than it says.
+						if (!choices.TryGetValue($"{parameter.Name}#{key}", out var entry)) continue;
+						// Every answer has to be sure, the nones too: an unsure none silently drops a value
+						// the step asked for, and the step would build and do less than it says.
 						if (entry.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 						{
-							return FellBack(step, $"Decider unsure what {key} is set to ({entry.Confidence:0.00}), llm fills parameters");
+							return FellBack(step, $"Decider unsure what the step does with {key} ({entry.Confidence:0.00}), llm fills parameters");
 						}
 						if (entry.Choice == NoneOption) continue;
+						if (entry.Choice == PassedThroughOption)
+						{
+							// `return %result%` is {"result": "%result%"}, keyed by the name without its %.
+							entries[key.Trim('%')] = key;
+							continue;
+						}
 						entries[key] = entry.Choice;
 					}
 					if (entries.Count == 0)
@@ -923,7 +930,10 @@ Make sure to use the information in <error> to return valid JSON response"
 					if (entries.Count > 0)
 					{
 						foreach (var entry in entries) questions[$"{parameter.Name}#{entry.Key}"] = entry.Value;
-						dictionaries[parameter.Name] = entries.Keys.ToList();
+						// The variables the questions are about, not the question keys: a step with one variable
+						// and nothing else asks only whether it is passed through, and keying off the questions
+						// then left nothing to read the answers against.
+						dictionaries[parameter.Name] = variables.ToList();
 						continue;
 					}
 				}
@@ -1530,16 +1540,25 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			foreach (var key in variables)
 			{
+				// One question for each value the step writes, with every shape such a dictionary takes
+				// among the options: assigned something, handed over as it stands, or not part of it at
+				// all. Asked as two questions, an assignment and a yes/no, the yes/no sat between 0.47
+				// and 0.78 because it was a second question about a variable already asked about. One
+				// choice between shapes is the question that was actually being asked.
 				var candidates = new Dictionary<string, string>();
 				foreach (var other in tokens)
 				{
 					if (other == key) continue;
-					candidates[other] = other.StartsWith("%") ? $"{key} is set to the variable {other}" : $"{key} is set to the text \"{other}\"";
+					candidates[other] = other.StartsWith("%") ? $"the step sets {key} to the variable {other}" : $"the step sets {key} to the text \"{other}\"";
 				}
-				if (candidates.Count == 0) continue;
+				candidates[PassedThroughOption] = $"the step passes {key} itself to '{parameter.Name}', with its own value";
+				candidates[NoneOption] = $"{key} is not part of '{parameter.Name}': it is a value being read, or not involved";
 
-				candidates[NoneOption] = $"the step does not set {key}: it is a value being read, or not involved";
-				questions[key] = new ParameterQuestion($"The step calls {method}, which sets several values at once. What does the step assign to {key}?", candidates);
+				questions[key] = new ParameterQuestion(
+					$"The parameter '{parameter.Name}' of {method} holds one or more values."
+						+ (string.IsNullOrWhiteSpace(parameter.Description) ? "" : " " + parameter.Description.Trim())
+						+ $" What does this step do with {key}?",
+					candidates, Standalone: true);
 			}
 			return questions;
 		}

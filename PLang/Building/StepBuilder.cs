@@ -563,9 +563,11 @@ public class StepBuilder : IStepBuilder
 		// string" with no way to tell key from value, and the engine put the literal in key at 0.99.
 		var instructions = $"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. It calls {method}."
 			+ (returnFact == null ? "" : " " + returnFact)
-			+ $" Parameter '{parameterName}': {question.Description}"
-			+ $" Which of these is the value of '{parameterName}' in step {step.Index + 1}?";
-		return new DeciderQuestion(instructions, question.Candidates);
+			+ (question.Standalone
+				? " " + question.Description
+				: $" Parameter '{parameterName}': {question.Description}"
+					+ $" Which of these is the value of '{parameterName}' in step {step.Index + 1}?");
+		return new DeciderQuestion(instructions, question.Candidates, question.YesNo);
 	}
 
 	// The module a step will end up on, when that is already known without asking the llm: either
