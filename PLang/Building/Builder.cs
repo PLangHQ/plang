@@ -22,7 +22,7 @@ namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null);
+		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null, bool withSetupGoals = false);
 	}
 	public class Builder : IBuilder
 	{
@@ -58,7 +58,7 @@ namespace PLang.Building
 		}
 
 
-		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null)
+		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null, bool withSetupGoals = false)
 		{
 			IError? error;
 			// The switch is process wide and half the runtime reads it: BaseProgram sets IsBuilder from
@@ -101,10 +101,16 @@ namespace PLang.Building
 				// the setup loop, so a targeted build still rebuilt every setup goal: slow, and inside a
 				// running app it fails, because setup sql is validated against an anchor db that is only
 				// populated by the create-table steps of that same build.
+				//
+				// That anchor db is exactly why a cli build keeps the setup goals: a build resolves a
+				// sqlite datasource to an empty in-memory database, so a step selecting from a table
+				// only validates when the create-table step of a Setup/ goal has run in this same
+				// build. Skipping them there made every goal holding sql unbuildable. A build asked
+				// for from inside a running app (withSetupGoals: false) keeps the narrow behaviour.
 				if (targeted)
 				{
 					var wanted = new HashSet<string>(absoluteGoalPaths!, StringComparer.OrdinalIgnoreCase);
-					goals = goals.Where(p => wanted.Contains(p.AbsoluteGoalPath)).ToList();
+					goals = goals.Where(p => wanted.Contains(p.AbsoluteGoalPath) || (withSetupGoals && p.IsSetup)).ToList();
 				}
 
 				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));

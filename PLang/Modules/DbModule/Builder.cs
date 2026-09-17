@@ -632,7 +632,14 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 					(var tableSuggestions, error) = await GetTableSuggestions(tablesWithMissingDataSource);
 					if (error != null) return (null, error);
 
-					return (null, new StepBuilderError($"Could not find datasource for table(s): {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))}. Is there a typo in the sql?"
+					// Naming the table alone leaves the developer guessing where it was looked for.
+					// Say which datasources were searched, and where that list came from: the step's
+					// own ds:, or every datasource the app has when the step names none.
+					var searched = dataSources.Count == 0 ? "none" : string.Join(", ", dataSources.Select(p => $"'{p.Name}'"));
+					var source = methodsAndTables.DataSourceNames?.Count > 0
+						? $"the datasource named in the step (ds: {string.Join(", ", methodsAndTables.DataSourceNames.Select(p => $"\"{p.Name}\""))})"
+						: "every datasource in this app, because the step names no ds:";
+					return (null, new StepBuilderError($"Could not find table(s) {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))} in datasource(s) {searched}, searched because that is {source}. Either the table name is a typo, or the table has not been created yet: a table is created by a goal in Setup/, and a build that skips the setup goals (--goal=, which builds only what it names) never creates it."
 						, step, FixSuggestion: tableSuggestions, Retry: false));
 				}
 			}

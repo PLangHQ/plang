@@ -285,7 +285,7 @@ namespace PLang
 				if (goalError != null) return goalError;
 
 				this.builder = container.GetInstance<IBuilder>();
-				var errors = await builder.Start(container, context, goalPaths);
+				var errors = await builder.Start(container, context, goalPaths, withSetupGoals: true);
 				if (errors != null && errors.Count > 0)
 				{
 					foreach (var error in errors)
