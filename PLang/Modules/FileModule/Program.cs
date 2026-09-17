@@ -719,7 +719,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
 		public async Task<IError?> WriteToFile(string path, object content, bool overwrite = false,
-			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			[Description("true only when the step asks for %variables% written inside the content to be replaced with their values before the content is written. false is the normal case: the content is written as it stands")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			if (string.IsNullOrEmpty(path))
@@ -806,7 +806,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
-				[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+				[Description("true only when the step asks for %variables% written inside the content to be replaced with their values before the content is written. false is the normal case: the content is written as it stands")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);

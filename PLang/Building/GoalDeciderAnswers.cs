@@ -19,6 +19,7 @@ namespace PLang.Building
 		private readonly ConcurrentDictionary<int, (string Text, ModuleChoice Choice)> modules = new();
 		private readonly ConcurrentDictionary<int, (string Text, MethodChoice Choice)> methods = new();
 		private readonly ConcurrentDictionary<int, (string Text, Dictionary<string, ParameterChoice> Choices)> parameters = new();
+		private readonly ConcurrentDictionary<int, (string Text, ParameterChoice Choice)> returns = new();
 
 		public int ModuleCount => modules.Count;
 		public int MethodCount => methods.Count;
@@ -30,6 +31,14 @@ namespace PLang.Building
 
 		public Dictionary<string, ParameterChoice>? Parameters(GoalStep step)
 			=> parameters.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choices : null;
+
+		// The variable a step writes its result into, asked alongside the methods. A parameter can
+		// depend on it, and questions in one request are answered in isolation, so it has to be
+		// known before the parameters are asked, not in the same request as them.
+		public void SetReturn(GoalStep step, ParameterChoice choice) => returns[step.Index] = (step.Text, choice);
+
+		public ParameterChoice? Return(GoalStep step)
+			=> returns.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
 
 		public ModuleChoice? Module(GoalStep step)
 			=> modules.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
@@ -44,6 +53,7 @@ namespace PLang.Building
 			modules.Clear();
 			methods.Clear();
 			parameters.Clear();
+			returns.Clear();
 		}
 	}
 

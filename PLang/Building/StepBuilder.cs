@@ -387,6 +387,20 @@ public class StepBuilder : IStepBuilder
 		foreach (var index in stepIndexes)
 		{
 			var step = goal.GoalSteps[index];
+
+			// The return variable is asked for every step, before anything about the module or the
+			// method is known, because it needs neither. Steps whose module the llm still has to
+			// pick were otherwise left out and each asked for itself afterwards, one request apiece.
+			var variables = StepVariables(step);
+			if (variables.Count > 0)
+			{
+				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
+				targets["__none__"] = "the result is not written to a variable";
+				questions[QuestionKey(step) + "__return__"] = new DeciderQuestion(
+					$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. Which variable does step {step.Index + 1} write its result into, if it captures the result at all? Choose none when the step does not keep the result in a variable.",
+					targets);
+			}
+
 			var module = ModuleForStep(step, cached);
 			if (module == null) continue;
 
@@ -417,10 +431,14 @@ public class StepBuilder : IStepBuilder
 		foreach (var index in stepIndexes)
 		{
 			var step = goal.GoalSteps[index];
+			if (answers.TryGetValue(QuestionKey(step) + "__return__", out var returnAnswer))
+			{
+				cached.SetReturn(step, new ParameterChoice(returnAnswer.Choice, returnAnswer.Confidence, returnAnswer.Probabilities));
+			}
 			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
 			cached.SetMethod(step, new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities));
 		}
-		logger.Value.LogDebug($"Decider chose methods for {cached.MethodCount} steps of {goal.GoalName} in one request");
+		logger.Value.LogDebug($"Decider chose methods and return variables for {cached.MethodCount} steps of {goal.GoalName} in one request");
 
 		await PrefetchParameters(goal, stepIndexes, cached, descriptions);
 	}
@@ -458,29 +476,12 @@ public class StepBuilder : IStepBuilder
 		var state = GoalState(goal);
 		var answersByStep = plans.ToDictionary(p => p.Key, _ => new Dictionary<string, ParameterChoice>());
 
-		// Returns for every step, one request.
-		var returnQuestions = new Dictionary<string, DeciderQuestion>();
+		// The returns were answered beside the methods, so they are already known here.
 		foreach (var (index, plan) in plans)
 		{
 			if (!plan.HasReturn) continue;
-			var step = goal.GoalSteps[index];
-			returnQuestions[$"{QuestionKey(step)}__return__"] = Ask(step, plan.Method.MethodName, "__return__", plan.ReturnQuestion["__return__"], null);
-		}
-		if (returnQuestions.Count > 0)
-		{
-			var (returnAnswers, returnError) = await decider.Choose(state, returnQuestions);
-			if (returnError != null || returnAnswers == null)
-			{
-				logger.Value.LogWarning($"Decider could not choose return variables for {goal.GoalName} in one request, each step will ask on its own: {returnError?.Message}");
-				return;
-			}
-			foreach (var (index, plan) in plans)
-			{
-				if (!plan.HasReturn) continue;
-				var step = goal.GoalSteps[index];
-				if (!returnAnswers.TryGetValue($"{QuestionKey(step)}__return__", out var answer)) continue;
-				answersByStep[index]["__return__"] = new ParameterChoice(answer.Choice, answer.Confidence, answer.Probabilities);
-			}
+			var choice = cached.Return(goal.GoalSteps[index]);
+			if (choice != null) answersByStep[index]["__return__"] = choice;
 		}
 
 		// Then every parameter of every step, one request. The return outcome rides on each
@@ -495,6 +496,10 @@ public class StepBuilder : IStepBuilder
 				: returnChoice.Choice == "__none__"
 					? "This step does not write its result into any variable."
 					: $"This step writes its result into the variable {returnChoice.Choice}.";
+
+			// A variable the step writes into can still be one it reads from, so it stays a
+			// candidate and is labelled rather than removed.
+			if (returnChoice != null && returnChoice.Choice != "__none__") MarkReturnVariable(plan.Questions, returnChoice.Choice);
 
 			foreach (var (name, question) in plan.Questions)
 			{
@@ -525,7 +530,7 @@ public class StepBuilder : IStepBuilder
 			if (answers.Count == 0) continue;
 			cached.SetParameters(goal.GoalSteps[index], answers);
 		}
-		logger.Value.LogDebug($"Decider chose parameters for {cached.ParameterStepCount} steps of {goal.GoalName} in two requests");
+		logger.Value.LogDebug($"Decider chose parameters for {cached.ParameterStepCount} steps of {goal.GoalName} in one request");
 	}
 
 	// Same wording the per step path uses, with the step named so one request can hold many steps.
@@ -552,6 +557,11 @@ public class StepBuilder : IStepBuilder
 		var choice = cached.Module(step);
 		if (choice == null || choice.Confidence < DeciderConfidenceThreshold) return null;
 		return typeHelper.GetRuntimeType(choice.Module) == null ? null : choice.Module;
+	}
+
+	private List<string> StepVariables(GoalStep step)
+	{
+		return variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
 	}
 
 	private static string QuestionKey(GoalStep step) => "step" + step.Index;

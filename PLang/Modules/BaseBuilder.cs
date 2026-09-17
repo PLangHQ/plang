@@ -438,9 +438,11 @@ Make sure to use the information in <error> to return valid JSON response"
 			var returnType = plan.ReturnType;
 			bool hasReturn = plan.HasReturn;
 
-			// Usually every step of the goal already had both of these answered, in one request each,
-			// by StepBuilder's prefetch. A miss means this step asks for itself, as it did before.
-			var prefetched = deciderCache?.ForGoal(step.Goal!).Parameters(step);
+			// Usually already answered for the whole goal by StepBuilder's prefetch, the return along
+			// with the methods and the parameters after it. A miss means this step asks for itself.
+			var cached = deciderCache?.ForGoal(step.Goal!);
+			var prefetched = cached?.Parameters(step);
+			var cachedReturn = cached?.Return(step);
 
 			// The goal, not just the step. The questions are still about this one step, but the steps
 			// around it are what make the engine decisive about a flag the step says nothing of:
@@ -450,10 +452,9 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			if (hasReturn)
 			{
-				if (prefetched != null)
-				{
-					prefetched.TryGetValue("__return__", out returnChoice);
-				}
+				returnChoice = cachedReturn;
+				if (returnChoice == null && prefetched != null) prefetched.TryGetValue("__return__", out returnChoice);
+
 				var returnError = returnChoice != null ? null : await AskReturn(step, method, plan, state, r => returnChoice = r);
 				if (returnChoice == null)
 				{
@@ -463,6 +464,8 @@ Make sure to use the information in <error> to return valid JSON response"
 				state += returnChoice.Choice == NoneOption
 					? "\n\nThis step does not write its result into any variable."
 					: $"\n\nThis step writes its result into the variable {returnChoice.Choice}.";
+
+				if (returnChoice.Choice != NoneOption) MarkReturnVariable(questions, returnChoice.Choice);
 			}
 
 			if (questions.Count == 0)
@@ -641,6 +644,24 @@ Make sure to use the information in <error> to return valid JSON response"
 			return Math.Max(choice.Confidence, total);
 		}
 
+		// Once the return variable is known, every other question that offers it says so. It is not
+		// removed: a step may well read and write the same variable, `calculate %number% + 1, write
+		// to %number%`, so it stays a legal answer and the engine is told what it is.
+		internal static void MarkReturnVariable(Dictionary<string, ParameterQuestion> questions, string? returnVariable)
+		{
+			if (string.IsNullOrEmpty(returnVariable) || returnVariable == NoneOption) return;
+
+			foreach (var name in questions.Keys.ToList())
+			{
+				var question = questions[name];
+				if (!question.Candidates.ContainsKey(returnVariable)) continue;
+
+				var candidates = new Dictionary<string, string>(question.Candidates);
+				candidates[returnVariable] = $"the variable {returnVariable}, which is where this step writes its result";
+				questions[name] = question with { Candidates = candidates };
+			}
+		}
+
 		// Only a value the step actually writes can belong to one parameter. true and false are not
 		// values taken from the step, they are the whole option set of every bool, so two bools
 		// answering false are not competing for anything and neither claim should be dropped.
@@ -652,8 +673,11 @@ Make sure to use the information in <error> to return valid JSON response"
 
 		private Dictionary<string, ParameterChoice> DropDuplicateClaims(GoalStep step, Dictionary<string, ParameterChoice> choices)
 		{
+			// The return variable never competes. A step may read and write the same variable, and
+			// `calculate %number% + 1, write to %number%` would otherwise have one of the two claims
+			// thrown away.
 			var winners = choices
-				.Where(c => c.Value.Choice != NoneOption && !IsShareableConstant(c.Value.Choice))
+				.Where(c => c.Key != "__return__" && c.Value.Choice != NoneOption && !IsShareableConstant(c.Value.Choice))
 				.GroupBy(c => c.Value.Choice)
 				.Where(g => g.Count() > 1)
 				.Select(g => g.OrderByDescending(c => c.Value.Confidence).First().Key)
@@ -663,8 +687,8 @@ Make sure to use the information in <error> to return valid JSON response"
 			var deduped = new Dictionary<string, ParameterChoice>();
 			foreach (var choice in choices)
 			{
-				bool contested = !IsShareableConstant(choice.Value.Choice)
-					&& choices.Any(other => other.Key != choice.Key && other.Value.Choice == choice.Value.Choice);
+				bool contested = choice.Key != "__return__" && !IsShareableConstant(choice.Value.Choice)
+					&& choices.Any(other => other.Key != "__return__" && other.Key != choice.Key && other.Value.Choice == choice.Value.Choice);
 				if (choice.Value.Choice != NoneOption && contested && !winners.Contains(choice.Key))
 				{
 					logger.LogInformation($"{step.LineNumber}: Decider gives {choice.Value.Choice} to another parameter, {choice.Key} is left unset");
@@ -760,14 +784,14 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			foreach (var parameter in method.Parameters ?? new())
 			{
-				if (LeaveUnset(parameter, step.Text)) continue;
+				if (LeaveUnset(parameter)) continue;
 				var candidates = ParameterCandidates(parameter, variables, literals, numbers);
 				if (candidates == null)
 				{
 					// A record of simple fields (TextMessage is one) is decided field by field, the same
 					// way a method is decided parameter by parameter: required fields are asked, fields
 					// with a constructor default that the step never mentions keep that default.
-					var fields = RecordFields(parameter, step.Text);
+					var fields = RecordFields(parameter);
 					if (fields == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
 
 					foreach (var field in fields)
@@ -788,13 +812,16 @@ Make sure to use the information in <error> to return valid JSON response"
 			// other parameters depend on it and questions in one request cannot see each other's
 			// answers: RenderTemplate's RenderToOutputstream has to be true exactly when nothing is
 			// captured, and asked blind it stayed unset, which renders the page and sends nothing.
+			// No variable anywhere in the step means there is nothing it could write its result into,
+			// so there is nothing to choose and the question is not worth a request. This is not
+			// reading the step: a plang variable is %name% whatever language the step is written in.
 			var returnType = method.ReturnValue?.Type;
 			var returnQuestion = new Dictionary<string, ParameterQuestion>();
-			if (!string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase))
+			if (variables.Count > 0 && !string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase))
 			{
 				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
 				targets[NoneOption] = "the result is not written to a variable";
-				returnQuestion["__return__"] = new ParameterQuestion("The variable the method's result is written into, when the step names one (write to %x%, into %x%, -> %x%).", targets);
+				returnQuestion["__return__"] = new ParameterQuestion("The variable this step writes its result into, if the step captures the result at all. Choose none when the step does not keep the result in a variable.", targets);
 			}
 
 			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, returnType, null);
@@ -848,6 +875,18 @@ Make sure to use the information in <error> to return valid JSON response"
 			// optional one simply keeps its default: RenderMessage.StatusCode is an int and most steps
 			// write no number at all, which was being reported as "not a choice" and gave up the step.
 			// An empty set of candidates, as opposed to null, tells the caller to leave it unset.
+			// An optional parameter is never offered its own default as an option. Choosing it and
+			// leaving the parameter alone are the same instruction, so offering both split the
+			// probability between two answers that do the same thing: loadVariables, whose default is
+			// false, came back as unset at 0.27 while also holding false at 0.5, and looked unsure
+			// when it was not. Now there is one way to say leave it alone.
+			if (!parameter.IsRequired && parameter.DefaultValue != null)
+			{
+				var asDefault = parameter.DefaultValue.ToString();
+				var sameAsDefault = candidates.Keys.FirstOrDefault(c => string.Equals(c, asDefault, StringComparison.OrdinalIgnoreCase));
+				if (sameAsDefault != null) candidates.Remove(sameAsDefault);
+			}
+
 			if (candidates.Count == 0) return parameter.IsRequired ? null : candidates;
 			// Saying what unset means matters: choosing between "true" and "leave it unset" is only a
 			// real choice when the engine knows unset is false. RenderToOutputstream stayed unset on
@@ -863,10 +902,10 @@ Make sure to use the information in <error> to return valid JSON response"
 		// The fields of a record parameter, read off its constructor: a field with no default is
 		// required, one with a default is only asked about when the step names it. Null when the
 		// type cannot be resolved or has no constructor to read.
-		private static List<PrimitiveDescription>? RecordFields(IPropertyDescription parameter, string stepText)
+		private static List<PrimitiveDescription>? RecordFields(IPropertyDescription parameter)
 		{
 			var fields = new List<PrimitiveDescription>();
-			return CollectRecordFields(parameter.Type ?? "", "", stepText, fields, 0) ? fields : null;
+			return CollectRecordFields(parameter.Type ?? "", "", fields, 0) ? fields : null;
 		}
 
 		// Walks a record's constructor and collects the leaves that can be decided, naming each by
@@ -875,7 +914,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		// options.RenderMessage.Content and options.RenderMessage.Target. Depth is capped because a
 		// type graph can be deep or cyclic, and a leaf that is neither a choice nor a record it can
 		// walk gives up on the whole step.
-		private static bool CollectRecordFields(string typeName, string prefix, string stepText, List<PrimitiveDescription> fields, int depth)
+		private static bool CollectRecordFields(string typeName, string prefix, List<PrimitiveDescription> fields, int depth)
 		{
 			if (depth > 2) return false;
 
@@ -915,13 +954,13 @@ Make sure to use the information in <error> to return valid JSON response"
 					}.Where(text => !string.IsNullOrWhiteSpace(text)))
 				};
 
-				if (LeaveUnset(description, stepText)) continue;
+				if (LeaveUnset(description)) continue;
 				if (IsChoiceType(description.Type))
 				{
 					fields.Add(description);
 					continue;
 				}
-				if (!CollectRecordFields(description.Type, path, stepText, fields, depth + 1)) return false;
+				if (!CollectRecordFields(description.Type, path, fields, depth + 1)) return false;
 			}
 			return true;
 		}
@@ -1086,13 +1125,16 @@ Make sure to use the information in <error> to return valid JSON response"
 		// is accepted at any confidence.
 		//
 		// What is still skipped is an optional parameter of a type that is not a choice at all, an
-		// object or a list of objects the step never mentions. That is safe only because
-		// EveryValuePlaced refuses the step when a value written in it found no home.
-		private static bool LeaveUnset(IPropertyDescription parameter, string stepText)
+		// object or a list of objects. There is nothing to offer for it, and EveryValuePlaced
+		// refuses the step when a value written in it found no home.
+		//
+		// This used to also look for the parameter's name in the step text. That is reading plang
+		// code, and plang has no syntax: a step is intent, written in whatever language the
+		// developer thinks in, so an English parameter name matches nothing in `- skrifa í %nafn%`
+		// and every optional parameter would quietly take its default.
+		private static bool LeaveUnset(IPropertyDescription parameter)
 		{
-			if (parameter.IsRequired) return false;
-			if (IsChoiceType(parameter.Type ?? "")) return false;
-			return stepText.IndexOf(parameter.Name, StringComparison.OrdinalIgnoreCase) < 0;
+			return !parameter.IsRequired && !IsChoiceType(parameter.Type ?? "");
 		}
 
 		private static object? ToValue(IPropertyDescription parameter, string choice)

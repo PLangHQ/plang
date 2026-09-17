@@ -326,7 +326,7 @@ namespace PLang.Modules.VariableModule
 
 
 		[Description(@"Set one variable to a text value written in single/double quotes in the step, e.g. set %name% = ""John"". The wrapping quotes are not part of the value. If the value is a %variable%, an object or json, use SetVariable instead. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
+		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [Description("A fallback, used only when the step itself states one, e.g. `set %x% = %y%, default is 10` or `%y% ?? 10`. When the step just assigns a value, this stays unset: the value belongs to the value parameter, not here")] [HandlesVariable] string? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
 
@@ -338,7 +338,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set json variable. Make sure value is valid json")]
-		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [HandlesVariable] object? defaultValue = null)
+		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [Description("A fallback, used only when the step itself states one, e.g. `set %x% = %y%, default is 10` or `%y% ?? 10`. When the step just assigns a value, this stays unset: the value belongs to the value parameter, not here")] [HandlesVariable] object? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
 
@@ -483,7 +483,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set one variable to a value that is not a quoted text: another %variable% such as set %question% = %answer.text%, an object, a list or json. A value written in quotes belongs to SetStringVariable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
+		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [Description("A fallback, used only when the step itself states one, e.g. `set %x% = %y%, default is 10` or `%y% ?? 10`. When the step just assigns a value, this stays unset: the value belongs to the value parameter, not here")] [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"         - Start SetVariable (key:{key} | value:{value}) - {stopwatch.ElapsedMilliseconds}");
