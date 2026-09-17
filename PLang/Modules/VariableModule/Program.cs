@@ -325,7 +325,7 @@ namespace PLang.Modules.VariableModule
 
 
 
-		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
+		[Description(@"Set one variable to a text value written in single/double quotes in the step, e.g. set %name% = ""John"". The wrapping quotes are not part of the value. If the value is a %variable%, an object or json, use SetVariable instead. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
@@ -482,7 +482,7 @@ namespace PLang.Modules.VariableModule
 			return error;
 		}
 
-		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
+		[Description(@"Set one variable to a value that is not a quoted text: another %variable% such as set %question% = %answer.text%, an object, a list or json. A value written in quotes belongs to SetStringVariable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
@@ -538,7 +538,7 @@ pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|tota
 			return (ts, null);
 		}
 
-		[Description(@"Set multiple variables with possible default values used with variable(such as %request.query.*% and fix default. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		[Description(@"Set two or more variables in one step where at least one of them has a default value, e.g. set %page% = %request.query.page% ?? 1, %size% = 20. When no variable has a default, SetValuesOnVariables is the method. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
@@ -546,7 +546,7 @@ pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|tota
 				await SetVariable(key.Key, key.Value?.Item1 ?? key.Value?.Item2, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
-		[Description(@"Set value on variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		[Description(@"Set two or more variables in one step, none of them with a default value, e.g. set %page% = %request.body.page%, %note% = %request.body.note%. If any variable has a default, SetVariables is the method. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
