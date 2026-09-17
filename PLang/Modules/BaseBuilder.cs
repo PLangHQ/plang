@@ -351,7 +351,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			MethodChoice? choice;
 			IError? deciderError = null;
 			var prefetched = deciderCache?.ForGoal(step.Goal!).Methods;
-			if (prefetched != null && prefetched.TryGetValue(step.LineNumber, out var cachedChoice))
+			if (prefetched != null && prefetched.TryGetValue(step.Index, out var cachedChoice))
 			{
 				choice = cachedChoice;
 			}

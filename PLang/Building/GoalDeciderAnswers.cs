@@ -6,11 +6,10 @@ namespace PLang.Building
 	// The decider's answers for one goal, fetched in one request per phase before the goal's steps
 	// are built. A step then reads its answer instead of asking for it.
 	//
-	// Keyed by GoalStep.LineNumber. Not by step text, because a goal may hold the same step twice
-	// and Idea.goal does, writing the same file in two places. Not by GoalStep.Number either: the
-	// parser sets that 1 based and StepBuilder overwrites it with the 0 based index while building,
-	// so a prefetch keyed by it handed every step the answer belonging to its neighbour. LineNumber
-	// is written once by the parser, never again, and is what the build log prints.
+	// Keyed by GoalStep.Index, the 0 based position the parser assigns and nothing overwrites.
+	// Not Number, which is the 1 based number a person reads and which StepBuilder rewrites while
+	// building: keying on it handed every step the answer belonging to its neighbour. Not the step
+	// text either, because a goal may hold the same step twice, and Idea.goal does.
 	public class GoalDeciderAnswers
 	{
 		public ConcurrentDictionary<int, ModuleChoice> Modules { get; } = new();

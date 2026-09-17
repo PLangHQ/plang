@@ -347,7 +347,7 @@ public class StepBuilder : IStepBuilder
 		{
 			var step = goal.GoalSteps[index];
 			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
-			cached.Modules[step.LineNumber] = new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+			cached.Modules[step.Index] = new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities);
 		}
 		logger.Value.LogDebug($"Decider chose modules for {cached.Modules.Count} steps of {goal.GoalName} in one request");
 
@@ -396,7 +396,7 @@ public class StepBuilder : IStepBuilder
 		{
 			var step = goal.GoalSteps[index];
 			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
-			cached.Methods[step.LineNumber] = new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities);
+			cached.Methods[step.Index] = new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities);
 		}
 		logger.Value.LogDebug($"Decider chose methods for {cached.Methods.Count} steps of {goal.GoalName} in one request");
 	}
@@ -408,12 +408,12 @@ public class StepBuilder : IStepBuilder
 		var requested = GetUserRequestedModule(step);
 		if (requested.Count == 1) return requested[0];
 
-		if (!cached.Modules.TryGetValue(step.LineNumber, out var choice)) return null;
+		if (!cached.Modules.TryGetValue(step.Index, out var choice)) return null;
 		if (choice.Confidence < DeciderConfidenceThreshold) return null;
 		return typeHelper.GetRuntimeType(choice.Module) == null ? null : choice.Module;
 	}
 
-	private static string QuestionKey(GoalStep step) => "step" + step.LineNumber;
+	private static string QuestionKey(GoalStep step) => "step" + step.Index;
 
 	// Every step of the goal, so a question about one step is answered knowing the rest, even when
 	// only a few steps are being rebuilt.
@@ -450,7 +450,7 @@ public class StepBuilder : IStepBuilder
 			// Answers from an excludeModules retry are never cached, because prevError is set then.
 			ModuleChoice? choice;
 			IError? deciderError = null;
-			if (deciderCache.ForGoal(goal).Modules.TryGetValue(step.LineNumber, out var cachedChoice))
+			if (deciderCache.ForGoal(goal).Modules.TryGetValue(step.Index, out var cachedChoice))
 			{
 				choice = cachedChoice;
 			}
