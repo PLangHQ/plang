@@ -455,6 +455,14 @@ Make sure to use the information in <error> to return valid JSON response"
 		}
 
 		private const string NoneOption = "__none__";
+		private const string EmptyListOption = "__empty_list__";
+
+		private static bool IsList(string type)
+		{
+			return type.StartsWith("System.Collections.Generic.List`1[")
+				|| type.StartsWith("System.Collections.Generic.IReadOnlyList`1[")
+				|| type.StartsWith("System.Collections.Generic.IList`1[");
+		}
 
 		// With the method known, every parameter is a choice from a finite set the step itself
 		// provides: a %variable% in scope, a quoted literal, a number, an enum name or a bool, plus
@@ -945,13 +953,26 @@ Make sure to use the information in <error> to return valid JSON response"
 						continue;
 					}
 
+					var fieldQuestions = new Dictionary<string, ParameterQuestion>();
+					var recordIsUnanswerable = false;
 					foreach (var field in fields)
 					{
 						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans, words);
-						if (fieldCandidates == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
+						if (fieldCandidates == null)
+						{
+							// Nothing in the step can fill this field. If the record itself is optional then
+							// the record is not set at all, which is what the llm writes for it:
+							// `add route /admin, call /admin/Overview` sets no requestProperties, and its
+							// required Methods was being demanded of a record the step never asked for.
+							if (!parameter.IsRequired) { recordIsUnanswerable = true; break; }
+							return GiveUp($"Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
+						}
 						if (fieldCandidates.Count == 0) continue;
-						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
+						fieldQuestions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
 					}
+					if (recordIsUnanswerable) continue;
+
+					foreach (var fieldQuestion in fieldQuestions) questions[fieldQuestion.Key] = fieldQuestion.Value;
 					recordFields[parameter.Name] = fields;
 					continue;
 				}
@@ -1029,6 +1050,15 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				foreach (var literal in literals) candidates[literal] = $"the text \"{literal}\" written in the step";
 				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+
+				// A required text the step writes without quotes has nothing to offer otherwise, and a
+				// step is full of them: `add route /admin, call /admin/Overview` puts the route in bare.
+				// The words of the step are added only when quotes and variables gave nothing, so a step
+				// that does quote its values is not offered every other word in it as well.
+				if (parameter.IsRequired && candidates.Count == 0)
+				{
+					foreach (var word in words) candidates[word] = $"the word {word} written in the step";
+				}
 				if (type == "System.Object")
 				{
 					foreach (var span in jsonSpans) candidates[span] = $"the value {span} written in the step";
@@ -1324,6 +1354,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		private static object? ToValue(IPropertyDescription parameter, string choice)
 		{
 			var listType = parameter.Type ?? "";
+			if (choice == EmptyListOption) return new Newtonsoft.Json.Linq.JArray();
 			if (IsStringList(listType)) return new List<string> { choice };
 
 			if (choice.StartsWith("%") && choice.EndsWith("%")) return choice;
@@ -1523,6 +1554,15 @@ Make sure to use the information in <error> to return valid JSON response"
 			var candidates = new Dictionary<string, string>();
 			foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
 			foreach (var span in jsonSpans) candidates[span] = $"the value {span} written in the step";
+
+			// A list has one more legal value than the step can write: none at all. `add route /admin,
+			// call /admin/Overview` names no path parameters, and its pathParameters is a required
+			// list, so with nothing on offer the step went to the llm over a value that is simply empty.
+			if (IsList(parameter.Type ?? ""))
+			{
+				candidates[EmptyListOption] = "the step names none of these, so the list is empty";
+			}
+
 			if (candidates.Count == 0) return null;
 
 			candidates[NoneOption] = parameter.IsRequired
