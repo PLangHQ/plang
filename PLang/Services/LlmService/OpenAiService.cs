@@ -91,6 +91,24 @@ namespace PLang.Services.OpenAi
 			}}";
 		}
 
+		// What can be said about a failed call without the body to say it with.
+		private static string DescribeFailure(HttpResponseMessage response, string? responseBody, string? model)
+		{
+			if (!string.IsNullOrWhiteSpace(responseBody)) return responseBody;
+
+			model ??= "unknown";
+			var reason = (int)response.StatusCode switch
+			{
+				401 or 403 => "the key was refused, check %Settings.OpenAiKey%",
+				404 => $"the model {model} was not found on this account",
+				413 => "the request was too large",
+				429 => "the account is rate limited or out of credit",
+				>= 500 => "the service is having trouble, it is worth retrying",
+				_ => "no reason was given"
+			};
+			return $"OpenAI returned {(int)response.StatusCode} with an empty body for model {model}: {reason}";
+		}
+
 		private string? GetBearer()
 		{
 			// App settings first, then the shared store, read directly: the old way switched the
@@ -151,7 +169,11 @@ namespace PLang.Services.OpenAi
 				responseBody = await response.Content.ReadAsStringAsync();
 				if (!response.IsSuccessStatusCode)
 				{
-					return (null, new ServiceError(responseBody, this.GetType(), StatusCode: (int)response.StatusCode));
+					// The body is the message when there is one. When there is not, and a 4xx with an
+					// empty body does happen, passing it through produced an error that said nothing at
+					// all: a build died on ServiceError(400) with a blank reason and no way to tell
+					// whether it was the key, the model, the size of the request or the service itself.
+					return (null, new ServiceError(DescribeFailure(response, responseBody, request.Model), this.GetType(), StatusCode: (int)response.StatusCode));
 				}
 			}
 			catch (Exception ex)
@@ -236,7 +258,7 @@ namespace PLang.Services.OpenAi
 					string responseBody = await response.Content.ReadAsStringAsync();
 					if (!response.IsSuccessStatusCode)
 					{
-						return (null, new ServiceError(responseBody, this.GetType()));
+						return (null, new ServiceError(DescribeFailure(response, responseBody, question.model), this.GetType(), StatusCode: (int)response.StatusCode));
 					}
 
 					var json = JsonConvert.DeserializeObject<dynamic>(responseBody);

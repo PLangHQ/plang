@@ -34,7 +34,26 @@ namespace PLang.Services.DbService
 		{
 			if (dataSource == null) throw new Exception("Data source cannot be empty");
 
-			var connection = container.GetInstance<IDbConnection>(dataSource.TypeFullName);
+			IDbConnection connection;
+			try
+			{
+				connection = container.GetInstance<IDbConnection>(dataSource.TypeFullName);
+			}
+			catch (Exception ex)
+			{
+				// Only sqlite is registered by plang itself; every other driver arrives through an
+				// `inject db` step. The message from the container names a type and leaves the reader
+				// to work out the rest, so say which datasource wanted it and where a driver comes from.
+				//
+				// A build hits this on setup goals in particular: setup is built before the events are
+				// built and before the start of app events run, so an `inject db` written in an event
+				// goal has not happened yet when a setup step asks for the driver.
+				throw new Exception($"No driver is registered for datasource '{dataSource.Name}' ({dataSource.TypeFullName}). " +
+					$"plang registers sqlite itself; any other database is registered by an `inject db` step, e.g. " +
+					$"`- inject db, 'MySqlConnector.dll', global`." +
+					(isBuilder ? " This is a build, and setup goals are built before event goals run, so an inject written in an event goal has not taken effect yet." : ""),
+					ex);
+			}
 
 			if (dataSource.TypeFullName != typeof(SqliteConnection).ToString())
 			{
