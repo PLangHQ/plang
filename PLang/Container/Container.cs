@@ -316,6 +316,7 @@ namespace PLang.Container
 			// Holds each goal's prefetched decisions for the length of the build, so it must be the
 			// same instance for the goal builder that fills it and the step builder that reads it.
 			container.RegisterSingleton<IBuilderDeciderCache, BuilderDeciderCache>();
+			container.RegisterSingleton<IBuilderDeciderReport, BuilderDeciderReport>();
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 
 			container.Register<LlmCaching, LlmCaching>();

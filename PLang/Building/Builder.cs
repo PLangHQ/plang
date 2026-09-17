@@ -37,11 +37,12 @@ namespace PLang.Building
 		private readonly IGoalParser goalParser;
 		private readonly IEngine engine;
 		private readonly PLangAppContext appContext;
+		private readonly IBuilderDeciderReport deciderReport;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
 			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, 
-			IGoalParser goalParser, IEngine engine, PLangAppContext appContext)
+			IGoalParser goalParser, IEngine engine, PLangAppContext appContext, IBuilderDeciderReport deciderReport)
 		{
 
 			this.fileSystem = fileSystem;
@@ -55,6 +56,7 @@ namespace PLang.Building
 			this.goalParser = goalParser;
 			this.engine = engine;
 			this.appContext = appContext;
+			this.deciderReport = deciderReport;
 		}
 
 
@@ -367,6 +369,13 @@ namespace PLang.Building
 			{
 				logger.LogWarning($"\n\n🎉 Build was succesfull!");
 			}
+
+			// What the decider managed, and what went to the llm that did not have to. On a large app
+			// the second number is the one to watch: a build where the llm writes the sql is working,
+			// a build where it has quietly taken over half the steps is not, and the difference is
+			// invisible one log line at a time.
+			var deciderSummary = deciderReport.Summary();
+			if (deciderSummary != null) logger.LogInformation("\n" + deciderSummary);
 
 			if (goals.Count == 0)
 			{

@@ -56,11 +56,12 @@ namespace PLang.Building
 		private readonly MethodHelper methodHelper;
 		private readonly IBuilderDecider decider;
 		private readonly IBuilderDeciderCache deciderCache;
+		private readonly IBuilderDeciderReport deciderReport;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
 			IMemoryStackAccessor memoryStackAccessor, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, ISettings settings,
-			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper, IBuilderDecider decider, IBuilderDeciderCache deciderCache)
+			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper, IBuilderDecider decider, IBuilderDeciderCache deciderCache, IBuilderDeciderReport deciderReport)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
@@ -77,6 +78,7 @@ namespace PLang.Building
 			this.methodHelper = methodHelper;
 			this.decider = decider;
 			this.deciderCache = deciderCache;
+			this.deciderReport = deciderReport;
 		}
 		public Dictionary<string, List<IBuilderError>> ErrorCount { get; set; } = new();
 
@@ -140,7 +142,7 @@ namespace PLang.Building
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug("Building instruction");
 			var classInstance = builderFactory.Create(step.ModuleType);
-			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache);
+			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache, deciderReport);
 
 			string logInfo = (previousBuildError != null) ? "Retrying to build" : "Build";
 			logger.LogInformation(@$"  - {logInfo} using {step.ModuleType}");
@@ -293,7 +295,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			var classInstance = builderFactory.Create(goalStep.ModuleType);
 			logger.LogDebug($"    - Have instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
 
-			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache);
+			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache, deciderReport);
 
 			if (isValidatedMethod != null)
 			{

@@ -45,6 +45,7 @@ namespace PLang.Modules
 		private IContentExtractor contentExtractor;
 		private PLang.Building.IBuilderDecider? decider;
 		private PLang.Building.IBuilderDeciderCache? deciderCache;
+		private PLang.Building.IBuilderDeciderReport? deciderReport;
 		protected GoalStep GoalStep;
 
 
@@ -57,11 +58,12 @@ namespace PLang.Modules
 
 		[Init]
 		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null, PLang.Building.IBuilderDeciderCache? deciderCache = null)
+			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null, PLang.Building.IBuilderDeciderCache? deciderCache = null, PLang.Building.IBuilderDeciderReport? deciderReport = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			this.decider = decider;
 			this.deciderCache = deciderCache;
+			this.deciderReport = deciderReport;
 			logger.LogDebug($"        - Start InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
 			this.GoalStep = goalStep;
 			this.module = goalStep.ModuleType;
@@ -160,9 +162,23 @@ namespace PLang.Modules
 			ClassDescription? decided = null;
 			if (classDescription == null)
 			{
+				lastDeciderReason = null;
 				decided = await NarrowToDecidedMethod(step, previousBuildError);
 				classDescription = decided;
 			}
+			else
+			{
+				// The module handed its own description in, so it builds this step itself: sql, c#,
+				// a regex. The llm is the right answer here and the decider was never in it.
+				deciderReport?.Record(step.Goal!, step, PLang.Building.DeciderOutcome.ModuleBuildsItsOwn);
+			}
+			if (decided == null && classDescription == null)
+			{
+				deciderReport?.Record(step.Goal!, step,
+					lastDeciderReason == null ? PLang.Building.DeciderOutcome.NotOffered : PLang.Building.DeciderOutcome.FellBack,
+					lastDeciderReason);
+			}
+
 			var question = GetLlmRequest(step, responseType, previousBuildError, classDescription);
 
 			if (decided != null)
@@ -177,6 +193,10 @@ namespace PLang.Modules
 					// A bug in the decider must never break a build: name it and let the llm fill the step.
 					logger.LogWarning($"{step.LineNumber}: Decider threw {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
 				}
+				deciderReport?.Record(step.Goal!, step,
+					built != null ? PLang.Building.DeciderOutcome.Decided : PLang.Building.DeciderOutcome.FellBack,
+					built != null ? null : lastDeciderReason ?? "the decider gave no answer");
+
 				if (built != null)
 				{
 					appendedSystemCommand.Clear();
@@ -364,7 +384,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			if (choice == null || overloads.Count == 0 || choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 			{
 				var contenders = string.Join(", ", (choice?.Probabilities ?? new()).OrderByDescending(p => p.Value).Take(4).Select(p => $"{p.Key} {p.Value:0.00}"));
-				logger.LogInformation($"{step.LineNumber}: Decider method {choice?.Method} ({choice?.Confidence:0.00}) not trusted, llm picks from all methods. Contenders: {contenders}");
+				FellBack(step, $"Decider method {choice?.Method} ({choice?.Confidence:0.00}) not trusted, llm picks from all methods. Contenders: {contenders}");
 				return null;
 			}
 
@@ -413,21 +433,27 @@ Make sure to use the information in <error> to return valid JSON response"
 		// which is what SQL and code look like, or a low-confidence pick) and the whole step goes to
 		// the llm, which still only sees this one method. On success the function is built here
 		// and the llm is never called for the step.
+		// The reason the last step fell back, kept so the build can report it rather than leaving it
+		// in a log line somewhere. Set wherever DecideParameters or NarrowToDecidedMethod gives up.
+		private string? lastDeciderReason;
+
+		private Instruction? FellBack(GoalStep step, string reason)
+		{
+			lastDeciderReason = reason;
+			logger.LogInformation($"{step.LineNumber}: {reason}");
+			return null;
+		}
+
 		private async Task<Instruction?> DecideParameters(GoalStep step, ClassDescription decided, LlmRequest question)
 		{
 			if (decider == null || !PLang.Building.BuilderDecider.IsOn()) return null;
 			if (decided.Methods.Count != 1)
 			{
-				logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {decided.Methods.Count} overloads of {decided.Methods.FirstOrDefault()?.MethodName}");
-				return null;
+				return FellBack(step, $"Decider leaves parameters to llm, {decided.Methods.Count} overloads of {decided.Methods.FirstOrDefault()?.MethodName}");
 			}
 
 			var plan = BuildParameterPlan(step, decided, variableHelper, memoryStack);
-			if (plan.GiveUpReason != null)
-			{
-				logger.LogInformation($"{step.LineNumber}: {plan.GiveUpReason}");
-				return null;
-			}
+			if (plan.GiveUpReason != null) return FellBack(step, plan.GiveUpReason);
 
 			var method = plan.Method;
 			var variables = plan.Variables;
@@ -458,16 +484,14 @@ Make sure to use the information in <error> to return valid JSON response"
 				var returnError = returnChoice != null ? null : await AskReturn(step, method, plan, state, r => returnChoice = r);
 				if (returnChoice == null)
 				{
-					logger.LogWarning($"{step.LineNumber}: Decider could not choose the return variable, llm fills parameters: {returnError?.Message}");
-					return null;
+					return FellBack(step, $"Decider could not choose the return variable, llm fills parameters: {returnError?.Message}");
 				}
 				// The batched question is asked beside the method, before the method is known, so it
 				// still offers "nowhere" even for a method that must return. Catch that here: an
 				// answer that cannot be legal is not an answer.
 				if (method.ReturnRequired && returnChoice.Choice == NoneOption)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider left {method.MethodName} without a return variable, which it requires, llm fills parameters");
-					return null;
+					return FellBack(step, $"Decider left {method.MethodName} without a return variable, which it requires, llm fills parameters");
 				}
 
 				state += returnChoice.Choice == NoneOption
@@ -485,8 +509,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				{
 					if (returnChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 					{
-						logger.LogInformation($"{step.LineNumber}: Decider return target {returnChoice.Choice} ({returnChoice.Confidence:0.00}) not trusted, llm fills parameters");
-						return null;
+						return FellBack(step, $"Decider return target {returnChoice.Choice} ({returnChoice.Confidence:0.00}) not trusted, llm fills parameters");
 					}
 					onlyReturn.Add(new ReturnValue(returnType!, returnChoice.Choice));
 				}
@@ -502,8 +525,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 			if (error != null || choices == null)
 			{
-				logger.LogWarning($"{step.LineNumber}: Decider could not choose parameters, llm fills them: {error?.Message}");
-				return null;
+				return FellBack(step, $"Decider could not choose parameters, llm fills them: {error?.Message}");
 			}
 			if (returnChoice != null) choices["__return__"] = returnChoice;
 
@@ -522,16 +544,14 @@ Make sure to use the information in <error> to return valid JSON response"
 						// assignment the step asked for, and the step would build and do less than it says.
 						if (entry.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 						{
-							logger.LogInformation($"{step.LineNumber}: Decider unsure what {key} is set to ({entry.Confidence:0.00}), llm fills parameters");
-							return null;
+							return FellBack(step, $"Decider unsure what {key} is set to ({entry.Confidence:0.00}), llm fills parameters");
 						}
 						if (entry.Choice == NoneOption) continue;
 						entries[key] = entry.Choice;
 					}
 					if (entries.Count == 0)
 					{
-						logger.LogInformation($"{step.LineNumber}: Decider found nothing set by the step for {parameter.Name}, llm fills parameters");
-						return null;
+						return FellBack(step, $"Decider found nothing set by the step for {parameter.Name}, llm fills parameters");
 					}
 					logger.LogInformation($"{step.LineNumber}: Decider set {parameter.Name} = {entries.ToString(Newtonsoft.Json.Formatting.None)}");
 					parameters.Add(new Parameter(parameter.Type, parameter.Name, entries));
@@ -552,8 +572,7 @@ Make sure to use the information in <error> to return valid JSON response"
 							var sure = ConfidenceInLeavingUnset(field, fieldChoice);
 							if (sure < PLang.Building.BuilderDecider.ConfidenceThreshold)
 							{
-								logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {fieldKey} unset ({sure:0.00}), llm fills parameters");
-								return null;
+								return FellBack(step, $"Decider is unsure whether to leave {fieldKey} unset ({sure:0.00}), llm fills parameters");
 							}
 							logger.LogDebug($"{step.LineNumber}: Decider leaves {fieldKey} unset ({sure:0.00})");
 							continue;
@@ -575,14 +594,12 @@ Make sure to use the information in <error> to return valid JSON response"
 								record.Clear();
 								break;
 							}
-							logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required field {fieldKey}, llm fills parameters");
-							return null;
+							return FellBack(step, $"Decider found no value in the step for required field {fieldKey}, llm fills parameters");
 						}
 						var fieldValue = ToValue(field, fieldChoice.Choice);
 						if (fieldValue == null)
 						{
-							logger.LogInformation($"{step.LineNumber}: Decider could not type {fieldKey}={fieldChoice.Choice} as {field.Type}, llm fills parameters");
-							return null;
+							return FellBack(step, $"Decider could not type {fieldKey}={fieldChoice.Choice} as {field.Type}, llm fills parameters");
 						}
 						logger.LogInformation($"{step.LineNumber}: Decider set {fieldKey} = {fieldChoice.Choice} ({fieldChoice.Confidence:0.00})");
 						record[field.Name] = fieldValue;
@@ -594,8 +611,7 @@ Make sure to use the information in <error> to return valid JSON response"
 					var recordValue = RecordValue(parameter, record);
 					if (recordValue == null)
 					{
-						logger.LogInformation($"{step.LineNumber}: Decider could not construct {parameter.Name} ({parameter.Type}), llm fills parameters");
-						return null;
+						return FellBack(step, $"Decider could not construct {parameter.Name} ({parameter.Type}), llm fills parameters");
 					}
 					parameters.Add(new Parameter(parameter.Type, parameter.Name, recordValue));
 					continue;
@@ -615,26 +631,22 @@ Make sure to use the information in <error> to return valid JSON response"
 					var sure = ConfidenceInLeavingUnset(parameter, choice);
 					if (sure < PLang.Building.BuilderDecider.ConfidenceThreshold)
 					{
-						logger.LogInformation($"{step.LineNumber}: Decider is unsure whether to leave {parameter.Name} unset ({sure:0.00}), llm fills parameters");
-						return null;
+						return FellBack(step, $"Decider is unsure whether to leave {parameter.Name} unset ({sure:0.00}), llm fills parameters");
 					}
 					continue;
 				}
 				if (choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider parameter {parameter.Name}={choice.Choice} ({choice.Confidence:0.00}) not trusted, llm fills parameters");
-					return null;
+					return FellBack(step, $"Decider parameter {parameter.Name}={choice.Choice} ({choice.Confidence:0.00}) not trusted, llm fills parameters");
 				}
 				if (choice.Choice == NoneOption)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required parameter {parameter.Name}, llm fills parameters");
-					return null;
+					return FellBack(step, $"Decider found no value in the step for required parameter {parameter.Name}, llm fills parameters");
 				}
 				var value = ToValue(parameter, choice.Choice);
 				if (value == null)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider could not type {parameter.Name}={choice.Choice} as {parameter.Type}, llm fills parameters");
-					return null;
+					return FellBack(step, $"Decider could not type {parameter.Name}={choice.Choice} as {parameter.Type}, llm fills parameters");
 				}
 				logger.LogInformation($"{step.LineNumber}: Decider set {parameter.Name} = {choice.Choice} ({choice.Confidence:0.00})");
 				parameters.Add(new Parameter(parameter.Type, parameter.Name, value));
@@ -645,8 +657,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				if (target.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider return target {target.Choice} ({target.Confidence:0.00}) not trusted, llm fills parameters");
-					return null;
+					return FellBack(step, $"Decider return target {target.Choice} ({target.Confidence:0.00}) not trusted, llm fills parameters");
 				}
 				if (target.Choice != NoneOption)
 				{
