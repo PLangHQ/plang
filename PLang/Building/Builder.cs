@@ -120,15 +120,16 @@ namespace PLang.Building
 				{
 					logger.LogDebug($"Start setup file build on '{setupGoal.GoalName}' - {stopwatch.ElapsedMilliseconds}");
 					var goalError = await goalBuilder.BuildGoal(container, setupGoal, context);
-					if (goalError != null && !goalError.ContinueBuild)
+					if (goalError != null)
 					{
-						return [goalError];
-					}
-					else if (goalError != null)
-					{
-						//logger.LogWarning(goalError.ToFormat().ToString());
+						// A setup goal that will not build used to end the build then and there, so one
+						// unreachable database, or one step the llm could not answer, meant nothing else
+						// got built at all. It is reported and the build carries on: a step that did not
+						// build has no .pr, so the next build tries it again, and meanwhile everything
+						// that can be built is. The later setup goals may well fail too, and it is more
+						// use to see all of them at once than the first one on its own.
+						logger.LogError($"Setup goal {setupGoal.GoalName} did not build, carrying on with the rest: {goalError.Message?.ReplaceLineEndings(" ").Trim().MaxLength(160)}");
 						goalBuilder.AddToBuildErrors(goalError);
-						
 					}
 					logger.LogDebug($"Done Setup Build on {setupGoal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 				}

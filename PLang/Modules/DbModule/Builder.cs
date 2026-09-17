@@ -581,7 +581,18 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 				
 				(var tableInfos, var dsError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.Tables.Select(p => p.Name).ToList());
 				if (dsError?.StatusCode == 404) continue;
-				if (dsError != null) return (null, new StepBuilderError(dsError, step));
+				if (dsError != null)
+				{
+					// The step has not said which datasource it means, so every one is searched for the
+					// table. One of them being unreachable is not a reason to fail the step: the table
+					// is probably in another. A warning, and on to the next, and if no datasource has
+					// the table the error below says so and names the ones that were searched.
+					//
+					// Failing here meant a database that happened to be down, a vpn not connected,
+					// stopped a step that had nothing to do with it from building at all.
+					logger.LogWarning($"{step.LineNumber}: could not read datasource '{dataSource.Name}' while looking for {string.Join(", ", methodsAndTables.Tables.Select(p => p.Name))}, skipping it: {dsError.Message?.ReplaceLineEndings(" ").Trim().MaxLength(120)}");
+					continue;
+				}
 
 				foreach (var tableInfo in tableInfos)
 				{

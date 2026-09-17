@@ -493,7 +493,18 @@ namespace PLang.Modules.DbModule
 			}
 			else
 			{
-				connection = dbFactory.CreateHandler(dataSource, memoryStack, readOnly);
+				try
+				{
+					connection = dbFactory.CreateHandler(dataSource, memoryStack, readOnly);
+				}
+				catch (Exception ex)
+				{
+					// A driver that is not registered threw out of here, past every caller that knows how
+					// to carry on without this datasource. The builder searches all of them when a step
+					// names none, and one it cannot open should be skipped, not fatal.
+					return (null, null, null, sql, new ProgramError($"Could not open datasource '{dataSource.Name}': {ex.Message}",
+						goalStep, function, Exception: ex, Key: "DataSourceUnreachable"));
+				}
 			}
 			if (connection == null) return (null, null, null, sql, new ProgramError("Connection to db could not be created"));
 
