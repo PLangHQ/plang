@@ -355,7 +355,8 @@ Make sure to use the information in <error> to return valid JSON response"
 			var overloads = classDescription.Methods.Where(m => m.MethodName == choice?.Method).ToList();
 			if (choice == null || overloads.Count == 0 || choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 			{
-				logger.LogInformation($"{step.LineNumber}: Decider method {choice?.Method} ({choice?.Confidence:0.00}) not trusted, llm picks from all methods");
+				var contenders = string.Join(", ", (choice?.Probabilities ?? new()).OrderByDescending(p => p.Value).Take(4).Select(p => $"{p.Key} {p.Value:0.00}"));
+				logger.LogInformation($"{step.LineNumber}: Decider method {choice?.Method} ({choice?.Confidence:0.00}) not trusted, llm picks from all methods. Contenders: {contenders}");
 				return null;
 			}
 

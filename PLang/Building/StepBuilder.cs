@@ -335,7 +335,8 @@ public class StepBuilder : IStepBuilder
 			}
 			else if (choice != null)
 			{
-				logger.Value.LogInformation($"{step.LineNumber}: Decider confidence {choice.Confidence:0.00} for {choice.Module} is below {DeciderConfidenceThreshold}, falling back to llm");
+				var contenders = string.Join(", ", choice.Probabilities.OrderByDescending(p => p.Value).Take(4).Select(p => $"{p.Key.Replace("PLang.Modules.", "")} {p.Value:0.00}"));
+				logger.Value.LogInformation($"{step.LineNumber}: Decider confidence {choice.Confidence:0.00} for {choice.Module} is below {DeciderConfidenceThreshold}, falling back to llm. Contenders: {contenders}");
 			}
 		}
 
