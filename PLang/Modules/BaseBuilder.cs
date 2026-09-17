@@ -701,7 +701,11 @@ Make sure to use the information in <error> to return valid JSON response"
 				if (choice.Value.Choice != NoneOption && contested && !winners.Contains(choice.Key))
 				{
 					logger.LogInformation($"{step.LineNumber}: Decider gives {choice.Value.Choice} to another parameter, {choice.Key} is left unset");
-					deduped[choice.Key] = choice.Value with { Choice = NoneOption };
+					// Certain, because this is our conclusion and not the engine's guess: the value went
+					// to a surer claim, so nothing is left for this one. Keeping the engine's confidence
+					// for the value it no longer holds made the unset look like doubt and threw the step
+					// away, which is how `render "x.html", cssSelector: "#main"` lost LayoutTarget at 0.63.
+					deduped[choice.Key] = choice.Value with { Choice = NoneOption, Confidence = 1 };
 					continue;
 				}
 				deduped[choice.Key] = choice.Value;
