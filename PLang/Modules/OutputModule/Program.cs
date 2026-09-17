@@ -17,7 +17,7 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such audit|metric|debug|...., and it can have different serialization, text, json, csv, binary, etc.")]
+	[Description("Send a value or text to the user, and ask the user a question with either text or a template file. A step that starts with `write out`, `write to output` or `ask user` belongs here. The content is already made by an earlier step: putting a template or a variable into an element on the page (`render x to #main`) is the template/ui module, not this one. Output stream can be to the user(default), system, to different channels such audit|metric|debug|...., and it can have different serialization, text, json, csv, binary, etc.")]
 	public class Program : BaseProgram
 	{
 		private readonly VariableHelper variableHelper;

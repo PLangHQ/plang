@@ -28,7 +28,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.TemplateEngineModule
 {
-	[Description(@"Render template html, files, elements using template engine. plang examples: 
+	[Description(@"Run a template file or template text through the template engine, filling it with variables. A step that starts with `render` belongs here; a step that starts with `write out` is the output module, which sends content that is already made. plang examples:
 ```
 - render file.html
 - render %content% to #main / will render the variable into the element #main
