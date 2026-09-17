@@ -142,7 +142,7 @@ namespace PLang.Building
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug("Building instruction");
 			var classInstance = builderFactory.Create(step.ModuleType);
-			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache, deciderReport);
+			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache, deciderReport, goalParser.GetGoals().Select(g => g.GoalName).Distinct().ToList());
 
 			string logInfo = (previousBuildError != null) ? "Retrying to build" : "Build";
 			logger.LogInformation(@$"  - {logInfo} using {step.ModuleType}");
@@ -295,7 +295,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			var classInstance = builderFactory.Create(goalStep.ModuleType);
 			logger.LogDebug($"    - Have instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
 
-			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache, deciderReport);
+			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, decider, deciderCache, deciderReport, goalParser.GetGoals().Select(g => g.GoalName).Distinct().ToList());
 
 			if (isValidatedMethod != null)
 			{

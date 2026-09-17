@@ -46,6 +46,7 @@ namespace PLang.Modules
 		private PLang.Building.IBuilderDecider? decider;
 		private PLang.Building.IBuilderDeciderCache? deciderCache;
 		private PLang.Building.IBuilderDeciderReport? deciderReport;
+		private List<string>? goalNames;
 		protected GoalStep GoalStep;
 
 
@@ -58,12 +59,13 @@ namespace PLang.Modules
 
 		[Init]
 		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null, PLang.Building.IBuilderDeciderCache? deciderCache = null, PLang.Building.IBuilderDeciderReport? deciderReport = null)
+			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger, PLang.Building.IBuilderDecider? decider = null, PLang.Building.IBuilderDeciderCache? deciderCache = null, PLang.Building.IBuilderDeciderReport? deciderReport = null, List<string>? goalNames = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			this.decider = decider;
 			this.deciderCache = deciderCache;
 			this.deciderReport = deciderReport;
+			this.goalNames = goalNames;
 			logger.LogDebug($"        - Start InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
 			this.GoalStep = goalStep;
 			this.module = goalStep.ModuleType;
@@ -365,7 +367,21 @@ Make sure to use the information in <error> to return valid JSON response"
 
 			var (classDescription, error) = new ClassDescriptionHelper().GetClassDescription(programType);
 			if (error != null || classDescription == null) return null;
-			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) return null;
+			// One method is not a decision, but it is an answer: the method is known without asking,
+			// and its parameters can still be decided. Giving up here sent every `call goal X` to the
+			// llm over a choice that had already been made.
+			var onlyMethod = classDescription.Methods.Select(m => m.MethodName).Distinct().ToList();
+			if (onlyMethod.Count == 1)
+			{
+				logger.LogInformation($"{step.LineNumber}: {module} has one method, {onlyMethod[0]}, so nothing to choose");
+				return new ClassDescription
+				{
+					Description = classDescription.Description,
+					ExampleInformation = classDescription.ExampleInformation,
+					Methods = classDescription.Methods.Where(m => m.MethodName == onlyMethod[0]).ToList(),
+					SupportingObjects = classDescription.SupportingObjects
+				};
+			}
 
 			// Usually already answered for the whole goal in one request by StepBuilder's prefetch.
 			var choice = deciderCache?.ForGoal(step.Goal!).Method(step);
@@ -447,12 +463,13 @@ Make sure to use the information in <error> to return valid JSON response"
 		private async Task<Instruction?> DecideParameters(GoalStep step, ClassDescription decided, LlmRequest question)
 		{
 			if (decider == null || !PLang.Building.BuilderDecider.IsOn()) return null;
+			lastDeciderReason = null;
 			if (decided.Methods.Count != 1)
 			{
 				return FellBack(step, $"Decider leaves parameters to llm, {decided.Methods.Count} overloads of {decided.Methods.FirstOrDefault()?.MethodName}");
 			}
 
-			var plan = BuildParameterPlan(step, decided, variableHelper, memoryStack);
+			var plan = BuildParameterPlan(step, decided, variableHelper, memoryStack, goalNames);
 			if (plan.GiveUpReason != null) return FellBack(step, plan.GiveUpReason);
 
 			var method = plan.Method;
@@ -539,7 +556,7 @@ Make sure to use the information in <error> to return valid JSON response"
 					var entries = new Newtonsoft.Json.Linq.JObject();
 					foreach (var key in keys)
 					{
-						if (!choices.TryGetValue($"{parameter.Name}#{key}", out var entry)) return null;
+						if (!choices.TryGetValue($"{parameter.Name}#{key}", out var entry)) return FellBack(step, $"Decider got no answer for what {key} is set to, llm fills parameters");
 						// Every answer has to be sure, the nones too: an unsure none silently drops an
 						// assignment the step asked for, and the step would build and do less than it says.
 						if (entry.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
@@ -566,7 +583,7 @@ Make sure to use the information in <error> to return valid JSON response"
 						var fieldKey = $"{parameter.Name}.{field.Name}";
 						// Nothing in the step could fill it, so it was never asked and keeps its default.
 						if (!questions.ContainsKey(fieldKey)) continue;
-						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return null;
+						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return FellBack(step, $"Decider got no answer for {fieldKey}, llm fills parameters");
 						if (!field.IsRequired && MeansLeaveAlone(field, fieldChoice.Choice))
 						{
 							var sure = ConfidenceInLeavingUnset(field, fieldChoice);
@@ -596,6 +613,16 @@ Make sure to use the information in <error> to return valid JSON response"
 							}
 							return FellBack(step, $"Decider found no value in the step for required field {fieldKey}, llm fills parameters");
 						}
+						// The app's goals check the answer rather than supply it: a word the engine picked
+						// that names no goal is not a goal name, and the llm should have the step.
+						if (field.ValueSource == "goal" && goalNames != null && goalNames.Count > 0
+							&& !fieldChoice.Choice.StartsWith("%")
+							&& !goalNames.Any(g => g.Equals(fieldChoice.Choice, StringComparison.OrdinalIgnoreCase)
+								|| fieldChoice.Choice.EndsWith("/" + g, StringComparison.OrdinalIgnoreCase)))
+						{
+							return FellBack(step, $"Decider chose {fieldChoice.Choice} for {fieldKey}, which is no goal in this app, llm fills parameters");
+						}
+
 						var fieldValue = ToValue(field, fieldChoice.Choice);
 						if (fieldValue == null)
 						{
@@ -625,7 +652,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				// "true when the step captures no result" stayed false at 0.37 confidence and built a
 				// page that renders and sends nothing. The engine is decisive when it knows: the
 				// unsets that are right come back at 0.91 to 1.00.
-				if (!choices.TryGetValue(parameter.Name, out var choice)) return null;
+				if (!choices.TryGetValue(parameter.Name, out var choice)) return FellBack(step, $"Decider got no answer for {parameter.Name}, llm fills parameters");
 				if (!parameter.IsRequired && MeansLeaveAlone(parameter, choice.Choice))
 				{
 					var sure = ConfidenceInLeavingUnset(parameter, choice);
@@ -800,7 +827,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				.ToList();
 			if (unplaced.Count == 0) return true;
 
-			logger.LogInformation($"{step.LineNumber}: Decider found no parameter for {string.Join(", ", unplaced)} in the step, llm builds it");
+			FellBack(step, $"Decider found no parameter for {string.Join(", ", unplaced)} in the step, llm builds it");
 			return false;
 		}
 
@@ -843,13 +870,14 @@ Make sure to use the information in <error> to return valid JSON response"
 			public bool HasReturn => ReturnQuestion.Count > 0;
 		}
 
-		internal static ParameterPlan BuildParameterPlan(GoalStep step, ClassDescription decided, VariableHelper variableHelper, MemoryStack memoryStack)
+		internal static ParameterPlan BuildParameterPlan(GoalStep step, ClassDescription decided, VariableHelper variableHelper, MemoryStack memoryStack, List<string>? goalNames = null)
 		{
 			var method = decided.Methods[0];
 			// Paths come back without their %; the runtime only treats a value as a variable when it
 			// is wrapped, so wrap here or a decided variable would be written as a literal string.
 			var variables = variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
 			var jsonSpans = JsonSpans(step.Text);
+			var words = StepWords(step.Text);
 			var literals = QuotedLiterals(step.Text, jsonSpans);
 			var numbers = Numbers(step.Text);
 
@@ -872,7 +900,7 @@ Make sure to use the information in <error> to return valid JSON response"
 					}
 				}
 
-				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans);
+				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans, words);
 				if (candidates == null)
 				{
 					// A record of simple fields (TextMessage is one) is decided field by field, the same
@@ -899,7 +927,7 @@ Make sure to use the information in <error> to return valid JSON response"
 
 					foreach (var field in fields)
 					{
-						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans);
+						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans, words);
 						if (fieldCandidates == null) return GiveUp($"Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
 						if (fieldCandidates.Count == 0) continue;
 						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
@@ -949,10 +977,24 @@ Make sure to use the information in <error> to return valid JSON response"
 		// The finite options for one parameter, keyed by the text the decider hands back. Null
 		// means the type is not something the step can answer by choosing, so the step goes to
 		// the llm.
-		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers, List<string> jsonSpans)
+		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers, List<string> jsonSpans, List<string> words)
 		{
 			var type = parameter.Type ?? "";
 			var candidates = new Dictionary<string, string>();
+
+			// A goal name is written bare in a step, `call goal Advise`, so it is neither a quoted text
+			// nor a variable and nothing was on offer. The options are the words the step itself
+			// writes, not the goals the app has: a project's goal list is unbounded and would outgrow
+			// the 255 options a question may carry, while a step stays a step. The app's goals are
+			// still used, to check the answer afterwards rather than to supply it.
+			if (parameter is PrimitiveDescription primitive && primitive.ValueSource == "goal")
+			{
+				foreach (var word in words) candidates[word] = $"the goal named {word}";
+				foreach (var variable in variables) candidates[variable] = $"the goal named by the variable {variable}";
+				if (candidates.Count == 0) return null;
+				if (!parameter.IsRequired) candidates[NoneOption] = "none of these, leave the parameter unset so its default applies";
+				return candidates;
+			}
 
 			if (type == "System.Boolean" || type == "System.Nullable`1[System.Boolean]")
 			{
@@ -1064,6 +1106,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				var path = prefix.Length == 0 ? field.Name! : $"{prefix}.{field.Name}";
 				var description = new PrimitiveDescription
 				{
+					ValueSource = type == typeof(PLang.Models.GoalToCallInfo) && field.Name == "name" ? "goal" : null,
 					Name = path,
 					Type = fieldType.FullName ?? "",
 					IsRequired = !field.HasDefaultValue,
@@ -1376,6 +1419,20 @@ Make sure to use the information in <error> to return valid JSON response"
 		// hold something that is only approximately json, `set %list% = [{name:john}]`, so nothing
 		// here validates or interprets it: it is a token, like a quoted string or a number, and it
 		// looks the same whatever language the step is written in.
+		// The bare words a step writes, as tokens. Not a reading of the step: a word is a word in any
+		// language, and which of them means something is the decider's job, not this method's.
+		private static List<string> StepWords(string text)
+		{
+			var words = new List<string>();
+			foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"[\p{L}_/][\p{L}\p{N}_/.-]*"))
+			{
+				var word = match.Value.Trim('.', '-', '/');
+				if (word.Length < 2 || words.Contains(word)) continue;
+				words.Add(match.Value);
+			}
+			return words;
+		}
+
 		private static List<string> JsonSpans(string text)
 		{
 			var spans = new List<string>();

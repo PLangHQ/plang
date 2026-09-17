@@ -290,6 +290,11 @@ namespace PLang.Building
 			finally
 			{
 				AppContext.SetSwitch("Builder", wasBuilder);
+
+				// In the finally, because a build that stopped on an error is exactly when it is worth
+				// knowing how the steps that did build were built.
+				var deciderSummary = deciderReport.Summary();
+				if (deciderSummary != null) logger.LogInformation("\n" + deciderSummary);
 			}
 			return null;
 		}
@@ -369,13 +374,6 @@ namespace PLang.Building
 			{
 				logger.LogWarning($"\n\n🎉 Build was succesfull!");
 			}
-
-			// What the decider managed, and what went to the llm that did not have to. On a large app
-			// the second number is the one to watch: a build where the llm writes the sql is working,
-			// a build where it has quietly taken over half the steps is not, and the difference is
-			// invisible one log line at a time.
-			var deciderSummary = deciderReport.Summary();
-			if (deciderSummary != null) logger.LogInformation("\n" + deciderSummary);
 
 			if (goals.Count == 0)
 			{

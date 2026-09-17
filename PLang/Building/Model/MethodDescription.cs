@@ -41,6 +41,10 @@ public interface IPropertyDescription
 }
 public class PrimitiveDescription : IPropertyDescription
 {
+	// Some values are not written in the step and are not a type either: the name of a goal to call
+	// is one of a hundred goals in the app. Names where the options come from when they come from
+	// the project rather than the step.
+	public string? ValueSource { get; set; }
 	public string Type { get; set; }
 	public string Name { get; set; }
 	public object? DefaultValue { get; set; }
