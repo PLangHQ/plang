@@ -184,7 +184,7 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return await sink.SendAsync(executeMessage);
 		}
 
-		[Description(@"Set ExecuteMessage.Actions=""show""")]
+		[Description(@"Show an element that is already on the page, by css selector. Set ExecuteMessage.Actions=""show"". A step that renders a template file into the page is RenderTemplate, even when it names an action such as show or showModal: the action is part of rendering, not a step of its own")]
 		public async Task<IError?> ShowElement(ExecuteMessage executeMessage)
 		{
 			var sink = context.GetSink(executeMessage.Actor);

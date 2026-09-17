@@ -390,7 +390,15 @@ Make sure to use the information in <error> to return valid JSON response"
 				if (criteria.ContainsKey(method.MethodName)) continue;
 				var parameters = string.Join(", ", (method.Parameters ?? new()).Select(p => $"{p.Name}: {p.Type}"));
 				var description = string.IsNullOrWhiteSpace(method.Description) ? "" : " " + method.Description;
-				criteria[method.MethodName] = $"{method.MethodName}({parameters}){description}";
+				// The examples an author wrote are the plainest statement of what a method is for, and
+				// some methods have examples and no description at all: IsEmpty carries
+				// `if %id% is empty then call Create` and nothing else, so without them it went to the
+				// decider as a bare signature and lost to SimpleCondition, whose description happens to
+				// list isEmpty among its operators.
+				var examples = method.Examples == null || method.Examples.Count == 0
+					? ""
+					: " Examples: " + string.Join(" ", method.Examples);
+				criteria[method.MethodName] = $"{method.MethodName}({parameters}){description}{examples}";
 			}
 			return criteria;
 		}

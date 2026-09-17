@@ -76,7 +76,8 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		[Description(@"Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. 
+		[Description(@"One condition made of a value and an operator, for cases no dedicated method covers. When a dedicated method exists for the test, use that instead: IsEmpty for `is empty`, IsEqual for `==`, StartsWith for `starts with`, ContainsString for `contains`.
+Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. 
 IsNot=True for ‘is not’, ‘does not’, 
 Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 "
@@ -173,6 +174,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
+		[Description("Is a value empty or null, e.g. `if %question% is empty then`. This is the dedicated method for that test and is the one to use, rather than SimpleCondition with its isEmpty operator")]
 		[Example("if %id% is empty then call Create, else call Update", @"item=%id%, goalTocallIfTrue={Name=""Create""}, goalToCallifFalse={Name=""Update""}")]
 		[Example("if %name% is empty then throw", @"item=%name%, throwErrorOnTrue=...generate ErrorInfo")]
 		public async Task<(object?, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
