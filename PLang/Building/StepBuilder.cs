@@ -330,6 +330,21 @@ public class StepBuilder : IStepBuilder
 		cached.Clear();
 
 		var modules = typeHelper.GetModulesDictionary(null);
+
+		// Every question in this phase offers the same 48 modules, and the api has no way to name a
+		// criteria set once and point at it, so each copy of a description is paid for again. The
+		// descriptions go in the state, which is shared, and the options are bare names. Measured on
+		// 3 goals and 37 steps: 294 KB down to 93 KB, the same module chosen 37 out of 37 times.
+		// Dropping the descriptions altogether is a different thing and is not safe: it answers
+		// confidently and wrongly, picking the ui module for template steps.
+		var catalogue = new StringBuilder("\n\nThese are the plang modules you may choose from:\n");
+		var options = new Dictionary<string, string>();
+		foreach (var module in modules)
+		{
+			catalogue.AppendLine($"- {module.Key}: {module.Value}");
+			options[module.Key] = null!;
+		}
+
 		var questions = new Dictionary<string, DeciderQuestion>();
 		foreach (var index in stepIndexes)
 		{
@@ -338,11 +353,11 @@ public class StepBuilder : IStepBuilder
 			if (GetUserRequestedModule(step).Count == 1) continue;
 			questions[QuestionKey(step)] = new DeciderQuestion(
 				$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. Which plang module implements what step {step.Index + 1} does?",
-				modules);
+				options);
 		}
 		if (questions.Count == 0) return;
 
-		var (answers, error) = await decider.Choose(GoalState(goal), questions);
+		var (answers, error) = await decider.Choose(GoalState(goal) + catalogue, questions);
 		if (error != null || answers == null)
 		{
 			// Nothing is lost: with an empty cache every step asks for itself, exactly as before.

@@ -35,7 +35,7 @@ namespace PLang.Modules.UiModule
 	{
 		Task Flush();
 	}
-	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript.")]
+	[Description("Puts content into the page the user is looking at. A render step belongs here when it says where on the page the result goes, naming a cssSelector such as #main or an action such as replace, append, showModal or navigate, e.g. `render 'page.html' to #main`. A render step that captures the result in a variable instead, `write to %html%`, is the template engine module and shows nothing. Also takes any user command and tries to convert it to html, adds, removes and inserts content at a css selector, sets the (default) layout for the UI, and executes javascript.")]
 	public class Program : BaseProgram, IFlush
 	{
 		public Program() : base()
