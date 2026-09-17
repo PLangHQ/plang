@@ -281,8 +281,11 @@ namespace PLang
 
 				LoadArgsToMemoryStack(args, memoryStack);
 
+				var (goalPaths, goalError) = GetGoalPathsToBuild(args);
+				if (goalError != null) return goalError;
+
 				this.builder = container.GetInstance<IBuilder>();
-				var errors = await builder.Start(container, context);
+				var errors = await builder.Start(container, context, goalPaths);
 				if (errors != null && errors.Count > 0)
 				{
 					foreach (var error in errors)
@@ -465,6 +468,38 @@ namespace PLang
 
 			(var vars, var error) = await engine.Run(goalToRun, context);
 			return (engine, vars, error);
+		}
+
+		// --goal=<path> makes the build targeted: only that goal file, or every goal file under that
+		// folder, is built and the setup loop is skipped. The path is relative to the project root,
+		// which is the working directory the build starts in, so "--goal=tests/Demo.goal" and
+		// "--goal=/tests" both work. Without the flag the whole app is built as before.
+		private (List<string>? Paths, IError? Error) GetGoalPathsToBuild(string[]? args)
+		{
+			var arg = args?.FirstOrDefault(p => p.StartsWith("--goal=", StringComparison.OrdinalIgnoreCase));
+			if (arg == null) return (null, null);
+
+			var relative = arg.Substring("--goal=".Length).Trim().Trim('"').TrimStart('/', '\\');
+			if (string.IsNullOrEmpty(relative))
+			{
+				return (null, new Error("--goal needs a path, e.g. --goal=Start.goal or --goal=admin", Key: "MissingGoalPath"));
+			}
+
+			var absolute = fileSystem.Path.GetFullPath(fileSystem.Path.Join(fileSystem.RootDirectory, relative));
+			if (fileSystem.File.Exists(absolute))
+			{
+				return ([absolute], null);
+			}
+			if (fileSystem.Directory.Exists(absolute))
+			{
+				var files = fileSystem.Directory.GetFiles(absolute, "*.goal", SearchOption.AllDirectories).ToList();
+				if (files.Count == 0)
+				{
+					return (null, new Error($"No .goal files found under '{relative}' (looked in {absolute})", Key: "NoGoalFiles"));
+				}
+				return (files, null);
+			}
+			return (null, new Error($"--goal={relative} is neither a file nor a folder in the project root {fileSystem.RootDirectory}", Key: "GoalPathNotFound"));
 		}
 
 		private string LoadArgsToMemoryStack(string[]? args, MemoryStack memoryStack)
