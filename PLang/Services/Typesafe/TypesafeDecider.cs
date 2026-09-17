@@ -11,9 +11,10 @@ using System.Text;
 namespace PLang.Services.Typesafe
 {
 	// Typesafe.ai "System One" is not a chat model: it answers typed questions against a state and
-	// returns a choice with a probability over the options. That is exactly the module and method
-	// decisions the builder makes for every step, so it lives behind IBuilderDecider rather than
-	// ILlmService. https://docs.typesafe.ai/api
+	// returns a choice with a probability over the options. That is exactly the module, method and
+	// parameter decisions the builder makes for every step, so it lives behind IBuilderDecider
+	// rather than ILlmService. Several questions go in one request and are answered together.
+	// https://docs.typesafe.ai/api
 	public class TypesafeDecider : IBuilderDecider
 	{
 		private readonly ISettings settings;
@@ -23,6 +24,7 @@ namespace PLang.Services.Typesafe
 		private const string Model = "jev-latest";
 		private const string SettingKey = "TypeSafeApiKey";
 
+		private record Question(string Instructions, Dictionary<string, string> Criteria);
 		private record Answer(string Choice, double Confidence, Dictionary<string, double> Probabilities);
 
 		public TypesafeDecider(ISettings settings, ILogger logger)
@@ -33,9 +35,8 @@ namespace PLang.Services.Typesafe
 
 		// Same home as every other key in plang: %Settings.TypeSafeApiKey%, kept in system.sqlite.
 		// A missing key must never prompt: settings.Get throws MissingSettingsException, which the
-		// engine turns into the ask-user flow, and that has no place inside a build (a system app
-		// built in another settings scope hit exactly this). The miss is swallowed here and Choose
-		// turns it into an error the builder falls back from.
+		// engine turns into the ask-user flow, and that has no place inside a build. The miss is
+		// swallowed here and Ask turns it into an error the builder falls back from.
 		private string? GetKey()
 		{
 			try
@@ -50,29 +51,63 @@ namespace PLang.Services.Typesafe
 
 		public async Task<(ModuleChoice? Choice, IError? Error)> ChooseModule(string stepText, Dictionary<string, string> modules)
 		{
-			var (answer, error) = await Choose(stepText, "module",
-				"This is one step of plang code. Which plang module implements what this step does?", modules);
-			if (error != null || answer == null) return (null, error);
+			var (answers, error) = await Ask(stepText, new()
+			{
+				["module"] = new Question("This is one step of plang code. Which plang module implements what this step does?", modules)
+			});
+			if (error != null || answers == null || !answers.TryGetValue("module", out var answer)) return (null, error);
 
 			return (new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities), null);
 		}
 
 		public async Task<(MethodChoice? Choice, IError? Error)> ChooseMethod(string stepText, string module, Dictionary<string, string> methods)
 		{
-			var (answer, error) = await Choose(stepText, "method",
-				$"This is one step of plang code that uses the module {module}. Which method of the module does this step call?", methods);
-			if (error != null || answer == null) return (null, error);
+			var (answers, error) = await Ask(stepText, new()
+			{
+				["method"] = new Question($"This is one step of plang code that uses the module {module}. Which method of the module does this step call?", methods)
+			});
+			if (error != null || answers == null || !answers.TryGetValue("method", out var answer)) return (null, error);
 
 			return (new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities), null);
 		}
 
-		// One Choice question: the step is the state, the options are the criteria, and the answer
-		// is the option key plus how sure the model is.
-		private async Task<(Answer? Answer, IError? Error)> Choose(string state, string questionKey, string instructions, Dictionary<string, string> criteria)
+		public async Task<(Dictionary<string, ParameterChoice>? Choices, IError? Error)> ChooseParameters(string stepText, string method, Dictionary<string, Dictionary<string, string>> parameters)
 		{
-			if (criteria == null || criteria.Count == 0)
+			var questions = new Dictionary<string, Question>();
+			foreach (var parameter in parameters)
 			{
-				return (null, new ServiceError($"No options to choose from for '{questionKey}'", this.GetType()));
+				questions[parameter.Key] = new Question(
+					$"This is one step of plang code that calls the method {method}. Which of these is the value of its parameter '{parameter.Key}'?",
+					parameter.Value);
+			}
+
+			var (answers, error) = await Ask(stepText, questions);
+			if (error != null || answers == null) return (null, error);
+
+			var choices = new Dictionary<string, ParameterChoice>();
+			foreach (var answer in answers)
+			{
+				choices[answer.Key] = new ParameterChoice(answer.Value.Choice, answer.Value.Confidence);
+			}
+			return (choices, null);
+		}
+
+		// One request, any number of Choice questions: the step is the state, each question's
+		// options are its criteria, and each answer is the option key plus how sure the model is.
+		// Nothing thrown in here may reach the builder: every failure comes back as an error that
+		// names itself, and the builder falls back to the llm for the step.
+		private async Task<(Dictionary<string, Answer>? Answers, IError? Error)> Ask(string state, Dictionary<string, Question> questions)
+		{
+			if (questions.Count == 0)
+			{
+				return (null, new ServiceError("No questions to ask", this.GetType()));
+			}
+			foreach (var question in questions)
+			{
+				if (question.Value.Criteria == null || question.Value.Criteria.Count == 0)
+				{
+					return (null, new ServiceError($"No options to choose from for '{question.Key}'", this.GetType()));
+				}
 			}
 
 			var key = GetKey();
@@ -81,55 +116,60 @@ namespace PLang.Services.Typesafe
 				return (null, new ServiceError("TypeSafeApiKey is not set in this app's settings (%Settings.TypeSafeApiKey%)", this.GetType(), Key: "MissingTypeSafeApiKey"));
 			}
 
-			var body = new Dictionary<string, object>
-			{
-				["state"] = state,
-				["model"] = Model,
-				["questions"] = new Dictionary<string, object>
-				{
-					[questionKey] = new Dictionary<string, object>
-					{
-						["type"] = "choice",
-						["instructions"] = instructions,
-						["criteria"] = criteria
-					}
-				}
-			};
-
-			using var httpClient = new HttpClient();
-			httpClient.Timeout = TimeSpan.FromMinutes(2);
-			using var request = new HttpRequestMessage(HttpMethod.Post, Url);
-			request.Headers.UserAgent.ParseAdd("plang v0.1");
-			request.Headers.Add("Authorization", $"Bearer {key}");
-			request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-
-			string responseBody;
 			try
 			{
+				var body = new Dictionary<string, object>
+				{
+					["state"] = state,
+					["model"] = Model,
+					["questions"] = questions.ToDictionary(q => q.Key, q => (object)new Dictionary<string, object>
+					{
+						["type"] = "choice",
+						["instructions"] = q.Value.Instructions,
+						["criteria"] = q.Value.Criteria
+					})
+				};
+
+				using var httpClient = new HttpClient();
+				httpClient.Timeout = TimeSpan.FromMinutes(2);
+				using var request = new HttpRequestMessage(HttpMethod.Post, Url);
+				request.Headers.UserAgent.ParseAdd("plang v0.1");
+				request.Headers.Add("Authorization", $"Bearer {key}");
+				request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+
 				using var response = await httpClient.SendAsync(request);
-				responseBody = await response.Content.ReadAsStringAsync();
+				var responseBody = await response.Content.ReadAsStringAsync();
 				if (!response.IsSuccessStatusCode)
 				{
 					return (null, new ServiceError($"Typesafe returned {(int)response.StatusCode}: {responseBody}", this.GetType(), StatusCode: (int)response.StatusCode));
 				}
+
+				var answersJson = JObject.Parse(responseBody)["answers"] as JObject;
+				if (answersJson == null)
+				{
+					return (null, new ServiceError("Typesafe gave no answers: " + responseBody, this.GetType()));
+				}
+
+				var answers = new Dictionary<string, Answer>();
+				foreach (var question in questions)
+				{
+					var answer = answersJson[question.Key];
+					var choice = answer?["choice"]?.ToString();
+					if (string.IsNullOrEmpty(choice))
+					{
+						return (null, new ServiceError($"Typesafe gave no '{question.Key}' choice: {responseBody}", this.GetType()));
+					}
+					var confidence = answer?["confidence"]?.Value<double>() ?? 0;
+					var probabilities = answer?["probabilities"]?.ToObject<Dictionary<string, double>>() ?? new();
+					answers[question.Key] = new Answer(choice, confidence, probabilities);
+					logger.LogDebug("Typesafe chose {Choice} for {Question} with confidence {Confidence}", choice, question.Key, confidence);
+				}
+				return (answers, null);
 			}
 			catch (Exception ex)
 			{
-				return (null, new ServiceError($"Could not reach Typesafe: {ex.Message}", this.GetType()));
+				return (null, new ServiceError($"Decider failed with {ex.GetType().Name}: {ex.Message}", this.GetType()));
 			}
-
-			var answer = JObject.Parse(responseBody)["answers"]?[questionKey];
-			var choice = answer?["choice"]?.ToString();
-			if (string.IsNullOrEmpty(choice))
-			{
-				return (null, new ServiceError($"Typesafe gave no '{questionKey}' choice: {responseBody}", this.GetType()));
-			}
-
-			var confidence = answer?["confidence"]?.Value<double>() ?? 0;
-			var probabilities = answer?["probabilities"]?.ToObject<Dictionary<string, double>>() ?? new();
-
-			logger.LogDebug("Typesafe chose {Choice} for {Question} with confidence {Confidence}", choice, questionKey, confidence);
-			return (new Answer(choice, confidence, probabilities), null);
 		}
 	}
 }

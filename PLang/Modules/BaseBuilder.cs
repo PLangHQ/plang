@@ -153,11 +153,37 @@ namespace PLang.Modules
 
 			if (responseType == null) responseType = typeof(GenericFunction);
 
+			// Phase 3 only runs on a method this builder narrowed itself, never on a description a
+			// module builder supplied, so the decided one is kept apart from the caller's.
+			ClassDescription? decided = null;
 			if (classDescription == null)
 			{
-				classDescription = await NarrowToDecidedMethod(step, previousBuildError);
+				decided = await NarrowToDecidedMethod(step, previousBuildError);
+				classDescription = decided;
 			}
 			var question = GetLlmRequest(step, responseType, previousBuildError, classDescription);
+
+			if (decided != null)
+			{
+				Instruction? built = null;
+				try
+				{
+					built = await DecideParameters(step, decided, question);
+				}
+				catch (Exception ex)
+				{
+					// A bug in the decider must never break a build: name it and let the llm fill the step.
+					logger.LogWarning($"{step.LineNumber}: Decider threw {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+				}
+				if (built != null)
+				{
+					appendedSystemCommand.Clear();
+					appendedAssistantCommand.Clear();
+					assistant = "";
+					system = "";
+					return (built, null);
+				}
+			}
 
 			try
 			{
@@ -356,6 +382,227 @@ Make sure to use the information in <error> to return valid JSON response"
 				criteria[method.MethodName] = $"{method.MethodName}({parameters}){description}";
 			}
 			return criteria;
+		}
+
+		private const string NoneOption = "__none__";
+
+		// With the method known, every parameter is a choice from a finite set the step itself
+		// provides: a %variable% in scope, a quoted literal, a number, an enum name or a bool, plus
+		// "none of these", which means "leave unset" for an optional parameter and "the value is
+		// something else" for a required one. All questions go in one call. It is all or nothing:
+		// one parameter the step cannot answer (a complex type, a string not present in the step,
+		// which is what SQL and code look like, or a low-confidence pick) and the whole step goes to
+		// the llm, which still only sees this one method. On success the function is built here
+		// and the llm is never called for the step.
+		private async Task<Instruction?> DecideParameters(GoalStep step, ClassDescription decided, LlmRequest question)
+		{
+			if (decider == null || !PLang.Building.BuilderDecider.IsOn()) return null;
+			if (decided.Methods.Count != 1)
+			{
+				logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {decided.Methods.Count} overloads of {decided.Methods.FirstOrDefault()?.MethodName}");
+				return null;
+			}
+
+			var method = decided.Methods[0];
+			// Paths come back without their %; the runtime only treats a value as a variable when it
+			// is wrapped, so wrap here or a decided variable would be written as a literal string.
+			var variables = variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
+			var literals = QuotedLiterals(step.Text);
+			var numbers = Numbers(step.Text);
+
+			var questions = new Dictionary<string, Dictionary<string, string>>();
+			foreach (var parameter in method.Parameters ?? new())
+			{
+				// An optional parameter the step never mentions is left unset so its default applies.
+				// Asking about it only invites an unsure answer that would veto the whole step, and
+				// leaving it out is exactly what the llm does with it.
+				if (!parameter.IsRequired && step.Text.IndexOf(parameter.Name, StringComparison.OrdinalIgnoreCase) < 0)
+				{
+					continue;
+				}
+				var candidates = ParameterCandidates(parameter, variables, literals, numbers);
+				if (candidates == null)
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+					return null;
+				}
+				questions[parameter.Name] = candidates;
+			}
+
+			var returnType = method.ReturnValue?.Type;
+			bool hasReturn = !string.IsNullOrEmpty(returnType) && !returnType.EndsWith("Void", StringComparison.OrdinalIgnoreCase);
+			if (hasReturn)
+			{
+				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
+				targets[NoneOption] = "the result is not written to a variable";
+				questions["__return__"] = targets;
+			}
+			if (questions.Count == 0)
+			{
+				return BuildDecided(step, method, new(), new(), question);
+			}
+
+			var (choices, error) = await decider.ChooseParameters(step.Text, method.MethodName, questions);
+			if (error != null || choices == null)
+			{
+				logger.LogWarning($"{step.LineNumber}: Decider could not choose parameters, llm fills them: {error?.Message}");
+				return null;
+			}
+
+			var parameters = new List<Parameter>();
+			foreach (var parameter in method.Parameters ?? new())
+			{
+				// Never asked about, so nothing to trust or distrust: the parameter stays unset.
+				if (!questions.ContainsKey(parameter.Name)) continue;
+
+				if (!choices.TryGetValue(parameter.Name, out var choice) || choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider parameter {parameter.Name}={choice?.Choice} ({choice?.Confidence:0.00}) not trusted, llm fills parameters");
+					return null;
+				}
+				if (choice.Choice == NoneOption)
+				{
+					if (parameter.IsRequired)
+					{
+						logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required parameter {parameter.Name}, llm fills parameters");
+						return null;
+					}
+					continue;
+				}
+				var value = ToValue(parameter, choice.Choice);
+				if (value == null)
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider could not type {parameter.Name}={choice.Choice} as {parameter.Type}, llm fills parameters");
+					return null;
+				}
+				logger.LogInformation($"{step.LineNumber}: Decider set {parameter.Name} = {choice.Choice} ({choice.Confidence:0.00})");
+				parameters.Add(new Parameter(parameter.Type, parameter.Name, value));
+			}
+
+			var returnValues = new List<ReturnValue>();
+			if (hasReturn && choices.TryGetValue("__return__", out var target))
+			{
+				if (target.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider return target {target.Choice} ({target.Confidence:0.00}) not trusted, llm fills parameters");
+					return null;
+				}
+				if (target.Choice != NoneOption)
+				{
+					logger.LogInformation($"{step.LineNumber}: Decider set return to {target.Choice} ({target.Confidence:0.00})");
+					returnValues.Add(new ReturnValue(returnType!, target.Choice));
+				}
+			}
+
+			return BuildDecided(step, method, parameters, returnValues, question);
+		}
+
+		private Instruction BuildDecided(GoalStep step, MethodDescription method, List<Parameter> parameters, List<ReturnValue> returnValues, LlmRequest question)
+		{
+			logger.LogInformation($"{step.LineNumber}: Decider built {method.MethodName} without the llm");
+			var function = new GenericFunction("Decided by Typesafe: module, method and parameters", method.MethodName, parameters, returnValues);
+			return InstructionCreator.Create(function, step, question);
+		}
+
+		// The finite options for one parameter, keyed by the text the decider hands back. Null
+		// means the type is not something the step can answer by choosing, so the step goes to
+		// the llm.
+		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers)
+		{
+			var type = parameter.Type ?? "";
+			var candidates = new Dictionary<string, string>();
+
+			if (type == "System.Boolean" || type == "System.Nullable`1[System.Boolean]")
+			{
+				candidates["true"] = "true";
+				candidates["false"] = "false";
+			}
+			else if (ResolveType(type) is Type enumType && enumType.IsEnum)
+			{
+				foreach (var name in Enum.GetNames(enumType)) candidates[name] = $"the value {name}";
+			}
+			else if (type == "System.String" || type == "System.Object")
+			{
+				foreach (var literal in literals) candidates[literal] = $"the text \"{literal}\" written in the step";
+				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+			}
+			else if (IsNumeric(type))
+			{
+				foreach (var number in numbers) candidates[number] = $"the number {number} written in the step";
+				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+			}
+			else
+			{
+				return null;
+			}
+
+			if (candidates.Count == 0) return null;
+			candidates[NoneOption] = parameter.IsRequired
+				? "none of these, the value is something else"
+				: "none of these, leave the parameter unset so its default applies";
+			return candidates;
+		}
+
+		private static object? ToValue(IPropertyDescription parameter, string choice)
+		{
+			if (choice.StartsWith("%") && choice.EndsWith("%")) return choice;
+
+			var type = parameter.Type ?? "";
+			if (type == "System.Boolean" || type == "System.Nullable`1[System.Boolean]")
+			{
+				return bool.TryParse(choice, out var b) ? b : null;
+			}
+			if (ResolveType(type) is Type enumType && enumType.IsEnum) return choice;
+			if (type == "System.String" || type == "System.Object") return choice;
+			if (IsNumeric(type))
+			{
+				var culture = System.Globalization.CultureInfo.InvariantCulture;
+				if (type.Contains("Int64")) return long.TryParse(choice, out var l) ? l : null;
+				if (type.Contains("Int32")) return int.TryParse(choice, out var i) ? i : null;
+				return double.TryParse(choice, System.Globalization.NumberStyles.Any, culture, out var d) ? d : null;
+			}
+			return null;
+		}
+
+		private static bool IsNumeric(string type)
+		{
+			return type == "System.Int32" || type == "System.Int64" || type == "System.Double" || type == "System.Single" || type == "System.Decimal"
+				|| type == "System.Nullable`1[System.Int32]" || type == "System.Nullable`1[System.Int64]" || type == "System.Nullable`1[System.Double]";
+		}
+
+		private static Type? ResolveType(string typeName)
+		{
+			if (string.IsNullOrEmpty(typeName) || typeName.StartsWith("System.")) return null;
+			var type = Type.GetType(typeName);
+			if (type != null) return type;
+			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				type = assembly.GetType(typeName);
+				if (type != null) return type;
+			}
+			return null;
+		}
+
+		private static List<string> QuotedLiterals(string text)
+		{
+			var literals = new List<string>();
+			foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(text ?? "", "\"([^\"]*)\"|'([^']*)'"))
+			{
+				var literal = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+				if (!literals.Contains(literal)) literals.Add(literal);
+			}
+			return literals;
+		}
+
+		private static List<string> Numbers(string text)
+		{
+			var withoutLiterals = System.Text.RegularExpressions.Regex.Replace(text ?? "", "\"[^\"]*\"|'[^']*'|%[^%]*%", " ");
+			var numbers = new List<string>();
+			foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(withoutLiterals, @"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])"))
+			{
+				if (!numbers.Contains(match.Value)) numbers.Add(match.Value);
+			}
+			return numbers;
 		}
 
 		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null, ClassDescription? classDescription = null)
