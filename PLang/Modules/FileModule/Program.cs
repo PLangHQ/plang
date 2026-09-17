@@ -165,13 +165,13 @@ namespace PLang.Modules.FileModule
 			return base64;
 		}
 		public async Task<(object?, IError?)> ReadJson(string path, bool throwErrorOnNotFound = true,
-			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			[Description("true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, null, allowReadingFromSystem);
 		}
 		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = true,
-			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			[Description("true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			newLineSymbol ??= Environment.NewLine;
@@ -199,7 +199,7 @@ namespace PLang.Modules.FileModule
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
 		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
-			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
+			[Description("true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			var absolutePath = GetPath(path);
@@ -719,7 +719,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
 		public async Task<IError?> WriteToFile(string path, object content, bool overwrite = false,
-			[Description("true only when the step asks for %variables% written inside the content to be replaced with their values before the content is written. false is the normal case: the content is written as it stands")]
+			[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			if (string.IsNullOrEmpty(path))
@@ -806,7 +806,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
-				[Description("true only when the step asks for %variables% written inside the content to be replaced with their values before the content is written. false is the normal case: the content is written as it stands")]
+				[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);

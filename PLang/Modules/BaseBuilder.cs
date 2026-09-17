@@ -490,7 +490,7 @@ Make sure to use the information in <error> to return valid JSON response"
 					}
 					onlyReturn.Add(new ReturnValue(returnType!, returnChoice.Choice));
 				}
-				if (!EveryValuePlaced(step, variables, literals, numbers, new(), onlyReturn)) return null;
+				if (!EveryValuePlaced(step, variables, literals, numbers, new(), onlyReturn, plan.JsonSpans)) return null;
 				return BuildDecided(step, method, new(), onlyReturn, question);
 			}
 
@@ -615,7 +615,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				}
 			}
 
-			if (!EveryValuePlaced(step, variables, literals, numbers, parameters, returnValues)) return null;
+			if (!EveryValuePlaced(step, variables, literals, numbers, parameters, returnValues, plan.JsonSpans)) return null;
 			return BuildDecided(step, method, parameters, returnValues, question);
 		}
 
@@ -714,7 +714,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		// decided method has no place for, and the llm has to read it. This is what stops a step
 		// like `set %a% = %x%, %b% = %y%` from being built with its only parameter, a dictionary
 		// that is not a choice, left out because it is declared optional.
-		private bool EveryValuePlaced(GoalStep step, List<string> variables, List<string> literals, List<string> numbers, List<Parameter> parameters, List<ReturnValue> returnValues)
+		private bool EveryValuePlaced(GoalStep step, List<string> variables, List<string> literals, List<string> numbers, List<Parameter> parameters, List<ReturnValue> returnValues, List<string>? jsonSpans = null)
 		{
 			var placed = new List<string>();
 			foreach (var parameter in parameters)
@@ -736,7 +736,11 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 			placed.AddRange(returnValues.Select(r => r.VariableName));
 
+			// A value written only inside a {...} or [...] span belongs to that span, not to the step:
+			// the %ideaId% of `call back data: {"ideaId": "%ideaId%"}` is part of one value and has no
+			// parameter of its own to land in.
 			var unplaced = variables.Concat(literals).Concat(numbers)
+				.Where(value => !OnlyInsideSpan(step.Text, value, jsonSpans))
 				.Where(value => !placed.Any(p => p.Contains(value, StringComparison.OrdinalIgnoreCase)))
 				.ToList();
 			if (unplaced.Count == 0) return true;
@@ -777,7 +781,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			Dictionary<string, ParameterQuestion> Questions,
 			Dictionary<string, ParameterQuestion> ReturnQuestion,
 			Dictionary<string, List<PrimitiveDescription>> RecordFields,
-			List<string> Variables, List<string> Literals, List<string> Numbers,
+			List<string> Variables, List<string> Literals, List<string> Numbers, List<string> JsonSpans,
 			string? ReturnType, string? GiveUpReason)
 		{
 			public bool HasReturn => ReturnQuestion.Count > 0;
@@ -796,7 +800,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			var questions = new Dictionary<string, ParameterQuestion>();
 			var recordFields = new Dictionary<string, List<PrimitiveDescription>>();
 
-			ParameterPlan GiveUp(string reason) => new(method, questions, new(), recordFields, variables, literals, numbers, null, reason);
+			ParameterPlan GiveUp(string reason) => new(method, questions, new(), recordFields, variables, literals, numbers, jsonSpans, null, reason);
 
 			foreach (var parameter in method.Parameters ?? new())
 			{
@@ -858,7 +862,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				returnQuestion["__return__"] = new ParameterQuestion(description, targets);
 			}
 
-			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, returnType, null);
+			return new ParameterPlan(method, questions, returnQuestion, recordFields, variables, literals, numbers, jsonSpans, returnType, null);
 		}
 
 		private Instruction BuildDecided(GoalStep step, MethodDescription method, List<Parameter> parameters, List<ReturnValue> returnValues, LlmRequest question)
@@ -1190,7 +1194,13 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				try
 				{
-					return Newtonsoft.Json.Linq.JToken.Parse(choice);
+					// A step writes a variable bare inside the value, `{"messages": %messages%}`, which
+					// is not json a parser will take. Quoting it is what the llm writes for the same
+					// step, and it is a token change, not a reading of the step: %name% is a plang
+					// variable whatever language the step is written in.
+					var quoted = System.Text.RegularExpressions.Regex.Replace(choice,
+						"(?<![\"'\\w])(%[^%\"'\\s]+%)(?![\"'\\w])", "\"$1\"");
+					return Newtonsoft.Json.Linq.JToken.Parse(quoted);
 				}
 				catch (Exception)
 				{
@@ -1249,6 +1259,22 @@ Make sure to use the information in <error> to return valid JSON response"
 				if (!literals.Contains(literal)) literals.Add(literal);
 			}
 			return literals;
+		}
+
+		// Every occurrence of the value in the step text sits inside a json span.
+		private static bool OnlyInsideSpan(string text, string value, List<string>? spans)
+		{
+			if (spans == null || spans.Count == 0 || string.IsNullOrEmpty(value)) return false;
+
+			bool found = false;
+			int at = text.IndexOf(value, StringComparison.OrdinalIgnoreCase);
+			while (at >= 0)
+			{
+				found = true;
+				if (!InsideSpan(text, at, spans)) return false;
+				at = text.IndexOf(value, at + 1, StringComparison.OrdinalIgnoreCase);
+			}
+			return found;
 		}
 
 		private static bool InsideSpan(string text, int index, List<string>? spans)
