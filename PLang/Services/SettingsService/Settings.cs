@@ -196,6 +196,20 @@ namespace PLang.Services.SettingsService
 			}
             
         }
+        // Reads the shared store of another app without touching which store this instance points
+        // at, so it is safe to call from parallel builds. Missing is null, never a prompt.
+        public T? GetShared<T>(string appId, Type callingType, string key)
+        {
+            var setting = settingsRepositoryFactory.CreateHandler().GetShared(appId, callingType.FullName, typeof(T).FullName, GetKey(key));
+            if (setting == null || string.IsNullOrEmpty(setting.Value)) return default;
+
+            if (typeof(T) == typeof(string) && !setting.Value.StartsWith("\""))
+            {
+                return (T)Convert.ChangeType(setting.Value, typeof(T));
+            }
+            return JsonConvert.DeserializeObject<T>(setting.Value);
+        }
+
         public T GetOrDefault<T>(Type callingType, string? key, T defaultValue)
         {
             var type = typeof(T).FullName;

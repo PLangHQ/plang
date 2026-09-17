@@ -306,6 +306,18 @@ CREATE TABLE IF NOT EXISTS Settings (
 			return setting;
 		}
 
+		// Same lookup as Get, against another app's shared store, without moving DataSource there.
+		public Setting? GetShared(string appId, string? fullName, string? type, string? key)
+		{
+			var sharedDataSource = GetSharedDataSourcePath(appId);
+			CheckSettingsTable(sharedDataSource);
+			using (IDbConnection connection = new SqliteConnection(sharedDataSource))
+			{
+				return connection.Query<Setting>("SELECT * FROM Settings")
+					.FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			}
+		}
+
 		public string SerializeSettings()
 		{
 			StringBuilder sb = new StringBuilder();

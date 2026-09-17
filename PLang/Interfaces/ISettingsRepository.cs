@@ -15,6 +15,7 @@ namespace PLang.Interfaces
         void Remove(Setting setting);
 		void SetSharedDataSource(string? appId = null);
 		Setting? Get(string? fullName, string? type, string? key);
+		Setting? GetShared(string appId, string? fullName, string? type, string? key);
 		string SerializeSettings();
 		IError? SetSystemDbPath(string path);
 		void ResetSystemDbPath();

@@ -93,17 +93,18 @@ namespace PLang.Services.OpenAi
 
 		private string? GetBearer()
 		{
-			string? bearer = null;
-			try
+			// App settings first, then the shared store, read directly: the old way switched the
+			// settings repository to the shared store and back, process wide state that parallel goal
+			// builds interleaved, so the key was found or missed depending on timing. Only when both
+			// miss is the user asked, and the answer lands in the app settings.
+			var bearer = settings.GetOrDefault<string>(this.GetType(), settingKey, "");
+			if (string.IsNullOrEmpty(bearer) && !string.IsNullOrEmpty(appId))
 			{
-				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
+				bearer = settings.GetShared<string>(appId, this.GetType(), settingKey);
 			}
-			catch { }
 			if (string.IsNullOrEmpty(bearer))
 			{
-				settings.SetSharedSettings(appId);
-				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
-				settings.SetSharedSettings(null);
+				bearer = settings.Get(this.GetType(), settingKey, "", $"Type in API key for LLM service ({settingKey} was not found in this app's settings or the shared settings)");
 			}
 			return bearer;
 		}

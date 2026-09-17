@@ -12,6 +12,7 @@ namespace PLang.Interfaces
 		bool Contains<T>(Type callingType, string? key = null);
 		T Get<T>(Type callingType, string key, T defaultValue, string explain);
 		T? GetOrDefault<T>(Type callingType, string key, T defaultValue);
+		T? GetShared<T>(string appId, Type callingType, string key);
 		void Set<T>(Type callingType, string key, T value);
 		void Remove<T>(Type callingType, string? key = null);
 		IEnumerable<Setting> GetAllSettings();
