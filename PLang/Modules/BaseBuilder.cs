@@ -411,23 +411,37 @@ Make sure to use the information in <error> to return valid JSON response"
 			var literals = QuotedLiterals(step.Text);
 			var numbers = Numbers(step.Text);
 
-			var questions = new Dictionary<string, Dictionary<string, string>>();
+			var questions = new Dictionary<string, ParameterQuestion>();
+			var recordFields = new Dictionary<string, List<PrimitiveDescription>>();
 			foreach (var parameter in method.Parameters ?? new())
 			{
-				// An optional parameter the step never mentions is left unset so its default applies.
-				// Asking about it only invites an unsure answer that would veto the whole step, and
-				// leaving it out is exactly what the llm does with it.
-				if (!parameter.IsRequired && step.Text.IndexOf(parameter.Name, StringComparison.OrdinalIgnoreCase) < 0)
-				{
-					continue;
-				}
+				if (LeaveUnset(parameter, step.Text)) continue;
 				var candidates = ParameterCandidates(parameter, variables, literals, numbers);
 				if (candidates == null)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
-					return null;
+					// A record of simple fields (TextMessage is one) is decided field by field, the same
+					// way a method is decided parameter by parameter: required fields are asked, fields
+					// with a constructor default that the step never mentions keep that default.
+					var fields = RecordFields(parameter, step.Text);
+					if (fields == null)
+					{
+						logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name} ({parameter.Type}) is not a choice");
+						return null;
+					}
+					foreach (var field in fields)
+					{
+						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers);
+						if (fieldCandidates == null)
+						{
+							logger.LogInformation($"{step.LineNumber}: Decider leaves parameters to llm, {parameter.Name}.{field.Name} ({field.Type}) is not a choice");
+							return null;
+						}
+						questions[$"{parameter.Name}.{field.Name}"] = new ParameterQuestion(Describe(field, $"a field of the {parameter.Name} parameter"), fieldCandidates);
+					}
+					recordFields[parameter.Name] = fields;
+					continue;
 				}
-				questions[parameter.Name] = candidates;
+				questions[parameter.Name] = new ParameterQuestion(Describe(parameter, null), candidates);
 			}
 
 			var returnType = method.ReturnValue?.Type;
@@ -436,10 +450,11 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				var targets = variables.ToDictionary(v => v, v => $"write the result into the variable {v}");
 				targets[NoneOption] = "the result is not written to a variable";
-				questions["__return__"] = targets;
+				questions["__return__"] = new ParameterQuestion("The variable the method's result is written into, when the step names one (write to %x%, into %x%, -> %x%).", targets);
 			}
 			if (questions.Count == 0)
 			{
+				if (!EveryValuePlaced(step, variables, literals, numbers, new(), new())) return null;
 				return BuildDecided(step, method, new(), new(), question);
 			}
 
@@ -453,22 +468,60 @@ Make sure to use the information in <error> to return valid JSON response"
 			var parameters = new List<Parameter>();
 			foreach (var parameter in method.Parameters ?? new())
 			{
+				if (recordFields.TryGetValue(parameter.Name, out var fields))
+				{
+					var record = new Dictionary<string, object?>();
+					foreach (var field in fields)
+					{
+						var fieldKey = $"{parameter.Name}.{field.Name}";
+						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return null;
+						if (fieldChoice.Choice == NoneOption && !field.IsRequired) continue;
+						if (fieldChoice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+						{
+							logger.LogInformation($"{step.LineNumber}: Decider field {fieldKey}={fieldChoice.Choice} ({fieldChoice.Confidence:0.00}, {(field.IsRequired ? "required" : "optional")}) not trusted, llm fills parameters");
+							return null;
+						}
+						if (fieldChoice.Choice == NoneOption)
+						{
+							logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required field {fieldKey}, llm fills parameters");
+							return null;
+						}
+						var fieldValue = ToValue(field, fieldChoice.Choice);
+						if (fieldValue == null)
+						{
+							logger.LogInformation($"{step.LineNumber}: Decider could not type {fieldKey}={fieldChoice.Choice} as {field.Type}, llm fills parameters");
+							return null;
+						}
+						logger.LogInformation($"{step.LineNumber}: Decider set {fieldKey} = {fieldChoice.Choice} ({fieldChoice.Confidence:0.00})");
+						record[field.Name] = fieldValue;
+					}
+					var recordValue = RecordValue(parameter, record);
+					if (recordValue == null)
+					{
+						logger.LogInformation($"{step.LineNumber}: Decider could not construct {parameter.Name} ({parameter.Type}), llm fills parameters");
+						return null;
+					}
+					parameters.Add(new Parameter(parameter.Type, parameter.Name, recordValue));
+					continue;
+				}
+
 				// Never asked about, so nothing to trust or distrust: the parameter stays unset.
 				if (!questions.ContainsKey(parameter.Name)) continue;
 
-				if (!choices.TryGetValue(parameter.Name, out var choice) || choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
+				// Unset is the default for an optional parameter, the llm leaves it out just the same,
+				// so that answer is taken at any confidence; a value the step carries that should have
+				// gone here is caught by EveryValuePlaced. Only an assignment has to be sure.
+				if (!choices.TryGetValue(parameter.Name, out var choice)) return null;
+				if (choice.Choice == NoneOption && !parameter.IsRequired) continue;
+				if (choice.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
 				{
-					logger.LogInformation($"{step.LineNumber}: Decider parameter {parameter.Name}={choice?.Choice} ({choice?.Confidence:0.00}) not trusted, llm fills parameters");
+					logger.LogInformation($"{step.LineNumber}: Decider parameter {parameter.Name}={choice.Choice} ({choice.Confidence:0.00}) not trusted, llm fills parameters");
 					return null;
 				}
 				if (choice.Choice == NoneOption)
 				{
-					if (parameter.IsRequired)
-					{
-						logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required parameter {parameter.Name}, llm fills parameters");
-						return null;
-					}
-					continue;
+					logger.LogInformation($"{step.LineNumber}: Decider found no value in the step for required parameter {parameter.Name}, llm fills parameters");
+					return null;
 				}
 				var value = ToValue(parameter, choice.Choice);
 				if (value == null)
@@ -495,7 +548,38 @@ Make sure to use the information in <error> to return valid JSON response"
 				}
 			}
 
+			if (!EveryValuePlaced(step, variables, literals, numbers, parameters, returnValues)) return null;
 			return BuildDecided(step, method, parameters, returnValues, question);
+		}
+
+		// The step's own values, its variables, quoted texts and numbers, must all have landed in a
+		// parameter or the return variable; one left over means the step carries something the
+		// decided method has no place for, and the llm has to read it. This is what stops a step
+		// like `set %a% = %x%, %b% = %y%` from being built with its only parameter, a dictionary
+		// that is not a choice, left out because it is declared optional.
+		private bool EveryValuePlaced(GoalStep step, List<string> variables, List<string> literals, List<string> numbers, List<Parameter> parameters, List<ReturnValue> returnValues)
+		{
+			var placed = new List<string>();
+			foreach (var parameter in parameters)
+			{
+				if (parameter.Value is Newtonsoft.Json.Linq.JObject record)
+				{
+					placed.AddRange(record.Properties().Select(p => p.Value.ToString()));
+				}
+				else if (parameter.Value != null)
+				{
+					placed.Add(parameter.Value.ToString()!);
+				}
+			}
+			placed.AddRange(returnValues.Select(r => r.VariableName));
+
+			var unplaced = variables.Concat(literals).Concat(numbers)
+				.Where(value => !placed.Any(p => p.Contains(value, StringComparison.OrdinalIgnoreCase)))
+				.ToList();
+			if (unplaced.Count == 0) return true;
+
+			logger.LogInformation($"{step.LineNumber}: Decider found no parameter for {string.Join(", ", unplaced)} in the step, llm builds it");
+			return false;
 		}
 
 		private Instruction BuildDecided(GoalStep step, MethodDescription method, List<Parameter> parameters, List<ReturnValue> returnValues, LlmRequest question)
@@ -542,6 +626,84 @@ Make sure to use the information in <error> to return valid JSON response"
 				? "none of these, the value is something else"
 				: "none of these, leave the parameter unset so its default applies";
 			return candidates;
+		}
+
+		// The fields of a record parameter, read off its constructor: a field with no default is
+		// required, one with a default is only asked about when the step names it. Null when the
+		// type cannot be resolved or has no constructor to read.
+		private static List<PrimitiveDescription>? RecordFields(IPropertyDescription parameter, string stepText)
+		{
+			var type = ResolveType(parameter.Type ?? "");
+			var constructor = type?.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+			if (constructor == null || constructor.GetParameters().Length == 0) return null;
+
+			var fields = new List<PrimitiveDescription>();
+			foreach (var field in constructor.GetParameters())
+			{
+				var fieldType = Nullable.GetUnderlyingType(field.ParameterType) ?? field.ParameterType;
+				var description = new PrimitiveDescription { Name = field.Name!, Type = fieldType.FullName ?? "", IsRequired = !field.HasDefaultValue };
+				if (LeaveUnset(description, stepText)) continue;
+				fields.Add(description);
+			}
+			return fields;
+		}
+
+		// The runtime fills a record parameter property by property, never through its constructor,
+		// so a field left out does not get its constructor default but default(T): a TextMessage
+		// with only Content set arrives with Level null and StatusCode 0 and the sink throws. Build
+		// the real instance through the constructor, decided fields plus defaults, and write that,
+		// which is the same complete shape the llm writes.
+		private static object? RecordValue(IPropertyDescription parameter, Dictionary<string, object?> decided)
+		{
+			var type = ResolveType(parameter.Type ?? "");
+			var constructor = type?.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+			if (constructor == null) return null;
+
+			var arguments = new List<object?>();
+			foreach (var field in constructor.GetParameters())
+			{
+				if (decided.TryGetValue(field.Name!, out var value) && value != null)
+				{
+					var fieldType = Nullable.GetUnderlyingType(field.ParameterType) ?? field.ParameterType;
+					arguments.Add(fieldType.IsEnum ? Enum.Parse(fieldType, value.ToString()!) : Convert.ChangeType(value, fieldType, System.Globalization.CultureInfo.InvariantCulture));
+				}
+				else
+				{
+					arguments.Add(field.HasDefaultValue ? field.DefaultValue : null);
+				}
+			}
+			var instance = constructor.Invoke(arguments.ToArray());
+			return Newtonsoft.Json.Linq.JObject.FromObject(instance);
+		}
+
+		// An optional parameter the step never names is left unset, so its default applies, unless
+		// it is a text, number or object: those take their candidates from the step itself, and
+		// `set %greeting% = "hello"` never names its `value` parameter, yet that is where "hello"
+		// goes. A bool or enum has candidates regardless of the step, and a complex type is not a
+		// choice at all; asking about either invites an unsure answer that vetoes the whole step.
+		// Leaving a complex one unset is only safe because EveryValuePlaced then refuses a step
+		// whose values found no home.
+		// What the decider is told about a parameter: whether it may be left unset, its type, and
+		// the description the module author wrote for it, the same text the llm gets.
+		private static string Describe(IPropertyDescription parameter, string? role)
+		{
+			var type = (parameter.Type ?? "").Replace("System.Nullable`1[", "").Replace("System.", "").TrimEnd(']');
+			var text = parameter.IsRequired
+				? $"required, type {type}."
+				: $"optional, type {type}, left unset unless the step clearly gives it a value.";
+			if (role != null) text = role + ", " + text;
+			if (!string.IsNullOrWhiteSpace(parameter.Description)) text += " " + parameter.Description.Trim();
+			return text;
+		}
+
+		private static bool LeaveUnset(IPropertyDescription parameter, string stepText)
+		{
+			if (parameter.IsRequired) return false;
+			if (stepText.IndexOf(parameter.Name, StringComparison.OrdinalIgnoreCase) >= 0) return false;
+
+			var type = parameter.Type ?? "";
+			bool fromStep = type == "System.String" || type == "System.Object" || IsNumeric(type);
+			return !fromStep;
 		}
 
 		private static object? ToValue(IPropertyDescription parameter, string choice)

@@ -12,9 +12,9 @@ namespace PLang.Building
 		Task<(MethodChoice? Choice, IError? Error)> ChooseMethod(string stepText, string module, Dictionary<string, string> methods);
 
 		// One question per parameter, all answered in a single call. Each entry is the parameter
-		// name mapped to its candidate options (option key -> description). The answer maps the
-		// same parameter names to the chosen option key and how sure the engine is.
-		Task<(Dictionary<string, ParameterChoice>? Choices, IError? Error)> ChooseParameters(string stepText, string method, Dictionary<string, Dictionary<string, string>> parameters);
+		// name mapped to what it is and its candidate options. The answer maps the same parameter
+		// names to the chosen option key and how sure the engine is.
+		Task<(Dictionary<string, ParameterChoice>? Choices, IError? Error)> ChooseParameters(string stepText, string method, Dictionary<string, ParameterQuestion> parameters);
 	}
 
 	public static class BuilderDecider

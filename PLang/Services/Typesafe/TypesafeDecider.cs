@@ -71,14 +71,14 @@ namespace PLang.Services.Typesafe
 			return (new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities), null);
 		}
 
-		public async Task<(Dictionary<string, ParameterChoice>? Choices, IError? Error)> ChooseParameters(string stepText, string method, Dictionary<string, Dictionary<string, string>> parameters)
+		public async Task<(Dictionary<string, ParameterChoice>? Choices, IError? Error)> ChooseParameters(string stepText, string method, Dictionary<string, ParameterQuestion> parameters)
 		{
 			var questions = new Dictionary<string, Question>();
 			foreach (var parameter in parameters)
 			{
 				questions[parameter.Key] = new Question(
-					$"This is one step of plang code that calls the method {method}. Which of these is the value of its parameter '{parameter.Key}'?",
-					parameter.Value);
+					$"This is one step of plang code that calls the method {method}. Parameter '{parameter.Key}': {parameter.Value.Description} Which of these is its value in this step?",
+					parameter.Value.Candidates);
 			}
 
 			var (answers, error) = await Ask(stepText, questions);
