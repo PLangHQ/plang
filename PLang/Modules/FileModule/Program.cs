@@ -166,13 +166,13 @@ namespace PLang.Modules.FileModule
 		}
 		public async Task<(object?, IError?)> ReadJson(string path, bool throwErrorOnNotFound = true,
 			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", [Description("true only when the step asks to read from plang's own system folder. false for any path in the app")] bool allowReadingFromSystem = false)
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, null, allowReadingFromSystem);
 		}
 		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = true,
 			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, [Description("true only when the step asks to read from plang's own system folder. false for any path in the app")] bool allowReadingFromSystem = false)
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			newLineSymbol ??= Environment.NewLine;
 			var result = await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol, allowReadingFromSystem);
@@ -200,7 +200,7 @@ namespace PLang.Modules.FileModule
 		[Description("Reads a text file and write the content into a variable(return value)")]
 		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
 			[Description("true only when the step asks for %variables% written inside the file's content to be replaced with their values as it is read, e.g. `read file x.txt, load variables`. false is the normal case: the file is read as it stands")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, [Description("true only when the step asks to read from plang's own system folder. false for any path in the app")] bool allowReadingFromSystem = false)
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			var absolutePath = GetPath(path);
 

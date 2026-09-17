@@ -337,7 +337,7 @@ public class StepBuilder : IStepBuilder
 			// A module the developer named is not a decision, so it is not worth asking about.
 			if (GetUserRequestedModule(step).Count == 1) continue;
 			questions[QuestionKey(step)] = new DeciderQuestion(
-				$"Step {step.LineNumber} of this goal is `{step.Text.Trim()}`. Which plang module implements what step {step.LineNumber} does?",
+				$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. Which plang module implements what step {step.Index + 1} does?",
 				modules);
 		}
 		if (questions.Count == 0) return;
@@ -387,7 +387,7 @@ public class StepBuilder : IStepBuilder
 			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) continue;
 
 			questions[QuestionKey(step)] = new DeciderQuestion(
-				$"Step {step.LineNumber} of this goal is `{step.Text.Trim()}`. It uses the module {module}. Which method of that module does step {step.LineNumber} call?",
+				$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. It uses the module {module}. Which method of that module does step {step.Index + 1} call?",
 				MethodCriteria(classDescription));
 		}
 		if (questions.Count == 0) return;
@@ -520,10 +520,10 @@ public class StepBuilder : IStepBuilder
 		// by, or a question names a step the state does not contain. And the parameter's name has to
 		// be in the text: without it `set %greeting% = "hello"` was asked twice for "a required
 		// string" with no way to tell key from value, and the engine put the literal in key at 0.99.
-		var instructions = $"Step {step.LineNumber} of this goal is `{step.Text.Trim()}`. It calls {method}."
+		var instructions = $"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. It calls {method}."
 			+ (returnFact == null ? "" : " " + returnFact)
 			+ $" Parameter '{parameterName}': {question.Description}"
-			+ $" Which of these is the value of '{parameterName}' in step {step.LineNumber}?";
+			+ $" Which of these is the value of '{parameterName}' in step {step.Index + 1}?";
 		return new DeciderQuestion(instructions, question.Candidates);
 	}
 
@@ -548,7 +548,7 @@ public class StepBuilder : IStepBuilder
 		var text = new StringBuilder($"This is a plang goal called {goal.GoalName}. Its steps are numbered.\n\n");
 		foreach (var step in goal.GoalSteps)
 		{
-			text.AppendLine($"step {step.LineNumber}: {step.Text.Trim()}");
+			text.AppendLine($"step {step.Index + 1}: {step.Text.Trim()}");
 		}
 		return text.ToString();
 	}

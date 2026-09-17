@@ -50,6 +50,26 @@ namespace PLang.Services.Typesafe
 			}
 		}
 
+		// Set PLANG_TYPESAFE_DUMP to a folder to write every request body there, to read what the
+		// builder actually asks. Off unless the variable is set, and a failure to write is ignored:
+		// this is a look at the traffic, never something a build depends on.
+		private static int dumpCounter;
+		private static void DumpRequest(Dictionary<string, object> body)
+		{
+			var folder = Environment.GetEnvironmentVariable("PLANG_TYPESAFE_DUMP");
+			if (string.IsNullOrEmpty(folder)) return;
+
+			try
+			{
+				Directory.CreateDirectory(folder);
+				var count = Interlocked.Increment(ref dumpCounter);
+				var questions = (body["questions"] as Dictionary<string, object>)?.Count ?? 0;
+				var path = Path.Combine(folder, $"{count:00}-{questions}-questions.json");
+				File.WriteAllText(path, JsonConvert.SerializeObject(body, Formatting.Indented));
+			}
+			catch { }
+		}
+
 		public async Task<(ModuleChoice? Choice, IError? Error)> ChooseModule(string stepText, Dictionary<string, string> modules)
 		{
 			var (answers, error) = await Choose(stepText, new()
@@ -130,6 +150,8 @@ namespace PLang.Services.Typesafe
 						["criteria"] = q.Value.Criteria
 					})
 				};
+
+				DumpRequest(body);
 
 				using var request = new HttpRequestMessage(HttpMethod.Post, Url);
 				request.Headers.UserAgent.ParseAdd("plang v0.1");

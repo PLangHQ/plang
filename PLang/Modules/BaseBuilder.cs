@@ -708,9 +708,9 @@ Make sure to use the information in <error> to return valid JSON response"
 			var text = new System.Text.StringBuilder($"This is a plang goal called {step.Goal!.GoalName}. Its steps are numbered.\n\n");
 			foreach (var other in steps)
 			{
-				text.AppendLine($"step {other.LineNumber}: {other.Text.Trim()}");
+				text.AppendLine($"step {other.Index + 1}: {other.Text.Trim()}");
 			}
-			text.AppendLine($"\nThe questions below are all about step {step.LineNumber}: {step.Text.Trim()}");
+			text.AppendLine($"\nThe questions below are all about step {step.Index + 1}: {step.Text.Trim()}");
 			return text.ToString();
 		}
 
@@ -993,7 +993,20 @@ Make sure to use the information in <error> to return valid JSON response"
 		private static object? RecordValue(IPropertyDescription parameter, Dictionary<string, object?> decided)
 		{
 			var instance = ConstructRecord(parameter.Type ?? "", "", decided);
-			return instance == null ? null : Newtonsoft.Json.Linq.JObject.FromObject(instance);
+			if (instance == null) return null;
+
+			// A record can carry properties that are derived rather than given, such as
+			// RenderTemplateOptions.GuessIfTemplateFile, which reads whether Content looks like a file
+			// name. They are computed at runtime and the llm never writes them, so writing them into
+			// the instruction would put something in the .pr that is not an input.
+			var json = Newtonsoft.Json.Linq.JObject.FromObject(instance);
+			foreach (var property in instance.GetType().GetProperties())
+			{
+				bool derived = !property.CanWrite
+					|| System.Reflection.CustomAttributeExtensions.GetCustomAttributes(property, typeof(PLang.Attributes.LlmIgnoreAttribute)).Any();
+				if (derived) json.Remove(property.Name);
+			}
+			return json;
 		}
 
 		private static object? ConstructRecord(string typeName, string prefix, Dictionary<string, object?> decided)
