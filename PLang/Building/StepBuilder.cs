@@ -561,7 +561,7 @@ public class StepBuilder : IStepBuilder
 		// by, or a question names a step the state does not contain. And the parameter's name has to
 		// be in the text: without it `set %greeting% = "hello"` was asked twice for "a required
 		// string" with no way to tell key from value, and the engine put the literal in key at 0.99.
-		var instructions = $"Step {step.Index + 1} calls {method}."
+		var instructions = $"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. It calls {method}."
 			+ (returnFact == null ? "" : " " + returnFact)
 			+ $" Parameter '{parameterName}': {question.Description}"
 			+ $" Which of these is the value of '{parameterName}' in step {step.Index + 1}?";

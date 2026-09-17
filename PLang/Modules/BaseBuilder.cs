@@ -917,12 +917,17 @@ Make sure to use the information in <error> to return valid JSON response"
 			// optional one simply keeps its default: RenderMessage.StatusCode is an int and most steps
 			// write no number at all, which was being reported as "not a choice" and gave up the step.
 			// An empty set of candidates, as opposed to null, tells the caller to leave it unset.
-			// An optional parameter is never offered its own default as an option. Choosing it and
-			// leaving the parameter alone are the same instruction, so offering both split the
-			// probability between two answers that do the same thing: loadVariables, whose default is
-			// false, came back as unset at 0.27 while also holding false at 0.5, and looked unsure
-			// when it was not. Now there is one way to say leave it alone.
-			if (!parameter.IsRequired && parameter.DefaultValue != null)
+			// A bool keeps both of its answers. Removing the one that matches the default leaves
+			// `true` against `leave it unset`, and that indirection is what a bool is worst at:
+			// loadVariables answered 0.17 to 0.57 that way and answers 0.97 asked as true against
+			// false. A chosen value that equals the default is simply not written, which is the same
+			// instruction as leaving it out.
+			bool isBool = type == "System.Boolean" || type == "System.Nullable`1[System.Boolean]";
+
+			// Every other optional parameter is never offered its own default as an option. Choosing
+			// it and leaving the parameter alone are the same instruction, so offering both split the
+			// probability between two answers that do the same thing.
+			if (!isBool && !parameter.IsRequired && parameter.DefaultValue != null)
 			{
 				var asDefault = parameter.DefaultValue.ToString();
 				var sameAsDefault = candidates.Keys.FirstOrDefault(c => string.Equals(c, asDefault, StringComparison.OrdinalIgnoreCase));
