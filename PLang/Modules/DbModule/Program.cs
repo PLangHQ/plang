@@ -508,7 +508,18 @@ namespace PLang.Modules.DbModule
 				return (connection, transaction, paramResult.DynamicParameters, sql, null);
 			}
 
-			connection.Open();
+			try
+			{
+				connection.Open();
+			}
+			catch (Exception ex)
+			{
+				// The driver's message alone ("Connect Timeout expired") does not say which of the
+				// app's datasources it was, and the builder reads the structure of every datasource a
+				// step could mean, so name it, and the server for a remote one.
+				var server = System.Text.RegularExpressions.Regex.Match(connection.ConnectionString ?? "", @"(?:Server|Host|Data Source)=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
+				return (null, null, null, sql, new ProgramError($"Could not open datasource '{dataSource.Name}' ({dataSource.TypeFullName.Split('.').Last()} at {server}): {ex.Message}", goalStep, function, Exception: ex, Key: "DataSourceUnreachable"));
+			}
 
 			SqliteJournalMode.EnableWal(connection);
 
