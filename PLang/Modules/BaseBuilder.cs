@@ -1184,6 +1184,15 @@ Make sure to use the information in <error> to return valid JSON response"
 				foreach (var literal in literals) candidates[literal] = $"the text \"{literal}\" written in the step";
 				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
 
+				// A number the step writes unquoted is a value an object can hold, and it was on offer
+				// only for a parameter typed as a number. `if %n% == 3` compares against item2, which
+				// is an object, so 3 was on no menu at all and the step reported no value for a
+				// required parameter: every equality test against a number went to the llm.
+				if (type == "System.Object")
+				{
+					foreach (var number in numbers) candidates[number] = $"the number {number} written in the step";
+				}
+
 				// A calculation is one value made of several tokens, so offering the tokens one at a
 				// time never offers the answer: `set %prevWeek% = %week% - 1` needs "%week% - 1" and
 				// only %week% and 1 were on the menu. A span of variables, numbers and arithmetic
