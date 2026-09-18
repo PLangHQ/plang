@@ -296,6 +296,9 @@ namespace PLang.Building
 				// knowing how the steps that did build were built.
 				var deciderSummary = deciderReport.Summary();
 				if (deciderSummary != null) logger.LogInformation("\n" + deciderSummary);
+
+				var timings = deciderReport.Timings();
+				if (timings != null) logger.LogInformation("\n" + timings);
 			}
 			return null;
 		}

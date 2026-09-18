@@ -52,9 +52,10 @@ namespace PLang.Building
 		private readonly VariableHelper variableHelper;
 		private readonly MethodHelper methodHelper;
 		private readonly IStepBuilder stepBuilder;
+		private readonly IBuilderDeciderReport deciderReport;
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
-				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
+				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper, IBuilderDeciderReport deciderReport,
 				PrParser prParser, ISettings settings, Modules.DbModule.ModuleSettings dbSettings,
 				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper)
 		{
@@ -64,6 +65,7 @@ namespace PLang.Building
 			this.logger = logger;
 			this.goalParser = goalParser;
 			this.stepBuilder = stepBuilder;
+			this.deciderReport = deciderReport;
 			this.eventRuntime = eventRuntime;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
@@ -194,6 +196,7 @@ namespace PLang.Building
 
 			WriteToGoalPrFile(goal);
 			logger.LogInformation($"Done building all goals {goal.GoalName} - It took {stopwatch.ElapsedMilliseconds}ms");
+			deciderReport.RecordGoalBuilt(goal, stopwatch.Elapsed);
 
 			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
 		}

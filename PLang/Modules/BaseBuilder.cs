@@ -213,7 +213,9 @@ namespace PLang.Modules
 			{
 
 
+				var llmStarted = Stopwatch.StartNew();
 				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
+				deciderReport?.RecordLlmCall(step.Goal!, llmStarted.Elapsed);
 				if (queryError != null) return (null, new BuilderError(queryError));
 
 				if (result == null || (result is string str && string.IsNullOrEmpty(str)))
@@ -403,7 +405,9 @@ Make sure to use the information in <error> to return valid JSON response"
 			IError? deciderError = null;
 			if (choice == null)
 			{
+				var methodStarted = Stopwatch.StartNew();
 				(choice, deciderError) = await decider.ChooseMethod(step.Text, module, MethodCriteria(classDescription));
+				deciderReport?.RecordDeciderCall(step.Goal!, methodStarted.Elapsed);
 			}
 			if (deciderError != null)
 			{
@@ -562,7 +566,9 @@ Make sure to use the information in <error> to return valid JSON response"
 			IError? error = null;
 			if (choices == null)
 			{
+				var parametersStarted = Stopwatch.StartNew();
 				(choices, error) = await decider.ChooseParameters(state, method.MethodName, questions);
+				deciderReport?.RecordDeciderCall(step.Goal!, parametersStarted.Elapsed);
 			}
 			if (error != null || choices == null)
 			{
@@ -598,6 +604,10 @@ Make sure to use the information in <error> to return valid JSON response"
 					}
 					if (entries.Count == 0)
 					{
+						// Nothing in the step belongs to this dictionary. For an optional one that is the
+						// answer, not a failure: `render "x.html", write to %html%` passes no variables to
+						// the template, and the llm writes null for it too.
+						if (!parameter.IsRequired) continue;
 						return FellBack(step, $"Decider found nothing set by the step for {parameter.Name}, llm fills parameters");
 					}
 					logger.LogInformation($"{step.LineNumber}: Decider set {parameter.Name} = {entries.ToString(Newtonsoft.Json.Formatting.None)}");

@@ -51,6 +51,7 @@ public class StepBuilder : IStepBuilder
 	private readonly IGoalParser goalParser;
 	private readonly IBuilderDecider decider;
 	private readonly IBuilderDeciderCache deciderCache;
+	private readonly IBuilderDeciderReport deciderReport;
 
 	private const double DeciderConfidenceThreshold = BuilderDecider.ConfidenceThreshold;
 	private IMemoryStackAccessor memoryStackAccessor;
@@ -59,10 +60,11 @@ public class StepBuilder : IStepBuilder
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
 				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine,
-				PrParser prParser, IGoalParser goalParser, IBuilderDecider decider, IBuilderDeciderCache deciderCache)
+				PrParser prParser, IGoalParser goalParser, IBuilderDecider decider, IBuilderDeciderCache deciderCache, IBuilderDeciderReport deciderReport)
 	{
 		this.decider = decider;
 		this.deciderCache = deciderCache;
+		this.deciderReport = deciderReport;
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
 		this.logger = logger;
@@ -357,7 +359,9 @@ public class StepBuilder : IStepBuilder
 		}
 		if (questions.Count == 0) return;
 
+		var started354 = System.Diagnostics.Stopwatch.StartNew();
 		var (answers, error) = await decider.Choose(GoalState(goal) + catalogue, questions);
+		deciderReport.RecordDeciderCall(goal, started354.Elapsed);
 		if (error != null || answers == null)
 		{
 			// Nothing is lost: with an empty cache every step asks for itself, exactly as before.
@@ -437,7 +441,9 @@ public class StepBuilder : IStepBuilder
 		}
 		if (questions.Count == 0) return;
 
+		var started632 = System.Diagnostics.Stopwatch.StartNew();
 		var (answers, error2) = await decider.Choose(GoalState(goal), questions);
+		deciderReport.RecordDeciderCall(goal, started632.Elapsed);
 		if (error2 != null || answers == null)
 		{
 			logger.Value.LogWarning($"Decider could not choose methods for {goal.GoalName} in one request, each step will ask on its own: {error2?.Message}");
@@ -524,7 +530,9 @@ public class StepBuilder : IStepBuilder
 		}
 		if (questions.Count > 0)
 		{
-			var (answers, error) = await decider.Choose(state, questions);
+			var started457 = System.Diagnostics.Stopwatch.StartNew();
+		var (answers, error) = await decider.Choose(state, questions);
+		deciderReport.RecordDeciderCall(goal, started457.Elapsed);
 			if (error != null || answers == null)
 			{
 				logger.Value.LogWarning($"Decider could not choose parameters for {goal.GoalName} in one request, each step will ask on its own: {error?.Message}");
@@ -649,7 +657,9 @@ public class StepBuilder : IStepBuilder
 
 		logger.Value.LogInformation($"{step.LineNumber}: Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 
+		var moduleLlmStarted = System.Diagnostics.Stopwatch.StartNew();
 		(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
+		deciderReport.RecordLlmCall(goal, moduleLlmStarted.Elapsed);
 		if (llmError != null) return (step, new BuilderError(llmError, false));
 		if (stepInformation == null) return (step, new BuilderError("Didn't get any information"));
 
