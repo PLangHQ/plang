@@ -220,11 +220,16 @@ namespace PLang.Services.Typesafe
 						continue;
 					}
 
-					var choice = answer?["choice"]?.ToString();
-					if (string.IsNullOrEmpty(choice))
+					// An option key may itself be the empty string: `set %path% = ""` offers "" as the
+					// value, and the engine answering "" is the right answer, not a missing one.
+					// Reading it as missing threw the whole goal's batch away and sent every step in
+					// it to the llm. Only a choice that is not there at all is an error.
+					var choiceToken = answer?["choice"];
+					if (choiceToken == null || choiceToken.Type == JTokenType.Null)
 					{
 						return (null, new ServiceError($"Typesafe gave no '{question.Key}' choice: {responseBody}", this.GetType()));
 					}
+					var choice = choiceToken.ToString();
 					var confidence = answer?["confidence"]?.Value<double>() ?? 0;
 					var probabilities = answer?["probabilities"]?.ToObject<Dictionary<string, double>>() ?? new();
 					answers[question.Key] = new DeciderAnswer(choice, confidence, probabilities);

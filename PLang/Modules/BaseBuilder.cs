@@ -460,7 +460,11 @@ Make sure to use the information in <error> to return valid JSON response"
 
 		private const string NoneOption = "__none__";
 		private const string EmptyListOption = "__empty_list__";
-		private const string PassedThroughOption = "__passed__";
+
+		// A dictionary is asked about from both ends and the two sets of answers are read back
+		// differently, so the question keys carry which end they came from.
+		private const string ByValue = "value:";
+		private const string ByName = "name:";
 
 		private static bool IsList(string type)
 		{
@@ -583,26 +587,9 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				if (plan.Dictionaries.TryGetValue(parameter.Name, out var keys))
 				{
-					var entries = new Newtonsoft.Json.Linq.JObject();
-					foreach (var key in keys)
-					{
-						if (!choices.TryGetValue($"{parameter.Name}#{key}", out var entry)) continue;
-						// Every answer has to be sure, the nones too: an unsure none silently drops a value
-						// the step asked for, and the step would build and do less than it says.
-						if (entry.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold)
-						{
-							return FellBack(step, $"Decider unsure what the step does with {key} ({entry.Confidence:0.00}), llm fills parameters");
-						}
-						if (entry.Choice == NoneOption) continue;
-						if (entry.Choice == PassedThroughOption)
-						{
-							// `return %result%` is {"result": "%result%"}, keyed by the name without its %.
-							entries[key.Trim('%')] = key;
-							continue;
-						}
-						entries[key] = entry.Choice;
-					}
-					if (entries.Count == 0)
+					var entries = BuildDictionary(step, choices, parameter.Name, keys, out var dictionaryError);
+					if (dictionaryError != null) return FellBack(step, dictionaryError);
+					if (entries!.Count == 0)
 					{
 						// Nothing in the step belongs to this dictionary. For an optional one that is the
 						// answer, not a failure: `render "x.html", write to %html%` passes no variables to
@@ -621,6 +608,17 @@ Make sure to use the information in <error> to return valid JSON response"
 					foreach (var field in fields)
 					{
 						var fieldKey = $"{parameter.Name}.{field.Name}";
+
+						// A dictionary inside the record: its entries were asked for one by one, the same
+						// as a dictionary parameter, and are built here into the value of this field.
+						if (field.ValueSource == "dictionary" && plan.Dictionaries.TryGetValue(fieldKey, out var nestedKeys))
+						{
+							var nested = BuildDictionary(step, choices, fieldKey, nestedKeys, out var nestedError);
+							if (nestedError != null) return FellBack(step, nestedError);
+							if (nested != null && nested.Count > 0) record[field.Name] = nested;
+							continue;
+						}
+
 						// Nothing in the step could fill it, so it was never asked and keeps its default.
 						if (!questions.ContainsKey(fieldKey)) continue;
 						if (!choices.TryGetValue(fieldKey, out var fieldChoice)) return FellBack(step, $"Decider got no answer for {fieldKey}, llm fills parameters");
@@ -892,6 +890,58 @@ Make sure to use the information in <error> to return valid JSON response"
 			return text.ToString();
 		}
 
+		// The entries of one dictionary, read off two sets of answers that have to agree: one asked
+		// per value, whose answer is the name that value goes under, and one asked per name, whose
+		// answer is the value that name gets. See DictionaryQuestions for why it is asked twice.
+		//
+		// An entry is kept when it was answered above the threshold and nothing above the threshold
+		// contradicts it. A contradiction ends the whole dictionary: the answers disagree about what
+		// the step says, and a dictionary built out of half of a disagreement is a wrong build.
+		private Newtonsoft.Json.Linq.JObject? BuildDictionary(GoalStep step, Dictionary<string, ParameterChoice> choices,
+			string questionPrefix, List<string> questionKeys, out string? error)
+		{
+			error = null;
+			var byValue = new Dictionary<string, string>();
+			var byName = new Dictionary<string, string>();
+
+			foreach (var questionKey in questionKeys)
+			{
+				if (!choices.TryGetValue($"{questionPrefix}#{questionKey}", out var answer)) continue;
+				if (answer.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold) continue;
+				if (answer.Choice == NoneOption) continue;
+
+				if (questionKey.StartsWith(ByValue)) byValue[questionKey.Substring(ByValue.Length)] = answer.Choice;
+				else if (questionKey.StartsWith(ByName)) byName[questionKey.Substring(ByName.Length)] = answer.Choice;
+			}
+
+			// name -> value, from both directions. Either side may be silent about an entry the other
+			// is sure of; neither may say something different about the same entry.
+			var entries = new Newtonsoft.Json.Linq.JObject();
+			foreach (var pair in byValue.Select(v => (Name: v.Value, Value: v.Key))
+				.Concat(byName.Select(n => (Name: n.Key, Value: n.Value))))
+			{
+				var existing = entries[pair.Name];
+				if (existing != null)
+				{
+					if (existing.ToString() == pair.Value) continue;
+					error = $"Decider disagreed about '{pair.Name}' in {questionPrefix}: {existing} and {pair.Value}, llm fills parameters";
+					return null;
+				}
+
+				// The same value filed under two names is the same disagreement seen from the value's
+				// side, and it is the one a name question produces on its own: a word that names
+				// nothing claiming a value another name already has.
+				var other = entries.Properties().FirstOrDefault(p => p.Value.ToString() == pair.Value);
+				if (other != null)
+				{
+					error = $"Decider filed {pair.Value} under both '{other.Name}' and '{pair.Name}' in {questionPrefix}, llm fills parameters";
+					return null;
+				}
+				entries[pair.Name] = pair.Value;
+			}
+			return entries;
+		}
+
 		private async Task<IError?> AskReturn(GoalStep step, MethodDescription method, ParameterPlan plan, string state, Action<ParameterChoice?> keep)
 		{
 			var (answer, error) = await decider!.ChooseParameters(state, method.MethodName, plan.ReturnQuestion);
@@ -936,14 +986,11 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				if (IsSimpleDictionary(parameter.Type ?? "") && variables.Count > 0)
 				{
-					var entries = DictionaryQuestions(parameter, step.Text, method.MethodName, variables, literals);
+					var entries = DictionaryQuestions(parameter, step.Text, method.MethodName, variables, literals, words, askByName: true);
 					if (entries.Count > 0)
 					{
 						foreach (var entry in entries) questions[$"{parameter.Name}#{entry.Key}"] = entry.Value;
-						// The variables the questions are about, not the question keys: a step with one variable
-						// and nothing else asks only whether it is passed through, and keying off the questions
-						// then left nothing to read the answers against.
-						dictionaries[parameter.Name] = variables.ToList();
+						dictionaries[parameter.Name] = entries.Keys.ToList();
 						continue;
 					}
 				}
@@ -977,6 +1024,17 @@ Make sure to use the information in <error> to return valid JSON response"
 					var recordIsUnanswerable = false;
 					foreach (var field in fields)
 					{
+						if (field.ValueSource == "dictionary")
+						{
+							var nested = DictionaryQuestions(field, step.Text, method.MethodName, variables, literals, words, askByName: false);
+							if (nested.Count > 0)
+							{
+								foreach (var entry in nested) fieldQuestions[$"{parameter.Name}.{field.Name}#{entry.Key}"] = entry.Value;
+								dictionaries[$"{parameter.Name}.{field.Name}"] = nested.Keys.ToList();
+							}
+							continue;
+						}
+
 						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans, words);
 						if (fieldCandidates == null)
 						{
@@ -1176,7 +1234,8 @@ Make sure to use the information in <error> to return valid JSON response"
 				var path = prefix.Length == 0 ? field.Name! : $"{prefix}.{field.Name}";
 				var description = new PrimitiveDescription
 				{
-					ValueSource = type == typeof(PLang.Models.GoalToCallInfo) && field.Name == "name" ? "goal" : null,
+					ValueSource = type == typeof(PLang.Models.GoalToCallInfo) && field.Name == "name" ? "goal"
+						: IsSimpleDictionary(fieldType.FullName ?? "") ? "dictionary" : null,
 					Name = path,
 					Type = fieldType.FullName ?? "",
 					IsRequired = !field.HasDefaultValue,
@@ -1187,6 +1246,15 @@ Make sure to use the information in <error> to return valid JSON response"
 						perField.GetValueOrDefault(field.Name!)
 					}.Where(text => !string.IsNullOrWhiteSpace(text)))
 				};
+
+				// A dictionary inside a record is kept and asked about the same way a dictionary
+				// parameter is: `call goal X id=%y%` puts id=%y% in the parameters of the goal to
+				// call, and skipping it left %y% belonging to nothing, which failed the whole step.
+				if (description.ValueSource == "dictionary")
+				{
+					fields.Add(description);
+					continue;
+				}
 
 				if (LeaveUnset(description)) continue;
 				if (IsChoiceType(description.Type))
@@ -1322,6 +1390,16 @@ Make sure to use the information in <error> to return valid JSON response"
 
 		private static object? CoerceToFieldType(object value, Type fieldType)
 		{
+			// Json, and the target is not something Convert.ChangeType knows. It has to become the
+			// real type as well, because the record is built by reflection and the constructor will
+			// not take a JObject for a Dictionary. Both of those threw in turn, and the safety net
+			// caught them and reported the decider as giving no answer.
+			if (value is Newtonsoft.Json.Linq.JToken token && !fieldType.IsPrimitive && fieldType != typeof(string))
+			{
+				try { return token.ToObject(fieldType); }
+				catch (Exception) { return token; }
+			}
+
 			if (fieldType.IsEnum) return Enum.Parse(fieldType, value.ToString()!);
 			if (IsStringList(fieldType.FullName ?? "")) return value is string single ? new List<string> { single } : value;
 			return Convert.ChangeType(value, fieldType, System.Globalization.CultureInfo.InvariantCulture);
@@ -1543,31 +1621,80 @@ Make sure to use the information in <error> to return valid JSON response"
 		}
 
 		private static Dictionary<string, ParameterQuestion> DictionaryQuestions(IPropertyDescription parameter, string stepText,
-			string method, List<string> variables, List<string> literals)
+			string method, List<string> variables, List<string> literals, List<string> words, bool askByName)
 		{
 			var questions = new Dictionary<string, ParameterQuestion>();
-			var tokens = variables.Concat(literals).ToList();
+			var values = variables.Concat(literals).ToList();
 
-			foreach (var key in variables)
+			// The names an entry can be filed under. A key is not always a variable: `call goal X
+			// id=%y%` writes the name id as a bare word, and asking only per variable produced
+			// {"ideaId": "%ideaId%"} where the called goal expects id. A variable's own name is a
+			// name too, because `return %result%` files %result% under result. Bare is also what the
+			// runtime reads: MemoryStack trims % off a key on put and on get, so the % the llm
+			// writes in SetValuesOnVariables keys is cosmetic and either form runs the same.
+			var names = words.Concat(variables.Select(variable => variable.Trim('%'))).Distinct().ToList();
+			if (names.Count == 0 || values.Count == 0) return questions;
+
+			// Asked two ways, because each way is blind where the other sees.
+			//
+			// Per value, "under which name does this value go", is the shape that matches what a
+			// dictionary is: every value in the step is written once and belongs to at most one
+			// name, so one question per value cannot produce a duplicate key and cannot invent one.
+			// It is the only shape that answers `return %result%` at all. Per name it is the one
+			// question nothing affirms, because no name is written anywhere in that step.
+			//
+			// Per name, "what value does this name get", is the shape that reads an assignment. Per
+			// value, `set %messages% = %stored.messages%` asks about %messages% as if it were a
+			// value when it is the name, and answers nothing.
+			//
+			// Both are asked and the answers have to agree. Where only one speaks, its answer
+			// stands. Where they conflict, the step falls back to the llm: per name alone filed
+			// %draft.suggested% under "through" at 0.92 in `go through %draft.suggested%, call
+			// AddSuggested item=%offerId%`, which builds a wrong dictionary silently, and per value
+			// rejects that same token at 0.85. A wrong build is worse than a fallback.
+			var prefix = $"This is one step of plang code that calls the method {method}. The parameter '{parameter.Name}' holds one or more named values."
+				+ (string.IsNullOrWhiteSpace(parameter.Description) ? "" : " " + parameter.Description.Trim());
+
+			foreach (var value in values)
 			{
-				// One question for each value the step writes, with every shape such a dictionary takes
-				// among the options: assigned something, handed over as it stands, or not part of it at
-				// all. Asked as two questions, an assignment and a yes/no, the yes/no sat between 0.47
-				// and 0.78 because it was a second question about a variable already asked about. One
-				// choice between shapes is the question that was actually being asked.
 				var candidates = new Dictionary<string, string>();
-				foreach (var other in tokens)
+				foreach (var name in names)
 				{
-					if (other == key) continue;
-					candidates[other] = other.StartsWith("%") ? $"the step sets {key} to the variable {other}" : $"the step sets {key} to the text \"{other}\"";
+					candidates[name] = value.Trim('%') == name
+						? $"under the name {name}: the step hands {value} over as it stands, with the value it already holds, and writes no other name for it"
+						: $"under the name {name}, which the step writes for it";
 				}
-				candidates[PassedThroughOption] = $"the step passes {key} itself to '{parameter.Name}', with its own value";
-				candidates[NoneOption] = $"{key} is not part of '{parameter.Name}': it is a value being read, or not involved";
+				candidates[NoneOption] = $"{value} does not go into '{parameter.Name}' as a value at all: the step reads it, uses it for something else, or {value} is a name that is being given a value rather than a value being given";
 
-				questions[key] = new ParameterQuestion(
-					$"The parameter '{parameter.Name}' of {method} holds one or more values."
-						+ (string.IsNullOrWhiteSpace(parameter.Description) ? "" : " " + parameter.Description.Trim())
-						+ $" What does this step do with {key}?",
+				var shown = value.StartsWith("%") ? $"the variable {value}" : $"the text \"{value}\"";
+				questions[$"{ByValue}{value}"] = new ParameterQuestion(
+					$"{prefix} This step writes {shown}. Under which name does it go into '{parameter.Name}'?",
+					candidates, Standalone: true);
+			}
+
+			// The name direction costs a question per word in the step, and a word is not a name.
+			// On every conditional step the nested goalToCall.parameters asked about if, then, not,
+			// empty, ends, with and md, and the goal's whole batch went over max_tokens_exceeded,
+			// which drops the batch and sends every step of that goal to the llm on its own. So it
+			// is asked only where it earns its cost: a dictionary that is the parameter itself,
+			// which is the assignment shape `set %a% = %b%` that the value direction cannot read.
+			// A dictionary nested in a record is a called goal's parameters, where the step writes
+			// the name out as in `id=%y%`, and the value direction reads that on its own.
+			if (!askByName) return questions;
+
+			foreach (var name in names)
+			{
+				var candidates = new Dictionary<string, string>();
+				foreach (var value in values)
+				{
+					candidates[value] = value.StartsWith("%")
+						? $"the step gives {name} the value of the variable {value}"
+						: $"the step gives {name} the text \"{value}\"";
+				}
+				candidates[NoneOption] = $"the step gives {name} no value: {name} is not a name being given a value in this step, or is not part of '{parameter.Name}' at all";
+
+				questions[$"{ByName}{name}"] = new ParameterQuestion(
+					$"{prefix} What value does this step give to {name}?",
 					candidates, Standalone: true);
 			}
 			return questions;

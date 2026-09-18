@@ -103,6 +103,15 @@ namespace PLang.Utils
 				AppContext.SetData("decider", deciderName);
 			}
 
+			// --rebuild builds every step again even when nothing in the goal file changed. The
+			// builder skips a step whose hash still matches its .pr, which is what makes a build
+			// incremental, so measuring what the decider can now answer, or picking up a change to
+			// the builder itself rather than to the app, otherwise means deleting .pr files by hand.
+			if (args.Any(p => p.Equals("--rebuild", StringComparison.OrdinalIgnoreCase)))
+			{
+				AppContext.SetSwitch("Rebuild", true);
+			}
+
 			var parallel = args.FirstOrDefault(p => p.StartsWith("--buildparallel", StringComparison.OrdinalIgnoreCase));
 			int buildParallel = DefaultBuildParallel;
 			if (parallel != null)

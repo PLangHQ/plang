@@ -113,6 +113,10 @@ namespace PLang.Building
 				{
 					var wanted = new HashSet<string>(absoluteGoalPaths!, StringComparer.OrdinalIgnoreCase);
 					goals = goals.Where(p => wanted.Contains(p.AbsoluteGoalPath) || (withSetupGoals && p.IsSetup)).ToList();
+
+					// --rebuild applies to the goals that were named and to nothing else. The setup
+					// goals above are carried along for the anchor database, not to be rebuilt.
+					AppContext.SetData("rebuildpaths", wanted);
 				}
 
 				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));
@@ -149,7 +153,9 @@ namespace PLang.Building
 				var goalsToBuild = goals.Where(p => !p.IsSetup && !p.IsEvent);
 				if (AppContext.TryGetSwitch("Validate", out bool isEnabled) && !isEnabled)
 				{
-					goalsToBuild = goalsToBuild.Where(p => p.HasChanged);
+					// --rebuild means an unchanged goal is still to be built, so it has to survive this
+					// filter: it runs before anything else asks whether the goal should be rebuilt.
+					goalsToBuild = goalsToBuild.Where(p => p.HasChanged || GoalBuilder.ShouldRebuild(p));
 				}
 				// Goals do not feed each other either, so with --buildparallel they can go out together.
 				// Two exceptions stay sequential and are not a locking problem but a scoping one:

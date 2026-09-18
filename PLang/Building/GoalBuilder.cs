@@ -127,10 +127,11 @@ namespace PLang.Building
 			// --buildparallel=6, so 4.1x. Measure this with a cold cache or the numbers lie: a warm
 			// cache serves the sequential run from disk and the gain looks like 2.8x instead.
 			var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? RegisterStartupParameters.DefaultBuildParallel;
+			var rebuild = ShouldRebuild(goal);
 			var indexesToBuild = new List<int>();
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
-				if (!goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
+				if (!rebuild && !goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
 				indexesToBuild.Add(i);
 			}
 
@@ -201,8 +202,36 @@ namespace PLang.Building
 			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
 		}
 
+		// Whether --rebuild applies to this goal. With --goal it is exactly the goals that were
+		// named; without it, everything except the setup goals. Setup goals are in a targeted build
+		// only to populate the anchor database the sql in the other goals is validated against, and
+		// rebuilding them runs their inserts before their own create-table steps have filled it, so
+		// Seed failed with 'no such table: errors' and the failing event handler ended the build
+		// before a single app goal was reached.
+		public static bool ShouldRebuild(Goal goal)
+		{
+			if (!AppContext.TryGetSwitch("Rebuild", out bool rebuild) || !rebuild) return false;
+			if (AppContext.GetData("rebuildpaths") is not HashSet<string> paths) return !goal.IsSetup;
+			return paths.Contains(goal.AbsoluteGoalPath);
+		}
+
+		public static bool ShouldRebuild(GoalStep step)
+		{
+			if (!AppContext.TryGetSwitch("Rebuild", out bool rebuild) || !rebuild) return false;
+			if (AppContext.GetData("rebuildpaths") is not HashSet<string> paths) return step.Goal == null || !step.Goal.IsSetup;
+			return step.Goal != null && paths.Contains(step.Goal.AbsoluteGoalPath);
+		}
+
 		private async Task<(bool IsBuilt, IBuilderError? Error)> GoalIsBuilt(Goal goal, GroupedBuildErrors? validationError, IEngine engine, PLangContext context)
 		{
+			// --rebuild means build it again whatever the hashes say, so an unchanged goal must not
+			// report itself as already built: this returns before the step loop is ever reached.
+			// Never the setup goals. They are in the build to populate the anchor database the sql
+			// in every other goal is validated against, and rebuilding them runs their inserts
+			// against a database their own create-table steps have not filled yet, so Seed failed
+			// with 'no such table: errors' and took the build with it.
+			if (ShouldRebuild(goal)) return (false, null);
+
 			if (validationError == null) return (!goal.HasChanged, null);
 
 			var missingSettings = validationError.ErrorChain.Where(p => p.Exception?.GetType() == typeof(MissingSettingsException));

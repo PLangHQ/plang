@@ -259,6 +259,9 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<(bool IsBuilt, IBuilderError? Error)> StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
 	{
+		// --rebuild builds every step again, so the .pr sitting next to it is not an answer.
+		if (GoalBuilder.ShouldRebuild(step)) return (false, null);
+
 		AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
 		if (isStrict && step.Number != stepIndex) return (false, null);
 		if (step.PrFileName == null || excludeModules.Count > 0) return (false, null);
