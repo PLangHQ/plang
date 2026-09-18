@@ -895,14 +895,14 @@ Make sure to use the information in <error> to return valid JSON response"
 		// answer is the value that name gets. See DictionaryQuestions for why it is asked twice.
 		//
 		// An entry is kept when it was answered above the threshold and nothing above the threshold
-		// contradicts it. A contradiction ends the whole dictionary: the answers disagree about what
-		// the step says, and a dictionary built out of half of a disagreement is a wrong build.
+		// contradicts it. Where the two directions contradict each other the whole dictionary ends
+		// and the llm fills it: a dictionary built out of half of a disagreement is a wrong build.
 		private Newtonsoft.Json.Linq.JObject? BuildDictionary(GoalStep step, Dictionary<string, ParameterChoice> choices,
 			string questionPrefix, List<string> questionKeys, out string? error)
 		{
 			error = null;
-			var byValue = new Dictionary<string, string>();
-			var byName = new Dictionary<string, string>();
+			var byValue = new List<(string Name, string Value)>();
+			var byName = new List<(string Name, string Value, double Confidence)>();
 
 			foreach (var questionKey in questionKeys)
 			{
@@ -910,34 +910,51 @@ Make sure to use the information in <error> to return valid JSON response"
 				if (answer.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold) continue;
 				if (answer.Choice == NoneOption) continue;
 
-				if (questionKey.StartsWith(ByValue)) byValue[questionKey.Substring(ByValue.Length)] = answer.Choice;
-				else if (questionKey.StartsWith(ByName)) byName[questionKey.Substring(ByName.Length)] = answer.Choice;
+				if (questionKey.StartsWith(ByValue)) byValue.Add((answer.Choice, questionKey.Substring(ByValue.Length)));
+				else if (questionKey.StartsWith(ByName)) byName.Add((questionKey.Substring(ByName.Length), answer.Choice, answer.Confidence));
 			}
 
-			// name -> value, from both directions. Either side may be silent about an entry the other
-			// is sure of; neither may say something different about the same entry.
 			var entries = new Newtonsoft.Json.Linq.JObject();
-			foreach (var pair in byValue.Select(v => (Name: v.Value, Value: v.Key))
-				.Concat(byName.Select(n => (Name: n.Key, Value: n.Value))))
+
+			// The value side goes first and settles what it is sure of. It is one question per value,
+			// so it cannot claim a value twice, and it is the direction that reads `return %result%`.
+			// Two values claiming one name is a real disagreement and ends the dictionary.
+			foreach (var claim in byValue)
 			{
-				var existing = entries[pair.Name];
-				if (existing != null)
+				var existing = entries[claim.Name];
+				if (existing != null && existing.ToString() != claim.Value)
 				{
-					if (existing.ToString() == pair.Value) continue;
-					error = $"Decider disagreed about '{pair.Name}' in {questionPrefix}: {existing} and {pair.Value}, llm fills parameters";
+					error = $"Decider filed both {existing} and {claim.Value} under '{claim.Name}' in {questionPrefix}, llm fills parameters";
 					return null;
 				}
+				entries[claim.Name] = claim.Value;
+			}
 
-				// The same value filed under two names is the same disagreement seen from the value's
-				// side, and it is the one a name question produces on its own: a word that names
-				// nothing claiming a value another name already has.
-				var other = entries.Properties().FirstOrDefault(p => p.Value.ToString() == pair.Value);
+			// Then the name side, strongest first so the error names the same pair whichever order
+			// the answers arrive in.
+			// Every contradiction here objects rather than skipping the claim. Skipping silently is
+			// what built {"markdown": ""} for `set %content% = "", %markdown% = ""`, a step that
+			// sets two variables building as a step that sets one. The two identical literals are
+			// one token by the time they get here, so the value side can only place one of them and
+			// the other name's claim was dropped on the way past. Half a dictionary is a wrong
+			// build, and a fallback costs one llm call.
+			foreach (var claim in byName.OrderByDescending(c => c.Confidence))
+			{
+				var existing = entries[claim.Name];
+				if (existing != null && existing.ToString() == claim.Value) continue;
+
+				var other = entries.Properties().FirstOrDefault(p => p.Value.ToString() == claim.Value);
 				if (other != null)
 				{
-					error = $"Decider filed {pair.Value} under both '{other.Name}' and '{pair.Name}' in {questionPrefix}, llm fills parameters";
+					error = $"Decider filed {claim.Value} under both '{other.Name}' and '{claim.Name}' in {questionPrefix}, llm fills parameters";
 					return null;
 				}
-				entries[pair.Name] = pair.Value;
+				if (existing != null)
+				{
+					error = $"Decider disagreed about '{claim.Name}' in {questionPrefix}: {existing} and {claim.Value}, llm fills parameters";
+					return null;
+				}
+				entries[claim.Name] = claim.Value;
 			}
 			return entries;
 		}
@@ -1632,7 +1649,8 @@ Make sure to use the information in <error> to return valid JSON response"
 			// name too, because `return %result%` files %result% under result. Bare is also what the
 			// runtime reads: MemoryStack trims % off a key on put and on get, so the % the llm
 			// writes in SetValuesOnVariables keys is cosmetic and either form runs the same.
-			var names = words.Concat(variables.Select(variable => variable.Trim('%'))).Distinct().ToList();
+			var variableNames = variables.Select(variable => variable.Trim('%')).ToList();
+			var names = words.Concat(variableNames).Distinct().ToList();
 			if (names.Count == 0 || values.Count == 0) return questions;
 
 			// Asked two ways, because each way is blind where the other sees.
@@ -1682,7 +1700,14 @@ Make sure to use the information in <error> to return valid JSON response"
 			// the name out as in `id=%y%`, and the value direction reads that on its own.
 			if (!askByName) return questions;
 
-			foreach (var name in names)
+			// And it is asked only about names a variable actually has, never about a bare word.
+			// Offered the words too, `return %result%` answered that the step gives "return" the
+			// value %result% at around 0.5 to 0.8, which cleared the bar and built
+			// {"return": "%result%"} in 13 steps: the caller asks for %result% and would get a
+			// variable called return. Every key of a dictionary that is the parameter itself is a
+			// variable's own name, in the built output of the llm as well. A bare word as a key is
+			// the `id=%y%` shape, which is nested and is read from the value side.
+			foreach (var name in variableNames)
 			{
 				var candidates = new Dictionary<string, string>();
 				foreach (var value in values)
