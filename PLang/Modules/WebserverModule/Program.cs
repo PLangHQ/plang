@@ -579,6 +579,14 @@ OnStartingWebserver
 	public record Route(Regex PathRegex, Dictionary<string, string>? QueryMap, GoalToCallInfo Goal, List<ParamInfo> ParamInfos);
 
 	[Description("Add route to webserver. When goalToCall is null, use the path parameter in the response to created instance of goalToCall using the path paramter as GoalToCallInfo.Name")]
+	[Example("add route /admin, call /admin/Overview",
+		@"path=""/admin"", pathParameters=[], goalToCall={""Name"":""/admin/Overview""}, requestProperties=null")]
+	[Example(@"add route ""/admin/crm/vendor/%id%(number)"", [get, post], call /admin/crm/Vendor",
+		@"path=""/admin/crm/vendor/%id%(number)"", pathParameters=[{""Name"":""id"",""VariableOrValue"":""%id%"",""Type"":""number""}], goalToCall={""Name"":""/admin/crm/Vendor""}, requestProperties={""Methods"":[""GET"",""POST""]}")]
+	[Example("add route /admin/idea, post, max content length 8mb, call /admin/Idea",
+		@"path=""/admin/idea"", pathParameters=[], goalToCall={""Name"":""/admin/Idea""}, requestProperties={""Methods"":[""POST""],""MaxContentLengthInBytes"":8388608}")]
+	[Example("add route /admin/dev/chat/%id%(number)/archive, call /admin/dev/Archive goalId=%id%",
+		@"path=""/admin/dev/chat/%id%(number)/archive"", pathParameters=[{""Name"":""id"",""VariableOrValue"":""%id%"",""Type"":""number""}], goalToCall={""Name"":""/admin/dev/Archive"",""Parameters"":{""goalId"":""%id%""}}")]
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
 		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
 	{
