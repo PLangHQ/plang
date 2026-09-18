@@ -45,7 +45,7 @@ public class PdfToMarkdownConverter
 		{
 			foreach (var page in pdfDocument.GetPages())
 			{	
-				var lines = ExtractPageContent(page);
+				var lines = format == "layout" ? ExtractPageLayout(page) : ExtractPageContent(page);
 				IEnumerable<string> images = new List<string>();
 				if (!string.IsNullOrEmpty(imagePath))
 				{
@@ -142,6 +142,49 @@ public class PdfToMarkdownConverter
 		}
 		return [""];
 
+	}
+
+	// Keeps the horizontal position of every word, the way pdftotext -layout does, so tables whose
+	// columns are only implied by x position (a lab report with one column per draw date) survive
+	// extraction. The reading order extractor loses that: a row with five values under six date
+	// columns comes out as five numbers with no way to tell which column is empty.
+	private IEnumerable<string> ExtractPageLayout(Page page)
+	{
+		var words = page.GetWords().Where(w => !string.IsNullOrWhiteSpace(w.Text)).ToList();
+		if (words.Count == 0) return [""];
+
+		double unit = words.Average(w => w.BoundingBox.Width / Math.Max(1, w.Text.Length));
+		if (unit <= 0) unit = 4;
+		double lineTolerance = words.Average(w => w.BoundingBox.Height) * 0.5;
+
+		var rows = new List<(double y, List<Word> words)>();
+		foreach (var word in words.OrderByDescending(w => w.BoundingBox.Bottom))
+		{
+			var row = rows.LastOrDefault();
+			if (rows.Count > 0 && Math.Abs(row.y - word.BoundingBox.Bottom) <= lineTolerance)
+			{
+				row.words.Add(word);
+			}
+			else
+			{
+				rows.Add((word.BoundingBox.Bottom, new List<Word> { word }));
+			}
+		}
+
+		var lines = new List<string>();
+		foreach (var row in rows)
+		{
+			var sb = new StringBuilder();
+			foreach (var word in row.words.OrderBy(w => w.BoundingBox.Left))
+			{
+				int column = (int)Math.Round(word.BoundingBox.Left / unit);
+				if (sb.Length < column) sb.Append(' ', column - sb.Length);
+				else if (sb.Length > 0) sb.Append(' ');
+				sb.Append(word.Text);
+			}
+			lines.Add(sb.ToString().TrimEnd());
+		}
+		return lines;
 	}
 
 	private IEnumerable<string> GetImages(Page page, string imageAction) {
