@@ -1166,8 +1166,21 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 			else if (IsStringList(type))
 			{
-				foreach (var literal in literals) candidates[literal] = $"a list holding only \"{literal}\"";
-				foreach (var variable in variables) candidates[variable] = $"a list holding only the variable {variable}";
+				// A list the step writes out in full, e.g. `parameters: [%goal%, "--llmservice=openai"]`.
+				// Only single item lists were offered before, so a step naming two or more had no
+				// right answer on the menu at all: the decider declined at around 0.5, which was
+				// honest, and the llm then built the step and dropped its ReturnValues, so validation
+				// failed and a second llm call retried it. Two calls for a value written out in the step.
+				var arrays = jsonSpans.Where(span => span.StartsWith("[")).ToList();
+				foreach (var span in arrays) candidates[span] = $"the list {span} written out in the step";
+
+				// An item that only ever appears inside one of those arrays is not a list of its own.
+				// Offered both, `parameters: [%goal%]` had the span and "a list holding only %goal%"
+				// on the menu meaning exactly the same thing, and the answer split at 0.54.
+				bool Spoken(string value) => !arrays.Any(span => span.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+				foreach (var literal in literals.Where(Spoken)) candidates[literal] = $"a list holding only \"{literal}\"";
+				foreach (var variable in variables.Where(Spoken)) candidates[variable] = $"a list holding only the variable {variable}";
 			}
 			else
 			{
@@ -1476,11 +1489,78 @@ Make sure to use the information in <error> to return valid JSON response"
 			return !parameter.IsRequired && !IsChoiceType(parameter.Type ?? "");
 		}
 
+		// The items of a list the step wrote out, e.g. `["-c", "diff ... ; true"]` or
+		// `[%goal%, "--llmservice=openai"]`. Newtonsoft cannot read the second, because a plang
+		// variable is written bare and bare is not json, and returning null for it sent the step to
+		// the llm twice: once to build it and once more after validation found no ReturnValues.
+		//
+		// This splits the array the engine already chose; it does not read the step for meaning.
+		// Quotes are respected so a comma inside an argument stays inside it, and nesting is kept
+		// whole so a list of objects survives.
+		private static List<string>? SplitWrittenList(string written)
+		{
+			var inner = written.Substring(1, written.Length - 2).Trim();
+			if (inner.Length == 0) return new List<string>();
+
+			var items = new List<string>();
+			var current = new System.Text.StringBuilder();
+			char quote = '\0';
+			int depth = 0;
+
+			foreach (var c in inner)
+			{
+				if (quote != '\0')
+				{
+					if (c == quote) quote = '\0';
+					current.Append(c);
+					continue;
+				}
+				if (c == '"' || c == '\'') { quote = c; current.Append(c); continue; }
+				if (c == '[' || c == '{') depth++;
+				else if (c == ']' || c == '}') depth--;
+
+				if (c == ',' && depth == 0)
+				{
+					items.Add(current.ToString());
+					current.Clear();
+					continue;
+				}
+				current.Append(c);
+			}
+			items.Add(current.ToString());
+
+			// An unterminated quote or unbalanced bracket means this is not the list it looked like.
+			if (quote != '\0' || depth != 0) return null;
+
+			var cleaned = new List<string>();
+			foreach (var item in items)
+			{
+				var value = item.Trim();
+				if (value.Length >= 2 && (value[0] == '"' || value[0] == '\'') && value[^1] == value[0])
+				{
+					value = value.Substring(1, value.Length - 2);
+				}
+				if (value.Length == 0) return null;
+				cleaned.Add(value);
+			}
+			return cleaned;
+		}
+
 		private static object? ToValue(IPropertyDescription parameter, string choice)
 		{
 			var listType = parameter.Type ?? "";
 			if (choice == EmptyListOption) return new Newtonsoft.Json.Linq.JArray();
-			if (IsStringList(listType)) return new List<string> { choice };
+			if (IsStringList(listType))
+			{
+				// A list written out in the step is the list, not one item that happens to look like
+				// one. Wrapping it would build `["[\"-c\", \"diff ...\"]"]`, a single argument holding
+				// the text of the array, and the terminal step would run with nonsense.
+				if (choice.StartsWith("[") && choice.EndsWith("]"))
+				{
+					return SplitWrittenList(choice);
+				}
+				return new List<string> { choice };
+			}
 
 			if (choice.StartsWith("%") && choice.EndsWith("%")) return choice;
 
