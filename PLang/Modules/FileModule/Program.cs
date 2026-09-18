@@ -390,10 +390,12 @@ namespace PLang.Modules.FileModule
 					{
 						csvOptions = csvOptions with { Encoding = enc.EncodingName };
 					}
-					else if (csvOptions.Encoding != enc.EncodingName)
+					else if (csvOptions.Encoding != enc.EncodingName && ov.Value is string text)
 					{
+						// Only text can be transcoded. A table or list went through ToString() here and the
+						// file came out as the type name, one character per row.
 						var encodingTo = Encoding.GetEncoding(csvOptions.Encoding);
-						var bytes = encodingTo.GetBytes(ov.Value.ToString());
+						var bytes = encodingTo.GetBytes(text);
 						variableToWriteToCsv = encodingTo.GetString(bytes);
 					}
 				}
