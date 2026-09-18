@@ -164,15 +164,15 @@ namespace PLang.Modules.FileModule
 
 			return base64;
 		}
-		public async Task<(object?, IError?)> ReadJson(string path, bool throwErrorOnNotFound = true,
+		public async Task<(object?, IError?)> ReadJson(string path, [Description("false when the step says a missing file is not an error, e.g. `dont throw error on not found` or `empty variable if not found`. true otherwise")] bool throwErrorOnNotFound = true,
 			[Description("true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
+			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8", [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, null, allowReadingFromSystem);
 		}
-		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = true,
+		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, [Description("false when the step says a missing file is not an error, e.g. `dont throw error on not found` or `empty variable if not found`. true otherwise")] bool throwErrorOnNotFound = true,
 			[Description("true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
+			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			newLineSymbol ??= Environment.NewLine;
 			var result = await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol, allowReadingFromSystem);
@@ -198,9 +198,9 @@ namespace PLang.Modules.FileModule
 		}
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
-		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
+		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", [Description("false when the step says a missing file is not an error, e.g. `dont throw error on not found` or `empty variable if not found`. true otherwise")] bool throwErrorOnNotFound = true,
 			[Description("true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
+			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, [Description("Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own")] bool allowReadingFromSystem = false)
 		{
 			var absolutePath = GetPath(path);
 
@@ -323,7 +323,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		public async Task WriteExcelFile(string path, object variableToWriteToExcel, string sheetName = "Sheet1",
-				bool printHeader = true, bool overwrite = false)
+				bool printHeader = true, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false)
 		{
 			var absolutePath = GetPath(path);
 
@@ -492,7 +492,7 @@ namespace PLang.Modules.FileModule
 
 
 		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false,
-			bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+			[Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			foreach (var file in files)
 			{
@@ -690,7 +690,7 @@ namespace PLang.Modules.FileModule
 			return (JsonConvert.DeserializeObject(jsonString), null);
 		}
 
-		public async Task WriteBase64ToFile(string path, string base64, bool overwrite = false)
+		public async Task WriteBase64ToFile(string path, string base64, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false)
 		{
 			if (base64.Contains(","))
 			{
@@ -700,7 +700,7 @@ namespace PLang.Modules.FileModule
 			await WriteBytesToFile(path, bytes, overwrite);
 		}
 
-		public async Task WriteBytesToFile(string path, byte[] content, bool overwrite = false)
+		public async Task WriteBytesToFile(string path, byte[] content, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false)
 		{
 			var absolutePath = GetPath(path);
 			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
@@ -718,9 +718,9 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
-		public async Task<IError?> WriteToFile(string path, object content, bool overwrite = false,
+		public async Task<IError?> WriteToFile(string path, object content, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false,
 			[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			if (string.IsNullOrEmpty(path))
 			{
@@ -807,7 +807,7 @@ namespace PLang.Modules.FileModule
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);
 			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);

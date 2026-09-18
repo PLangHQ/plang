@@ -49,7 +49,7 @@ namespace PLang.Modules.TerminalModule
 		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? variableNameForDeltaOnStandardStream = null, [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
-			bool hideTerminal = false
+			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false
 			)
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))

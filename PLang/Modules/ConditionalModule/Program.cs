@@ -211,7 +211,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 		}
 
 		[Description("isNot property reverse true to false, example: `if %name% contains \"john\" then`, `if %product% contains %title% then call goal DoProdudct`, `if %name% does not contain \"bill\"` (isNot=true)")]
-		public async Task<(object?, IError?)> ContainsString([Description("The value being tested, the left side of the comparison, e.g. %name% in `if %name% contains \"john\"`")] object? item, [Description("What it is tested against, the right side, e.g. \"john\" in `if %name% contains \"john\"`")] string contains, bool isNot = false, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+		public async Task<(object?, IError?)> ContainsString([Description("The value being tested, the left side of the comparison, e.g. %name% in `if %name% contains \"john\"`")] object? item, [Description("What it is tested against, the right side, e.g. \"john\" in `if %name% contains \"john\"`")] string contains, [Description("true when the step negates the test, e.g. `does not contain`, `does not start with`, `is not`. false when the step states the test plainly")] bool isNot = false, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
@@ -249,7 +249,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 		}
 
 		[Description("isNot property reverse true to false, example: `if %name% starts with \"john\" then`, `if %source% starts with \"t\" then call goal Track`, `if %name% does not start with \"bill\"` (isNot=true). Use ignoreCase=true to compare case insensitive.")]
-		public async Task<(object?, IError?)> StartsWith([Description("The value being tested, the left side of the comparison, e.g. %path% in `if %path% starts with \"/\"`")] object? item, [Description("What it is tested against, the right side, e.g. \"/\" in `if %path% starts with \"/\"`")] string startsWith, bool isNot = false, bool ignoreCase = false,
+		public async Task<(object?, IError?)> StartsWith([Description("The value being tested, the left side of the comparison, e.g. %path% in `if %path% starts with \"/\"`")] object? item, [Description("What it is tested against, the right side, e.g. \"/\" in `if %path% starts with \"/\"`")] string startsWith, [Description("true when the step negates the test, e.g. `does not contain`, `does not start with`, `is not`. false when the step states the test plainly")] bool isNot = false, [Description("true when letter case must not matter in the comparison. false unless the step asks for that")] bool ignoreCase = false,
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -310,7 +310,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 
 		}
 		public async Task<(object? Result, IError? Error)> IsNotEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
-			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
+			GoalToCallInfo? goalToCallIfFalse = null, [Description("true is the normal case, letter case does not matter. false only when the step asks for an exact, case sensitive comparison")] bool ignoreCase = true,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = !IsEqualInternal(item1, item2, ignoreCase);
@@ -322,7 +322,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 `if %zip equals 123....
 ")]
 		public async Task<(object? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
-		GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
+		GoalToCallInfo? goalToCallIfFalse = null, [Description("true is the normal case, letter case does not matter. false only when the step asks for an exact, case sensitive comparison")] bool ignoreCase = true,
 		ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = IsEqualInternal(item1, item2, ignoreCase);

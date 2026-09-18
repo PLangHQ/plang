@@ -51,7 +51,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.DbModule
 {
-	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
+	[Description("Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: \"dev\"`, is database access. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
 	public class Program : BaseProgram, IDisposable
 	{
 		//public static string DbConnectionContextKey = "DbConnection";

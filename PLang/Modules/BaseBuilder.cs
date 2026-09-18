@@ -1196,6 +1196,16 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 
 			if (candidates.Count == 0) return parameter.IsRequired ? null : candidates;
+
+			// A `bool x = true` has no unset state, so offering "leave it unset" beside true and
+			// false looks wrong, and it was tried: dropping the option for every non nullable bool
+			// took admin/dev from 81, 80 and 82 percent decided to 79, 79 and 80 over three runs
+			// each. Measure before trying it again. The option earns its place because it is how the
+			// engine says the step does not specify this, which ConfidenceInLeavingUnset then adds to
+			// the default; forced to commit to true or false instead, it answered less surely and
+			// waitForExecution, doNotLoadVariablesInValue and emptyVariableIfNotFound began falling
+			// back at around 0.6.
+			//
 			// Saying what unset means matters: choosing between "true" and "leave it unset" is only a
 			// real choice when the engine knows unset is false. RenderToOutputstream stayed unset on
 			// steps whose description said it should be true, because "its default applies" named no

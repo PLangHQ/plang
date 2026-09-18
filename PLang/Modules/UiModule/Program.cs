@@ -225,7 +225,12 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			bool RenderToOutputstream = false,
 			[property: Description("true when the content must not be wrapped in the page layout, which is the case whenever the step says 'without main layout', and whenever it renders into any element other than the page's main render area, normally #main. So a step naming #main is false, a step naming any other selector such as #ideaChat is true")]
 			bool DontRenderMainLayout = false,
-			[property: Description("set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
+			// Tried and measured worse, do not try again without measuring: telling the decider that
+			// unset is the normal case, because plang derives it from the resolved content, took
+			// IsTemplateFile from 2 fallbacks to 6 in admin/dev. It moved mass onto unset without
+			// conviction and split the answer three ways instead of two. Naming the file is what the
+			// engine can actually see in the step.
+			[property: Description("set as true when RenderMessage.Content is a file name, which includes a path written out in the step such as \"/ui/pages/landing.html\" or \"/admin/dev/diffLine.html\", and a %variable% that holds one. If Content is clearly the text to render, set as false")]
 			bool? IsTemplateFile = null,
 			[property: Description("Only for redrawing the whole page inside the layout, and then it is normally body, e.g. 'render whole page', 'replace whole body', 'redraw the page'. A cssSelector the step names is the Target of the content, not this, so leave this unset unless the step asks for the whole page")]
 			string? LayoutTarget = null)
