@@ -852,6 +852,14 @@ Make sure to use the information in <error> to return valid JSON response"
 					if (token is Newtonsoft.Json.Linq.JObject record)
 					{
 						placed.AddRange(record.Properties().Select(p => p.Value.ToString()));
+
+						// A dictionary key is the variable's name without its percent signs, which is
+						// how the runtime reads it, so %messages% is placed by a key of messages and
+						// the raw json above does not show it. Without this,
+						// `set %messages% = %stored.messages%, %chat% = %stored.log%` was built
+						// correctly, both entries answered at 1.00, and then thrown away and sent to
+						// the llm for holding no parameter for %messages%.
+						placed.AddRange(record.Properties().Select(p => $"%{p.Name}%"));
 					}
 				}
 				else if (parameter.Value != null)
@@ -1018,6 +1026,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			// is wrapped, so wrap here or a decided variable would be written as a literal string.
 			var variables = variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
 			var jsonSpans = JsonSpans(step.Text);
+			var calculations = CalculationSpans(step.Text);
 			var words = StepWords(step.Text);
 			var literals = QuotedLiterals(step.Text, jsonSpans);
 			var numbers = Numbers(step.Text);
@@ -1041,7 +1050,7 @@ Make sure to use the information in <error> to return valid JSON response"
 					}
 				}
 
-				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans, words);
+				var candidates = ParameterCandidates(parameter, variables, literals, numbers, jsonSpans, words, calculations);
 				if (candidates == null)
 				{
 					// A record of simple fields (TextMessage is one) is decided field by field, the same
@@ -1055,7 +1064,7 @@ Make sure to use the information in <error> to return valid JSON response"
 						// for an optional parameter, which was skipped before it got here: the tools of
 						// `run agent, messages: %messages%, tools: %tools%` were never asked about, and
 						// the step then died because %tools% had landed nowhere.
-						var complex = ComplexCandidates(parameter, variables, jsonSpans);
+						var complex = ComplexCandidates(parameter, variables, jsonSpans, literals);
 						if (complex == null)
 						{
 							if (!parameter.IsRequired) continue;
@@ -1081,7 +1090,7 @@ Make sure to use the information in <error> to return valid JSON response"
 							continue;
 						}
 
-						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans, words);
+						var fieldCandidates = ParameterCandidates(field, variables, literals, numbers, jsonSpans, words, calculations);
 						if (fieldCandidates == null)
 						{
 							// Nothing in the step can fill this field. If the record itself is optional then
@@ -1142,7 +1151,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		// The finite options for one parameter, keyed by the text the decider hands back. Null
 		// means the type is not something the step can answer by choosing, so the step goes to
 		// the llm.
-		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers, List<string> jsonSpans, List<string> words)
+		private static Dictionary<string, string>? ParameterCandidates(IPropertyDescription parameter, List<string> variables, List<string> literals, List<string> numbers, List<string> jsonSpans, List<string> words, List<string> calculations)
 		{
 			var type = parameter.Type ?? "";
 			var candidates = new Dictionary<string, string>();
@@ -1174,6 +1183,14 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				foreach (var literal in literals) candidates[literal] = $"the text \"{literal}\" written in the step";
 				foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+
+				// A calculation is one value made of several tokens, so offering the tokens one at a
+				// time never offers the answer: `set %prevWeek% = %week% - 1` needs "%week% - 1" and
+				// only %week% and 1 were on the menu. A span of variables, numbers and arithmetic
+				// operators is found by character class, with no word in it, so an Icelandic step
+				// reads the same as an English one and nothing here judges what the step means. The
+				// engine still chooses whether the span is the value, and answers 1.00 when it is.
+				foreach (var span in calculations) candidates[span] = $"the calculation {span} written in the step";
 
 				// A required text the step writes without quotes has nothing to offer otherwise, and a
 				// step is full of them: `add route /admin, call /admin/Overview` puts the route in bare.
@@ -1718,6 +1735,45 @@ Make sure to use the information in <error> to return valid JSON response"
 			return words;
 		}
 
+		// The calculations written in a step: runs of %variables% and numbers joined by arithmetic
+		// operators, naming at least one variable. There is no word in the pattern, so it finds
+		// `%teljari% + 1` in an Icelandic step exactly as it finds `%week% - 1` in an English one,
+		// and it says nothing about what the step means: it offers the span and the engine decides
+		// whether that is the value. Across this app of 79 goal files it offers four spans, and all
+		// four are the calculations.
+		// An operator has to sit between two values. Accepting one that merely touches a value
+		// matched a great deal that is not arithmetic at all: "/%path%" in a path, "-%chatId%" in
+		// the selector #chatLog-%chatId%, "-5.4-" inside the model name gpt-5.4-mini. Those would
+		// have been offered to every text parameter in the step as calculations.
+		private const string Operand = @"\(?\s*(?:%[^%\s]+%|\d+(?:\.\d+)?)\s*\)?";
+		private static readonly System.Text.RegularExpressions.Regex CalculationSpan =
+			new($@"{Operand}(?:\s*[-+*/]\s*{Operand})+", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+		private static List<string> CalculationSpans(string text)
+		{
+			var spans = new List<string>();
+			if (string.IsNullOrEmpty(text)) return spans;
+
+			foreach (System.Text.RegularExpressions.Match match in CalculationSpan.Matches(text))
+			{
+				var span = match.Value.Trim();
+				if (span.Length < 3) continue;
+
+				// A calculation in a step works on something the step holds, so it names a variable.
+				// Numbers alone are how a date reads: 2026-09-08 and 00+00 are a number, an operator
+				// and a number, and offering them as calculations put a near twin of the step's own
+				// quoted text on the menu beside it.
+				if (!span.Contains('%')) continue;
+
+				// Balanced only. The sql of `(%full% - %offer%) * 100.0 / %full%)` ends a span on a
+				// parenthesis that belongs to the statement around it.
+				if (span.Count(c => c == '(') != span.Count(c => c == ')')) continue;
+
+				if (!spans.Contains(span)) spans.Add(span);
+			}
+			return spans;
+		}
+
 		private static List<string> JsonSpans(string text)
 		{
 			var spans = new List<string>();
@@ -1854,10 +1910,21 @@ Make sure to use the information in <error> to return valid JSON response"
 		// value out option by option, but it can name a variable holding one, or write it inline, and
 		// both of those are a choice. Without this, `run agent, tools: %tools%` was abandoned over a
 		// parameter whose whole value is the word %tools%.
-		private static Dictionary<string, string>? ComplexCandidates(IPropertyDescription parameter, List<string> variables, List<string> jsonSpans)
+		private static Dictionary<string, string>? ComplexCandidates(IPropertyDescription parameter, List<string> variables, List<string> jsonSpans, List<string> literals)
 		{
 			var candidates = new Dictionary<string, string>();
-			foreach (var variable in variables) candidates[variable] = $"the variable {variable}";
+
+			// A variable written inside a quoted text is part of that text, not a value of its own.
+			// `add route "/admin/crm/offer/%id%(number)", call X` had %id% offered as the whole of
+			// pathParameters and it won at 0.70 to 0.80, so seven routes were built holding the
+			// string %id% where the type is a list of ParamInfo and the llm builds the list that
+			// carries the (number) the route declares. The variable of `run agent, tools: %tools%`
+			// stands on its own and is still offered.
+			foreach (var variable in variables)
+			{
+				if (literals.Any(literal => literal.Contains(variable, StringComparison.OrdinalIgnoreCase))) continue;
+				candidates[variable] = $"the variable {variable}";
+			}
 			foreach (var span in jsonSpans) candidates[span] = $"the value {span} written in the step";
 
 			// A list has one more legal value than the step can write: none at all. `add route /admin,
