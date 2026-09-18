@@ -897,6 +897,27 @@ Make sure to use the information in <error> to return valid JSON response"
 		// An entry is kept when it was answered above the threshold and nothing above the threshold
 		// contradicts it. Where the two directions contradict each other the whole dictionary ends
 		// and the llm fills it: a dictionary built out of half of a disagreement is a wrong build.
+		// How much the engine believes the answer it gave, which is not the same number as the
+		// confidence it reports. Confidence is a margin: asked which name %result% goes under in
+		// `return %result%`, it answered result at a probability of 0.57 against a none of 0.29 and
+		// reported 0.36, so a settled answer read as doubt and every return step in the app went to
+		// the llm. The belief is the probability of the option it picked.
+		//
+		// Used for dictionary entries only, where a second reading guards it: every entry is cross
+		// checked against the other direction and any contradiction ends the whole dictionary. On
+		// the 39 dictionary steps of the admin folder, read against what the llm built for the same
+		// steps, this decides 38 where the margin decides 25, and the two agree everywhere they both
+		// decide. Measured at every bar from 0.50 to 0.80: nothing is built wrongly anywhere in that
+		// range, and 0.70, the bar already in use, sits at the top of the flat part of it.
+		private static double BeliefIn(ParameterChoice answer)
+		{
+			if (answer.Probabilities == null || !answer.Probabilities.TryGetValue(answer.Choice, out var belief))
+			{
+				return answer.Confidence;
+			}
+			return Math.Max(answer.Confidence, belief);
+		}
+
 		private Newtonsoft.Json.Linq.JObject? BuildDictionary(GoalStep step, Dictionary<string, ParameterChoice> choices,
 			string questionPrefix, List<string> questionKeys, out string? error)
 		{
@@ -904,14 +925,22 @@ Make sure to use the information in <error> to return valid JSON response"
 			var byValue = new List<(string Name, string Value)>();
 			var byName = new List<(string Name, string Value, double Confidence)>();
 
+			// The belief is only safe where the cross check exists, which is where both directions
+			// were asked. A dictionary nested in a record, a called goal's parameters, is asked from
+			// the value side alone, and reading the belief there put every variable of
+			// `run agent, messages: %messages%, tools: %tools%` into the parameters of the goal named
+			// by `on tool call, call ToolUsed`, a step that passes nothing.
+			bool crossChecked = questionKeys.Any(k => k.StartsWith(ByName));
+
 			foreach (var questionKey in questionKeys)
 			{
 				if (!choices.TryGetValue($"{questionPrefix}#{questionKey}", out var answer)) continue;
-				if (answer.Confidence < PLang.Building.BuilderDecider.ConfidenceThreshold) continue;
+				var sure = crossChecked ? BeliefIn(answer) : answer.Confidence;
+				if (sure < PLang.Building.BuilderDecider.ConfidenceThreshold) continue;
 				if (answer.Choice == NoneOption) continue;
 
 				if (questionKey.StartsWith(ByValue)) byValue.Add((answer.Choice, questionKey.Substring(ByValue.Length)));
-				else if (questionKey.StartsWith(ByName)) byName.Add((questionKey.Substring(ByName.Length), answer.Choice, answer.Confidence));
+				else if (questionKey.StartsWith(ByName)) byName.Add((questionKey.Substring(ByName.Length), answer.Choice, sure));
 			}
 
 			var entries = new Newtonsoft.Json.Linq.JObject();
@@ -1043,7 +1072,7 @@ Make sure to use the information in <error> to return valid JSON response"
 					{
 						if (field.ValueSource == "dictionary")
 						{
-							var nested = DictionaryQuestions(field, step.Text, method.MethodName, variables, literals, words, askByName: false);
+							var nested = DictionaryQuestions(field, step.Text, method.MethodName, variables, literals, words, askByName: false, owner: parameter.Name);
 							if (nested.Count > 0)
 							{
 								foreach (var entry in nested) fieldQuestions[$"{parameter.Name}.{field.Name}#{entry.Key}"] = entry.Value;
@@ -1728,7 +1757,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		}
 
 		private static Dictionary<string, ParameterQuestion> DictionaryQuestions(IPropertyDescription parameter, string stepText,
-			string method, List<string> variables, List<string> literals, List<string> words, bool askByName)
+			string method, List<string> variables, List<string> literals, List<string> words, bool askByName, string? owner = null)
 		{
 			var questions = new Dictionary<string, ParameterQuestion>();
 			var values = variables.Concat(literals).ToList();
@@ -1760,7 +1789,12 @@ Make sure to use the information in <error> to return valid JSON response"
 			// %draft.suggested% under "through" at 0.92 in `go through %draft.suggested%, call
 			// AddSuggested item=%offerId%`, which builds a wrong dictionary silently, and per value
 			// rejects that same token at 0.85. A wrong build is worse than a fallback.
-			var prefix = $"This is one step of plang code that calls the method {method}. The parameter '{parameter.Name}' holds one or more named values."
+			// The owner has to be named. A dictionary nested in a record was described as "the
+			// parameter 'parameters'", which reads as this step's own parameters, so the values of
+			// `run agent, messages: %messages%, tools: %tools%` were filed into the parameters of the
+			// goal named by `on tool call, call ToolUsed`, a call that passes nothing.
+			var owned = string.IsNullOrEmpty(owner) ? $"'{parameter.Name}'" : $"'{parameter.Name}' of {owner}";
+			var prefix = $"This is one step of plang code that calls the method {method}. The parameter {owned} holds one or more named values."
 				+ (string.IsNullOrWhiteSpace(parameter.Description) ? "" : " " + parameter.Description.Trim());
 
 			foreach (var value in values)
