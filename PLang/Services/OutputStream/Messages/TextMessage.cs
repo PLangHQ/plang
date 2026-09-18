@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace PLang.Services.OutputStream.Messages;
 
-[Description(@"Content is what gets rendered or written: the name of a template file, or the text itself. It is never the variable the step writes its result into, and never a css selector or an action name. 
+[Description(@"Content is what gets rendered or written: the name of a template file, the text itself, or the variable holding what is to be written, e.g. `write out %result%` has Content %result%. What it is never is the variable the step writes its result INTO, the one named after `write to` or `into`, and never a css selector or an action name.
 Target defines where in the UI to write the content. It is a css selector such as #main or #ideaChat, which a step writes as cssSelector: #main or as `to #main`. This can be null and will be controlled by external system
 Actions are actions executed on the content. null is default value unless defined by user. 
 Built in actions are: 'append(default), prepend, replace, replaceSelf, clear, remove, scrollIntoView, focus, highlight, show, hide, notify, alert, badge, vibrate, navigate, reload, open, close'. 
