@@ -24,6 +24,7 @@ namespace PLang.Modules.ConditionalModule
 		[Description(@"Two or more tests joined together. Shape:
 {""Kind"":""Compound"",""Logic"":""AND"",""IsNot"":false,""Conditions"":[{""Kind"":""Simple"",...},{""Kind"":""Simple"",...}]}
 Logic is AND or OR and is required. Conditions holds the tests being joined.
+Each test inside carries its own IsNot, read from its own words, e.g. `%city% is empty and %name% is not empty` joins one with IsNot false and one with IsNot true. Joining tests does not make them positive.
 A Compound NEVER has LeftValue, Operator or RightValue of its own: those belong to the Simple conditions inside it.")]
 		public record CompoundCondition : Condition;
 
