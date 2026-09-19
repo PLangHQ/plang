@@ -88,8 +88,13 @@ Parallel building is much faster and safe for ordinary goals; setup and event go
 mentioning `inject`, stay sequential on their own. The flag is documented in
 `RegisterStartupParameters.cs`.
 
-**`plang build` exits 0 even when steps failed.** Do not trust the exit code, and never pipe the
-build through grep and read only the last line. Three checks actually prove a change works:
+**A build that exits 0 still proves less than you think.** The exit code itself is now reliable,
+measured on the current build: a clean build exits 0, and a step calling a goal that does not exist
+or holding invalid sql exits 1. A failed step also leaves no `.pr` at all, so the gap in the
+numbering says which step it was.
+
+What a green build does not tell you is whether it built the thing you meant. Never pipe the build
+through grep and read only the last line. Three checks actually prove a change works:
 
 1. No unbuilt steps: every step in the goal has a numbered `.pr` file.
 2. The templates you render still parse.
