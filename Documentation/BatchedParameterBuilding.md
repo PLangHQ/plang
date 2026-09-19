@@ -4,6 +4,44 @@ The builder asks the llm once per step. It does not have to. Once the decision e
 every step's module and method, what is left is filling parameters, and that can be asked for a
 whole goal at once.
 
+## As built
+
+`PLang/Building/BatchedInstructionBuilder.cs`. It runs after the decider's phases and before the
+goal's step loop, and puts a whole function in the decider cache for each step; `BaseBuilder`
+reads it instead of calling the llm. A step it cannot answer for, or a request that fails, leaves
+the cache empty and that step builds on its own exactly as before.
+
+`--batchbuild=off` goes back to a request per step. `--decider=mock` reads each step's module and
+method out of the `.pr` next to it: it decides nothing and is no use for building anything new, it
+is there so this path can be exercised while the decision engine is unavailable.
+
+Measured by building six goals for real and scoring the `.pr` files that land on disk, all six at
+100% either way:
+
+| goal | steps | llm calls per step | batched |
+| --- | --- | --- | --- |
+| admin/dev/File | 10 | 20 | 13 |
+| admin/dev/tools/RunTest | 11 | 22 | 18 |
+| Start/PaintHome | 7 | 12 | 9 |
+| admin/crm/Search | 6 | 11 | 5 |
+| api/MarkUsed/MockLookup | 11 | 19 | 9 |
+| routes/AdminRoutes | 28 | 84 | 29 |
+
+The function call per step is gone entirely. What is left is one request per build pass for the
+step's properties, its error handling and caching and log level, which is a separate question and
+is the obvious next thing to group. A goal with conditionals gains least, because a conditional
+builds twice and pays for its properties twice; AdminRoutes, which has none, is the clean case.
+
+Three things only showed up once it was building for real:
+
+- The answer shape has to be written into the request, not left to the json scheme. Without it the
+  model answered with a flat object of parameter names per step, in order, with no step number on
+  any of them, and every step but the first was dropped on the way back.
+- `maxLength` has to scale with the number of steps. At the 4000 token default the 28 step goal
+  came back empty, the request was thrown away and all 28 steps built on their own.
+- The answer must stay in the cache after a step reads it. Dropping it on first read sent the
+  second pass of a conditional to the llm.
+
 Everything below was measured on two goals of one app, `admin/dev/File` with 10 steps and
 `routes/AdminRoutes` with 28, against a hand written reference rather than against an earlier
 build, because an earlier build is just what one model answered and scoring against it rewards
