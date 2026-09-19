@@ -585,8 +585,12 @@ OnStartingWebserver
 		@"path=""/admin/crm/vendor/%id%(number)"", pathParameters=[{""Name"":""id"",""VariableOrValue"":""%id%"",""Type"":""number""}], goalToCall={""Name"":""/admin/crm/Vendor""}, requestProperties={""Methods"":[""GET"",""POST""]}")]
 	[Example("add route /admin/idea, post, max content length 8mb, call /admin/Idea",
 		@"path=""/admin/idea"", pathParameters=[], goalToCall={""Name"":""/admin/Idea""}, requestProperties={""Methods"":[""POST""],""MaxContentLengthInBytes"":8388608}")]
-	[Example("add route /admin/dev/chat/%id%(number)/archive, call /admin/dev/Archive goalId=%id%",
-		@"path=""/admin/dev/chat/%id%(number)/archive"", pathParameters=[{""Name"":""id"",""VariableOrValue"":""%id%"",""Type"":""number""}], goalToCall={""Name"":""/admin/dev/Archive"",""Parameters"":{""goalId"":""%id%""}}")]
+	// The path here is deliberately unlike anything an app would write. An earlier version used
+	// /admin/dev/chat/%id%(number)/archive, which is a real route in one app, and the model then
+	// answered that step by retrieving this example instead of reading it, carrying goalId=%id%
+	// onto three steps that never mention it.
+	[Example("add route /shop/%sku%/review, call /shop/Review productSku=%sku%",
+		@"path=""/shop/%sku%/review"", pathParameters=[{""Name"":""sku"",""VariableOrValue"":""%sku%""}], goalToCall={""Name"":""/shop/Review"",""Parameters"":{""productSku"":""%sku%""}}")]
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
 		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
 	{
