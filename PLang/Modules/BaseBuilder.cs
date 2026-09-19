@@ -181,6 +181,26 @@ namespace PLang.Modules
 					lastDeciderReason);
 			}
 
+			// The goal's parameters are usually already built, in one request for the whole goal,
+			// before any step gets here. A miss is not a failure: the step asks for itself, which is
+			// what happened before this existed. A retry is never served from it either, or a step
+			// whose answer failed validation would be handed the same answer again.
+			if (previousBuildError == null && responseType == typeof(GenericFunction) && step.Goal != null)
+			{
+				var prebuilt = deciderCache?.ForGoal(step.Goal).Function(step);
+				if (prebuilt != null)
+				{
+					deciderCache!.ForGoal(step.Goal).ForgetFunction(step);
+					deciderReport?.Record(step.Goal, step, PLang.Building.DeciderOutcome.Decided);
+
+					appendedSystemCommand.Clear();
+					appendedAssistantCommand.Clear();
+					assistant = "";
+					system = "";
+					return (InstructionCreator.Create(prebuilt.Value.Function, step, prebuilt.Value.Request), null);
+				}
+			}
+
 			var question = GetLlmRequest(step, responseType, previousBuildError, classDescription);
 
 			if (decided != null)
@@ -2049,7 +2069,12 @@ Make sure to use the information in <error> to return valid JSON response"
 		}
 
 		[Method]
-		public string GetDefaultSystemText(GoalStep step)
+		public string GetDefaultSystemText(GoalStep step) => DefaultSystemText();
+
+		// The same text, reachable without a builder instance. The batched builder sends it with two
+		// corrections, and the corrections have to be made against this exact text, not a copy of it
+		// that drifts: every rule added here has to reach both paths.
+		public static string DefaultSystemText()
 		{
 			/*
 			 * file.read system.txt, write to %content%

@@ -317,6 +317,7 @@ namespace PLang.Container
 			// same instance for the goal builder that fills it and the step builder that reads it.
 			container.RegisterSingleton<IBuilderDeciderCache, BuilderDeciderCache>();
 			container.RegisterSingleton<IBuilderDeciderReport, BuilderDeciderReport>();
+			container.Register<IBatchedInstructionBuilder, BatchedInstructionBuilder>();
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 
 			container.Register<LlmCaching, LlmCaching>();

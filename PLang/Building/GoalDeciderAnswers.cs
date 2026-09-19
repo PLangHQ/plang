@@ -20,10 +20,26 @@ namespace PLang.Building
 		private readonly ConcurrentDictionary<int, (string Text, MethodChoice Choice)> methods = new();
 		private readonly ConcurrentDictionary<int, (string Text, Dictionary<string, ParameterChoice> Choices)> parameters = new();
 		private readonly ConcurrentDictionary<int, (string Text, ParameterChoice Choice)> returns = new();
+		private readonly ConcurrentDictionary<int, (string Text, Modules.BaseBuilder.GenericFunction Function, Models.LlmRequest Request)> functions = new();
 
 		public int ModuleCount => modules.Count;
 		public int MethodCount => methods.Count;
 		public int ParameterStepCount => parameters.Count;
+		public int FunctionCount => functions.Count;
+
+		// A whole function, method and parameters and return values together, built for the whole
+		// goal in one llm request. The request itself is kept with it: it is what gets written into
+		// the .pr as the step's LlmRequest, so a step built this way still records what was asked.
+		public void SetFunction(GoalStep step, Modules.BaseBuilder.GenericFunction function, Models.LlmRequest request)
+			=> functions[step.Index] = (step.Text, function, request);
+
+		public (Modules.BaseBuilder.GenericFunction Function, Models.LlmRequest Request)? Function(GoalStep step)
+			=> functions.TryGetValue(step.Index, out var found) && found.Text == step.Text
+				? (found.Function, found.Request) : null;
+
+		// A step whose batched answer did not survive validation must not be handed the same answer
+		// again on the retry, or the build loops on it.
+		public void ForgetFunction(GoalStep step) => functions.TryRemove(step.Index, out _);
 
 		public void SetModule(GoalStep step, ModuleChoice choice) => modules[step.Index] = (step.Text, choice);
 		public void SetMethod(GoalStep step, MethodChoice choice) => methods[step.Index] = (step.Text, choice);
@@ -54,6 +70,7 @@ namespace PLang.Building
 			methods.Clear();
 			parameters.Clear();
 			returns.Clear();
+			functions.Clear();
 		}
 	}
 

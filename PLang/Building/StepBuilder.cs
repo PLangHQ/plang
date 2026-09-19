@@ -30,6 +30,9 @@ public interface IStepBuilder
 	// Asks the decider which module every step about to be built uses, in one request, before any
 	// of them are built. Answers land in the cache and BuildStep reads them instead of asking.
 	Task PrefetchModules(Goal goal, IReadOnlyList<int> stepIndexes);
+
+	// With the modules and methods decided, one llm request fills the parameters of every step.
+	Task PrefetchInstructions(Goal goal, IReadOnlyList<int> stepIndexes);
 }
 
 public class StepBuilder : IStepBuilder
@@ -52,6 +55,7 @@ public class StepBuilder : IStepBuilder
 	private readonly IBuilderDecider decider;
 	private readonly IBuilderDeciderCache deciderCache;
 	private readonly IBuilderDeciderReport deciderReport;
+	private readonly IBatchedInstructionBuilder batchedInstructionBuilder;
 
 	private const double DeciderConfidenceThreshold = BuilderDecider.ConfidenceThreshold;
 	private IMemoryStackAccessor memoryStackAccessor;
@@ -60,8 +64,10 @@ public class StepBuilder : IStepBuilder
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
 				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine,
-				PrParser prParser, IGoalParser goalParser, IBuilderDecider decider, IBuilderDeciderCache deciderCache, IBuilderDeciderReport deciderReport)
+				PrParser prParser, IGoalParser goalParser, IBuilderDecider decider, IBuilderDeciderCache deciderCache, IBuilderDeciderReport deciderReport,
+				IBatchedInstructionBuilder batchedInstructionBuilder)
 	{
+		this.batchedInstructionBuilder = batchedInstructionBuilder;
 		this.decider = decider;
 		this.deciderCache = deciderCache;
 		this.deciderReport = deciderReport;
@@ -321,8 +327,42 @@ public class StepBuilder : IStepBuilder
 	// including the ones that are not being rebuilt, because that context is what makes the answers
 	// better: measured against asking step by step, the choices were identical on 37 of 37 steps
 	// while 11 answers rose above the confidence threshold and 3 fell below it.
+	public async Task PrefetchInstructions(Goal goal, IReadOnlyList<int> stepIndexes)
+	{
+		await batchedInstructionBuilder.PrefetchInstructions(goal, stepIndexes);
+	}
+
+	// --decider=mock reads each step's module and method out of the .pr sitting next to it instead
+	// of asking the decision engine. It decides nothing, so it is no use for a real build: it is
+	// there so the batched builder can be exercised and measured when the decision engine is
+	// unavailable, which is the only part of the build it stands in for.
+	private void SeedFromBuiltPrFiles(Goal goal, IReadOnlyList<int> stepIndexes, GoalDeciderAnswers cached)
+	{
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			if (string.IsNullOrEmpty(step.AbsolutePrFilePath) || !fileSystem.File.Exists(step.AbsolutePrFilePath)) continue;
+
+			var (instruction, error) = InstructionCreator.Create(step.AbsolutePrFilePath, fileSystem);
+			if (error != null || instruction?.Function == null || instruction.Text != step.Text) continue;
+
+			var module = instruction.ModuleType ?? step.ModuleType;
+			if (!string.IsNullOrEmpty(module)) cached.SetModule(step, new ModuleChoice(module, 1.0, new()));
+			if (!string.IsNullOrEmpty(instruction.Function.Name)) cached.SetMethod(step, new MethodChoice(instruction.Function.Name, 1.0, new()));
+		}
+		logger.Value.LogWarning($"--decider=mock: read modules and methods for {cached.MethodCount} steps of {goal.GoalName} out of the built .pr files");
+	}
+
 	public async Task PrefetchModules(Goal goal, IReadOnlyList<int> stepIndexes)
 	{
+		if ((AppContext.GetData("decider") as string) == "mock")
+		{
+			if (goal.IsSystem || stepIndexes.Count == 0) return;
+			var mocked = deciderCache.ForGoal(goal);
+			mocked.Clear();
+			SeedFromBuiltPrFiles(goal, stepIndexes, mocked);
+			return;
+		}
 		if ((AppContext.GetData("decider") as string) == "off" || goal.IsSystem) return;
 		// Worth doing even for a single changed step. It is the same one request, and the state is
 		// the whole goal, so an edited step is decided knowing the steps around it, which is where

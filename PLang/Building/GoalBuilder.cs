@@ -140,6 +140,11 @@ namespace PLang.Building
 			// step asks for itself, which is what happened before this existed.
 			await stepBuilder.PrefetchModules(goal, indexesToBuild);
 
+			// With the modules and methods known, one more request fills the parameters of every
+			// step, so a ten step goal is built in one request instead of ten. A step this cannot
+			// answer for builds on its own exactly as before.
+			await stepBuilder.PrefetchInstructions(goal, indexesToBuild);
+
 			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1)
 			{
 				var errorsByIndex = new System.Collections.Concurrent.ConcurrentDictionary<int, IBuilderError>();
