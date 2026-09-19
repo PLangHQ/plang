@@ -44,7 +44,7 @@ Then, in late August 2023, I picked it up again. The potential hasn’t disappoi
 
 ## Turning Potential Into Reality
 
-Now it was time to code—both the [builder](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md) and the [runtime](https://github.com/PLangHQ/plang/blob/main/Documentation/RuntimeLifecycle.md).
+Now it was time to code—both the [builder](https://github.com/PLangHQ/plang/blob/main/Documentation/Building.md) and the [runtime](https://github.com/PLangHQ/plang/blob/main/Documentation/RuntimeLifecycle.md).
 
 I chose to build it in C# because I know it well and it’s a great language. Usually, programming languages aren’t built on top of another language. But doing it this way has huge benefits. Building a programming language from scratch is hard. You have to deal with all sorts of problems—garbage collection, encoding, virtual machines, security, and a ton of other stuff. I didn’t have to do any of that.
 

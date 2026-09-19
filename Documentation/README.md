@@ -89,8 +89,7 @@ Explore plang's features and capabilities:
         - **[Runtime Lifecycle](https://github.com/PLangHQ/plang/blob/main/Documentation/RuntimeLifecycle.md)**: Sequence of operations when running plang           
         - **[Startup parameters](https://github.com/PLangHQ/plang/blob/main/Documentation/StartupParameters.md)**: Lists out what parameters can be injected at startup
     - **Builder**
-        - **[Building your code](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md)**: How does the builder take your intent and convert it to executable code.
-        - **[Builder Lifecycle & Events](https://github.com/PLangHQ/plang/blob/main/Documentation/BuilderLifecycle.md)**: Sequence of operations when building plang and build events
+        - **[Building plang code](https://github.com/PLangHQ/plang/blob/main/Documentation/Building.md)**: What the builder decides and what the llm writes, the commands, writing steps that build first time, building several files at once, and what to verify.
     - **Writing an app that works the first time**
         - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
         - **[ask user](https://github.com/PLangHQ/plang/blob/main/Documentation/AskUser.md)**: Why `ask user` is `Console.ReadLine`, what survives the answer on a stateless web request and what does not, how the callback resumes the goal, and why a form is one shot.
@@ -98,7 +97,6 @@ Explore plang's features and capabilities:
         - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal hands back.
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
         - **[Running on your own server](https://github.com/PLangHQ/plang/blob/main/Documentation/RunningOnAServer.md)**: Runtime and app on a linux box, systemd, TLS straight from plang with no proxy, deploys, a watchdog, and rollback.
-        - **[Steps that build the first time](https://github.com/PLangHQ/plang/blob/main/Documentation/StepsThatBuild.md)**: Module hints, how short a step should be, `[code]` as a last resort, and what to verify after a build.
         - **[Agents](https://github.com/PLangHQ/plang/blob/main/Documentation/Agents.md)**: One step runs the loop, tools are goals, three events draw it; what to put in the prompt and what to attach to results.
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
