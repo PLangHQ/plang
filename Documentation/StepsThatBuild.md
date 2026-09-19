@@ -136,6 +136,41 @@ What a targeted build deliberately does not do:
   one, so a routes goal is safe to run again. A route removed from the file stays registered until
   the webserver restarts.
 
+## Building goals in parallel while you write the next one
+
+`plang build --goal=path/To.goal` builds one file, so an agent writing several goal files does not
+have to wait for each one. Write a file, start its build in the background, and carry on writing
+the next. Two builds running at once were measured on separate goals and both produced correct
+`.pr` files: they do not fight over `.build` or the llm cache.
+
+Order is the constraint, and both halves of it fail hard:
+
+- A goal that calls a goal which does not exist yet fails with `GoalNotFound(404)` and the calling
+  step gets no `.pr`. Build the callee first.
+- A step using a table fails until the setup goal that creates it has been **built and run**. A
+  targeted build never builds setup goals it was not asked for.
+
+So: setup first, built and run; then goals with no outgoing `call goal`, as many at once as you
+like; then their callers; then the routes file, because every route is a reference to a goal.
+
+**Read the build's output, not the directory listing.** Give each background build its own log and
+read the log of any build that exits non zero. The build says exactly what went wrong:
+
+```
+❌ BUILD FAILED - 1 step(s) did not build
+   /tests/FailBuild.goal:3
+       select nosuchcolumn from nosuchtable where id=1 ds: "crm" write to %y%
+       → Could not find table(s) nosuchtable in datasource(s) 'crm' ... a table is created by a
+         goal in Setup/, and a build that skips the setup goals never creates it.
+```
+
+File, line, the step, the cause and the fix. Working out which step failed from a gap in the `.pr`
+numbering throws all of that away.
+
+One thing not worth parallelising: a goal you are still changing your mind about. Each build is a
+real llm request, so writing the file properly and building it once is cheaper than building three
+drafts at the same time.
+
 ## Do not delete `.build`
 
 The builder detects changed goals itself. Deleting `.build` throws away every mapping decision and
