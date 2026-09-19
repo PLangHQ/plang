@@ -817,6 +817,14 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 	private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction)
 	{
+		// The goal's properties are usually already built, in the same request as its description,
+		// before any step gets here. A miss is not a failure: the step asks for itself, as before.
+		var prebuilt = deciderCache.ForGoal(goal).Properties(step);
+		if (prebuilt != null)
+		{
+			return ApplyStepProperties(goal, step, instruction, prebuilt);
+		}
+
 		LlmRequest llmQuestion = await GetBuildStepPropertiesQuestion(goal, step, instruction);
 
 		logger.Value.LogInformation($"  - Building properties for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
@@ -830,6 +838,15 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		if (llmError != null) return (step, new StepBuilderError(llmError, step));
 
 		if (stepProperties == null) return (step, new StepBuilderError($"Could not get answer from LLM.", step));
+
+		return ApplyStepProperties(goal, step, instruction, stepProperties);
+	}
+
+	// Shared by the per step answer and the batched one, so a step built either way is validated
+	// and limited the same: a goal named in an error handler still has to resolve to a real goal,
+	// and a method that forbids caching still gets none.
+	private (GoalStep, IBuilderError?) ApplyStepProperties(Goal goal, GoalStep step, Instruction instruction, StepProperties stepProperties)
+	{
 		(stepProperties, var error) = ValidateGoalPaths(stepProperties, step);
 		if (error != null) return (step, error);
 

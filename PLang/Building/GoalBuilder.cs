@@ -53,13 +53,16 @@ namespace PLang.Building
 		private readonly MethodHelper methodHelper;
 		private readonly IStepBuilder stepBuilder;
 		private readonly IBuilderDeciderReport deciderReport;
+		private readonly IBuilderDeciderCache deciderCache;
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper, IBuilderDeciderReport deciderReport,
 				PrParser prParser, ISettings settings, Modules.DbModule.ModuleSettings dbSettings,
-				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper)
+				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper,
+				IBuilderDeciderCache deciderCache)
 		{
 
+			this.deciderCache = deciderCache;
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
@@ -104,15 +107,12 @@ namespace PLang.Building
 			// 'create data source' step is meant to apply to the rest of that goal.
 			if (!goal.IsSetup) context.DataSource = null;
 
-			// Generate description and other properties for goal			
-			(goal, var error) = await LoadMethodAndDescription(goal);
-			if (error != null)
-			{
-				var result = await eventRuntime.RunGoalErrorEvents(goal, 0, error, true);
-				if (result.Error != null) return new GoalBuilderError(result.Error, goal, ContinueBuild: false);
-
-				return await BuildGoal(container, goal, context, errorCount, goalIndex);
-			}
+			// The goal's own GoalInfo is carried over from the previous build. Its description used
+			// to be written here, in a request of its own; it is asked for now beside the step
+			// properties, after the prefetch below, because both read the same thing, the goal's
+			// steps, and nothing in the step loop reads the description.
+			Goal? oldGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, goal.AbsolutePrFilePath);
+			if (oldGoal != null) goal.GoalInfo = oldGoal.GoalInfo;
 			logger.LogDebug($" - Run BuildGoal events {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
 			if (!ContinueBuildGoal(buildEventError, goal))
@@ -144,6 +144,17 @@ namespace PLang.Building
 			// step, so a ten step goal is built in one request instead of ten. A step this cannot
 			// answer for builds on its own exactly as before.
 			await stepBuilder.PrefetchInstructions(goal, indexesToBuild);
+
+			// Reads the answer the prefetch above already has, and only asks for itself when it has
+			// none: a goal whose steps were all already built, or a prefetch that did not run.
+			(goal, var error) = await CreateDescriptionForGoal(goal, oldGoal);
+			if (error != null)
+			{
+				var result = await eventRuntime.RunGoalErrorEvents(goal, 0, error, true);
+				if (result.Error != null) return new GoalBuilderError(result.Error, goal, ContinueBuild: false);
+
+				return await BuildGoal(container, goal, context, errorCount, goalIndex);
+			}
 
 			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1)
 			{
@@ -515,6 +526,15 @@ namespace PLang.Building
 
 			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
 			{
+				return (goal, null);
+			}
+
+			// Usually answered already, beside the step properties, in one request for the goal.
+			var batched = deciderCache.ForGoal(goal).Description(goal.GetGoalAsString());
+			if (batched != null)
+			{
+				goal.Description = batched.Value.Description;
+				goal.IncomingVariablesRequired = batched.Value.Incoming;
 				return (goal, null);
 			}
 

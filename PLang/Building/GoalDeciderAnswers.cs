@@ -41,6 +41,30 @@ namespace PLang.Building
 		// again on the retry, or the build loops on it.
 		public void ForgetFunction(GoalStep step) => functions.TryRemove(step.Index, out _);
 
+		// How a step is run: its error handlers, caching, whether it is waited for, its log level.
+		// Asked for the whole goal in the same request as the goal's description, because neither
+		// needs the method information and both are read off the step's own words.
+		private readonly ConcurrentDictionary<int, (string Text, Model.StepProperties Properties)> properties = new();
+
+		public int PropertyCount => properties.Count;
+
+		public void SetProperties(GoalStep step, Model.StepProperties value) => properties[step.Index] = (step.Text, value);
+
+		public Model.StepProperties? Properties(GoalStep step)
+			=> properties.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Properties : null;
+
+		// The goal's own description and the variables it has to be handed, answered beside the
+		// step properties. Held against the goal's text so a goal edited and built again does not
+		// read the previous version's description.
+		private (string Text, string Description, Dictionary<string, string>? Incoming)? description;
+
+		public void SetDescription(Goal goal, string text, string value, Dictionary<string, string>? incoming)
+			=> description = (text, value, incoming);
+
+		public (string Description, Dictionary<string, string>? Incoming)? Description(string goalText)
+			=> description != null && description.Value.Text == goalText
+				? (description.Value.Description, description.Value.Incoming) : null;
+
 		public void SetModule(GoalStep step, ModuleChoice choice) => modules[step.Index] = (step.Text, choice);
 		public void SetMethod(GoalStep step, MethodChoice choice) => methods[step.Index] = (step.Text, choice);
 		public void SetParameters(GoalStep step, Dictionary<string, ParameterChoice> choices) => parameters[step.Index] = (step.Text, choices);
@@ -71,6 +95,8 @@ namespace PLang.Building
 			parameters.Clear();
 			returns.Clear();
 			functions.Clear();
+			properties.Clear();
+			description = null;
 		}
 	}
 

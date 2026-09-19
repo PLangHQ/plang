@@ -2099,7 +2099,7 @@ null is used to represent no value, e.g. {{ ""name"": null }}
 Variables MUST not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
 Parameters that is type System.String MUST be without escaping quotes. See <Example>
-A quoted text is copied out of the step character for character, only the wrapping quotes are dropped. Never reword it, never translate it, never change its capitalisation and never drop a prefix such as ""Error: "". It is the text the app shows, not a description of it
+A quoted text is COPIED out of the step, character for character, only the wrapping quotes are dropped. Do not retype it from memory and do not write your own version of it: read the characters in the step and reproduce them exactly. Never reword, never translate, never change a capital letter to a small one, never drop a prefix such as ""Error: "", and never drop or alter a letter. This matters most for text that is not English, e.g. Icelandic `raunveruleg` is not `raunverleg` and `Prófið` is not `prófið`: a single changed letter is a wrong answer. It is the text the app shows, not a description of it
 Error handling is process by another step, if you see 'on error...' you can ignore it
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
