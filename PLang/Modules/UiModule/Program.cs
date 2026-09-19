@@ -223,7 +223,10 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			string LayoutName = "default",
 			[property: Description("true when the step does not write the result into a variable, because the rendered content must then be sent to the user, e.g. `render 'page.html' to #main`. false only when the step captures the result, e.g. `render 'row.html', write to %html%` or `into %html%`. Getting this wrong on a step with no variable renders the page and sends nothing")]
 			bool RenderToOutputstream = false,
-			[property: Description("true when the content must not be wrapped in the page layout, which is the case whenever the step says 'without main layout', and whenever it renders into any element other than the page's main render area, normally #main. So a step naming #main is false, a step naming any other selector such as #ideaChat is true")]
+			// Read the selector, do not read whether there is one. With the rule stated as "an element
+			// other than the main area", a step targeting #main itself came back true in 11 builds
+			// out of 12: naming any selector at all was being taken as the answer.
+			[property: Description("Decided by which selector RenderMessage.Target holds. #main is the page's main render area: a step targeting #main takes false. Any other selector, such as #list or #ideaChat, takes true, and so does a step that says 'without main layout'. A step naming no selector takes false")]
 			bool DontRenderMainLayout = false,
 			// Tried and measured worse, do not try again without measuring: telling the decider that
 			// unset is the normal case, because plang derives it from the resolved content, took
@@ -272,11 +275,13 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
   => options={""RenderMessage"":{""Content"":""<p>plain text</p>""},""IsTemplateFile"":false,""RenderToOutputstream"":true}
 - append to #list to item.html, scroll to view
   => options={""RenderMessage"":{""Content"":""item.html"",""Target"":""#list"",""Actions"":[""replace"",""scrollIntoView""]},""IsTemplateFile"":true,""RenderToOutputstream"":true,""DontRenderMainLayout"":true}
+- render welcome.html, cssSelector: ""#main"", action: ""replace""
+  => options={""RenderMessage"":{""Content"":""welcome.html"",""Target"":""#main"",""Actions"":[""replace""]},""IsTemplateFile"":true,""RenderToOutputstream"":true,""DontRenderMainLayout"":false}
 ```
 Target is null when the step names no selector, and lives inside RenderMessage with Content and Actions.
 ReRender defaults to true, the normal behaviour of re-rendering the content.
 RenderToOutputstream is true when the step writes the result into no variable.
-DontRenderMainLayout is true whenever the step renders into an element other than the page's main area.
+DontRenderMainLayout turns on the selector the step names, not on whether it names one. #main is the page's main render area and takes false; any other selector takes true.
 IsTemplateFile is true when RenderMessage.Content is a file name, which includes a path written out in the step, and false when Content is the text to render.")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{
