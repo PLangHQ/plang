@@ -611,7 +611,10 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer")]
-		[Example(@"query usersCount.sql, parameters: date=%now%, ds:""data"", ""sales"", table: ""users"", write to %result%", @"fileName=""usersCount.sql"", parameter=[{""date"":""%now%""}], dataSourceNames=[""data"", ""sales""], tableAllowList=[""users""], ReturnValues=""%result%""")]
+		// The example used to write parameter=[{"date":"%now%"}]: the wrong name, and a dictionary
+		// where the type is a list of ParameterInfo. A step passing one parameter was then built
+		// with the bare variable as the whole list, which is not that type at all.
+		[Example(@"query usersCount.sql, parameters: date=%now%, ds:""data"", ""sales"", table: ""users"", write to %result%", @"fileName=""usersCount.sql"", parameters=[{""TypeFullName"":""System.Object"",""ParameterName"":""@date"",""VariableNameOrValue"":""%now%""}], dataSourceNames=[""data"", ""sales""], tableAllowList=[""users""], ReturnValues=""%result%""")]
 		[Example(@"query usersCount.sql, table: ""users"", write to %result%", @"fileName=""usersCount.sql"", tableAllowList=[""users""], ReturnValues=""%result%""")]
 		[Example(@"query sql/totalProducts.sql, table: ""products"", write to %productCount%", @"fileName=""totalProducts.sql"", tableAllowList=[""products""], ReturnValues=""%productCount%""")]
 		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null, int? rowsToReturn = null)

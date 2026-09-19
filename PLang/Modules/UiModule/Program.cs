@@ -257,22 +257,27 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return path;
 		}
 
-		[Description(@" Examples:
+		// The examples here used to be written flat, with names the method no longer has:
+		// FileName=template.html, actions=[...], renderToOutputstream=true. The answer was then
+		// copied in that shape, with no options wrapper and fields the record does not carry, and
+		// two render steps of a goal were built wrong every run. Examples must be written as the
+		// value the method actually takes.
+		[Description(@"Everything goes inside the single options parameter, and what is rendered goes inside its RenderMessage. Examples:
 ```plang
-- render product.html => isTemplateFile=true, renderToOutputstream = true
-- render frontpage.html, write to %html% => isTemplateFile=true, renderToOutputstream = false
-- render ""Is this correct file content.html"" => isTemplateFile = false, renderToOutputstream = true
-- render product.html to #main => renderToOutputstream = true, ReRender=true, Target=""#main""
-- replace #main with template.html => Target=#main, actions=[""replace""], ReRender=true, FileName=template.html, renderToOutputStream= true
-- set html of #product to product.html => Target=#product, actions=[""replace""], ReRender=true, FileName=product.html, renderToOutputStream= true
-- append to #list to item.html, scroll to view => Target=#list, actions=[""replace"", ""scrollIntoView""], ReRender=true, FileName=item.html, renderToOutputStream= true
-
-Target can be null when not defined by user.
-Actions: list of action to preform, the default is 'replace'(innerHTML).
-ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
-When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
-IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false
-```")]
+- render product.html
+  => options={""RenderMessage"":{""Content"":""product.html""},""IsTemplateFile"":true,""RenderToOutputstream"":true}
+- render frontpage.html, write to %html%
+  => options={""RenderMessage"":{""Content"":""frontpage.html""},""IsTemplateFile"":true,""RenderToOutputstream"":false}
+- render ""<p>plain text</p>""
+  => options={""RenderMessage"":{""Content"":""<p>plain text</p>""},""IsTemplateFile"":false,""RenderToOutputstream"":true}
+- append to #list to item.html, scroll to view
+  => options={""RenderMessage"":{""Content"":""item.html"",""Target"":""#list"",""Actions"":[""replace"",""scrollIntoView""]},""IsTemplateFile"":true,""RenderToOutputstream"":true,""DontRenderMainLayout"":true}
+```
+Target is null when the step names no selector, and lives inside RenderMessage with Content and Actions.
+ReRender defaults to true, the normal behaviour of re-rendering the content.
+RenderToOutputstream is true when the step writes the result into no variable.
+DontRenderMainLayout is true whenever the step renders into an element other than the page's main area.
+IsTemplateFile is true when RenderMessage.Content is a file name, which includes a path written out in the step, and false when Content is the text to render.")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
