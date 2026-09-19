@@ -54,6 +54,14 @@ public class BatchedInstructionBuilder : IBatchedInstructionBuilder
 	private const int MinimumTokens = 4000;
 	private const int MaximumTokens = 16000;
 
+	// LlmRequest defaults to gpt-4.1-mini and that is what the builder has always used. Building
+	// the six goal suite for real on both: gpt-5.4-mini gets every step of all six right, where
+	// gpt-4.1-mini gets a render step's DontRenderMainLayout wrong on every build, and it is two
+	// to three times faster besides, File 3.9s against 11.0s and AdminRoutes 6.4s against 21.4s.
+	// Only these two requests are moved; the rest of the builder is untouched.
+	private static string Model => Environment.GetEnvironmentVariable("PLangBatchModel") is string m && m.Length > 0
+		? m : "gpt-5.4-mini";
+
 	public BatchedInstructionBuilder(Lazy<ILogger> logger, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
 		IBuilderDeciderCache deciderCache, IBuilderDeciderReport deciderReport, VariableHelper variableHelper,
 		IMemoryStackAccessor memoryStackAccessor)
@@ -271,7 +279,7 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 		// built repeatedly to see how stable an answer is. Measuring accuracy off a cached answer
 		// measures nothing: every run returns the same characters.
 		if (Environment.GetEnvironmentVariable("PLangBatchNoCache") == "1") request.Reload = true;
-		if (Environment.GetEnvironmentVariable("PLangBatchModel") is string m && m.Length > 0) request.model = m;
+		request.model = Model;
 		request.top_p = 0;
 		request.temperature = 0;
 		request.frequencyPenalty = 0;
@@ -340,7 +348,7 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 		// built repeatedly to see how stable an answer is. Measuring accuracy off a cached answer
 		// measures nothing: every run returns the same characters.
 		if (Environment.GetEnvironmentVariable("PLangBatchNoCache") == "1") request.Reload = true;
-		if (Environment.GetEnvironmentVariable("PLangBatchModel") is string m && m.Length > 0) request.model = m;
+		request.model = Model;
 		request.top_p = 0;
 		request.temperature = 0;
 		request.frequencyPenalty = 0;
@@ -425,10 +433,16 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 				// Without this the model invented a different spelling of the enum on every run.
 				text.Append($"  // one of: {e.AvailableValues}");
 			}
-			if (!string.IsNullOrEmpty(parameter.Description) && !parameter.Description.Contains("SupportingObjects"))
-			{
-				text.Append($"  // {OneLine(parameter.Description)}");
-			}
+			// A parameter whose type is a record carries a pointer to the types block appended to
+			// its own description. Skipping any description that mentions SupportingObjects threw
+			// the description away with the pointer, so every complex parameter was sent with
+			// nothing said about it: QuerySqlFile's parameters came back as the bare variable
+			// rather than a list of one entry, and the query then binds nothing. Drop the pointer,
+			// which the types block below makes redundant, and keep what was written.
+			var description = OneLine(parameter.Description ?? "");
+			var pointer = description.IndexOf("(see ", StringComparison.Ordinal);
+			if (pointer >= 0 && description.Contains("SupportingObjects")) description = description[..pointer].Trim();
+			if (description.Length > 0) text.Append($"  // {description}");
 			text.AppendLine();
 		}
 
