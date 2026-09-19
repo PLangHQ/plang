@@ -2070,6 +2070,7 @@ null is used to represent no value, e.g. {{ ""name"": null }}
 Variables MUST not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
 Parameters that is type System.String MUST be without escaping quotes. See <Example>
+A quoted text is copied out of the step character for character, only the wrapping quotes are dropped. Never reword it, never translate it, never change its capitalisation and never drop a prefix such as ""Error: "". It is the text the app shows, not a description of it
 Error handling is process by another step, if you see 'on error...' you can ignore it
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
@@ -2092,6 +2093,7 @@ Parameters: List of parameters that are needed according to the user intent.
 ReturnValue rules
 - Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable
 - If no %variable% is defined then set as null.
+- The variable the step writes its result into goes here and nowhere else. It is never also the value of a parameter, not even one whose name mentions a variable or an output. A step that names a variable to write into and leaves ReturnValues null has thrown the result away.
 ".Trim();
 		}
 		[Method]

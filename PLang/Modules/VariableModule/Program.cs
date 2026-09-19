@@ -233,8 +233,16 @@ namespace PLang.Modules.VariableModule
 			return null;
 		}
 
-		[Description("One or more variables to return. Variable can contain !, e.g. !callback=%callback%. When key is undefined, it is same as value, e.g. return %name% => then variables dictionary has key and value as name=%name%")]
-		public async Task<IError?> Return([HandlesVariable] Dictionary<string, object> variables)
+		// `return %result%` was coming back with no variables at all, roughly once in four builds,
+		// which ends the goal and returns nothing. The rule was buried at the end of one long line.
+		[Description("Return one or more variables out of the goal. variables is always set: a step that names a variable to return always has at least one entry.")]
+		[Example("return %result%", @"variables={""result"": ""%result%""}")]
+		[Example("return %total%, %count%", @"variables={""total"": ""%total%"", ""count"": ""%count%""}")]
+		[Example("return %user.name% as %name%", @"variables={""name"": ""%user.name%""}")]
+		[Example("return !callback=%callback%", @"variables={""!callback"": ""%callback%""}")]
+		public async Task<IError?> Return(
+			[Description("The name of each entry is what the value is returned as, without the percent signs. A step that just names a variable returns it under its own name, e.g. `return %name%` gives {\"name\": \"%name%\"}. A name starting with ! is a property, e.g. !callback")]
+			[HandlesVariable] Dictionary<string, object> variables)
 		{
 			if (variables == null) return new EndGoal(false, goal, goalStep, "", Levels: 0);
 

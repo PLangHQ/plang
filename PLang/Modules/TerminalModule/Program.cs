@@ -43,12 +43,17 @@ namespace PLang.Modules.TerminalModule
 			throw new NotImplementedException("Read is not implemented");
 		}
 
-		[Description("Run a executable. Parameters string should not be escaped. variableNameForDeltaOnStandardStream and variableNameForDeltaOnErrorStream must to be clearly defined by the user either in it's name or with parameter variableNameForDeltaOnStandardStream: or variableNameForDeltaOnErrorStream:. When user write to a %variable%, this is the whole standard output stream, NOT delta.")]
-		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", variableNameForDeltaOnStandardStream=null, variableNameForDeltaOnErrorStream=null, ReturnValues = %output%")]
+		[Description("Run an executable. Parameter strings should not be escaped.")]
+		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", ReturnValues = %output%")]
 		[Example("terminal ffmpeg -i input.mp4 output.avi, %delta%, %errorDelta%, write to %data%", @"appExecutableName=ffmpeg, parameters=""-i"",""input.mp4"",""output.avi"", variableNameForDeltaOnStandardStream=%delta%, variableNameForDeltaOnErrorStream=%errorDelta%, ReturnValues should be %data%")]
-		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
-			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? variableNameForDeltaOnStandardStream = null, [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
+		public async Task<(object?, IError?, Properties?)> RunTerminal(
+			[Description("The program to run, e.g. git in `terminal git --status`, or a full path such as /usr/bin/ffmpeg")] string appExecutableName,
+			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
+			[Description("The directory the program runs in, stated by the step as e.g. `working dir: \"/srv/app\"`")] string? pathToWorkingDirInTerminal = null,
+			// A step saying `write to %output%` was coming back with %output% here instead of as a
+			// return value, which streams the output away line by line and returns nothing.
+			[Description("Almost always unset. Only when the step names a variable to receive standard output line by line as it arrives, e.g. `%delta%`. `write to %x%` is the finished output and belongs in ReturnValues, never here")] [HandlesVariable] string? variableNameForDeltaOnStandardStream = null,
+			[Description("Almost always unset. Only when the step names a separate variable for the error stream, line by line as it arrives, e.g. `%errorDelta%`")] [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
 			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false
 			)
 		{
