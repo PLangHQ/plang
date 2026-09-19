@@ -573,7 +573,14 @@ OnStartingWebserver
 		return null;
 	}
 
-	public record ParamInfo(string Name, string VariableOrValue, string Type, string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
+	// Type used to be required on the record, so the builder filled it with System.String for a
+	// placeholder the path gives no type for, in 5 builds out of 12. BuildRoute reads the type out
+	// of the path itself, e.g. %id%(number), and only when the field is still empty: a type the
+	// builder invented would keep the one the path states from ever being recorded.
+	public record ParamInfo(string Name, string VariableOrValue,
+		[property: Description("Only when the path writes the type in parentheses after the placeholder, e.g. /user/%id%(number) gives number. A placeholder with no parentheses has no type, so leave it unset")]
+		string? Type = null,
+		string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
 	public record GoalToCallWithParamInfo(string Name, List<ParamInfo> Parameters);
 	public record Routing(string Path, Route Route, RequestProperties RequestProperties, ResponseProperties ResponseProperties);
 	public record Route(Regex PathRegex, Dictionary<string, string>? QueryMap, GoalToCallInfo Goal, List<ParamInfo> ParamInfos);
