@@ -18,13 +18,10 @@ namespace PLang.Building
 	{
 		private readonly ConcurrentDictionary<int, (string Text, ModuleChoice Choice)> modules = new();
 		private readonly ConcurrentDictionary<int, (string Text, MethodChoice Choice)> methods = new();
-		private readonly ConcurrentDictionary<int, (string Text, Dictionary<string, ParameterChoice> Choices)> parameters = new();
-		private readonly ConcurrentDictionary<int, (string Text, ParameterChoice Choice)> returns = new();
 		private readonly ConcurrentDictionary<int, (string Text, Modules.BaseBuilder.GenericFunction Function, Models.LlmRequest Request)> functions = new();
 
 		public int ModuleCount => modules.Count;
 		public int MethodCount => methods.Count;
-		public int ParameterStepCount => parameters.Count;
 		public int FunctionCount => functions.Count;
 
 		// A whole function, method and parameters and return values together, built for the whole
@@ -67,18 +64,6 @@ namespace PLang.Building
 
 		public void SetModule(GoalStep step, ModuleChoice choice) => modules[step.Index] = (step.Text, choice);
 		public void SetMethod(GoalStep step, MethodChoice choice) => methods[step.Index] = (step.Text, choice);
-		public void SetParameters(GoalStep step, Dictionary<string, ParameterChoice> choices) => parameters[step.Index] = (step.Text, choices);
-
-		public Dictionary<string, ParameterChoice>? Parameters(GoalStep step)
-			=> parameters.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choices : null;
-
-		// The variable a step writes its result into, asked alongside the methods. A parameter can
-		// depend on it, and questions in one request are answered in isolation, so it has to be
-		// known before the parameters are asked, not in the same request as them.
-		public void SetReturn(GoalStep step, ParameterChoice choice) => returns[step.Index] = (step.Text, choice);
-
-		public ParameterChoice? Return(GoalStep step)
-			=> returns.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
 
 		public ModuleChoice? Module(GoalStep step)
 			=> modules.TryGetValue(step.Index, out var found) && found.Text == step.Text ? found.Choice : null;
@@ -92,8 +77,6 @@ namespace PLang.Building
 		{
 			modules.Clear();
 			methods.Clear();
-			parameters.Clear();
-			returns.Clear();
 			functions.Clear();
 			properties.Clear();
 			description = null;

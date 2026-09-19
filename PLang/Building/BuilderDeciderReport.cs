@@ -6,8 +6,13 @@ namespace PLang.Building
 {
 	public enum DeciderOutcome
 	{
-		// Built by the decider, no llm call for the step.
+		// Built by the decider, no llm call for the step. The decider answers which module and
+		// which method; since it stopped answering parameters this means the method was decided
+		// and the step needed nothing more.
 		Decided,
+		// The parameters came from the llm, in one request for the whole goal rather than one for
+		// this step. Counted apart from Decided: it is an llm answer, just a shared one.
+		Batched,
 		// The module builds its own instruction, because what the step needs is written rather than
 		// chosen: sql, c#, a regex. The llm is the right answer for these and always will be.
 		ModuleBuildsItsOwn,
@@ -101,10 +106,13 @@ namespace PLang.Building
 			var fellBack = all.Where(e => e.Outcome == DeciderOutcome.FellBack).ToList();
 			int offered = decided + fellBack.Count;
 
+			int batched = all.Count(e => e.Outcome == DeciderOutcome.Batched);
+
 			var text = new System.Text.StringBuilder();
 			text.AppendLine("Decider:");
-			text.AppendLine($"  {decided} of {offered} steps built without the llm" +
+			text.AppendLine($"  {decided} of {offered} steps needed no llm call of their own" +
 				(offered == 0 ? "" : $", {100.0 * decided / offered:0}%"));
+			if (batched > 0) text.AppendLine($"  {batched} steps had their parameters built by the llm in one request for the goal");
 			if (generated > 0) text.AppendLine($"  {generated} steps the module writes itself, sql and the like, which the llm is meant to build");
 
 			if (fellBack.Count > 0)
