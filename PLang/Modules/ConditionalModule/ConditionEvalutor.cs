@@ -16,13 +16,27 @@ namespace PLang.Modules.ConditionalModule
 	public static class ConditionEvaluator
 	{
 		public enum ConditionKind { Simple, Compound }
-		[Description(@"
-For CompundCondition, use Conditions list to construct the condition. LeftValue and RightValue are used only at in SimpleCondition
-Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
-Logic: AND|OR is required for Compound
-")]
+		// Both records inherit every field of Condition and add none, so the only thing telling
+		// them apart is what is written here. Left to say it in prose, a step joining two tests
+		// came back as one flattened simple condition carrying a stray Logic: AND, because the
+		// two definitions read as the same shape. Each now states its own shape and says which
+		// fields it never has.
+		[Description(@"Two or more tests joined together. Shape:
+{""Kind"":""Compound"",""Logic"":""AND"",""IsNot"":false,""Conditions"":[{""Kind"":""Simple"",...},{""Kind"":""Simple"",...}]}
+Logic is AND or OR and is required. Conditions holds the tests being joined.
+A Compound NEVER has LeftValue, Operator or RightValue of its own: those belong to the Simple conditions inside it.")]
 		public record CompoundCondition : Condition;
-		[Description("Logic: AND|OR. Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf")]
+
+		[Description(@"One test. Shape:
+{""Kind"":""Simple"",""LeftValue"":""%age%"",""Operator"":"">="",""RightValue"":18,""IsNot"":false}
+Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf.
+IsNot is true whenever the test is written in the negative, and there is no negative operator to use instead: the operator stays the positive one and IsNot carries the not.
+  `%city% is not empty`        => Operator isEmpty,    IsNot true
+  `%city% is empty`            => Operator isEmpty,    IsNot false
+  `%city% does not contain ""x""` => Operator contains,  IsNot true
+  `%city% does not start with ""x""` => Operator startswith, IsNot true
+Getting IsNot wrong inverts the step silently, so read the test for a not before writing it.
+A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound.")]
 		public record SimpleCondition : Condition;
 		public record Condition
 		{
