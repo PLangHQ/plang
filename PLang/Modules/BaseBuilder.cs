@@ -2073,7 +2073,7 @@ Parameters that is type System.String MUST be without escaping quotes. See <Exam
 Error handling is process by another step, if you see 'on error...' you can ignore it
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
-Dictionary<T1, T2> value is {{key: value, ... }} => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => {{ key: ""userId"", value:""%userId%""}}
+Dictionary<T1, T2> is written as {{""name of the entry"": its value, ... }}. A dictionary parameter given a %variable% and no name takes the variable's own name, without the percent signs, as the name of the entry, e.g. %userId% => {{""userId"": ""%userId%""}}, and NOT {{""key"": ""userId"", ""value"": ""%userId%""}}, which is a dictionary of two entries called key and value
 Variable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(""yyyy-MM-dd"")% then type of %updated% is System.DateTime 
 List, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array
 When you see t%variable% or t""this is text"", set the Type to Plang.TString. This is for translation

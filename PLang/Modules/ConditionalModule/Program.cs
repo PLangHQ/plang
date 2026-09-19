@@ -279,6 +279,79 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
+		// A test written in the negative gets its own method, the way IsEmpty and IsNotEmpty
+		// already do. The isNot flag above is a separate boolean the builder has to remember to
+		// flip, and when it forgets the step means the opposite of what it says and nothing
+		// notices. Measured inside a compound condition, that happened in a third of builds until
+		// the negation moved into the name. The flags stay so what is already built keeps running.
+		[Description("For a step that says the value does NOT contain something, e.g. `if %user.role% does not contain \"admin\" then`. For the positive form use ContainsString.")]
+		[Example("if %tags% does not contain \"draft\" then", "item=\"%tags%\", contains=\"draft\"")]
+		public async Task<(object?, IError?)> NotContainsString(
+			[Description("The value being tested, the left side, e.g. %user.role% in `if %user.role% does not contain \"admin\"`")] object? item,
+			[Description("What it is tested against, the right side, e.g. \"admin\"")] string contains,
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			return await ContainsString(item, contains, isNot: true, goalToCallIfTrue, goalToCallIfFalse,
+				throwErrorOnTrue, throwErrorOnFalse);
+		}
+
+		[Description("For a step that says the value does NOT start with something, e.g. `if %goal% does not start with \"tests/\" then`. For the positive form use StartsWith.")]
+		[Example("if %file% does not start with \"tmp/\" then", "item=\"%file%\", startsWith=\"tmp/\"")]
+		public async Task<(object?, IError?)> NotStartsWith(
+			[Description("The value being tested, the left side, e.g. %goal% in `if %goal% does not start with \"tests/\"`")] object? item,
+			[Description("What it is tested against, the right side, e.g. \"tests/\"")] string startsWith,
+			[Description("true when letter case must not matter. false unless the step asks for that")] bool ignoreCase = false,
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			return await StartsWith(item, startsWith, isNot: true, ignoreCase, goalToCallIfTrue,
+				goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+
+		// There was no EndsWith at all, so `if %path% ends with ".md" then` had to go through a
+		// condition object, which the builder fills far less reliably than a named method.
+		[Description("For a step that tests how a value ends, e.g. `if %path% ends with \".md\" then`. For the negative form use NotEndsWith.")]
+		[Example("if %file% ends with \".csv\" then", "item=\"%file%\", endsWith=\".csv\"")]
+		public async Task<(object?, IError?)> EndsWith(
+			[Description("The value being tested, the left side, e.g. %path% in `if %path% ends with \".md\"`")] object? item,
+			[Description("What it is tested against, the right side, e.g. \".md\"")] string endsWith,
+			[Description("true when letter case must not matter. false unless the step asks for that")] bool ignoreCase = false,
+			[Description("true when the step negates the test. Prefer the NotEndsWith method, which says it in its name")] bool isNot = false,
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+			if (item is ObjectValue ov) item = ov.Value;
+
+			bool? result = null;
+			if (item == null) result = false;
+			else if (item is string str) result = str.EndsWith(endsWith, comparison);
+			else if (item is JValue jValue) result = jValue.ToString().EndsWith(endsWith, comparison);
+
+			if (result == null)
+			{
+				return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should check if it ends with {endsWith}.{ErrorReporting.CreateIssueNotImplemented}"));
+			}
+
+			if (isNot) result = !result;
+
+			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+
+		[Description("For a step that says the value does NOT end with something, e.g. `if %path% does not end with \".md\" then`. For the positive form use EndsWith.")]
+		[Example("if %file% does not end with \".tmp\" then", "item=\"%file%\", endsWith=\".tmp\"")]
+		public async Task<(object?, IError?)> NotEndsWith(
+			[Description("The value being tested, the left side, e.g. %path% in `if %path% does not end with \".md\"`")] object? item,
+			[Description("What it is tested against, the right side, e.g. \".md\"")] string endsWith,
+			[Description("true when letter case must not matter. false unless the step asks for that")] bool ignoreCase = false,
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			return await EndsWith(item, endsWith, ignoreCase, isNot: true, goalToCallIfTrue,
+				goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+
 		private bool IsEmptyCheck(object? item)
 		{
 			if (item == null) return true;
