@@ -99,9 +99,7 @@ namespace PLang.Models
 		private string name;
 		private Dictionary<string, object?> parameters;
 		private GenericFunction? function = null;
-		public GoalToCallInfo(string name,
-			[Description("The named values handed to the goal being called, and only those: they are what the step writes for that call, e.g. `call goal Chat id=%chatId%` passes id. Empty whenever the step names the goal and nothing else, e.g. `on tool call, call ToolUsed`. A variable the step uses for its own work is not passed on just by being in the step")]
-			Dictionary<string, object?>? parameters = null)
+		public GoalToCallInfo(string name, Dictionary<string, object?>? parameters = null)
 		{
 			if (string.IsNullOrWhiteSpace(name))
 			{
@@ -133,6 +131,12 @@ namespace PLang.Models
 				name = value;
 			}
 		}
+		// The description has to sit on the property. On the constructor parameter it never reached
+		// the prompt at all: the type walker reads the properties, and with nothing here it fell
+		// back to repeating the class description, which says nothing about what a value is. So
+		// `next="/admin/Overview"` came back as "\"/admin/Overview\"" with the quotes kept, and as
+		// "%next%", the name written back as if it were a variable.
+		[Description("The named values handed to the goal being called, and only those: they are what the step writes for that call, e.g. `call goal Chat id=%chatId%` passes id. Each entry's name is written to the LEFT of the = and its value to the RIGHT, so `call goal SignIn next=\"/admin/Overview\"` is {\"next\": \"/admin/Overview\"}: the wrapping quotes are dropped, and the value is never the name written back as %next%. Empty whenever the step names the goal and nothing else, e.g. `on tool call, call ToolUsed`. A variable the step uses for its own work is not passed on just by being in the step")]
 		public Dictionary<string, object?> Parameters { get { return parameters; } set { parameters = value ?? new(); } }
 
 		public IGenericFunction GetFunction(PLangContext context)
