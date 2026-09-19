@@ -187,10 +187,14 @@ namespace PLang.Modules
 			// whose answer failed validation would be handed the same answer again.
 			if (previousBuildError == null && responseType == typeof(GenericFunction) && step.Goal != null)
 			{
+				// The answer is left in the cache after it is read. Some steps come through here
+				// twice, a conditional does, and dropping the answer on the first read sent the
+				// second pass to the llm: the batch was filling all ten steps of a goal and four of
+				// them were still being asked for again. A retry after an error never reaches this
+				// at all, which is what previousBuildError guards.
 				var prebuilt = deciderCache?.ForGoal(step.Goal).Function(step);
 				if (prebuilt != null)
 				{
-					deciderCache!.ForGoal(step.Goal).ForgetFunction(step);
 					deciderReport?.Record(step.Goal, step, PLang.Building.DeciderOutcome.Decided);
 
 					appendedSystemCommand.Clear();

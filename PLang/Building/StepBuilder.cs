@@ -821,7 +821,12 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 		logger.Value.LogInformation($"  - Building properties for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 
+		// This one was not counted, so the report showed a goal making fewer llm calls than it does:
+		// one per step for the step's properties was invisible, which made any comparison of the
+		// per step and batched paths read wrong.
+		var propertiesStarted = System.Diagnostics.Stopwatch.StartNew();
 		(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
+		deciderReport.RecordLlmCall(goal, propertiesStarted.Elapsed);
 		if (llmError != null) return (step, new StepBuilderError(llmError, step));
 
 		if (stepProperties == null) return (step, new StepBuilderError($"Could not get answer from LLM.", step));
