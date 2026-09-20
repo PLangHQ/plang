@@ -703,6 +703,16 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		if (error != null) return (step, error);
 
 		(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
+
+		// A retry after a rejected handler came back with ErrorHandlers null and the build passed,
+		// so an `on error` clause the step spelled out was silently dropped. The step's words are
+		// the contract: a clause in the text is a handler in the properties.
+		if (canHaveErrorHandling && (stepProperties.ErrorHandlers == null || stepProperties.ErrorHandlers.Count == 0)
+			&& Regex.IsMatch(step.Text, @"\bon\s+error\b", RegexOptions.IgnoreCase))
+		{
+			return (step, new StepBuilderError("The step has an `on error` clause but no ErrorHandlers were built. Every `on error` clause is one handler; write it.", step));
+		}
+
 		step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
 		step.WaitForExecution = (canBeAsync) ? stepProperties.WaitForExecution : true;
 		step.LoggerLevel = GetLoggerLevel(stepProperties.LoggerLevel);
@@ -717,8 +727,16 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		for (int i =0;i<stepProperties.ErrorHandlers?.Count;i++)
 		{
 			var errorHandler = stepProperties.ErrorHandlers[i];
-			
-			if (errorHandler.GoalToCall == null) continue;	
+
+			// The runtime matches Key "*" before it looks at StatusCode, so a handler written as
+			// {StatusCode: 503, Key: "*"} catches every error, not the one the step named. The same
+			// clause built as {Key: "503"} in the step next to it. The status code is the key.
+			if (errorHandler.StatusCode != null && errorHandler.Key == "*")
+			{
+				return (stepProperties, new StepBuilderError($"Error handler has StatusCode {errorHandler.StatusCode} together with Key \"*\". Key \"*\" matches every error. Put the status code in Key (\"{errorHandler.StatusCode}\") and leave StatusCode null, or leave Key null.", step));
+			}
+
+			if (errorHandler.GoalToCall == null) continue;
 
 			(var goalFound, var error) = GoalHelper.GetGoalPath(step, errorHandler.GoalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
 			if (error != null) return (stepProperties, new BuilderError(error) {  Retry = false });

@@ -162,6 +162,76 @@ public class MethodHelper
 
 	bool IsNullableType(Type t) => Nullable.GetUnderlyingType(t) != null;
 
+	// The build checked a parameter's type and never what was inside it. A record such as
+	// TextMessage went through as {"Content": "..."}, and at run time, materialised the same way
+	// the runtime does it, Level, Channel and Actor came out null and the first write out failed.
+	// So the object is materialised here with the runtime's own conversion, and every member the
+	// type declares as not nullable has to hold a value. Value types keep their default and are
+	// not the problem; this is about reference members the type promises are never null.
+	private static List<string> MissingRequiredMembers(object? value, Type type, int depth = 0)
+	{
+		var missing = new List<string>();
+		if (value is not JObject json || depth > 3) return missing;
+		if (TypeHelper.IsConsideredPrimitive(type) || TypeHelper.IsList(type) || typeof(IDictionary).IsAssignableFrom(type)) return missing;
+
+		object? instance;
+		try
+		{
+			instance = TypeHelper.ConvertToType(value, type);
+		}
+		catch
+		{
+			return missing;
+		}
+		if (instance == null) return missing;
+
+		var nullability = new NullabilityInfoContext();
+		foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+		{
+			if (!property.CanRead || property.GetIndexParameters().Length > 0) continue;
+			if (property.GetCustomAttributes().Any(a => a.GetType().Name == "LlmIgnoreAttribute")) continue;
+
+			object? memberValue;
+			try
+			{
+				memberValue = property.GetValue(instance);
+			}
+			catch
+			{
+				continue;
+			}
+
+			if (memberValue == null)
+			{
+				if (nullability.Create(property).ReadState == NullabilityState.NotNull) missing.Add(property.Name);
+				continue;
+			}
+
+			if (json.TryGetValue(property.Name, StringComparison.OrdinalIgnoreCase, out var nested))
+			{
+				foreach (var name in MissingRequiredMembers(nested, property.PropertyType, depth + 1))
+				{
+					missing.Add($"{property.Name}.{name}");
+				}
+			}
+		}
+		return missing;
+	}
+
+	// The constructor defaults, written out so the model can fill the object in the same way the
+	// type would have, e.g. Level=info, StatusCode=200, Channel=default, Actor=user.
+	private static string DefaultsOf(Type type)
+	{
+		var constructor = type.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+		if (constructor == null) return "none";
+
+		var defaults = constructor.GetParameters()
+			.Where(p => p.HasDefaultValue && p.DefaultValue != null)
+			.Select(p => $"{p.Name}={p.DefaultValue}");
+		var text = string.Join(", ", defaults);
+		return string.IsNullOrEmpty(text) ? "none" : text;
+	}
+
 	public (Dictionary<string, ParameterType>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo methodInfo, List<Parameter> parameters, GoalStep goalStep)
 	{
 		GroupedBuildErrors buildErrors = new();
@@ -270,6 +340,14 @@ public class MethodHelper
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
 						$"{builderParameter.Value} could not be found in step. User is not defining {builderParameter.Value} as variable. You should not make up new variables.", goalStep));
+				}
+
+				var missing = MissingRequiredMembers(builderParameter.Value, methodParameter.ParameterType);
+				if (missing.Count > 0)
+				{
+					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
+						$"{methodParameter.Name} ({parameterType}) is missing required value(s): {string.Join(", ", missing)}. Every member that is not nullable must be given a value.", goalStep,
+						FixSuggestion: $"Write the full object for {methodParameter.Name}. Members with a default value take that default unless the step says otherwise: {DefaultsOf(methodParameter.ParameterType)}"));
 				}
 
 				parameterProperties.Add(methodParameter.Name, new ParameterType() { Name = methodParameter.Name, FullTypeName = parameterType });

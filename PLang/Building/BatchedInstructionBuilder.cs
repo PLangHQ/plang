@@ -116,6 +116,8 @@ Almost every step has none: WaitForExecution true, LoggerLevel null, ErrorHandle
 ErrorHandlers: from an `on error ...` clause, and from any wording that says a failure must not stop the step. `dont throw error on not found` on a file step is one, and it is a handler keyed to the failure it names: {""IgnoreError"": true, ""Key"": ""FileNotFound""}. Write the handler even when the method also has a parameter that looks like it covers the same thing. The parameter is how the method behaves; the handler is how the step is run, and the step asked for both.
  - IgnoreError is true only when the step says to ignore or continue, false otherwise
  - Key is ""*"" only when the step names no particular failure, e.g. `on error call HandleError`. When it names one, the Key is that failure
+ - A status code the step names is the Key, written as text: `on error status code 503` => Key ""503"", StatusCode null. Never Key ""*"" together with a StatusCode
+ - Every `on error` clause in a step is one handler. A step with an `on error` clause never has ErrorHandlers null
  - StatusCode, Message and Type are null unless the step states them
  - GoalToCall is the goal named after `call`, with any parameters written after its name
  - RetryHandler only when the step asks to retry; RunRetryBeforeCallingGoalToCall is true only when the retry is written before the call
@@ -123,6 +125,7 @@ Examples:
  `on error call HandleError` => [{""IgnoreError"": false, ""Key"": ""*"", ""GoalToCall"": {""Name"": ""HandleError""}}]
  `on error call Recover, ignore error` => [{""IgnoreError"": true, ""Key"": ""*"", ""GoalToCall"": {""Name"": ""Recover""}}]
  `on error key: Timeout, retry 3 times` => [{""IgnoreError"": false, ""Key"": ""Timeout"", ""RetryHandler"": {""RetryCount"": 3}}]
+ `on error status code = 404, call NotFound` => [{""IgnoreError"": false, ""Key"": ""404"", ""GoalToCall"": {""Name"": ""NotFound""}}]
 
 WaitForExecution: false only when the step says not to wait, e.g. `dont wait`.
 CachingHandler: only when the step asks for caching, e.g. `cache for 10 minutes`.
