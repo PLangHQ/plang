@@ -317,6 +317,20 @@ namespace PLang.Modules.PlangModule
 			{
 				return (null, new ProgramError($"Method {method} not found in {moduleName}", goalStep, Key: "MethodNotFound", StatusCode: 404));
 			}
+
+			// `parameters %params%` builds as { params: %params% }, the builder's rule for a bare
+			// variable, which is right when the variable is one value and wrong when it is the
+			// whole dictionary. One entry that names no parameter of the method and holds a
+			// dictionary is that dictionary.
+			if (parameters != null && parameters.Count == 1)
+			{
+				var only = parameters.First();
+				if (!candidates.Any(m => m.GetParameters().Any(p => p.Name == only.Key)))
+				{
+					if (only.Value is JObject inner) parameters = inner.ToObject<Dictionary<string, object?>>();
+					else if (only.Value is Dictionary<string, object?> innerDict) parameters = innerDict;
+				}
+			}
 			var parameterNames = parameters?.Keys.ToList() ?? new List<string>();
 			var chosen = candidates.FirstOrDefault(m => parameterNames.All(n => m.GetParameters().Any(p => p.Name == n))) ?? candidates[0];
 

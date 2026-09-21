@@ -1021,48 +1021,11 @@ public class MethodHelper
 			return;
 		}
 
-		// The builder writes a dictionary parameter given as a bare %variable% as { variable: "%variable%" },
-		// which is right when the variable is one value, `parameters %userId%`, and wrong when the
-		// variable is itself the dictionary, `parameters %params%`. The step then reaches the method
-		// as one entry named after the variable holding the whole dictionary, and a method that looks
-		// its parameters up by name finds none of them. The build cannot tell the two apart, the
-		// value decides at runtime: one entry, keyed by the variable it came from, holding a dictionary,
-		// is that dictionary.
-		var wrapped = UnwrapSingleDictionaryVariable(dict, memoryStack);
-		if (wrapped != null)
-		{
-			parameterValues.Add(parameter.Name, MapToDictionaryType(wrapped, parameter.ParameterType));
-			return;
-		}
-
 		foreach (DictionaryEntry item in dict)
 		{
 			dict[item.Key] = memoryStack.LoadVariables(item.Value);
 		}
 		parameterValues.Add(parameter.Name, dict);
-	}
-
-	private static object? UnwrapSingleDictionaryVariable(IDictionary dict, MemoryStack memoryStack)
-	{
-		if (dict.Count != 1) return null;
-		var entry = dict.Cast<DictionaryEntry>().First();
-		if (entry.Value is not string raw || !VariableHelper.IsVariable(raw)) return null;
-		if (!raw.Trim('%').Equals(entry.Key?.ToString(), StringComparison.OrdinalIgnoreCase)) return null;
-
-		var loaded = memoryStack.LoadVariables(raw);
-		if (loaded is JObject || loaded is IDictionary) return loaded;
-		return null;
-	}
-
-	private IDictionary MapToDictionaryType(object value, Type paramType)
-	{
-		if (value is JObject jObject) return MapJObject(jObject, paramType);
-		var dict = GetInstanceOfDictionaryTyped(paramType)!;
-		foreach (DictionaryEntry item in (IDictionary)value)
-		{
-			dict[item.Key] = item.Value;
-		}
-		return dict;
 	}
 
 	private IDictionary? GetInstanceOfDictionaryTyped(Type paramType)
