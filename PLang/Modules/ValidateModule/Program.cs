@@ -193,6 +193,7 @@ namespace PLang.Modules.ValidateModule
 		[Description("Every item in itemsToCheckInList must be in list, e.g. `validate %answer% is in list %question.options%, \"Ógilt svar\"`. A single value is checked as one item. Fails on the first item that is not in the list.")]
 		public async Task<(List<object>?, IError?)> ValidateItemIsInList(object[] itemsToCheckInList, IList list, string? errorMessage = "item is not in list", bool caseSensitive = false, int statusCode = 400)
 		{
+			if (list == null) return (null, new ProgramError("The list to check against is empty", goalStep, StatusCode: statusCode));
 			StringComparison comparisonType = (caseSensitive) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 			List<object> returnValues = new();
 			foreach (var itemToCheckInList in Flatten(itemsToCheckInList))
