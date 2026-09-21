@@ -132,14 +132,20 @@ to a user once; without a profile every start is a stranger.
 
 ```plang
 - [webcrawler] navigate to "http://localhost:8080/", headless: true, profileName: "/.db/browser", wait after 3000 ms
-- [webcrawler] evaluate javascript "() => window.plang.fetch('/admin/orders/42', { method: 'GET' })" in the page, wait after 2000 ms
+- [webcrawler] evaluate javascript "() => window.plang.fetch('/admin/orders/42', { method: 'GET' })" in the page
 - [webcrawler] take screenshot of website, save to "/tmp/orders.png", overwrite
 ```
 
-The first step is the anonymous load, the wait is for the client to connect and be answered, the
-second is the signed navigation. Navigating straight to `/admin/orders/42` in the first step gives
-the anonymous version of that page, whatever the guard does with strangers, and no amount of
-waiting changes it.
+The first step is the anonymous load, and its wait is the one wait there is: the client needs a
+moment to connect and be answered. The second is the signed navigation; `plang.fetch` returns a
+promise that resolves after the answer has been applied to the page, so when the step returns
+the page is there and the next step can act on it at once. Navigating straight to
+`/admin/orders/42` in the first step gives the anonymous version of that page, whatever the
+guard does with strangers, and no amount of waiting changes it.
+
+One browser profile is one visitor, and chromium locks the profile folder while it is open. Two
+processes using the same profile at the same time do not share it: the second one starts with an
+empty profile, a new keypair, and is a stranger.
 
 ## The mental model
 
