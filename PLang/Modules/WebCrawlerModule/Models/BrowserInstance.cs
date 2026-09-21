@@ -8,14 +8,43 @@ namespace PLang.Modules.WebCrawlerModule.Models
 		private bool disposed;
 		int currentPageIndex = 0;
 
-		public BrowserInstance(IPlaywright playwright, IBrowserContext browser)
+		// Starting a browser costs seconds, so the instance stays open across goals and is not
+		// closed when the goal that started it ends. What closes it is an explicit close browser
+		// step, or this: every use stamps LastUsed and a timer closes the browser once it has sat
+		// unused for IdleTimeout, so a chat that opened one and forgot it does not hold a chromium
+		// in memory for the life of the process.
+		private readonly Timer idleTimer;
+		public TimeSpan IdleTimeout { get; }
+		public DateTime LastUsed { get; private set; } = DateTime.UtcNow;
+
+		public BrowserInstance(IPlaywright playwright, IBrowserContext browser, TimeSpan? idleTimeout = null)
 		{
 			Playwright = playwright;
 			this.Browser = browser;
 			RouteAsyncByUrl = new();
+			IdleTimeout = idleTimeout ?? TimeSpan.FromMinutes(10);
+			idleTimer = new Timer(CloseIfIdle, null, IdleTimeout, Timeout.InfiniteTimeSpan);
 		}
 		public IPlaywright Playwright { get; set; }
 		public IBrowserContext Browser { get; set; }
+		public bool IsDisposed => disposed;
+
+		public void Touch()
+		{
+			LastUsed = DateTime.UtcNow;
+			if (!disposed) idleTimer.Change(IdleTimeout, Timeout.InfiniteTimeSpan);
+		}
+
+		private void CloseIfIdle(object? state)
+		{
+			if (disposed) return;
+			if (DateTime.UtcNow - LastUsed < IdleTimeout)
+			{
+				idleTimer.Change(IdleTimeout - (DateTime.UtcNow - LastUsed), Timeout.InfiniteTimeSpan);
+				return;
+			}
+			Dispose().GetAwaiter().GetResult();
+		}
 
 		public async Task<IPage> GetCurrentPage(int idx = -1)
 		{
@@ -54,10 +83,10 @@ namespace PLang.Modules.WebCrawlerModule.Models
 				return;
 			}
 
+			this.disposed = true;
+			idleTimer.Dispose();
 			await Browser.DisposeAsync();
 			Playwright.Dispose();
-
-			this.disposed = true;
 		}
 
 		protected virtual void ThrowIfDisposed()

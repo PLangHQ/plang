@@ -32,8 +32,16 @@ AssertPageContains(PLang.Modules.WebCrawlerModule.Program+AssertCheck assertChec
 ### Click
 
 ```
-Click(String cssSelector, Int32 elementAtToClick = 0, Boolean clickAllMatchingElements = False, Nullable<Int32> timeoutInSeconds = null) : object
+Click(String cssSelector, Int32 elementAtToClick = 0, Boolean clickAllMatchingElements = False, Nullable<Int32> timeoutInSeconds = null, Int32 waitAfterInMilliseconds = 0) : object
 ```
+
+waitAfterInMilliseconds pauses after the click, for a page that repaints a moment later, e.g. 'click #next, wait 2 seconds' => waitAfterInMilliseconds: 2000. Throws when nothing on the page matches cssSelector.
+
+- `cssSelector` *String*
+- `elementAtToClick` *Int32*, default `0`
+- `clickAllMatchingElements` *Boolean*, default `False`
+- `timeoutInSeconds` *Nullable<Int32>*, default `null`
+- `waitAfterInMilliseconds` *Int32*, default `0`
 
 
 ### ClickOnElement
@@ -181,10 +189,12 @@ set the value of an input by cssSelector
 ### NavigateToUrl
 
 ```
-NavigateToUrl(String url, String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timeoutInSeconds = null, Boolean hideTestingMode = False, Int32 pageIndex = -1, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, PLang.Models.GoalToCallInfo onWebsocketReceived = null, PLang.Models.GoalToCallInfo onWebsocketSent = null, PLang.Models.GoalToCallInfo onConsoleOutput = null, PLang.Models.GoalToCallInfo onWorker = null, PLang.Models.GoalToCallInfo onDialog = null, PLang.Models.GoalToCallInfo onLoad = null, PLang.Models.GoalToCallInfo onDOMLoad = null, PLang.Models.GoalToCallInfo onFileChooser = null, PLang.Models.GoalToCallInfo onIFrameLoad = null, PLang.Models.GoalToCallInfo onDownload = null) : object
+NavigateToUrl(String url, String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timeoutInSeconds = null, Boolean hideTestingMode = False, Int32 pageIndex = -1, Int32 waitAfterInMilliseconds = 0, Int32 closeAfterIdleMinutes = 10, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, PLang.Models.GoalToCallInfo onWebsocketReceived = null, PLang.Models.GoalToCallInfo onWebsocketSent = null, PLang.Models.GoalToCallInfo onConsoleOutput = null, PLang.Models.GoalToCallInfo onWorker = null, PLang.Models.GoalToCallInfo onDialog = null, PLang.Models.GoalToCallInfo onLoad = null, PLang.Models.GoalToCallInfo onDOMLoad = null, PLang.Models.GoalToCallInfo onFileChooser = null, PLang.Models.GoalToCallInfo onIFrameLoad = null, PLang.Models.GoalToCallInfo onDownload = null) : object
 ```
 
-opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.
+opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. No separate Wait call is needed.
+
+The browser stays open across goals, including sub goals, until `close browser` is called or it has been unused for closeAfterIdleMinutes (default 10). A browser the idle timer closed is started again the same way, headless and with its profile, on the next call; its page is blank, so navigate again.
 
 - `url` *String*
 - `browserType` *String*, default `Chrome`
@@ -195,6 +205,8 @@ opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMod
 - `timeoutInSeconds` *Nullable<Int32>*, default `null`
 - `hideTestingMode` *Boolean*, default `False`
 - `pageIndex` *Int32*, default `-1`
+- `waitAfterInMilliseconds` *Int32*, default `0`
+- `closeAfterIdleMinutes` *Int32*, default `10`
 - `onRequest` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `onResponse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `onWebsocketReceived` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)

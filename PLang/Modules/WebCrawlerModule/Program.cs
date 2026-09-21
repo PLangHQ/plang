@@ -22,9 +22,15 @@ using System.Text.RegularExpressions;
 namespace PLang.Modules.WebCrawlerModule
 {
 
+	public record BrowserStart(string BrowserType, bool Headless, string ProfileName, bool KioskMode,
+		Dictionary<string, object>? ArgumentOptions, int? TimeoutInSeconds, bool HideTestingMode, int CloseAfterIdleMinutes);
+
 	public class BrowserModuleData
 	{
 		public BrowserInstance? BrowserInstance { get; set; }
+		// How the browser was last started, so one the idle timer closed comes back the same way
+		// on the next call, headless and with its profile, instead of with the method defaults.
+		public BrowserStart? LastStart { get; set; }
 		public string Url { get; set; }
 		public string CssSelector { get; set; }
 		public Microsoft.Playwright.IResponse? Response { get; internal set; }
@@ -66,24 +72,40 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task<BrowserInstance> GetBrowserInstance(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
-			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
+			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, int closeAfterIdleMinutes = 10)
 		{
-			return data.BrowserInstance ?? await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds,
-				hideTestingMode, onRequest, onResponse);
+			// An instance the idle timer has closed is gone, the next use starts a fresh one the way
+			// the last one was started. A caller that says nothing, ExtractContent say, gets the old
+			// settings; a caller that asks for something, headless or a profile, is honoured.
+			if (data.BrowserInstance != null && data.BrowserInstance.IsDisposed)
+			{
+				data.BrowserInstance = null;
+				var last = data.LastStart;
+				if (last != null)
+				{
+					browserType = browserType == "Chrome" ? last.BrowserType : browserType;
+					headless = headless || last.Headless;
+					profileName = string.IsNullOrEmpty(profileName) ? last.ProfileName : profileName;
+					kioskMode = kioskMode || last.KioskMode;
+					argumentOptions ??= last.ArgumentOptions;
+					timoutInSeconds ??= last.TimeoutInSeconds;
+					hideTestingMode = hideTestingMode || last.HideTestingMode;
+					closeAfterIdleMinutes = closeAfterIdleMinutes == 10 ? last.CloseAfterIdleMinutes : closeAfterIdleMinutes;
+				}
+			}
+
+			var instance = data.BrowserInstance ?? await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds,
+				hideTestingMode, onRequest, onResponse, closeAfterIdleMinutes);
+			instance.Touch();
+			return instance;
 		}
 
+		// The runtime disposes a module instance when the goal that used it ends. The browser is not
+		// that instance's to close: starting one costs seconds, and a sub goal that takes a
+		// screenshot would otherwise shut the browser its caller is still using. The browser
+		// lives in the context until close browser is called or it has sat idle, see BrowserInstance.
 		public void Dispose()
 		{
-			if (this.disposed)
-			{
-				return;
-			}
-			data = context.GetModuleData<BrowserModuleData>();
-			if (data != null && data.BrowserInstance != null)
-			{
-				data.BrowserInstance.Dispose().Wait();
-			}
-
 			this.disposed = true;
 		}
 
@@ -111,10 +133,10 @@ namespace PLang.Modules.WebCrawlerModule
 		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot. when user want to use the default profile, set profileName=\"default\". profileName written as a folder path, e.g. \"/.db/browser\", is the folder the browser profile lives in: it is created if missing and everything the page stores, cookies, localStorage and IndexedDB, is still there on the next call and after a restart. Without it the browser starts empty each time, so anything the site remembers about the visitor, a signed in session included, is gone")]
 		public async Task<BrowserInstance> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
-			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
+			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, int closeAfterIdleMinutes = 10)
 		{
 			var browserInstance = data.BrowserInstance;
-			if (browserInstance != null)
+			if (browserInstance != null && !browserInstance.IsDisposed)
 			{
 				return browserInstance;
 			}
@@ -133,8 +155,9 @@ namespace PLang.Modules.WebCrawlerModule
 
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
 
-			browserInstance = new BrowserInstance(playwright, browser);
+			browserInstance = new BrowserInstance(playwright, browser, TimeSpan.FromMinutes(Math.Max(1, closeAfterIdleMinutes)));
 			data.BrowserInstance = browserInstance;
+			data.LastStart = new BrowserStart(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds, hideTestingMode, closeAfterIdleMinutes);
 
 			await browser.RouteAsync("*/**", async route =>
 			{
@@ -352,10 +375,10 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000")]
+		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. The browser stays open across goals until 'close browser' or until it has been unused for closeAfterIdleMinutes.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
-				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1, int waitAfterInMilliseconds = 0,
+				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1, int waitAfterInMilliseconds = 0, int closeAfterIdleMinutes = 10,
 				GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, GoalToCallInfo? onWebsocketReceived = null, GoalToCallInfo? onWebsocketSent = null,
 				GoalToCallInfo? onConsoleOutput = null, GoalToCallInfo? onWorker = null,
 				GoalToCallInfo? onDialog = null, GoalToCallInfo? onLoad = null, GoalToCallInfo? onDOMLoad = null, GoalToCallInfo? onFileChooser = null,
@@ -379,7 +402,7 @@ namespace PLang.Modules.WebCrawlerModule
 				pageGotoOptions.Timeout = timeoutInSeconds.Value * 1000;
 			}
 
-			var browser = await GetBrowserInstance(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSeconds, hideTestingMode, onRequest, onResponse);
+			var browser = await GetBrowserInstance(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSeconds, hideTestingMode, onRequest, onResponse, closeAfterIdleMinutes);
 			IPage page = await GetPage(pageIndex);
 			BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
 					onConsoleOutput, onWorker,
