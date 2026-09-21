@@ -67,7 +67,7 @@ namespace PLang.Models.ObjectValueExtractors
 			{
 				if (memoryStack == null) throw new Exception("MemoryStack cannot be null when searching for variable in " + segment.Value);
 
-				index = memoryStack.Get<int>(segment.Value);
+				index = Convert.ToInt32(segment.ValueOfPath ?? memoryStack.Get(segment.Value));
 			}
 
 
