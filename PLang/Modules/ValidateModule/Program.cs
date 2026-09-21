@@ -190,38 +190,52 @@ namespace PLang.Modules.ValidateModule
 			return null;
 		}
 
-		public async Task<(List<object>?, IError?)> ValidateItemIsInList(object[] itemsToCheckInList, IList list, string? errorMessage = "item is not in list", bool caseSensitive = false)
+		[Description("Every item in itemsToCheckInList must be in list, e.g. `validate %answer% is in list %question.options%, \"Ógilt svar\"`. A single value is checked as one item. Fails on the first item that is not in the list.")]
+		public async Task<(List<object>?, IError?)> ValidateItemIsInList(object[] itemsToCheckInList, IList list, string? errorMessage = "item is not in list", bool caseSensitive = false, int statusCode = 400)
 		{
 			StringComparison comparisonType = (caseSensitive) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 			List<object> returnValues = new();
-			foreach (var itemToCheckInList in itemsToCheckInList)
+			foreach (var itemToCheckInList in Flatten(itemsToCheckInList))
 			{
+				object? found = null;
 				foreach (var item in list)
 				{
-					if (item is ObjectValue ov)
-					{
-						if (ov.Equals(itemToCheckInList.ToString(), comparisonType))
-						{
-							returnValues.Add(item);
-						}
-					} else if (item is string str)
-					{
-						if (str.Equals(itemToCheckInList.ToString(), comparisonType))
-						{
-							returnValues.Add(item);
-						}
-					}
-					else if (item.Equals(itemToCheckInList))
-					{
-						returnValues.Add(item);
-					}
+					var value = Unwrap(item);
+					if (value is string str && str.Equals(itemToCheckInList.ToString(), comparisonType)) found = item;
+					else if (value != null && value.Equals(itemToCheckInList)) found = item;
+					if (found != null) break;
+				}
+				if (found == null)
+				{
+					if (string.IsNullOrEmpty(errorMessage)) errorMessage = "item is not in list";
+					return (null, new ProgramError($"{errorMessage}: {itemToCheckInList}", goalStep, StatusCode: statusCode));
+				}
+				returnValues.Add(found);
+			}
+			return (returnValues, null);
+		}
+
+		private static object? Unwrap(object? item)
+		{
+			if (item is ObjectValue ov) item = ov.Value;
+			if (item is JValue jv) item = jv.Value;
+			return item;
+		}
+
+		private static IEnumerable<object> Flatten(IEnumerable items)
+		{
+			foreach (var item in items)
+			{
+				var value = Unwrap(item);
+				if (value is IEnumerable e && value is not string)
+				{
+					foreach (var inner in Flatten(e)) yield return inner;
+				}
+				else if (value != null)
+				{
+					yield return value;
 				}
 			}
-			if (returnValues.Count > 0) return (returnValues, null);
-
-			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "item is not in list";
-
-			return (null, new ProgramError(errorMessage, goalStep));
 		}
 
 

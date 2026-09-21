@@ -73,8 +73,20 @@ namespace PLang.Models.ObjectValueConverters
 					}
 					else if (match.Groups[3].Success)
 					{
-						var position = memoryStack.Get<object>(match.Groups[3].Value);
-						segments.Add(new PathSegment(match.Groups[3].Value, SegmentType.Index) {  ValueOfPath = position });
+						// [3] is a position, [%key%] and [name] are looked up as written or through the memory stack.
+						// The extractors read ValueOfPath: a number is a position, anything else is a key.
+						string inner = match.Groups[3].Value.Trim();
+						object? position;
+						if (long.TryParse(inner, out long number))
+						{
+							position = number;
+						}
+						else
+						{
+							string variableName = inner.Trim('%');
+							position = memoryStack?.Get<object>(variableName) ?? variableName;
+						}
+						segments.Add(new PathSegment(inner, SegmentType.Index) { ValueOfPath = position });
 					}
 				}
 			} catch (Exception ex)
@@ -84,7 +96,10 @@ namespace PLang.Models.ObjectValueConverters
 				throw;
 			}
 
-			PathCache.TryAdd(path, segments);
+			// A segment resolved from the memory stack changes between loop iterations, so a path holding one
+			// is parsed every time. Cached, %answers[%item.key%]% would keep the key of the first iteration.
+			bool hasVariableIndex = segments.Any(s => s.Type == SegmentType.Index && !long.TryParse(s.Value, out _));
+			if (!hasVariableIndex) PathCache.TryAdd(path, segments);
 
 			return segments;
 		}

@@ -23,10 +23,22 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			if (segment.Type == SegmentType.Index)
 			{
-				var list = dict.Values.ToDynamicList();
-				if (list.Count > long.Parse(segment.Value)) return new ObjectValue("[5]", list[int.Parse(segment.Value)]);
-								
-				throw new NotImplementedException("Is Index on DictionaryExtractor");
+				// [%name%] on a dictionary is a key lookup, [2] is the second entry. Before this the segment
+				// text ("item.key") was parsed as a number, which is the "not in a correct format" error.
+				var indexValue = segment.ValueOfPath;
+				if (indexValue is string keyName)
+				{
+					var foundKey = TryGetKey(dict, keyName);
+					if (foundKey == null) return ObjectValue.Nullable(keyName);
+					return new ObjectValue(keyName, dict[foundKey], parent: parent, properties: parent.Properties);
+				}
+				if (indexValue != null && long.TryParse(indexValue.ToString(), out long position))
+				{
+					var list = dict.Values.ToDynamicList();
+					if (position >= 0 && list.Count > position) return new ObjectValue($"[{position}]", list[(int)position], parent: parent, properties: parent.Properties);
+					return null;
+				}
+				throw new NotImplementedException($"Index [{segment.Value}] on a dictionary must be a key or a position");
 			}
 			else if (segment.Type == SegmentType.Property)
 			{

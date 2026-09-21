@@ -126,7 +126,7 @@ namespace PLang.Utils
 
 			if (obj is JArray array)
 			{
-				return LoadVariablesToJArray(array, variables, defaultValue);
+				return LoadVariablesToJArray(array, variables, defaultValue, memoryStack, emptyIfNotFound);
 
 			}
 			if (variables.Count == 1 && IsVariable(content)) return variables[0].Value;
@@ -151,21 +151,36 @@ namespace PLang.Utils
 
 		}
 
-		private object? LoadVariablesToJArray(JArray incomingArray, List<ObjectValue> variables, object? defaultValue)
+		// A json array in a step, e.g. ["%posted%", "b"], becomes a List<object?> of the real values so the
+		// variable keeps its C# type (a string[], a DateTime, a Row) instead of being stringified into a JArray.
+		private object? LoadVariablesToJArray(JArray incomingArray, List<ObjectValue> variables, object? defaultValue, MemoryStack memoryStack, bool emptyIfNotFound)
 		{
-			var array = incomingArray.DeepClone() as JArray;
-
-			foreach (var variable in variables)
+			var list = new List<object?>();
+			foreach (var token in incomingArray)
 			{
-				for (int i = 0; i < array.Count; i++)
+				if (token is JValue jValue)
 				{
-					if (array[i].ToString().Equals(variable.PathAsVariable, StringComparison.OrdinalIgnoreCase))
+					var text = jValue.Value?.ToString();
+					var variable = (text == null) ? null : variables.FirstOrDefault(v => text.Equals(v.PathAsVariable, StringComparison.OrdinalIgnoreCase));
+					if (variable != null)
 					{
-						array[i] = variable.Value?.ToString();
+						list.Add(variable.Value);
+					}
+					else if (jValue.Type == JTokenType.String && text != null && text.Contains('%'))
+					{
+						list.Add(LoadVariables(memoryStack, text, emptyIfNotFound, defaultValue));
+					}
+					else
+					{
+						list.Add(jValue.Value);
 					}
 				}
+				else
+				{
+					list.Add(LoadVariables(memoryStack, token, emptyIfNotFound, defaultValue));
+				}
 			}
-			return array;
+			return list;
 		}
 
 		private object? LoadVariablesToJObject(JObject incomingJObject, List<ObjectValue> variables, object? defaultValue, MemoryStack memoryStack)

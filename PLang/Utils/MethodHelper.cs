@@ -659,6 +659,18 @@ public class MethodHelper
 				parameterValues.Add(parameter.Name, value);
 				return;
 			}
+			else if (value is IList loadedList && rootElementType != null)
+			{
+				Array typedArray = Array.CreateInstance(rootElementType, loadedList.Count);
+				for (int i = 0; i < loadedList.Count; i++)
+				{
+					var element = loadedList[i];
+					if (element != null && !rootElementType.IsInstanceOfType(element)) element = TypeHelper.ConvertToType(element, rootElementType);
+					typedArray.SetValue(element, i);
+				}
+				parameterValues.Add(parameter.Name, typedArray);
+				return;
+			}
 
 		}
 

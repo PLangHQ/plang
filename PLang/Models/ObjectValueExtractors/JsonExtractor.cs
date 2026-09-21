@@ -26,8 +26,10 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			if (jToken is JObject jObject)
 			{
+				// [%key%] on an object is the same as .key with the name coming from a variable.
+				string propertyName = (segment.Type == SegmentType.Index && segment.ValueOfPath is string keyName) ? keyName : segment.Value;
 				var token = jObject.Properties()
-					   .FirstOrDefault(p => string.Equals(p.Name, segment.Value, StringComparison.OrdinalIgnoreCase))
+					   .FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase))
 					   ?.Value;
 				if (token == null)
 				{

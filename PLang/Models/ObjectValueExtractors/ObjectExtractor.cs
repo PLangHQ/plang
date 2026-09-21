@@ -25,7 +25,17 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			if (segment.Type == SegmentType.Index)
 			{
-				int? position = segment.ValueOfPath as int?;
+				if (segment.ValueOfPath is string keyName && obj is IDictionary keyed)
+				{
+					foreach (var k in keyed.Keys)
+					{
+						if (k is string strKey && string.Equals(strKey, keyName, StringComparison.OrdinalIgnoreCase))
+							return new ObjectValue(keyName, keyed[k], parent: parent, properties: parent.Properties);
+					}
+					return ObjectValue.Nullable(keyName);
+				}
+				int? position = null;
+				if (segment.ValueOfPath != null && long.TryParse(segment.ValueOfPath.ToString(), out long parsed)) position = (int)parsed;
 				if (position == null) return null;
 
 				object? extractedObj = null;
