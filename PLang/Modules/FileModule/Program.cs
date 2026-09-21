@@ -1150,7 +1150,7 @@ namespace PLang.Modules.FileModule
 			}
 		};
 
-		[Description("Reads pdf file and loads into return variable. format can be md|text. imagePath can be null|base64|pathToFolder.")]
+		[Description("Reads pdf file and loads into return variable. format can be md|text|layout. layout keeps the horizontal position of words so table columns line up. imagePath can be null|base64|pathToFolder.")]
 		public async Task<(Pdf, IError?)> ReadPdf(string path, string format = "md", string? imagePath = null, string? password = null)
 		{
 			var absolutePath = GetPath(path);
