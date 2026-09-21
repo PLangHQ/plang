@@ -208,12 +208,18 @@ namespace PLang.Modules.TerminalModule
 			process.BeginErrorReadLine(); // Start asynchronous read of error
 
 			// Get the input stream
-			StreamWriter sw = process.StandardInput;
-
-			// Write the command to run the application with parameters
-
-			//sw.WriteLine(command);
-			sw.Close();
+			// Nothing is written to stdin, so closing it only signals end of input. On a child that
+			// has already exited the close raises EPIPE, "Broken pipe", and the step fails although
+			// the command ran and its output was read. Any command fast enough to finish first hits
+			// it: `ls` failed every time in a container, the same `ls` behind `sleep 1` never did.
+			// The close is tidiness and must not be able to fail the step.
+			try
+			{
+				process.StandardInput.Close();
+			}
+			catch (IOException)
+			{
+			}
 			// Close the input stream to signal completion
 			if (goalStep.WaitForExecution)
 			{
