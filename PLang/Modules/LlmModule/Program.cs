@@ -140,7 +140,7 @@ public class Program : BaseProgram
 
 				if (onToolResult != null)
 				{
-					var (replaced, resultError) = await callGoal.RunGoal(new GoalToCallInfo(onToolResult.Name, new() { ["toolCall"] = callInfo, ["toolResult"] = output }) { Path = onToolResult.Path });
+					var (replaced, resultError) = await callGoal.RunGoal(new GoalToCallInfo(onToolResult.Name, new() { ["toolCall"] = callInfo, ["toolResult"] = output }) { Path = onToolResult.Path }, onlyExplicitReturn: true);
 					if (resultError != null) return (null, resultError);
 					replaced = Unwrap(replaced);
 					if (replaced != null) output = replaced;

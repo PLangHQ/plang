@@ -22,7 +22,7 @@ namespace PLang.Modules.CallGoalModule
 		[Example("call goal Process %name%", @"GoalToCallInfo.Name=Process, GoalToCallInfo.Parameters={""name"":""%name%""}")]
 		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, 
-			bool isolated = false, bool disableSystemGoals = false)
+			bool isolated = false, bool disableSystemGoals = false, bool onlyExplicitReturn = false)
 		{
 			try
 			{
@@ -36,6 +36,11 @@ namespace PLang.Modules.CallGoalModule
 				{
 					return (ret.ReturnVariables, null);
 				}
+
+				// A goal that never says return still hands back the variables of its last step, so a
+				// callback that merely logged something would replace a tool result with an affected
+				// row count. A caller that wants only what the goal explicitly returned asks for that.
+				if (onlyExplicitReturn) return (null, result.Error);
 
 				/*
 				if (result.error is EndGoal endGoal && (goal == null || GoalHelper.IsPartOfCallStack(goal, endGoal)) && endGoal.Levels == 0)
