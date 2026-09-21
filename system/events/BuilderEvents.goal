@@ -1,2 +1,3 @@
 BuildEvents
 - on step error, key:"InvalidInstructionFile", include os, call /events/Runtime/HandleBadInstructionFile
+- on step error, key:"DataSourceNotFound", include os, call /events/Builder/BuildDataSource

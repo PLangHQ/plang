@@ -544,7 +544,10 @@ namespace PLang.Events
 
 			foreach (var eve in eventsToRun)
 			{
-				if (context!.CallStack.IsEventGoalInStack(eve.Id)) continue;
+				// The builder builds steps in parallel on one call stack, so an event frame another
+				// step's error opened is still there when this step asks; the builder guards
+				// against a loop itself, one event driven rebuild per step.
+				if (!isBuilder && context!.CallStack.IsEventGoalInStack(eve.Id)) continue;
 				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
 				{
 					var eventError = await Run(eve, goal, step, error);

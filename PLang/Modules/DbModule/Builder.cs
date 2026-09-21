@@ -643,6 +643,21 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 				}
 				else
 				{
+					// The table is looked up in the in memory mirror a Setup goal fills when it is built.
+					// A build in a process that never built that Setup goal, one goal from the dev chat
+					// say, has an empty mirror for the datasource, and every table is "missing". That
+					// is not a typo, it is a datasource that has not been built, and the same builder
+					// event that handles an unknown datasource can build the Setup goal and retry.
+					var mirrors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
+					var unbuilt = dataSources.FirstOrDefault(p => p.TypeFullName == typeof(Microsoft.Data.Sqlite.SqliteConnection).ToString()
+						&& (!mirrors.TryGetValue(p.Name, out var mirror) || MirrorIsEmpty(mirror)));
+					if (unbuilt != null)
+					{
+						var notBuilt = new StepBuilderError($"Datasource '{unbuilt.Name}' has not been built in this process, so its tables are unknown", step, Key: "DataSourceNotFound", Retry: false);
+						notBuilt.Properties = new() { ["DataSourceName"] = unbuilt.Name };
+						return (null, notBuilt);
+					}
+
 					(var tableSuggestions, error) = await GetTableSuggestions(tablesWithMissingDataSource);
 					if (error != null) return (null, error);
 
@@ -659,6 +674,22 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 			}
 		}
 		return (methodsAndTables, null);
+	}
+
+	// The mirror is opened on first use, so it can exist and still hold nothing: that is a
+	// datasource whose Setup goal was never built in this process.
+	private static bool MirrorIsEmpty(IDbConnection mirror)
+	{
+		try
+		{
+			using var command = mirror.CreateCommand();
+			command.CommandText = "SELECT count(*) FROM sqlite_master WHERE type IN ('table', 'view')";
+			return Convert.ToInt64(command.ExecuteScalar()) == 0;
+		}
+		catch
+		{
+			return false;
+		}
 	}
 
 	private async Task<(string, IBuilderError)> GetTableSuggestions(List<Table> tablesWithMissingDataSource)
@@ -1065,6 +1096,16 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 			info = tableStructure.Error.Message;
 		}
 
+		// An unbuilt datasource is not a bad sql. The key and the name travel with the wrapped
+		// error so the builder event that builds the Setup goal sees it.
+		if (error.Key == "DataSourceNotFound")
+		{
+			var unbuilt = new StepBuilderError($@"Could not validate sql: {sql}.
+Reason:{error.Message}", step, Key: error.Key, FixSuggestion: info, Retry: false);
+			unbuilt.Properties = (error as Error)?.Properties;
+			return (instruction, unbuilt);
+		}
+
 		return (instruction, new StepBuilderError($@"Could not validate sql: {sql}.
 Reason:{error.Message}", step,
 			FixSuggestion: info, LlmBuilderHelp: info, Retry: retry));
@@ -1367,9 +1408,12 @@ Reason:{error.Message}", step,
 		var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
 		if (!anchors.ContainsKey(dataSource.Name))
 		{
-			return (false, dataSource.Name, new StepBuilderError($"Data source name '{dataSource.Name}' does not exists.", step,
-			 FixSuggestion: $@"Choose datasource name from one of there: {string.Join(", ", anchors.Select(p => p.Key))}"));
-
+			// A build of one goal has no mirror for a datasource a Setup goal creates, so the name
+			// and the key go with the error and a builder event can build that Setup goal and retry.
+			var notFound = new StepBuilderError($"Data source name '{dataSource.Name}' does not exists.", step, Key: "DataSourceNotFound", Retry: false,
+			 FixSuggestion: $@"Choose datasource name from one of there: {string.Join(", ", anchors.Select(p => p.Key))}");
+			notFound.Properties = new() { ["DataSourceName"] = dataSource.Name };
+			return (false, dataSource.Name, notFound);
 		}
 
 

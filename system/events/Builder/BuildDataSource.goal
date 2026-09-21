@@ -1,0 +1,26 @@
+BuildDataSource
+- if %!error.Step.RelativeGoalPath% starts with "/Setup" then
+    - throw %!error%
+- [plang] get goals in "/Setup", visibility: "public_and_private", parser: "pr", write to %setupGoals%
+- set %setupFile% = ""
+- go through %setupGoals%, call FindSetupGoal
+- if %setupFile% is empty then
+    - throw %!error%
+- logger info "Building %setupFile% for datasource %!error.Properties.DataSourceName%"
+- [plang] get goals in %setupFile%, visibility: "public_and_private", parser: "goal", write to %goals%
+- [plang] build plang code %goals%
+- retry
+
+FindSetupGoal
+- go through %item.GoalSteps%, call CheckStep
+
+CheckStep
+- if %item.ModuleType% == "PLang.Modules.DbModule" then
+    - set %stepGoalPath% = %item.RelativeGoalPath%
+    - read json file "/%item.RelativePrPath%", write to %pr%
+    - if %pr.Function.Name% == "CreateDataSource" then
+        - go through %pr.Function.Parameters%, call CheckParameter
+
+CheckParameter
+- if %item.Name% == "name" and %item.Value% == %!error.Properties.DataSourceName% then
+    - set %setupFile% = %stepGoalPath%

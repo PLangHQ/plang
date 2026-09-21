@@ -1,0 +1,91 @@
+{
+  "Text": "go through %item.GoalSteps%, call CheckStep",
+  "ModuleType": "PLang.Modules.LoopModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to iterate over each element in the list %item.GoalSteps% and call the goal named CheckStep for each element. The RunLoop function is designed to loop through a list and call a specified goal, which matches the user's intent perfectly.",
+    "Name": "RunLoop",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "variableToLoopThrough",
+        "Value": "%item.GoalSteps%"
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalToCall",
+        "Value": {
+          "Path": ".build/events/Builder/BuildDataSource/CheckStep/00. Goal.pr",
+          "Name": "CheckStep",
+          "Parameters": {}
+        }
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "variableToLoopThrough": {
+        "Name": "variableToLoopThrough",
+        "FullTypeName": "System.String"
+      },
+      "goalToCall": {
+        "Name": "goalToCall",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.19.26",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\n\nYour job is: \n1. Parse and understand user intent\n2. Map the intent to one of C# function provided to you\n3. Return a valid JSON\n\n## Rules\n%variable% in plang is defined with starting and ending percentage sign (%)\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\nleave %variable% as is and do not change text to a variable\nnull is used to represent no value, e.g. { \"name\": null }\nVariables MUST not be changed, they can include dot(.) and parentheses()\nKeep \\n, \\r, \\t that are submitted to you for string variables\nParameters that is type System.String MUST be without escaping quotes. See <Example>\nThe quotes around a value in the step are delimiters, they say where the value starts and ends, and they are NEVER part of the value. A System.String parameter's Value is what is between them, so `add route \"/admin/crm/vendor/%id%(number)\"` has Value \"/admin/crm/vendor/%id%(number)\" and never \"\\\"/admin/crm/vendor/%id%(number)\\\"\". A Value that begins and ends with a quote character is wrong unless the step itself wrote two sets of quotes\nA quoted text is COPIED out of the step, character for character, only the wrapping quotes are dropped. Do not retype it from memory and do not write your own version of it: read the characters in the step and reproduce them exactly. Never reword, never translate, never change a capital letter to a small one, never drop a prefix such as \"Error: \", and never drop or alter a letter. This matters most for text that is not English, e.g. Icelandic `raunveruleg` is not `raunverleg` and `Prófið` is not `prófið`: a single changed letter is a wrong answer. It is the text the app shows, not a description of it\nError handling is process by another step, if you see 'on error...' you can ignore it\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \n- NameOfApiKey should named in relation to what is happening if change is needed\nDictionary<T1, T2> is written as {\"name of the entry\": its value, ... }. A dictionary parameter given a %variable% and no name takes the variable's own name, without the percent signs, as the name of the entry, e.g. %userId% => {\"userId\": \"%userId%\"}, and NOT {\"key\": \"userId\", \"value\": \"%userId%\"}, which is a dictionary of two entries called key and value\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\n<Example>\nget url \"http://example.org\" => Value: \"http://example.org\"\nwrite out 'Hello world' => Value: \"Hello world\"\n<Example>\n\n## JSON scheme information\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\nParameters: List of parameters that are needed according to the user intent.\n- Type: the object type in c#\n- Name: name of the variable\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\nReturnValue rules\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\n- If no %variable% is defined then set as null.\n- The variable the step writes its result into goes here and nowhere else. It is never also the value of a parameter, not even one whose name mentions a variable or an output. A step that names a variable to write into and leaves ReturnValues null has thrown the result away."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nIterate over each element in the list %item.GoalSteps% and for each element, call the goal or step named CheckStep\n## functions available starts ##\n{\"Description\":\"While, for, foreach, loops, repeat, go through a list and call a goal\",\"Methods\":[{\"Description\":\"Repeat a call to a function number of time. Great for pagination, where repeatCount is page count and startIndex is page number. startIndex starts at 0\",\"MethodName\":\"Repeat\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"repeatCounter\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"startIndex\",\"DefaultValue\":0,\"IsRequired\":false}],\"ReturnRequired\":false},{\"Description\":\"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is \\\"item\\\" and value is \\\"%product%\\\". cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnRequired\":false}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"Description\":\"The named values handed to the goal being called, and only those: they are what the step writes for that call, e.g. `call goal Chat id=%chatId%` passes id. Each entry's name is written to the LEFT of the = and its value to the RIGHT, so `call goal SignIn next=\\\"/admin/Overview\\\"` is {\\\"next\\\": \\\"/admin/Overview\\\"}: the wrapping quotes are dropped, and the value is never the name written back as %next%. Empty whenever the step names the goal and nothing else, e.g. `on tool call, call ToolUsed`. A variable the step uses for its own work is not passed on just by being in the step\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"ThreadCount\",\"IsRequired\":true},{\"Type\":\"System.Double\",\"Name\":\"CpuUsage\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"FailFast\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallBeforeItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallAfterItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Split\",\"IsRequired\":true}],\"IsRequired\":false}]}\n## functions available ends ##\n## defined variables ##\nitem.GoalSteps (type:object), \n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "go through %item.GoalSteps%, call CheckStep"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each element in the list %item.GoalSteps% and call the goal named CheckStep for each element. The RunLoop function is designed to loop through a list and call a specified goal, which matches the user's intent perfectly.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%item.GoalSteps%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"CheckStep\",\n        \"Parameters\": {}\n      }\n    }\n  ],\n  \"ReturnValues\": null\n}",
+      "Tools": null
+    }
+  ]
+}

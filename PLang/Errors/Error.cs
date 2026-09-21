@@ -65,9 +65,13 @@ namespace PLang.Errors
 			this.Exception = Exception;
 			this.FixSuggestion = FixSuggestion;
 			this.HelpfulLinks = HelpfulLinks;
+			this.Properties = Properties;
 		}
 		//public Error(IErrorReporting error)
 		public string Id { get; set; } = Guid.NewGuid().ToString();
+		// Named facts about the error a handler can act on, %!error.Properties.DataSourceName%
+		// say, instead of reading them out of the message.
+		public Dictionary<string, object?>? Properties { get; set; }
 		public virtual GoalStep? Step { get; set; }
 		public virtual Goal? Goal { get; set; }
 		public string? FixSuggestion { get; set; }

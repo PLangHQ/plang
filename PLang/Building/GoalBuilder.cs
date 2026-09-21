@@ -306,6 +306,11 @@ namespace PLang.Building
 		}
 
 		private readonly object buildErrorsLock = new();
+		// One event driven rebuild per step per build, so an event that keeps saying retry on a
+		// cause it did not fix cannot loop.
+		private readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> eventRetries = new();
+		private static readonly SemaphoreSlim eventGate = new(1, 1);
+		private static readonly HashSet<string> fixedCauses = new();
 
 		public void AddToBuildErrors(IBuilderError buildStepError)
 		{
@@ -342,7 +347,54 @@ namespace PLang.Building
 			{
 				logger.LogError($"  - ❌ Error finding module for step. I tried '{string.Join("', '", excludeModules)}' - Error message: {buildStepError.MessageOrDetail}");
 			}
-			AddToBuildErrors(buildStepError);			
+
+			// The builder has step error events of its own, system/events/BuilderEvents.goal, written
+			// in plang like the runtime ones. Until here they were never asked about a step that
+			// failed to build. An event that fixes the cause, building the Setup goal a datasource
+			// comes from say, ends with retry, and the step builds again with the cause gone.
+			var step = goal.GoalSteps[stepIndex];
+			step.Retry = false;
+			// Steps build in parallel, so two of them fail on the same cause at the same time. The
+			// events run one at a time, and a cause an event has fixed once is fixed for every
+			// step: the next step with the same cause is built again without running the event,
+			// which for a datasource meant building its Setup goal a second time on top of the
+			// first, with the first still in use.
+			var cause = buildStepError.Key + ":" + string.Join(",", (buildStepError as Error)?.Properties?.Values.Select(v => v?.ToString()) ?? []);
+			(object? Variables, IError? Error) handled = (null, buildStepError);
+			await eventGate.WaitAsync();
+			try
+			{
+				if (fixedCauses.Contains(cause))
+				{
+					step.Retry = true;
+				}
+				else
+				{
+					handled = await eventRuntime.RunOnErrorStepEvents(buildStepError, goal, step, isBuilder: true);
+					if (step.Retry || buildStepError.Step?.Retry == true) fixedCauses.Add(cause);
+				}
+			}
+			finally
+			{
+				eventGate.Release();
+			}
+			var retryKey = goal.RelativeGoalPath + ":" + step.LineNumber;
+			// The retry step marks the step the error carries, which is not always the same object as
+			// the goal's. Both are read, and the count the retry step writes is reset so the .pr is
+			// not left saying the step was retried; the builder keeps its own count.
+			var errorStep = buildStepError.Step;
+			var retry = step.Retry || errorStep?.Retry == true;
+			step.Retry = false; step.RetryCount = 1;
+			if (errorStep != null) { errorStep.Retry = false; errorStep.RetryCount = 1; }
+			if (retry && eventRetries.AddOrUpdate(retryKey, 1, (_, n) => n + 1) == 1)
+			{
+				logger.LogWarning($"  - Build event handled '{buildStepError.Key}' for step {step.LineNumber}, building it again");
+				return await BuildStep(goal, stepIndex, excludeModules);
+			}
+			step.Retry = false;
+			if (handled.Error is IBuilderError replaced && replaced != buildStepError) buildStepError = replaced;
+
+			AddToBuildErrors(buildStepError);
 
 			return buildStepError;
 		}
