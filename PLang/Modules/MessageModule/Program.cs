@@ -40,7 +40,7 @@ namespace PLang.Modules.MessageModule
 	// this is so they dont stay in memory until garbage collection
 	// this needs to happen down the call stack and figure out how settings is handled
 
-	[Description("Send and recieve private messages. Get account(public key), set current account for messaging")]
+	[Description("Send and recieve private messages over the network to a public key. Get account(public key), set current account for messaging. Not for a database table that happens to be called messages: a step that inserts, selects or updates rows is DbModule, whatever the table is named")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private static readonly object _lock = new object();

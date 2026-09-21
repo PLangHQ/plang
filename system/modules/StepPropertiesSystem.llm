@@ -9,6 +9,8 @@ ErrorHandlers:
 	- Error properties: 
         StatusCode(int), Message(string), Type(string), Key(string) is null unless clearly defined by user in on error clause.  
     - Key is "*" when user does not define ANY type of error property, e.g. on error call HandleError => Key = "*"
+    - A status code the user names goes in StatusCode as a number, with Key = null: on error status code 503 => StatusCode = 503, Key = null. Never write the number into Key, and never Key = "*" together with a StatusCode
+    - Every `on error` clause in the step is one handler. A step with an `on error` clause never has ErrorHandlers = null
 	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name
 	- Retry can happened before or after GoalToCall is executed depending on user intent, default is after(RunRetryBeforeCallingGoalToCall:false)
 
@@ -19,6 +21,7 @@ ErrorHandlers:
 		on error retry 3 times over 3 seconds, call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = true, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
 		on error call HandleError, retry 3 times over 3 seconds => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = false, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
 		on error message 'timeout' ignore error => { IgnoreError = true, Message = "timeout", RetryHandler = null }
+		on error status code = 404, call NotFound => { IgnoreError = false, StatusCode = 404, Key = null, GoalToCall = "NotFound" }
 {{ else }}
 ErrorHandler: is always null
 {{ end }}

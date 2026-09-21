@@ -233,8 +233,16 @@ namespace PLang.Modules.VariableModule
 			return null;
 		}
 
-		[Description("One or more variables to return. Variable can contain !, e.g. !callback=%callback%. When key is undefined, it is same as value, e.g. return %name% => then variables dictionary has key and value as name=%name%")]
-		public async Task<IError?> Return([HandlesVariable] Dictionary<string, object> variables)
+		// `return %result%` was coming back with no variables at all, roughly once in four builds,
+		// which ends the goal and returns nothing. The rule was buried at the end of one long line.
+		[Description("Return one or more variables out of the goal. variables is always set: a step that names a variable to return always has at least one entry.")]
+		[Example("return %result%", @"variables={""result"": ""%result%""}")]
+		[Example("return %total%, %count%", @"variables={""total"": ""%total%"", ""count"": ""%count%""}")]
+		[Example("return %user.name% as %name%", @"variables={""name"": ""%user.name%""}")]
+		[Example("return !callback=%callback%", @"variables={""!callback"": ""%callback%""}")]
+		public async Task<IError?> Return(
+			[Description("The name of each entry is what the value is returned as, without the percent signs. A step that just names a variable returns it under its own name, e.g. `return %name%` gives {\"name\": \"%name%\"}. A name starting with ! is a property, e.g. !callback")]
+			[HandlesVariable] Dictionary<string, object> variables)
 		{
 			if (variables == null) return new EndGoal(false, goal, goalStep, "", Levels: 0);
 
@@ -325,8 +333,10 @@ namespace PLang.Modules.VariableModule
 
 
 
-		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
+		[Description(@"Set one variable to a text value written in single/double quotes in the step, e.g. set %name% = ""John"". The wrapping quotes are not part of the value. A quoted text with %variables% written inside it is still a quoted text and belongs here, e.g. set %target% = ""/%path%"" or set %msg% = ""Halló %name%"": the variables are replaced with their values inside the text, and the wrapping quotes are still dropped. Only a value that is not wrapped in quotes at all, a bare %variable%, an object or json, belongs to SetVariable or SetJsonObjectVariable")]
+		public async Task SetStringVariable(
+			[Description("The variable being set: the name on the LEFT of the =, e.g. target in `set %target% = \"/%path%\"`. Never the value on the right")] [HandlesVariable] string key,
+			[Description("What the variable is set to: everything on the RIGHT of the =, with the wrapping quotes dropped, e.g. /%path% in `set %target% = \"/%path%\"`")] [HandlesVariable] string? value = null, [Description("true only when the step says the value is url encoded and should be decoded. false is the normal case")] bool urlDecode = false, [Description("true only when the step says the value is html encoded and should be decoded. false is the normal case")] bool htmlDecode = false, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [Description("A fallback, used only when the step itself states one, e.g. `set %x% = %y%, default is 10` or `%y% ?? 10`. When the step just assigns a value, this stays unset: the value belongs to the value parameter, not here")] [HandlesVariable] string? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
 
@@ -337,8 +347,9 @@ namespace PLang.Modules.VariableModule
 			memoryStack.Put(key, content, goalStep: goalStep);
 		}
 
-		[Description(@"Set json variable. Make sure value is valid json")]
-		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, [HandlesVariable] object? defaultValue = null)
+		[Description(@"Set one variable to a json object or array written out in the step, e.g. set %lookup% = {{""ok"": true, ""code"": ""%code%""}}. The value is the json itself, never a string holding json: {{""ok"":true}} and NOT ""{{\""ok\"":true}}"".")]
+		[Example(@"set %result% = {""ok"": true, ""id"": ""%id%""}", @"key=""%result%"", value={""ok"": true, ""id"": ""%id%""}")]
+		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, [Description("A fallback, used only when the step itself states one, e.g. `set %x% = %y%, default is 10` or `%y% ?? 10`. When the step just assigns a value, this stays unset: the value belongs to the value parameter, not here")] [HandlesVariable] object? defaultValue = null)
 		{
 			if (value == null) value = defaultValue;
 
@@ -482,8 +493,10 @@ namespace PLang.Modules.VariableModule
 			return error;
 		}
 
-		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
+		[Description(@"Set one variable to a value that is not a quoted text: a bare %variable% such as set %question% = %answer.text%, an object, a list or json. Any value the step wraps in quotes belongs to SetStringVariable, including one with %variables% inside it such as set %target% = ""/%path%"": this method keeps the quote characters as part of the value, so %target% would hold the quotes as text and a file read on it finds nothing. A json object or array is the value itself, written as json, and never a string holding json: {{""ok"":true}} and NOT ""{{\""ok\"":true}}"". Written as a string the variable holds text, and reading a property off it, e.g. %lookup.ok%, finds nothing")]
+		public async Task SetVariable(
+			[Description("The variable being set: the name on the LEFT of the =, e.g. path in `set %path% = %request.query.path%`. Never the variable being read on the right")] [HandlesVariable] string key,
+			[Description("What the variable is set to: everything on the RIGHT of the =, e.g. %request.query.path% in `set %path% = %request.query.path%`")] [HandlesVariable] object? value = null, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, [Description("Almost always unset. Only when the step says the assignment is conditional on the current value, e.g. `set %x% = 1 only if it is not null`")] object? onlyIfValueIsNot = null, [Description("A fallback, used only when the step itself states one, e.g. `set %x% = %y%, default is 10` or `%y% ?? 10`. When the step just assigns a value, this stays unset: the value belongs to the value parameter, not here")] [HandlesVariable] object? defaultValue = null, [Description("Almost always unset. Only when the step asks for the value to become a particular .NET type, e.g. `set %n% = \"42\" as int`. A value that is simply assigned keeps its own type")] string? FullTypeName = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"         - Start SetVariable (key:{key} | value:{value}) - {stopwatch.ElapsedMilliseconds}");
@@ -538,16 +551,16 @@ pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|tota
 			return (ts, null);
 		}
 
-		[Description(@"Set multiple variables with possible default values used with variable(such as %request.query.*% and fix default. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		[Description(@"Set two or more variables in one step where at least one of them has a default value, e.g. set %page% = %request.query.page% ?? 1, %size% = 20. When no variable has a default, SetValuesOnVariables is the method. Number can be represented with _, e.g. 100_000. A json object or array is the value itself, written as json, and never a string holding json: {{""ok"":true}} and NOT ""{{\""ok\"":true}}"". Written as a string the variable holds text, and reading a property off it, e.g. %lookup.ok%, finds nothing. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, [Description("Almost always unset. Only when the step says the assignment is conditional on the current value, e.g. `set %x% = 1 only if it is not null`")] object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
 				await SetVariable(key.Key, key.Value?.Item1 ?? key.Value?.Item2, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
-		[Description(@"Set value on variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		[Description(@"Set two or more variables in one step, none of them with a default value, e.g. set %page% = %request.body.page%, %note% = %request.body.note%. If any variable has a default, SetVariables is the method. A json object or array is the value itself, written as json, and never a string holding json: {{""ok"":true}} and NOT ""{{\""ok\"":true}}"". Written as a string the variable holds text, and reading a property off it, e.g. %lookup.ok%, finds nothing.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, [Description("Almost always unset. Only when the step says the assignment is conditional on the current value, e.g. `set %x% = 1 only if it is not null`")] object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
@@ -558,7 +571,7 @@ pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|tota
 
 
 
-		[Description(@"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.
+		[Description(@"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. A json object or array is the value itself, written as json, and never a string holding json: {{""ok"":true}} and NOT ""{{\""ok\"":true}}"". Written as a string the variable holds text, and reading a property off it, e.g. %lookup.ok%, finds nothing.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.
 Example:
 `set default value %name% = %request.body.name%, %zip% = %request.body.zip%` => [{key=%name%, value=%request.body.zip%}, {key=%zip%, value=%request.body.zip%}]
 `set default value %target% = ""#body"" => {key=%target%, value=""#body""}
@@ -566,7 +579,7 @@ Example:
 Bad (dont use for):
 `set default %page% = %request.query.page% ?? 1` => use:SetValueOnVariablesOrDefaultIfValueIsEmpty
 ")]
-		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, [Description("Almost always unset. Only when the step says the assignment is conditional on the current value, e.g. `set %x% = 1 only if it is not null`")] object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
@@ -602,13 +615,13 @@ Bad (dont use for):
 		[Description("Type should be c# object type, e.g. System.String, System.DateTime, etc. When undefined, set to System.Object")]
 		public record VariableIfEmpty(string Name, object FirstValue, object ValueIfFirstIsEmpty, string Type);
 
-		[Description(@"Set value on variables or a default value is value is empty. The trailing clause may be written as `, default is X`, `, or X if empty` or `?? X`, they all mean the same. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		[Description(@"Set value on variables or a default value is value is empty. The trailing clause may be written as `, default is X`, `, or X if empty` or `?? X`, they all mean the same. Number can be represented with _, e.g. 100_000. A json object or array is the value itself, written as json, and never a string holding json: {{""ok"":true}} and NOT ""{{\""ok\"":true}}"". Written as a string the variable holds text, and reading a property off it, e.g. %lookup.ok%, finds nothing.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		[Example(@"set %q% = %request.query.q%, or ""hello"" if empty", @"keyValues.key=""%q%"", value=[""%request.query.q%"", ""hello""]")]
 		[Example(@"set %q% = %request.query.page% ?? 1", @"keyValues.key=""%page%"", value=[""%request.query.page%"", 1, ""System.Int64""]")]
 		[Example(@"set %day% = %request.query.day%, default is """"", @"keyValues.key=""%day%"", value=[""%request.query.day%"", """"]")]
 		[Example(@"set %goals% = %q.goals%, default is []", @"keyValues.key=""%goals%"", value=[""%q.goals%"", []]")]
 		[Example(@"set %target% = %request.body.target%, default is ""#body""", @"keyValues.key=""%target%"", value=[""%request.body.target%"", ""#body""]")]
-		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, [Description("Almost always unset. Only when the step says the assignment is conditional on the current value, e.g. `set %x% = 1 only if it is not null`")] object? onlyIfValueIsNot = null)
 		{
 			foreach (var variable in variables)
 			{

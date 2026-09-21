@@ -19,7 +19,7 @@ namespace PLang.Modules.ThrowErrorModule
 	[Description("statusCode default is 400")]
 	public record ErrorInfo(string? Message = null, string Type = "error", int StatusCode = 400, string Key = "Error");
 
-	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
+	[Description("Allows user to throw error or retry a step. Allows user to stop(end) running goal, leaving it early without sending anything back. Create payment request(status code 402). Not for a step that returns a value, e.g. `return %result%`: giving named values back to the caller is the Return method of VariableModule, whatever the values happen to hold")]
 	public class Program : BaseProgram
 	{
 		private readonly ProgramFactory programFactory;

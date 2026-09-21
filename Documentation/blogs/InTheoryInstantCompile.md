@@ -6,7 +6,7 @@ Let’s take a look at how the Plang builder works and why it can deliver near-i
 
 The Plang builder takes your goals file, processes each step, and uses an LLM to map it to methods in a module. These instructions are saved in a `.pr` file, a simple JSON that anyone can read. Once a step is processed and mapped, you never need to compile it again unless you change it.
 
-That’s the core idea—compile once, never again, unless you modify something. So when you run the builder, the only thing sent to the LLM is the step you’ve just written. With GPT-4o-mini, this happens in around 500ms, making build times almost instant. [Read more about the builder here](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md).
+That’s the core idea—compile once, never again, unless you modify something. So when you run the builder, the only thing sent to the LLM is the step you’ve just written. With GPT-4o-mini, this happens in around 500ms, making build times almost instant. [Read more about the builder here](https://github.com/PLangHQ/plang/blob/main/Documentation/Building.md).
 
 ### Example in Action
 

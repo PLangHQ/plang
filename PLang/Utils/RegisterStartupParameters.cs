@@ -85,6 +85,51 @@ namespace PLang.Utils
 				AppContext.SetData("llmservice", serviceName);
 			}
 
+			// The decider picks the module for each step on build; the llm service above still does
+			// the generation. Default is on, so a build with no flag uses Typesafe for that decision.
+			var decider = args.FirstOrDefault(p => p.ToLower().StartsWith("--decider")) ?? Environment.GetEnvironmentVariable("PLangDecider");
+			if (!string.IsNullOrEmpty(decider))
+			{
+				var deciderName = decider.ToLower();
+				if (decider.IndexOf("=") != -1)
+				{
+					deciderName = decider.Substring(decider.IndexOf("=") + 1).ToLower();
+				}
+
+				// mock decides nothing. It reads each step's module and method out of the .pr next to
+				// it, so the batched builder can be exercised and measured when the decision engine
+				// is unavailable. It is no use for building anything that is not already built.
+				if (deciderName != "typesafe" && deciderName != "off" && deciderName != "mock")
+				{
+					throw new RuntimeException("Parameter --decider can only be 'typesafe', 'off' or 'mock'. For example --decider=off");
+				}
+				AppContext.SetData("decider", deciderName);
+			}
+
+			// One llm request builds the parameters of a whole goal instead of one request per step.
+			// Default is on; --batchbuild=off goes back to a request per step.
+			var batch = args.FirstOrDefault(p => p.ToLower().StartsWith("--batchbuild")) ?? Environment.GetEnvironmentVariable("PLangBatchBuild");
+			if (!string.IsNullOrEmpty(batch))
+			{
+				var batchName = batch.ToLower();
+				if (batch.IndexOf("=") != -1) batchName = batch.Substring(batch.IndexOf("=") + 1).ToLower();
+
+				if (batchName != "on" && batchName != "off")
+				{
+					throw new RuntimeException("Parameter --batchbuild can only be 'on' or 'off'. For example --batchbuild=off");
+				}
+				AppContext.SetData("batchbuild", batchName);
+			}
+
+			// --rebuild builds every step again even when nothing in the goal file changed. The
+			// builder skips a step whose hash still matches its .pr, which is what makes a build
+			// incremental, so measuring what the decider can now answer, or picking up a change to
+			// the builder itself rather than to the app, otherwise means deleting .pr files by hand.
+			if (args.Any(p => p.Equals("--rebuild", StringComparison.OrdinalIgnoreCase)))
+			{
+				AppContext.SetSwitch("Rebuild", true);
+			}
+
 			var parallel = args.FirstOrDefault(p => p.StartsWith("--buildparallel", StringComparison.OrdinalIgnoreCase));
 			int buildParallel = DefaultBuildParallel;
 			if (parallel != null)

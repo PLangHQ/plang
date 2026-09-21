@@ -51,7 +51,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.DbModule
 {
-	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
+	[Description("Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: \"dev\"`, is database access. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
 	public class Program : BaseProgram, IDisposable
 	{
 		//public static string DbConnectionContextKey = "DbConnection";
@@ -493,7 +493,18 @@ namespace PLang.Modules.DbModule
 			}
 			else
 			{
-				connection = dbFactory.CreateHandler(dataSource, memoryStack, readOnly);
+				try
+				{
+					connection = dbFactory.CreateHandler(dataSource, memoryStack, readOnly);
+				}
+				catch (Exception ex)
+				{
+					// A driver that is not registered threw out of here, past every caller that knows how
+					// to carry on without this datasource. The builder searches all of them when a step
+					// names none, and one it cannot open should be skipped, not fatal.
+					return (null, null, null, sql, new ProgramError($"Could not open datasource '{dataSource.Name}': {ex.Message}",
+						goalStep, function, Exception: ex, Key: "DataSourceUnreachable"));
+				}
 			}
 			if (connection == null) return (null, null, null, sql, new ProgramError("Connection to db could not be created"));
 
@@ -508,7 +519,18 @@ namespace PLang.Modules.DbModule
 				return (connection, transaction, paramResult.DynamicParameters, sql, null);
 			}
 
-			connection.Open();
+			try
+			{
+				connection.Open();
+			}
+			catch (Exception ex)
+			{
+				// The driver's message alone ("Connect Timeout expired") does not say which of the
+				// app's datasources it was, and the builder reads the structure of every datasource a
+				// step could mean, so name it, and the server for a remote one.
+				var server = System.Text.RegularExpressions.Regex.Match(connection.ConnectionString ?? "", @"(?:Server|Host|Data Source)=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
+				return (null, null, null, sql, new ProgramError($"Could not open datasource '{dataSource.Name}' ({dataSource.TypeFullName.Split('.').Last()} at {server}): {ex.Message}", goalStep, function, Exception: ex, Key: "DataSourceUnreachable"));
+			}
 
 			SqliteJournalMode.EnableWal(connection);
 
@@ -589,10 +611,20 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer")]
-		[Example(@"query usersCount.sql, parameters: date=%now%, ds:""data"", ""sales"", table: ""users"", write to %result%", @"fileName=""usersCount.sql"", parameter=[{""date"":""%now%""}], dataSourceNames=[""data"", ""sales""], tableAllowList=[""users""], ReturnValues=""%result%""")]
+		// The example used to write parameter=[{"date":"%now%"}]: the wrong name, and a dictionary
+		// where the type is a list of ParameterInfo. A step passing one parameter was then built
+		// with the bare variable as the whole list, which is not that type at all.
+		[Example(@"query usersCount.sql, parameters: date=%now%, ds:""data"", ""sales"", table: ""users"", write to %result%", @"fileName=""usersCount.sql"", parameters=[{""TypeFullName"":""System.Object"",""ParameterName"":""@date"",""VariableNameOrValue"":""%now%""}], dataSourceNames=[""data"", ""sales""], tableAllowList=[""users""], ReturnValues=""%result%""")]
 		[Example(@"query usersCount.sql, table: ""users"", write to %result%", @"fileName=""usersCount.sql"", tableAllowList=[""users""], ReturnValues=""%result%""")]
 		[Example(@"query sql/totalProducts.sql, table: ""products"", write to %productCount%", @"fileName=""totalProducts.sql"", tableAllowList=[""products""], ReturnValues=""%productCount%""")]
-		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null, int? rowsToReturn = null)
+		// A step may name its parameters without the word parameters, `query x.sql, kt=%kt% ...`,
+		// and every example here wrote the word. The bare form then came back as parameters="%kt%",
+		// the variable as the whole list rather than one entry in it, which is not that type: the
+		// query runs with nothing bound and returns everything or nothing.
+		[Example(@"query sql/lookup.sql, kt=%kt%, table: ""people"", write to %person%", @"fileName=""lookup.sql"", parameters=[{""TypeFullName"":""System.Object"",""ParameterName"":""@kt"",""VariableNameOrValue"":""%kt%""}], tableAllowList=[""people""], ReturnValues=""%person%""")]
+		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList,
+			[Description("One entry per named value the sql file expects. The step writes each as name=value, with or without the word parameters in front, e.g. `kt=%kt%` is one entry. ParameterName is that name with an @ in front, VariableNameOrValue is the value. This is always a list, never the bare value: parameters=\"%kt%\" binds nothing")]
+			List<ParameterInfo>? parameters = null, int? rowsToReturn = null)
 		{ 
 			(var dataSource, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (0, error, null);

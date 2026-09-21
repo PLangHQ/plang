@@ -35,7 +35,7 @@ namespace PLang.Modules.UiModule
 	{
 		Task Flush();
 	}
-	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript.")]
+	[Description("Puts content into the page the user is looking at. A render step belongs here when it says where on the page the result goes, naming a cssSelector such as #main or an action such as replace, append, showModal or navigate, e.g. `render 'page.html' to #main`. A render step that captures the result in a variable instead, `write to %html%`, is the template engine module and shows nothing. Also takes any user command and tries to convert it to html, adds, removes and inserts content at a css selector, sets the (default) layout for the UI, and executes javascript.")]
 	public class Program : BaseProgram, IFlush
 	{
 		public Program() : base()
@@ -184,7 +184,7 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return await sink.SendAsync(executeMessage);
 		}
 
-		[Description(@"Set ExecuteMessage.Actions=""show""")]
+		[Description(@"Show an element that is already on the page, by css selector. Set ExecuteMessage.Actions=""show"". A step that renders a template file into the page is RenderTemplate, even when it names an action such as show or showModal: the action is part of rendering, not a step of its own")]
 		public async Task<IError?> ShowElement(ExecuteMessage executeMessage)
 		{
 			var sink = context.GetSink(executeMessage.Actor);
@@ -217,11 +217,25 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
 
 
-		public record RenderTemplateOptions(RenderMessage RenderMessage, bool ReRender = true, string LayoutName = "default", 
-			bool RenderToOutputstream = false, bool DontRenderMainLayout = false,
-			[property: Description("set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
+		public record RenderTemplateOptions(RenderMessage RenderMessage,
+			[property: Description("true is the normal case and is sent to the client with the content. Set false only when the step explicitly says the target should not be re-rendered")]
+			bool ReRender = true,
+			string LayoutName = "default",
+			[property: Description("true when the step does not write the result into a variable, because the rendered content must then be sent to the user, e.g. `render 'page.html' to #main`. false only when the step captures the result, e.g. `render 'row.html', write to %html%` or `into %html%`. Getting this wrong on a step with no variable renders the page and sends nothing")]
+			bool RenderToOutputstream = false,
+			// Read the selector, do not read whether there is one. With the rule stated as "an element
+			// other than the main area", a step targeting #main itself came back true in 11 builds
+			// out of 12: naming any selector at all was being taken as the answer.
+			[property: Description("Decided by which selector RenderMessage.Target holds. #main is the page's main render area: a step targeting #main takes false. Any other selector, such as #list or #ideaChat, takes true, and so does a step that says 'without main layout'. A step naming no selector takes false")]
+			bool DontRenderMainLayout = false,
+			// Tried and measured worse, do not try again without measuring: telling the decider that
+			// unset is the normal case, because plang derives it from the resolved content, took
+			// IsTemplateFile from 2 fallbacks to 6 in admin/dev. It moved mass onto unset without
+			// conviction and split the answer three ways instead of two. Naming the file is what the
+			// engine can actually see in the step.
+			[property: Description("set as true when RenderMessage.Content is a file name, which includes a path written out in the step such as \"/ui/pages/landing.html\" or \"/admin/dev/diffLine.html\", and a %variable% that holds one. If Content is clearly the text to render, set as false")]
 			bool? IsTemplateFile = null,
-			[property: Description("css selector, normally body, when the user wants the whole page redrawn inside the layout, e.g. 'render whole page', 'replace whole body', 'redraw the page'")]
+			[property: Description("Only for redrawing the whole page inside the layout, and then it is normally body, e.g. 'render whole page', 'replace whole body', 'redraw the page'. A cssSelector the step names is the Target of the content, not this, so leave this unset unless the step asks for the whole page")]
 			string? LayoutTarget = null)
 		{
 
@@ -246,22 +260,29 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return path;
 		}
 
-		[Description(@" Examples:
+		// The examples here used to be written flat, with names the method no longer has:
+		// FileName=template.html, actions=[...], renderToOutputstream=true. The answer was then
+		// copied in that shape, with no options wrapper and fields the record does not carry, and
+		// two render steps of a goal were built wrong every run. Examples must be written as the
+		// value the method actually takes.
+		[Description(@"Everything goes inside the single options parameter, and what is rendered goes inside its RenderMessage. Examples:
 ```plang
-- render product.html => isTemplateFile=true, renderToOutputstream = true
-- render frontpage.html, write to %html% => isTemplateFile=true, renderToOutputstream = false
-- render ""Is this correct file content.html"" => isTemplateFile = false, renderToOutputstream = true
-- render product.html to #main => renderToOutputstream = true, ReRender=true, Target=""#main""
-- replace #main with template.html => Target=#main, actions=[""replace""], ReRender=true, FileName=template.html, renderToOutputStream= true
-- set html of #product to product.html => Target=#product, actions=[""replace""], ReRender=true, FileName=product.html, renderToOutputStream= true
-- append to #list to item.html, scroll to view => Target=#list, actions=[""replace"", ""scrollIntoView""], ReRender=true, FileName=item.html, renderToOutputStream= true
-
-Target can be null when not defined by user.
-Actions: list of action to preform, the default is 'replace'(innerHTML).
-ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
-When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
-IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false
-```")]
+- render product.html
+  => options={""RenderMessage"":{""Content"":""product.html""},""IsTemplateFile"":true,""RenderToOutputstream"":true}
+- render frontpage.html, write to %html%
+  => options={""RenderMessage"":{""Content"":""frontpage.html""},""IsTemplateFile"":true,""RenderToOutputstream"":false}
+- render ""<p>plain text</p>""
+  => options={""RenderMessage"":{""Content"":""<p>plain text</p>""},""IsTemplateFile"":false,""RenderToOutputstream"":true}
+- append to #list to item.html, scroll to view
+  => options={""RenderMessage"":{""Content"":""item.html"",""Target"":""#list"",""Actions"":[""replace"",""scrollIntoView""]},""IsTemplateFile"":true,""RenderToOutputstream"":true,""DontRenderMainLayout"":true}
+- render welcome.html, cssSelector: ""#main"", action: ""replace""
+  => options={""RenderMessage"":{""Content"":""welcome.html"",""Target"":""#main"",""Actions"":[""replace""]},""IsTemplateFile"":true,""RenderToOutputstream"":true,""DontRenderMainLayout"":false}
+```
+Target is null when the step names no selector, and lives inside RenderMessage with Content and Actions.
+ReRender defaults to true, the normal behaviour of re-rendering the content.
+RenderToOutputstream is true when the step writes the result into no variable.
+DontRenderMainLayout turns on the selector the step names, not on whether it names one. #main is the page's main render area and takes false; any other selector takes true.
+IsTemplateFile is true when RenderMessage.Content is a file name, which includes a path written out in the step, and false when Content is the text to render.")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();

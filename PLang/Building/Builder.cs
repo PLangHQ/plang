@@ -22,7 +22,7 @@ namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null);
+		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null, bool withSetupGoals = false);
 	}
 	public class Builder : IBuilder
 	{
@@ -37,11 +37,12 @@ namespace PLang.Building
 		private readonly IGoalParser goalParser;
 		private readonly IEngine engine;
 		private readonly PLangAppContext appContext;
+		private readonly IBuilderDeciderReport deciderReport;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
 			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, 
-			IGoalParser goalParser, IEngine engine, PLangAppContext appContext)
+			IGoalParser goalParser, IEngine engine, PLangAppContext appContext, IBuilderDeciderReport deciderReport)
 		{
 
 			this.fileSystem = fileSystem;
@@ -55,10 +56,11 @@ namespace PLang.Building
 			this.goalParser = goalParser;
 			this.engine = engine;
 			this.appContext = appContext;
+			this.deciderReport = deciderReport;
 		}
 
 
-		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null)
+		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, IReadOnlyCollection<string>? absoluteGoalPaths = null, bool withSetupGoals = false)
 		{
 			IError? error;
 			// The switch is process wide and half the runtime reads it: BaseProgram sets IsBuilder from
@@ -101,10 +103,20 @@ namespace PLang.Building
 				// the setup loop, so a targeted build still rebuilt every setup goal: slow, and inside a
 				// running app it fails, because setup sql is validated against an anchor db that is only
 				// populated by the create-table steps of that same build.
+				//
+				// That anchor db is exactly why a cli build keeps the setup goals: a build resolves a
+				// sqlite datasource to an empty in-memory database, so a step selecting from a table
+				// only validates when the create-table step of a Setup/ goal has run in this same
+				// build. Skipping them there made every goal holding sql unbuildable. A build asked
+				// for from inside a running app (withSetupGoals: false) keeps the narrow behaviour.
 				if (targeted)
 				{
 					var wanted = new HashSet<string>(absoluteGoalPaths!, StringComparer.OrdinalIgnoreCase);
-					goals = goals.Where(p => wanted.Contains(p.AbsoluteGoalPath)).ToList();
+					goals = goals.Where(p => wanted.Contains(p.AbsoluteGoalPath) || (withSetupGoals && p.IsSetup)).ToList();
+
+					// --rebuild applies to the goals that were named and to nothing else. The setup
+					// goals above are carried along for the anchor database, not to be rebuilt.
+					AppContext.SetData("rebuildpaths", wanted);
 				}
 
 				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));
@@ -112,15 +124,16 @@ namespace PLang.Building
 				{
 					logger.LogDebug($"Start setup file build on '{setupGoal.GoalName}' - {stopwatch.ElapsedMilliseconds}");
 					var goalError = await goalBuilder.BuildGoal(container, setupGoal, context);
-					if (goalError != null && !goalError.ContinueBuild)
+					if (goalError != null)
 					{
-						return [goalError];
-					}
-					else if (goalError != null)
-					{
-						//logger.LogWarning(goalError.ToFormat().ToString());
+						// A setup goal that will not build used to end the build then and there, so one
+						// unreachable database, or one step the llm could not answer, meant nothing else
+						// got built at all. It is reported and the build carries on: a step that did not
+						// build has no .pr, so the next build tries it again, and meanwhile everything
+						// that can be built is. The later setup goals may well fail too, and it is more
+						// use to see all of them at once than the first one on its own.
+						logger.LogError($"Setup goal {setupGoal.GoalName} did not build, carrying on with the rest: {goalError.Message?.ReplaceLineEndings(" ").Trim().MaxLength(160)}");
 						goalBuilder.AddToBuildErrors(goalError);
-						
 					}
 					logger.LogDebug($"Done Setup Build on {setupGoal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 				}
@@ -140,7 +153,9 @@ namespace PLang.Building
 				var goalsToBuild = goals.Where(p => !p.IsSetup && !p.IsEvent);
 				if (AppContext.TryGetSwitch("Validate", out bool isEnabled) && !isEnabled)
 				{
-					goalsToBuild = goalsToBuild.Where(p => p.HasChanged);
+					// --rebuild means an unchanged goal is still to be built, so it has to survive this
+					// filter: it runs before anything else asks whether the goal should be rebuilt.
+					goalsToBuild = goalsToBuild.Where(p => p.HasChanged || GoalBuilder.ShouldRebuild(p));
 				}
 				// Goals do not feed each other either, so with --buildparallel they can go out together.
 				// Two exceptions stay sequential and are not a locking problem but a scoping one:
@@ -282,6 +297,14 @@ namespace PLang.Building
 			finally
 			{
 				AppContext.SetSwitch("Builder", wasBuilder);
+
+				// In the finally, because a build that stopped on an error is exactly when it is worth
+				// knowing how the steps that did build were built.
+				var deciderSummary = deciderReport.Summary();
+				if (deciderSummary != null) logger.LogInformation("\n" + deciderSummary);
+
+				var timings = deciderReport.Timings();
+				if (timings != null) logger.LogInformation("\n" + timings);
 			}
 			return null;
 		}

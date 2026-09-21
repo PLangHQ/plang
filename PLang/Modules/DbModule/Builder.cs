@@ -206,8 +206,11 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 		var dataSourceNameParam = gf.GetParameter<string>("dataSourceName");
 		if (dataSourceNameParam?.Contains("%variable0%") == true)
 		{
+			// %variable0% is the runtime's placeholder for the datasource variable and the model has
+			// echoed it back. With no datasource in context this fell over on ds.NameInStep; now it is
+			// reported as the invalid answer it is and the step builds again.
 			var ds = context.DataSource;
-			if (ds.NameInStep != null && !ds.NameInStep.Contains("%variable0%"))
+			if (ds?.NameInStep != null && !ds.NameInStep.Contains("%variable0%"))
 			{
 				var updatedParams = gf.Parameters
 					.Select(p => p.Name == "dataSourceName" ? p with { Value = ds.NameInStep } : p)
@@ -219,7 +222,7 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 			}
 			else
 			{
-				return (null, new StepBuilderError("dataSourceName cannot contain %variable0%", goalStep, Retry: ds.NameInStep != null));
+				return (null, new StepBuilderError("dataSourceName cannot contain %variable0%. Use the datasource the step names, e.g. users/%userId%, or leave it out when the step names none", goalStep, Retry: true));
 			}
 		}
 		if (dataSourceNameParam?.Contains("%") == true && !VariableHelper.IsVariable(dataSourceNameParam))
@@ -581,7 +584,18 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 				
 				(var tableInfos, var dsError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.Tables.Select(p => p.Name).ToList());
 				if (dsError?.StatusCode == 404) continue;
-				if (dsError != null) return (null, new StepBuilderError(dsError, step));
+				if (dsError != null)
+				{
+					// The step has not said which datasource it means, so every one is searched for the
+					// table. One of them being unreachable is not a reason to fail the step: the table
+					// is probably in another. A warning, and on to the next, and if no datasource has
+					// the table the error below says so and names the ones that were searched.
+					//
+					// Failing here meant a database that happened to be down, a vpn not connected,
+					// stopped a step that had nothing to do with it from building at all.
+					logger.LogWarning($"{step.LineNumber}: could not read datasource '{dataSource.Name}' while looking for {string.Join(", ", methodsAndTables.Tables.Select(p => p.Name))}, skipping it: {dsError.Message?.ReplaceLineEndings(" ").Trim().MaxLength(120)}");
+					continue;
+				}
 
 				foreach (var tableInfo in tableInfos)
 				{
@@ -632,7 +646,14 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 					(var tableSuggestions, error) = await GetTableSuggestions(tablesWithMissingDataSource);
 					if (error != null) return (null, error);
 
-					return (null, new StepBuilderError($"Could not find datasource for table(s): {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))}. Is there a typo in the sql?"
+					// Naming the table alone leaves the developer guessing where it was looked for.
+					// Say which datasources were searched, and where that list came from: the step's
+					// own ds:, or every datasource the app has when the step names none.
+					var searched = dataSources.Count == 0 ? "none" : string.Join(", ", dataSources.Select(p => $"'{p.Name}'"));
+					var source = methodsAndTables.DataSourceNames?.Count > 0
+						? $"the datasource named in the step (ds: {string.Join(", ", methodsAndTables.DataSourceNames.Select(p => $"\"{p.Name}\""))})"
+						: "every datasource in this app, because the step names no ds:";
+					return (null, new StepBuilderError($"Could not find table(s) {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))} in datasource(s) {searched}, searched because that is {source}. Either the table name is a typo, or the table has not been created yet: a table is created by a goal in Setup/, and a build that skips the setup goals (--goal=, which builds only what it names) never creates it."
 						, step, FixSuggestion: tableSuggestions, Retry: false));
 				}
 			}

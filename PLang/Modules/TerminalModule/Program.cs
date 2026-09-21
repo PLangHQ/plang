@@ -43,13 +43,23 @@ namespace PLang.Modules.TerminalModule
 			throw new NotImplementedException("Read is not implemented");
 		}
 
-		[Description("Run a executable. Parameters string should not be escaped. variableNameForDeltaOnStandardStream and variableNameForDeltaOnErrorStream must to be clearly defined by the user either in it's name or with parameter variableNameForDeltaOnStandardStream: or variableNameForDeltaOnErrorStream:. When user write to a %variable%, this is the whole standard output stream, NOT delta.")]
-		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", variableNameForDeltaOnStandardStream=null, variableNameForDeltaOnErrorStream=null, ReturnValues = %output%")]
-		[Example("terminal ffmpeg -i input.mp4 output.avi, %delta%, %errorDelta%, write to %data%", @"appExecutableName=ffmpeg, parameters=""-i"",""input.mp4"",""output.avi"", variableNameForDeltaOnStandardStream=%delta%, variableNameForDeltaOnErrorStream=%errorDelta%, ReturnValues should be %data%")]
-		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
-			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? variableNameForDeltaOnStandardStream = null, [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
-			bool hideTerminal = false
+		[Description("Run an executable and return its output. Parameter strings should not be escaped.")]
+		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", ReturnValues = %output%")]
+		[Example("terminal /usr/bin/du, parameters: [%dir%] working dir: \"/srv\", hide terminal, write to %usage%", @"appExecutableName=""/usr/bin/du"", parameters=""%dir%"", pathToWorkingDirInTerminal=""/srv"", hideTerminal=true, ReturnValues = %usage%")]
+		public async Task<(object?, IError?, Properties?)> RunTerminal(
+			[Description("The program to run, e.g. git in `terminal git --status`, or a full path such as /usr/bin/ffmpeg")] string appExecutableName,
+			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
+			[Description("The directory the program runs in, stated by the step as e.g. `working dir: \"/srv/app\"`")] string? pathToWorkingDirInTerminal = null,
+			// These two are hidden from the builder. A step saying `write to %output%` kept coming
+			// back with %output% here instead of as a return value, which streams the output away
+			// line by line and returns nothing: the variable ends up holding the last line. Saying
+			// so in the description got it from 8 builds in 12 down to 2, not to 0. A parameter the
+			// builder cannot see cannot be filled by mistake, so streaming is its own method now.
+			// They stay on the signature, unhidden from the runtime, so every .pr already written
+			// keeps binding them.
+			[LlmIgnore] [HandlesVariable] string? variableNameForDeltaOnStandardStream = null,
+			[LlmIgnore] [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
+			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false
 			)
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
@@ -226,6 +236,20 @@ namespace PLang.Modules.TerminalModule
 			return (dataOutput.ToString(), error, properties);
 		}
 
+		[Description("Run an executable that streams its output while it runs, for a step that names a variable to receive each line as it arrives. A plain `write to %variable%` is the finished output and belongs to RunTerminal, not here: this method is only for a step that names a separate variable for the running output, e.g. `terminal ffmpeg ..., %delta%`.")]
+		[Example("terminal /usr/bin/rsync -av src dst, %line%, %problem%, write to %summary%", @"appExecutableName=""/usr/bin/rsync"", parameters=""-av"",""src"",""dst"", variableNameForDeltaOnStandardStream=""%line%"", variableNameForDeltaOnErrorStream=""%problem%"", ReturnValues = %summary%")]
+		public async Task<(object?, IError?, Properties?)> RunTerminalStreaming(
+			[Description("The program to run, e.g. ffmpeg, or a full path such as /usr/bin/ffmpeg")] string appExecutableName,
+			[Description("The variable that receives standard output line by line as it arrives")] [HandlesVariable] string variableNameForDeltaOnStandardStream,
+			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
+			[Description("The directory the program runs in, stated by the step as e.g. `working dir: \"/srv/app\"`")] string? pathToWorkingDirInTerminal = null,
+			[Description("The variable that receives the error stream line by line, when the step names a second one")] [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
+			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false
+			)
+		{
+			return await RunTerminal(appExecutableName, parameters, pathToWorkingDirInTerminal,
+				variableNameForDeltaOnStandardStream, variableNameForDeltaOnErrorStream, hideTerminal);
+		}
 
 	}
 }

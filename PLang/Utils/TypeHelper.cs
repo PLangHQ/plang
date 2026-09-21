@@ -38,6 +38,7 @@ public interface ITypeHelper
 	BaseBuilder GetInstructionBuilderInstance(string module);
 	List<Type> GetRuntimeModules();
 	string GetModulesAsString(List<string>? excludedModules = null);
+	Dictionary<string, string> GetModulesDictionary(List<string>? excludedModules = null);
 	BaseProgram GetProgramInstance(string module);
 	List<Type> GetBuilderModules();
 	Type? GetBuilderType(string module);
@@ -177,6 +178,27 @@ public class TypeHelper : ITypeHelper
 			strModules += " }, \n";
 		}
 		return strModules + "]";
+	}
+
+	// Same list as GetModulesAsString, as data: the decider wants the options as a map of module
+	// name to description, not a prompt string. A module without a description gets its own name
+	// so it is still a valid option.
+	public Dictionary<string, string> GetModulesDictionary(List<string>? excludedModules = null)
+	{
+		var modules = new Dictionary<string, string>();
+		foreach (var module in runtimeModules)
+		{
+			var name = module.FullName.Replace(".Program", "");
+			if (excludedModules != null && excludedModules.Contains(name)) continue;
+
+			var descriptions = module.CustomAttributes
+				.Where(p => p.AttributeType.Name == "DescriptionAttribute")
+				.Select(p => p.ConstructorArguments.FirstOrDefault().Value?.ToString())
+				.Where(p => !string.IsNullOrWhiteSpace(p));
+			var description = string.Join(" ", descriptions);
+			modules[name] = string.IsNullOrWhiteSpace(description) ? name : description;
+		}
+		return modules;
 	}
 
 	public Type DefaultBuilderType(string module)

@@ -195,4 +195,4 @@ that way never appears.
 - [Identity in the browser](./IdentityInTheBrowser.md), which decides what a goal can know about
   who is asking.
 - [Talking to an api](./TalkingToAnApi.md)
-- [Steps that build the first time](./StepsThatBuild.md)
+- [Building plang code](./Building.md)

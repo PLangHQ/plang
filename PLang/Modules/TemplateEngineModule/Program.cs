@@ -28,7 +28,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.TemplateEngineModule
 {
-	[Description(@"Render template html, files, elements using template engine. plang examples: 
+	[Description(@"Run a template file or template text through the template engine and hand the result back to the goal. A render step belongs here when it captures the result in a variable, e.g. `render products.html, write to %html%` or `render file.html into %content%`: nothing is shown to the user, the html becomes a value. A render step that puts the result into the page instead, naming a cssSelector or an action such as replace, append or showModal, is the ui module. A step that starts with `write out` is the output module, which sends content that is already made. plang examples:
 ```
 - render file.html
 - render %content% to #main / will render the variable into the element #main

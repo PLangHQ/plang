@@ -15,8 +15,9 @@ using System.Linq;
 namespace PLang.Modules.ListDictionaryModule
 {
 	[Description(@"
-get first|last|random|position| item from list or dictionary.
-Add, update, delete and retrieve list or dictionary. Group by key, merge two lists
+get first|last|random|position| item from list or dictionary, when the step asks for it in words, e.g. `get first item of %rows%, write to %row%`.
+Add, update, delete and retrieve list or dictionary. Group by key, merge two lists.
+Not for an index written inside a %variable% path, e.g. `set %id% = %reply.data[0].id%`: that is one variable being read, the runtime walks the path itself, and a step assigning it belongs to VariableModule.
 ")]
 	public class Program : BaseProgram
 	{

@@ -125,5 +125,5 @@ rather than a language feature, but it is the one that has paid for itself most 
 ## See also
 
 - [Writing goals that behave](./WritingGoals.md)
-- [Steps that build the first time](./StepsThatBuild.md)
+- [Building plang code](./Building.md)
 - [Module reference](./modules/reference/README.md), for the exact method and its parameters.

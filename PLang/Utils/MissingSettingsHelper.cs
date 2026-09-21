@@ -33,7 +33,13 @@ namespace PLang.Utils
 		public static async Task<IError?> HandleMissingSetting(IEngine engine, PLangContext context, MissingSettingsException missing)
 		{
 			(var answer, var error) = await AskUser.GetAnswer(engine, context, missing.Message);
-			if (error != null) return error;
+			if (error != null)
+			{
+				// When asking fails, the failure alone says nothing about what was being asked. Keep
+				// the original so the log names the missing setting, not just the broken prompt.
+				error.ErrorChain.Add(new Error($"This was asked because a setting is missing: {missing.Message}", Key: "MissingSetting"));
+				return error;
+			}
 
 			error = await missing.InvokeCallback(answer);
 			if (error != null) return error;

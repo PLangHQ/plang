@@ -573,12 +573,31 @@ OnStartingWebserver
 		return null;
 	}
 
-	public record ParamInfo(string Name, string VariableOrValue, string Type, string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
+	// Type used to be required on the record, so the builder filled it with System.String for a
+	// placeholder the path gives no type for, in 5 builds out of 12. BuildRoute reads the type out
+	// of the path itself, e.g. %id%(number), and only when the field is still empty: a type the
+	// builder invented would keep the one the path states from ever being recorded.
+	public record ParamInfo(string Name, string VariableOrValue,
+		[property: Description("Only when the path writes the type in parentheses after the placeholder, e.g. /user/%id%(number) gives number. A placeholder with no parentheses has no type, so leave it unset")]
+		string? Type = null,
+		string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
 	public record GoalToCallWithParamInfo(string Name, List<ParamInfo> Parameters);
 	public record Routing(string Path, Route Route, RequestProperties RequestProperties, ResponseProperties ResponseProperties);
 	public record Route(Regex PathRegex, Dictionary<string, string>? QueryMap, GoalToCallInfo Goal, List<ParamInfo> ParamInfos);
 
 	[Description("Add route to webserver. When goalToCall is null, use the path parameter in the response to created instance of goalToCall using the path paramter as GoalToCallInfo.Name")]
+	[Example("add route /admin, call /admin/Overview",
+		@"path=""/admin"", pathParameters=[], goalToCall={""Name"":""/admin/Overview""}, requestProperties=null")]
+	[Example(@"add route ""/admin/crm/vendor/%id%(number)"", [get, post], call /admin/crm/Vendor",
+		@"path=""/admin/crm/vendor/%id%(number)"", pathParameters=[{""Name"":""id"",""VariableOrValue"":""%id%"",""Type"":""number""}], goalToCall={""Name"":""/admin/crm/Vendor""}, requestProperties={""Methods"":[""GET"",""POST""]}")]
+	[Example("add route /admin/idea, post, max content length 8mb, call /admin/Idea",
+		@"path=""/admin/idea"", pathParameters=[], goalToCall={""Name"":""/admin/Idea""}, requestProperties={""Methods"":[""POST""],""MaxContentLengthInBytes"":8388608}")]
+	// The path here is deliberately unlike anything an app would write. An earlier version used
+	// /admin/dev/chat/%id%(number)/archive, which is a real route in one app, and the model then
+	// answered that step by retrieving this example instead of reading it, carrying goalId=%id%
+	// onto three steps that never mention it.
+	[Example("add route /shop/%sku%/review, call /shop/Review productSku=%sku%",
+		@"path=""/shop/%sku%/review"", pathParameters=[{""Name"":""sku"",""VariableOrValue"":""%sku%""}], goalToCall={""Name"":""/shop/Review"",""Parameters"":{""productSku"":""%sku%""}}")]
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
 		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
 	{

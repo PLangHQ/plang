@@ -416,7 +416,7 @@ Plang’s approach allows you to describe what you want to achieve in natural la
 ## How Do I Know That Each Build Doesn't Change My Code?
 This is a question I get often because people don't trust the LLM.
 
-When [Plang builds](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md) a step (a step is a line that starts with -), it generates a JSON instruction file and saves it into the `.build` folder. This file describes how to execute your Plang code at runtime.
+When [Plang builds](https://github.com/PLangHQ/plang/blob/main/Documentation/Building.md) a step (a step is a line that starts with -), it generates a JSON instruction file and saves it into the `.build` folder. This file describes how to execute your Plang code at runtime.
 
 This JSON instruction file is never built again, unless you modify the step.
 

@@ -17,6 +17,7 @@ using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 
@@ -25,6 +26,13 @@ namespace PLang.Building;
 public interface IStepBuilder
 {
 	Task<IBuilderError?> BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, IBuilderError? invalidFunctionError = null);
+
+	// Asks the decider which module every step about to be built uses, in one request, before any
+	// of them are built. Answers land in the cache and BuildStep reads them instead of asking.
+	Task PrefetchModules(Goal goal, IReadOnlyList<int> stepIndexes);
+
+	// With the modules and methods decided, one llm request fills the parameters of every step.
+	Task PrefetchInstructions(Goal goal, IReadOnlyList<int> stepIndexes);
 }
 
 public class StepBuilder : IStepBuilder
@@ -44,14 +52,25 @@ public class StepBuilder : IStepBuilder
 	private readonly IEngine engine;
 	private readonly PrParser prParser;
 	private readonly IGoalParser goalParser;
+	private readonly IBuilderDecider decider;
+	private readonly IBuilderDeciderCache deciderCache;
+	private readonly IBuilderDeciderReport deciderReport;
+	private readonly IBatchedInstructionBuilder batchedInstructionBuilder;
+
+	private const double DeciderConfidenceThreshold = BuilderDecider.ConfidenceThreshold;
 	private IMemoryStackAccessor memoryStackAccessor;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
 				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine,
-				PrParser prParser, IGoalParser goalParser)
+				PrParser prParser, IGoalParser goalParser, IBuilderDecider decider, IBuilderDeciderCache deciderCache, IBuilderDeciderReport deciderReport,
+				IBatchedInstructionBuilder batchedInstructionBuilder)
 	{
+		this.batchedInstructionBuilder = batchedInstructionBuilder;
+		this.decider = decider;
+		this.deciderCache = deciderCache;
+		this.deciderReport = deciderReport;
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
 		this.logger = logger;
@@ -104,9 +123,9 @@ public class StepBuilder : IStepBuilder
 			(step, error) = await BuildStepProperties(goal, step, instruction);
 			if (error != null) return error;
 
-			if (step.Confidence == "Low" || step.Confidence == "Medium")
+			if (step.Confidence != null && step.Confidence < DeciderConfidenceThreshold)
 			{
-				logger.Value.LogWarning($"{step.Confidence} confidence");
+				logger.Value.LogWarning($"{step.Confidence:0.00} confidence");
 			}
 
 			if (!string.IsNullOrEmpty(step.Inconsistency))
@@ -246,6 +265,9 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<(bool IsBuilt, IBuilderError? Error)> StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
 	{
+		// --rebuild builds every step again, so the .pr sitting next to it is not an answer.
+		if (GoalBuilder.ShouldRebuild(step)) return (false, null);
+
 		AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
 		if (isStrict && step.Number != stepIndex) return (false, null);
 		if (step.PrFileName == null || excludeModules.Count > 0) return (false, null);
@@ -301,13 +323,238 @@ public class StepBuilder : IStepBuilder
 		return await BuildStepInformationWithRetry(goal, step, stepIndex, excludeModules, result.Error);
 	}
 
+	// One request for the whole goal instead of one per step. The state is every step of the goal,
+	// including the ones that are not being rebuilt, because that context is what makes the answers
+	// better: measured against asking step by step, the choices were identical on 37 of 37 steps
+	// while 11 answers rose above the confidence threshold and 3 fell below it.
+	public async Task PrefetchInstructions(Goal goal, IReadOnlyList<int> stepIndexes)
+	{
+		await batchedInstructionBuilder.PrefetchInstructions(goal, stepIndexes);
+	}
+
+	// --decider=mock reads each step's module and method out of the .pr sitting next to it instead
+	// of asking the decision engine. It decides nothing, so it is no use for a real build: it is
+	// there so the batched builder can be exercised and measured when the decision engine is
+	// unavailable, which is the only part of the build it stands in for.
+	private void SeedFromBuiltPrFiles(Goal goal, IReadOnlyList<int> stepIndexes, GoalDeciderAnswers cached)
+	{
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			if (string.IsNullOrEmpty(step.AbsolutePrFilePath) || !fileSystem.File.Exists(step.AbsolutePrFilePath)) continue;
+
+			var (instruction, error) = InstructionCreator.Create(step.AbsolutePrFilePath, fileSystem);
+			if (error != null || instruction?.Function == null || instruction.Text != step.Text) continue;
+
+			var module = instruction.ModuleType ?? step.ModuleType;
+			if (!string.IsNullOrEmpty(module)) cached.SetModule(step, new ModuleChoice(module, 1.0, new()));
+			if (!string.IsNullOrEmpty(instruction.Function.Name)) cached.SetMethod(step, new MethodChoice(instruction.Function.Name, 1.0, new()));
+		}
+		logger.Value.LogWarning($"--decider=mock: read modules and methods for {cached.MethodCount} steps of {goal.GoalName} out of the built .pr files");
+	}
+
+	public async Task PrefetchModules(Goal goal, IReadOnlyList<int> stepIndexes)
+	{
+		if ((AppContext.GetData("decider") as string) == "mock")
+		{
+			if (goal.IsSystem || stepIndexes.Count == 0) return;
+			var mocked = deciderCache.ForGoal(goal);
+			mocked.Clear();
+			SeedFromBuiltPrFiles(goal, stepIndexes, mocked);
+			return;
+		}
+		if ((AppContext.GetData("decider") as string) == "off" || goal.IsSystem) return;
+		// Worth doing even for a single changed step. It is the same one request, and the state is
+		// the whole goal, so an edited step is decided knowing the steps around it, which is where
+		// the accuracy came from: 11 answers rose above the threshold on that context alone.
+		if (stepIndexes.Count == 0) return;
+
+		// A goal built a second time, after a retry or after a running app edited it, must not read
+		// the previous build's answers.
+		var cached = deciderCache.ForGoal(goal);
+		cached.Clear();
+
+		var modules = typeHelper.GetModulesDictionary(null);
+
+		// Every question in this phase offers the same 48 modules, and the api has no way to name a
+		// criteria set once and point at it, so each copy of a description is paid for again. The
+		// descriptions go in the state, which is shared, and the options are bare names. Measured on
+		// 3 goals and 37 steps: 294 KB down to 93 KB, the same module chosen 37 out of 37 times.
+		// Dropping the descriptions altogether is a different thing and is not safe: it answers
+		// confidently and wrongly, picking the ui module for template steps.
+		var catalogue = new StringBuilder("\n\nThese are the plang modules you may choose from:\n");
+		var options = new Dictionary<string, string>();
+		foreach (var module in modules)
+		{
+			catalogue.AppendLine($"- {module.Key}: {module.Value}");
+			options[module.Key] = null!;
+		}
+
+		var questions = new Dictionary<string, DeciderQuestion>();
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			// A module the developer named is not a decision, so it is not worth asking about.
+			if (GetUserRequestedModule(step).Count == 1) continue;
+			questions[QuestionKey(step)] = new DeciderQuestion(
+				$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. Which plang module implements what step {step.Index + 1} does?",
+				options);
+		}
+		if (questions.Count == 0) return;
+
+		var started354 = System.Diagnostics.Stopwatch.StartNew();
+		var (answers, error) = await decider.Choose(GoalState(goal) + catalogue, questions);
+		deciderReport.RecordDeciderCall(goal, started354.Elapsed);
+		if (error != null || answers == null)
+		{
+			// Nothing is lost: with an empty cache every step asks for itself, exactly as before.
+			logger.Value.LogWarning($"Decider could not choose modules for {goal.GoalName} in one request, each step will ask on its own: {error?.Message}");
+			return;
+		}
+
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
+			cached.SetModule(step, new ModuleChoice(answer.Choice, answer.Confidence, answer.Probabilities));
+		}
+		logger.Value.LogDebug($"Decider chose modules for {cached.ModuleCount} steps of {goal.GoalName} in one request");
+
+		await PrefetchMethods(goal, stepIndexes, cached);
+	}
+
+	// With the modules known, every step's method goes in a second request. Each question carries
+	// its own module's method list, which is what makes one request possible at all: the options
+	// are per question, only the state is shared.
+	private async Task PrefetchMethods(Goal goal, IReadOnlyList<int> stepIndexes, GoalDeciderAnswers cached)
+	{
+		var questions = new Dictionary<string, DeciderQuestion>();
+		var descriptions = new Dictionary<string, ClassDescription>();
+
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+
+			var module = ModuleForStep(step, cached);
+			ClassDescription? classDescription = null;
+			if (module != null && !descriptions.TryGetValue(module, out classDescription))
+			{
+				var programType = typeHelper.GetRuntimeType(module);
+				var (described, error) = programType == null ? (null, null) : new ClassDescriptionHelper().GetClassDescription(programType);
+				if (error == null && described != null) descriptions[module] = classDescription = described;
+			}
+
+			if (module == null || classDescription == null) continue;
+			// One method means there is nothing to choose, same rule as NarrowToDecidedMethod.
+			if (classDescription.Methods.Select(m => m.MethodName).Distinct().Count() <= 1) continue;
+
+			questions[QuestionKey(step)] = new DeciderQuestion(
+				$"Step {step.Index + 1} of this goal is `{step.Text.Trim()}`. It uses the module {module}. Which method of that module does step {step.Index + 1} call?",
+				MethodCriteria(classDescription));
+		}
+		if (questions.Count == 0) return;
+
+		var started632 = System.Diagnostics.Stopwatch.StartNew();
+		var (answers, error2) = await decider.Choose(GoalState(goal), questions);
+		deciderReport.RecordDeciderCall(goal, started632.Elapsed);
+		if (error2 != null || answers == null)
+		{
+			logger.Value.LogWarning($"Decider could not choose methods for {goal.GoalName} in one request, each step will ask on its own: {error2?.Message}");
+			return;
+		}
+
+		foreach (var index in stepIndexes)
+		{
+			var step = goal.GoalSteps[index];
+			if (!answers.TryGetValue(QuestionKey(step), out var answer)) continue;
+			cached.SetMethod(step, new MethodChoice(answer.Choice, answer.Confidence, answer.Probabilities));
+		}
+		logger.Value.LogDebug($"Decider chose methods for {cached.MethodCount} steps of {goal.GoalName} in one request");
+
+	}
+
+	// The module a step will end up on, when that is already known without asking the llm: either
+	// the developer named it, or the decider just chose it with enough confidence.
+	private string? ModuleForStep(GoalStep step, GoalDeciderAnswers cached)
+	{
+		var requested = GetUserRequestedModule(step);
+		if (requested.Count == 1) return requested[0];
+
+		var choice = cached.Module(step);
+		if (choice == null || choice.Confidence < DeciderConfidenceThreshold) return null;
+		return typeHelper.GetRuntimeType(choice.Module) == null ? null : choice.Module;
+	}
+
+	private List<string> StepVariables(GoalStep step)
+	{
+		return variableHelper.GetVariables(step.Text, memoryStack).Select(v => "%" + v.Path.Trim('%') + "%").Distinct().ToList();
+	}
+
+	private static string QuestionKey(GoalStep step) => "step" + step.Index;
+
+	// Every step of the goal, so a question about one step is answered knowing the rest, even when
+	// only a few steps are being rebuilt.
+	private static string GoalState(Goal goal)
+	{
+		var text = new StringBuilder($"This is a plang goal called {goal.GoalName}. Its steps are numbered.\n\n");
+		foreach (var step in goal.GoalSteps)
+		{
+			text.AppendLine($"step {step.Index + 1}: {step.Text.Trim()}");
+		}
+		return text.ToString();
+	}
+
 	private async Task<(GoalStep Step, IBuilderError? Error)> BuildStepInformation(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, IBuilderError? prevError = null)
 	{
+		// A module the user named in the step ([db], [ui]) is not a decision, it is an instruction.
+		var userRequestedModule = GetUserRequestedModule(step);
+		if (excludeModules != null)
+		{
+			foreach (var excludedModule in excludeModules) userRequestedModule.Remove(excludedModule);
+		}
+		if (userRequestedModule.Count == 1)
+		{
+			return (ApplyDerivedStep(goal, step, stepIndex, userRequestedModule[0], 1.0), null);
+		}
+
+		// First attempt goes to the decider. A retry (prevError set) means the decider's module did
+		// not build, so the retry takes the llm path, which upgrades the model for exactly that case.
+		var deciderSetting = AppContext.GetData("decider") as string;
+		if (deciderSetting != "off" && prevError == null && !goal.IsSystem)
+		{
+			// The goal's modules are usually already decided, in one request, by PrefetchModules.
+			// A miss is not a failure: the step asks for itself, which is what happened before.
+			// Answers from an excludeModules retry are never cached, because prevError is set then.
+			ModuleChoice? choice;
+			IError? deciderError = null;
+			choice = deciderCache.ForGoal(goal).Module(step);
+			if (choice == null)
+			{
+				(choice, deciderError) = await decider.ChooseModule(step.Text, typeHelper.GetModulesDictionary(excludeModules));
+			}
+			if (deciderError != null)
+			{
+				logger.Value.LogWarning($"{step.LineNumber}: Decider failed, falling back to llm: {deciderError.Message}");
+			}
+			else if (choice != null && choice.Confidence >= DeciderConfidenceThreshold && typeHelper.GetRuntimeType(choice.Module) != null)
+			{
+				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
+				return (ApplyDerivedStep(goal, step, stepIndex, choice.Module, choice.Confidence), null);
+			}
+			else if (choice != null)
+			{
+				var contenders = string.Join(", ", choice.Probabilities.OrderByDescending(p => p.Value).Take(4).Select(p => $"{p.Key.Replace("PLang.Modules.", "")} {p.Value:0.00}"));
+				logger.Value.LogInformation($"{step.LineNumber}: Decider confidence {choice.Confidence:0.00} for {choice.Module} is below {DeciderConfidenceThreshold}, falling back to llm. Contenders: {contenders}");
+			}
+		}
+
 		LlmRequest llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules, prevError);
 
 		logger.Value.LogInformation($"{step.LineNumber}: Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 
+		var moduleLlmStarted = System.Diagnostics.Stopwatch.StartNew();
 		(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
+		deciderReport.RecordLlmCall(goal, moduleLlmStarted.Elapsed);
 		if (llmError != null) return (step, new BuilderError(llmError, false));
 		if (stepInformation == null) return (step, new BuilderError("Didn't get any information"));
 
@@ -331,7 +578,7 @@ public class StepBuilder : IStepBuilder
 
 		step.ModuleType = module;
 		step.Name = stepInformation.StepName;
-		step.Confidence = stepInformation.Confidence;
+		step.Confidence = PLang.Utils.JsonConverters.ConfidenceConverter.Parse(stepInformation.Confidence);
 		step.Inconsistency = stepInformation.Inconsistency;
 		step.UserIntent = stepInformation.ExplainUserIntent;
 		step.Description = stepInformation.StepDescription;
@@ -387,23 +634,89 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		return strStepNr + ". " + stepName + ".pr";
 	}
 
+	// The decider only answers "which module". The name, description and intent the llm used to
+	// write are derived instead: the name from the step text, the description is the step, and the
+	// intent is left empty so the method builder does not present the raw step as disambiguated.
+	private GoalStep ApplyDerivedStep(Goal goal, GoalStep step, int stepIndex, string module, double confidence)
+	{
+		step.ModuleType = module;
+		step.Confidence = confidence;
+		step.Inconsistency = null;
+		step.UserIntent = null;
+		step.Name = DeriveStepName(step.Text);
+		step.Description = step.Text.Trim();
+		step.PrFileName = GetPrFileName(stepIndex, step.Name);
+		step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
+		step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
+		step.LlmRequest = null;
+		step.Number = stepIndex;
+		step.RunOnce = GoalHelper.RunOnce(goal);
+		return step;
+	}
+
+	// The step number prefix already makes the .pr file name unique, so the name only needs to be
+	// readable and safe on every file system: ascii words from the step, a handful of them.
+	private static string DeriveStepName(string text)
+	{
+		var cleaned = System.Text.RegularExpressions.Regex.Replace(text ?? "", "[^a-zA-Z0-9]+", " ").Trim().ToLowerInvariant();
+		var name = string.Join("_", cleaned.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(6));
+		if (name.Length > 40) name = name.Substring(0, 40).TrimEnd('_');
+		return string.IsNullOrEmpty(name) ? "step" : name;
+	}
+
 
 
 
 	private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction)
 	{
+		// The goal's properties are usually already built, in the same request as its description,
+		// before any step gets here. A miss is not a failure: the step asks for itself, as before.
+		var prebuilt = deciderCache.ForGoal(goal).Properties(step);
+		if (prebuilt != null)
+		{
+			return ApplyStepProperties(goal, step, instruction, prebuilt);
+		}
+
 		LlmRequest llmQuestion = await GetBuildStepPropertiesQuestion(goal, step, instruction);
 
 		logger.Value.LogInformation($"  - Building properties for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 
+		// This one was not counted, so the report showed a goal making fewer llm calls than it does:
+		// one per step for the step's properties was invisible, which made any comparison of the
+		// per step and batched paths read wrong.
+		var propertiesStarted = System.Diagnostics.Stopwatch.StartNew();
 		(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
+		deciderReport.RecordLlmCall(goal, propertiesStarted.Elapsed);
 		if (llmError != null) return (step, new StepBuilderError(llmError, step));
 
 		if (stepProperties == null) return (step, new StepBuilderError($"Could not get answer from LLM.", step));
+
+		return ApplyStepProperties(goal, step, instruction, stepProperties);
+	}
+
+	// Shared by the per step answer and the batched one, so a step built either way is validated
+	// and limited the same: a goal named in an error handler still has to resolve to a real goal,
+	// and a method that forbids caching still gets none.
+	private (GoalStep, IBuilderError?) ApplyStepProperties(Goal goal, GoalStep step, Instruction instruction, StepProperties stepProperties)
+	{
 		(stepProperties, var error) = ValidateGoalPaths(stepProperties, step);
 		if (error != null) return (step, error);
 
 		(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
+
+		// A retry after a rejected handler came back with ErrorHandlers null and the build passed,
+		// so an `on error` clause the step spelled out was silently dropped. The step's words are
+		// the contract: a clause in the text is a handler in the properties.
+		if (canHaveErrorHandling)
+		{
+			int clauses = Regex.Matches(step.Text, @"\bon\s+error\b", RegexOptions.IgnoreCase).Count;
+			int handlers = stepProperties.ErrorHandlers?.Count ?? 0;
+			if (clauses > handlers)
+			{
+				return (step, new StepBuilderError($"The step has {clauses} `on error` clause(s) but {handlers} ErrorHandler(s) were built. Every `on error` clause is one handler, in the order written; write all of them.", step));
+			}
+		}
+
 		step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
 		step.WaitForExecution = (canBeAsync) ? stepProperties.WaitForExecution : true;
 		step.LoggerLevel = GetLoggerLevel(stepProperties.LoggerLevel);
@@ -418,8 +731,23 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		for (int i =0;i<stepProperties.ErrorHandlers?.Count;i++)
 		{
 			var errorHandler = stepProperties.ErrorHandlers[i];
-			
-			if (errorHandler.GoalToCall == null) continue;	
+
+			// The runtime matches Key "*" before it looks at StatusCode, so a handler written as
+			// {StatusCode: 503, Key: "*"} catches every error, not the one the step named. The same
+			// clause built as {Key: "503"} in the step next to it. The status code is the key.
+			if (errorHandler.StatusCode != null && errorHandler.Key == "*")
+			{
+				return (stepProperties, new StepBuilderError($"Error handler has StatusCode {errorHandler.StatusCode} together with Key \"*\". Key \"*\" matches every error. Leave Key null when the handler is for a status code.", step));
+			}
+
+			// An http error carries the reason phrase as its Key, "Not Found", never the number, so a
+			// handler keyed "404" matches nothing. The number belongs in StatusCode.
+			if (!string.IsNullOrEmpty(errorHandler.Key) && int.TryParse(errorHandler.Key, out var numericKey))
+			{
+				return (stepProperties, new StepBuilderError($"Error handler has Key \"{errorHandler.Key}\". A status code goes in StatusCode as a number ({numericKey}) with Key null; Key is for named errors such as FileNotFound.", step));
+			}
+
+			if (errorHandler.GoalToCall == null) continue;
 
 			(var goalFound, var error) = GoalHelper.GetGoalPath(step, errorHandler.GoalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
 			if (error != null) return (stepProperties, new BuilderError(error) {  Retry = false });

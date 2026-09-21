@@ -52,18 +52,23 @@ namespace PLang.Building
 		private readonly VariableHelper variableHelper;
 		private readonly MethodHelper methodHelper;
 		private readonly IStepBuilder stepBuilder;
+		private readonly IBuilderDeciderReport deciderReport;
+		private readonly IBuilderDeciderCache deciderCache;
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
-				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
+				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper, IBuilderDeciderReport deciderReport,
 				PrParser prParser, ISettings settings, Modules.DbModule.ModuleSettings dbSettings,
-				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper)
+				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper,
+				IBuilderDeciderCache deciderCache)
 		{
 
+			this.deciderCache = deciderCache;
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
 			this.goalParser = goalParser;
 			this.stepBuilder = stepBuilder;
+			this.deciderReport = deciderReport;
 			this.eventRuntime = eventRuntime;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
@@ -102,15 +107,12 @@ namespace PLang.Building
 			// 'create data source' step is meant to apply to the rest of that goal.
 			if (!goal.IsSetup) context.DataSource = null;
 
-			// Generate description and other properties for goal			
-			(goal, var error) = await LoadMethodAndDescription(goal);
-			if (error != null)
-			{
-				var result = await eventRuntime.RunGoalErrorEvents(goal, 0, error, true);
-				if (result.Error != null) return new GoalBuilderError(result.Error, goal, ContinueBuild: false);
-
-				return await BuildGoal(container, goal, context, errorCount, goalIndex);
-			}
+			// The goal's own GoalInfo is carried over from the previous build. Its description used
+			// to be written here, in a request of its own; it is asked for now beside the step
+			// properties, after the prefetch below, because both read the same thing, the goal's
+			// steps, and nothing in the step loop reads the description.
+			Goal? oldGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, goal.AbsolutePrFilePath);
+			if (oldGoal != null) goal.GoalInfo = oldGoal.GoalInfo;
 			logger.LogDebug($" - Run BuildGoal events {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
 			if (!ContinueBuildGoal(buildEventError, goal))
@@ -125,11 +127,33 @@ namespace PLang.Building
 			// --buildparallel=6, so 4.1x. Measure this with a cold cache or the numbers lie: a warm
 			// cache serves the sequential run from disk and the gain looks like 2.8x instead.
 			var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? RegisterStartupParameters.DefaultBuildParallel;
+			var rebuild = ShouldRebuild(goal);
 			var indexesToBuild = new List<int>();
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
-				if (!goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
+				if (!rebuild && !goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
 				indexesToBuild.Add(i);
+			}
+
+			// One request decides the module for every step about to be built, before any of them
+			// build. Each step then reads its answer. A failure here leaves the cache empty and every
+			// step asks for itself, which is what happened before this existed.
+			await stepBuilder.PrefetchModules(goal, indexesToBuild);
+
+			// With the modules and methods known, one more request fills the parameters of every
+			// step, so a ten step goal is built in one request instead of ten. A step this cannot
+			// answer for builds on its own exactly as before.
+			await stepBuilder.PrefetchInstructions(goal, indexesToBuild);
+
+			// Reads the answer the prefetch above already has, and only asks for itself when it has
+			// none: a goal whose steps were all already built, or a prefetch that did not run.
+			(goal, var error) = await CreateDescriptionForGoal(goal, oldGoal);
+			if (error != null)
+			{
+				var result = await eventRuntime.RunGoalErrorEvents(goal, 0, error, true);
+				if (result.Error != null) return new GoalBuilderError(result.Error, goal, ContinueBuild: false);
+
+				return await BuildGoal(container, goal, context, errorCount, goalIndex);
 			}
 
 			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1)
@@ -189,12 +213,41 @@ namespace PLang.Building
 
 			WriteToGoalPrFile(goal);
 			logger.LogInformation($"Done building all goals {goal.GoalName} - It took {stopwatch.ElapsedMilliseconds}ms");
+			deciderReport.RecordGoalBuilt(goal, stopwatch.Elapsed);
 
 			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
 		}
 
+		// Whether --rebuild applies to this goal. With --goal it is exactly the goals that were
+		// named; without it, everything except the setup goals. Setup goals are in a targeted build
+		// only to populate the anchor database the sql in the other goals is validated against, and
+		// rebuilding them runs their inserts before their own create-table steps have filled it, so
+		// Seed failed with 'no such table: errors' and the failing event handler ended the build
+		// before a single app goal was reached.
+		public static bool ShouldRebuild(Goal goal)
+		{
+			if (!AppContext.TryGetSwitch("Rebuild", out bool rebuild) || !rebuild) return false;
+			if (AppContext.GetData("rebuildpaths") is not HashSet<string> paths) return !goal.IsSetup;
+			return paths.Contains(goal.AbsoluteGoalPath);
+		}
+
+		public static bool ShouldRebuild(GoalStep step)
+		{
+			if (!AppContext.TryGetSwitch("Rebuild", out bool rebuild) || !rebuild) return false;
+			if (AppContext.GetData("rebuildpaths") is not HashSet<string> paths) return step.Goal == null || !step.Goal.IsSetup;
+			return step.Goal != null && paths.Contains(step.Goal.AbsoluteGoalPath);
+		}
+
 		private async Task<(bool IsBuilt, IBuilderError? Error)> GoalIsBuilt(Goal goal, GroupedBuildErrors? validationError, IEngine engine, PLangContext context)
 		{
+			// --rebuild means build it again whatever the hashes say, so an unchanged goal must not
+			// report itself as already built: this returns before the step loop is ever reached.
+			// Never the setup goals. They are in the build to populate the anchor database the sql
+			// in every other goal is validated against, and rebuilding them runs their inserts
+			// against a database their own create-table steps have not filled yet, so Seed failed
+			// with 'no such table: errors' and took the build with it.
+			if (ShouldRebuild(goal)) return (false, null);
+
 			if (validationError == null) return (!goal.HasChanged, null);
 
 			var missingSettings = validationError.ErrorChain.Where(p => p.Exception?.GetType() == typeof(MissingSettingsException));
@@ -473,6 +526,15 @@ namespace PLang.Building
 
 			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
 			{
+				return (goal, null);
+			}
+
+			// Usually answered already, beside the step properties, in one request for the goal.
+			var batched = deciderCache.ForGoal(goal).Description(goal.GetGoalAsString());
+			if (batched != null)
+			{
+				goal.Description = batched.Value.Description;
+				goal.IncomingVariablesRequired = batched.Value.Incoming;
 				return (goal, null);
 			}
 

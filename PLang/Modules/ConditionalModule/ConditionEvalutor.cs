@@ -16,13 +16,29 @@ namespace PLang.Modules.ConditionalModule
 	public static class ConditionEvaluator
 	{
 		public enum ConditionKind { Simple, Compound }
-		[Description(@"
-For CompundCondition, use Conditions list to construct the condition. LeftValue and RightValue are used only at in SimpleCondition
-Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
-Logic: AND|OR is required for Compound
-")]
+		// Both records inherit every field of Condition and add none, so the only thing telling
+		// them apart is what is written here. Left to say it in prose, a step joining two tests
+		// came back as one flattened simple condition carrying a stray Logic: AND, because the
+		// two definitions read as the same shape. Each now states its own shape and says which
+		// fields it never has.
+		[Description(@"Two or more tests joined together. Shape:
+{""Kind"":""Compound"",""Logic"":""AND"",""IsNot"":false,""Conditions"":[{""Kind"":""Simple"",...},{""Kind"":""Simple"",...}]}
+Logic is AND or OR and is required. Conditions holds the tests being joined.
+Each test inside is read from its own words, e.g. `%city% is empty and %name% is not empty` joins one with Operator isEmpty and one with Operator isNotEmpty. Joining tests does not make them positive.
+A Compound NEVER has LeftValue, Operator or RightValue of its own: those belong to the Simple conditions inside it.")]
 		public record CompoundCondition : Condition;
-		[Description("Logic: AND|OR. Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf")]
+
+		[Description(@"One test. Shape:
+{""Kind"":""Simple"",""LeftValue"":""%age%"",""Operator"":"">="",""RightValue"":18,""IsNot"":false}
+Operator: ==|!=|<|>|<=|>=|in|notIn|isEmpty|isNotEmpty|contains|notContains|startswith|notStartswith|endswith|notEndswith|indexOf.
+A test written in the negative takes the negative operator, and IsNot stays false:
+  `%city% is empty`               => Operator isEmpty
+  `%city% is not empty`           => Operator isNotEmpty
+  `%city% contains ""x""`           => Operator contains
+  `%city% does not contain ""x""`   => Operator notContains
+  `%city% does not start with ""x""`=> Operator notStartswith
+IsNot exists for a negation the operators cannot express and is false otherwise. Never write a positive operator for a test the step writes in the negative: that is the opposite step, and it runs without anything noticing.
+A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound.")]
 		public record SimpleCondition : Condition;
 		public record Condition
 		{
@@ -71,6 +87,18 @@ Logic: AND|OR is required for Compound
 				"startswith" => Str(n, (s, x) => s.StartsWith(x, StringComparison.OrdinalIgnoreCase)),
 				"endswith" => Str(n, (s, x) => s.EndsWith(x, StringComparison.OrdinalIgnoreCase)),
 				"indexof" => Str(n, (s, x) => s.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0),
+
+				// A test written in the negative can say so in the operator instead of setting IsNot
+				// on the side. IsNot is a separate flag the builder has to remember to flip, and
+				// when it forgets, the step means the opposite of what it says and nothing notices:
+				// measured on one goal, `is not empty` inside a compound came back with IsNot false
+				// once in three builds. One token cannot be half right. IsNot still works and every
+				// .pr already written keeps running.
+				"isnotempty" => !IsEmpty(n.LeftValue, n.RightValue),
+				"notin" => !(n.RightValue is IEnumerable nr && nr.Cast<object>().Contains(n.LeftValue)),
+				"notcontains" => !Has(n.LeftValue, n.RightValue),
+				"notstartswith" => !Str(n, (s, x) => s.StartsWith(x, StringComparison.OrdinalIgnoreCase)),
+				"notendswith" => !Str(n, (s, x) => s.EndsWith(x, StringComparison.OrdinalIgnoreCase)),
 				_ => throw new NotSupportedException($"Op '{n.Operator}'")
 			};
 

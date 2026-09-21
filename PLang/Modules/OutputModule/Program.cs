@@ -17,7 +17,7 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such audit|metric|debug|...., and it can have different serialization, text, json, csv, binary, etc.")]
+	[Description("Send a value or text to the user, and ask the user a question with either text or a template file. A step that starts with `write out`, `write to output` or `ask user` belongs here. The content is already made by an earlier step: putting a template or a variable into an element on the page (`render x to #main`) is the template/ui module, not this one. Output stream can be to the user(default), system, to different channels such audit|metric|debug|...., and it can have different serialization, text, json, csv, binary, etc.")]
 	public class Program : BaseProgram
 	{
 		private readonly VariableHelper variableHelper;
@@ -322,7 +322,7 @@ namespace PLang.Modules.OutputModule
 			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented,
 			ReferenceLoopHandling ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
-		[Description("Write out json content. Only choose this method when it's clear user is defining a json output, e.g. `- write out '{name:John}'. Do your best to make sure that TextMessage.Content is valid json. Any %variable% should have double quotes around it. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system, channel=default|trace|debug|info(default for log)|warning|error|audit|metric|security|. User can also define his custom channel")]
+		[Description("Write out json content. Only choose this method when the step itself writes the json out, e.g. `- write out '{name:John}'`. A step that writes a %variable% is the Write method, whatever that variable happens to hold: `write out %result%` is Write even where an earlier step set %result% to a json object, because the step says to write the variable out and says nothing about json. Do your best to make sure that TextMessage.Content is valid json. Any %variable% should have double quotes around it. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system, channel=default|trace|debug|info(default for log)|warning|error|audit|metric|security|. User can also define his custom channel")]
 		public async Task<IError?> WriteJson(TextMessage textMessage, JsonOptions? jsonOptions = null)
 		{
 
