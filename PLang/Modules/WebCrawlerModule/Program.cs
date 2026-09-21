@@ -352,10 +352,10 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
+		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
-				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1,
+				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1, int waitAfterInMilliseconds = 0,
 				GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, GoalToCallInfo? onWebsocketReceived = null, GoalToCallInfo? onWebsocketSent = null,
 				GoalToCallInfo? onConsoleOutput = null, GoalToCallInfo? onWorker = null,
 				GoalToCallInfo? onDialog = null, GoalToCallInfo? onLoad = null, GoalToCallInfo? onDOMLoad = null, GoalToCallInfo? onFileChooser = null,
@@ -393,7 +393,7 @@ namespace PLang.Modules.WebCrawlerModule
 			var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
 			memoryStack.Put(goal.GoalName + ".response", wrappedResponse, goalStep: goalStep);
 
-
+			if (waitAfterInMilliseconds > 0) await Task.Delay(waitAfterInMilliseconds);
 		}
 
 		public async Task<object> ExtractClassesToList(string[] cssSelectors, string fromCssSelector)
@@ -524,10 +524,15 @@ return result;");
 			await element.WebElement.ClickAsync();
 		}
 
-		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false, int? timeoutInSeconds = null)
+		[Description("waitAfterInMilliseconds pauses after the click, for a page that repaints a moment later, e.g. 'click #next, wait 2 seconds' => waitAfterInMilliseconds: 2000")]
+		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false, int? timeoutInSeconds = null, int waitAfterInMilliseconds = 0)
 		{
 			var page = await GetPage();
 			var elements = await page.QuerySelectorAllAsync(cssSelector);
+			if (elements.Count == 0)
+			{
+				throw new RuntimeException($"No element matches {cssSelector} on the page");
+			}
 			if (clickAllMatchingElements)
 			{
 				foreach (var element in elements)
@@ -541,6 +546,7 @@ return result;");
 				await element.ClickAsync(new ElementHandleClickOptions() { Timeout = timeoutInSeconds * 1000 });
 			}
 
+			if (waitAfterInMilliseconds > 0) await Task.Delay(waitAfterInMilliseconds);
 		}
 		/*
 		 * 
