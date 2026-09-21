@@ -344,10 +344,23 @@ namespace PLang.Modules.PlangModule
 					functionParameters.Add(new Parameter(type, parameter.Key, parameter.Value));
 				}
 			}
-			var genericFunction = new GenericFunction("", method, functionParameters, null);
+			// A function with no return variable writes what it returns straight into memory, a
+			// one row select becomes %id%, %name% and so on. That is the step syntax at work, and
+			// here it clobbered the caller: an agent tool ran `select id ... where id=14` and the
+			// goal that had called the agent finished with %id% = 14. The result is handed back
+			// through one named variable instead, and that variable is removed again.
+			var holder = "__runModule_" + Guid.NewGuid().ToString("N");
+			var genericFunction = new GenericFunction("", method, functionParameters, new() { new BaseBuilder.ReturnValue("System.Object", holder) });
 			genericFunction.Instruction = instruction;
 
-			return await program.RunFunction(genericFunction);
+			try
+			{
+				return await program.RunFunction(genericFunction);
+			}
+			finally
+			{
+				memoryStack.Remove(holder);
+			}
 			}
 			catch (Exception ex)
 			{
