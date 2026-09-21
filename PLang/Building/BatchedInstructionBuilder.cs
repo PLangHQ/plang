@@ -235,7 +235,26 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 			var parameters = found.Entry.Parameters?
 				.Select(p => new Parameter(DeclaredType(plan.Method, p.Name) ?? p.Type, p.Name,
 										   RepairLiteral(p.Value, plan.Step.Text))).ToList();
-			var function = new GenericFunction("", plan.Method.MethodName, parameters, found.Entry.ReturnValues);
+
+			// The answer is checked against the method before it is kept. `return %image%` came
+			// back once with no parameters and %image% in ReturnValues, the variable read as the
+			// step's output instead of the value it returns, and the step then failed at runtime
+			// on the missing parameter. A step that lacks a required parameter is left out here
+			// and builds on its own; a method that returns nothing cannot write to a variable.
+			var missing = (plan.Method.Parameters ?? new())
+				.Where(p => p.IsRequired && (parameters == null || !parameters.Any(x => x.Name == p.Name)))
+				.Select(p => p.Name).ToList();
+			if (missing.Count > 0)
+			{
+				logger.Value.LogWarning($"Step {plan.Step.Index} of {goal.GoalName} came back without {string.Join(", ", missing)} for {plan.Method.MethodName}, it will build on its own");
+				continue;
+			}
+			var returnValues = found.Entry.ReturnValues;
+			if (ReturnsNothing(plan.Method) && returnValues != null && returnValues.Count > 0)
+			{
+				returnValues = null;
+			}
+			var function = new GenericFunction("", plan.Method.MethodName, parameters, returnValues);
 			cached.SetFunction(plan.Step, function, found.Request);
 			filled++;
 		}
@@ -633,6 +652,12 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 
 	private static string? DeclaredType(MethodDescription method, string parameterName)
 		=> (method.Parameters ?? new()).FirstOrDefault(p => p.Name == parameterName)?.Type;
+
+	private static bool ReturnsNothing(MethodDescription method)
+	{
+		var type = method.ReturnValue?.Type;
+		return string.IsNullOrEmpty(type) || type == "void" || type == "System.Void" || type == "System.Threading.Tasks.Task";
+	}
 
 	private static string Short(string? type)
 	{
