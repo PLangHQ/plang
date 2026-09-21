@@ -66,6 +66,17 @@ ExtractClassesToList(String[] cssSelectors, String fromCssSelector) : Object
 ```
 
 
+### EvaluateJavascript
+
+```
+EvaluateJavascript(String script, Int32 waitAfterInMilliseconds = 0) : object
+```
+
+Runs javascript inside the open page, in the browser, and returns what the script returns. e.g. 'run javascript "document.title" in the browser, write to %title%'. Not the same as `[ui] execute javascript`, which sends script to the user's browser through the webserver. A script written as `() => ...` runs as a function and may return a promise.
+
+- `script` *String*
+- `waitAfterInMilliseconds` *Int32*, default `0`
+
 ### ExtractContent
 
 ```

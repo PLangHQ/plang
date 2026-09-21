@@ -894,6 +894,15 @@ return result;");
 			await Task.Delay(milliseconds);
 		}
 
+		[Description("Runs javascript inside the open page, in the browser, and returns what the script returns. e.g. 'run javascript \"document.title\" in the browser, write to %title%'. Not the same as [ui] execute javascript, which sends script to the user's browser through the webserver.")]
+		public async Task<object?> EvaluateJavascript(string script, int waitAfterInMilliseconds = 0)
+		{
+			var page = await GetPage();
+			var result = await page.EvaluateAsync<object?>(script);
+			if (waitAfterInMilliseconds > 0) await Task.Delay(waitAfterInMilliseconds);
+			return result;
+		}
+
 		public async Task<IError?> TakeScreenshotOfWebsite(string saveToPath, bool overwrite = false, string? cssSelector = null)
 		{
 			if (string.IsNullOrWhiteSpace(saveToPath))
