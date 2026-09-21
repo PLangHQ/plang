@@ -122,8 +122,24 @@ Two practical notes for automated browser tests:
 
 - A headless browser is detected as a crawler by its user agent and gets no identity row at all,
   which then fails at the first step that expects one. Set a normal desktop user agent.
-- To move around in-app from a test, append an `<a href>` to the page and click it, so the client
-  intercepts it. `page.goto` is a hard navigation and drops you back to anonymous.
+- To move around in-app from a test, go through the client: `window.plang.fetch('/the/path',
+  { method: 'GET' })` is exactly what a click on an in-app link does, or click a real link on the
+  page. `page.goto` is a hard navigation and drops you back to anonymous.
+
+With plang's own browser, `PLang.Modules.WebCrawlerModule`, the whole recipe is three steps. The
+profile folder keeps the keypair, so the browser is the same visitor every time and can be linked
+to a user once; without a profile every start is a stranger.
+
+```plang
+- [webcrawler] navigate to "http://localhost:8080/", headless: true, profileName: "/.db/browser", wait after 3000 ms
+- [webcrawler] evaluate javascript "() => window.plang.fetch('/admin/orders/42', { method: 'GET' })" in the page, wait after 2000 ms
+- [webcrawler] take screenshot of website, save to "/tmp/orders.png", overwrite
+```
+
+The first step is the anonymous load, the wait is for the client to connect and be answered, the
+second is the signed navigation. Navigating straight to `/admin/orders/42` in the first step gives
+the anonymous version of that page, whatever the guard does with strangers, and no amount of
+waiting changes it.
 
 ## The mental model
 
