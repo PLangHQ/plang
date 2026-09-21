@@ -108,7 +108,7 @@ namespace PLang.Modules.WebCrawlerModule
 			return userDataDir;
 		}
 
-		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot. when user want to use the default profile, set profileName=\"default\"")]
+		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot. when user want to use the default profile, set profileName=\"default\". profileName written as a folder path, e.g. \"/.db/browser\", is the folder the browser profile lives in: it is created if missing and everything the page stores, cookies, localStorage and IndexedDB, is still there on the next call and after a restart. Without it the browser starts empty each time, so anything the site remembers about the visitor, a signed in session included, is gone")]
 		public async Task<BrowserInstance> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
@@ -914,6 +914,19 @@ return result;");
 
 
 
+		// A folder, not the name of a profile Chrome already has: "/.db/browser" or "profiles/agent".
+		private static bool LooksLikeAPath(string profileName)
+		{
+			if (string.IsNullOrWhiteSpace(profileName)) return false;
+			return profileName.Contains('/') || profileName.Contains('\\');
+		}
+
+		private static bool argHasUserAgentEarly(Dictionary<string, object>? argumentOptions)
+		{
+			return argumentOptions != null
+				&& argumentOptions.FirstOrDefault(p => p.Key.Equals("user-agent", StringComparison.OrdinalIgnoreCase)).Value != null;
+		}
+
 		private string GetChromeProfileFolder(string profileName)
 		{
 			string localStatePath = fileSystem.Path.Join(GetChromeUserDataDir(), "Local State");
@@ -1020,6 +1033,30 @@ return result;");
 			bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode, int errorCount = 0)
 		{
 			string? userProfile = null;
+
+			// A profileName written as a path is the folder the profile lives in, and the browser is
+			// launched straight into it with the bundled chromium. The branch below it needs Chrome
+			// installed on the machine: it reads Chrome's own Local State to find a named profile and
+			// copies that profile out, which there is nothing to do on a server or in a container.
+			//
+			// This is what makes an identity last. plang's identity is a key the page holds in the
+			// browser's IndexedDB, so a browser launched into a fresh temporary profile is a new
+			// anonymous visitor every time and can never reach a page that requires a signed in user.
+			// Point this at a folder that survives, e.g. one under the app's data folder, and the
+			// identity is still there on the next call and after a restart.
+			if (LooksLikeAPath(profileName))
+			{
+				var dir = GetPath(profileName);
+				if (!fileSystem.Directory.Exists(dir)) fileSystem.Directory.CreateDirectory(dir);
+
+				var pathOptions = GetChromeOptionsPersistent(headless, kioskMode, argumentOptions, hideTestingMode);
+				if (hideTestingMode && !argHasUserAgentEarly(argumentOptions))
+				{
+					pathOptions.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+				}
+				logger.LogDebug($"Using persistent browser profile at {dir}");
+				return await playwright.Chromium.LaunchPersistentContextAsync(dir, pathOptions);
+			}
 
 			if (profileName.Equals("default", StringComparison.OrdinalIgnoreCase))
 			{
