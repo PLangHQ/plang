@@ -588,6 +588,7 @@ null is used to represent no value, e.g. {{ ""name"": null }}
 Variables MUST not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
 Parameters that is type System.String MUST be without escaping quotes. See <Example>
+The quotes around a value in the step are delimiters, they say where the value starts and ends, and they are NEVER part of the value. A System.String parameter's Value is what is between them, so `add route ""/admin/crm/vendor/%id%(number)""` has Value ""/admin/crm/vendor/%id%(number)"" and never ""\""/admin/crm/vendor/%id%(number)\"""". A Value that begins and ends with a quote character is wrong unless the step itself wrote two sets of quotes
 A quoted text is COPIED out of the step, character for character, only the wrapping quotes are dropped. Do not retype it from memory and do not write your own version of it: read the characters in the step and reproduce them exactly. Never reword, never translate, never change a capital letter to a small one, never drop a prefix such as ""Error: "", and never drop or alter a letter. This matters most for text that is not English, e.g. Icelandic `raunveruleg` is not `raunverleg` and `Prófið` is not `prófið`: a single changed letter is a wrong answer. It is the text the app shows, not a description of it
 Error handling is process by another step, if you see 'on error...' you can ignore it
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
