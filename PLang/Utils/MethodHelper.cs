@@ -124,7 +124,7 @@ public class MethodHelper
 
 			foreach (var instanceFunction in instanceFunctions)
 			{
-				(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, step);
+				(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, step, checkRequiredMembers: true);
 				ParameterProperties.AddOrReplace(parameterProperties);
 
 				if (parameterErrors.Count == 0)
@@ -201,13 +201,17 @@ public class MethodHelper
 				continue;
 			}
 
+			// A key that is present with null was written by a module that builds its own step,
+			// e.g. the compiled [code] implementation, and the type's promise does not hold there.
+			// The half built object is the one where the key was never written at all.
+			bool written = json.TryGetValue(property.Name, StringComparison.OrdinalIgnoreCase, out var nested);
 			if (memberValue == null)
 			{
-				if (nullability.Create(property).ReadState == NullabilityState.NotNull) missing.Add(property.Name);
+				if (!written && nullability.Create(property).ReadState == NullabilityState.NotNull) missing.Add(property.Name);
 				continue;
 			}
 
-			if (json.TryGetValue(property.Name, StringComparison.OrdinalIgnoreCase, out var nested))
+			if (written)
 			{
 				foreach (var name in MissingRequiredMembers(nested, property.PropertyType, depth + 1))
 				{
@@ -216,6 +220,34 @@ public class MethodHelper
 			}
 		}
 		return missing;
+	}
+
+	// A member the model left out that the type gives a default is not a decision for the model,
+	// so the build writes the default in itself, and the .pr is as complete as the type would have
+	// made it. TextMessage without Level, Channel and Actor becomes info, default, user. Nested
+	// objects are filled the same way, RenderMessage inside RenderTemplateOptions. What remains
+	// missing after this had no default, and that is what MissingRequiredMembers reports.
+	private static void FillConstructorDefaults(object? value, Type type, int depth = 0)
+	{
+		if (value is not JObject json || depth > 3) return;
+		if (TypeHelper.IsConsideredPrimitive(type) || TypeHelper.IsList(type) || typeof(IDictionary).IsAssignableFrom(type)) return;
+
+		var constructor = type.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+		if (constructor == null) return;
+
+		foreach (var parameter in constructor.GetParameters())
+		{
+			if (parameter.Name == null) continue;
+			if (json.TryGetValue(parameter.Name, StringComparison.OrdinalIgnoreCase, out var existing))
+			{
+				FillConstructorDefaults(existing, parameter.ParameterType, depth + 1);
+				continue;
+			}
+			if (parameter.HasDefaultValue && parameter.DefaultValue != null)
+			{
+				json[parameter.Name] = JToken.FromObject(parameter.DefaultValue);
+			}
+		}
 	}
 
 	// The constructor defaults, written out so the model can fill the object in the same way the
@@ -232,7 +264,7 @@ public class MethodHelper
 		return string.IsNullOrEmpty(text) ? "none" : text;
 	}
 
-	public (Dictionary<string, ParameterType>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo methodInfo, List<Parameter> parameters, GoalStep goalStep)
+	public (Dictionary<string, ParameterType>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo methodInfo, List<Parameter> parameters, GoalStep goalStep, bool checkRequiredMembers = false)
 	{
 		GroupedBuildErrors buildErrors = new();
 
@@ -342,7 +374,10 @@ public class MethodHelper
 						$"{builderParameter.Value} could not be found in step. User is not defining {builderParameter.Value} as variable. You should not make up new variables.", goalStep));
 				}
 
-				var missing = MissingRequiredMembers(builderParameter.Value, methodParameter.ParameterType);
+				// Build time only. At run time this same match picks the method for a .pr that is
+				// already on disk, and an older .pr is not made invalid by a stricter build.
+				if (checkRequiredMembers) FillConstructorDefaults(builderParameter.Value, methodParameter.ParameterType);
+				var missing = checkRequiredMembers ? MissingRequiredMembers(builderParameter.Value, methodParameter.ParameterType) : new List<string>();
 				if (missing.Count > 0)
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,

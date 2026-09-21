@@ -707,10 +707,14 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		// A retry after a rejected handler came back with ErrorHandlers null and the build passed,
 		// so an `on error` clause the step spelled out was silently dropped. The step's words are
 		// the contract: a clause in the text is a handler in the properties.
-		if (canHaveErrorHandling && (stepProperties.ErrorHandlers == null || stepProperties.ErrorHandlers.Count == 0)
-			&& Regex.IsMatch(step.Text, @"\bon\s+error\b", RegexOptions.IgnoreCase))
+		if (canHaveErrorHandling)
 		{
-			return (step, new StepBuilderError("The step has an `on error` clause but no ErrorHandlers were built. Every `on error` clause is one handler; write it.", step));
+			int clauses = Regex.Matches(step.Text, @"\bon\s+error\b", RegexOptions.IgnoreCase).Count;
+			int handlers = stepProperties.ErrorHandlers?.Count ?? 0;
+			if (clauses > handlers)
+			{
+				return (step, new StepBuilderError($"The step has {clauses} `on error` clause(s) but {handlers} ErrorHandler(s) were built. Every `on error` clause is one handler, in the order written; write all of them.", step));
+			}
 		}
 
 		step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
@@ -733,7 +737,14 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			// clause built as {Key: "503"} in the step next to it. The status code is the key.
 			if (errorHandler.StatusCode != null && errorHandler.Key == "*")
 			{
-				return (stepProperties, new StepBuilderError($"Error handler has StatusCode {errorHandler.StatusCode} together with Key \"*\". Key \"*\" matches every error. Put the status code in Key (\"{errorHandler.StatusCode}\") and leave StatusCode null, or leave Key null.", step));
+				return (stepProperties, new StepBuilderError($"Error handler has StatusCode {errorHandler.StatusCode} together with Key \"*\". Key \"*\" matches every error. Leave Key null when the handler is for a status code.", step));
+			}
+
+			// An http error carries the reason phrase as its Key, "Not Found", never the number, so a
+			// handler keyed "404" matches nothing. The number belongs in StatusCode.
+			if (!string.IsNullOrEmpty(errorHandler.Key) && int.TryParse(errorHandler.Key, out var numericKey))
+			{
+				return (stepProperties, new StepBuilderError($"Error handler has Key \"{errorHandler.Key}\". A status code goes in StatusCode as a number ({numericKey}) with Key null; Key is for named errors such as FileNotFound.", step));
 			}
 
 			if (errorHandler.GoalToCall == null) continue;

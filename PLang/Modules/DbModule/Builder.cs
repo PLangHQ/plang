@@ -206,8 +206,11 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 		var dataSourceNameParam = gf.GetParameter<string>("dataSourceName");
 		if (dataSourceNameParam?.Contains("%variable0%") == true)
 		{
+			// %variable0% is the runtime's placeholder for the datasource variable and the model has
+			// echoed it back. With no datasource in context this fell over on ds.NameInStep; now it is
+			// reported as the invalid answer it is and the step builds again.
 			var ds = context.DataSource;
-			if (ds.NameInStep != null && !ds.NameInStep.Contains("%variable0%"))
+			if (ds?.NameInStep != null && !ds.NameInStep.Contains("%variable0%"))
 			{
 				var updatedParams = gf.Parameters
 					.Select(p => p.Name == "dataSourceName" ? p with { Value = ds.NameInStep } : p)
@@ -219,7 +222,7 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 			}
 			else
 			{
-				return (null, new StepBuilderError("dataSourceName cannot contain %variable0%", goalStep, Retry: ds.NameInStep != null));
+				return (null, new StepBuilderError("dataSourceName cannot contain %variable0%. Use the datasource the step names, e.g. users/%userId%, or leave it out when the step names none", goalStep, Retry: true));
 			}
 		}
 		if (dataSourceNameParam?.Contains("%") == true && !VariableHelper.IsVariable(dataSourceNameParam))
