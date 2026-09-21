@@ -146,7 +146,7 @@ public class Program : BaseProgram
 					if (replaced != null) output = replaced;
 				}
 
-				AddToHistory(history, ToolOutput(call.Id, output is string s ? s : JsonConvert.SerializeObject(output, Formatting.Indented)));
+				AddToHistory(history, ToolOutput(call.Id, output));
 			}
 
 			if (onRoundEnd != null)
@@ -176,9 +176,40 @@ public class Program : BaseProgram
 		return list.ToDictionary(v => v.Name, v => v.Value);
 	}
 
-	private static Dictionary<string, object?> ToolOutput(string callId, string output)
+	private static Dictionary<string, object?> ToolOutput(string callId, object? output)
 	{
-		return new Dictionary<string, object?> { ["type"] = "function_call_output", ["call_id"] = callId, ["output"] = output };
+		return new Dictionary<string, object?> { ["type"] = "function_call_output", ["call_id"] = callId, ["output"] = ToolOutputContent(output) };
+	}
+
+	// A tool that returns a data url of an image, a screenshot say, is handing the model something
+	// to look at, not a string to read. It goes in as image content so the model actually sees it;
+	// as a string it would be a few hundred thousand characters of base64 that mean nothing.
+	// A tool can also return {text, image} to say something alongside the picture.
+	private static object ToolOutputContent(object? output)
+	{
+		if (output is string s)
+		{
+			if (IsImageDataUrl(s)) return new List<object> { ImageContent(s) };
+			return s;
+		}
+		if (output is IDictionary<string, object?> dict && dict.TryGetValue("image", out var img) && img is string image && IsImageDataUrl(image))
+		{
+			var content = new List<object>();
+			if (dict.TryGetValue("text", out var text) && text is string t && !string.IsNullOrEmpty(t))
+			{
+				content.Add(new Dictionary<string, object?> { ["type"] = "input_text", ["text"] = t });
+			}
+			content.Add(ImageContent(image));
+			return content;
+		}
+		return JsonConvert.SerializeObject(output, Formatting.Indented);
+	}
+
+	private static bool IsImageDataUrl(string s) => s.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase) && s.Contains(";base64,");
+
+	private static Dictionary<string, object?> ImageContent(string dataUrl)
+	{
+		return new Dictionary<string, object?> { ["type"] = "input_image", ["image_url"] = dataUrl };
 	}
 
 	private static void AddToHistory(IList history, object item)
