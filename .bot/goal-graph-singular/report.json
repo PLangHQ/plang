@@ -513,6 +513,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Provenance run (b31603cad): the three security tests pass on origin/runtime2 and fail on the branch — branch regressions failing open. Baseline rule adopted (against the branch base, never intra-branch). Ruled: git bisect from the merge-base with the three tests as oracle, culprits recorded before code; fix at root (Verify outer/nested is the caller's decision, not a bridge default; masking routes through the value's own output face); test names join the verify gates."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bisect result (d965eaeeb) disproved the Verify:false suspect: both tamper tests already fail at da067599c^ (range 0ea5a4b94..da067599c^), the masking test breaks later (da067599c^..HEAD) — two independent regressions. Blind git bisect run is unreliable on this branch (mid-branch test-layout switch, stale obj/ makes msbuild emit nothing while reporting success). Ruled: tamper pair first, masking second; narrow-then-test is the procedure (test files in the narrowing paths, narrow on both verify-skipped and properties-outside-signed-bytes, binary-search candidates, confirm only by parent-passes/commit-fails, close gaps with the oracle); oracle script committed under coder .bot; culprit + diff recorded before any code."
         }
       ],
       "after": {
