@@ -324,7 +324,7 @@
       "id": "cadaae39-7941-4c3a-92ca-6424246dbc41",
       "bot": "architect",
       "timestamp_start": "2026-09-22T00:00:00",
-      "timestamp_end": "2026-09-22T13:15:24.520001",
+      "timestamp_end": "2026-09-22T13:28:19.442891",
       "intent": "Answer coder's formal-abandoned handoff: rule on steps A-E, name the recovery slot, order the queue",
       "before": {
         "assumptions": "formal dropped by Ingi's decision; recovery-as-structure already ruled (Addendum 3); error model live on the frame walk",
@@ -362,6 +362,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Door 2's remaining customer (build.validate reading %goal.step[i].action% rows) exists only because the Addendum-2 graft (step's Set('action') host-construction) is not implemented; coder's 'no step' premise is wrong \u2014 the write target step IS the step. After the graft: actions born with the step at the write, validate's row.Value<action>() is ICreate pass-through, door 2 has zero customers \u2192 delete atomically."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/graft-bridge-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Graft bridge: the parent is a birth fact of the READER (ctor arg), not a Read parameter \u2014 bridge/ITypeReader/ReadContext untouched; door 2 dies by construction because discovery requires a parameterless ctor (reader/this.cs:205); coder's option 1 (row bytes) rejected as json named outside the json kind; the step-has-no-context note is the already-ruled program-structure-is-context-free law working."
         }
       ],
       "after": {
