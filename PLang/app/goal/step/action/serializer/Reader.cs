@@ -7,56 +7,39 @@ namespace app.goal.step.action.serializer;
 /// positioned it): the action's bare <c>[Store]</c> shape <c>{module, action, parameters[],
 /// defaults?[], modifiers[]}</c>. Parameter/default rows ride the existing <c>@schema:data</c> reader.
 /// A modifier rides action's own shape — each element in the <c>modifiers</c> array is populated as the
-/// subtype so catalog/Is asks answer "modifier". Synthetic + the Goal backref are stamped by the caller
-/// (goal.list load).
+/// subtype so catalog/Is asks answer "modifier".
+/// <para>The reader is BORN with the step whose actions it reads, so every action it makes is born
+/// holding that step — the same birth fact one level up. Having no parameterless constructor is what
+/// keeps it out of the type-reader registry: the registry mints only readers that need no parent
+/// (values and file roots), so there is no parentless way to make an action.</para>
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
-    // Lazy — the action reads its Child steps through the step reader, which reads its actions back
-    // through THIS reader. A `new()` field would recurse at construction; lazy breaks the cycle.
-    private global::app.goal.step.serializer.Reader? _stepReader;
-    private global::app.goal.step.serializer.Reader StepReader => _stepReader ??= new();
+    private readonly global::app.goal.step.@this _step;
+
+    public Reader(global::app.goal.step.@this step) => _step = step;
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
+    /// <summary>The one door. A null element is consumed and answered as the null citizen; the
+    /// caller drops it.</summary>
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("action", kind);
-        var action = new global::app.goal.step.action.@this();
-        // Provenance at birth: an action READ from a .pr is authored, not injected — so it is
-        // non-synthetic. Stamped here (the reader knows authored mode), never in a post-load loop.
-        action.Synthetic = false;
+        // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic.
+        var action = new global::app.goal.step.action.@this { Step = _step, Synthetic = false };
         Populate(ref reader, action, ctx);
-        return action;
-    }
-
-    /// <summary>The CONSTRUCTION door — the step reader calls this concretely, handing the step it
-    /// has already built. The action is born knowing its step; nothing stamps it afterwards.
-    /// The interface door above survives only until the graft and recovery stop routing actions
-    /// through the type-reader registry, at which point this is the only way to make one.</summary>
-    public global::app.goal.step.action.@this? Read<TReader>(ref TReader reader,
-        global::app.type.reader.ReadContext ctx, global::app.goal.step.@this step)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
-    {
-        // A null element still has to be CONSUMED or the reader desyncs. There is no null
-        // action to construct, so the caller drops it.
-        if (reader.Null()) return null;
-
-        var action = new global::app.goal.step.action.@this { Step = step, Synthetic = false };
-        Populate(ref reader, action, ctx, step);
         return action;
     }
 
     // Fills a fresh action (or its modifier subtype) off the handed reader — the shared walk, so a
     // modifier element (same wire as an action) populates the subtype instance without re-parsing.
-    // `step` is the action's own step when the construction door was used; null on the legacy
-    // registry door. It flows to the children this action owns: its modifiers take the same step,
-    // and its child steps take that step's goal — the chain self-feeds, nothing else is threaded.
+    // The children this action owns take their parent from the reader: modifiers and recovery
+    // actions the same step, child steps that step's goal — the chain self-feeds.
     private void Populate<TReader>(ref TReader reader,
-        global::app.goal.step.action.@this action, global::app.type.reader.ReadContext ctx,
-        global::app.goal.step.@this? step = null)
+        global::app.goal.step.action.@this action, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         var dataReader = new global::app.data.reader.@this();
@@ -95,10 +78,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.BeginArray();
                     while (reader.NextElement())
                     {
-                        // A modifier belongs to its action's step — handed over at construction,
-                        // null only on the legacy registry door where no step is known.
-                        var modifier = new global::app.goal.step.action.modifier.@this { Step = step };
-                        Populate(ref reader, modifier, ctx, step);
+                        // A modifier belongs to its action's step, like the action itself.
+                        var modifier = new global::app.goal.step.action.modifier.@this { Step = _step };
+                        Populate(ref reader, modifier, ctx);
                         action.Modifier.Add(modifier);
                     }
                     reader.EndArray();
@@ -108,25 +90,18 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     // SAME step as the action they recover — a real step, not an invented one.
                     reader.BeginArray();
                     while (reader.NextElement())
-                    {
-                        var recovered = step != null
-                            ? Read(ref reader, ctx, step)
-                            : Read(ref reader, null, ctx) as global::app.goal.step.action.@this;
-                        if (recovered != null) action.Recovery.Add(recovered);
-                    }
+                        if (Read(ref reader, null, ctx) is global::app.goal.step.action.@this recovered)
+                            action.Recovery.Add(recovered);
                     reader.EndArray();
                     break;
                 case "child":
-                    var childSteps = new global::app.goal.step.list.@this();   // Add each step into the node
+                    // chain self-feeds: a child step's goal is this action's step's goal
+                    var childSteps = new global::app.goal.step.list.@this();
+                    var stepReader = new global::app.goal.step.serializer.Reader(_step.Goal);
                     reader.BeginArray();
                     while (reader.NextElement())
-                    {
-                        // chain self-feeds: a child step's goal is this action's step's goal
-                        var child = step != null
-                            ? StepReader.Read(ref reader, ctx, step.Goal)
-                            : StepReader.Read(ref reader, null, ctx) as global::app.goal.step.@this;
-                        if (child != null) childSteps.Add(child);
-                    }
+                        if (stepReader.Read(ref reader, null, ctx) is global::app.goal.step.@this child)
+                            childSteps.Add(child);
                     reader.EndArray();
                     action.Child = childSteps;
                     break;

@@ -45,6 +45,51 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure, never a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
+    /// <summary>The step takes its own children. A write to <c>action</c> — the builder handing over
+    /// what it just compiled — is the step CONSTRUCTING those actions, not a slot assignment: each one
+    /// is born holding this step, the same birth fact a .pr load gives them. The rows ride the action's
+    /// own reader, so the wire shape lives in one place. Every other key falls to the reflected
+    /// default.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
+        string key, bool isIndex, object? value)
+    {
+        if (isIndex || !string.Equals(key, "action", System.StringComparison.OrdinalIgnoreCase))
+            return await base.Set(key, isIndex, value);
+
+        var binding = value as global::app.data.@this;
+        var incoming = binding != null ? await binding.Value() : value as global::app.type.item.@this;
+        var context = binding?.Context
+            ?? throw new System.NotSupportedException("writing a step's actions needs the write's context");
+
+        // The reader is born holding THIS step, so every action it makes is born holding it too —
+        // the value bridges its own format, the reader carries the parent. Nothing is stamped.
+        var reader = new global::app.goal.step.action.serializer.Reader(this);
+        var node = new global::app.goal.step.action.list.@this();
+        foreach (var row in Rows(incoming, context))
+            if (row is global::app.goal.step.action.@this built) node.Add(built);
+            else if (row.Read(reader, null, context) is global::app.goal.step.action.@this made) node.Add(made);
+            else throw new System.NotSupportedException(
+                $"cannot build an action from a {row.Type.Name} — an action reads from its own wire shape.");
+        _action = node;
+        return this;
+    }
+
+    /// <summary>The rows of an incoming action write. A several-valued write enumerates ITSELF — a
+    /// plang list its elements, a json array its own (each value owns how it is walked); a single
+    /// action is one row.</summary>
+    private static System.Collections.Generic.IEnumerable<global::app.type.item.@this> Rows(
+        global::app.type.item.@this? incoming, global::app.actor.context.@this context)
+    {
+        if (incoming == null) yield break;
+        if (incoming is global::app.goal.step.action.@this) { yield return incoming; yield break; }
+        var any = false;
+        foreach (var (_, row) in incoming.EnumerateItems(context))
+        {
+            if (row.Peek() is { } item && !ReferenceEquals(item, incoming)) { any = true; yield return item; }
+        }
+        if (!any) yield return incoming;
+    }
+
     /// <summary>The step writes ITSELF — its bare [Store] shape in declaration order, singular keys,
     /// nulls omitted (byte-identical to the reflected write it replaces). Actions are action-shaped
     /// items (each writes itself). The DEBUG view (the live --debug channel, never the persisted wire)

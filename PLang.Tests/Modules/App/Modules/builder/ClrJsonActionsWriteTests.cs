@@ -62,8 +62,7 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         var clrJsonActions = new global::app.data.@this("actions",
             Type.Create("object", "json", context: context).Create(element, context), context: context);
 
-        // The builder write. Today this throws in ClrConvert; after Stage 1 it builds
-        // two action hosts onto the slot.
+        // The builder write: the STEP constructs its children from the incoming json.
         await context.Variable.Set("goal.Step[0].Action", clrJsonActions);
 
         await Assert.That(goal.Step[0].Action.Count).IsEqualTo(2);
@@ -71,6 +70,11 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("set");
         await Assert.That(goal.Step[0].Action[1].Module.Name).IsEqualTo("output");
         await Assert.That(goal.Step[0].Action[1].Name).IsEqualTo("write");
+
+        // The birth fact: an action written onto a step belongs to that step from the moment it is
+        // written. The host constructs its children — nothing stamps a step on afterwards.
+        await Assert.That(goal.Step[0].Action[0].Step).IsEqualTo(goal.Step[0]);
+        await Assert.That(goal.Step[0].Action[1].Step).IsEqualTo(goal.Step[0]);
     }
 
     // The goal.call proof: a clr(json) action whose param is a goal.call. It must read as a

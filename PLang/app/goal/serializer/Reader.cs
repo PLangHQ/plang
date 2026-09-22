@@ -15,8 +15,8 @@ namespace app.goal.serializer;
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
-    private readonly global::app.goal.step.serializer.Reader _step = new();
-
+    // The goal reader stays registered: a .pr FILE has no parent, so this one needs none. Its
+    // children's readers are born per goal, each holding the goal it reads for.
     public string Kind => global::app.type.reader.@this.AnyKind;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
@@ -42,6 +42,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
     {
         var goal = new global::app.goal.@this { Parent = parent };
+        var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
         reader.BeginObject();
         while (reader.NextName(out var field))
@@ -54,11 +55,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "step":
                     reader.BeginArray();
                     while (reader.NextElement())
-                    {
-                        // born knowing its goal; null elements are consumed and dropped
-                        var step = _step.Read(ref reader, ctx, goal);
-                        if (step != null) goal.Step.Add(step);
-                    }
+                        if (step.Read(ref reader, null, ctx) is global::app.goal.step.@this s)
+                            goal.Step.Add(s);
                     reader.EndArray();
                     break;
                 case "child":

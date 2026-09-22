@@ -4,30 +4,32 @@ namespace app.goal.step.serializer;
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>step</c> — the read-side
 /// mirror of <see cref="app.goal.step.@this.Output"/>. Walks the handed
 /// <see cref="app.channel.serializer.IReader"/> in place: the step's bare <c>[Store]</c> shape, each
-/// action via the sibling <see cref="app.goal.step.action.serializer.Reader"/>. Fields
-/// land in locals first so the step's <c>init</c> props construct once. The Goal backref + Synthetic
-/// are stamped by the caller (goal.list load).
+/// action via the sibling <see cref="app.goal.step.action.serializer.Reader"/>.
+/// <para>The reader is BORN with the goal whose steps it reads, so every step it makes is born
+/// holding that goal. Having no parameterless constructor is what keeps it out of the type-reader
+/// registry: the registry mints only readers that need no parent, so there is no parentless way to
+/// make a step.</para>
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
-    private readonly global::app.goal.step.action.serializer.Reader _action = new();
+    private readonly global::app.goal.@this _goal;
+
+    public Reader(global::app.goal.@this goal) => _goal = goal;
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
-    /// <summary>The CONSTRUCTION door — the goal reader calls this concretely, handing the goal it
-    /// has already built. SHELL-FIRST: the step is constructed empty so its actions can be born
+    /// <summary>The one door. SHELL-FIRST: the step is constructed empty so its actions can be born
     /// holding it, then its own scalars are filled as they arrive off the stream. That ordering is
-    /// the whole reason the step's read-time scalars are `internal set` rather than `init`.</summary>
-    public global::app.goal.step.@this? Read<TReader>(ref TReader reader,
-        global::app.type.reader.ReadContext ctx, global::app.goal.@this goal)
+    /// the whole reason the step's read-time scalars are `internal set` rather than `init`.
+    /// A null element is consumed and answered as the null citizen; the caller drops it.</summary>
+    public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
+        global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        // A null element still has to be CONSUMED or the reader desyncs and the goal's own
-        // scalars are read off the wrong tokens. There is no null step to construct, so the
-        // caller drops it.
-        if (reader.Null()) return null;
+        if (reader.Null()) return new global::app.type.item.@null.@this("step", kind);
 
-        var step = new global::app.goal.step.@this { Goal = goal };   // shell first — children can hold it
+        var step = new global::app.goal.step.@this { Goal = _goal };   // shell first — children hold it
+        var action = new global::app.goal.step.action.serializer.Reader(step);
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -39,14 +41,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "lineNumber": step.LineNumber = (int)reader.Long(); break;
                 case "indent": step.Indent = (int)reader.Long(); break;
                 case "comment": step.Comment = reader.String(); break;
+                // `action` is canonical (Output writes it); `actions` is the LLM's natural plural for
+                // the list (same tolerance as parameter/parameters on the action reader).
                 case "action": case "actions":
                     reader.BeginArray();
                     while (reader.NextElement())
-                    {
-                        // born knowing its step; null elements are consumed and dropped
-                        var action = _action.Read(ref reader, ctx, step);
-                        if (action != null) step.Action.Add(action);
-                    }
+                        if (action.Read(ref reader, null, ctx) is global::app.goal.step.action.@this a)
+                            step.Action.Add(a);
                     reader.EndArray();
                     break;
                 case "intent": step.Intent = reader.String(); break;
@@ -57,57 +58,5 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
         return step;
-    }
-
-    public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
-        global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
-    {
-        if (reader.Null()) return new global::app.type.item.@null.@this("step", kind);
-
-        int index = 0, lineNumber = 0, indent = 0;
-        string text = "";
-        string? comment = null, intent = null, source = null;
-        bool waitForExecution = true;
-        var actions = new global::app.goal.step.action.list.@this();   // Add each action straight into the node
-
-        reader.BeginObject();
-        while (reader.NextName(out var name))
-        {
-            switch (name)
-            {
-                case "index": index = (int)reader.Long(); break;
-                case "text": text = reader.String(); break;
-                case "lineNumber": lineNumber = (int)reader.Long(); break;
-                case "indent": indent = (int)reader.Long(); break;
-                case "comment": comment = reader.String(); break;
-                // `action` is canonical (Output writes it); `actions` is the LLM's natural plural for
-                // the list (same tolerance as parameter/parameters on the action reader).
-                case "action": case "actions":
-                    reader.BeginArray();
-                    while (reader.NextElement())
-                        actions.Add((global::app.goal.step.action.@this)_action.Read(ref reader, kind, ctx));
-                    reader.EndArray();
-                    break;
-                case "intent": intent = reader.String(); break;
-                case "source": source = reader.String(); break;
-                case "waitForExecution": waitForExecution = reader.Bool(); break;
-                default: reader.Skip(); break;
-            }
-        }
-        reader.EndObject();
-
-        return new global::app.goal.step.@this
-        {
-            Index = index,
-            Text = text,
-            LineNumber = lineNumber,
-            Indent = indent,
-            Comment = comment,
-            Action = actions,
-            Intent = intent,
-            Source = source,
-            WaitForExecution = waitForExecution,
-        };
     }
 }
