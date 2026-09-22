@@ -39,4 +39,20 @@ Structure as ruled. Coder's find worth recording: a structured wire payload ride
 
 **Open:** a captured variable comes back null (`Variables_SurviveWireRoundTrip`). Design expectation stated to coder: rows keep their envelope end to end — `Data.Output` writes `name` in Store view (`data/this.Output.cs:86-90`), the list reader reads each element through `ReadSlot` → `IsTypedEntry`/`@schema:data` → the data reader → a named Data row (`list.AddRaw` keeps it). So a null is one hop breaking the contract; coder instruments four hops (serialized string; the entry's slice + Type; rows after `Value<list>`; `Restore`'s `Set(data.Name, …)`) and reports. Ruling on the fix waits for evidence — no guessing at the list/Data boundary.
 
+**RESOLVED by evidence (hop 2b):** the write was perfect (names, envelopes, no flattening). A read section arrives as a typed `snapshot` WIRE SLICE (the data reader's lazy value arm), and the views test `Entries.Get(name)?.Peek() is @this` → false → `HasSection` false everywhere → `App.Restore` visits nothing. Not value fidelity — the sections were never visited.
+
+**Ruling: (c) — the snapshot reads EAGERLY, and eagerness is the TYPE's declaration.** Coder dismissed (c) as unavailable ("materializing is async") — but materializing a typed slot off the same stream through its pull reader is a sync ref-struct read; the data reader already does it for goal.call (`data/reader/this.cs:69-74`). Rejected: (a) two doors (fork); (b) making every `Capture` async to compensate for reading structure as if it were lazy content. Not as `|| typeRef.Name == "snapshot"` — that string switch is a type-switch in a courier and this bug is its second customer. Instead:
+
+```csharp
+// ITypeReader — default interface member; only the two eager readers override:
+bool IsEager => false;                 // "my values are structure: read me off the stream, never slice me"
+// goal.call Reader, snapshot Reader:  public bool IsEager => true;
+// data/reader/this.cs value arm — replaces the goal.call name check:
+if (typeRef is { IsNull: false } && ctx.Context.App.Type.Reader.Typed(typeRef.Name, null) is { IsEager: true } eager)
+    value = eager.Read(ref reader, null, ctx);
+else … the lazy slice arms as today
+```
+
+One rule, two declarers, the data reader stays generic; lazy stays the default (store-raw-type-on-read is deliberate; eagerness is not widened beyond the two). A read snapshot then holds real snapshot instances, `Peek` stays honest, the views stay sync, `Capture` stays sync. Test: read a snapshot back; every section answers `HasSection` true and `Value<snapshot>()` passes through.
+
 **Smell found on the trace (todo, not the bug today):** the data reader mints a nested slice with `ctx.Context.Actor?.Channel.Serializers?.Transport` (`data/reader/this.cs:102`) — the actor's transport, an ambient reach — instead of the serializer actually reading (the capture handing itself, as `wire.@this`'s doc requires). Always the plang serializer today (`serializer/list/this.cs:138`), so harmless now; cursor-as-identity in shape. Fix when touched: the reader that slices carries its serializer and hands it to the wire it mints.

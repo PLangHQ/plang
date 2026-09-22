@@ -463,6 +463,16 @@
           "category": "doc",
           "confidence": "medium",
           "context": "Collapse landed (e5865c985); value fidelity open (captured variable null after round trip). Stated the contract (rows keep their Store-view envelope; list read is envelope-aware) and sent coder a four-hop instrumentation instead of guessing; ruling on the fix deferred to evidence. Logged the ambient-transport smell in data/reader/this.cs:102 as a todo (not the bug today)."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Hop trace evidence: sections arrive as lazy typed wire slices; views' Peek test false → HasSection false → nothing restored. Ruled (c): snapshot reads eagerly (sync pull through its reader, as goal.call already does); eagerness declared by the reader (ITypeReader.IsEager default false; goal.call + snapshot true) replacing the data reader's goal.call name check; lazy stays default; views/Capture stay sync. (a) fork and (b) async-Capture ripple rejected."
         }
       ],
       "after": {
