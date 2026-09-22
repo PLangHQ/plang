@@ -12,6 +12,9 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Section present → a session was live → born it back (presence IS the enable signal).
     /// </summary>
-    public static void Restore(snapshot.@this s, actor.context.@this context)
-        => context.App.Test = new @this(context);
+    public static System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
+    {
+        context.App.Test = new @this(context);
+        return System.Threading.Tasks.Task.CompletedTask;
+    }
 }

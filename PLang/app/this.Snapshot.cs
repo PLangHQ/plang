@@ -56,13 +56,13 @@ public sealed partial class @this
     /// the App is left in a partially-restored state and the caller is responsible
     /// for treating the failure as a referent-integrity violation.
     /// </summary>
-    public void Restore(snapshot.@this s, actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
-        if (s.HasSection("Providers")) global::app.module.action.code.@this.Restore(s.Section("Providers"), context);
-        if (s.HasSection("Variables")) global::app.variable.list.@this.Restore(s.Section("Variables"), context);
-        if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), context);
-        if (s.HasSection("Build"))     global::app.module.action.build.@this.Restore(s.Section("Build"), context);
-        if (s.HasSection("Test"))   global::app.test.list.@this.Restore(s.Section("Test"), context);
-        if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), context);
+        if (s.HasSection("Providers")) await global::app.module.action.code.@this.Restore(s.Section("Providers"), context);
+        if (s.HasSection("Variables")) await global::app.variable.list.@this.Restore(s.Section("Variables"), context);
+        if (s.HasSection("Statics"))   await global::app.Statics.@this.Restore(s.Section("Statics"), context);
+        if (s.HasSection("Build"))     await global::app.module.action.build.@this.Restore(s.Section("Build"), context);
+        if (s.HasSection("Test"))   await global::app.test.list.@this.Restore(s.Section("Test"), context);
+        if (s.HasSection("CallStack")) await global::app.callstack.@this.Restore(s.Section("CallStack"), context);
     }
 }

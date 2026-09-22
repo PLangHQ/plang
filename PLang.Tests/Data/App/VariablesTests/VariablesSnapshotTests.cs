@@ -12,7 +12,7 @@ public class VariablesSnapshotTests
 
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         var x = await dst.User.Context.Variable.Get("x");
         await Assert.That(x).IsNotNull();
@@ -39,10 +39,9 @@ public class VariablesSnapshotTests
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
         var snap = src.Snapshot(src.User.Context);
-        var captured = snap.Section("Variables").Read<List<Data>>("variables");
-        await Assert.That(captured).IsNotNull();
+        var captured = await snap.Section("Variables").Rows("variables");
 
-        var names = captured!.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var names = captured.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         await Assert.That(names.Contains("user")).IsTrue();
         await Assert.That(names.Any(n => n.StartsWith("!"))).IsFalse();
         await Assert.That(names.Contains("Now")).IsFalse();

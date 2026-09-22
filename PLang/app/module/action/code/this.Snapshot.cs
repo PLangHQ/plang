@@ -11,13 +11,21 @@ public sealed partial class @this : ISnapshot
     /// Name is the provider instance's Name; Source is the DLL path that loaded it,
     /// or null for an in-process registration on the same App.
     /// </summary>
-    internal sealed record Registration(string TypeName, string ProviderName, string? Source);
+    /// <remarks>[Out] is what puts these across the wire — the sanctioned property-bag path for a
+    /// domain type, enforced by the reflection kind. The old snapshot serializer carried a second,
+    /// unguarded copy of that mechanism.</remarks>
+    internal sealed record Registration(
+        [property: Out] string TypeName,
+        [property: Out] string ProviderName,
+        [property: Out] string? Source);
 
     /// <summary>
     /// Snapshot record for one default-selection override — captures only when the
     /// current default differs from the corresponding built-in default for that type.
     /// </summary>
-    internal sealed record DefaultOverride(string TypeName, string ProviderName);
+    internal sealed record DefaultOverride(
+        [property: Out] string TypeName,
+        [property: Out] string ProviderName);
 
     /// <summary>
     /// Captures the registry layer (NOT the provider instances themselves):
@@ -69,12 +77,16 @@ public sealed partial class @this : ISnapshot
     ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
     /// The fresh App boot has already run RegisterDefaults so built-ins are present.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    public static async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var providers = context.App.Code;
 
-        var registrations = s.Read<List<Registration>>("registrations") ?? new();
-        var overrides = s.Read<List<DefaultOverride>>("defaultOverrides") ?? new();
+        // CLR BOUNDARY — the one lowering in snapshot restore, and it is this site's own, not a
+        // policy. In-process these two records ride as clr carriers, so reading the carrier's
+        // payload back is exactly what the clr kind exists for. From the wire they return as dicts;
+        // the end-state is Registration/DefaultOverride becoming small items that read from one.
+        var registrations = await Rows<Registration>(s, "registrations");
+        var overrides = await Rows<DefaultOverride>(s, "defaultOverrides");
 
         // Step 1 — registrations
         foreach (var reg in registrations)
@@ -152,6 +164,19 @@ public sealed partial class @this : ISnapshot
         }
     }
 
+
+    /// <summary>The captured rows of one entry, lowered to their CLR record at this site's own
+    /// boundary (see Restore). Absent entry → empty, the same as a captured empty list.</summary>
+    private static async System.Threading.Tasks.Task<List<T>> Rows<T>(
+        global::app.snapshot.@this s, string key)
+    {
+        var rows = new List<T>();
+        var entry = s.Entries.Get(key);
+        if (entry == null) return rows;
+        foreach (var row in await entry.Value<global::app.type.item.list.@this>())
+            if (row.Peek().Clr<T>() is { } record) rows.Add(record);
+        return rows;
+    }
 
     private static string InstanceName(System.Type implType)
     {

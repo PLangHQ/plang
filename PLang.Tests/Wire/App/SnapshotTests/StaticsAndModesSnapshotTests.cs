@@ -13,7 +13,7 @@ public class StaticsAndModesSnapshotTests
 
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         var dstBag = dst.Statics.GetBag("greetings");
         await Assert.That(dstBag["hello"]).IsEqualTo("world");
@@ -30,7 +30,7 @@ public class StaticsAndModesSnapshotTests
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.That(dst.Build != null).IsFalse(); // pre-restore baseline
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         await Assert.That(dst.Build != null).IsTrue();
     }
@@ -45,7 +45,7 @@ public class StaticsAndModesSnapshotTests
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.That(dst.Test != null).IsFalse();
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         await Assert.That(dst.Test != null).IsTrue();
     }

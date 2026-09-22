@@ -31,7 +31,7 @@ public class AppSnapshotTests
         var snap = src.Snapshot(src.User.Context);
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         await Assert.That((await (await dst.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
         await Assert.That(dst.Build != null).IsTrue();
@@ -63,7 +63,7 @@ public class AppSnapshotTests
         var snap = src.Snapshot(src.User.Context);
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         await Assert.That(dst.Cache).IsTypeOf<global::app.module.action.cache.Memory>();
         await Assert.That(snap.HasSection("Cache")).IsFalse();

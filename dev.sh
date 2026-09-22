@@ -59,9 +59,9 @@ run_bin() { # $1 = project, rest = args
 # consistently, a suite grew a slow test or a perf regression landed — investigate.
 # Re-measured 2026-09-22 after the truncation fix: the old Modules=27 / Runtime=15 were
 # taken while the 15s cap was cutting those suites off mid-run, so they timed a partial
-# suite. Two consecutive full sweeps agreed on the values below. Wire still crashes
-# (core dump, no summary), so its number stays the pre-crash estimate.
-declare -A SUITE_SECS=( [Generator]=4 [Types]=8 [Runtime]=24 [Wire]=16 [Modules]=43 [Data]=28 )
+# suite. Wire=25 is its first real measurement — before the snapshot write door was typed
+# it stack-overflowed and never reached a summary.
+declare -A SUITE_SECS=( [Generator]=4 [Types]=8 [Runtime]=24 [Wire]=25 [Modules]=43 [Data]=28 )
 
 run_all_suites() { # rest = extra args passed to each suite
   local p fail=0

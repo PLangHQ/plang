@@ -30,8 +30,8 @@ public class CallSnapshotTests
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
-        await Assert.That(snap.Read<string>("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
-        await Assert.That(snap.Read<string>("goalHash")).IsEqualTo(action.Step.Goal.Hash);
+        await Assert.That(await snap.Text("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
+        await Assert.That(await snap.Text("goalHash")).IsEqualTo(action.Step.Goal.Hash);
         // Wire shape is the stub triple — no full goal serialised.
         await Assert.That(snap.Has("goal")).IsFalse();
         await Assert.That(snap.Has("steps")).IsFalse();
@@ -47,8 +47,8 @@ public class CallSnapshotTests
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
-        await Assert.That(snap.Read<int>("stepIndex")).IsEqualTo(0);
-        await Assert.That(snap.Read<int>("actionIndex")).IsEqualTo(0);
+        await Assert.That(await snap.Int("stepIndex")).IsEqualTo(0);
+        await Assert.That(await snap.Int("actionIndex")).IsEqualTo(0);
     }
 
     [Test]
@@ -73,7 +73,7 @@ public class CallSnapshotTests
             dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
-            dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.User.Context);
 
             var bottom = dst.User.CallStack.BottomFrame;
             await Assert.That(bottom).IsNotNull();
@@ -94,7 +94,7 @@ public class CallSnapshotTests
 
             await Assert.ThrowsAsync<CallbackGoalNotFound>(async () =>
             {
-                dst.Restore(snap, dst.User.Context);
+                await dst.Restore(snap, dst.User.Context);
                 await Task.CompletedTask;
             });
         }
@@ -120,7 +120,7 @@ public class CallSnapshotTests
 
             await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
             {
-                dst.Restore(snap, dst.User.Context);
+                await dst.Restore(snap, dst.User.Context);
                 await Task.CompletedTask;
             });
         }
@@ -147,7 +147,7 @@ public class CallSnapshotTests
             var stepBefore = dstStep;
             var actionBefore = dstAction;
 
-            dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.User.Context);
 
             // Same instances — Restore is read-only on the registry.
             await Assert.That(dst.Goal.Get("PureGoal")).IsSameReferenceAs(goalBefore);
@@ -160,11 +160,12 @@ public class CallSnapshotTests
     public async Task Call_Restore_HashErrorIsTypedNotBoolean()
     {
         // The restore path raises a typed exception — there is no boolean Success / Failure
-        // bubbling up. The shape of CallStack.Restore is `void`; failures throw.
+        // bubbling up. Restore returns a bare Task: it carries no result, so a failure has
+        // nowhere to hide except a throw.
         var restoreMethod = typeof(global::app.callstack.@this).GetMethod("Restore",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         await Assert.That(restoreMethod).IsNotNull();
-        await Assert.That(restoreMethod!.ReturnType).IsEqualTo(typeof(void));
+        await Assert.That(restoreMethod!.ReturnType).IsEqualTo(typeof(Task));
     }
 
     [Test]

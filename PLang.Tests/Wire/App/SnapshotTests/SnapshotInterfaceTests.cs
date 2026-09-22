@@ -12,9 +12,12 @@ public class SnapshotInterfaceTests
         section.Write<int>("age", 42);
         section.Write("tags", new List<string> { "a", "b" });
 
-        await Assert.That(section.Read<string>("name")).IsEqualTo("alice");
-        await Assert.That(section.Read<int>("age")).IsEqualTo(42);
-        await Assert.That(section.Read<List<string>>("tags")).IsEquivalentTo(new[] { "a", "b" });
+        await Assert.That(await section.Text("name")).IsEqualTo("alice");
+        await Assert.That(await section.Int("age")).IsEqualTo(42);
+        var tags = new List<string>();
+        foreach (var row in await section.Rows("tags"))
+            tags.Add((await row.Value<global::app.type.item.text.@this>()).ToString());
+        await Assert.That(tags).IsEquivalentTo(new[] { "a", "b" });
         await Assert.That(section.Has("name")).IsTrue();
         await Assert.That(section.Has("missing")).IsFalse();
     }

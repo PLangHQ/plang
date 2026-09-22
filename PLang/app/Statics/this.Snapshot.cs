@@ -24,16 +24,22 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Replaces the live App's Statics bag tree with the captured one.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    public static async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var target = context.App.Statics;
         target._bags.Clear();
-        var snap = s.Read<Dictionary<string, Dictionary<string, object?>>>("bags");
-        if (snap == null) return;
-        foreach (var (key, inner) in snap)
+        var entry = s.Entries.Get("bags");
+        if (entry == null) return;
+
+        // The entry is a dict of dicts of values. What Statics puts BACK in its own storage is
+        // Statics' problem: that storage is itself an untyped bag — the same disease one level
+        // down — so the values land there as the items they are until Statics is typed.
+        var bags = await entry.Value<global::app.type.item.dict.@this>();
+        foreach (var outer in bags.Entries)
         {
-            var bag = target.GetBag(key);
-            foreach (var (k, v) in inner) bag[k] = v;
+            var bag = target.GetBag(outer.Name);
+            foreach (var inner in (await outer.Value<global::app.type.item.dict.@this>()).Entries)
+                bag[inner.Name] = inner.Peek();
         }
     }
 

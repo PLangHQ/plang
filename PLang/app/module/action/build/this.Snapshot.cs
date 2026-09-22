@@ -12,6 +12,9 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Section present → Build was on → born it back (presence IS the enable signal).
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
-        => context.App.Build = new global::app.module.action.build.@this(context);
+    public static System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    {
+        context.App.Build = new global::app.module.action.build.@this(context);
+        return System.Threading.Tasks.Task.CompletedTask;
+    }
 }

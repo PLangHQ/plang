@@ -37,11 +37,11 @@ public class CallStackSnapshotTests
         var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         stack.Capture(section);
 
-        var frames = section.Read<List<Snapshot>>("frames")!;
+        var frames = await section.Frames("frames")!;
         await Assert.That(frames.Count).IsEqualTo(2);
         // Outer first → bottom (inner) last.
-        await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
-        await Assert.That(frames[1].Read<string>("goalPrPath")).IsEqualTo(g2.PrPath?.ToString());
+        await Assert.That(await frames[0].Text("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
+        await Assert.That(await frames[1].Text("goalPrPath")).IsEqualTo(g2.PrPath?.ToString());
     }
 
     [Test]
@@ -60,9 +60,9 @@ public class CallStackSnapshotTests
             await using (var child = stack.Push(a2)) { /* completes here */ }
             var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
             stack.Capture(section);
-            var frames = section.Read<List<Snapshot>>("frames")!;
+            var frames = await section.Frames("frames")!;
             await Assert.That(frames.Count).IsEqualTo(1);
-            await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
+            await Assert.That(await frames[0].Text("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
         }
     }
 
@@ -84,7 +84,7 @@ public class CallStackSnapshotTests
             var (dg2, _, _) = MakeFrame("Inner2");
             var dst = BuildAppWithGoals(dg1, dg2);
 
-            dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.User.Context);
 
             var chain = dst.User.CallStack.RestoredChain!;
             await Assert.That(chain.Count).IsEqualTo(2);

@@ -17,7 +17,7 @@ public sealed partial class @this
 {
     public async Task<data.@this> Resume(actor.context.@this context)
     {
-        context.App.Restore(this, context);
+        await context.App.Restore(this, context);
         var chain = context.CallStack.RestoredChain;
         if (chain == null || chain.Count == 0)
             return context.Error(new global::app.error.ServiceError(

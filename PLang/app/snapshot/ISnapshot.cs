@@ -24,7 +24,9 @@ public interface ISnapshot
     /// live App reachable via <paramref name="context"/>. Hard-errors on referent-integrity
     /// violations (unresolvable name, hash mismatch, missing source). No silent fallback.
     /// </summary>
-    static abstract void Restore(@this s, actor.context.@this context);
+    /// <remarks>Async because entries are plang values and the typed ask that reads them is async —
+    /// the same door every other value read goes through. Nothing here lowers to CLR.</remarks>
+    static abstract System.Threading.Tasks.Task Restore(@this s, actor.context.@this context);
 
     // Read(Io, @this) — the per-section wire rebuild — is removed with the STJ read cursor.
     // Snapshot RESTORE is deferred to the ISnapshot redesign, where the read moves onto an

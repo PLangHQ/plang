@@ -165,20 +165,25 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// (<see cref="CallbackGoalHashMismatch"/>). Does not mutate the live AsyncLocal Current —
     /// the resumed action is dispatched separately via App.Run from <see cref="BottomFrame"/>.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    public static async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var captured = s.Read<List<global::app.snapshot.@this>>("frames")
-                       ?? new List<global::app.snapshot.@this>();
-        var restored = new List<call.Position>(captured.Count);
+        var framesEntry = s.Entries.Get("frames");
+        var restored = new List<call.Position>();
+        if (framesEntry == null) { context.CallStack._restoredChain = restored; return; }
 
-        foreach (var frame in captured)
+        // Values all the way down: the rows of the frames list ARE snapshots, and each frame's
+        // entries answer the typed ask. The conversion to a CLR int/string happens at the USE,
+        // through the value's own member — nothing lowers on the way out of the snapshot.
+        foreach (var row in await framesEntry.Value<global::app.type.item.list.@this>())
         {
-            var goalName   = frame.Read<string>("goalName")   ?? "";
-            var goalPrPath = frame.Read<string>("goalPrPath") ?? "";
-            var goalHash   = frame.Read<string>("goalHash")   ?? "";
-            var stepIndex  = frame.Read<int>("stepIndex");
-            var actionIndex = frame.Read<int>("actionIndex");
-            var id         = frame.Read<string>("id") ?? "";
+            var frame = await row.Value<global::app.snapshot.@this>();
+
+            var goalName    = (await frame.Entries.Get("goalName")!.Value<global::app.type.item.text.@this>()).ToString();
+            var goalPrPath  = (await frame.Entries.Get("goalPrPath")!.Value<global::app.type.item.text.@this>()).ToString();
+            var goalHash    = (await frame.Entries.Get("goalHash")!.Value<global::app.type.item.text.@this>()).ToString();
+            var stepIndex   = (await frame.Entries.Get("stepIndex")!.Value<global::app.type.item.number.@this>()).ToInt32();
+            var actionIndex = (await frame.Entries.Get("actionIndex")!.Value<global::app.type.item.number.@this>()).ToInt32();
+            var id          = (await frame.Entries.Get("id")!.Value<global::app.type.item.text.@this>()).ToString();
 
             // Resolve by name — the goal's identity. A v0.2 .pr holds many goals on
             // one PrPath (the file), so a PrPath lookup picks the wrong goal; the

@@ -27,10 +27,10 @@ public class ProvidersSnapshotTests
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
         var snap = src.Snapshot(src.User.Context);
-        var registrations = snap.Section("Providers")
-            .Read<List<global::app.module.action.code.@this.Registration>>("registrations");
-        var overrides = snap.Section("Providers")
-            .Read<List<global::app.module.action.code.@this.DefaultOverride>>("defaultOverrides");
+        var registrations = await snap.Section("Providers")
+            .Records<global::app.module.action.code.@this.Registration>("registrations");
+        var overrides = await snap.Section("Providers")
+            .Records<global::app.module.action.code.@this.DefaultOverride>("defaultOverrides");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
@@ -69,7 +69,7 @@ public class ProvidersSnapshotTests
             Match: global::app.type.item.permission.Match.Exact);
         await dst.User.Permission.Add(
             new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.User.Context), persist: false);
-        dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();
         await Assert.That(defaultGrep.Error).IsNull();
@@ -93,7 +93,7 @@ public class ProvidersSnapshotTests
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
-            dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.User.Context);
             await Task.CompletedTask;
         });
     }
@@ -113,7 +113,7 @@ public class ProvidersSnapshotTests
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
-            dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.User.Context);
             await Task.CompletedTask;
         });
     }
@@ -125,8 +125,8 @@ public class ProvidersSnapshotTests
         // registrations end up in the captured payload.
         var app = global::PLang.Tests.TestApp.Create("/test");
         var snap = app.Snapshot(app.User.Context);
-        var registrations = snap.Section("Providers")
-            .Read<List<global::app.module.action.code.@this.Registration>>("registrations");
+        var registrations = await snap.Section("Providers")
+            .Records<global::app.module.action.code.@this.Registration>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(0);
@@ -144,8 +144,8 @@ public class ProvidersSnapshotTests
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
 
         var snap = src.Snapshot(src.User.Context);
-        var registrations = snap.Section("Providers")
-            .Read<List<global::app.module.action.code.@this.Registration>>("registrations");
+        var registrations = await snap.Section("Providers")
+            .Records<global::app.module.action.code.@this.Registration>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(1);

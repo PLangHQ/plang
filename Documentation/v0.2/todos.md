@@ -2016,6 +2016,28 @@ Context: the builder now compiles a simple goal end-to-end on a clean LLM pass
    .goal step and emit that string, or (b) a value-serialization seam the template calls (NOT a
    `jsonval` filter — Ingi rejected that name/shape). `jsonval` is also currently unregistered.
 
+3. **Snapshot/Restore is wrongly structured as a whole** (Ingi flagged, 2026-09-22).
+   The write door is now typed (entries are plang values, the snapshot writes itself, the
+   leaf-serializer is gone), but that only removed the worst symptom. The shape underneath is
+   still wrong and wants a design pass, not patches:
+   - **`Capture`/`Restore` is a split lifecycle across two types** — an instance `Capture` writes
+     the subtree, a *static* `Restore` rebuilds it somewhere else, and the pairing is held
+     together only by `ISnapshot`'s `static abstract`. Neither half owns the section's shape;
+     the keys are matched by string literal at both ends with nothing checking they agree.
+   - **`App.Restore` is a dispatch ladder** — six `if (s.HasSection("X")) await X.Restore(...)`
+     lines naming sections as strings, i.e. a registry as a hand-written switch. Adding a
+     section means editing that ladder.
+   - **Presence-as-signal** — `build` and `test` capture NOTHING and restore by the section
+     merely existing. The section's existence is load-bearing data encoded as absence of data.
+   - **Two sites remain genuinely CLR** and are queued by the architect's ruling:
+     `Registration`/`DefaultOverride` should become small items that read from a dict, and
+     `Statics`' own storage is an untyped `Dictionary<string, Dictionary<string, object?>>` —
+     the same disease one level down, so what Statics stores on restore is still raw.
+   - **The read half is still deferred** — bytes→sections off an `IReader`, symmetric with the
+     write side (`snapshot/this.Wire.cs`, `Create` throws).
+   Prior art: `.bot/goal-graph-singular/architect/snapshot-serializer-seal-answer.md` and
+   `snapshot-read-half-answer.md`.
+
 2. **goal.Child should be a list<goal> node, not a naked List<@this>** (Ingi flagged).
    `goal/this.cs:54` `public List<@this> Child` is a naked collection — its sibling
    `goal.Step` is a proper `step.list` node, and `%goals%` is a `list<goal>` node (both

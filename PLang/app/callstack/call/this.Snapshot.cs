@@ -31,7 +31,9 @@ public sealed partial class @this
         s.Write("goalHash",    goal?.Hash   ?? "");
         s.Write("stepIndex",   step?.Index  ?? -1);
         s.Write("actionIndex", actionIndex);
-        s.Write("actionModule", Action.Module);
+        // The module's NAME, not the element: an element is a live graph node whose Actions lead
+        // back to their Module. Write-only debug data — nothing restores it.
+        s.Write("actionModule", Action.Module.Name);
         s.Write("actionName",   Action.Name);
         s.Write("id",           Id);
         return actionIndex >= 0;

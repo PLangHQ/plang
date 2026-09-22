@@ -22,7 +22,7 @@ public class SnapshotWireTests
         var wired = await RoundTrip(src, src.Snapshot(src.User.Context));
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(wired, dst.User.Context);
+        await dst.Restore(wired, dst.User.Context);
 
         await Assert.That((await (await dst.User.Context.Variable.Get("count")).Value())?.ToString()).IsEqualTo("42");
         await Assert.That((await (await dst.User.Context.Variable.Get("name")).Value())?.ToString()).IsEqualTo("plang");
@@ -38,7 +38,7 @@ public class SnapshotWireTests
         var wired = await RoundTrip(src, src.Snapshot(src.User.Context));
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(wired, dst.User.Context);
+        await dst.Restore(wired, dst.User.Context);
 
         await Assert.That(dst.Build != null).IsTrue();
         await Assert.That(dst.Test != null).IsTrue();
@@ -73,12 +73,12 @@ public class SnapshotWireTests
 
         var wired = await RoundTrip(src, snap);
 
-        var rf = wired.Section("CallStack").Read<List<global::app.snapshot.@this>>("frames")!;
+        var rf = await wired.Section("CallStack").Frames("frames")!;
         await Assert.That(rf.Count).IsEqualTo(1);
-        await Assert.That(rf[0].Read<int>("stepIndex")).IsEqualTo(3);
-        await Assert.That(rf[0].Read<int>("actionIndex")).IsEqualTo(1);
-        await Assert.That(rf[0].Read<string>("goalPrPath")).IsEqualTo("/.build/Start/00. Goal.pr");
-        await Assert.That(rf[0].Read<string>("actionName")).IsEqualTo("query");
+        await Assert.That(await rf[0].Int("stepIndex")).IsEqualTo(3);
+        await Assert.That(await rf[0].Int("actionIndex")).IsEqualTo(1);
+        await Assert.That(await rf[0].Text("goalPrPath")).IsEqualTo("/.build/Start/00. Goal.pr");
+        await Assert.That(await rf[0].Text("actionName")).IsEqualTo("query");
     }
 
     // A step is born knowing its goal, and the goal is born knowing the step.
@@ -210,7 +210,7 @@ public class SnapshotWireTests
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
         // operator/builder makes — the C# stand-in for `set %snap.variable.i% = 2`).
         var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
-        var vars = snap.Section("Variables").Read<List<global::app.data.@this>>("variables")!;
+        var vars = await snap.Section("Variables").Rows("variables");
         var iVar = vars.First(v => v.Name == "i");
         iVar.SetValue(2L);
 
