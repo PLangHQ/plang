@@ -619,7 +619,7 @@ public class Default : IBuilder
 
         // Per-action Build() pass — each handler may stamp a type on the step's
         // terminal variable.set. See IClass.Build for the contract.
-        var buildErrors = await RunBuildPass(actions, modules, context);
+        var buildErrors = await RunBuildPass(actions, context);
         if (buildErrors.Count > 0)
         {
             return context.Error(new global::app.error.ActionError(
@@ -637,16 +637,16 @@ public class Default : IBuilder
     /// "json"). A returned typeName stamps onto the terminal variable.set's "Type"
     /// parameter; Fail aborts validation; bare Ok contributes nothing.
     /// </summary>
-    internal static async Task<List<string>> RunBuildPass(Actions actions, global::app.module.list.@this modules,
+    internal static async Task<List<string>> RunBuildPass(Actions actions,
         actor.context.@this context)
     {
         var errors = new List<string>();
         foreach (var a in actions)
         {
-            var (shell, _) = modules.GetCodeGenerated(a, context);
-            if (shell == null) continue;
+            var (instance, _) = a.Instance(context);
+            if (instance == null) continue;
             // Resolve builds a populated instance (params decoded); Build() reads them.
-            var (handler, resolveErr) = await shell.Resolve(a, context);
+            var (handler, resolveErr) = await instance.Resolve(a, context);
             if (resolveErr != null)
             {
                 errors.Add($"{a.Module}.{a.Name}: {resolveErr.Message}");

@@ -98,7 +98,7 @@ public class Stage4_TypeHintPrecedenceTests
     }
 
     private static async Task<List<string>> RunBuildPass(StepActions actions, global::app.@this app)
-        => await Default.RunBuildPass(actions, app.Module, app.User.Context);
+        => await Default.RunBuildPass(actions, app.User.Context);
 
     [Test]
     public async Task BuilderValidate_UserHintWinsOverBuildInference()
@@ -156,7 +156,7 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
     {
         var action = Make("output", "ask", ("Question", "?"));
-        var (shell, _) = _app.Module.GetCodeGenerated(action, _app.User.Context);
+        var (shell, _) = action.Instance(_app.User.Context);
         var (handler, _) = await shell!.Resolve(action, _app.User.Context);
         var result = await ((IClass)handler!).Build();
 

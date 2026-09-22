@@ -27,10 +27,10 @@ public class @this : global::app.goal.step.action.@this
         System.Func<System.Threading.Tasks.Task<global::app.data.@this>> inner,
         global::app.actor.context.@this context)
     {
-        var (shell, error) = context.App!.Module.GetCodeGenerated(this, context);
+        var (instance, error) = Instance(context);
         if (error != null) return (null, await Recorded(error, context));
         // Resolve populates the handler's params so IModifier.Wrap reads real values.
-        var (handler, resolveErr) = await shell!.Resolve(this, context);
+        var (handler, resolveErr) = await instance!.Resolve(this, context);
         if (resolveErr != null) return (null, await Recorded(resolveErr, context));
         if (handler is not global::app.module.IModifier mod)
         {

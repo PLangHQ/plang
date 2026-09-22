@@ -236,15 +236,31 @@ public partial class @this
     private async Task<global::app.data.@this> DispatchAsync(
         actor.context.@this context, global::app.callstack.call.@this call)
     {
-        var app = context.App!;
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
         // Seed (app.Run) rides on the entity and is read by the generated Resolve as the
         // pass-through for its set params — no separate skip-Resolve path.
-        var (handler, error) = app.Module.GetCodeGenerated(this, context);
+        var (code, error) = Instance(context);
         if (error != null) return context.Error(error);
 
         using var _anchor = context.AnchorScope(this);
-        return await call.ExecuteAsync(handler!, context);
+        return await call.ExecuteAsync(code!, context);
+    }
+
+    /// <summary>This action, instantiated — the live object carrying its typed parameters and
+    /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
+    /// strings. A name the module doesn't carry, or one whose entry isn't code-generated, comes
+    /// back as a keyed error.</summary>
+    public (module.ICodeGenerated? Code, global::app.error.IError? Error) Instance(
+        actor.context.@this context)
+    {
+        if (!Module.Contains(Name))
+            return (null, global::app.error.ActionError.NotFound($"Action '{Module}.{Name}'"));
+
+        var code = Module.Create(Name, context);
+        return code == null
+            ? (null, new global::app.error.ActionError(
+                $"Action '{Module}.{Name}' does not implement ICodeGenerated", "ActionError", 500))
+            : (code, null);
     }
 
     /// <summary>

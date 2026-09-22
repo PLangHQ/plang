@@ -80,7 +80,7 @@ public class Stage0_BuildMethodTests
             Make("typedreturns", "buildordered", ("Marker", "second")),
             Make("typedreturns", "buildordered", ("Marker", "third")));
 
-        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         await Assert.That(BuildOrdered.InvocationLog).IsEquivalentTo(new[] { "first", "second", "third" });
@@ -95,7 +95,7 @@ public class Stage0_BuildMethodTests
             Make("typedreturns", "buildreturnstype"),
             setAction);
 
-        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         var typeParam = setAction.Parameter.FirstOrDefault(p =>
@@ -112,7 +112,7 @@ public class Stage0_BuildMethodTests
     {
         var actions = ActionsOf(Make("typedreturns", "buildfails"));
 
-        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.User.Context);
 
         await Assert.That(errors).IsNotEmpty();
         await Assert.That(errors[0]).Contains("forced build failure");
@@ -127,7 +127,7 @@ public class Stage0_BuildMethodTests
             Make("typedreturns", "buildbareok"),
             setAction);
 
-        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         var typeParam = setAction.Parameter.FirstOrDefault(p =>
@@ -141,7 +141,7 @@ public class Stage0_BuildMethodTests
     {
         var actions = ActionsOf(Make("typedreturns", "noopbuild"));
 
-        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
     }
@@ -157,7 +157,7 @@ public class Stage0_BuildMethodTests
             firstSet,
             lastSet);
 
-        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         await Assert.That(firstSet.Parameter.Any(p =>

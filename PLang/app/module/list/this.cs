@@ -101,24 +101,6 @@ public sealed class @this : IAsyncDisposable
     public void Register(string module, string actionName, IAction instance)
         => Element(module).Add(actionName, null, instance);
 
-    /// <summary>
-    /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
-    /// </summary>
-    public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
-        global::app.goal.step.action.@this action, actor.context.@this context)
-    {
-        if (!action.Module.Contains(action.Name))
-            return (null, ActionError.NotFound($"Action '{action.Module}.{action.Name}'"));
-
-        var handler = action.Module.Create(action.Name, context);
-        if (handler == null)
-            return (null, new ActionError(
-                $"Action '{action.Module}.{action.Name}' does not implement ICodeGenerated",
-                "ActionError", 500));
-
-        return (handler, null);
-    }
-
     // --- Queries ---
 
     /// <summary>Does this module exist? Whether it HAS an action is the module's own question:

@@ -12,6 +12,12 @@ set -uo pipefail
 cmd=$(jq -r '.tool_input.command // ""')
 [ -z "$cmd" ] && exit 0
 
+# Test C# may be shell-batched — it is not production and Ingi does not review it line by line.
+# Drop whole PLang.Tests path tokens before checking, so a command naming only those has no
+# production target left and passes; one that also names production still trips the rules below.
+# Flag tokens (--include=*.cs) are filters, never write targets, so they drop too.
+cmd=$(printf '%s' "$cmd" | tr ' \t' '\n\n' | grep -v 'PLang\.Tests/' | grep -v '^-' | tr '\n' ' ')
+
 # A production target: a .cs or .goal file, or any path under a production project.
 TARGET='(PLang/|PLang\.Generators/|PlangConsole/|(^|[[:space:]"'"'"'/])os/|\.cs([[:space:]"'"'"';)|&]|$)|\.goal([[:space:]"'"'"';)|&]|$))'
 
