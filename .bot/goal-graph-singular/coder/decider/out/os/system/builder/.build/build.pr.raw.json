@@ -1,0 +1,300 @@
+{
+ "Build": {
+  "menu": {
+   "0": [
+    "variable.set"
+   ],
+   "1": [
+    "variable.set"
+   ],
+   "2": [
+    "variable.set"
+   ],
+   "3": [
+    "channel.set"
+   ],
+   "4": [
+    "goal.call"
+   ],
+   "5": [
+    "build.load",
+    "variable.set"
+   ],
+   "6": [
+    "build.goals",
+    "variable.set"
+   ],
+   "7": [
+    "goal.call"
+   ],
+   "8": [
+    "goal.call",
+    "loop.foreach"
+   ],
+   "9": [
+    "file.save"
+   ],
+   "10": [
+    "build.appSave"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%path%"
+        },
+        {
+         "name": "Value",
+         "value": "/"
+        },
+        {
+         "name": "AsDefault",
+         "value": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "Value",
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "value": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%!build.summary%"
+        },
+        {
+         "name": "Value",
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "value": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "channel",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "builder"
+        },
+        {
+         "name": "Goal",
+         "value": {
+          "name": "BuilderChannel"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "EmitBuildEvent"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "builder"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "actions": [
+      {
+       "module": "build",
+       "action": "load",
+       "parameter": [
+        {
+         "name": "Path",
+         "value": "%path%"
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%app%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "actions": [
+      {
+       "module": "build",
+       "action": "goals",
+       "parameter": [
+        {
+         "name": "Path",
+         "value": "%path%"
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%goals%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "EmitBuildEvent"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "builder"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "actions": [
+      {
+       "module": "loop",
+       "action": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%goals%"
+        },
+        {
+         "name": "ItemName",
+         "value": "%item%"
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "BuildGoal"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "builder"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "actions": [
+      {
+       "module": "file",
+       "action": "save",
+       "parameter": [
+        {
+         "name": "Path",
+         "value": "/.build/traces/%!trace.id%/manifest.json"
+        },
+        {
+         "name": "Value",
+         "value": "%traceGoals%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "actions": [
+      {
+       "module": "build",
+       "action": "appSave",
+       "parameter": []
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,228 @@
+{
+ "Properties": {
+  "menu": {
+   "0": [
+    "ui.render"
+   ],
+   "1": [
+    "ui.render"
+   ],
+   "2": [
+    "variable.set"
+   ],
+   "3": [
+    "cache.wrap",
+    "llm.query"
+   ],
+   "4": [
+    "goal.call"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "ui",
+       "action": "render",
+       "parameter": [
+        {
+         "name": "Template",
+         "value": "/system/builder/llm/templates/propertiesUser.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%propertiesUserMsg%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "ui",
+       "action": "render",
+       "parameter": [
+        {
+         "name": "Template",
+         "value": "/system/builder/llm/Properties.llm"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%propertiesSystemMsg%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%messages%"
+        },
+        {
+         "name": "Value",
+         "value": [
+          {
+           "Role": "system",
+           "Content": "%propertiesSystemMsg%"
+          },
+          {
+           "Role": "user",
+           "Content": "%propertiesUserMsg%"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "llm",
+       "action": "query",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "%messages%"
+        },
+        {
+         "name": "Model",
+         "value": "gpt-5.4-nano"
+        },
+        {
+         "name": "Schema",
+         "value": {
+          "steps": {
+           "type": "list",
+           "item": {
+            "type": "dict",
+            "fields": {
+             "index": {
+              "type": "int"
+             },
+             "actions": {
+              "type": "list",
+              "item": {
+               "type": "dict",
+               "fields": {
+                "module": {
+                 "type": "string"
+                },
+                "action": {
+                 "type": "string"
+                },
+                "parameter": {
+                 "type": "list"
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "name": "Cache",
+         "value": true
+        },
+        {
+         "name": "Tool",
+         "value": []
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "action": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "value": "%!build.cache%"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%properties%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "goal-properties"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           }
+          ]
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

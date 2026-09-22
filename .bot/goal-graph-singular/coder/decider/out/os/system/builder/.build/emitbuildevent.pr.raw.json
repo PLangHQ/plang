@@ -1,0 +1,58 @@
+{
+ "EmitBuildEvent": {
+  "menu": {
+   "0": [
+    "ui.render"
+   ],
+   "1": [
+    "output.write"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "ui",
+       "action": "render",
+       "parameter": [
+        {
+         "name": "Template",
+         "value": "/system/builder/templates/output/build-output.template"
+        },
+        {
+         "name": "Parameter",
+         "value": []
+        },
+        {
+         "name": "IsFile",
+         "value": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "output",
+       "action": "write",
+       "parameter": [
+        {
+         "name": "Data",
+         "value": "%msg%"
+        },
+        {
+         "name": "channel",
+         "value": "builder"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -21,34 +21,127 @@ def first_line(p):
         if s: return s
     return ''
 
+import re
+def example_steps(p):
+    """The `Step text: `...`` lines of an examples.md — the step shapes this action is for."""
+    if not os.path.exists(p): return []
+    return re.findall(r'Step text:\s*`([^`]+)`', open(p, encoding='utf-8').read())
+
+# Descriptions on disk that describe ONE action instead of the module. Overridden here so the
+# harness measures the decider, not the typo; each is a fix to propose for the .md.
+DESCRIPTION_FIX = {
+    'goal': 'Call another goal (`call X`), return from the current goal, and goal introspection',
+}
+
+
+def whole(p):
+    return open(p, encoding='utf-8').read().strip() if os.path.exists(p) else None
+
 def catalogue():
+    """The WHOLE teaching set per module — description, notes, and per action description, notes,
+    examples — exactly the markdown the builder's compile prompt is fed. Nothing summarised."""
     mods = {}
     for d in sorted(glob.glob(f'{ROOT}/os/system/modules/*/')):
         name = os.path.basename(d.rstrip('/'))
-        mdesc = os.path.join(d, 'module.description.md')
-        if not os.path.exists(mdesc): continue
+        if not os.path.exists(os.path.join(d, 'module.description.md')): continue
         acts = {}
         for a in sorted(glob.glob(d + '*.description.md')):
             an = os.path.basename(a)[:-len('.description.md')]
             if an == 'module': continue
-            acts[an] = first_line(a)
-        mods[name] = {'description': first_line(mdesc), 'actions': acts}
+            entry = {'description': whole(a)}
+            for facet in ('notes', 'examples'):
+                t = whole(os.path.join(d, f'{an}.{facet}.md'))
+                if t: entry[facet] = t
+            acts[an] = entry
+        mod = {'description': DESCRIPTION_FIX.get(name) or whole(os.path.join(d, 'module.description.md'))}
+        notes = whole(os.path.join(d, 'module.notes.md'))
+        if notes: mod['notes'] = notes
+        # The module's example steps, lifted from its actions' examples.md — the on-disk teaching,
+        # shown at module level so stage 1 can recognise the shapes without seeing the action docs.
+        ex = [t for an in acts for t in example_steps(os.path.join(d, f'{an}.examples.md'))]
+        if ex: mod['example_steps'] = ex
+        mod['actions'] = acts
+        mods[name] = mod
     return mods
 
 # ---------------------------------------------------------------- dataset
-def goals(limit=None, seed=0):
+CHOSEN = [   # 5 goals, varied size and modules; one long one
+    'Tests/Modules/Http/DownloadSkip/.build/downloadskip.test.pr',        #  6 steps: http, file, condition, output
+    'Tests/BuilderSanity/.build/buildersanity.test.pr',                    #  7 steps: condition, goal, loop
+    'Tests/Modules/Variable/Scoping/.build/variablescoping.test.pr',       # 12 steps: goal, list, loop
+    'Tests/Condition/Compound/.build/conditioncompound.test.pr',           # 18 steps: if + call
+    'Tests/Modules/List/.build/listops.test.pr',                           # 34 steps: the long one
+]
+
+FRESH = [   # five goals NOT tuned on: modules with no example files, and Icelandic goal names
+    'Tests/Http/ConfigBaseUrl/.build/configbaseurl.test.pr',                          # http, condition, output
+    'Tests/App/Retry/.build/retry.test.pr',                                            # error, assert
+    'Tests/Modules/Signing/ContractMismatch/.build/signingcontractmismatch.test.pr',   # signing, identity
+    'Tests/Builder/.build/mockllmsmoke.test.pr',                                       # llm, mock
+    'Tests/Modules/Test/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr',# Icelandic names, test, list
+]
+
+BUILDER = [   # the builder itself, written in plang — the hardest goals we have
+    'os/system/builder/BuildGoal/.build/start.pr',     # 17 steps: build, file, goal, list, loop, math, ui, variable
+    'os/system/builder/.build/build.pr',                # 11 steps: build, channel, file, goal, loop, variable
+    'os/system/builder/BuildGoal/.build/plan.pr',       #  9 steps: goal, ui, variable
+    'os/system/builder/BuildGoal/.build/llmfixer.pr',   #  3 steps: goal, llm, variable
+    'os/system/builder/BuildStep/.build/validate.pr',   #  3 steps: condition, goal, loop
+]
+
+WIDE = [   # ten more unseen goals, picked for module variety
+    'Tests/TestModule/TypedReturns/Stage1/.build/testrunnerpipelinestillworksaftertesterfilerename.test.pr',
+    'Tests/Modules/Signing/TimedOut/.build/signingtimedout.test.pr',
+    'Tests/Modules/Signing/Expired/.build/signingexpired.test.pr',
+    'Tests/Http/UploadFile/.build/uploadfile.test.pr',
+    'Tests/Modules/Test/Report/.build/testreportwritesjunitxml.test.pr',
+    'Tests/Event/Multiple/.build/eventmultiple.test.pr',
+    'Tests/Modules/Cache/DynamicKey/.build/cachedynamickey.test.pr',
+    'Tests/Modules/Event/Remove/.build/eventremove.test.pr',
+    'Tests/Modules/Signing/DotNavigation/.build/signingdotnavigation.test.pr',
+    'os/system/error/.build/consoleerror.pr',
+]
+
+HOLDOUT = [   # never seen: picked at random from everything not yet used
+    'Tests/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr',
+    'Tests/Modules/Test/Report/.build/testreportmaskssensitivevariables.test.pr',
+    'Tests/Modules/Signing/Roundtrip/.build/signingroundtrip.test.pr',
+    'Tests/Crypto/VerifyWrongHash/.build/verifywronghash.test.pr',
+    'Tests/CompareRedesign/Plane_MembershipNeverErrors/.build/plane_membershipnevererrors.test.pr',
+    'Tests/CompareRedesign/Cut1_CrossTypeAntisymmetry/.build/cut1.test.pr',
+    'Tests/Modules/Test/Report/.build/testreportrendersfailurewithvariables.test.pr',
+    'Tests/Identity/Unarchive/.build/identityunarchive.test.pr',
+]
+
+TWO = ['Tests/App/CallStack/.build/throwitem.pr']
+
+SETS = {'two': TWO, 'fresh': FRESH, 'builder': BUILDER, 'wide': WIDE, 'holdout': HOLDOUT}
+
+def goals(limit=None, seed=0, chosen=True):
     out = []
-    files = sorted(glob.glob(f'{ROOT}/Tests/**/.build/*.pr', recursive=True))
+    picks = SETS.get(os.environ.get('SET', ''), CHOSEN)
+    files = [f'{ROOT}/{p}' for p in picks] if chosen else sorted(glob.glob(f'{ROOT}/Tests/**/.build/*.pr', recursive=True))
     for f in files:
         try: d = json.load(open(f, encoding='utf-8'))
         except Exception: continue
         sts = d.get('step') or d.get('steps') or []
         steps = []
+        def walk(a):   # an action, its modifiers, its child steps, and recovery actions riding as a parameter value
+            if a.get('module'): yield (a['module'], a.get('action') or a.get('name'))
+            for mod in a.get('modifier') or a.get('modifiers') or []: yield from walk(mod)
+            for child in a.get('child') or []:
+                for ca in child.get('action') or child.get('actions') or []: yield from walk(ca)
+            for p in a.get('parameter') or a.get('parameters') or []:
+                v = p.get('value')
+                if isinstance(v, list):
+                    for ra in v:
+                        if isinstance(ra, dict) and ra.get('module'): yield from walk(ra)
         for st in sts:
             acts = st.get('action') or st.get('actions') or []
-            label = [(a.get('module'), a.get('action') or a.get('name')) for a in acts if a.get('module')]
+            label = [x for a in acts for x in walk(a)]
             if not label or not st.get('text'): continue
-            steps.append({'index': len(steps), 'text': st['text'], 'label': label})
+            steps.append({'index': len(steps), 'text': st['text'], 'label': label,
+                          'indent': st.get('indent') or 0, '_raw': acts})
         if steps:
             out.append({'file': os.path.relpath(f, ROOT), 'name': d.get('name', ''), 'steps': steps})
     if seed:
@@ -56,8 +149,14 @@ def goals(limit=None, seed=0):
     return out[:limit] if limit else out
 
 # ---------------------------------------------------------------- api
+DUMP = None   # set to a (folder, label) to write the raw request/response of every call
+
 def ask(state, questions, retries=4):
-    body = json.dumps({'state': state, 'model': MODEL, 'questions': questions}).encode()
+    payload = {'state': state, 'model': MODEL, 'questions': questions}
+    body = json.dumps(payload).encode()
+    if DUMP:
+        folder, label = DUMP
+        json.dump(payload, open(os.path.join(folder, f'{label}.request.json'), 'w'), indent=2, ensure_ascii=False)
     for attempt in range(retries):
         if attempt: time.sleep(2 ** attempt)
         req = urllib.request.Request(URL, data=body, method='POST', headers={
@@ -66,6 +165,9 @@ def ask(state, questions, retries=4):
         try:
             with urllib.request.urlopen(req, timeout=180) as r:
                 resp = json.loads(r.read())
+            if DUMP:
+                folder, label = DUMP
+                json.dump(resp, open(os.path.join(folder, f'{label}.response.json'), 'w'), indent=2, ensure_ascii=False)
             return resp, time.time() - t0, len(body)
         except urllib.error.HTTPError as e:
             txt = e.read().decode(errors='replace')
@@ -74,47 +176,106 @@ def ask(state, questions, retries=4):
     raise RuntimeError('retries exhausted')
 
 # ---------------------------------------------------------------- stages
-def state_for(goal, cat):
-    return {
-        'goal': goal['name'],
-        'steps': [{'index': s['index'], 'text': s['text']} for s in goal['steps']],
-        'modules': {m: v['description'] for m, v in cat.items()},
-    }
+GUIDANCE = (
+    'plang is natural-language code: each entry in `steps` is one step, written in any human language. '
+    'A step is carried out by one or more modules; each module has actions. `modules.<name>` holds a '
+    'module\'s full documentation: what it does, its actions, and example steps. A step uses a module '
+    'if carrying out the step needs one of that module\'s actions ANYWHERE in the step — including a '
+    'call that sits inside an if/foreach clause, and a trailing "write to %x%" clause (which stores a '
+    'result and uses the variable module). Each module\'s `example_steps` are steps that use it.')
+
+WINDOW = 15   # steps asked about per request; the state always carries the whole goal for context
+
+TEXT_STATE = True   # v0.1's shape: plain text, steps numbered from 1, catalogue appended
+
+# How plang is structured — taught once, in plain words, with no syntax. Intent only: the
+# developer writes a step in any human language, so no wording is ever assumed.
+STRUCTURE = '''How plang is structured:
+- A goal is a list of steps. Each step is a sentence saying what to do, written in any human language. There is no syntax and no reserved words; only the intent matters.
+- A step is carried out by one or more actions. Every action belongs to exactly one module.
+- Within a step the actions form a chain: the result of one action can feed the next one.
+- A step may keep its result for later use by naming a variable (a name between % signs). That is the variable module's job, in addition to whatever module did the work.
+- A step may guard part of its work behind a condition (condition module), repeat part of it for each item of a collection (loop module), or attach error handling to it (error module). Each of those is an action of its own, and whatever runs INSIDE the guard, the loop or the error handler is also an action of its own — so calling a goal inside an if, a loop or an error handler uses the goal module as well.
+- So one step often uses several modules: the one doing the main work; condition/loop/error for a surrounding clause; goal when a goal is called anywhere in it; variable when the result is kept.
+- A module counts as used by a step whenever the step's sentence names work that module does, EVEN IF that work only runs in some cases — the body of a condition, of a loop, or of an error handler is named by the step and counts, regardless of whether it happens to run.
+- A step that REGISTERS something to happen later — an event handler, a callback, a scheduled goal — does not do that work now. Naming a goal to be run later is not calling it; the step uses the module that does the registering.
+- Steps are listed in order and may be indented. An indented step is the body of the step above it, and belongs to that step; each step is still asked about on its own, for what its own sentence does.'''
+
+def step_no(s): return s['index'] + 1
+
+def state_for(goal, cat, modules=None):
+    """Stage 1 sees MODULE-level docs only (what each module is for) — it decides modules.
+    Stage 2 passes `modules`: only the chosen ones, with their full action docs — it decides actions."""
+    if modules is None:
+        shown = {m: {k: v[k] for k in ('description', 'notes', 'example_steps') if k in v} for m, v in cat.items()}
+    else:
+        shown = {m: cat[m] for m in sorted(modules)}
+    if not TEXT_STATE:
+        return {'guidance': GUIDANCE, 'goal': goal['name'],
+                'steps': [{'index': s['index'], 'text': s['text']} for s in goal['steps']], 'modules': shown}
+
+    lines = [STRUCTURE, '', f'This is a plang goal called {goal["name"]}. Its steps are numbered.', '']
+    # Indentation is structure: an indented step is the body of the step above it.
+    for s in goal['steps']:
+        lines.append(f'step {step_no(s)}: ' + '    ' * s.get('indent', 0) + s['text'])
+    lines += ['', 'These are the plang modules you may choose from:']
+    for m, v in shown.items():
+        lines.append(f'- {m}: {v["description"]}')
+        if v.get('notes'): lines.append(f'  notes: {v["notes"]}')
+        for ex in v.get('example_steps', []): lines.append(f'  e.g. `{ex}`')
+        if modules is not None:   # stage 2: the module's actions, in full
+            for an, av in v['actions'].items():
+                lines.append(f'  action {m}.{an}: {av["description"]}')
+                if av.get('examples'): lines.append(f'    examples: {av["examples"]}')
+    return '\n'.join(lines)
+
+def windows(steps):
+    for i in range(0, len(steps), WINDOW):
+        yield steps[i:i + WINDOW]
 
 def stage1(goal, cat):
-    qs = {}
-    for s in goal['steps']:
-        for m in cat:
-            qs[f's{s["index"]}_{m}'] = {
-                'type': 'noul',
-                'instructions': f'Does `steps[{s["index"]}].text` use the plang module `{m}` (described at `modules.{m}`) to do what it says?'}
-    resp, secs, nbytes = ask(state_for(goal, cat), qs)
-    probs = collections.defaultdict(dict)
-    for k, a in resp['answers'].items():
-        i, m = k[1:].split('_', 1)
-        probs[int(i)][m] = a.get('noul')
-    return probs, secs, nbytes, len(qs), resp.get('usage', {})
+    state = state_for(goal, cat)
+    probs = collections.defaultdict(dict); secs = nbytes = nq = 0; usage = collections.Counter()
+    for win in windows(goal['steps']):
+        qs = {f's{s["index"]}_{m}': {'type': 'noul', 'instructions':
+                  f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. Does step {step_no(s)} — its own work, or '
+                  f'anything it guards behind a condition, repeats in a loop, or hands to an error handler — need an '
+                  f'action from the plang module `{m}`? (Keeping the result in a variable afterwards is asked separately.)'}
+              for s in win for m in cat}
+        # stage 1b, same request: the result-store is its own question, not a module decision
+        for s in win:
+            qs[f's{s["index"]}_@store'] = {'type': 'noul', 'instructions':
+                f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. After doing its work, does step {step_no(s)} '
+                f'keep its result for later use in a variable?'}
+        resp, t, b = ask(state, qs)
+        secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
+        for k, a in resp['answers'].items():
+            i, m = k[1:].split('_', 1)
+            probs[int(i)][m] = a.get('noul')
+    return probs, secs, nbytes, nq, dict(usage)
 
 def stage2(goal, cat, chosen):   # chosen: {step_index: [modules]}
-    qs = {}
-    for s in goal['steps']:
-        for m in chosen.get(s['index'], []):
-            acts = cat[m]['actions']
-            if len(acts) <= 1: continue
-            qs[f's{s["index"]}_{m}'] = {
-                'type': 'choice',
-                'instructions': f'`steps[{s["index"]}].text` uses the plang module `{m}`. Which action of `{m}` does it call?',
-                'criteria': acts}
-    if not qs: return {}, 0.0, 0, 0, {}
-    resp, secs, nbytes = ask(state_for(goal, cat), qs)
-    out = {}
-    for k, a in resp['answers'].items():
-        i, m = k[1:].split('_', 1)
-        out[(int(i), m)] = (a.get('choice'), a.get('confidence'))
-    for s in goal['steps']:                       # single-action modules need no question
-        for m in chosen.get(s['index'], []):
-            if len(cat[m]['actions']) == 1: out[(s['index'], m)] = (next(iter(cat[m]['actions'])), 1.0)
-    return out, secs, nbytes, len(qs), resp.get('usage', {})
+    used = {m for ms in chosen.values() for m in ms}
+    state = state_for(goal, cat, modules=used)
+    out = {}; secs = nbytes = nq = 0; usage = collections.Counter()
+    for win in windows(goal['steps']):
+        qs = {}
+        for s in win:
+            for m in chosen.get(s['index'], []):
+                acts = cat[m]['actions']
+                if len(acts) == 1:
+                    out[(s['index'], m)] = (next(iter(acts)), 1.0); continue
+                qs[f's{s["index"]}_{m}'] = {
+                    'type': 'choice',
+                    'instructions': f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. It uses the plang module `{m}`. Which action of `{m}` does step {step_no(s)} call?',
+                    'criteria': {an: av['description'] for an, av in acts.items()}}
+        if not qs: continue
+        resp, t, b = ask(state, qs)
+        secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
+        for k, a in resp['answers'].items():
+            i, m = k[1:].split('_', 1)
+            out[(int(i), m)] = (a.get('choice'), a.get('confidence'))
+    return out, secs, nbytes, nq, dict(usage)
 
 # ---------------------------------------------------------------- run
 def run(name, limit, seed, threshold=0.5, workers=4):
@@ -127,7 +288,7 @@ def run(name, limit, seed, threshold=0.5, workers=4):
         rec = {'goal': goal['name'], 'file': goal['file'], 'steps': goal['steps']}
         try:
             probs, s1, b1, q1, u1 = stage1(goal, cat)
-            chosen = {i: [m for m, p in probs[i].items() if p is not None and p >= threshold] for i in probs}
+            chosen = {i: [m for m, p in probs[i].items() if m in cat and p is not None and p >= threshold] for i in probs}
             acts, s2, b2, q2, u2 = stage2(goal, cat, chosen)
             rec.update(stage1={'probs': {str(i): probs[i] for i in probs}, 'secs': s1, 'bytes': b1, 'questions': q1, 'usage': u1},
                        stage2={'choice': {f'{i}|{m}': v for (i, m), v in acts.items()}, 'secs': s2, 'bytes': b2, 'questions': q2, 'usage': u2})

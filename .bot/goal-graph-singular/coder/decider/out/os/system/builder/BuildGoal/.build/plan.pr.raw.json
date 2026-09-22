@@ -1,0 +1,360 @@
+{
+ "Plan": {
+  "menu": {
+   "0": [
+    "variable.set"
+   ],
+   "1": [
+    "ui.render"
+   ],
+   "2": [
+    "ui.render"
+   ],
+   "3": [
+    "ui.render"
+   ],
+   "4": [
+    "error.handle",
+    "goal.call"
+   ],
+   "5": [
+    "error.handle",
+    "goal.call"
+   ],
+   "6": [
+    "variable.set"
+   ],
+   "7": [
+    "variable.set"
+   ],
+   "8": [
+    "variable.set"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%modules%"
+        },
+        {
+         "name": "Value",
+         "value": "%!app.module.list%"
+        },
+        {
+         "name": "Type",
+         "value": "list"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "ui",
+       "action": "render",
+       "parameter": [
+        {
+         "name": "Template",
+         "value": "/system/actions/v2/summary.planner.md"
+        },
+        {
+         "name": "Parameter",
+         "value": "%modules%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "ui",
+       "action": "render",
+       "parameter": [
+        {
+         "name": "Template",
+         "value": "/system/builder/llm/templates/goalFormat.template"
+        },
+        {
+         "name": "Parameter",
+         "value": "%modules%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "ui",
+       "action": "render",
+       "parameter": [
+        {
+         "name": "Template",
+         "value": "/system/builder/llm/Plan.llm"
+        },
+        {
+         "name": "Parameter",
+         "value": "%modules%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%messages%"
+        },
+        {
+         "name": "Value",
+         "value": [
+          {
+           "Role": "system",
+           "Content": "%planPrompt%"
+          },
+          {
+           "Role": "user",
+           "Content": "%goalForLlm%"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "QueryAndValidatePlan"
+         }
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "action": "handle",
+         "parameter": [
+          {
+           "name": "RetryCount",
+           "value": 2
+          }
+         ],
+         "recovery": [
+          {
+           "module": "goal",
+           "action": "call",
+           "parameter": [
+            {
+             "name": "GoalName",
+             "value": {
+              "name": "LlmFixer"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%plan.system%"
+        },
+        {
+         "name": "Value",
+         "value": "%planPrompt%"
+        },
+        {
+         "name": "Type",
+         "value": "text"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%plan.user%"
+        },
+        {
+         "name": "Value",
+         "value": "%goalForLlm%"
+        },
+        {
+         "name": "Type",
+         "value": "text"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%plan.usage%"
+        },
+        {
+         "name": "Value",
+         "value": {
+          "model": "%plan.Model%",
+          "promptTokens": "%plan.PromptTokens%",
+          "cachedTokens": "%plan.CachedTokens%",
+          "completionTokens": "%plan.CompletionTokens%",
+          "totalTokens": "%plan.TotalTokens%",
+          "cost": "%plan.Cost%",
+          "cached": "%plan.Cached%"
+         }
+        },
+        {
+         "name": "Type",
+         "value": "dict"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "QueryAndValidatePlan": {
+  "menu": {
+   "0": [
+    "cache.wrap",
+    "llm.query"
+   ],
+   "1": [
+    "goal.call"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "llm",
+       "action": "query",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "%messages%"
+        },
+        {
+         "name": "Schema",
+         "value": "{\"description\": \"string\", \"steps\": \"list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>\"}"
+        },
+        {
+         "name": "Cache",
+         "value": true
+        },
+        {
+         "name": "format",
+         "value": "json"
+        },
+        {
+         "name": "MaxValidationRetries",
+         "value": 3
+        },
+        {
+         "name": "ContinuePreviousConversation",
+         "value": false
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "action": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "value": 600000
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%plan%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Validate"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

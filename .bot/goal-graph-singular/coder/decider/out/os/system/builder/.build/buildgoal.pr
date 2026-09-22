@@ -1,0 +1,39 @@
+{
+ "name": "BuildGoal",
+ "path": "/os/system/builder/BuildGoal.goal",
+ "step": [
+  {
+   "index": 0,
+   "text": "call BuildGoal/Start goal=%goal%",
+   "lineNumber": 4,
+   "comment": "Bootstrap shim \u2014 Build.goal calls this with goal=%goal%; delegates to BuildGoal/Start.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "BuildGoal/Start"
+       }
+      },
+      {
+       "name": "goal",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goal%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": []
+}

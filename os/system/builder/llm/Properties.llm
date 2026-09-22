@@ -34,6 +34,35 @@ BEFORE it writes the result, so `file.read` runs first. `ResolveVariables` is le
 step does not ask for it. `Value` is `%!data%` because that is the result of the action before it
 in the same step.
 
+Modifiers. A menu entry marked `[modifier]` — `error.handle`, `cache.wrap`, `timeout.after` — is
+never an action of its own. It wraps the action before it: put it in that action's `modifier` list.
+What an `on error` clause runs — "on error call X" — is the error.handle's `recovery`: a list of
+actions, the same shape as the step's own. Given:
+
+  step 3: call Compile, on error call HandleFailure, then retry 2 times
+     menu:
+       goal.call
+          GoalName (goal.call, required)
+       error.handle  [modifier]
+          Key (text, optional)
+          RetryCount (number, optional)
+
+the step's entry is:
+
+  {"index": 3, "actions": [
+    {"module": "goal", "action": "call",
+     "parameter": [{"name": "GoalName", "value": {"name": "Compile"}}],
+     "modifier": [
+       {"module": "error", "action": "handle",
+        "parameter": [{"name": "RetryCount", "value": 2}],
+        "recovery": [
+          {"module": "goal", "action": "call",
+           "parameter": [{"name": "GoalName", "value": {"name": "HandleFailure"}}]}]}]}
+  ]}
+
+A goal call's value is the goal's name and, when the step passes any, its arguments:
+`{"name": "SendMail", "parameter": [{"name": "to", "value": "%email%"}]}`.
+
 Filling a property:
 - A value the step writes goes in as written — a quoted text as that text, a %variable% with its
   % signs, a number as a number.

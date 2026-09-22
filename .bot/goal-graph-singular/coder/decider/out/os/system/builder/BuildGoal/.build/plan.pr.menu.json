@@ -1,0 +1,42 @@
+{
+ "Plan": {
+  "0": [
+   "variable.set"
+  ],
+  "1": [
+   "ui.render"
+  ],
+  "2": [
+   "ui.render"
+  ],
+  "3": [
+   "ui.render"
+  ],
+  "4": [
+   "error.handle",
+   "goal.call"
+  ],
+  "5": [
+   "error.handle",
+   "goal.call"
+  ],
+  "6": [
+   "variable.set"
+  ],
+  "7": [
+   "variable.set"
+  ],
+  "8": [
+   "variable.set"
+  ]
+ },
+ "QueryAndValidatePlan": {
+  "0": [
+   "cache.wrap",
+   "llm.query"
+  ],
+  "1": [
+   "goal.call"
+  ]
+ }
+}

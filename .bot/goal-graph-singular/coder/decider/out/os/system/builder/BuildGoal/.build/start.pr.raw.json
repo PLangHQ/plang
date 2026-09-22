@@ -1,0 +1,1286 @@
+{
+ "Start": {
+  "menu": {
+   "0": [],
+   "1": [
+    "variable.set"
+   ],
+   "2": [
+    "variable.set"
+   ],
+   "3": [
+    "error.handle",
+    "goal.call"
+   ],
+   "4": [
+    "variable.set"
+   ],
+   "5": [
+    "variable.set"
+   ],
+   "6": [],
+   "7": [
+    "variable.set"
+   ],
+   "8": [
+    "math.subtract"
+   ],
+   "9": [
+    "math.divide"
+   ],
+   "10": [
+    "variable.set"
+   ],
+   "11": [],
+   "12": [
+    "build.goalsSave"
+   ],
+   "13": [
+    "build.goalsSave"
+   ],
+   "14": [
+    "build.goalsSave"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "goalHeader"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           }
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%buildStart%"
+        },
+        {
+         "name": "Value",
+         "value": "%Now.Ticks%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%trace%"
+        },
+        {
+         "name": "Value",
+         "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Compile"
+         }
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "action": "handle",
+         "parameter": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "action": "call",
+           "parameter": [
+            {
+             "name": "GoalName",
+             "value": {
+              "name": "HandleBuildFailure"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%trace.menu%"
+        },
+        {
+         "name": "Value",
+         "value": "%menu%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%parentGoal%"
+        },
+        {
+         "name": "Value",
+         "value": "%goal%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "BuildSubGoal",
+          "parameter": [
+           {
+            "name": "subGoal",
+            "value": "%item%"
+           }
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%goal%"
+        },
+        {
+         "name": "Value",
+         "value": "%parentGoal%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "actions": [
+      {
+       "module": "math",
+       "action": "subtract",
+       "parameter": [
+        {
+         "name": "A",
+         "value": "%Now.Ticks%"
+        },
+        {
+         "name": "B",
+         "value": "%buildStart%"
+        },
+        {
+         "name": "write to",
+         "value": "%elapsedTicks%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "actions": [
+      {
+       "module": "math",
+       "action": "divide",
+       "parameter": [
+        {
+         "name": "A",
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "B",
+         "value": 10000
+        },
+        {
+         "name": "write to",
+         "value": "%elapsedMs%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%trace.durationMs%"
+        },
+        {
+         "name": "Value",
+         "value": "%elapsedMs%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "actions": [
+      {
+       "module": "file",
+       "action": "write",
+       "parameter": [
+        {
+         "name": "Path",
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+        },
+        {
+         "name": "Value",
+         "value": "%trace%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "actions": [
+      {
+       "module": "build",
+       "action": "goalsSave",
+       "parameter": [
+        {
+         "name": "Goal",
+         "value": "%goal.Name%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "actions": [
+      {
+       "module": "build",
+       "action": "goalsSave",
+       "parameter": [
+        {
+         "name": "Goal",
+         "value": "%goal%"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "action": "handle",
+         "parameter": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "action": "call",
+           "parameter": [
+            {
+             "name": "GoalName",
+             "value": {
+              "name": "HandleBuildFailure"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "actions": [
+      {
+       "module": "build",
+       "action": "goalsSave",
+       "parameter": [
+        {
+         "name": "Goal",
+         "value": "%goal%"
+        },
+        {
+         "name": "App",
+         "value": "%app%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "Compile": {
+  "menu": {
+   "0": [
+    "goal.call"
+   ],
+   "1": [
+    "goal.call",
+    "loop.foreach"
+   ],
+   "2": [
+    "goal.call"
+   ],
+   "3": [
+    "goal.call",
+    "loop.foreach"
+   ],
+   "4": [
+    "goal.call",
+    "loop.foreach"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Decide"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "loop",
+       "action": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "ItemName",
+         "value": "%item%"
+        },
+        {
+         "name": "KeyName",
+         "value": "%key%"
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Menu"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "%item%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Properties"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "loop",
+       "action": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "ItemName",
+         "value": "%item%"
+        },
+        {
+         "name": "KeyName",
+         "value": "%key%"
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Apply"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "%item%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "actions": [
+      {
+       "module": "loop",
+       "action": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "ItemName",
+         "value": "%item%"
+        },
+        {
+         "name": "KeyName",
+         "value": "%key%"
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "ValidateStep"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "%item%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "Menu": {
+  "menu": {
+   "0": [
+    "loop.foreach"
+   ],
+   "1": [
+    "variable.set"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "loop",
+       "action": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%modules%"
+        },
+        {
+         "name": "ItemName",
+         "value": "%item%"
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": "%MenuModule%"
+        },
+        {
+         "name": "module",
+         "value": "%item%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%menu[step.Index]%"
+        },
+        {
+         "name": "Value",
+         "value": "%choices%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "MenuModule": {
+  "menu": {
+   "0": [
+    "variable.set"
+   ],
+   "1": [
+    "condition.if"
+   ],
+   "2": [
+    "list.add"
+   ],
+   "3": [
+    "list.add"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%key%"
+        },
+        {
+         "name": "Value",
+         "value": "\"s%step.Index%_%module.Name%\""
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "condition",
+       "action": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "value": "%moduleAnswer[key].noul%"
+        },
+        {
+         "name": "Operator",
+         "value": "less_than"
+        },
+        {
+         "name": "Right",
+         "value": "%threshold%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "list",
+       "action": "add",
+       "parameter": [
+        {
+         "name": "ListName",
+         "value": "%choices%"
+        },
+        {
+         "name": "Value",
+         "value": "\"%module.Name%.%module.Actions[0].Name%\""
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "list",
+       "action": "add",
+       "parameter": [
+        {
+         "name": "ListName",
+         "value": "%choices%"
+        },
+        {
+         "name": "Value",
+         "value": "\"%module.Name%.%actionAnswer[key].choice%\""
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "Apply": {
+  "menu": {
+   "0": [
+    "variable.set"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%goal.step[step.Index].action%"
+        },
+        {
+         "name": "Value",
+         "value": "%properties.steps[step.Index].actions%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "ValidateStep": {
+  "menu": {
+   "0": [
+    "build.validate"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "build",
+       "action": "validate",
+       "parameter": [
+        {
+         "name": "Actions",
+         "value": [
+          "%goal.step[step.Index].action%"
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "action": "handle",
+         "parameter": [
+          {
+           "name": "RetryCount",
+           "value": 2
+          }
+         ],
+         "recovery": [
+          {
+           "module": "goal",
+           "action": "call",
+           "parameter": [
+            {
+             "name": "GoalName",
+             "value": {
+              "name": "FixProperties"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "FixProperties": {
+  "menu": {
+   "0": [
+    "variable.set"
+   ],
+   "1": [
+    "cache.wrap",
+    "llm.query"
+   ],
+   "2": [
+    "goal.call"
+   ],
+   "3": [
+    "event.on"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%fixMessages%"
+        },
+        {
+         "name": "Value",
+         "value": "[{\"Role\":\"user\",\"Content\":\"Your answer was rejected by the validator: %!error.Message%\\n\\nReturn the corrected answer in the same shape.\"}]"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "llm",
+       "action": "query",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "%fixMessages%"
+        },
+        {
+         "name": "Model",
+         "value": "gpt-5.4-nano"
+        },
+        {
+         "name": "Cache",
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "ContinuePreviousConversation",
+         "value": true
+        },
+        {
+         "name": "Format",
+         "value": "json"
+        },
+        {
+         "name": "Schema",
+         "value": "%properties%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Apply"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "%step%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "event",
+       "action": "on",
+       "parameter": [
+        {
+         "name": "Trigger",
+         "value": "step-validation-error"
+        },
+        {
+         "name": "GoalToCall",
+         "value": {
+          "name": "/system/builder/EmitBuildEvent"
+         }
+        },
+        {
+         "name": "StepPattern",
+         "value": "%step%"
+        },
+        {
+         "name": "ActionPattern",
+         "value": "%!error.Message%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "BuildSubGoal": {
+  "menu": {
+   "0": [
+    "variable.set"
+   ],
+   "1": [],
+   "2": [
+    "variable.set"
+   ],
+   "3": [
+    "error.handle",
+    "goal.call"
+   ],
+   "4": [
+    "list.add"
+   ],
+   "5": [
+    "math.subtract"
+   ],
+   "6": [
+    "math.divide"
+   ],
+   "7": []
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%goal%"
+        },
+        {
+         "name": "Value",
+         "value": "%subGoal%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": "/system/builder/EmitBuildEvent",
+         "type": "text"
+        },
+        {
+         "name": "Actor",
+         "value": {
+          "name": "kind",
+          "value": "subGoalHeader"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%subgoalStart%"
+        },
+        {
+         "name": "Value",
+         "value": "%Now.Ticks%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "action": "handle",
+         "parameter": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "action": "call",
+           "parameter": [
+            {
+             "name": "GoalName",
+             "value": "HandleBuildFailure"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "actions": [
+      {
+       "module": "list",
+       "action": "add",
+       "parameter": [
+        {
+         "name": "ListName",
+         "value": "%trace.subGoals%"
+        },
+        {
+         "name": "Value",
+         "value": "{goal: %goal%, menu: %menu%}"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "actions": [
+      {
+       "module": "math",
+       "action": "subtract",
+       "parameter": [
+        {
+         "name": "A",
+         "value": "%Now.Ticks%"
+        },
+        {
+         "name": "B",
+         "value": "%subgoalStart%"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "action": "wrap",
+         "parameter": []
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "actions": [
+      {
+       "module": "math",
+       "action": "divide",
+       "parameter": [
+        {
+         "name": "A",
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "B",
+         "value": 10000
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%subgoalMs%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": "/system/builder/EmitBuildEvent",
+         "type": "text"
+        },
+        {
+         "name": "Actor",
+         "value": {
+          "name": "kind",
+          "value": "subGoalDone"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "HandleBuildFailure": {
+  "menu": {
+   "0": [
+    "goal.call"
+   ],
+   "1": [
+    "variable.set"
+   ],
+   "2": [
+    "file.save"
+   ],
+   "3": [
+    "error.throw"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "goalError"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           },
+           {
+            "name": "errorMessage",
+            "value": "%!error.Message%"
+           }
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%trace.buildError%"
+        },
+        {
+         "name": "Value",
+         "value": {
+          "key": "%!error.Key%",
+          "message": "%!error.Message%",
+          "goal": "%goal.Name%"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "file",
+       "action": "save",
+       "parameter": [
+        {
+         "name": "Path",
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+        },
+        {
+         "name": "Value",
+         "value": "%trace%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "actions": [
+      {
+       "module": "error",
+       "action": "throw",
+       "parameter": [
+        {
+         "name": "Data",
+         "value": "%!error%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

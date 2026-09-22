@@ -1,0 +1,157 @@
+{
+ "Validate": {
+  "menu": {
+   "0": [
+    "condition.if",
+    "error.throw"
+   ],
+   "1": [
+    "condition.if",
+    "error.throw"
+   ],
+   "2": [
+    "goal.call",
+    "loop.foreach"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "condition",
+       "action": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "value": "%compileResult.errors%"
+        },
+        {
+         "name": "Operator",
+         "value": "not_empty"
+        }
+       ]
+      },
+      {
+       "module": "error",
+       "action": "throw",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "Step %step.Index% (%step.Text%): %compileResult.errors%"
+        },
+        {
+         "name": "Key",
+         "value": "GoalBug"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "condition",
+       "action": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "value": "%compileResult.actions%"
+        },
+        {
+         "name": "Operator",
+         "value": "empty"
+        }
+       ]
+      },
+      {
+       "module": "error",
+       "action": "throw",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "Step %step.Index% (%step.Text%) has no actions."
+        },
+        {
+         "name": "Key",
+         "value": "GoalBug"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "loop",
+       "action": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%compileResult.actions%"
+        },
+        {
+         "name": "ItemName",
+         "value": "__vAct__"
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "ValidateAction"
+         }
+        },
+        {
+         "name": "Actor",
+         "value": "%__vAct__%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "ValidateAction": {
+  "menu": {
+   "0": [
+    "error.throw"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "error",
+       "action": "throw",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
+        },
+        {
+         "name": "Key",
+         "value": "GoalBug"
+        },
+        {
+         "name": "Data",
+         "value": "%__vAct__.errors%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,147 @@
+{
+ "Start": {
+  "0": [],
+  "1": [
+   "variable.set"
+  ],
+  "2": [
+   "variable.set"
+  ],
+  "3": [
+   "error.handle",
+   "goal.call"
+  ],
+  "4": [
+   "variable.set"
+  ],
+  "5": [
+   "variable.set"
+  ],
+  "6": [
+   "variable.get"
+  ],
+  "7": [
+   "variable.set"
+  ],
+  "8": [
+   "math.subtract"
+  ],
+  "9": [
+   "math.divide"
+  ],
+  "10": [
+   "variable.set"
+  ],
+  "11": [],
+  "12": [
+   "build.goalsSave"
+  ],
+  "13": [
+   "build.goalsSave"
+  ],
+  "14": [
+   "build.goalsSave"
+  ]
+ },
+ "Compile": {
+  "0": [
+   "goal.call"
+  ],
+  "1": [
+   "goal.call",
+   "loop.foreach"
+  ],
+  "2": [
+   "goal.call"
+  ],
+  "3": [
+   "goal.call",
+   "loop.foreach"
+  ],
+  "4": [
+   "goal.call",
+   "loop.foreach"
+  ]
+ },
+ "Menu": {
+  "0": [
+   "loop.foreach"
+  ],
+  "1": [
+   "variable.set"
+  ]
+ },
+ "MenuModule": {
+  "0": [
+   "variable.set"
+  ],
+  "1": [
+   "condition.if"
+  ],
+  "2": [],
+  "3": [
+   "condition.if",
+   "list.add"
+  ]
+ },
+ "Apply": {
+  "0": [
+   "variable.set"
+  ]
+ },
+ "ValidateStep": {
+  "0": [
+   "build.validate"
+  ]
+ },
+ "FixProperties": {
+  "0": [
+   "variable.set"
+  ],
+  "1": [
+   "cache.wrap",
+   "llm.query"
+  ],
+  "2": [
+   "goal.call"
+  ],
+  "3": [
+   "event.on"
+  ]
+ },
+ "BuildSubGoal": {
+  "0": [
+   "variable.set"
+  ],
+  "1": [],
+  "2": [
+   "variable.set"
+  ],
+  "3": [
+   "error.handle",
+   "goal.call"
+  ],
+  "4": [
+   "list.add"
+  ],
+  "5": [
+   "math.subtract"
+  ],
+  "6": [
+   "math.divide"
+  ],
+  "7": []
+ },
+ "HandleBuildFailure": {
+  "0": [],
+  "1": [
+   "variable.set"
+  ],
+  "2": [
+   "file.save"
+  ],
+  "3": [
+   "error.throw"
+  ]
+ }
+}

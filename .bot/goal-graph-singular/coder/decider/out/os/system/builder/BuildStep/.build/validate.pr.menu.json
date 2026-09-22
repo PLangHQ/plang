@@ -1,0 +1,21 @@
+{
+ "Validate": {
+  "0": [
+   "condition.if",
+   "error.throw"
+  ],
+  "1": [
+   "condition.if",
+   "error.throw"
+  ],
+  "2": [
+   "goal.call",
+   "loop.foreach"
+  ]
+ },
+ "ValidateAction": {
+  "0": [
+   "error.throw"
+  ]
+ }
+}

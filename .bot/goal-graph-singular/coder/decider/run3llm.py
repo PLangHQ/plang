@@ -25,19 +25,19 @@ def run(setname, show=30):
     for g in goals:
         plan = {s['index']: [(m, a) for m, a in s['label']] for s in g['steps']}
         try:
-            ans, t, u, _ = s3.ask(g, plan, cat)
+            ans, t, u, (_, order) = s3.ask(g, plan, cat)
         except Exception as e:
             print(f'  {g["name"]}: ERROR {type(e).__name__} {str(e)[:120]}'); continue
         secs += t; usage.update({k: v for k, v in u.items() if isinstance(v, int)})
-        got = s3.flatten(ans)
+        got = s3.flatten(ans, order)
         for s in g['steps']:
             want = pp.label_params(s)
             declared_default = {}
-            for (m, a, pname), v in want.items():
+            for (n, m, a, pname), v in want.items():
                 d = (pp.parameters(m, a) or {}).get(pname, {}).get('default')
                 # a materialised default is not something the step stated
                 if d is not None and norm(v) == norm(d): continue
-                key = (s['index'], m, a, pname)
+                key = (s['index'], n, pname)
                 if key not in got:
                     missing += 1
                     misses.append(('MISSING', s['text'][:52], f'{m}.{a}.{pname}', norm(v), '-'))
@@ -46,11 +46,11 @@ def run(setname, show=30):
                     bad += 1
                     misses.append(('WRONG', s['text'][:52], f'{m}.{a}.{pname}', norm(v), norm(got[key])))
         # parameters the model produced that the .pr does not have
-        wanted = {(s['index'], m, a, p) for s in g['steps'] for (m, a, p) in pp.label_params(s)}
+        wanted = {(s['index'], n, p) for s in g['steps'] for (n, m, a, p) in pp.label_params(s)}
         for k in got:
             if k not in wanted:
                 extra += 1
-                misses.append(('EXTRA', '', f'{k[1]}.{k[2]}.{k[3]}', '-', norm(got[k])))
+                misses.append(('EXTRA', '', f'step{k[0]+1} action{k[1]}.{k[2]}', '-', norm(got[k])))
     tot = ok + bad + missing
     print(f'{setname}: {len(goals)} goals, {secs:.1f}s, {dict(usage)}')
     print(f'  params in .pr: {tot}   matched {ok}  wrong {bad}  missing {missing}   -> {ok/tot:.1%}' if tot else '  none')

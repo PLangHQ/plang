@@ -1,0 +1,73 @@
+{
+ "name": "EmitBuildEvent",
+ "path": "/os/system/builder/EmitBuildEvent.goal",
+ "step": [
+  {
+   "index": 0,
+   "text": "render template \"/system/builder/templates/output/build-output.template\", write to %msg%",
+   "lineNumber": 11,
+   "comment": "One-call helper for build-time output. Caller passes %event% (name) plus any\nvariables the template needs:\n- call EmitBuildEvent event=\"build-path\"                              (path is already in scope at the caller? still passes as goal param)\n- call EmitBuildEvent event=\"step-fresh\", step=%step%\n- call EmitBuildEvent event=\"build-error\", goal=%goal%, errorMessage=%!error.Message%\nRenders /system/builder/templates/output/build-output.template (one\ntemplate, one case-block per event) and writes the result to the \"builder\"\nchannel. Swap the channel's backing goal to redirect all build output.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/templates/output/build-output.template"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "text": "write out %msg% channel: \"builder\"",
+   "lineNumber": 12,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "output",
+     "name": "write",
+     "parameter": [
+      {
+       "name": "Data",
+       "type": {
+        "name": "item"
+       },
+       "value": "%msg%"
+      },
+      {
+       "name": "channel",
+       "type": {
+        "name": "item"
+       },
+       "value": "builder"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": []
+}

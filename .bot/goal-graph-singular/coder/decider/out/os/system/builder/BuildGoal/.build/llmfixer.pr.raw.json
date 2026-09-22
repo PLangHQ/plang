@@ -1,0 +1,109 @@
+{
+ "LlmFixer": {
+  "menu": {
+   "0": [],
+   "1": [],
+   "2": [
+    "cache.wrap",
+    "llm.query"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "system",
+       "action": "EmitBuildEvent",
+       "parameter": [
+        {
+         "name": "kind",
+         "value": "planner-validation-failed"
+        },
+        {
+         "name": "errorMessage",
+         "value": "%!error.Message%"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "actions": [
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%fixerMessages%"
+        },
+        {
+         "name": "Value",
+         "value": [
+          {
+           "Role": "user",
+           "Content": "Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\"module.action\"` strings from the catalog (e.g. `\"variable.set\"`, `\"file.read\"`). `index` is 0-based."
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "actions": [
+      {
+       "module": "llm",
+       "action": "query",
+       "parameter": [
+        {
+         "name": "Message",
+         "value": "%fixerMessages%"
+        },
+        {
+         "name": "Schema",
+         "value": {
+          "description": "string",
+          "steps": "list<{index: int, actions: list<string>, confidence: string, explanation?: string}>"
+         }
+        },
+        {
+         "name": "Cache",
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "previousConversation",
+         "value": "%plan%"
+        },
+        {
+         "name": "writeTo",
+         "value": "%plan%"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "action": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "value": 600000
+          },
+          {
+           "name": "Sliding",
+           "value": true
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

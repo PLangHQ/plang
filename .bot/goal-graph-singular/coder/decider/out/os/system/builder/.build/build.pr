@@ -1,0 +1,390 @@
+{
+ "name": "Build",
+ "path": "/os/system/builder/Build.goal",
+ "step": [
+  {
+   "index": 0,
+   "text": "set default %path% = \"/\"",
+   "lineNumber": 6,
+   "comment": "Main entry point for the PLang builder\nTransforms .goal files (natural language) into .pr files (JSON the Runtime executes)\nParameters: %path% - folder to build (default: \".\")",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%path%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "/"
+      },
+      {
+       "name": "AsDefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "text": "set default %!build.cache% = true",
+   "lineNumber": 7,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%!build.cache%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": true
+      },
+      {
+       "name": "AsDefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "text": "set default %!build.summary% = true",
+   "lineNumber": 8,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%!build.summary%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": true
+      },
+      {
+       "name": "AsDefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "text": "set channel \"builder\" call BuilderChannel",
+   "lineNumber": 9,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "channel",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "text"
+       },
+       "value": "builder"
+      },
+      {
+       "name": "Goal",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "BuilderChannel"
+       }
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
+   "lineNumber": 10,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "EmitBuildEvent"
+       }
+      },
+      {
+       "name": "Actor",
+       "type": {
+        "name": "item"
+       },
+       "value": "builder"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "text": "build.load, write to %app%",
+   "lineNumber": 11,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "build",
+     "name": "load",
+     "parameter": [
+      {
+       "name": "Path",
+       "type": {
+        "name": "path"
+       },
+       "value": "%path%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%app%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "text": "build.goals path=%path%, write to %goals%",
+   "lineNumber": 12,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "build",
+     "name": "goals",
+     "parameter": [
+      {
+       "name": "Path",
+       "type": {
+        "name": "path"
+       },
+       "value": "%path%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%goals%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
+   "lineNumber": 13,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "EmitBuildEvent"
+       }
+      },
+      {
+       "name": "Actor",
+       "type": {
+        "name": "item"
+       },
+       "value": "builder"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "text": "foreach %goals%, call BuildGoal goal=%item%",
+   "lineNumber": 14,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
+      {
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goals%"
+      },
+      {
+       "name": "ItemName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%item%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "BuildGoal"
+       }
+      },
+      {
+       "name": "Actor",
+       "type": {
+        "name": "item"
+       },
+       "value": "builder"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 9,
+   "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+   "lineNumber": 15,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "file",
+     "name": "save",
+     "parameter": [
+      {
+       "name": "Path",
+       "type": {
+        "name": "item"
+       },
+       "value": "/.build/traces/%!trace.id%/manifest.json"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%traceGoals%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 10,
+   "text": "build.appSave",
+   "lineNumber": 16,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "build",
+     "name": "appSave",
+     "parameter": [],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": []
+}

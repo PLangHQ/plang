@@ -1,0 +1,544 @@
+{
+ "name": "Decide",
+ "path": "/os/system/builder/BuildGoal/Decide.goal",
+ "step": [
+  {
+   "index": 0,
+   "text": "set %threshold% = 0.5",
+   "lineNumber": 18,
+   "comment": "Decide which module and which action every step of this goal uses \u2014 the whole goal in two\nexchanges, not one LLM call per step.\n\nThe decider is generic: it takes a state and typed questions and answers them. It knows nothing\nabout goals or steps. Everything goal-shaped is composed HERE.\n\nThe state is built as a plang value, not rendered as JSON text: it carries step text and module\nprose, and prose contains quotes. A value serializes itself; text pasted into a JSON template\ndoes not. The questions are rendered, because they only hold module names, action names and step\nnumbers, and they point at the state by path rather than repeating it.\n\nStage 1 asks a yes/no of every (step, module) pair at once. Independent answers mean a step that\nuses three modules gets three yeses, instead of the model ranking them against each other and\ndropping two. Stage 2 then asks a closed choice \u2014 which action \u2014 only of the modules that said\nyes, and only where the module has more than one action to choose between.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%threshold%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": 0.5
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "text": "set %modules% = %!app.module.list%",
+   "lineNumber": 19,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%modules%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!app.module.list%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "text": "set %state.goal% = %goal.Name%",
+   "lineNumber": 21,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%state.goal%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goal.Name%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "text": "foreach %goal.Step%, call AddStepToState item=%step%",
+   "lineNumber": 22,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
+      {
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goal.Step%"
+      },
+      {
+       "name": "ItemName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%step%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "AddStepToState"
+       }
+      },
+      {
+       "name": "item",
+       "type": {
+        "name": "item"
+       },
+       "value": "%step%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "text": "foreach %modules%, call AddModuleToState item=%module%",
+   "lineNumber": 23,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
+      {
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%modules%"
+      },
+      {
+       "name": "ItemName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%module%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "AddModuleToState"
+       }
+      },
+      {
+       "name": "item",
+       "type": {
+        "name": "item"
+       },
+       "value": "%module%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "text": "render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%",
+   "lineNumber": 25,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%moduleQuestions%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%",
+   "lineNumber": 26,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "llm",
+     "name": "decider",
+     "parameter": [
+      {
+       "name": "State",
+       "type": {
+        "name": "dict"
+       },
+       "value": "%state%"
+      },
+      {
+       "name": "Question",
+       "type": {
+        "name": "dict"
+       },
+       "value": "%moduleQuestions%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%moduleAnswer%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "text": "render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%",
+   "lineNumber": 28,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%actionQuestions%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "text": "llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%",
+   "lineNumber": 29,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "llm",
+     "name": "decider",
+     "parameter": [
+      {
+       "name": "State",
+       "type": {
+        "name": "dict"
+       },
+       "value": "%state%"
+      },
+      {
+       "name": "Question",
+       "type": {
+        "name": "dict"
+       },
+       "value": "%actionQuestions%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "event",
+     "name": "on",
+     "parameter": [
+      {
+       "name": "Trigger",
+       "type": {
+        "name": "choice"
+       },
+       "value": "goal-decided"
+      },
+      {
+       "name": "GoalToCall",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "AddActionToState"
+       }
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%actionAnswer%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 9,
+   "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
+   "lineNumber": 31,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "event",
+     "name": "on",
+     "parameter": [
+      {
+       "name": "Trigger",
+       "type": {
+        "name": "choice"
+       },
+       "value": "goal-decided"
+      },
+      {
+       "name": "GoalToCall",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "/system/builder/EmitBuildEvent",
+        "parameter": []
+       }
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": [
+  {
+   "name": "AddStepToState",
+   "path": "/os/system/builder/BuildGoal/Decide.goal",
+   "step": [
+    {
+     "index": 0,
+     "text": "add {\"index\": %step.Index%, \"text\": %step.Text%} to %state.steps%",
+     "lineNumber": 36,
+     "comment": "The decider sees a step as its position and its words \u2014 nothing it has been compiled into yet.",
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "parameter": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.steps%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": {
+          "index": "%step.Index%",
+          "text": "%step.Text%"
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "AddModuleToState",
+   "path": "/os/system/builder/BuildGoal/Decide.goal",
+   "step": [
+    {
+     "index": 0,
+     "text": "set %state.modules% key %module.Name% to %module.Description%",
+     "lineNumber": 41,
+     "comment": "What each module is for, in its own words: the description the module ships with.",
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.modules%[%module.Name%]"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%module.Description%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

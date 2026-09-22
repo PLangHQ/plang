@@ -1,0 +1,10 @@
+{
+ "LlmFixer": {
+  "0": [],
+  "1": [],
+  "2": [
+   "cache.wrap",
+   "llm.query"
+  ]
+ }
+}

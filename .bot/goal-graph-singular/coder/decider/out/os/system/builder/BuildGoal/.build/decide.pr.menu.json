@@ -1,0 +1,43 @@
+{
+ "Decide": {
+  "0": [
+   "variable.set"
+  ],
+  "1": [
+   "variable.set"
+  ],
+  "2": [],
+  "3": [
+   "loop.foreach"
+  ],
+  "4": [
+   "loop.foreach"
+  ],
+  "5": [
+   "llm.decider",
+   "ui.render"
+  ],
+  "6": [
+   "llm.decider"
+  ],
+  "7": [
+   "ui.render"
+  ],
+  "8": [
+   "event.on"
+  ],
+  "9": [
+   "event.on"
+  ]
+ },
+ "AddStepToState": {
+  "0": [
+   "list.add"
+  ]
+ },
+ "AddModuleToState": {
+  "0": [
+   "variable.set"
+  ]
+ }
+}

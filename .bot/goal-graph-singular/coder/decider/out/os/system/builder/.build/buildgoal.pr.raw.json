@@ -1,0 +1,34 @@
+{
+ "BuildGoal": {
+  "menu": {
+   "0": [
+    "goal.call"
+   ]
+  },
+  "answer": {
+   "steps": [
+    {
+     "index": 0,
+     "actions": [
+      {
+       "module": "goal",
+       "action": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "BuildGoal/Start"
+         }
+        },
+        {
+         "name": "goal",
+         "value": "%goal%"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

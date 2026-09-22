@@ -1,0 +1,468 @@
+{
+ "name": "Plan",
+ "path": "/os/system/builder/BuildGoal/Plan.goal",
+ "step": [
+  {
+   "index": 0,
+   "text": "set %modules% = %!app.module.list%",
+   "lineNumber": 6,
+   "comment": "Planner LLM call. Per step \u2192 {index, actions: [\"module.action\", ...], group?}.\nThe planner only names which actions are involved; the compiler decides chain order\nand shape from each action's authored examples.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%modules%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!app.module.list%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "list"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "text": "render template \"/system/actions/v2/summary.planner.md\", write to %actionSummary%",
+   "lineNumber": 7,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/actions/v2/summary.planner.md"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": "%modules%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "text": "render template \"/system/builder/llm/templates/goalFormat.template\", write to %goalForLlm%",
+   "lineNumber": 8,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/templates/goalFormat.template"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": "%modules%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
+   "lineNumber": 9,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/Plan.llm"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": "%modules%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}]",
+   "lineNumber": 10,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%messages%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": [
+        {
+         "Role": "system",
+         "Content": "%planPrompt%"
+        },
+        {
+         "Role": "user",
+         "Content": "%goalForLlm%"
+        }
+       ]
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
+   "lineNumber": 16,
+   "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime's\njob. LlmFixer re-prompts with previousConversation=%plan%.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "QueryAndValidatePlan"
+       }
+      }
+     ],
+     "modifier": [
+      {
+       "module": "error",
+       "name": "handle",
+       "parameter": [
+        {
+         "name": "RetryCount",
+         "type": {
+          "name": "number"
+         },
+         "value": 2
+        }
+       ],
+       "modifier": [],
+       "recovery": [
+        {
+         "module": "goal",
+         "name": "call",
+         "parameter": [
+          {
+           "name": "GoalName",
+           "type": {
+            "name": "goal.call"
+           },
+           "value": {
+            "name": "LlmFixer"
+           }
+          }
+         ],
+         "modifier": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "text": "set %plan.system% = %planPrompt%",
+   "lineNumber": 20,
+   "comment": "Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%plan.system%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%planPrompt%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "text"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "text": "set %plan.user% = %goalForLlm%",
+   "lineNumber": 21,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%plan.user%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goalForLlm%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "text"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "text": "set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}",
+   "lineNumber": 22,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%plan.usage%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": {
+        "model": "%plan.Model%",
+        "promptTokens": "%plan.PromptTokens%",
+        "cachedTokens": "%plan.CachedTokens%",
+        "completionTokens": "%plan.CompletionTokens%",
+        "totalTokens": "%plan.TotalTokens%",
+        "cost": "%plan.Cost%",
+        "cached": "%plan.Cached%"
+       }
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "dict"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": [
+  {
+   "name": "QueryAndValidatePlan",
+   "path": "/os/system/builder/BuildGoal/Plan.goal",
+   "step": [
+    {
+     "index": 0,
+     "text": "llm.query Message=%messages%, Schema=\"{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}\", cache=%!build.cache%, write to %plan%",
+     "lineNumber": 26,
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "llm",
+       "name": "query",
+       "parameter": [
+        {
+         "name": "Message",
+         "type": {
+          "name": "list"
+         },
+         "value": "%messages%"
+        },
+        {
+         "name": "Schema",
+         "type": {
+          "name": "item"
+         },
+         "value": "{\"description\": \"string\", \"steps\": \"list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>\"}"
+        },
+        {
+         "name": "Cache",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "format",
+         "type": {
+          "name": "item"
+         },
+         "value": "json"
+        },
+        {
+         "name": "MaxValidationRetries",
+         "type": {
+          "name": "number"
+         },
+         "value": 3
+        },
+        {
+         "name": "ContinuePreviousConversation",
+         "type": {
+          "name": "bool"
+         },
+         "value": false
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "name": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "type": {
+            "name": "number"
+           },
+           "value": 600000
+          }
+         ],
+         "modifier": []
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%plan%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "text": "call Validate",
+     "lineNumber": 27,
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "type": {
+          "name": "goal.call"
+         },
+         "value": {
+          "name": "Validate"
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

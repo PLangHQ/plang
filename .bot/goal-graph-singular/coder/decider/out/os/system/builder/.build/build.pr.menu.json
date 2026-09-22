@@ -1,0 +1,36 @@
+{
+ "Build": {
+  "0": [
+   "variable.set"
+  ],
+  "1": [
+   "variable.set"
+  ],
+  "2": [
+   "variable.set"
+  ],
+  "3": [
+   "channel.set"
+  ],
+  "4": [],
+  "5": [
+   "build.load"
+  ],
+  "6": [
+   "build.goals"
+  ],
+  "7": [
+   "event.on"
+  ],
+  "8": [
+   "file.save",
+   "goal.call"
+  ],
+  "9": [
+   "file.save"
+  ],
+  "10": [
+   "build.appSave"
+  ]
+ }
+}

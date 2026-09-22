@@ -26,6 +26,11 @@ def run(setname):
             for (m, a, pname), v in want.items():
                 got = answers.get((s['index'], m, a, pname))
                 if got is None: continue                      # not asked (no candidates)
+                decl = (pp.parameters(m, a) or {}).get(pname) or {}
+                d = decl.get('default')
+                # A value equal to the declared default is what happens when nobody answers —
+                # the .pr materialises it, the step never states it. Not a question.
+                if d is not None and str(v).strip().lower() == str(d).strip().lower(): continue
                 verdict = same(got[0], v)
                 if verdict is None: structural += 1
                 elif verdict: ok += 1

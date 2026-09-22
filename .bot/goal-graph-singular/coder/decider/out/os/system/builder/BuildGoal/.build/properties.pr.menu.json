@@ -1,0 +1,20 @@
+{
+ "Properties": {
+  "0": [
+   "ui.render"
+  ],
+  "1": [
+   "ui.render"
+  ],
+  "2": [
+   "variable.set"
+  ],
+  "3": [
+   "cache.wrap",
+   "llm.query"
+  ],
+  "4": [
+   "goal.call"
+  ]
+ }
+}

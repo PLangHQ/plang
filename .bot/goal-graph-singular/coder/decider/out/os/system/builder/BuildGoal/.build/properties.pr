@@ -1,0 +1,281 @@
+{
+ "name": "Properties",
+ "path": "/os/system/builder/BuildGoal/Properties.goal",
+ "step": [
+  {
+   "index": 0,
+   "text": "render template \"/system/builder/llm/templates/propertiesUser.template\", write to %propertiesUserMsg%",
+   "lineNumber": 12,
+   "comment": "Stage 3 \u2014 write each step's actions: which of its menu, in what order, how many times, and with\nwhat property values.\n\nThis one IS an LLM call, not a decider question: order and property values are written, not\npicked from a closed set. One request for the whole goal, because the steps refer to each other \u2014\n`%!data%` means the action before it, and a model shown one step alone cannot see that.\n\nThe answer is in the .pr's own action shape, so the step reads it through the same door it reads\na built .pr through \u2014 nothing converts it on the way in.",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/templates/propertiesUser.template"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%propertiesUserMsg%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "text": "render template \"/system/builder/llm/Properties.llm\", write to %propertiesSystemMsg%",
+   "lineNumber": 13,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/Properties.llm"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%propertiesSystemMsg%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%propertiesSystemMsg%\"}, {\"Role\":\"user\", \"Content\":\"%propertiesUserMsg%\"}]",
+   "lineNumber": 14,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%messages%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": [
+        {
+         "Role": "system",
+         "Content": "%propertiesSystemMsg%"
+        },
+        {
+         "Role": "user",
+         "Content": "%propertiesUserMsg%"
+        }
+       ]
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", Schema={steps: list<{index: int, actions: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}, cache=%!build.cache%, write to %properties%",
+   "lineNumber": 16,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "llm",
+     "name": "query",
+     "parameter": [
+      {
+       "name": "Message",
+       "type": {
+        "name": "list"
+       },
+       "value": "%messages%"
+      },
+      {
+       "name": "Model",
+       "type": {
+        "name": "text"
+       },
+       "value": "gpt-5.4-nano"
+      },
+      {
+       "name": "Schema",
+       "type": {
+        "name": "item"
+       },
+       "value": {
+        "steps": {
+         "type": "list",
+         "item": {
+          "type": "dict",
+          "fields": {
+           "index": {
+            "type": "int"
+           },
+           "actions": {
+            "type": "list",
+            "item": {
+             "type": "dict",
+             "fields": {
+              "module": {
+               "type": "string"
+              },
+              "action": {
+               "type": "string"
+              },
+              "parameter": {
+               "type": "list"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "name": "Cache",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      },
+      {
+       "name": "Tool",
+       "type": {
+        "name": "list"
+       },
+       "value": []
+      }
+     ],
+     "modifier": [
+      {
+       "module": "cache",
+       "name": "wrap",
+       "parameter": [
+        {
+         "name": "DurationMs",
+         "type": {
+          "name": "number"
+         },
+         "value": "%!build.cache%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%properties%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "text": "call /system/builder/EmitBuildEvent kind=\"goal-properties\", goal=%goal%",
+   "lineNumber": 18,
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "/system/builder/EmitBuildEvent",
+        "parameter": [
+         {
+          "name": "kind",
+          "value": "goal-properties"
+         },
+         {
+          "name": "goal",
+          "value": "%goal%"
+         }
+        ]
+       }
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": []
+}

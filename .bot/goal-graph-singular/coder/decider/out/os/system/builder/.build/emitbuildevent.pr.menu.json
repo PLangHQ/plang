@@ -1,0 +1,10 @@
+{
+ "EmitBuildEvent": {
+  "0": [
+   "ui.render"
+  ],
+  "1": [
+   "output.write"
+  ]
+ }
+}
