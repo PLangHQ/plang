@@ -66,12 +66,12 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                           as global::app.type.@this;
                     break;
                 case "value":
-                    // goal.call is read EAGERLY through its reader (a build/Peek consumer expects
-                    // the GoalCall, not a deferred source) — the reader builds its own options
-                    // for the nested Data params, so the data reader stays options-free.
-                    if (typeRef is { IsNull: false } && typeRef.Name == "goal.call")
-                        value = ctx.Context.App.Type.Reader.Reader("goal.call", null, ctx.Context)
-                            .Read(ref reader, null, ctx);
+                    // A type whose values are STRUCTURE is read eagerly, off this stream, through
+                    // its own reader. Which types those are is the TYPE's declaration (ITypeReader
+                    // .IsEager), never a list of names kept here — the courier stays generic.
+                    if (typeRef is { IsNull: false }
+                        && ctx.Context.App.Type.Reader.Typed(typeRef.Name, null) is { IsEager: true } eager)
+                        value = eager.Read(ref reader, null, ctx);
                     else if (typeRef is not { IsNull: false })
                     {
                         var preview = System.Text.Encoding.UTF8.GetString(reader.RawValue());

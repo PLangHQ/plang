@@ -14,6 +14,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
 
+    /// <summary>A call descriptor is structure a build/Peek consumer reaches into directly — it
+    /// expects the GoalCall itself, not a slice it would have to ask for.</summary>
+    public bool IsEager => true;
+
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct

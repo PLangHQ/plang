@@ -26,6 +26,17 @@ public interface ITypeReader
     string Kind { get; }
 
     /// <summary>
+    /// True when this type's values are STRUCTURE sitting in the stream rather than content to
+    /// fetch later — read me off the stream where I am found, never slice me into a lazy wire.
+    /// <para>Laziness is the default and deliberate (store raw, type on first touch), and it is
+    /// right for content a value may never be asked for. It is wrong for a value a consumer reaches
+    /// through directly, because a slice does not answer <c>Peek</c> — it answers only the async
+    /// ask, and a caller navigating structure has no reason to expect that. The type declares this
+    /// about itself; nothing downstream keeps a list of which types are eager.</para>
+    /// </summary>
+    bool IsEager => false;
+
+    /// <summary>
     /// Pull this type's value off <paramref name="reader"/>, positioned at the
     /// value's first token, and return the born-native instance. The cursor is
     /// left on the value's last token (the <see cref="app.channel.serializer.IReader"/>

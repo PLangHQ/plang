@@ -16,6 +16,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
 
+    /// <summary>A section is structure, not content: <see cref="app.snapshot.@this.Section"/> and
+    /// its sibling views navigate straight into it, so it must be a real snapshot when they look,
+    /// not a slice waiting to be asked.</summary>
+    public bool IsEager => true;
+
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
