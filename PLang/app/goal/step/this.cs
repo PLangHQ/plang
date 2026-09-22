@@ -111,10 +111,6 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; internal set; }
 
-    /// <summary>LLM's formalized rendering of this step (action.module Param=value | …). Stored for traces.</summary>
-    [Store, Debug, Default]
-    public string? Formal { get; set; }
-
     /// <summary>Tag set by enrichResponse: "known" (prior text matched), "hint" (text changed, prior available), or "new".</summary>
     [Store, Debug, Default]
     public string? Source { get; set; }

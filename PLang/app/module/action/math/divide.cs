@@ -1,32 +1,11 @@
 using app.variable;
-using ExampleSpec = app.type.spec.Example;
-using ActionSpec = app.type.spec.Action;
 using number = global::app.type.item.number.@this;
-
 
 namespace app.module.action.math;
 
 [Action("divide")]
 public partial class Divide : IContext
 {
-    public static ExampleSpec[] ExamplesForLlm() => new[]
-    {
-        new ExampleSpec(
-            "divide 10 by 4, write to %quotient%",
-            new[]
-            {
-                new ActionSpec("math",     "divide", new() { ["A"] = 10, ["B"] = 4 }),
-                new ActionSpec("variable", "set",    new() { ["Name"] = "%quotient%", ["Value"] = "%!data%" }),
-            }),
-        new ExampleSpec(
-            "set %avg% = %total% / %count%",
-            new[]
-            {
-                new ActionSpec("math",     "divide", new() { ["A"] = "%total%", ["B"] = "%count%" }),
-                new ActionSpec("variable", "set",    new() { ["Name"] = "%avg%", ["Value"] = "%!data%" }),
-            }),
-    };
-
     public partial data.@this A { get; init; }
     public partial data.@this B { get; init; }
     /// <summary>Integer-overflow mode. Default: Promote (widen; never wrap).</summary>

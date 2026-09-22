@@ -2,8 +2,6 @@ using app.error;
 using app.variable;
 using Action = app.goal.step.action.@this;
 using Call = app.callstack.call.@this;
-using ExampleSpec = app.type.spec.Example;
-using ActionSpec = app.type.spec.Action;
 
 namespace app.module.action.error;
 
@@ -17,51 +15,6 @@ namespace app.module.action.error;
 [Modifier(Order = 3)]
 public partial class Handle : IContext, IModifier
 {
-    public static ExampleSpec[] ExamplesForLlm() => new[]
-    {
-        // Numeric error codes go to StatusCode (an int), regardless of whether
-        // the source uses "on error 404" or "on error key 404" — `404` is
-        // always a status code, not a string identifier.
-        new ExampleSpec(
-            "read %path%, on error 404, write out \"missing\", read fallback.txt, write to %content%",
-            new[]
-            {
-                new ActionSpec("file", "read", new() { ["Path"] = "%path%" },
-                    Modifiers: new[]
-                    {
-                        new ActionSpec("error", "handle", new()
-                        {
-                            ["StatusCode"] = 404,
-                            ["Action"] = new[]
-                            {
-                                new ActionSpec("output",   "write", new() { ["Data"] = "missing" }),
-                                new ActionSpec("file",     "read",  new() { ["Path"] = "fallback.txt" }),
-                                new ActionSpec("variable", "set",   new() { ["Name"]  = "%content%",
-                                                                             ["Value"] = "%!data%" }),
-                            }
-                        })
-                    }),
-            }),
-        // Named error keys (non-numeric identifiers) go to Key.
-        new ExampleSpec(
-            "save %doc%, on error key Conflict, write out \"already exists\"",
-            new[]
-            {
-                new ActionSpec("file", "write", new() { ["Path"] = "%doc%" },
-                    Modifiers: new[]
-                    {
-                        new ActionSpec("error", "handle", new()
-                        {
-                            ["Key"] = "Conflict",
-                            ["Action"] = new[]
-                            {
-                                new ActionSpec("output", "write", new() { ["Data"] = "already exists" }),
-                            }
-                        })
-                    }),
-            }),
-    };
-
     public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Message { get; init; }

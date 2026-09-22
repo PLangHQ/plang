@@ -1,32 +1,11 @@
 using app.variable;
-using ExampleSpec = app.type.spec.Example;
-using ActionSpec = app.type.spec.Action;
 using number = global::app.type.item.number.@this;
-
 
 namespace app.module.action.math;
 
 [Action("power")]
 public partial class Power : IContext
 {
-    public static ExampleSpec[] ExamplesForLlm() => new[]
-    {
-        new ExampleSpec(
-            "raise 2 to the power of 3, write to %pow%",
-            new[]
-            {
-                new ActionSpec("math",     "power", new() { ["Base"] = 2, ["Exponent"] = 3 }),
-                new ActionSpec("variable", "set",   new() { ["Name"] = "%pow%", ["Value"] = "%!data%" }),
-            }),
-        new ExampleSpec(
-            "set %y% = %x% ^ 2",
-            new[]
-            {
-                new ActionSpec("math",     "power", new() { ["Base"] = "%x%", ["Exponent"] = 2 }),
-                new ActionSpec("variable", "set",   new() { ["Name"] = "%y%", ["Value"] = "%!data%" }),
-            }),
-    };
-
     public partial data.@this Base { get; init; }
     public partial data.@this Exponent { get; init; }
     /// <summary>Integer-overflow mode. Default: Promote (widen; never wrap).</summary>

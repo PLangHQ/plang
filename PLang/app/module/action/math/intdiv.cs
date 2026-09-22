@@ -1,8 +1,5 @@
 using app.variable;
-using ExampleSpec = app.type.spec.Example;
-using ActionSpec = app.type.spec.Action;
 using number = global::app.type.item.number.@this;
-
 
 namespace app.module.action.math;
 
@@ -14,17 +11,6 @@ namespace app.module.action.math;
 [Action("intdiv")]
 public partial class IntDiv : IContext
 {
-    public static ExampleSpec[] ExamplesForLlm() => new[]
-    {
-        new ExampleSpec(
-            "integer divide 7 by 2, write to %quotient%",
-            new[]
-            {
-                new ActionSpec("math",     "intdiv", new() { ["A"] = 7, ["B"] = 2 }),
-                new ActionSpec("variable", "set",    new() { ["Name"] = "%quotient%", ["Value"] = "%!data%" }),
-            }),
-    };
-
     public partial data.@this A { get; init; }
     public partial data.@this B { get; init; }
     /// <summary>Integer-overflow mode. Default: Promote (widen; never wrap).</summary>

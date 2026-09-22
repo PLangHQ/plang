@@ -50,7 +50,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.EndArray();
                     break;
                 case "intent": step.Intent = reader.String(); break;
-                case "formal": step.Formal = reader.String(); break;
                 case "source": step.Source = reader.String(); break;
                 case "waitForExecution": step.WaitForExecution = reader.Bool(); break;
                 default: reader.Skip(); break;
@@ -68,7 +67,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
         int index = 0, lineNumber = 0, indent = 0;
         string text = "";
-        string? comment = null, intent = null, formal = null, source = null;
+        string? comment = null, intent = null, source = null;
         bool waitForExecution = true;
         var actions = new global::app.goal.step.action.list.@this();   // Add each action straight into the node
 
@@ -91,7 +90,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.EndArray();
                     break;
                 case "intent": intent = reader.String(); break;
-                case "formal": formal = reader.String(); break;
                 case "source": source = reader.String(); break;
                 case "waitForExecution": waitForExecution = reader.Bool(); break;
                 default: reader.Skip(); break;
@@ -108,7 +106,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             Comment = comment,
             Action = actions,
             Intent = intent,
-            Formal = formal,
             Source = source,
             WaitForExecution = waitForExecution,
         };

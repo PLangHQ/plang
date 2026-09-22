@@ -25,7 +25,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// The type-catalog's LLM view — PrimitiveNames / Types / Kinds, "what the type vocabulary
     /// looks like for the LLM." Built on demand via <c>Schema.Build()</c> (which reads
-    /// <c>App.Type</c>). Example rendering moved out to <c>app.type.spec.render.@this</c>.
+    /// <c>App.Type</c>).
     /// </summary>
     public global::app.type.list.view.@this Schema { get; }
 

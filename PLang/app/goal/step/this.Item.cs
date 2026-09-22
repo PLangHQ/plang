@@ -31,7 +31,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             Comment = d.Get("comment")?.Peek()?.ToString(),
             Intent = d.Get("intent")?.Peek()?.ToString(),
         };
-        step.Formal = d.Get("formal")?.Peek()?.ToString();
         step.Source = d.Get("source")?.Peek()?.ToString();
         if (d.Get("action")?.Peek() is global::app.type.item.list.@this acts)
         {
@@ -67,7 +66,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("action");
         await Action.Output(writer, mode, context);   // the action.list writes its own bare array
         if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
-        if (Formal != null) { writer.Name("formal"); writer.String(Formal); }
         if (Source != null) { writer.Name("source"); writer.String(Source); }
         writer.Name("waitForExecution"); writer.Bool(WaitForExecution);
         writer.EndObject();
