@@ -130,6 +130,20 @@ case "${1:-build}" in
     build_tests
     build_console
     ;;
+  suite)
+    # ONE whole suite by name — the middle ground between a class filter (too narrow to show a
+    # blast radius) and the full sweep (six suites, ~3min). Use this to answer "is this failure
+    # mine?": run the suite, stash, run it again, diff the failing NAMES.
+    build_tests
+    p="${2:-}"
+    case " ${PROJECTS[*]} " in
+      *" $p "*) ;;
+      *) echo "usage: ./dev.sh suite {${PROJECTS[*]}}" >&2; exit 2 ;;
+    esac
+    echo "=== $p ===  (full output: /tmp/devsh_$p.log)"
+    run_bin "$p" > "/tmp/devsh_$p.log" 2>&1 || true
+    grep -aiE '^failed |^  (total|failed):' "/tmp/devsh_$p.log" || echo "  (no failures — full output in the log)"
+    ;;
   test)
     build_tests
     if [ -n "${2:-}" ]; then
@@ -173,6 +187,6 @@ case "${1:-build}" in
     echo warm
     ;;
   *)
-    echo "usage: ./dev.sh {build|test [ClassFilter]|ptest|full|warm}" >&2; exit 2
+    echo "usage: ./dev.sh {build|test [ClassFilter]|suite <Suite>|ptest|full|warm}" >&2; exit 2
     ;;
 esac
