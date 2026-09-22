@@ -23,17 +23,27 @@ public sealed partial class @this
         => s.Serialize(s.Context);
 
     /// <summary>
-    /// Parses a JSON string back into a snapshot tree through the value door — the
-    /// json rides as a <c>Data</c> in the given actor context and is asked for
-    /// <c>snapshot</c>, dispatching to <see cref="global::app.snapshot.@this.Create"/>
-    /// (born-with-context). The result is the same in-memory shape <see cref="Snapshot()"/>
-    /// produces, so <see cref="Restore"/> consumes it unchanged.
+    /// Parses a JSON string back into a snapshot tree. The json rides as a <c>snapshot</c>-TYPED
+    /// Data, so asking for its value materializes it through the snapshot's own registered reader —
+    /// the mirror of <see cref="global::app.snapshot.@this.Serialize"/>. Declaring the type is what
+    /// routes the read to the reader instead of asking a converter to turn text into a snapshot.
+    /// The result is the same in-memory shape <see cref="Snapshot()"/> produces, so
+    /// <see cref="Restore"/> consumes it unchanged.
     /// </summary>
     public async Task<global::app.snapshot.@this> SnapshotFromWire(string json, global::app.actor.context.@this context)
     {
-        var wire = new global::app.data.@this("", json, context: context);
-        return await wire.Value<global::app.snapshot.@this>()
-            ?? throw new System.InvalidOperationException("Snapshot could not be rebuilt from wire JSON");
+        // A still-encoded slice born holding the serializer that reads it — the exact mirror of
+        // Serialize, which wrote through the same one. A structured payload rides here rather than
+        // as a bare source: a source decodes a scalar off its own token and has no document to walk.
+        var snapshotType = new global::app.type.@this("snapshot");
+        var slice = new global::app.type.item.wire.@this(
+            json, snapshotType, context, new global::app.channel.serializer.plang.@this(context));
+        var wire = new global::app.data.@this("", slice, snapshotType, context: context);
+        var snapshot = await wire.Value<global::app.snapshot.@this>();
+        // Carry the real reason. A decline here is a materialization failure with its own message;
+        // replacing it with "could not be rebuilt" hides the one fact that identifies the cause.
+        return snapshot ?? throw new System.InvalidOperationException(
+            $"Snapshot could not be rebuilt from wire JSON — {wire.Error?.Message ?? "the value door declined without an error"}");
     }
 
     /// <summary>

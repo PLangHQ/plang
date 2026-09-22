@@ -25,9 +25,9 @@ public sealed partial class @this
     public async System.Threading.Tasks.Task<string> Serialize(global::app.actor.context.@this context)
     {
         var serializer = new global::app.channel.serializer.plang.@this(context);
-        // The snapshot writes ITSELF via Output (base → Write → serializer.Default, section by section)
-        // — bare (no Data envelope, unsigned: it's internal in-process state). The read (Create) is
-        // envelope-tolerant, so the bare {…sections…} round-trips.
+        // The snapshot writes ITSELF via Output — one object of entries, each writing its own value.
+        // The root rides bare (no Data envelope, unsigned: internal in-process state); a nested
+        // section rides as the entry that holds it, so it carries its own type on the wire.
         using var ms = new System.IO.MemoryStream();
         await serializer.SerializeItemAsync(ms, this, global::app.View.Store);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -36,18 +36,10 @@ public sealed partial class @this
     /// <summary>
     /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches here).
     ///
-    /// <para>RESTORE IS DEFERRED to the ISnapshot redesign. Snapshot capture + write are live
-    /// (the write is format-independent — it drives <see cref="global::app.channel.serializer.IWriter"/>).
-    /// The read half — rebuilding each typed section from the wire — will move onto an
-    /// <c>IReader</c> (symmetric with the writer), replacing the STJ read cursor that was torn
-    /// out with the last <c>JsonConverter</c>/<c>JsonSerializerOptions</c>. Until that lands,
-    /// reading a snapshot back throws.</para>
+    /// <para>An ordinary courier: a snapshot passes through, anything else declines. The wire READ
+    /// is not here — it lives at the serializer boundary in <see cref="serializer.Reader"/>, where a
+    /// snapshot is read as the value it is rather than converted from some other value.</para>
     /// </summary>
     public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
-    {
-        if (value is @this self) return self;
-        throw new System.NotSupportedException(
-            "Snapshot restore is deferred to the ISnapshot redesign — the read cursor rebuilds " +
-            "on IReader (symmetric with the IWriter write side) there. See Documentation/v0.2/todos.md.");
-    }
+        => value as @this;
 }
