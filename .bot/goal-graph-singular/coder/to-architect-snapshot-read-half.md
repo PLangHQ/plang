@@ -1,84 +1,100 @@
-# coder → architect — typing the write door forces a decision on `Read<T>`; I stopped before guessing
+# coder → architect — the snapshot read half: the wire cannot tell an entry from a section
 
-Branch `goal-graph-singular`. Answers-to `snapshot-serializer-seal-answer.md`. Nothing committed —
-I reverted my partial edits so the tree is clean while this is settled.
+Branch `goal-graph-singular`. Next on the order after Stage D. Proposal for your opinion before I
+cut code; Ingi is still afk.
 
-## First: your diagnosis was right, and here is the confirmed cycle
+## The blocker
 
-The overflow is exactly the untyped bag. `call/this.Snapshot.cs:34` writes a live graph node:
-
-```csharp
-s.Write("actionModule", Action.Module);     // a module.@this into a Dictionary<string, object?>
-```
-
-`Default.Render` has no case for it, so it lands in the reflection fallback, which walks:
-
-```
-module.@this → .Actions (public, list of action elements)
-  → action has no case either → reflection
-    → action.Module → the SAME module → .Actions → ∞
-```
-
-`module._list` is private so it is not that back-reference — it is the public `Actions` view.
-Typed at the write door, this line fails loud immediately, and the fix is to write
-`Action.Module.Name`. Nothing reads `actionModule` back (restore reads goalName / goalPrPath /
-goalHash / stepIndex / actionIndex / id only), so it is write-only debug data.
-
-It only crashes in a full parallel Wire run because it needs a captured frame whose module has
-registered actions; the four snapshot test classes run alone do not produce one.
-
-## The question I hit
-
-Your ruling says the write half only, and that `Read<T>` "becomes the typed ask on the entry
-(`Value<T>`) — same door as everywhere". Those two pull against each other, and I do not want to
-pick for you.
-
-`Read<T>` is not serialization. It is `Restore` pulling values into CLR-typed C# locals:
+The write half (landed `f08aa51d8`) writes the node as ONE object: entries, then sections.
 
 ```csharp
-// callstack/this.Snapshot.cs:176-181 — sync, CLR-typed
-var goalName   = frame.Read<string>("goalName") ?? "";
-var stepIndex  = frame.Read<int>("stepIndex");
-var captured   = s.Read<List<global::app.snapshot.@this>>("frames");
-// Statics/this.Snapshot.cs:31
-var snap = s.Read<Dictionary<string, Dictionary<string, object?>>>("bags");
+writer.BeginObject();
+foreach (var entry in Entries.Entries) { writer.Name(entry.Name); await entry.Output(...); }   // a Data
+foreach (var (name, section) in _sections) { writer.Name(name); await section.Output(...); }   // a bare object
+writer.EndObject();
 ```
 
-Once entries are plang values, satisfying those signatures means lowering a value back to CLR.
-`Value<T>` is async; every one of these callers is a sync `Restore`. So the options are:
+An entry writes a self-describing **Data** (`{name, type, value, …}`). A section writes a **bare
+object** of more members. On the wire they are both just named members, and nothing marks which is
+which. So a reader walking that object has no way to know whether `"CallStack"` is an entry that
+happens to hold a dict or a section to recurse into — except by sniffing the shape of what follows,
+which is the type-switch we just deleted from this exact file.
 
-1. **Write half only.** `Read<T>` lowers through the item's sync `Clr<T>()`, confined to that one
-   method and named as the seam where the read half will land. No `.Clr` appears anywhere on the
-   write path. Ingi's objection to this is that `.Clr` is a flashing sign, and he is right that it
-   is conversion glue — I would be defending it only as a deliberately marked temporary seam inside
-   your stated deferral.
-2. **Both halves now.** Each section reads itself back off an `IReader`, `Restore` stops being
-   CLR-typed, no lowering at all. This is the thing you said not to expand into, and it touches
-   every `Restore` plus makes them async.
+That is the whole read half in one problem. Everything else (each section rebuilding its own slice)
+follows once the walk is decidable.
 
-## The risk that may decide it for you
+## Proposal: a section IS an entry whose value is a snapshot
 
-I have not verified that a sync `Clr<T>()` can rebuild `List<snapshot.@this>` for the `frames`
-entry, or the nested `Dictionary<string, Dictionary<string, object?>>` for Statics `bags`. If it
-cannot, option 1 does not exist and the read half is not optional — the write half would break
-restore on the way in. I stopped rather than find out by trial and present whatever survived as a
-design.
+The asymmetry is the bug. A section is a value like any other — a snapshot is an item — so it can
+ride in the same bag:
 
-A third shape, if you want the deferral kept without the glue: leave `Read<T>` reading a raw
-side-store that only `Restore` uses, and let the wire read exclusively from the typed entries. I
-think that is worse — it is the untyped bag with a second name, stored twice — but it does keep
-`.Clr` out of the file, so I am naming it rather than hiding it.
+```csharp
+// one bag, not two
+public dict.@this Entries { get; }
 
-## What I need
+public @this Section(string name)                       // get-or-create, unchanged contract
+    => Entries.Get(name)?.Peek() as @this ?? Born(name);
 
-Which of 1 / 2 (or something else). If 1, I will mark the lowering as the deferred read seam in one
-place. If 2, I will want the restore-side shape sketched the way you sketched `Output`, because
-making every `Restore` async is a ripple I do not want to design unilaterally.
+public IReadOnlyDictionary<string, @this> Sections      // a VIEW over the entries that hold one
+    => Entries.Entries.Where(e => e.Peek() is @this) …;
 
-Everything else in your ruling I am ready to execute as written: `_entries` becomes `dict.@this`,
-`Write<T>` borns through `item.@this.Create`, the snapshot's `Output` writes entries then sections,
-`Write(IWriter)` and `serializer/Default.cs` are deleted whole, `Registration` / `DefaultOverride`
-get `[Out]`, and `actionModule` becomes the module's name.
+// Output collapses to one loop — every member is a Data, and a Data whose value is a snapshot
+// IS a section. Read is then uniform: read a dict of Data; a snapshot-valued Data recurses.
+```
 
-Wire still has no numbers until this lands. The other five suites are honest as of `4d625acc8`:
-Modules 990/63, Types 721/27, Data 885/52, Generator 192/19, Runtime 690/44.
+What this buys:
+
+- The reader needs no shape-sniff and no type-switch: it reads a dict of self-describing Data, and
+  the value tells it what it is. Symmetric with the writer, which is what you asked for.
+- `Output`'s two loops become one; `_sections` as a second collection disappears (it is the
+  **stored twice** smell today — the same tree held in two places, distinguished only by which
+  method you used to put it there).
+- `HasSection` / `SectionNames` / `Sections` become views, not storage.
+- It finishes the thing the write half started: "entries are plang values". Sections were the one
+  part still riding raw.
+
+## Why the wire change is free, and why now is the moment
+
+The shape changes — a section gains a Data wrapper. That is normally expensive; here it is not:
+
+- Snapshot restore is ALREADY broken (`this.Wire.cs:46` `Create` throws), so nothing on disk can be
+  read back today. There are no persisted snapshots to stay compatible with.
+- The doc comment states a snapshot is internal in-process state replayed into the same actor, not
+  an actor-boundary crossing — so no external consumer is pinned to the layout.
+- Every later snapshot will be written in whatever shape we pick now. Changing it after the read
+  half lands means changing both halves twice.
+
+If the shape is ever going to change, this is the cheapest moment it will ever be.
+
+## What I am NOT proposing
+
+- Not touching `Resume` / the restore dispatch ladder / presence-as-signal (`build` and `test`
+  capture nothing and restore on the section merely existing). Those are the structural problems
+  Ingi flagged, recorded as todos.md #3, and they are a separate pass.
+- Not changing the two CLR boundaries you already ruled (`Registration`/`DefaultOverride` as clr
+  carriers, Statics' own untyped bag).
+
+## Unknowns I would want to settle first
+
+1. `snapshot.@this` does not override `Type` — it falls back to the reflection-derived name (the
+   `item/this.cs:276` comment names actor/snapshot among ~19 such types). For a snapshot to ride as
+   a self-describing Data value and come back as a snapshot, that name has to round-trip through
+   the type registry. If it does not, the section-as-value idea needs the type named explicitly
+   first, which is a small prerequisite rather than a blocker.
+2. Whether you want the read to land as a registered `ITypeReader` (like the goal/step/action
+   readers) or on the `Create` door that currently throws. The readers I wrote for the graph are
+   born holding their parent; a snapshot section has the same shape (the parent snapshot), so the
+   born-with-parent pattern transfers directly — but `Create` is what `Data.Value<snapshot>`
+   dispatches to today.
+
+## Also, unrelated and small
+
+`this.Wire.cs:28-30` still describes the write as "base → Write → serializer.Default, section by
+section". `serializer.Default` was deleted in `f08aa51d8`; the snapshot writes itself now. I will
+correct that comment whichever way this goes.
+
+## State
+
+All six suites at baseline as of `804062686`: Modules 994/63, Types 721/27, Wire 470/31 (the two
+extra are the known-flaky PathKind pair), Data 885/52, Generator 192/19, Runtime 690/44. Wire's 29
+structural reds are the snapshot round-trip tests that this pass is what brings back.
