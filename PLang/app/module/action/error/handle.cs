@@ -35,7 +35,7 @@ public partial class Handle : IContext, IModifier, IAction
         {
             var result = await next();
             if (result.Success) return result;
-            if (!MatchesError(result.Error)) return result;
+            if (!await MatchesError(result.Error)) return result;
 
             // The failing Call is LIVE and it is the current one: an action owns one frame for
             // its whole run, and this modifier is wrapped inside that frame, so the frame that
@@ -102,24 +102,26 @@ public partial class Handle : IContext, IModifier, IAction
     /// Matches the error against StatusCode / Key / Message filters.
     /// No filters = match all errors. Each supplied filter must match.
     /// </summary>
-    private bool MatchesError(IError? error)
+    private async Task<bool> MatchesError(IError? error)
     {
-        // MatchesError is a sync predicate — read the materialised backing, not the async door.
-        // An UNSET filter resolves to the typed null citizen, never C# null — and its
-        // ToString() renders "null", so presence MUST be tested via IsNull, never
-        // string.IsNullOrEmpty(ToString()) (which would read an unset filter as the
-        // literal "null" and spuriously activate it).
-        var sc = StatusCode?.Peek();
-        var key = Key?.Peek();
-        var msg = Message?.Peek();
+        // The filters are read through the typed ask, not a sync Peek. A .pr-loaded parameter is
+        // lazy — it lifts on the ask — so a Peek here sees the wire form rather than the value, and
+        // the comparison below would silently match the wrong errors. This runs inside the delegate,
+        // where awaiting is free.
+        // An UNSET filter resolves to the typed null citizen, never C# null — and its ToString()
+        // renders "null", so presence MUST be tested via IsNull, never
+        // string.IsNullOrEmpty(ToString()) (which would read an unset filter as the literal "null"
+        // and spuriously activate it).
+        var sc = StatusCode == null ? null : await StatusCode.Value();
+        var key = Key == null ? null : await Key.Value();
+        var msg = Message == null ? null : await Message.Value();
         bool hasKey = key is { IsNull: false };
         bool hasMsg = msg is { IsNull: false };
 
         if (sc is not global::app.type.item.number.@this && !hasKey && !hasMsg) return true;
         if (error == null) return false;
 
-        // The matcher's int boundary is IError.StatusCode — the number lowers
-        // itself there (Peek: sync predicate, value already in memory).
+        // The matcher's int boundary is IError.StatusCode — the number lowers itself there.
         if (sc is global::app.type.item.number.@this scNum && error.StatusCode != scNum.ToInt32()) return false;
         if (hasKey && !string.Equals(error.Key, key!.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
         if (hasMsg && !error.Message.Contains(msg!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;

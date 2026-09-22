@@ -19,17 +19,20 @@ public class @this : global::app.goal.step.action.@this
     protected internal override global::app.type.@this Type => new("modifier", typeof(@this));
 
     /// <summary>The modifier wraps <paramref name="inner"/> in ITSELF — it owns wrapping. Resolves its
-    /// own handler, verifies it implements IModifier, runs Resolve so the source-generated params are
-    /// populated before Wrap() reads them, then delegates to IModifier.Wrap (the same two-layer shape as
-    /// action.Dispatch → handler.Run). Returns the wrapped delegate, or a keyed error when the named
-    /// action isn't actually a modifier (it was placed in a modifiers array but doesn't implement it).</summary>
+    /// own handler, verifies it implements IModifier, wires its parameter slots, then delegates to
+    /// IModifier.Wrap (the same two-layer shape as action.Dispatch → handler.Run). Returns the wrapped
+    /// delegate, or a keyed error when the named action isn't actually a modifier (it was placed in a
+    /// modifiers array but doesn't implement it).
+    /// <para>Wrap composes delegates and reads no values. A parameter loaded from a .pr is lazy — it
+    /// lifts on the typed ask — so a modifier reads its own parameters INSIDE the delegate it returns,
+    /// where awaiting is free. Reading at wrap time sees the wire form and has to invent a value.</para></summary>
     public async System.Threading.Tasks.Task<(System.Func<System.Threading.Tasks.Task<global::app.data.@this>>? Wrapped, global::app.error.IError? Error)> Wrap(
         System.Func<System.Threading.Tasks.Task<global::app.data.@this>> inner,
         global::app.actor.context.@this context)
     {
         var (instance, error) = Instance(context);
         if (error != null) return (null, Recorded(error, context));
-        // Resolve populates the handler's params so IModifier.Wrap reads real values.
+        // Resolve wires the handler's parameter slots; the values lift later, on the typed ask.
         var (handler, resolveErr) = await instance!.Resolve(this, context);
         if (resolveErr != null) return (null, Recorded(resolveErr, context));
         if (handler is not global::app.module.IModifier mod)
