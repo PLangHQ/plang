@@ -29,3 +29,12 @@ Plus **reference** — a value neither evaluated on read nor run by its owner, s
 
 A body written as an expression (recovery actions stored in a parameter) and a reference written as an expression (`channel.set Goal=goal.call(…)`) are the two known mis-modellings; both are fixed by moving the value into its correct slot/type.
 ```
+
+## architect — 2026-09-22 (Stage D)
+**Target:** /PLang/App/CLAUDE.md (or Documentation/v0.2/good_to_know.md)
+**Why:** Coder hit this twice in one change while moving build validation onto the nodes: `await p.Value() is GoalCall` opened every parameter, an authored `%var%` (unset at build time) failed to resolve, and the failure surfaced three layers later in code nobody touched — the courier had marked the binding failed. It is a general build-time rule, not a Validate rule.
+**Proposed change:**
+
+```markdown
+- **Build-time code judges SHAPE, never evaluates authored values ("judging must not resolve").** Anything that runs at build time — validation, Nest, Normalize, the repair loops — reads an action's declared types, catalog rows and structural slots, and never opens a parameter's VALUE except on a slot whose declared type is the thing being judged (`p.Type?.Name == "goal.call"` first, ask second). Authored values are constructed at load and evaluated on read; evaluating one at build time does the run's job at the wrong moment, and a failed evaluation poisons the binding for the run that follows — the error lands far from its cause. Corollary: `await p.Value() is X` is not a guard, it is the opened box; check the declared type, then ask.
+```

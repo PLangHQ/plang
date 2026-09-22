@@ -432,6 +432,17 @@
           "category": "doc",
           "confidence": "high",
           "context": "Stage D proposal ruled over the session socket with Ingi afk (coder + architect in charge): split confirmed; EmptyActions on step.Validate; Q2 = (b) Validate returns the verdict tree (the Sept error-model ruling superseded July's warnings-onto-Warning) with the severity rule stated (Warning = advisory/proceeds; fatal = returned with causes); recursion mirrors Run with per-level aggregation; ToGoalCall carry-over; verify gates. Ingi to review on return."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/stage-d-proposal-answer.md",
+            ".bot/goal-graph-singular/claude-md-proposals.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage D corrected after coder traced the plang caller (entry at action.list.Validate, EmptyActions on the list, strings are behaviour) and then LANDED (804062686). Coder's trap adopted as a rule and filed as a proposal: build-time code judges shape, never evaluates authored values (await p.Value() is X is the opened box; declared-type check first). All exchanges over the session socket with Ingi afk."
         }
       ],
       "after": {
