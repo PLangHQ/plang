@@ -324,7 +324,7 @@
       "id": "cadaae39-7941-4c3a-92ca-6424246dbc41",
       "bot": "architect",
       "timestamp_start": "2026-09-22T00:00:00",
-      "timestamp_end": "2026-09-22T10:02:40.968983",
+      "timestamp_end": "2026-09-22T13:04:04.126513",
       "intent": "Answer coder's formal-abandoned handoff: rule on steps A-E, name the recovery slot, order the queue",
       "before": {
         "assumptions": "formal dropped by Ingi's decision; recovery-as-structure already ruled (Addendum 3); error model live on the frame walk",
@@ -342,10 +342,20 @@
           "category": "doc",
           "confidence": "high",
           "context": "Step A concur + dead residue; recovery slot named `recovery` on the action base (Child precedent) \u2014 Ingi yes; modifier subframes PROMOTED ahead of Stage D (verified: only Push site is action/this.cs:160) \u2014 Ingi yes; Step D scope shrunk to freshly built .pr (Ingi: most of the 353 are stale files) with the no-CLR-fallback rule standing; Step E later. Construct-at-load rule + four relationships filed as a good_to_know proposal so they survive the formal-plang.md deletion."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/recovery-slot-shape-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Recovery slot shape: coder's blocker (handler can't reach its entity) is false \u2014 the generated Attach wires Action = the modifier entity for IAction implementors, before Wrap runs (modifier/this.cs:33 Resolve-then-Wrap). Ruling: Handle implements IAction, deletes the Action parameter, reads Action.Recovery.Run(context); NO verdict split (would move error.handle semantics into the generic modifier entity \u2014 misplaced behavior); Retry stays on the handler; don't wait for the one-object cleanup (it becomes a prefix deletion). IModifier untouched."
         }
       ],
       "after": {
-        "status": "all steps ruled; order A -> B(recovery) -> modifier subframes -> Stage D -> D(object, fresh .pr) -> E",
+        "status": "formal-abandoned + recovery-slot-shape answered; Step B unblocked for coder",
         "health": "no production code changed by architect",
         "notes": "Ingi discounted the object count as stale-corpus noise"
       }
