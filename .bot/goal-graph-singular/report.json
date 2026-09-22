@@ -412,6 +412,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Addendum after coder's socket report (54ab44cd5): Current invariant production-only (accepted, TestFrame + ReferenceEquals); catalog Positions inverted — ruled by what each modifier bounds: error.handle=1, cache.wrap=2, timeout.after=3 (was 3/2/1); timeout verdict = the deadline (drop && !result.Success), no ?? 0 for Ms. First cross-container architect<->coder exchange over the shared socket volume."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/modifier-subframe-shape-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addendum 2 after coder's 5c1d55b16: 3(b) deviation accepted — .pr params are lazy, sync Peek at Wrap time sees the wire form; rule: modifier params are read inside the returned delegate through the typed ask, Wrap composes and reads nothing. Sweep: error.handle.MatchesError Peeks its filters (silent mismatch on .pr-built filters) → async typed ask; cache.wrap clean; false Resolve comment on the modifier node rewritten."
         }
       ],
       "after": {

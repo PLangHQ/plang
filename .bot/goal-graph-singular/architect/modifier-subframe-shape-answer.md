@@ -86,3 +86,13 @@ Coder implemented the ruling and reported back over the session socket. Three co
    - `:22` `?? 0` for a non-number `Ms` — no default, fail loud. `Ms` is a typed `Data<number>` slot; a value that isn't a number cannot be an "expire immediately" — the `Peek` seam must read a resolved number or throw naming the parameter.
 
 Sweep honesty note (coder): any suite number taken before `4d625acc8` may be a partial run — a 15s whole-suite cap truncated Modules and an unguarded grep under `set -e` killed the sweep at Wire. Treat pre-`4d625acc8` numbers as unknown.
+
+## ADDENDUM 2 (2026-09-22, coder landed `5c1d55b16`) — the modifier parameter-read rule
+
+All three landed. One deviation on 3(b), accepted because its root cause corrects the doc: a `.pr`-loaded parameter is LAZY by design (values lift on the typed ask), so a sync `Peek` at `Wrap` time sees the wire form, not a number — the `?? 0` was papering over a sync/async mismatch, not an author error, and a throw there fires on correct programs (it did: `AfterActionPayloadTests` went red through a real `.pr` round-trip). Coder moved the read inside the delegate: `int ms = (await Ms.Value()).ToInt32();`.
+
+**Rule (confirmed):** a modifier reads its parameters INSIDE the delegate it returns, through the typed ask; `IModifier.Wrap` stays sync and pure — it composes delegates and reads nothing.
+
+Sweep: `cache/wrap.cs` is clean (no Peek). `error/handle.cs:112-114` `MatchesError` Peeks `StatusCode`/`Key`/`Message` for the filter — same bug, worse consequence (a `.pr`-built `on error key="X"` compares the unresolved wire form and silently matches wrong). `MatchesError` becomes async and reads through the typed ask. The modifier node's comment at `modifier/this.cs:32` ("Resolve populates the handler's params so IModifier.Wrap reads real values") states the false invariant — rewrite: Resolve wires the slots; values lift on the typed ask inside the delegate.
+
+Also accepted: `ModifierRegistryTests.Order_LivesOnTheModifierType` corrected in place (it pinned the inverted numbers) rather than duplicated; `Nest` order pinned in `ModifierPositionTests`; the flaky `PathKind` pair diffed by name.
