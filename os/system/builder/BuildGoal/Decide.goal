@@ -18,7 +18,7 @@ Decide
 - set %threshold% = 0.5
 - set %modules% = %!app.module.list%
 
-- set %state% = {"goal": %goal.Name%, "steps": [], "modules": {}}
+- set %state.goal% = %goal.Name%
 - foreach %goal.Step%, call AddStepToState item=%step%
 - foreach %modules%, call AddModuleToState item=%module%
 

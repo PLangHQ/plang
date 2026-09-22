@@ -1,18 +1,12 @@
 Start
-/ Build one .goal file: planner pass, per-step compile, recurse sub-goals.
+/ Build one .goal file: decide which modules and actions each step uses, then let the LLM order
+/ them and fill their properties, then validate and recurse into sub-goals.
 
 - call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
 - set %buildStart% = %Now.Ticks%
-- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}
-- call Plan, on error call HandleBuildFailure
-- set %trace.plan% = %plan%
-
-/ The compile system prompt is static across every step in every goal — render
-/ it once at goal level so the trace doesn't duplicate ~14KB per step.
-- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
-- set %trace.compileSystem% = %compileSystemPrompt%
-
-- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "menu": null, "subGoals": [], "durationMs": 0}
+- call Compile, on error call HandleBuildFailure
+- set %trace.menu% = %menu%
 
 - set %parentGoal% = %goal%
 - foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%
@@ -29,15 +23,54 @@ Start
 - build.goalsSave Goal=%goal%, App=%app%
 
 
-BuildSubGoal
-/ Sub-goal recursion — same Plan + per-step pipeline, attach to parent trace.
+Compile
+/ The three stages for the goal in %goal% — shared by the top goal and every sub-goal.
+/ The decider answers WHICH modules and actions a step may use; that is a menu, not a sequence.
+/ The LLM then decides the order, how often each is used, and what goes in their properties.
+- call Decide
+- foreach %goal.Step%, call Menu step=%item%
+- call Properties
+- foreach %goal.Step%, call Apply step=%item%
+- foreach %goal.Step%, call ValidateStep step=%item%
 
+
+Menu
+/ Every module that said yes for this step, with the action chosen for it.
+- foreach %modules%, call MenuModule module=%item%
+- set %menu[step.Index]% = %choices%
+
+MenuModule
+- set %key% = "s%step.Index%_%module.Name%"
+- if %moduleAnswer[key].noul% is less than %threshold%, return
+- if %module.Actions.Count% is 1, add "%module.Name%.%module.Actions[0].Name%" to %choices%
+- if %module.Actions.Count% is more than 1, add "%module.Name%.%actionAnswer[key].choice%" to %choices%
+
+
+Apply
+/ The step constructs its own actions from the rows the LLM answered — each born holding the step.
+- set %goal.step[step.Index].action% = %properties.steps[step.Index].actions%
+
+
+ValidateStep
+- build.validate actions=%goal.step[step.Index].action%, on error call FixProperties, then retry 2 times
+
+
+FixProperties
+/ The validator rejected this step's actions. Continue the properties conversation with its
+/ complaint — it is the correction prompt — then re-apply the step.
+- set %fixMessages% = [{"Role":"user", "Content":"Your answer was rejected by the validator: %!error.Message%\n\nReturn the corrected answer in the same shape."}]
+- llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %properties%
+- call Apply step=%step%
+- call /system/builder/EmitBuildEvent kind="step-validation-error", step=%step%, errorMessage=%!error.Message%
+
+
+BuildSubGoal
+/ Sub-goal recursion — the same three stages, attached to the parent trace.
 - set %goal% = %subGoal%
 - call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
 - set %subgoalStart% = %Now.Ticks%
-- call Plan, on error call HandleBuildFailure
-- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
-- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- call Compile, on error call HandleBuildFailure
+- add {goal: %goal%, menu: %menu%} to %trace.subGoals%
 - math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
 - math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
 - call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
@@ -45,7 +78,7 @@ BuildSubGoal
 
 HandleBuildFailure
 / Capture error onto trace, save, rethrow. No null-pass inference.
-
 - call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%
-- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - throw %!error%

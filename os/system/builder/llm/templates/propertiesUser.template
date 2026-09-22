@@ -1,21 +1,25 @@
 {% comment %}
-Every step of the goal, with the actions already decided, each numbered and each property listed as
-a blank to fill. One request per GOAL, not per step: the steps of a goal refer to one another
-(`%!data%` is the action before it), and a model shown one step in isolation cannot see that.
+Every step of the goal, each with its MENU — the actions the decider said it may use — and each
+menu action's properties as the catalogue declares them. One request per GOAL, not per step: the
+steps refer to one another (`%!data%` is the action before it), and a model shown one step in
+isolation cannot see that.
 
-The numbering is flat across the whole goal, so an answer keyed by number needs nothing
-cross-referenced back.
-
-Properties come from the action's own catalogue rows — name, type, required-or-not, default — so
-nothing here restates what a class already declares about itself.
+The menu is walked off the module catalogue and filtered by what the decider chose, so every
+property row comes from the action's own declaration — nothing here restates it.
 {% endcomment %}
 {{ goal.Name }}
 {% for s in goal.Step %}
 step {{ s.Index }}: {{ s.Text }}
-{%- for a in s.Decided %}
-   {{ a.Number }}. {{ a.Module }}.{{ a.Name }}
-   {%- for p in a.Property %}
-      {{ p.Name }} ({{ p.Type.Name }}{% if p.Nullable %}, optional{% else %}, required{% endif %}{% if p.Default %}, default {{ p.Default }}{% endif %})
-   {%- endfor %}
+   menu:
+{%- for m in modules -%}
+{%- for a in m.Actions -%}
+{%- assign choice = m.Name | append: "." | append: a.Name -%}
+{%- if menu[s.Index] contains choice %}
+     {{ choice }}
+{%- for p in a.Property %}
+        {{ p.Name }} ({{ p.Type.Name }}{% if p.Nullable %}, optional{% else %}, required{% endif %}{% if p.Default %}, default {{ p.Default }}{% endif %})
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
 {%- endfor %}
 {% endfor %}
