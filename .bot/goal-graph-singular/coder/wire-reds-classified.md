@@ -110,14 +110,46 @@ All three exist on the base and pass there. So this branch broke them, and what 
 This is the top item, ahead of everything else in the order below. It is not snapshot-adjacent and
 it should not go to a merge.
 
-Suspects to check first, in order (the architect's, and they match the shape):
+### The leading suspect is DISPROVED, and there are TWO regressions, not one
 
-1. The `Verify: false` applied on nested/ingest reads (the kind bridge, the data reader's nested
-   arms). If a path that used to be the OUTER read is now treated as nested, the outer verify is
-   skipped — which is exactly "tampered value verifies".
-2. For the masking test, the error-render changes made around `app.Error`'s deletion.
+The suspect was `da067599c` — *"Stage 4: no-verify flag for nested reconstruction"* — whose own
+message says the outer read verifies and a nested reconstruction peels without verifying. A
+plausible story: if a path that used to be the OUTER read became nested, the outer verify is
+skipped, which is exactly "tampered value verifies".
 
-Not started; provenance only, as ruled.
+Measured instead, at `da067599c^` (the commit BEFORE it), Wire suite built clean:
+
+| Test | base `0ea5a4b94` | `da067599c^` | HEAD |
+|---|---|---|---|
+| `Cut4_TamperingPropertyValue_FailsOuterSignatureVerify` | PASS | **FAIL** | FAIL |
+| `OuterSignature_AfterPropertiesValueTamper_FailsVerify` | PASS | **FAIL** | FAIL |
+| `AssertionError_Message_MasksSensitiveViaDiagnosticOutput` | PASS | **PASS** | FAIL |
+
+Both tamper tests were **already broken before** the no-verify commit, so it did not cause them.
+The masking test was still **passing there**, so it broke later. Two independent regressions:
+
+- **tamper pair** — introduced in `0ea5a4b94..da067599c^` (773 commits)
+- **masking** — introduced in `da067599c^..HEAD` (963 commits)
+
+This is the value of bisecting over reasoning: the hypothesis was coherent, named by the person who
+made the change, and wrong. It would have cost a day.
+
+### Bisect harness notes for whoever continues
+
+A naive `git bisect run` over this branch does NOT work, for two reasons, both of which silently
+report "skip" rather than failing:
+
+1. **The test layout changes mid-branch** — one `PLang.Tests` project at the base, six suites later.
+   An oracle must detect which exists.
+2. **Build artefacts do not survive a checkout.** A stale `obj/` from the other layout makes msbuild
+   produce nothing while reporting success. Worse, cleaning `PLang/bin` alone then breaks the test
+   projects with *"could not copy PLangLibrary.dll"*, because they reference its output and msbuild
+   will not rebuild it. The library must be built explicitly first.
+
+A working oracle is at `scratchpad/bisect-oracle.sh` (session-local). Faster than bisecting blind:
+narrow with `git log <base>..HEAD -- <paths>` on the signature/verify files first, then test
+candidates directly in a worktree — which is how the above was measured, at two builds instead of
+eleven.
 
 ## Order this suggests
 
