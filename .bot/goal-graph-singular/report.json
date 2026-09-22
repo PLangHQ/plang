@@ -503,6 +503,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "The 24 Wire reds classified by coder: 8 deferred restore, 1 Statics, flaky pair, and (d) the predicted Data<T> double-wrap (deserialize path — capture-site pointer corrected), a moved-path test bug, and THREE security-shaped tests failing open. Ruled: security jumps the queue with provenance first (run on origin/runtime2 worktree; green there = branch regression, suspects Verify:false on nested reads and error-render changes). Then double-wrap -> test fix -> flaky -> restore -> Statics."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Provenance run (b31603cad): the three security tests pass on origin/runtime2 and fail on the branch — branch regressions failing open. Baseline rule adopted (against the branch base, never intra-branch). Ruled: git bisect from the merge-base with the three tests as oracle, culprits recorded before code; fix at root (Verify outer/nested is the caller's decision, not a bridge default; masking routes through the value's own output face); test names join the verify gates."
         }
       ],
       "after": {
