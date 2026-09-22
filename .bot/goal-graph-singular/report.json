@@ -443,6 +443,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Stage D corrected after coder traced the plang caller (entry at action.list.Validate, EmptyActions on the list, strings are behaviour) and then LANDED (804062686). Coder's trap adopted as a rule and filed as a proposal: build-time code judges shape, never evaluates authored values (await p.Value() is X is the opened box; declared-type check first). All exchanges over the session socket with Ingi afk."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Snapshot read half: coder's collapse approved — a section is an entry whose value is a snapshot (one structure: a dict of Data; _sections was stored-twice; wire undecidable otherwise). Type named explicitly; a registered ITypeReader (snapshot is a value, no parent birth fact) with recursion via the data reader's typed dispatch, born with the reading context; Create becomes the ordinary courier. Ruled with Ingi afk."
         }
       ],
       "after": {
