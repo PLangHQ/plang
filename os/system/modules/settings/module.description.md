@@ -1,1 +1,1 @@
-Persistent key-value settings store backed by the System actor's data source
+Persistent key-value settings store backed by the System actor's data source. A step that configures something by name and value — a timeout, a limit, a key, a default — is setting a setting, and the named thing's own module is not involved.

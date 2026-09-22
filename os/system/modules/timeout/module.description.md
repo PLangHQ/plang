@@ -1,1 +1,1 @@
-Modifier that wraps any action with a hard deadline, returning a 408 error on expiry
+Modifier that wraps ANOTHER action with a hard deadline, returning a 408 error on expiry. It always attaches to work being done — `read the file, timeout after 5s`. A step that only waits for time to pass, with no work to bound, is the timer module.
