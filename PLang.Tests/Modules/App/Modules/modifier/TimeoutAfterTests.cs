@@ -155,11 +155,11 @@ public class TimeoutAfterTests
     }
 
     [Test]
-    public async Task After_NestedWithOtherModifiers_TimeoutWrapsOuter()
+    public async Task After_NestedInsideErrorHandle_TimeoutIsAnIgnorableError()
     {
-        // timeout(50) wraps error(ignore) wraps timer.sleep(5000).
-        // Sleep exceeds deadline → timeout fires inside error.handle's wrap → error.handle
-        // sees the 408, IgnoreError = true → final result is Ok.
+        // error(ignore) wraps timeout(50) wraps timer.sleep(5000) — the catalog nesting, handler
+        // outermost. The sleep exceeds the deadline, so the deadline's verdict is a 408, and the
+        // handler outside it ignores that like any other error → final result is Ok.
         var action = new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
@@ -167,12 +167,12 @@ public class TimeoutAfterTests
             Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
             Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
-                TimeoutModifier(50),
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
                     Parameter = new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) }
-                }
+                },
+                TimeoutModifier(50)
             }
         };
 

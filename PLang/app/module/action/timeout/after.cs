@@ -6,8 +6,10 @@ namespace app.module.action.timeout;
 /// Modifier: wraps an action with a hard deadline. Cancels the action if it
 /// exceeds Ms milliseconds and returns a 408 Timeout error.
 /// </summary>
+// timeout.after bounds one ATTEMPT, so it is innermost: each retry gets a fresh deadline, and an
+// enclosing error.handle catches a Timeout like any other error.
 [Action("after", Cacheable = false)]
-[Modifier(Order = 1)]
+[Modifier(Order = 3)]
 public partial class After : IContext, IModifier
 {
     [IsNotNull]
@@ -17,11 +19,15 @@ public partial class After : IContext, IModifier
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        // Sync wrap seam — Peek (the .pr literal is in memory); the number
-        // lowers itself at the CancelAfter .NET edge.
-        int ms = (Ms.Peek() as global::app.type.item.number.@this)?.ToInt32() ?? 0;
         return async () =>
         {
+            // The deadline is read through the typed door, INSIDE the async delegate: Wrap itself
+            // is sync, and a param loaded from a .pr is lazy, so a sync Peek here sees an unresolved
+            // value and has to invent a number. It used to invent 0 — "expire immediately" — which
+            // is the most destructive reading available. The number lowers itself at CancelAfter,
+            // the .NET edge that needs an int.
+            int ms = (await Ms.Value()).ToInt32();
+
             // Capture parent token BEFORE pushing — after the push, context.CancellationToken
             // returns our own CTS, making the when-filter always false.
             var parentToken = context.CancellationToken;
@@ -36,9 +42,11 @@ public partial class After : IContext, IModifier
                 if (parentToken.IsCancellationRequested)
                     throw new OperationCanceledException(parentToken);
 
-                // Our timeout fired. Inner action's generated ExecuteAsync swallows OCE into a
-                // ServiceError result, so we detect the timeout via CTS state + failed result.
-                if (cts.IsCancellationRequested && !result.Success)
+                // Our deadline fired, so the verdict is ours: a result arriving after the deadline
+                // is late, and late is what a deadline forbids. It does not matter whether the
+                // inner action also failed — reading its result to decide would let a success that
+                // beat the cancellation home anyway overrule the deadline.
+                if (cts.IsCancellationRequested)
                     return context.Error(new ServiceError(
                         $"Timed out after {ms}ms", "Timeout", 408));
 

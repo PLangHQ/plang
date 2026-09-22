@@ -11,8 +11,11 @@ namespace app.module.action.error;
 /// Message); if matched, either ignores, retries, or runs its actions — ordered by
 /// Order (RetryFirst default, GoalFirst runs the actions before retry).
 /// </summary>
+// A modifier's Order follows what it BOUNDS, lowest outermost. error.handle bounds the ATTEMPTS —
+// every retry, and the recovery that follows them — so it is outermost and catches a deadline like
+// any other error.
 [Action("handle", Cacheable = false)]
-[Modifier(Order = 3)]
+[Modifier(Order = 1)]
 public partial class Handle : IContext, IModifier, IAction
 {
     public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }

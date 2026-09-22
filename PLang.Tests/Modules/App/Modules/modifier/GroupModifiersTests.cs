@@ -48,21 +48,22 @@ public class GroupModifiersTests
     public async Task GroupModifiers_MultipleModifiersOnOneAction_SortedByOrder()
     {
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
-        // Insertion order: error(3), cache(2), timeout(1) — should sort to timeout, cache, error
+        // Insertion order timeout(3), cache(2), error(1) sorts to error, cache, timeout —
+        // outermost first: the handler bounds the attempts, the deadline bounds one attempt.
         var actions = Flat(
             ("file", "read"),
-            ("error", "handle"),
+            ("timeout", "after"),
             ("cache", "wrap"),
-            ("timeout", "after"));
+            ("error", "handle"));
 
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(1);
         var mods = step.Action[0].Modifier;
         await Assert.That(mods.Count).IsEqualTo(3);
-        await Assert.That(mods[0].Module.Name).IsEqualTo("timeout");
+        await Assert.That(mods[0].Module.Name).IsEqualTo("error");
         await Assert.That(mods[1].Module.Name).IsEqualTo("cache");
-        await Assert.That(mods[2].Module.Name).IsEqualTo("error");
+        await Assert.That(mods[2].Module.Name).IsEqualTo("timeout");
     }
 
     [Test]
@@ -100,7 +101,7 @@ public class GroupModifiersTests
     {
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         // [file.read, cache.wrap, error.handle, variable.set, timeout.after]
-        // -> file.read with sorted [cache(2), error(3)]; variable.set with [timeout(1)]
+        // -> file.read with sorted [error(1), cache(2)]; variable.set with [timeout(3)]
         var actions = Flat(
             ("file", "read"),
             ("cache", "wrap"),
@@ -113,8 +114,8 @@ public class GroupModifiersTests
         await Assert.That(step.Action.Count).IsEqualTo(2);
         await Assert.That(step.Action[0].Module.Name).IsEqualTo("file");
         await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(2);
-        await Assert.That(step.Action[0].Modifier[0].Module.Name).IsEqualTo("cache");
-        await Assert.That(step.Action[0].Modifier[1].Module.Name).IsEqualTo("error");
+        await Assert.That(step.Action[0].Modifier[0].Module.Name).IsEqualTo("error");
+        await Assert.That(step.Action[0].Modifier[1].Module.Name).IsEqualTo("cache");
         await Assert.That(step.Action[1].Module.Name).IsEqualTo("variable");
         await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(1);
         await Assert.That(step.Action[1].Modifier[0].Module.Name).IsEqualTo("timeout");

@@ -26,13 +26,14 @@ public class ModifierFoldTests
     [Test]
     public async Task ModifierAttribute_Order_IsSetAndReadable()
     {
-        // Verify [Modifier(Order = N)] stores and exposes the Order value via reflection
+        // [Modifier(Order = N)] stores and exposes the Order via reflection. Which number belongs
+        // to which modifier is pinned by ModifierRegistryTests.Order_LivesOnTheModifierType.
         var timeoutType = typeof(global::app.module.action.timeout.After);
         var attr = timeoutType.GetCustomAttributes(typeof(ModifierAttribute), false)
             .Cast<ModifierAttribute>().FirstOrDefault();
 
         await Assert.That(attr).IsNotNull();
-        await Assert.That(attr!.Order).IsEqualTo(1);
+        await Assert.That(attr!.Order).IsEqualTo(3);
     }
 
     #endregion
