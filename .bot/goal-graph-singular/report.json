@@ -372,10 +372,20 @@
           "category": "doc",
           "confidence": "high",
           "context": "Graft bridge: the parent is a birth fact of the READER (ctor arg), not a Read parameter \u2014 bridge/ITypeReader/ReadContext untouched; door 2 dies by construction because discovery requires a parameterless ctor (reader/this.cs:205); coder's option 1 (row bytes) rejected as json named outside the json kind; the step-has-no-context note is the already-ruled program-structure-is-context-free law working."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-serializer-seal-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Snapshot serializer: coder's smells confirmed; root is the untyped entry bag (Write<T> stores object?). Ruling: entries born as plang values at the write door (entity Create lift), snapshot writes itself (entries + sections, each entry Output), serializer/Default.cs deleted, Registration/DefaultOverride tagged [Out] through the established reflection-kind Output; no depth cap; if the nested-Data symptom survives it's the Data<T> double-wrap footgun at the capture site; restore stays deferred."
         }
       ],
       "after": {
-        "status": "formal-abandoned + recovery-slot-shape answered; Step B unblocked for coder",
+        "status": "formal-abandoned, recovery-slot-shape, door2, graft-bridge, snapshot-serializer answered; Wire suite unblock ruled",
         "health": "no production code changed by architect",
         "notes": "Ingi discounted the object count as stale-corpus noise"
       }
