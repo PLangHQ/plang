@@ -32,3 +32,11 @@ As you drew it: Resume, the restore dispatch ladder, presence-as-signal for buil
 1. Capture → Serialize → read back → `Sections`/`HasSection` views answer the same as before the collapse (the views are the compatibility surface for every ISnapshot section).
 2. A nested section round-trips typed (`Value<snapshot>()` pass-through after read).
 3. Wire's deferred-read reds turn green; diff by name.
+
+## LANDED (`e5865c985`) — read half open on value fidelity
+
+Structure as ruled. Coder's find worth recording: a structured wire payload rides as `wire.@this` (born holding the serializer that sliced it), never as a bare `source` (whose `Read()` decodes one scalar token and yields the null citizen). `SnapshotFromWire` now slices with a plang serializer, the mirror of `Serialize`.
+
+**Open:** a captured variable comes back null (`Variables_SurviveWireRoundTrip`). Design expectation stated to coder: rows keep their envelope end to end — `Data.Output` writes `name` in Store view (`data/this.Output.cs:86-90`), the list reader reads each element through `ReadSlot` → `IsTypedEntry`/`@schema:data` → the data reader → a named Data row (`list.AddRaw` keeps it). So a null is one hop breaking the contract; coder instruments four hops (serialized string; the entry's slice + Type; rows after `Value<list>`; `Restore`'s `Set(data.Name, …)`) and reports. Ruling on the fix waits for evidence — no guessing at the list/Data boundary.
+
+**Smell found on the trace (todo, not the bug today):** the data reader mints a nested slice with `ctx.Context.Actor?.Channel.Serializers?.Transport` (`data/reader/this.cs:102`) — the actor's transport, an ambient reach — instead of the serializer actually reading (the capture handing itself, as `wire.@this`'s doc requires). Always the plang serializer today (`serializer/list/this.cs:138`), so harmless now; cursor-as-identity in shape. Fix when touched: the reader that slices carries its serializer and hands it to the wire it mints.

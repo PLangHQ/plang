@@ -453,6 +453,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Snapshot read half: coder's collapse approved — a section is an entry whose value is a snapshot (one structure: a dict of Data; _sections was stored-twice; wire undecidable otherwise). Type named explicitly; a registered ITypeReader (snapshot is a value, no parent birth fact) with recursion via the data reader's typed dispatch, born with the reading context; Create becomes the ordinary courier. Ruled with Ingi afk."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Collapse landed (e5865c985); value fidelity open (captured variable null after round trip). Stated the contract (rows keep their Store-view envelope; list read is envelope-aware) and sent coder a four-hop instrumentation instead of guessing; ruling on the fix deferred to evidence. Logged the ambient-transport smell in data/reader/this.cs:102 as a todo (not the bug today)."
         }
       ],
       "after": {
