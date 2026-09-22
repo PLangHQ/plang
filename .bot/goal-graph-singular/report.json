@@ -402,6 +402,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Modifier verdicts: (b) spanning frame rejected (incompatible with the Caller-walk %!error% model + breaks error.handle's Current); the FRAME owns recording via NEW call.Record(IError) — idempotent by instance, CallFrames stamp + Errors + Audit — ExecuteAsync's three sites collapse to it; the modifier NODE records any failed result leaving its layer on Current (the action's frame); handlers never record; Recorded's transient push dies. My 'modifier subframes' label corrected: the requirement is a verdict on a live frame. Tests: Audit assertion + live error.handle>timeout>sleep %!error% test."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/modifier-subframe-shape-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addendum after coder's socket report (54ab44cd5): Current invariant production-only (accepted, TestFrame + ReferenceEquals); catalog Positions inverted — ruled by what each modifier bounds: error.handle=1, cache.wrap=2, timeout.after=3 (was 3/2/1); timeout verdict = the deadline (drop && !result.Success), no ?? 0 for Ms. First cross-container architect<->coder exchange over the shared socket volume."
         }
       ],
       "after": {

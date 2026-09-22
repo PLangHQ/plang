@@ -65,3 +65,24 @@ Keep your `Audit` assertion — it is the correct POST-RUN observable (your read
 ## Order
 
 This closes the error-model hole. Then Stage D.
+
+---
+
+## ADDENDUM (2026-09-22, after coder's implementation — landed as `54ab44cd5`)
+
+Coder implemented the ruling and reported back over the session socket. Three corrections/rulings:
+
+1. **"Current is non-null by construction" holds in PRODUCTION only** (the fold runs inside `Run`'s Push). Tests that drive `modifier.Wrap` standalone have no frame — coder made the missing frame an explicit `InvalidOperationException` naming the modifier (not an NRE) and gave those tests a frame (`PLang.Tests/Shared/TestFrame.cs`). Accepted; the invariant above is amended to "in production; a standalone driver must provide a frame." Also accepted: `Record`'s idempotence uses an explicit `ReferenceEquals` scan, not `Contains` — a future `IError` equality override must not silently turn instance identity into value equality.
+
+2. **The catalog Positions are inverted — the trace was right, the numbers were wrong.** Today: `timeout.after = 1` (outermost), `cache.wrap = 2`, `error.handle = 3` (innermost); `Nest` sorts ascending and the fold puts index 0 outermost. So every built `.pr` nests `timeout ⊃ cache ⊃ error.handle ⊃ action` — `on error` sits INSIDE the deadline and can never see a `Timeout` verdict; the deadline wraps the handler and discards its recovery. **Ruling — a modifier's Position follows what it bounds:**
+   - `timeout.after` bounds an ATTEMPT → innermost. Each retry gets a fresh deadline; `on error` catches `Timeout` like any error.
+   - `error.handle` bounds the ATTEMPTS → outermost of the three.
+   - `cache.wrap` bounds the outcome of the REAL work → between: a hit skips the work and the deadline; a miss runs `timeout ⊃ action` and caches the success; a recovery result is never cached (recovery happens outside the cache).
+
+   New Positions: **`error.handle = 1`, `cache.wrap = 2`, `timeout.after = 3`** — the exact reverse of today's pair (someone read "Order" as priority rather than nesting). Coder's hand-built acceptance test (error.handle at index 0) is then exactly what the builder produces. Add a catalog test pinning the three Positions, and a `Nest` test asserting the resulting order, so this can't silently invert again.
+
+3. **`timeout/after.cs` — two rulings on the adjacent finds:**
+   - `:41` `if (cts.IsCancellationRequested && !result.Success)` — drop the `&& !result.Success`. **The deadline is the verdict**: if the CTS fired before `next()` returned, the result is `Timeout` regardless of what the inner returned. A success arriving after the deadline is late, and late is the thing a deadline forbids. (Parent cancellation is already distinguished at `:36`.) This is also the root of the flaky green coder hit.
+   - `:22` `?? 0` for a non-number `Ms` — no default, fail loud. `Ms` is a typed `Data<number>` slot; a value that isn't a number cannot be an "expire immediately" — the `Peek` seam must read a resolved number or throw naming the parameter.
+
+Sweep honesty note (coder): any suite number taken before `4d625acc8` may be a partial run — a 15s whole-suite cap truncated Modules and an unguarded grep under `set -e` killed the sweep at Wire. Treat pre-`4d625acc8` numbers as unknown.
