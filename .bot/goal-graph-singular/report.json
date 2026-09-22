@@ -324,7 +324,7 @@
       "id": "cadaae39-7941-4c3a-92ca-6424246dbc41",
       "bot": "architect",
       "timestamp_start": "2026-09-22T00:00:00",
-      "timestamp_end": "2026-09-22T13:04:04.126513",
+      "timestamp_end": "2026-09-22T13:15:24.520001",
       "intent": "Answer coder's formal-abandoned handoff: rule on steps A-E, name the recovery slot, order the queue",
       "before": {
         "assumptions": "formal dropped by Ingi's decision; recovery-as-structure already ruled (Addendum 3); error model live on the frame walk",
@@ -352,6 +352,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Recovery slot shape: coder's blocker (handler can't reach its entity) is false \u2014 the generated Attach wires Action = the modifier entity for IAction implementors, before Wrap runs (modifier/this.cs:33 Resolve-then-Wrap). Ruling: Handle implements IAction, deletes the Action parameter, reads Action.Recovery.Run(context); NO verdict split (would move error.handle semantics into the generic modifier entity \u2014 misplaced behavior); Retry stays on the handler; don't wait for the one-object cleanup (it becomes a prefix deletion). IModifier untouched."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/door2-survives-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Door 2's remaining customer (build.validate reading %goal.step[i].action% rows) exists only because the Addendum-2 graft (step's Set('action') host-construction) is not implemented; coder's 'no step' premise is wrong \u2014 the write target step IS the step. After the graft: actions born with the step at the write, validate's row.Value<action>() is ICreate pass-through, door 2 has zero customers \u2192 delete atomically."
         }
       ],
       "after": {
