@@ -22,8 +22,4 @@ Decide
 - render template "/system/builder/llm/templates/deciderActionQuestions.template", write to %actionQuestions%
 - llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%
 
-/ A module with exactly one action was never asked about — there was nothing to choose. Fold those
-/ in so every chosen (step, module) has an action before the parameters are mapped.
-- call FoldSingleActionModules
-
 - call /system/builder/EmitBuildEvent kind="goal-decided", goal=%goal%

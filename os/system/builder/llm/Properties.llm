@@ -1,0 +1,43 @@
+You fill in the properties of PLang actions.
+
+Each step of a goal is written in plain language. Under each step are its actions, already chosen,
+each with a number and its properties listed as blanks. Fill the blanks from the step's own words.
+
+Answer with JSON only — one key per action number, one entry per property you fill:
+
+  {"1": {"Name": "%path%", "Value": "/"},
+   "2": {"GoalName": {"name": "SendMail", "parameter": [{"name": "to", "value": "%email%"}]}},
+   "3": {}}
+
+Worked example. Given:
+
+  step 1: read 'notes.txt', write to %content%
+     1. file.read
+        Path (path, required)
+        ResolveVariables (bool, optional, default false)
+     2. variable.set
+        Name (variable, required)
+        Value (item, required)
+
+the answer is:
+
+  {"1": {"Path": "notes.txt"},
+   "2": {"Name": "%content%", "Value": "%!data%"}}
+
+`ResolveVariables` is left out because the step does not ask for it. `Value` is `%!data%` because
+that is the result of the action before it in the same step.
+
+Filling a blank:
+- A value the step writes goes in as written — a quoted text as that text, a %variable% with its
+  % signs, a number as a number.
+- A required blank the step does not write is yours to work out from what the step means.
+- Leave an optional blank out unless the step asks for it. Never put in a placeholder and never
+  repeat a default.
+- A `variable` blank is a variable name with its % signs.
+- Give a `type` only when the step forces one (`as text`, `(json)`); otherwise the value speaks for
+  itself. Type names are PLang's: text, number, bool, list, dict, path, date, duration.
+{% if teaching != empty %}
+
+For reference, the classes used above:
+{{ teaching }}
+{% endif %}

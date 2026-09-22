@@ -1,0 +1,18 @@
+Properties
+/ Stage 3 — fill in the properties of the actions the decider chose.
+/
+/ This one IS an LLM call, not a decider question: a property value is written, not chosen from a
+/ closed set. The decider answers "which of these", and there is no list of every string a Path
+/ could be.
+/
+/ One request for the whole goal, because the steps refer to each other — `%!data%` means the
+/ action before it, and a model shown one step alone cannot see that. Actions are numbered flat
+/ across the goal so the answer needs nothing cross-referenced back.
+
+- render template "/system/builder/llm/templates/propertiesUser.template", write to %propertiesUserMsg%
+- render template "/system/builder/llm/Properties.llm", write to %propertiesSystemMsg%
+- set %messages% = [{"Role":"system", "Content":"%propertiesSystemMsg%"}, {"Role":"user", "Content":"%propertiesUserMsg%"}]
+
+- llm.query Message=%messages%, Model="gpt-5.4-nano", cache=%!build.cache%, write to %properties%
+
+- call /system/builder/EmitBuildEvent kind="goal-properties", goal=%goal%
