@@ -27,11 +27,15 @@ PROJECTS=(Modules Types Wire Data Generator Runtime)
 # --timeout is a WHOLE-SUITE cap (TUnit's "global test execution timeout"), not
 # per-test. It exists only as a safety net: one test blocks on stdin (a stream/ask
 # channel test reading input that never arrives) and hangs the suite forever — that
-# was the 5-minute "Wire hang". The cap cancels it so the suite finishes. Sized just
-# above the suites' real completion time (~5-12s); too low (e.g. 5s) truncates a big
-# suite mid-run. Once the stdin-blocking test is fixed (see todos.md), this net can
-# drop or go away. Override via TEST_TIMEOUT=Ns.
-TEST_TIMEOUT="${TEST_TIMEOUT:-15s}"
+# was the 5-minute "Wire hang". The cap cancels it so the suite finishes.
+#
+# It must sit WELL ABOVE the slowest suite's real time, or it silently truncates:
+# at 15s, Modules (21-27s) was cancelled mid-run EVERY run, reporting 500-737 of its
+# ~1000 tests with the count varying by CPU load — untested failures vanished and
+# "failed: N" meant nothing. A hang is minutes, so a generous cap still catches it
+# immediately; the cap is a net, not a budget. Keep it above SUITE_SECS max by 2x.
+# Override via TEST_TIMEOUT=Ns.
+TEST_TIMEOUT="${TEST_TIMEOUT:-90s}"
 
 run_bin() { # $1 = project, rest = args
   # < /dev/null: a test that reads stdin (a stream/ask-channel test) otherwise BLOCKS
@@ -53,7 +57,11 @@ run_bin() { # $1 = project, rest = args
 # Rough per-suite wall-clock baselines (2026-07-10, this machine, warm build). Noisy
 # (machine load / JIT), so treat as a drift signal, not a gate: if actual ≫ expected
 # consistently, a suite grew a slow test or a perf regression landed — investigate.
-declare -A SUITE_SECS=( [Generator]=6 [Types]=8 [Runtime]=15 [Wire]=16 [Modules]=27 [Data]=35 )
+# Re-measured 2026-09-22 after the truncation fix: the old Modules=27 / Runtime=15 were
+# taken while the 15s cap was cutting those suites off mid-run, so they timed a partial
+# suite. Two consecutive full sweeps agreed on the values below. Wire still crashes
+# (core dump, no summary), so its number stays the pre-crash estimate.
+declare -A SUITE_SECS=( [Generator]=4 [Types]=8 [Runtime]=24 [Wire]=16 [Modules]=43 [Data]=28 )
 
 run_all_suites() { # rest = extra args passed to each suite
   local p fail=0
@@ -64,8 +72,13 @@ run_all_suites() { # rest = extra args passed to each suite
   for p in "${PROJECTS[@]}"; do
     run_bin "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 || true
     local n dur
-    n=$(grep -aoE 'failed: [0-9]+' "/tmp/devsh_$p.log" | tail -1 | grep -oE '[0-9]+')
-    dur=$(grep -aoE 'duration: [0-9smh ]+' "/tmp/devsh_$p.log" | tail -1 | sed 's/duration: //')
+    # Anchored to the SUMMARY block's own lines ("  failed: 44"), never a substring of
+    # assertion text — a message reading 'Data failed: ...' was being read as the count.
+    # `|| true` on both: a suite that dies before printing a summary makes these greps
+    # return 1, and under `set -e` that killed the WHOLE sweep at that suite (Wire), so
+    # every later suite silently never ran and the NO SUMMARY branch below was dead code.
+    n=$(grep -aE '^[[:space:]]*failed: [0-9]+[[:space:]]*$' "/tmp/devsh_$p.log" | tail -1 | grep -oE '[0-9]+' || true)
+    dur=$(grep -aoE 'duration: [0-9smh ]+' "/tmp/devsh_$p.log" | tail -1 | sed 's/duration: //' || true)
     local tag="${dur:-?} vs ~${SUITE_SECS[$p]:-?}s"
     if [ -z "$n" ]; then echo "=== $p === NO SUMMARY (crash before summary?) — see /tmp/devsh_$p.log [$tag]"; fail=1
     elif [ "$n" != 0 ]; then echo "=== $p === FAILED: $n ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fail=1
