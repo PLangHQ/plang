@@ -422,6 +422,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Addendum 2 after coder's 5c1d55b16: 3(b) deviation accepted — .pr params are lazy, sync Peek at Wrap time sees the wire form; rule: modifier params are read inside the returned delegate through the typed ask, Wrap composes and reads nothing. Sweep: error.handle.MatchesError Peeks its filters (silent mismatch on .pr-built filters) → async typed ask; cache.wrap clean; false Resolve comment on the modifier node rewritten."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/stage-d-proposal-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage D proposal ruled over the session socket with Ingi afk (coder + architect in charge): split confirmed; EmptyActions on step.Validate; Q2 = (b) Validate returns the verdict tree (the Sept error-model ruling superseded July's warnings-onto-Warning) with the severity rule stated (Warning = advisory/proceeds; fatal = returned with causes); recursion mirrors Run with per-level aggregation; ToGoalCall carry-over; verify gates. Ingi to review on return."
         }
       ],
       "after": {
