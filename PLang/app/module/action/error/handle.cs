@@ -48,8 +48,9 @@ public partial class Handle : IContext, IModifier
             var erroredCall = context.CallStack.Current;
 
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
-            // The recovery chain is a plang list<action> — RunRecovery opens each row through its
-            // own action door (row.Value<action>()), so params survive; no CLR peel that drops them.
+            // Recovery actions belong in the action's own `Recovery` slot; opening them out of a
+            // parameter value is the old shape. IModifier.Wrap is handed only `next` and `context`,
+            // so the slot is out of reach from here.
             var actions = Action == null ? null : await Action.Value() as global::app.type.item.list.@this;
             bool hasRecovery = actions != null && actions.Count > 0;
 

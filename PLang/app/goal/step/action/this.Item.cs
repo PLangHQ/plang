@@ -61,6 +61,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             writer.Name("child");
             await Child.Output(writer, mode, context);   // step.list writes its own bare array
         }
+        // The body of an `on error` clause — omitted on every action but error.handle.
+        if (Recovery.Count > 0)
+        {
+            writer.Name("recovery");
+            await Recovery.Output(writer, mode, context);   // action.list writes its own bare array
+        }
         writer.EndObject();
     }
 }

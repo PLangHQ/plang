@@ -103,6 +103,19 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     }
                     reader.EndArray();
                     break;
+                case "recovery":
+                    // Recovery actions are actions, read here like any other and born holding the
+                    // SAME step as the action they recover — a real step, not an invented one.
+                    reader.BeginArray();
+                    while (reader.NextElement())
+                    {
+                        var recovered = step != null
+                            ? Read(ref reader, ctx, step)
+                            : Read(ref reader, null, ctx) as global::app.goal.step.action.@this;
+                        if (recovered != null) action.Recovery.Add(recovered);
+                    }
+                    reader.EndArray();
+                    break;
                 case "child":
                     var childSteps = new global::app.goal.step.list.@this();   // Add each step into the node
                     reader.BeginArray();

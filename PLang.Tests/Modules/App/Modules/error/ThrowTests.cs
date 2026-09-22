@@ -42,7 +42,7 @@ public class ThrowTests
     }
 
     [Test]
-    public async Task Throw_DefaultsStatusCode500()
+    public async Task Throw_DefaultsStatusCodeAndKey()
     {
         var (context, _) = CreateContext();
 
@@ -50,7 +50,8 @@ public class ThrowTests
         var result = await action.Run();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
+        await Assert.That(result.Error.Key).IsEqualTo("error");
     }
 
     [Test]

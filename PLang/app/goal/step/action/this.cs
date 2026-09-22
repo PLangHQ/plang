@@ -52,6 +52,14 @@ public partial class @this
     [Store, Debug, Default]
     public global::app.goal.step.list.@this Child { get; set; } = new();
 
+    /// <summary>The actions that run when this one's recovery fires — the body of an `on error`
+    /// clause. Empty on every action but <c>error.handle</c>. A structural slot like
+    /// <see cref="Modifier"/> and <see cref="Child"/>, not a parameter value: an action is program,
+    /// not data, so it is read at load through the same door as any other action and is born
+    /// holding the enclosing step. A <c>action.list</c>, so it runs itself.</summary>
+    [Store, Debug, Default]
+    public global::app.goal.step.action.list.@this Recovery { get; set; } = new();
+
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
 
