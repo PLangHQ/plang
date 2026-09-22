@@ -46,6 +46,27 @@ public sealed class @this : global::app.type.item.list.@this<Action>
         return result;
     }
 
+    /// <summary>What is wrong with this chain, or null when nothing is. The node iterates ITSELF and
+    /// each action judges itself, the same shape as <see cref="Run"/>; the causes of every element
+    /// gather into one error for the chain.
+    /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
+    /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
+    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate(actor.context.@this context)
+    {
+        if (Count == 0)
+            return new global::app.error.Error(
+                "the compiled step has no actions — every step maps to at least one action.",
+                "EmptyActions", 400);
+
+        var causes = new List<global::app.error.IError>();
+        for (int i = 0; i < Count; i++)
+            if (await this[i].Validate(context) is { } invalid) causes.Add(invalid);
+
+        if (causes.Count == 0) return null;
+        return new global::app.error.Error(
+            string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes };
+    }
+
     /// <summary>Writes itself to the wire as the bare <c>.pr</c> action array — each element writes its
     /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
     /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Run"/>.</summary>

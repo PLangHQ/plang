@@ -472,44 +472,22 @@ public class Default : IBuilder
         var modules = app.Module;
 
         var actionList = action.Actions == null ? null : await action.Actions.Value() as global::app.type.item.list.@this;
-        if (actionList == null || actionList.Count == 0)
-            // An empty action set is a compile failure, not a pass: a step maps to at least one
-            // action. Surfacing it here (keyed for the FixValidation retry) instead of letting it
-            // slip through to goalsSave — where the LLM's "I will correct…" no-op response would
-            // otherwise land as a late, un-retryable "Step[N]: no actions".
-            return context.Error(new global::app.error.ActionError(
-                "the compiled step has no actions — every step maps to at least one action.",
-                "EmptyActions", 400));
 
-        // Each row opens through its own action door — params intact, no CLR peel.
+        // Each row opens through its own action door — params intact, no CLR peel. The chain is the
+        // node the graph judges itself through; `actions` is the same instances, for the
+        // construction passes that still take a plain list.
         var actions = new List<global::app.goal.step.action.@this>();
-        foreach (var row in actionList.Items)
-            if (await row.Value<global::app.goal.step.action.@this>() is { } ae) actions.Add(ae);
-        var notFound = new List<string>();
-        foreach (var a in actions)
-        {
-            // The module is resolved at read — an action that exists carries a real module element,
-            // so only the action name can be wrong here. A bad module name never reaches this loop:
-            // it throws at read, which is what tells the LLM it named something that isn't there.
-            if (a.Module[a.Name] == null)
+        var chain = new global::app.goal.step.action.list.@this();
+        foreach (var row in actionList?.Items ?? (IReadOnlyList<data.@this>)System.Array.Empty<data.@this>())
+            if (await row.Value<global::app.goal.step.action.@this>() is { } ae)
             {
-                var sorted = Utils.StringDistance.OrderBySimilarity(a.Name, modules.GetActions(a.Module.Name));
-                notFound.Add($"{a.Module}.{a.Name}: module '{a.Module}' exists but action '{a.Name}' not found. " +
-                             $"Did you mean: {string.Join(", ", sorted.Take(5))}?");
+                actions.Add(ae);
+                chain.Add(ae);
             }
-        }
-
-        if (notFound.Count > 0)
-        {
-            return context.Error(new global::app.error.ActionError(
-                $"Actions not found: {string.Join("; ", notFound)}",
-                "ActionNotFound", 400));
-        }
 
         await ResolveGoalCallPaths(actions, app, context);
         var normalizationErrors = NormalizeParameterTypes(actions, modules, context);
 
-        var validationErrors = new List<string>(normalizationErrors);
         foreach (var a in actions)
         {
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -518,32 +496,22 @@ public class Default : IBuilder
             a.Default = modules.GetDefaults(a.Module.Name, a.Name, paramNames) is { } defs
                 ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
 
-            // goal.call sanity — goal names are simple identifiers (BuildGoalCore,
-            // HandleValidationError) or slash-paths (Setup/Init). They never contain
-            // dots. The LLM occasionally hallucinates a CLR type name into the slot
-            // (Fluid.Values.ObjectDictionaryFluidIndexable, App.GoalCall);
-            // catch those here so LlmFixer retries instead of writing a dead .pr.
+            // goal.call REPAIR — construction, not judgement. A name that survives this and still
+            // carries a dot is the action's own verdict to give (action.Validate).
             if (a.Parameter != null)
             {
                 foreach (var p in a.Parameter)
                 {
+                    // Only a goal.call SLOT is opened. Asking every parameter for its value would
+                    // resolve things the build must not read — an authored `%count%` is unset at
+                    // build time, and reading it turns a repair pass into a resolution failure.
                     if (!string.Equals(p.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
-                    // Catalog descriptions (e.g. "goal.call", "goal.call?") aren't real values —
-                    // they're schema metadata from Modules.Describe(). Same skip as in
-                    // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
-                    // dotted name and the type-name guard below false-positives on every
-                    // goal.call slot in the catalog.
-                    if ((await p.Value()) is global::app.type.item.text.@this descText
-                        && IsCatalogDescription(descText, p.Type!.Name)) continue;
-                    var goalCall = ToGoalCall((await p.Value()), context);
-                    if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
+                    // A catalog row's "goal.call" description is TEXT, not a goal.call, so it does
+                    // not match and needs no guard — the structure is the guard.
+                    if (await p.Value() is not GoalCall goalCall) continue;
+                    if (string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
-                    // Hard reject CLR type names — these are the known leak vector
-                    // (Fluid template rendering a typed object via ToString()). A goal
-                    // Name can never legitimately match a loaded CLR type's FullName.
-                    if (app.Type.IsClrTypeName(goalCall.Name))
-                        validationErrors.Add($"{a.Module}.{a.Name}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
-                    else if (goalCall.Name.Contains('.'))
+                    if (goalCall.Name.Contains('.'))
                     {
                         // Repair the recurring LLM leak of stuffing call notation into the
                         // goal NAME itself — e.g. event.on's GoalToCall coming back as
@@ -569,52 +537,25 @@ public class Default : IBuilder
                                 PrPath = goalCall.PrPath,
                             });
                         }
-                        else
-                            validationErrors.Add($"{a.Module}.{a.Name}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
                     }
                 }
             }
 
-            // Required-parameter check. A property is required when:
-            //   - non-nullable type (Data<T>, not Data<T>?, not <T?>)
-            //   - has no [Default] attribute
-            //   - is not a [Code], capability interface, or framework slot
-            // The LLM omitting a required param is a build-breaking mistake — without
-            // the param, the runtime can't construct the action's parameter record.
-            // Catch it at build time so LlmFixer / HandleValidationError can re-prompt.
-            {
-                // Read the ONE reflection site — the catalog element's declared parameter rows —
-                // instead of re-reflecting the handler with a fresh NullabilityInfoContext. The rows
-                // already drop [Code] / capability / EqualityContract / host params; a required slot
-                // is a row that's non-nullable with no [Default].
-                var element = a.Module[a.Name];
-                if (element != null)
-                {
-                    var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    if (a.Parameter != null)
-                        foreach (var p in a.Parameter) emitted.Add(p.Name);
-
-                    foreach (var row in element.Property.Rows)
-                    {
-                        if (row.Nullable || row.Default != null) continue;
-                        if (!emitted.Contains(row.Name))
-                            validationErrors.Add(
-                                $"{a.Module}.{a.Name}: required parameter '{row.Name}' is missing. " +
-                                $"Every action must emit all non-nullable, non-default parameters.");
-                    }
-                }
-            }
-
-            // Action-level build validation — the action asks its own handler; the builder reacts.
-            if (a.BuildError is { } buildError)
-                validationErrors.Add($"{a.Module}.{a.Name}: {buildError}");
         }
 
-        if (validationErrors.Count > 0)
+        // Construction is done; the graph judges itself and the builder only reacts. Normalization
+        // failures are the builder's own — it did the converting — so they ride as causes beside
+        // the chain's.
+        var verdict = await chain.Validate(context);
+        if (verdict != null || normalizationErrors.Count > 0)
         {
-            return context.Error(new global::app.error.ActionError(
-                string.Join("; ", validationErrors),
-                "BuildValidation", 400));
+            var causes = normalizationErrors
+                .Select(e => (global::app.error.IError)new global::app.error.Error(e, "NormalizeParameter", 400))
+                .ToList();
+            if (verdict != null) causes.AddRange(verdict.list.Count > 0 ? verdict.list : new() { verdict });
+
+            return context.Error(new global::app.error.Error(
+                string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes });
         }
 
         // Per-action Build() pass — each handler may stamp a type on the step's
@@ -816,8 +757,8 @@ public class Default : IBuilder
     /// Normalizes parameter values to match their declared type.
     /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
     /// This runs at build time so the .pr file has correct types.
-    /// Returns conversion errors so the caller can fold them into validationErrors —
-    /// without this, an LLM-emitted value that can't convert to the declared type
+    /// Returns conversion errors so the caller can carry them as causes beside the graph's own
+    /// verdicts — without this, an LLM-emitted value that can't convert to the declared type
     /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
     internal static List<string> NormalizeParameterTypes(System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> actions, global::app.module.list.@this modules,
