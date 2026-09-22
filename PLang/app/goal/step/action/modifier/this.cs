@@ -28,10 +28,10 @@ public class @this : global::app.goal.step.action.@this
         global::app.actor.context.@this context)
     {
         var (shell, error) = context.App!.Module.GetCodeGenerated(this, context);
-        if (error != null) return (null, error);
+        if (error != null) return (null, await Recorded(error, context));
         // Resolve populates the handler's params so IModifier.Wrap reads real values.
         var (handler, resolveErr) = await shell!.Resolve(this, context);
-        if (resolveErr != null) return (null, resolveErr);
+        if (resolveErr != null) return (null, await Recorded(resolveErr, context));
         if (handler is not global::app.module.IModifier mod)
         {
             // Pinpoint WHERE the misplaced "modifier" lives. Modifier actions don't carry their own
@@ -44,12 +44,25 @@ public class @this : global::app.goal.step.action.@this
                 (_, _, { } t, { } i) => $" — in step [{i}] \"{t}\"",
                 _ => ""
             };
-            return (null, new global::app.error.ActionError(
+            return (null, await Recorded(new global::app.error.ActionError(
                 $"{Module}.{Name} is not a modifier (it was placed in a modifiers array but isn't one). " +
                 $"Move it out as a peer action in the step's top-level actions array.{loc}",
-                "ModifierError", 400));
+                "ModifierError", 400), context));
         }
 
         return (mod.Wrap(inner, context), null);
+    }
+
+    /// <summary>The error, recorded on a frame of this modifier's. A modifier's own failure — it
+    /// could not be resolved, or it is not a modifier at all — happens on the modifier's behalf, so
+    /// it lands on a frame like any action's failure. Without it the failure is handed back out of
+    /// band and the call stack has no record that anything went wrong here.</summary>
+    private async System.Threading.Tasks.Task<global::app.error.IError> Recorded(
+        global::app.error.IError error, global::app.actor.context.@this context)
+    {
+        await using var call = context.CallStack.Push(this, context.Variable);
+        call.Errors.Add(error);
+        context.CallStack.Audit.Add(error);
+        return error;
     }
 }
