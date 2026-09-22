@@ -2038,6 +2038,12 @@ Context: the builder now compiles a simple goal end-to-end on a clean LLM pass
    Prior art: `.bot/goal-graph-singular/architect/snapshot-serializer-seal-answer.md` and
    `snapshot-read-half-answer.md`.
 
+   **Wire's 29 failures are newly VISIBLE, not new.** The suite used to stack-overflow before
+   printing a summary, so it reported nothing at all; it now runs 470 tests. Most of the reds are
+   snapshot round-trip / resume tests (`*_SurvivesDisk_*`, `*_ResumesToSuccess`, `*RoundTrip*`)
+   that need the deferred READ half — they cannot pass until bytes→sections lands. Do not read
+   them as a regression, and do not chase them piecemeal; they come back with the read half.
+
 2. **goal.Child should be a list<goal> node, not a naked List<@this>** (Ingi flagged).
    `goal/this.cs:54` `public List<@this> Child` is a naked collection — its sibling
    `goal.Step` is a proper `step.list` node, and `%goals%` is a `list<goal>` node (both
