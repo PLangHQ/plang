@@ -2038,6 +2038,13 @@ Context: the builder now compiles a simple goal end-to-end on a clean LLM pass
    Prior art: `.bot/goal-graph-singular/architect/snapshot-serializer-seal-answer.md` and
    `snapshot-read-half-answer.md`.
 
+   **Flaky tests now cost real time.** With the sweep honest (`4d625acc8`), the remaining noise is
+   genuine flakiness, and it makes "did I regress this?" expensive to answer. Measured on an
+   unchanged tree: `PathSerializerMigrationTests` (`PathKind_FileScheme_ViaCreate_IsFile`,
+   `PathKind_HttpsScheme_ViaCreate_IsHttps`) gave 0 / 2 / 0 failures across three identical runs,
+   and the Types suite drifts 27↔29 with no change in the failing NAMES. Diff failures by name, not
+   by count. Worth a pass to pin or quarantine these.
+
    **Wire's 29 failures are newly VISIBLE, not new.** The suite used to stack-overflow before
    printing a summary, so it reported nothing at all; it now runs 470 tests. Most of the reds are
    snapshot round-trip / resume tests (`*_SurvivesDisk_*`, `*_ResumesToSuccess`, `*RoundTrip*`)

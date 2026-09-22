@@ -209,6 +209,7 @@ public class ErrorHandleTests
             ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
         };
 
+        await using var frame = TestFrame.Live(Ctx);
         var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
         var result = await wrapped!();
 
@@ -234,6 +235,7 @@ public class ErrorHandleTests
             ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
         };
 
+        await using var frame = TestFrame.Live(Ctx);
         var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
         var result = await wrapped!();
 
@@ -255,6 +257,7 @@ public class ErrorHandleTests
 
         var modifiers = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("retryCount", 3)) };
 
+        await using var frame = TestFrame.Live(Ctx);
         var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
         var result = await wrapped!();
 
@@ -282,6 +285,7 @@ public class ErrorHandleTests
             ErrorHandler(("retryCount", 3))
         };
 
+        await using var frame = TestFrame.Live(Ctx);
         var (wrapped, _) = await modifiers[0].Wrap(statefulNext, Ctx);
         var result = await wrapped!();
 

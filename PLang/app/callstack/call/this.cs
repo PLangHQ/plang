@@ -222,9 +222,8 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Executes the resolved handler under this Call frame. Wraps:
     ///   - <c>handler.Resolve(action, context)</c> then <c>Execute()</c> invocation
-    ///   - error stamping: <c>SnapshotParams</c> onto <c>Error.Params</c>,
-    ///     <c>CallFrames</c> from <see cref="SnapshotChain"/> if not already set
-    ///   - this.Errors.Add and CallStack.Audit.Add on failure
+    ///   - <c>SnapshotParams</c> onto <c>Error.Params</c>
+    ///   - <see cref="Record"/> on failure (which stamps CallFrames and files the error)
     ///   - OperationCanceledException swallowing into ServiceError (timeout.after
     ///     contract: inner action's generated ExecuteAsync swallows OCE; this
     ///     catch is the safety net for handlers that bubble it differently)
@@ -241,9 +240,7 @@ public sealed partial class @this : IAsyncDisposable
             var (resolved, resolveErr) = await handler.Resolve(Action, context);
             if (resolveErr != null)
             {
-                if (resolveErr is Error rerr && rerr.CallFrames.Count == 0) rerr.CallFrames = SnapshotChain();
-                Errors.Add(resolveErr);
-                _stack.Audit.Add(resolveErr);
+                Record(resolveErr);
                 return context.Error(resolveErr);
             }
             real = resolved;
@@ -253,13 +250,7 @@ public sealed partial class @this : IAsyncDisposable
             if (!result.Success && result.Error is Error err)
             {
                 if (err.Params == null) err.Params = real.SnapshotParams();
-                // Capture the failing Call chain so error.handle (and other downstream
-                // observers) can identify the failing Call after this scope's Push pops.
-                // Snapshot is index-[0]=self, walking Caller upward — matches the
-                // ServiceError catch path below.
-                if (err.CallFrames.Count == 0) err.CallFrames = SnapshotChain();
-                Errors.Add(result.Error!);
-                _stack.Audit.Add(result.Error!);
+                Record(err);
             }
             return result;
         }
@@ -276,10 +267,22 @@ public sealed partial class @this : IAsyncDisposable
             var serviceErr = new ServiceError(
                 ex.Message, Action.Step!, SnapshotChain(), appEx?.Key ?? "ServiceError", appEx?.StatusCode ?? 400) { Exception = ex };
             serviceErr.Params = real?.SnapshotParams();
-            Errors.Add(serviceErr);
-            _stack.Audit.Add(serviceErr);
+            Record(serviceErr);
             return context.Error(serviceErr);
         }
+    }
+
+    /// <summary>The frame records an error against itself — the one door. Stamps the failing chain
+    /// if the error does not carry one yet, then files it on the frame and in the run's audit.
+    /// <para>Recording each error ONCE is the frame's own contract, kept by instance identity, so no
+    /// caller guards: a retry mints a fresh error per attempt and each is kept (real history), while
+    /// a layer that passes the same error through records nothing new.</para></summary>
+    public void Record(IError error)
+    {
+        if (error is Error e && e.CallFrames.Count == 0) e.CallFrames = SnapshotChain();
+        if (Errors.Any(x => ReferenceEquals(x, error))) return;
+        Errors.Add(error);
+        _stack.Audit.Add(error);
     }
 
     /// <summary>

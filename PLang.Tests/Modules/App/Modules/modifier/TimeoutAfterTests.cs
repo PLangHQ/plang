@@ -145,6 +145,7 @@ public class TimeoutAfterTests
             throw new OperationCanceledException();
         };
 
+        await using var frame = TestFrame.Live(Ctx);
         var (wrapped, _) = await modifiers[0].Wrap(throwingInner, Ctx);
         var result = await wrapped!();
 

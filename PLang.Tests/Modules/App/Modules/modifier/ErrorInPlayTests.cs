@@ -190,4 +190,50 @@ public class ErrorInPlayTests
         await Assert.That((await Ctx.Variable.GetValue("seen"))?.ToString())
             .IsEqualTo("the original failure");
     }
+
+    /// <summary>An action that copies %!error.Key% into the named variable.</summary>
+    private static PrAction CaptureErrorKey(string varName) => new()
+    {
+        Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
+        Parameter = new List<global::app.data.@this>
+        {
+            new("name", "%" + varName + "%", new global::app.type.@this("variable"),
+                context: global::PLang.Tests.TestApp.SharedContext),
+            new("value", "%!error.Key%", context: global::PLang.Tests.TestApp.SharedContext)
+        }
+    };
+
+    /// <summary>
+    /// A modifier's own verdict is in play for the recovery outside it. The deadline belongs to
+    /// timeout.after, not to the sleep it cancelled, so the error an enclosing `on error` recovers
+    /// from is the TIMEOUT — not the inner action's cancellation, and not nothing.
+    /// <para>This is why the verdict is recorded on the action's frame rather than a frame of the
+    /// modifier's own: a modifier's frame would already have popped by the time error.handle reads
+    /// the chain, and the walk never descends into closed children.</para>
+    /// </summary>
+    [Test]
+    public async Task ErrorInPlay_DuringRecovery_IsTheModifiersOwnVerdict()
+    {
+        RegisterGoal("Recover", CaptureErrorKey("seenKey"));
+
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var sleep = new PrAction
+        {
+            Module = ctx.App.Module["timer"], Name = "sleep",
+            Parameter = new List<global::app.data.@this> { new("ms", 3000L, context: ctx) }
+        };
+        // The slot folds index 0 outermost, so error.handle wraps timeout.after wraps the sleep —
+        // the recovery is outside the deadline and sees the verdict the deadline produced.
+        sleep.Modifier.Add(ErrorHandlerCalling("Recover", ("order", "GoalFirst")));
+        sleep.Modifier.Add(new global::app.goal.step.action.modifier.@this
+        {
+            Module = ctx.App.Module["timeout"], Name = "after",
+            Parameter = new List<global::app.data.@this> { new("ms", 1L, context: ctx) }
+        });
+
+        var result = await sleep.Run(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await Ctx.Variable.GetValue("seenKey"))?.ToString()).IsEqualTo("Timeout");
+    }
 }

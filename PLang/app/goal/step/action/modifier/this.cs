@@ -28,10 +28,10 @@ public class @this : global::app.goal.step.action.@this
         global::app.actor.context.@this context)
     {
         var (instance, error) = Instance(context);
-        if (error != null) return (null, await Recorded(error, context));
+        if (error != null) return (null, Recorded(error, context));
         // Resolve populates the handler's params so IModifier.Wrap reads real values.
         var (handler, resolveErr) = await instance!.Resolve(this, context);
-        if (resolveErr != null) return (null, await Recorded(resolveErr, context));
+        if (resolveErr != null) return (null, Recorded(resolveErr, context));
         if (handler is not global::app.module.IModifier mod)
         {
             // Pinpoint WHERE the misplaced "modifier" lives. Modifier actions don't carry their own
@@ -44,25 +44,38 @@ public class @this : global::app.goal.step.action.@this
                 (_, _, { } t, { } i) => $" — in step [{i}] \"{t}\"",
                 _ => ""
             };
-            return (null, await Recorded(new global::app.error.ActionError(
+            return (null, Recorded(new global::app.error.ActionError(
                 $"{Module}.{Name} is not a modifier (it was placed in a modifiers array but isn't one). " +
                 $"Move it out as a peer action in the step's top-level actions array.{loc}",
                 "ModifierError", 400), context));
         }
 
-        return (mod.Wrap(inner, context), null);
+        // The modifier's own verdict — a timeout, a cache failure — is produced inside the delegate
+        // the handler returned, after the inner action's own result was already recorded. Nothing
+        // else sees it, so the node records whatever failure leaves its layer. Recording on the
+        // ACTION's frame, not one of its own: a child frame pops before the layers outside it read
+        // the result, and the error walk never descends into closed children, so a verdict on a
+        // modifier's own frame would be invisible to an enclosing `on error`.
+        var wrapped = mod.Wrap(inner, context);
+        return (async () =>
+        {
+            var result = await wrapped();
+            if (!result.Success) Recorded(result.Error!, context);
+            return result;
+        }, null);
     }
 
-    /// <summary>The error, recorded on a frame of this modifier's. A modifier's own failure — it
-    /// could not be resolved, or it is not a modifier at all — happens on the modifier's behalf, so
-    /// it lands on a frame like any action's failure. Without it the failure is handed back out of
-    /// band and the call stack has no record that anything went wrong here.</summary>
-    private async System.Threading.Tasks.Task<global::app.error.IError> Recorded(
+    /// <summary>The error, recorded on the frame this modifier is running inside — the action's own,
+    /// because the fold runs after the action pushed it. The frame keeps each error once, so a layer
+    /// passing one through adds nothing and a retry's fresh error is kept.</summary>
+    private global::app.error.IError Recorded(
         global::app.error.IError error, global::app.actor.context.@this context)
     {
-        await using var call = context.CallStack.Push(this, context.Variable);
-        call.Errors.Add(error);
-        context.CallStack.Audit.Add(error);
+        var frame = context.CallStack.Current
+            ?? throw new System.InvalidOperationException(
+                $"{Module}.{Name} has no live frame to record '{error.Key}' on — a modifier runs inside " +
+                "the frame its action pushed, so reaching here means it was wrapped outside one.");
+        frame.Record(error);
         return error;
     }
 }
