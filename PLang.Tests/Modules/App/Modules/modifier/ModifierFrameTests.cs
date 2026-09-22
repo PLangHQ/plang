@@ -64,4 +64,46 @@ public class ModifierFrameTests
 
         await Assert.That(Ctx.CallStack.Audit.Count).IsGreaterThan(before);
     }
+
+    /// <summary>A sleep far longer than the deadline wrapping it — the timeout is the MODIFIER's own
+    /// verdict, produced inside the delegate it returned, not the inner action's. The gap is wide so
+    /// the test measures behaviour rather than scheduling: when the deadline works the sleep is
+    /// abandoned after ~1ms, and only a deadline that never fires pays the full three seconds.</summary>
+    private static PrAction TimedOutSleep()
+    {
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var action = new PrAction
+        {
+            Module = ctx.App.Module["timer"], Name = "sleep",
+            Parameter = new List<global::app.data.@this> { new("ms", 3000L, context: ctx) }
+        };
+        action.Modifier.Add(new global::app.goal.step.action.modifier.@this
+        {
+            Module = ctx.App.Module["timeout"], Name = "after",
+            Parameter = new List<global::app.data.@this> { new("ms", 1L, context: ctx) }
+        });
+        return action;
+    }
+
+    /// <summary>The step fails, and the failure it reports is the timeout.</summary>
+    [Test]
+    public async Task ModifierTimeout_IsReportedAsTheTimeout()
+    {
+        var result = await TimedOutSleep().Run(Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
+    }
+
+    /// <summary>THE GATE: the modifier's own verdict is recorded where the call stack keeps errors,
+    /// so it is visible to the frame walk while the frames are live and survives in the run's record
+    /// afterwards. A verdict produced inside the wrapped delegate lands on no frame — the step fails
+    /// with a timeout the call stack never heard of.</summary>
+    [Test]
+    public async Task ModifierTimeout_IsRecordedOnTheCallStack()
+    {
+        await TimedOutSleep().Run(Ctx);
+
+        await Assert.That(Ctx.CallStack.Audit.Any(e => e.Key == "Timeout")).IsTrue();
+    }
 }

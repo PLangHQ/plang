@@ -92,6 +92,31 @@ guard, and a guard is usually a sign the responsibility is in the wrong place. I
 verdict simply cannot be produced without landing on a frame — which is what (b) buys — then (a) is
 the cheaper lie. Your call on whether the branch pays for the truer shape now or books it.
 
-Suites at baseline otherwise: Modules 990/63 (the new red is the 4th test in
-`ModifierFrameTests`, uncommitted), Types 721/27, Wire 470/29, Data 885/52, Generator 192/19,
-Runtime 690/44.
+Suites: Modules 992/64 — the two new tests, one green, one the red gate; the rest at baseline,
+Types 721/27, Wire 470/29, Data 885/52, Generator 192/19, Runtime 690/44.
+
+## Addendum — `timeout.after` swallows its own timeout when the inner action succeeds
+
+Writing the test surfaced this, and it is adjacent enough to the ruling that you should see it
+before deciding. `timeout/after.cs:41`:
+
+```csharp
+if (cts.IsCancellationRequested && !result.Success)
+    return context.Error(new ServiceError($"Timed out after {ms}ms", "Timeout", 408));
+return result;   // deadline fired, inner happened to finish anyway → reports SUCCESS
+```
+
+The modifier's verdict is conditioned on the INNER action's result. If the deadline passes but the
+inner action completes successfully anyway, the timeout is discarded and the step reports success.
+I hit this for real: at first I wrote the test as 1ms over a 200ms sleep, and under parallel suite
+load it intermittently passed the sleep and reported success — a flaky green. I widened the gap to
+3000ms so the test measures behaviour instead of scheduling, and it is stable across loaded runs.
+
+Two things follow. First, "did my deadline fire" is the modifier's OWN state (`cts`), so reading
+the inner result to decide it is the modifier asking someone else about itself — which is the same
+shape as this whole ticket. Second, whichever option you pick, the recording site should key off
+the modifier's own verdict, not off a result it happens to be holding.
+
+Related and already on my list: `timeout.after` also defaults a non-number `Ms` to `0`
+(`(Ms.Peek() as number)?.ToInt32() ?? 0`), i.e. an unparseable deadline becomes "expire
+immediately" instead of failing loud.
