@@ -319,6 +319,36 @@
         "health": "no production code changed by architect",
         "notes": "memory project_branch_state updated to 2026-09-01"
       }
+    },
+    {
+      "id": "cadaae39-7941-4c3a-92ca-6424246dbc41",
+      "bot": "architect",
+      "timestamp_start": "2026-09-22T00:00:00",
+      "timestamp_end": "2026-09-22T10:02:40.968983",
+      "intent": "Answer coder's formal-abandoned handoff: rule on steps A-E, name the recovery slot, order the queue",
+      "before": {
+        "assumptions": "formal dropped by Ingi's decision; recovery-as-structure already ruled (Addendum 3); error model live on the frame walk",
+        "risk": "the construct-at-load rule dies with the deleted grammar doc; modifier failures invisible to %!error%"
+      },
+      "plan": ".bot/goal-graph-singular/architect/formal-abandoned-answer.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/formal-abandoned-answer.md",
+            ".bot/goal-graph-singular/claude-md-proposals.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Step A concur + dead residue; recovery slot named `recovery` on the action base (Child precedent) \u2014 Ingi yes; modifier subframes PROMOTED ahead of Stage D (verified: only Push site is action/this.cs:160) \u2014 Ingi yes; Step D scope shrunk to freshly built .pr (Ingi: most of the 353 are stale files) with the no-CLR-fallback rule standing; Step E later. Construct-at-load rule + four relationships filed as a good_to_know proposal so they survive the formal-plang.md deletion."
+        }
+      ],
+      "after": {
+        "status": "all steps ruled; order A -> B(recovery) -> modifier subframes -> Stage D -> D(object, fresh .pr) -> E",
+        "health": "no production code changed by architect",
+        "notes": "Ingi discounted the object count as stale-corpus noise"
+      }
     }
   ]
 }
