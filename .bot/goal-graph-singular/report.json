@@ -392,6 +392,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Snapshot Read<T>: option 2 scoped — Restore reads plang values via the typed ask and goes async (6 section Restores + ISnapshot + App.Restore + Resume.cs:20 — the whole ripple); Read<T> dies; no Clr in the snapshot; NOT the deferred read half (bytes->sections). Two genuinely-CLR sites stay their own boundaries (Registration/DefaultOverride clr carriers in-process — queued as items; Statics bags — backlog). actionModule cycle confirmed → Action.Module.Name."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/modifier-subframe-shape-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Modifier verdicts: (b) spanning frame rejected (incompatible with the Caller-walk %!error% model + breaks error.handle's Current); the FRAME owns recording via NEW call.Record(IError) — idempotent by instance, CallFrames stamp + Errors + Audit — ExecuteAsync's three sites collapse to it; the modifier NODE records any failed result leaving its layer on Current (the action's frame); handlers never record; Recorded's transient push dies. My 'modifier subframes' label corrected: the requirement is a verdict on a live frame. Tests: Audit assertion + live error.handle>timeout>sleep %!error% test."
         }
       ],
       "after": {
