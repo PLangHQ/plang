@@ -493,6 +493,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "947c973c4 landed: registration/defaultoverride items; Wire 470/24 (5 fixed incl. the original null). Corrections recorded: discovery keys on any *.serializer namespace (no hardcode), Rows<T> via Value<T> removes the CLR-site exception. Priority ruled: classify the 24 reds by name (read, don't fix) -> flaky-test pass (fix at root or quarantine with cause) -> Ingi's review before Step D/E."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The 24 Wire reds classified by coder: 8 deferred restore, 1 Statics, flaky pair, and (d) the predicted Data<T> double-wrap (deserialize path — capture-site pointer corrected), a moved-path test bug, and THREE security-shaped tests failing open. Ruled: security jumps the queue with provenance first (run on origin/runtime2 worktree; green there = branch regression, suspects Verify:false on nested reads and error-render changes). Then double-wrap -> test fix -> flaky -> restore -> Statics."
         }
       ],
       "after": {
