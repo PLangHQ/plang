@@ -1,0 +1,25 @@
+{% comment %}
+The shared state every decider question is asked against: the goal, its steps, and the module
+catalogue. Handed over ONCE per goal — the questions that follow reference it by path
+(`steps[3].text`, `modules.file`) rather than repeating it.
+
+Values render through `store`, so each one writes its own wire form and nothing here hand-rolls
+JSON escaping.
+{% endcomment %}
+{
+  "goal": {{ goal.Name | store }},
+  "steps": [
+    {%- assign sep = "" -%}
+    {%- for s in goal.Step -%}
+    {{ sep }}{"index": {{ s.Index }}, "text": {{ s.Text | store }}}
+    {%- assign sep = "," -%}
+    {%- endfor -%}
+  ],
+  "modules": {
+    {%- assign sep = "" -%}
+    {%- for m in modules -%}
+    {{ sep }}{{ m.Name | store }}: {{ m.Description | store }}
+    {%- assign sep = "," -%}
+    {%- endfor -%}
+  }
+}

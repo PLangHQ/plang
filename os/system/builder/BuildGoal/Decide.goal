@@ -1,0 +1,29 @@
+Decide
+/ Decide which module and which action every step of this goal uses — the whole goal in two
+/ exchanges, not one LLM call per step.
+/
+/ The decider is generic: it takes a state and typed questions and answers them. It knows nothing
+/ about goals or steps. Everything goal-shaped is composed HERE, by templates, which is why the
+/ questions are built in plang rather than inside the action.
+/
+/ Stage 1 asks a yes/no of every (step, module) pair at once. Independent answers mean a step that
+/ uses three modules gets three yeses, instead of the model ranking them against each other and
+/ dropping two. Stage 2 then asks a closed choice — which action — only of the modules that said
+/ yes, and only where the module has more than one action to choose between.
+
+- set %threshold% = 0.5
+- set %modules% = %!app.module.list%
+
+- render template "/system/builder/llm/templates/deciderState.template", write to %state%
+
+- render template "/system/builder/llm/templates/deciderModuleQuestions.template", write to %moduleQuestions%
+- llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%
+
+- render template "/system/builder/llm/templates/deciderActionQuestions.template", write to %actionQuestions%
+- llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%
+
+/ A module with exactly one action was never asked about — there was nothing to choose. Fold those
+/ in so every chosen (step, module) has an action before the parameters are mapped.
+- call FoldSingleActionModules
+
+- call /system/builder/EmitBuildEvent kind="goal-decided", goal=%goal%
