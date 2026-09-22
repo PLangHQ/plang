@@ -473,6 +473,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Hop trace evidence: sections arrive as lazy typed wire slices; views' Peek test false → HasSection false → nothing restored. Ruled (c): snapshot reads eagerly (sync pull through its reader, as goal.call already does); eagerness declared by the reader (ITypeReader.IsEager default false; goal.call + snapshot true) replacing the data reader's goal.call name check; lazy stays default; views/Capture stay sync. (a) fork and (b) async-Capture ripple rejected."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-collapse-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "IsEager landed (6c6a6a535). Providers records (Registration/DefaultOverride) unreadable by reflection; coder's reverted parameterless-ctor unblock endorsed as the right revert (born-valid). Ruled: the two records become plang value types by the recipe (item + ICreate + [Out] + own Reader), explicit registration if needed like goal.call, IsEager false. Not settable-records-by-reflection."
         }
       ],
       "after": {
