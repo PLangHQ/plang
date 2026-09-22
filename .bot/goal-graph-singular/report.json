@@ -382,6 +382,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Snapshot serializer: coder's smells confirmed; root is the untyped entry bag (Write<T> stores object?). Ruling: entries born as plang values at the write door (entity Create lift), snapshot writes itself (entries + sections, each entry Output), serializer/Default.cs deleted, Registration/DefaultOverride tagged [Out] through the established reflection-kind Output; no depth cap; if the nested-Data symptom survives it's the Data<T> double-wrap footgun at the capture site; restore stays deferred."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/snapshot-read-half-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Snapshot Read<T>: option 2 scoped — Restore reads plang values via the typed ask and goes async (6 section Restores + ISnapshot + App.Restore + Resume.cs:20 — the whole ripple); Read<T> dies; no Clr in the snapshot; NOT the deferred read half (bytes->sections). Two genuinely-CLR sites stay their own boundaries (Registration/DefaultOverride clr carriers in-process — queued as items; Statics bags — backlog). actionModule cycle confirmed → Action.Module.Name."
         }
       ],
       "after": {
