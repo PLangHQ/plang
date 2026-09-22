@@ -1,1 +1,1 @@
-Sign and verify data payloads using pluggable cryptographic providers
+Sign and verify data payloads using pluggable cryptographic providers. Only a step whose work IS signing or verifying belongs here. Another action's step may mention being signed or unsigned — a request sent unsigned, a file saved signed — and that is an option of that action, not this module.

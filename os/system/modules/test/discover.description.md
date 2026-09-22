@@ -1,1 +1,1 @@
-Walk a directory for *.test.goal files and return a filtered list of global::app.tester.Test.@this descriptors
+Find test goals under a directory and return them as a filtered list of test descriptors. Naming a folder or a filename pattern is part of this action — it does its own searching and no file action is involved.

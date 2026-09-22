@@ -1,1 +1,1 @@
-Test assertions that fail the step with a descriptive error when the condition is not met
+Test assertions: demand that something holds and fail the step with a descriptive error when it does not. A step that DEMANDS an outcome is this module; a step that merely asks whether something holds, and branches or keeps the answer, is the condition module. Only one of the two is ever used in a step, never both.

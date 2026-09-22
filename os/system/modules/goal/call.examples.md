@@ -15,5 +15,8 @@ Mapping: `condition.if … { goal.call GoalName([goal.call] WhenYes) } | conditi
 Step text: `foreach %items%, call HandleItem item=%item%`
 Mapping: `loop.foreach Collection([object] %items%) | goal.call GoalName([goal.call] HandleItem)` — `loop` for the iteration, `goal` for the body; `item=%item%` is a `goal.call` parameter.
 
+Step text: `verify %data% with contracts ['C1'], on error call HandleContractError`
+Mapping: `signing.verify … | error.handle { goal.call GoalName([goal.call] HandleContractError) }` — THREE modules: `signing` for the work, `error` for the clause, `goal` because a goal is called inside it. A goal called inside an error handler is a `goal.call` exactly as anywhere else.
+
 Step text: `call /system/builder/EmitBuildEvent kind="done"`
 Mapping: `goal.call GoalName([goal.call] /system/builder/EmitBuildEvent)` — a path-qualified name is still a plain `goal.call`.
