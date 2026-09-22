@@ -43,16 +43,23 @@ public class ErrorHandleTests
         };
     }
 
-    /// <summary>Single-action recovery list that calls <paramref name="goalName"/>.</summary>
-    private static List<PrAction> CallGoal(string goalName) => new()
+    /// <summary>An error handler whose recovery chain calls <paramref name="goalName"/>.
+    /// Recovery actions are structure on the modifier, not one of its parameters.</summary>
+    private static global::app.goal.step.action.modifier.@this ErrorHandlerCalling(
+        string goalName, params (string name, object? value)[] parameters)
     {
-        new PrAction
+        var handler = ErrorHandler(parameters);
+        handler.Recovery.Add(CallGoal(goalName));
+        return handler;
+    }
+
+    /// <summary>One recovery action: a call to <paramref name="goalName"/>.</summary>
+    private static PrAction CallGoal(string goalName) => new()
+    {
+        Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
+        Parameter = new List<global::app.data.@this>
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
-            Parameter = new List<global::app.data.@this>
-            {
-                new("goalname", new Dictionary<string, object?> { ["name"] = goalName }, context: global::PLang.Tests.TestApp.SharedContext)
-            }
+            new("goalname", new Dictionary<string, object?> { ["name"] = goalName }, context: global::PLang.Tests.TestApp.SharedContext)
         }
     };
 
@@ -312,7 +319,7 @@ public class ErrorHandleTests
         var action = Throw("boom",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("action", CallGoal("SuccessGoal")), ("order", "GoalFirst"))
+                ErrorHandlerCalling("SuccessGoal", ("order", "GoalFirst"))
             });
 
         var result = await action.Run(Ctx);
@@ -328,7 +335,7 @@ public class ErrorHandleTests
         var action = Throw("original error",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("action", CallGoal("FailGoal")), ("order", "GoalFirst"))
+                ErrorHandlerCalling("FailGoal", ("order", "GoalFirst"))
             });
 
         var result = await action.Run(Ctx);
@@ -346,7 +353,7 @@ public class ErrorHandleTests
         var action = Throw("persistent",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("action", CallGoal("SuccessGoal2")), ("order", "RetryFirst"))
+                ErrorHandlerCalling("SuccessGoal2", ("order", "RetryFirst"))
             });
 
         var result = await action.Run(Ctx);
@@ -362,7 +369,7 @@ public class ErrorHandleTests
         var action = Throw("persistent",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("action", CallGoal("FailGoal2")), ("order", "RetryFirst"))
+                ErrorHandlerCalling("FailGoal2", ("order", "RetryFirst"))
             });
 
         var result = await action.Run(Ctx);

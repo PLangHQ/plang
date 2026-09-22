@@ -13,18 +13,11 @@ namespace app.module.action.error;
 /// </summary>
 [Action("handle", Cacheable = false)]
 [Modifier(Order = 3)]
-public partial class Handle : IContext, IModifier
+public partial class Handle : IContext, IModifier, IAction
 {
     public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Message { get; init; }
-    /// <summary>
-    /// The action chain to run when the error matches. Preferred over Goal — lets a
-    /// developer express "on error, log + fall back + notify" inline without
-    /// wrapping it in a goal. The actions execute in order; %!data% flows between
-    /// them just like the main step chain.
-    /// </summary>
-    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>? Action { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
@@ -48,17 +41,13 @@ public partial class Handle : IContext, IModifier
             var erroredCall = context.CallStack.Current;
 
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
-            // Recovery actions belong in the action's own `Recovery` slot; opening them out of a
-            // parameter value is the old shape. IModifier.Wrap is handed only `next` and `context`,
-            // so the slot is out of reach from here.
-            var actions = Action == null ? null : await Action.Value() as global::app.type.item.list.@this;
-            bool hasRecovery = actions != null && actions.Count > 0;
+            bool hasRecovery = Action.Recovery.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)
             {
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context);
+                    var recoveryResult = await Recover(context);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -75,7 +64,7 @@ public partial class Handle : IContext, IModifier
                 if (retryResult?.Success == true) return retryResult;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context);
+                    var recoveryResult = await Recover(context);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -93,45 +82,17 @@ public partial class Handle : IContext, IModifier
     }
 
     /// <summary>
-    /// Runs recovery under a diff-capture scope, so handler-time mutations land on the
-    /// CallStack's diff stream and <c>Variables.SnapshotAt</c> can project back to throw-time
-    /// state. <c>%!error%</c> needs nothing here — the error is on the frame we are standing
-    /// in, and <c>CallStack.Error</c> reads it there.
+    /// Runs this modifier's recovery chain under a diff-capture scope, so handler-time mutations
+    /// land on the CallStack's diff stream and <c>Variables.SnapshotAt</c> can project back to
+    /// throw-time state. <c>%!error%</c> needs nothing here — the error is on the frame we are
+    /// standing in, and <c>CallStack.Error</c> reads it there.
     /// </summary>
-    private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
-        global::app.type.item.list.@this actions,
-        actor.context.@this context)
+    private async Task<global::app.data.@this> Recover(actor.context.@this context)
     {
         using (context.CallStack.DiffScope(context.Variable))
         {
-            return await RunRecovery(actions, context);
+            return await Action.Recovery.Run(context);
         }
-    }
-
-    /// <summary>
-    /// Runs the on-error recovery action chain.
-    /// </summary>
-    private static async Task<global::app.data.@this> RunRecovery(
-        global::app.type.item.list.@this actions,
-        actor.context.@this context)
-    {
-        // Nested actions live as parameter values with no Step reference of their own.
-        // Stamp the enclosing step so navigation — goal.call → GetGoalAsync → sibling
-        // sub-goals — works the same as for actions placed directly in a step.
-        var enclosingStep = context.Step;
-        global::app.data.@this last = context.Ok();
-        foreach (var row in actions.Items)
-        {
-            // Each row opens through its OWN action door — a raw pr row becomes a real action
-            // (params intact), not a CLR-peeled POCO.
-            var action = await row.Value<Action>();
-            if (action == null) continue;
-            if (action.Step == null && enclosingStep != null)
-                action.Step = enclosingStep;
-            last = await action.Run(context);
-            if (!last.Success) return last;
-        }
-        return last;
     }
 
     /// <summary>

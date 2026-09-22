@@ -41,10 +41,13 @@ public class ErrorInPlayTests
                     context: global::PLang.Tests.TestApp.SharedContext)).ToList()
         };
 
-    /// <summary>A recovery chain of one goal.call.</summary>
-    private static List<PrAction> CallGoal(string goalName) => new()
+    /// <summary>An error handler whose recovery chain calls <paramref name="goalName"/>.
+    /// Recovery actions are structure on the modifier, not one of its parameters.</summary>
+    private static global::app.goal.step.action.modifier.@this ErrorHandlerCalling(
+        string goalName, params (string name, object? value)[] parameters)
     {
-        new PrAction
+        var handler = ErrorHandler(parameters);
+        handler.Recovery.Add(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
             Parameter = new List<global::app.data.@this>
@@ -52,8 +55,9 @@ public class ErrorInPlayTests
                 new("goalname", new Dictionary<string, object?> { ["name"] = goalName },
                     context: global::PLang.Tests.TestApp.SharedContext)
             }
-        }
-    };
+        });
+        return handler;
+    }
 
     /// <summary>Registers a goal whose single step runs the given actions.</summary>
     private Goal RegisterGoal(string name, params PrAction[] actions)
@@ -177,7 +181,7 @@ public class ErrorInPlayTests
         var action = Throw("the original failure",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("action", CallGoal("Recover")), ("order", "GoalFirst"))
+                ErrorHandlerCalling("Recover", ("order", "GoalFirst"))
             });
 
         var result = await action.Run(Ctx);
