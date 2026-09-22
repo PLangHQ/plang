@@ -35,6 +35,10 @@
                       "name": "text"
                     },
                     "value": "goalHeader"
+                  },
+                  {
+                    "name": "goal",
+                    "value": "%goal%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
