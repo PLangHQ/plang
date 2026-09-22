@@ -20,9 +20,11 @@ public partial class Throw : IContext
     /// </summary>
     public partial data.@this? Data { get; init; }
 
-    [Default(500)]
+    [Default(400)]
     public partial data.@this<global::app.type.item.number.@this> StatusCode { get; init; }
-    public partial data.@this<global::app.type.item.text.@this>? Key { get; init; }
+
+    [Default("error")]
+    public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
     public async Task<data.@this> Run()
     {
@@ -45,7 +47,9 @@ public partial class Throw : IContext
         if (Message != null && (await Message.Value<global::app.type.item.@this>())?.Clr<object>() is global::app.error.IError msgError)
             return Error(msgError);
 
-        string key = Key == null ? "UserError" : (await Key.Value())?.Clr<string>() ?? "UserError";
+        // Key carries its own [Default] — the unset case is answered there, once, where the
+        // builder can also read it. A second fallback here would be the default stored twice.
+        string key = (await Key.Value())!.Clr<string>()!;
         int status = (await StatusCode.Value())!.ToInt32();
         string message = Message == null ? "" : (await Message.Value())?.Clr<string>() ?? "";
 

@@ -1,5 +1,5 @@
 Step text: `ask user 'what's your name?', write to %name%`
-Mapping: `output.ask Question([string] what's your name?) | variable.set Name([string] %name%), Value([object] %!data%)`
+Properties: `{"Question": "what's your name?"}` — the trailing `write to %name%` is its own action.
 
-Step text: `output.ask question='Allow access? (y/n/a)', write to %answer%`
-Mapping: `output.ask Question([string] Allow access? (y/n/a)) | variable.set Name([string] %answer%), Value([object] %!data%)`
+Step text: `ask 'Allow access? (y/n/a)', write to %answer%`
+Properties: `{"Question": "Allow access? (y/n/a)"}`

@@ -1,22 +1,19 @@
-`goal.call` runs another goal. It is the action behind `call X` wherever that clause appears — on its own, as the body of a condition, or as the body of a loop. The surrounding clause compiles to its own action; `call X` is always `goal.call`.
+`goal.call` runs another goal. It is the action behind `call X` wherever that clause appears — on its own, as the body of a condition, as the body of a loop, or inside an error handler. Named arguments after the goal name belong to the CALLEE and ride inside `GoalName.parameter`, never as properties of `goal.call` itself.
 
 Step text: `call Finalize`
-Mapping: `goal.call GoalName([goal.call] Finalize)`
+Properties: `{"GoalName": {"name": "Finalize"}}`
 
 Step text: `call ProcessOrder id=%orderId%, retries=3`
-Mapping: `goal.call GoalName([goal.call] ProcessOrder)` — `id=%orderId%` and `retries=3` are the goal's parameters; they live inside `GoalName.parameters`, not as peers.
-
-Step text: `if %total% > 5, call MarkBig`
-Mapping: `condition.if Left([object] %total%), Operator([operator] >), Right([int] 5) { goal.call GoalName([goal.call] MarkBig) }` — TWO modules: `condition` for the guard, `goal` for the body.
-
-Step text: `if %x% is "yes", call WhenYes, else call WhenNo`
-Mapping: `condition.if … { goal.call GoalName([goal.call] WhenYes) } | condition.else { goal.call GoalName([goal.call] WhenNo) }`
-
-Step text: `foreach %items%, call HandleItem item=%item%`
-Mapping: `loop.foreach Collection([object] %items%) | goal.call GoalName([goal.call] HandleItem)` — `loop` for the iteration, `goal` for the body; `item=%item%` is a `goal.call` parameter.
-
-Step text: `verify %data% with contracts ['C1'], on error call HandleContractError`
-Mapping: `signing.verify … | error.handle { goal.call GoalName([goal.call] HandleContractError) }` — THREE modules: `signing` for the work, `error` for the clause, `goal` because a goal is called inside it. A goal called inside an error handler is a `goal.call` exactly as anywhere else.
+Properties: `{"GoalName": {"name": "ProcessOrder", "parameter": [{"name": "id", "value": "%orderId%"}, {"name": "retries", "value": 3}]}}`
 
 Step text: `call /system/builder/EmitBuildEvent kind="done"`
-Mapping: `goal.call GoalName([goal.call] /system/builder/EmitBuildEvent)` — a path-qualified name is still a plain `goal.call`.
+Properties: `{"GoalName": {"name": "/system/builder/EmitBuildEvent", "parameter": [{"name": "kind", "value": "done"}]}}` — a path-qualified name is still just the name.
+
+Step text: `if %total% > 5, call MarkBig`
+Properties: `{"GoalName": {"name": "MarkBig"}}` — the condition is its own action; this one is only the call.
+
+Step text: `foreach %items%, call HandleItem item=%item%`
+Properties: `{"GoalName": {"name": "HandleItem", "parameter": [{"name": "item", "value": "%item%"}]}}` — the loop is its own action.
+
+Step text: `verify %data% with contracts ['C1'], on error call HandleContractError`
+Properties: `{"GoalName": {"name": "HandleContractError"}}` — a goal called inside an error handler is an ordinary call.

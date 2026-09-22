@@ -1,2 +1,5 @@
 Step text: `discover tests in 'Tests/Foo' recursive=false, write to %tests%`
-Mapping: `test.discover Path([string] Tests/Foo), Recursive([bool] false) | variable.set Name([string] %tests%), Value([object] %!data%)`
+Properties: `{"Path": "Tests/Foo", "Recursive": false}`
+
+Step text: `discover tests in '_fixtures', pattern='*.fixture.goal'`
+Properties: `{"Path": "_fixtures", "Pattern": "*.fixture.goal"}`

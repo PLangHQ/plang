@@ -1,12 +1,11 @@
 Step text: `set output channel as MyGoal`
-Mapping: `channel.set Name([string] "output"), Goal([goal.call] MyGoal)`
+Properties: `{"Name": "output", "Goal": {"name": "MyGoal"}}`
 
 Step text: `set error channel as ErrorHandler`
-Mapping: `channel.set Name([string] "error"), Goal([goal.call] ErrorHandler)`
+Properties: `{"Name": "error", "Goal": {"name": "ErrorHandler"}}`
 
-Step text: `set input channel as PromptUser`
-Mapping: `channel.set Name([string] "input"), Goal([goal.call] PromptUser)`
+Step text: `set channel "builder" call BuilderChannel`
+Properties: `{"Name": "builder", "Goal": {"name": "BuilderChannel"}}` — the channel name is the quoted literal; the goal is the one named after `call`.
 
-The channel name (output, error, input, or any custom literal) is always a
-bare string — never a %variable% reference. The Goal parameter is a
-goal.call to the goal that backs the channel.
+The channel name (output, error, input, or any custom literal) is always a bare string, never a
+%variable%. `Goal` is the goal that backs the channel, as the object `{"name": "<GoalName>"}`.

@@ -1,2 +1,5 @@
 Step text: `read file.txt, write to %content%`
-Mapping: `file.read Path([path] file.txt) | variable.set Name([string] %content%), Value([object] %!data%)`
+Properties: `{"Path": "file.txt"}` — the trailing `write to %content%` is its own action.
+
+Step text: `read 'config/settings.json'`
+Properties: `{"Path": "config/settings.json"}`

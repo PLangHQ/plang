@@ -1,2 +1,5 @@
 Step text: `hash %content%, write to %hash%`
-Mapping: `crypto.hash Data([object] %content%), Algorithm([string] keccak256) | variable.set Name([string] %hash%), Value([object] %!data%)`
+Properties: `{"Data": "%content%"}` — `Algorithm` is absent because the step does not name one.
+
+Step text: `hash %content% with sha256, write to %hash%`
+Properties: `{"Data": "%content%", "Algorithm": "sha256"}`

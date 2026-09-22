@@ -1,2 +1,5 @@
 Step text: `list files in docs/ recursive, write to %files%`
-Mapping: `file.list Path([path] docs/), Recursive([bool] true) | variable.set Name([string] %files%), Value([object] %!data%)`
+Properties: `{"Path": "docs/", "Recursive": true}`
+
+Step text: `list files in %folder%`
+Properties: `{"Path": "%folder%"}` — `Recursive` is absent because the step does not ask for it.

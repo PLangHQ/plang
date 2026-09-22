@@ -1,2 +1,2 @@
 Step text: `else if %a% > 5, write 'mid'`
-Mapping: `condition.elseif Left([object] %a%), Operator([operator] >), Right([int] 5)`
+Properties: `{"Left": "%a%", "Operator": ">", "Right": 5}` — the write is its own action.
