@@ -1,31 +1,17 @@
 using System.Reflection;
 using app.error;
+using Registration = app.module.action.code.registration.@this;
+using DefaultOverride = app.module.action.code.defaultoverride.@this;
 
 namespace app.module.action.code;
 
 public sealed partial class @this : ISnapshot
 {
-    /// <summary>
-    /// Snapshot record for one runtime registration. Type is the AssemblyQualifiedName
-    /// of the provider interface (so referent integrity survives across processes);
-    /// Name is the provider instance's Name; Source is the DLL path that loaded it,
-    /// or null for an in-process registration on the same App.
-    /// </summary>
-    /// <remarks>[Out] is what puts these across the wire — the sanctioned property-bag path for a
-    /// domain type, enforced by the reflection kind. The old snapshot serializer carried a second,
-    /// unguarded copy of that mechanism.</remarks>
-    internal sealed record Registration(
-        [property: Out] string TypeName,
-        [property: Out] string ProviderName,
-        [property: Out] string? Source);
-
-    /// <summary>
-    /// Snapshot record for one default-selection override — captures only when the
-    /// current default differs from the corresponding built-in default for that type.
-    /// </summary>
-    internal sealed record DefaultOverride(
-        [property: Out] string TypeName,
-        [property: Out] string ProviderName);
+    // The two captured shapes are plang VALUES, each with its own reader:
+    //   app/module/action/code/registration      — one runtime registration
+    //   app/module/action/code/defaultoverride    — one default-selection override
+    // They were CLR records read back by reflection, which could not construct them (positional,
+    // no parameterless way in) and would have had to birth them blank and fill them afterwards.
 
     /// <summary>
     /// Captures the registry layer (NOT the provider instances themselves):
@@ -49,7 +35,12 @@ public sealed partial class @this : ISnapshot
                 if (provider.IsDefault)
                     currentDefaultName = name;
                 if (!provider.IsBuiltIn)
-                    registrations.Add(new Registration(type.AssemblyQualifiedName ?? type.FullName!, name, provider.Source));
+                    registrations.Add(new Registration
+                    {
+                        TypeName = type.AssemblyQualifiedName ?? type.FullName!,
+                        ProviderName = name,
+                        Source = provider.Source,
+                    });
             }
 
             // Compare current default to the built-in default this type was *born* with
@@ -62,7 +53,11 @@ public sealed partial class @this : ISnapshot
                 && (bornDefault == null
                     || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
             {
-                overrides.Add(new DefaultOverride(type.AssemblyQualifiedName ?? type.FullName!, currentDefaultName));
+                overrides.Add(new DefaultOverride
+                {
+                    TypeName = type.AssemblyQualifiedName ?? type.FullName!,
+                    ProviderName = currentDefaultName,
+                });
             }
         }
 
@@ -81,10 +76,6 @@ public sealed partial class @this : ISnapshot
     {
         var providers = context.App.Code;
 
-        // CLR BOUNDARY — the one lowering in snapshot restore, and it is this site's own, not a
-        // policy. In-process these two records ride as clr carriers, so reading the carrier's
-        // payload back is exactly what the clr kind exists for. From the wire they return as dicts;
-        // the end-state is Registration/DefaultOverride becoming small items that read from one.
         var registrations = await Rows<Registration>(s, "registrations");
         var overrides = await Rows<DefaultOverride>(s, "defaultOverrides");
 
@@ -165,16 +156,18 @@ public sealed partial class @this : ISnapshot
     }
 
 
-    /// <summary>The captured rows of one entry, lowered to their CLR record at this site's own
-    /// boundary (see Restore). Absent entry → empty, the same as a captured empty list.</summary>
+    /// <summary>The captured rows of one entry, each read through its own typed ask — the same door
+    /// every value goes through, so nothing lowers to CLR here. Absent entry → empty, the same
+    /// answer a captured empty list gives.</summary>
     private static async System.Threading.Tasks.Task<List<T>> Rows<T>(
         global::app.snapshot.@this s, string key)
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var rows = new List<T>();
         var entry = s.Entries.Get(key);
         if (entry == null) return rows;
         foreach (var row in await entry.Value<global::app.type.item.list.@this>())
-            if (row.Peek().Clr<T>() is { } record) rows.Add(record);
+            if (await row.Value<T>() is { } value) rows.Add(value);
         return rows;
     }
 
