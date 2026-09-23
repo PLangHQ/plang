@@ -60,7 +60,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Reply to coder's node-list-values note. Ruling: program structure is context-free, context travels with the ask (rejects both A stamp-at-load and B late-stamp \u2014 shared-graph contamination). Context-never-null restated as a use rule, not storage. Two-lifecycle list.@this base (run-born keeps :103 throw; node lists get protected context-free ctor), seven _context-site audit, never-stamp-shared rule with fresh-view precedent, concurrency smoke test."
+          "context": "Reply to coder's node-list-values note. Ruling: program structure is context-free, context travels with the ask (rejects both A stamp-at-load and B late-stamp — shared-graph contamination). Context-never-null restated as a use rule, not storage. Two-lifecycle list.@this base (run-born keeps :103 throw; node lists get protected context-free ctor), seven _context-site audit, never-stamp-shared rule with fresh-view precedent, concurrency smoke test."
         },
         {
           "paths": [
@@ -70,7 +70,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Consumer trace folded into node-list-values ruling, settled with Ingi: no public typed-element face (typed face internal; only Data value face public), .list escape hatch dies with zero survivors, ~16 loops become graph members (goal wires itself \u2014 the twice-written wiring loop collapses) + walk-door migrations (ForEachAction needs single-verb rename), nine signature retypes incl. BuildResponse.Steps/Describe/implicit-operator (former flagged-not-fixed now fixed), construction via node Add, property.list precedent caveat (Clr-per-read is the disease), coder's Elements accessor goes internal."
+          "context": "Consumer trace folded into node-list-values ruling, settled with Ingi: no public typed-element face (typed face internal; only Data value face public), .list escape hatch dies with zero survivors, ~16 loops become graph members (goal wires itself — the twice-written wiring loop collapses) + walk-door migrations (ForEachAction needs single-verb rename), nine signature retypes incl. BuildResponse.Steps/Describe/implicit-operator (former flagged-not-fixed now fixed), construction via node Add, property.list precedent caveat (Clr-per-read is the disease), coder's Elements accessor goes internal."
         },
         {
           "paths": [
@@ -79,7 +79,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Completing sweep after Ingi asked if the map was complete (it was not): direct enumeration/indexer sites (Parameter enumeration is shape-stable Data-rows before+after ~14 sites no-change; snapshot-restore/Validate index sites use the INTERNAL typed face), template language boundary (goalFormat/stepForLlm/actionFormal render-diff verification), scope hole flagged for Ingi (goal.Child + action.Modifiers are [Store] sequences neither in nor out \u2014 lean: explicitly OUT this pass), ~19 test sites."
+          "context": "Completing sweep after Ingi asked if the map was complete (it was not): direct enumeration/indexer sites (Parameter enumeration is shape-stable Data-rows before+after ~14 sites no-change; snapshot-restore/Validate index sites use the INTERNAL typed face), template language boundary (goalFormat/stepForLlm/actionFormal render-diff verification), scope hole flagged for Ingi (goal.Child + action.Modifiers are [Store] sequences neither in nor out — lean: explicitly OUT this pass), ~19 test sites."
         },
         {
           "paths": [
@@ -129,7 +129,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Reply to coder's goal-tag/walker note: goal.Tag = tag.list program node (sibling of the three); parser stays generic \u2014 test.tag's IClass.Build() hook stamps goal.Tag at build (birth facts are LOCAL, no cross-goal aggregate stamps); ExtractAutoTags/SeedBranchChains obpv per Ingi \u2014 dissolve into test.Create(goal, context) (Create-everywhere; coverage nests its own Create); discover collapses to load + Goal.Test filter + test.Create. step.Variable withdrawn (superseded by %!app.type.list%)."
+          "context": "Reply to coder's goal-tag/walker note: goal.Tag = tag.list program node (sibling of the three); parser stays generic — test.tag's IClass.Build() hook stamps goal.Tag at build (birth facts are LOCAL, no cross-goal aggregate stamps); ExtractAutoTags/SeedBranchChains obpv per Ingi — dissolve into test.Create(goal, context) (Create-everywhere; coverage nests its own Create); discover collapses to load + Goal.Test filter + test.Create. step.Variable withdrawn (superseded by %!app.type.list%)."
         },
         {
           "paths": [
@@ -139,7 +139,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Reply to coder's template-value-view problem: none of (a)/(b)/(c) \u2014 the template hand-rolled the action wire (second writer). Ruling: {{ step.Action | store }} \u2014 the node writes itself via Output(View.Store); no leaf member-access, resolve door untouched, no accessor fork, Value() unchanged. Template law: {{x}} = resolve door; authored program values embed via the value's own writer with explicit view. render View input likely reverts; parameter-type idea not needed here."
+          "context": "Reply to coder's template-value-view problem: none of (a)/(b)/(c) — the template hand-rolled the action wire (second writer). Ruling: {{ step.Action | store }} — the node writes itself via Output(View.Store); no leaf member-access, resolve door untouched, no accessor fork, Value() unchanged. Template law: {{x}} = resolve door; authored program values embed via the value's own writer with explicit view. render View input likely reverts; parameter-type idea not needed here."
         },
         {
           "paths": [
@@ -159,7 +159,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Validate trilogy rulings: Q1 \u2014 module-owns-action RELEASED from discussion-context (Ingi agreed); Validate must not be built on registry strings; pipeline node-lists -> module-owns-action core -> Validate -> backref-pass; later rulings win where the older doc conflicts. Q2 \u2014 changes stay builder (Default population, goal.call name-repair), verdicts move to action.Validate; Validate judges the completed action."
+          "context": "Validate trilogy rulings: Q1 — module-owns-action RELEASED from discussion-context (Ingi agreed); Validate must not be built on registry strings; pipeline node-lists -> module-owns-action core -> Validate -> backref-pass; later rulings win where the older doc conflicts. Q2 — changes stay builder (Default population, goal.call name-repair), verdicts move to action.Validate; Validate judges the completed action."
         }
       ],
       "after": {
@@ -247,7 +247,7 @@
       ],
       "after": {
         "status": "Stage A + B landed green and pushed (c15662280, 05f55661a). Stage C blocked on naming discussion (Capabilities). Restructure (module owns its actions) scoped, not started.",
-        "health": "green \u2014 zero new test failures vs baseline for both stages; builder builds, rebuilds and runs end-to-end.",
+        "health": "green — zero new test failures vs baseline for both stages; builder builds, rebuilds and runs end-to-end.",
         "notes": "Open: %!app.type.list% render still unverified (branch debug-arg binding is broken three ways). 4 Render_Include_* failures proven pre-existing by running them on the stashed tree."
       }
     },
@@ -282,7 +282,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Addendum settled with Ingi: step/action readers DEREGISTER from ITypeReader (values-and-file-roots only; program structure is constructed by its parents) \u2014 concrete readers with (reader, readContext, parent) signatures; goal reader stays (file boundary); action.Step/step.Goal non-nullable; graft reroutes to host-construction atomically with deregistration. Rejected en route: adoption-setter walk (Ingi: double processing), owner-born-node Add (nullable window). Supersedes coder's \u00a77.6 hand-off."
+          "context": "Addendum settled with Ingi: step/action readers DEREGISTER from ITypeReader (values-and-file-roots only; program structure is constructed by its parents) — concrete readers with (reader, readContext, parent) signatures; goal reader stays (file boundary); action.Step/step.Goal non-nullable; graft reroutes to host-construction atomically with deregistration. Rejected en route: adoption-setter walk (Ingi: double processing), owner-born-node Add (nullable window). Supersedes coder's §7.6 hand-off."
         },
         {
           "paths": [
@@ -302,7 +302,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Addendum 3: nullable Step? accepted (throwing getter withdrawn \u2014 coder's invariant razor + the missed compose-and-run seam); Ingi's seam fix (App.Run invocation born knowing its CALLER \u2014 compose-and-run fused makes cursor-at-composition honest, distinct from the rejected program-action cursor move); three-role taxonomy (program/description/invocation \u2014 description split deferred by Ingi); recovery gets its OWN structural action-list slot (Child ruling withdrawn \u2014 Child holds authored sub-steps); Create(step) wording clarified (factory stepless, product born with step); Wire-suite stack overflow to backlog."
+          "context": "Addendum 3: nullable Step? accepted (throwing getter withdrawn — coder's invariant razor + the missed compose-and-run seam); Ingi's seam fix (App.Run invocation born knowing its CALLER — compose-and-run fused makes cursor-at-composition honest, distinct from the rejected program-action cursor move); three-role taxonomy (program/description/invocation — description split deferred by Ingi); recovery gets its OWN structural action-list slot (Child ruling withdrawn — Child holds authored sub-steps); Create(step) wording clarified (factory stepless, product born with step); Wire-suite stack overflow to backlog."
         },
         {
           "paths": [
@@ -311,7 +311,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Addendum 3 extended with the worked App.Run seam-fix code (one line in App.Run, four call sites byte-identical, worked trace, boot-edge note, --debug bonus) and Ingi's taxonomy refinement: role 3 is a C#-authored program action, not a fake \u2014 one action/two objects; Q2 cleanup reframed as one-object (generated run surface on the record)."
+          "context": "Addendum 3 extended with the worked App.Run seam-fix code (one line in App.Run, four call sites byte-identical, worked trace, boot-edge note, --debug bonus) and Ingi's taxonomy refinement: role 3 is a C#-authored program action, not a fake — one action/two objects; Q2 cleanup reframed as one-object (generated run surface on the record)."
         }
       ],
       "after": {
@@ -341,7 +341,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Step A concur + dead residue; recovery slot named `recovery` on the action base (Child precedent) \u2014 Ingi yes; modifier subframes PROMOTED ahead of Stage D (verified: only Push site is action/this.cs:160) \u2014 Ingi yes; Step D scope shrunk to freshly built .pr (Ingi: most of the 353 are stale files) with the no-CLR-fallback rule standing; Step E later. Construct-at-load rule + four relationships filed as a good_to_know proposal so they survive the formal-plang.md deletion."
+          "context": "Step A concur + dead residue; recovery slot named `recovery` on the action base (Child precedent) — Ingi yes; modifier subframes PROMOTED ahead of Stage D (verified: only Push site is action/this.cs:160) — Ingi yes; Step D scope shrunk to freshly built .pr (Ingi: most of the 353 are stale files) with the no-CLR-fallback rule standing; Step E later. Construct-at-load rule + four relationships filed as a good_to_know proposal so they survive the formal-plang.md deletion."
         },
         {
           "paths": [
@@ -351,7 +351,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Recovery slot shape: coder's blocker (handler can't reach its entity) is false \u2014 the generated Attach wires Action = the modifier entity for IAction implementors, before Wrap runs (modifier/this.cs:33 Resolve-then-Wrap). Ruling: Handle implements IAction, deletes the Action parameter, reads Action.Recovery.Run(context); NO verdict split (would move error.handle semantics into the generic modifier entity \u2014 misplaced behavior); Retry stays on the handler; don't wait for the one-object cleanup (it becomes a prefix deletion). IModifier untouched."
+          "context": "Recovery slot shape: coder's blocker (handler can't reach its entity) is false — the generated Attach wires Action = the modifier entity for IAction implementors, before Wrap runs (modifier/this.cs:33 Resolve-then-Wrap). Ruling: Handle implements IAction, deletes the Action parameter, reads Action.Recovery.Run(context); NO verdict split (would move error.handle semantics into the generic modifier entity — misplaced behavior); Retry stays on the handler; don't wait for the one-object cleanup (it becomes a prefix deletion). IModifier untouched."
         },
         {
           "paths": [
@@ -361,7 +361,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Door 2's remaining customer (build.validate reading %goal.step[i].action% rows) exists only because the Addendum-2 graft (step's Set('action') host-construction) is not implemented; coder's 'no step' premise is wrong \u2014 the write target step IS the step. After the graft: actions born with the step at the write, validate's row.Value<action>() is ICreate pass-through, door 2 has zero customers \u2192 delete atomically."
+          "context": "Door 2's remaining customer (build.validate reading %goal.step[i].action% rows) exists only because the Addendum-2 graft (step's Set('action') host-construction) is not implemented; coder's 'no step' premise is wrong — the write target step IS the step. After the graft: actions born with the step at the write, validate's row.Value<action>() is ICreate pass-through, door 2 has zero customers → delete atomically."
         },
         {
           "paths": [
@@ -371,7 +371,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Graft bridge: the parent is a birth fact of the READER (ctor arg), not a Read parameter \u2014 bridge/ITypeReader/ReadContext untouched; door 2 dies by construction because discovery requires a parameterless ctor (reader/this.cs:205); coder's option 1 (row bytes) rejected as json named outside the json kind; the step-has-no-context note is the already-ruled program-structure-is-context-free law working."
+          "context": "Graft bridge: the parent is a birth fact of the READER (ctor arg), not a Read parameter — bridge/ITypeReader/ReadContext untouched; door 2 dies by construction because discovery requires a parameterless ctor (reader/this.cs:205); coder's option 1 (row bytes) rejected as json named outside the json kind; the step-has-no-context note is the already-ruled program-structure-is-context-free law working."
         },
         {
           "paths": [
@@ -533,6 +533,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Plural gate (coder c3d27cecf): builder replaced by the decider pipeline mid-branch. Measured: old planner/compiler has no callers; BuildResponse still used at Default.cs:348 (live GoalsSave); four reader aliases not two; the 811 plural .pr files are unloadable regardless (goal reader has no steps arm — loads empty; data reader throws on bare-string type). Ruled: Q1 delete dead builder + its C# (build.actions D3 lapsed), :348 becomes goal.Validate→step.Validate→action.list.Validate; Q2 drop all four aliases, teach the LLM the wire keys, no migration script; Q3 rename build.validate.Actions→Action now; Q4 rename only — modifiers-through-the-decider is one design item (four gaps) for Ingi; role-flag list rejected. Flagged for Ingi: silent-empty load of stale .pr under plang --test."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/plural-gate-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder measurement (89fcc15b6): plang --test runs nothing and exits 0 — the runner's own os/system/.build/test.pr is stale (plural keys), system/test.goal loads with zero steps, discovery never starts. 790/804 goal .pr plural, 467/468 test.pr. Ruled: do not resurrect the runner alone (empty test goals could read as false green); order = loud graph readers (Ingi's go) → test.pr regenerated → loud failures → corpus rebuild when the builder runs. Tester must report zero-discovered and not exit 0."
         }
       ],
       "after": {

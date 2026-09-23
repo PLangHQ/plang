@@ -50,3 +50,12 @@ Rejected shapes: "one `module.Action` holding all with modifier as a role" — a
 2. The four alias arms gone; a `.pr` written by `goal.Output` reads back through the same keys (round trip, byte-identical modulo nothing).
 3. `build.goalsSave` on a goal with an empty step fails `EmptyActions` through `goal.Validate`; a goal with a bad literal fails at the graft inside the retry.
 4. Modules suite by name vs the branch base; deleted tests named in the commit.
+
+## MEASUREMENT (coder, `89fcc15b6`) — worse than predicted: `plang --test` runs NOTHING and exits 0
+
+The runner's own `os/system/.build/test.pr` is stale (goal-level `steps`, element key `actions`, last touched 2026-05-22), so `system/test.goal` loads with zero steps: discovery never runs, nothing prints, exit code 0. A per-goal zero-step count is therefore impossible; the static count: 804 goal `.pr` files under `os/` + `Tests/`, **790 plural / 14 singular**; of `*.test.pr` alone, **467 plural / 1 singular**.
+
+**Ruled (with the fail-loud proposal to Ingi):**
+- Do NOT resurrect the runner in isolation. Regenerating `test.pr` alone (via `build_pr.py`, the tool that exists because the runtime cannot run the builder) would make discovery run over 467 stale test goals that load EMPTY — if the tester counts an empty goal as passed, that is false green, which is worse than silence. Order: the loud graph readers (Ingi's go) → `test.pr` regenerated → `plang --test` reports 467 loud failures, truthfully → the corpus regenerates when the builder runs.
+- Second small item for Ingi: a run that discovers zero tests must SAY so and not exit 0 silently — "0 tests discovered" is a result, and it is not success. This is the tester's own guard, independent of the reader change.
+- The gate's acceptance stands on the C# suites only until then; "one real `plang build` end-to-end" and the `plang --test` corpus stay open branch acceptance, owned by the builder-runs question, not by this pass.
