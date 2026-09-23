@@ -14,25 +14,20 @@ namespace app.module.action.variable;
 /// (Data values are never mutated in place), carrying event subscribers across the name.
 /// </summary>
 [Action("set", Cacheable = false)]
-public partial class Set : IContext, IBuildValidatable
+public partial class Set : IContext
 {
-    public global::app.error.IError? ValidateBuild(List<data.@this> parameters)
+    /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
+    /// value door: a %var% is unknown at build and defers to Run.</summary>
+    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate()
     {
-        var value = parameters.FirstOrDefault(p =>
-            string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
-        // Build-time is a sync surface — read the materialised backing, never
-        // the async door. The strict probe and the conversion check below
-        // reason over the value's raw face at this proven leaf (ValidateKind
-        // and TryConvert are CLR-facing machinery).
-        var valueBacking = global::app.type.item.@this.Backing(value?.Peek());
+        // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
+        // CLR-facing machinery).
+        var valueBacking = global::app.type.item.@this.Backing(Value.Peek());
 
-        // Strict kind enforcement at build for literals. Pulls the user-named
-        // type entity from the Type parameter (post-Stage-4 — a type, not a
-        // string). Mismatches return a build error; %var% values defer to Run.
-        var typeParam = parameters.FirstOrDefault(p =>
-            string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-        if (typeParam?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null
-            && valueBacking != null && !value!.HasVariableReference)
+        // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
+        // string) against the literal's content. %var% values defer to Run.
+        if (Type?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null
+            && valueBacking != null && !Value.HasVariableReference)
         {
             var clr = t.ClrType;
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
@@ -172,7 +167,7 @@ public partial class Set : IContext, IBuildValidatable
         //
         // Strict-kind is enforced at THREE genuinely different times in this block — they are
         // NOT redundant, each catches a case the others can't see:
-        //   1. ValidateBuild (above) — a literal value, at BUILD time.
+        //   1. Validate (above) — a literal value, at BUILD time.
         //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
         // An omitted `as` clause is an EMPTY slot, not C# null — the value door
@@ -239,7 +234,7 @@ public partial class Set : IContext, IBuildValidatable
             }
 
             // Strict kind enforcement at runtime — for `%var%` paths
-            // ValidateBuild deferred to here. When the resolved CLR type
+            // Validate deferred to here. When the resolved CLR type
             // implements IKindValidatable and Strict is true, sniff the value.
             // We construct a sample instance using the raw value as the first
             // ctor argument (image's primary ctor takes byte[]); a type without

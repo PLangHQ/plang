@@ -22,4 +22,11 @@ public interface IClass
 {
     System.Threading.Tasks.Task<data.@this> Build()
         => System.Threading.Tasks.Task.FromResult(data.@this.Ok());
+
+    /// <summary>Build-time judgement of the handler's own properties — the parameter COMBINATIONS
+    /// only the handler knows are legal. Runs on the bound handler (typed views, unresolved);
+    /// a %var% is unknown at build, so read with Peek and open .Value() only when the check truly
+    /// needs it. Null when nothing is wrong — the default.</summary>
+    System.Threading.Tasks.Task<global::app.error.IError?> Validate()
+        => System.Threading.Tasks.Task.FromResult<global::app.error.IError?>(null);
 }

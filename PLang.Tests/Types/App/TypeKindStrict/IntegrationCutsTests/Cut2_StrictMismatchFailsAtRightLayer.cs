@@ -33,14 +33,20 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         return t;
     }
 
-    [Test] public async Task LiteralPngAsImageGifStrict_FailsAtBuild()
+    // The bound variable.set handler with a strict image/gif Type — as the build pass holds it.
+    private global::app.module.action.variable.Set Handler(object value)
     {
         var ctx = _app.User.Context;
-        var nameData = new global::app.data.@this("Name", "img", context: ctx);
-        var valueData = new global::app.data.@this("Value", PngBytes, context: ctx);
-        var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: ctx);
-        var parameters = new List<global::app.data.@this> { nameData, valueData, typeData };
-        var error = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(parameters);
+        return new(ctx)
+        {
+            Value = new global::app.data.@this("Value", value, context: ctx),
+            Type = new global::app.data.@this("Type", Type("image", "gif", true), context: ctx),
+        };
+    }
+
+    [Test] public async Task LiteralPngAsImageGifStrict_FailsAtBuild()
+    {
+        var error = await Handler(PngBytes).Validate();
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.Message).Contains("gif");
     }
@@ -50,12 +56,8 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         var context = _app.User.Context;
         context.Variable.Set("upload", PngBytes);
 
-        // ValidateBuild defers — value is a %var% reference.
-        var nameData = new global::app.data.@this("Name", "img", context: context);
-        var valueData = new global::app.data.@this("Value", "%upload%", context: context);
-        var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: context);
-        var validateParams = new List<global::app.data.@this> { nameData, valueData, typeData };
-        await Assert.That(new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(validateParams)).IsNull();
+        // Validate defers — value is a %var% reference.
+        await Assert.That(await Handler("%upload%").Validate()).IsNull();
 
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
@@ -70,11 +72,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     {
         var context = _app.User.Context;
 
-        var nameData = new global::app.data.@this("Name", "img", context: context);
-        var valueData = new global::app.data.@this("Value", GifBytes, context: context);
-        var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: context);
-        var validateParams = new List<global::app.data.@this> { nameData, valueData, typeData };
-        await Assert.That(new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(validateParams)).IsNull();
+        await Assert.That(await Handler(GifBytes).Validate()).IsNull();
 
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),

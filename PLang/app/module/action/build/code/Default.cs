@@ -372,6 +372,12 @@ public class Default : IBuilder
                 break;
             }
             if (handler is not global::app.module.IClass classified) continue;
+            // The bound handler judges its own properties (typed views, unresolved).
+            if (await classified.Validate() is { } complaint)
+            {
+                errors.Add($"{a.Module}.{a.Name}: {complaint.Message}");
+                break;
+            }
             var buildResult = await classified.Build();
             if (!buildResult.Success)
             {

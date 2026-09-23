@@ -252,6 +252,41 @@ public class ValidateActionsTests
         await Assert.That((await leftParam.Value())?.ToString()).IsEqualTo("%flag%");
     }
 
+    // The build pass asks each bound handler for its own verdict: variable.set judges a strict
+    // declared kind against its literal's content — a check only the handler makes.
+    [Test]
+    public async Task ValidateActions_HandlerValidate_VerdictFailsTheStep()
+    {
+        byte[] png =
+        {
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+            0x89,0x00,0x00,0x00,0x0D,0x49,0x44,0x41,0x54,0x78,0x9C,0x62,0x00,0x01,0x00,0x00,
+            0x05,0x00,0x01,0x0D,0x0A,0x2D,0xB4,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+            0x42,0x60,0x82
+        };
+        var gifStrict = new global::app.type.@this("image", "gif", true) { Context = _app.User.Context };
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+                Name = "set",
+                Parameter = new List<Data>
+                {
+                    new("Name", "%img%", context: _app.User.Context),
+                    new("Value", png, context: _app.User.Context),
+                    new("Type", gifStrict, context: _app.User.Context),
+                }
+            }
+        };
+
+        var result = await _app.Run(For(actions), _app.User.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("Strict kind mismatch");
+    }
+
     // (Removed ValidateActions_ConfigureDefaults_FromIConfigureT — http.configure + IConfigure<Config>
     // dissolved; http defaults are per-request [Default] props resolved by the setting cascade.)
 }

@@ -61,21 +61,6 @@ public sealed class IsInitiatedAttribute : Attribute { }
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class IsNotNullAttribute : Attribute { }
 
-/// <summary>
-/// Action classes that implement this interface judge their own parameter COMBINATIONS at build
-/// time — only the handler knows which are legal (the catalog rows describe slots one at a time).
-/// The action asks its handler shell through this interface from <c>action.Validate</c>.
-/// </summary>
-public interface IBuildValidatable
-{
-    /// <summary>
-    /// Judges the action's parameter rows as authored — read, never resolved. Returns null if valid,
-    /// or the error describing what is wrong so the LLM can fix it — a real
-    /// <see cref="global::app.error.IError"/> (key, status, message): the build reacts to it like any
-    /// other error.
-    /// </summary>
-    global::app.error.IError? ValidateBuild(List<data.@this> parameters);
-}
 
 /// <summary>
 /// Describes the module as a whole. Apply to exactly one class per module namespace

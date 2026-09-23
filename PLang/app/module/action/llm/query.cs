@@ -11,21 +11,16 @@ namespace app.module.action.llm;
 /// </summary>
 [Action("query")]
 [RequiresCapability("llm")]
-public partial class query : IContext, IBuildValidatable
+public partial class query : IContext
 {
-    public global::app.error.IError? ValidateBuild(List<data.@this> parameters)
+    /// <summary>Build-time judgement of my own Message, read as authored (Peek). A missing Message
+    /// is the action's own required-parameter verdict, not mine.</summary>
+    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate()
     {
-        var messages = parameters.FirstOrDefault(p =>
-            string.Equals(p.Name, "Message", StringComparison.OrdinalIgnoreCase));
+        var value = Message.Peek();
 
-        if (messages == null)
-            return new global::app.error.ProgramError("Missing required parameter 'Message'. Must be a list of {Role: string, Content: string} objects. Map system= to {Role: \"system\", Content: \"...\"} and user= to {Role: \"user\", Content: \"...\"}", key: "MissingParameter");
-
-        var value = messages.Peek();
-
-        // Build-time is a sync surface — the binding answers presence, the
-        // text instance its own (sync) emptiness notion via truthiness.
-        if (!messages.HasValue
+        // The binding answers presence, the text instance its own emptiness via truthiness.
+        if (!Message.HasValue
             || (value is global::app.type.item.text.@this st && !st.IsTruthy()))
             return new global::app.error.ProgramError("Parameter 'Message' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}", key: "EmptyParameter");
 

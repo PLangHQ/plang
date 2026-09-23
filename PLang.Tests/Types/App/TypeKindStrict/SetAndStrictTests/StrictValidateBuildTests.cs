@@ -34,56 +34,52 @@ public class StrictValidateBuildTests
         return t;
     }
 
-    private List<global::app.data.@this> Params(object value, global::app.type.@this typeEntity)
+    // The bound handler, as the build pass holds it after Resolve: its own properties set.
+    private global::app.module.action.variable.Set Handler(object value, global::app.type.@this typeEntity)
     {
         var ctx = _app.User.Context;
-        var nameData = new global::app.data.@this("Name", "x", context: ctx);
-        var valueData = new global::app.data.@this("Value", value, context: ctx);
-        var typeData = new global::app.data.@this("Type", typeEntity, context: ctx);
-        return new() { nameData, valueData, typeData };
+        return new(ctx)
+        {
+            Value = new global::app.data.@this("Value", value, context: ctx),
+            Type = new global::app.data.@this("Type", typeEntity, context: ctx),
+        };
     }
 
-    [Test] public async Task ValidateBuild_StrictImageGifWithGifLiteral_ReturnsNull()
+    [Test] public async Task Validate_StrictImageGifWithGifLiteral_ReturnsNull()
     {
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(
-            Params(GifBytes, Type("image", "gif", true)));
+        var result = await Handler(GifBytes, Type("image", "gif", true)).Validate();
         await Assert.That(result).IsNull();
     }
 
-    [Test] public async Task ValidateBuild_StrictImageGifWithPngLiteral_ReturnsError()
+    [Test] public async Task Validate_StrictImageGifWithPngLiteral_ReturnsError()
     {
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(
-            Params(PngBytes, Type("image", "gif", true)));
+        var result = await Handler(PngBytes, Type("image", "gif", true)).Validate();
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Message).Contains("gif");
         await Assert.That(result!.Message.ToLowerInvariant()).Contains("png");
     }
 
-    [Test] public async Task ValidateBuild_StrictImageGifWithVarRef_ReturnsNull_DefersToRuntime()
+    [Test] public async Task Validate_StrictImageGifWithVarRef_ReturnsNull_DefersToRuntime()
     {
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(
-            Params("%upload%", Type("image", "gif", true)));
+        var result = await Handler("%upload%", Type("image", "gif", true)).Validate();
         await Assert.That(result).IsNull();
     }
 
-    [Test] public async Task ValidateBuild_StrictTextMdWithLiteral_ReturnsNull()
+    [Test] public async Task Validate_StrictTextMdWithLiteral_ReturnsNull()
     {
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(
-            Params("hello", Type("text", "md", true)));
+        var result = await Handler("hello", Type("text", "md", true)).Validate();
         await Assert.That(result).IsNull();
     }
 
-    [Test] public async Task ValidateBuild_NotStrict_DoesNotValidate_EvenOnMismatch()
+    [Test] public async Task Validate_NotStrict_DoesNotValidate_EvenOnMismatch()
     {
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(
-            Params(PngBytes, Type("image", "gif")));
+        var result = await Handler(PngBytes, Type("image", "gif")).Validate();
         await Assert.That(result).IsNull();
     }
 
-    [Test] public async Task ValidateBuild_StrictWithNoKind_ReturnsNull()
+    [Test] public async Task Validate_StrictWithNoKind_ReturnsNull()
     {
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(
-            Params(GifBytes, Type("image", null, true)));
+        var result = await Handler(GifBytes, Type("image", null, true)).Validate();
         await Assert.That(result).IsNull();
     }
 }

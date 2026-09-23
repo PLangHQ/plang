@@ -138,42 +138,35 @@ public class SetTests
         await Assert.That(result.Name).IsNotEqualTo("!data");
     }
 
-    // --- ValidateBuild tests ---
+    // --- Validate tests (the bound handler judging its own properties) ---
 
+    private global::app.module.action.variable.Set WithValue(object value, string type)
+        => new(_app.User.Context)
+        {
+            Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.Type.Create(type), context: _app.User.Context)
+        };
 
     [Test]
-    public async Task ValidateBuild_VariableReference_ReturnsNull()
+    public async Task Validate_VariableReference_ReturnsNull()
     {
-        var parameters = new List<Data>
-        {
-            new Data("Value", "%myVar%", global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
-        };
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(parameters);
+        var result = await WithValue("%myVar%", "int").Validate();
 
         await Assert.That(result).IsNull();
     }
 
     [Test]
-    public async Task ValidateBuild_TypeMismatch_ReturnsError()
+    public async Task Validate_TypeMismatch_ReturnsError()
     {
-        var parameters = new List<Data>
-        {
-            new Data("Value", "not a number", global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
-        };
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(parameters);
+        var result = await WithValue("not a number", "int").Validate();
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Message).Contains("type=number");
     }
 
     [Test]
-    public async Task ValidateBuild_ValidTypeMatch_ReturnsNull()
+    public async Task Validate_ValidTypeMatch_ReturnsNull()
     {
-        var parameters = new List<Data>
-        {
-            new Data("Value", 42, global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
-        };
-        var result = new global::app.module.action.variable.Set(_app.User.Context).ValidateBuild(parameters);
+        var result = await WithValue(42, "int").Validate();
 
         await Assert.That(result).IsNull();
     }
