@@ -57,6 +57,9 @@ Out of scope unless it falls out naturally: statics elsewhere in the codebase. T
 - **Q4:** `ComplexSchemas()` dies; `Rank` → the entity's `Richness`. Logged: `Rank` hides a name collision (`app.goal.@this` and `app.channel.type.goal.@this` both "goal") — the inverse of named-twice; todos, not this pass.
 - **Q5:** every closed set declares its name with `[PlangType("…")]`; `choice<T>` reads T's attribute; the registry indexes the same attribute; a closed set without one fails loud at registration.
 
+- **Q5 follow-up:** none of the 12 sets carries `[PlangType]` today (names come from the lowered-CLR fallback); each gains it with today's name, and `PlangTypeAttribute`'s doc changes to say a closed set declares its name.
+- **Stale `.pr` rows (16 tracked `Tests/**/.build/*.pr` carry `"type":{"name":"operator"|"trigger"|"errororder"}`):** delete `choice/list:53` in the same commit anyway. The stale corpus is not a constraint (plural-gate Q2 reasoning): 467 of 468 test `.pr` files already load as empty goals. A C# test that goes red on one is listed as a stale fixture that regenerates with the builder; no temporary second name, no translate-on-read door.
+
 ## Verify
 
 1. `condition.if` Operator: the menu shows `choice<operator>`; an LLM row `{"name":"Operator","type":{"name":"choice","kind":"operator"},"value":"=="}` grafts, builds, runs; `"=+"` fails at the build with choice's own message.
