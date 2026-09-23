@@ -32,21 +32,37 @@ Status 2026-09-23: being designed with Ingi. Coder holds after step 1 (`ee03f91f
 
 **What goes:** `Promote()` and `_foldLoaded`; the type object's `Context`; the stamps `data/this.cs:426` (`minted.Context ??= _context`), `type/this.cs:428` (`{ Context = context }`), `data/this.cs:192` (`other.Context ??= _context`); navigation's stamp on walked values, `data/this.Navigation.cs:105-106` (`contextual.Context = _context`).
 
-## Not solved yet
+## Trace A: C# uses of a type object that need `app.type` (done 2026-09-23)
 
-**A. C# code that uses a type object outside navigation and needs `app.type`:**
-- `ClrType` (15 reads) — `_clrType ?? Context?.App.Type.Clr(Name) ?? AppTypes.GetPrimitiveOrMime(Name)`.
-- The `Create` doors — they close over `ClrType` (`Creatable`, `type/this.cs:361-367`).
-- `Compressible` (`Context?.App.Format`) and `Scheme` (`Context?.App.Type.Scheme`) — about 11 reads.
+**Result: every site that needs `app.type` already holds a context when it makes the call. None needs the type object to carry one.**
 
-Without a context on the type object, each of these has to ask `app.type` with a context the caller holds. That needs a trace of every call site: does it hold a context, and which one? This is most of step 3's real work, and it isn't done.
+| Use | Sites | What it needs | Context at hand |
+|---|---|---|---|
+| `Is(other)` / `Is(name)` (`type/this.cs:485-501`) | `data.Is` | name only | not needed. The stamp `data/this.cs:192` (`other.Context ??= _context`) is useless |
+| `ClrType` on an entry already from `app.type` | `data/reader/this.cs:99`, `type/item/this.cs:619`, `type/this.cs:258, :287` | the entry's stamped class | caller asked `context.App.Type[...]`. No change |
+| `ClrType.Exit()` on a result's type | `data/ShouldExit.cs:31`, `path/this.Operations.cs:43, :144, :158`, `module/action/file/read.cs:74` | the class (Exit = `IExitsGoal`) | the result Data's context. The same check is written out in 5 places, so it belongs on one owner |
+| `ClrType` on a declared type (from `.pr`) | `variable/set.cs:32` (strict probe), `:217` | the class | the handler's `Context` |
+| The `Create` doors: `Creatable` → `ClrType` (`type/this.cs:361-367`) | `data/this.cs:250, :303`, `type/item/this.cs:90`, `reflection:168`, `file/this.Operations.cs:78, :97`, `variable/set.cs:227, :293`, `channel/this.cs:291`, `data/reader/this.cs:101` | the class | each door already takes a context (or a Data with one). Its binder gets it (`Bind(raw, ctx)`, `:339`) but asks `ClrType` without passing it |
+| `Compressible` (`type/this.cs:168-181`, `Context?.App.Format`) | `data/this.Transport.cs:54` | the format registry | the Data's context |
+| `Scheme` (`type/this.cs:550-551`) | no C# reader (path and image use `App.Type.Scheme` directly) | — | dead, or navigation only |
+| The eight facts | builder/catalog read entries from `app.type`. No plang or template reads them off a value's type (grep of `os/`, `Tests/`) | the entry | navigation, via the asker's context |
+
+**Where type objects are made today.** The 36 item getters. The registry itself (`type/list/this.cs:185` for primitives, `:205-206` for kinded types and choice). `context.Type.Create(name)` (`type/factory.cs`, 7 callers) plus the static `type.Create(name, …, context)` (8), which is a second door for "a type by name" beside `app.Type[name]`. `type/serializer/Reader.cs:38` (declared types read from `.pr`). `type/kind/this.cs:53`. Seven `new type(...)` outside `type/`. The static helpers `String/Int/Long/Decimal/Double/Bool/DateTime/FromMime` (`type/this.cs:209-217`).
+
+**Late context stamps on type objects (all die):** `data/this.cs:192` (useless), `data/this.cs:426`, `type/this.cs:428`, `type/kind/this.cs:53`, `type/serializer/Reader.cs:38`, `variable/set.cs:211`.
+
+**Found: `variable.set` changes a type object's `Kind`** (`variable/set.cs:207`, `:228`: `type.Kind = ...`). The type object comes from the parameter's value, and step 1's run copy shares that value with the program row. So this writes on the shared program. If type objects become `app.type`'s shared entries, it would also corrupt the registry. `Kind` must become read-only, and `variable.set` gets a new type object instead.
+
+**Step A's slot is dead.** `app.Context` is only ever set (`goal/step/action/this.cs:153`, `goal/this.cs:287`, `Start()`). Nothing in production reads it.
 
 **B. The static tables** — `GetPrimitiveOrMime` (4 references), `ClrFromMime` (4), the primitive table (10 reads). Once A is traced, decide for each: move it onto its owner, or delete it.
 
-**C. Step A's slot.** It has no known use after this. Confirm, then remove it.
+**C. Step A's slot.** It's dead (see trace), so remove it.
 
-**D. #15, #24** — unchanged. Plan them after A.
+**D. #15, #24** — unchanged.
+
+**E. One door for "a type by name".** `context.Type.Create(name)` and the static `type.Create(name, …)` sit beside `app.Type[name]`.
 
 ## Next
 
-Trace A (read-only, every call site and its context), then bring the result to Ingi before writing the coder plan.
+Bring the trace to Ingi, then write the coder plan.
