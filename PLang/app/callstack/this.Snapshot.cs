@@ -190,12 +190,20 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         {
             var frame = await row.Value<global::app.snapshot.@this>();
 
-            var goalName    = (await frame.Entries.Get("goalName")!.Value<global::app.type.item.text.@this>()).ToString();
-            var goalPrPath  = (await frame.Entries.Get("goalPrPath")!.Value<global::app.type.item.text.@this>()).ToString();
-            var goalHash    = (await frame.Entries.Get("goalHash")!.Value<global::app.type.item.text.@this>()).ToString();
-            var stepIndex   = (await frame.Entries.Get("stepIndex")!.Value<global::app.type.item.number.@this>()).ToInt32();
-            var actionIndex = (await frame.Entries.Get("actionIndex")!.Value<global::app.type.item.number.@this>()).ToInt32();
-            var id          = (await frame.Entries.Get("id")!.Value<global::app.type.item.text.@this>()).ToString();
+            // Each captured key through its typed ask; a missing or unreadable one names itself.
+            async System.Threading.Tasks.Task<T> Entry<T>(string key)
+                where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+                => await (frame.Entries.Get(key) ?? throw new CallbackFrameIncomplete(key)).Value<T>()
+                   ?? throw new CallbackFrameIncomplete(key);
+
+            var goalName     = (await Entry<global::app.type.item.text.@this>("goalName")).ToString();
+            var goalPrPath   = (await Entry<global::app.type.item.text.@this>("goalPrPath")).ToString();
+            var goalHash     = (await Entry<global::app.type.item.text.@this>("goalHash")).ToString();
+            var stepIndex    = (await Entry<global::app.type.item.number.@this>("stepIndex")).ToInt32();
+            var actionIndex  = (await Entry<global::app.type.item.number.@this>("actionIndex")).ToInt32();
+            var actionModule = (await Entry<global::app.type.item.text.@this>("actionModule")).ToString();
+            var actionName   = (await Entry<global::app.type.item.text.@this>("actionName")).ToString();
+            var id           = (await Entry<global::app.type.item.text.@this>("id")).ToString();
 
             // Resolve by name — the goal's identity. A v0.2 .pr holds many goals on
             // one PrPath (the file), so a PrPath lookup picks the wrong goal; the
@@ -217,6 +225,13 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             if (actionIndex < 0 || actionIndex >= liveStep.Action.Count)
                 throw new CallbackGoalNotFound($"{goalPrPath} (actionIndex {actionIndex} out of range at step {stepIndex})");
             var liveAction = liveStep.Action[actionIndex];
+
+            // The hash covers the source text, not the compiled actions — the captured action is the
+            // check it can't make.
+            if (!string.Equals(liveAction.Module.Name, actionModule, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(liveAction.Name, actionName, StringComparison.OrdinalIgnoreCase))
+                throw new CallbackActionMismatch(liveGoal.Name, stepIndex, actionIndex,
+                    $"{actionModule}.{actionName}", $"{liveAction.Module.Name}.{liveAction.Name}");
 
             restored.Add(new call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
         }

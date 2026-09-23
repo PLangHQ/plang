@@ -37,3 +37,28 @@ public sealed class CallbackGoalNotFound : System.Exception
         GoalPrPath = goalPrPath;
     }
 }
+
+/// <summary>
+/// Hard referent-integrity error raised when the action at a captured frame's (step, action) index
+/// is no longer the action the frame captured. The goal hash covers the goal's name and step TEXT,
+/// not the compiled actions — a rebuild with unchanged prose can compile a step to different actions,
+/// so the position lands on another action with the same hash. The captured module/name is the check
+/// the hash can't make.
+/// </summary>
+public sealed class CallbackActionMismatch : System.Exception
+{
+    public CallbackActionMismatch(string goal, int stepIndex, int actionIndex, string captured, string live)
+        : base($"Callback frame at '{goal}' step {stepIndex} action {actionIndex}: captured action '{captured}', live action '{live}'.")
+    { }
+}
+
+/// <summary>
+/// Hard referent-integrity error raised when a captured frame lacks an entry its restore needs — the
+/// snapshot is not one this runtime wrote, or it was cut.
+/// </summary>
+public sealed class CallbackFrameIncomplete : System.Exception
+{
+    public CallbackFrameIncomplete(string key)
+        : base($"Callback frame is missing '{key}' — the snapshot cannot place it.")
+    { }
+}

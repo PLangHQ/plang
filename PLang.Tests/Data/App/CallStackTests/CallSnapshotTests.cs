@@ -127,6 +127,35 @@ public class CallSnapshotTests
     }
 
     [Test]
+    public async Task Call_Restore_HardErrors_WhenTheActionAtThePositionChanged()
+    {
+        // Same step text (so the goal hash matches) compiled to a different action: the position now
+        // points at another action, which only the captured module/name can tell.
+        var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
+        await using (var call = src.User.CallStack.Push(action))
+        {
+            var snap = src.Snapshot(src.User.Context);
+
+            var dst = global::PLang.Tests.TestApp.Create("/dst");
+            var dstGoal = new Goal { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+            var dstStep = new Step { Index = 0, Text = "same step text", Goal = dstGoal };
+            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" };
+            dstAction.Step = dstStep;
+            dstStep.Action.Add(dstAction);
+            dstGoal.Step.Add(dstStep);
+            dst.Goal.Add(dstGoal);
+
+            var thrown = await Assert.ThrowsAsync<CallbackActionMismatch>(async () =>
+            {
+                await dst.Restore(snap, dst.User.Context);
+                await Task.CompletedTask;
+            });
+            await Assert.That(thrown!.Message).Contains("test.test");
+            await Assert.That(thrown.Message).Contains("variable.set");
+        }
+    }
+
+    [Test]
     public async Task Call_Restore_DoesNotMutateLiveGoal()
     {
         var (src, action) = BuildLiveAction("PureGoal");

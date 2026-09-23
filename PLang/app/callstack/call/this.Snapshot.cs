@@ -8,7 +8,8 @@ public sealed partial class @this
     ///  - GoalHash    : SHA-256 of name + step prose; mismatch on resume = hard error
     ///  - StepIndex   : Step.Index inside Goal.Step
     ///  - ActionIndex : index of this Action inside its Step.Action
-    ///  - ActionModule, ActionName : human-readable position help; Action lookup is by index
+    ///  - ActionModule, ActionName : the action at the position; restore verifies the live action is
+    ///    still it (the hash covers step text, not compiled actions). Action lookup is by index
     ///  - Id          : the Call's short hex Id; preserved for log correlation
     ///
     /// Excludes: timing tier (StartedAt/CompletedAt), Diffs, in-flight network state,
@@ -32,7 +33,7 @@ public sealed partial class @this
         s.Write("stepIndex",   step?.Index  ?? -1);
         s.Write("actionIndex", actionIndex);
         // The module's NAME, not the element: an element is a live graph node whose Actions lead
-        // back to their Module. Write-only debug data — nothing restores it.
+        // back to their Module. Restore checks the live action at the position against these.
         s.Write("actionModule", Action.Module.Name);
         s.Write("actionName",   Action.Name);
         s.Write("id",           Id);
