@@ -47,9 +47,10 @@ public partial class query : IContext
     [GoalCallback("response")]
     public partial data.@this<GoalCall>? OnValidateResponse { get; init; }
 
-    /// <summary>Callback fired for each streaming chunk. Receives: content, fullContent, isDone.</summary>
-    [GoalCallback("streamChunk")]
-    public partial data.@this<GoalCall>? OnStream { get; init; }
+    /// <summary>The call run for each streaming chunk — the response streams through http.request's
+    /// OnStream, so the chunk arrives as %chunk%.</summary>
+    [GoalCallback("chunk")]
+    public partial data.@this<global::app.goal.step.action.@this>? OnStream { get; init; }
 
     /// <summary>JSON schema string the LLM must conform to. When set, format defaults to "json".</summary>
     /// <summary>

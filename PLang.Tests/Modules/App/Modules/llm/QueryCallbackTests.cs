@@ -250,7 +250,7 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "stream test" }
             }.ToListData<LlmMessage>(),
-            OnStream = new GoalCall { Name = "HandleChunk" }
+            OnStream = Make.Call("HandleChunk")
         };
 
         // With streaming enabled, the request should have stream:true
@@ -275,7 +275,7 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "stream" }
             }.ToListData<LlmMessage>(),
-            OnStream = new GoalCall { Name = "StreamHandler" }
+            OnStream = Make.Call("StreamHandler")
         };
 
         await action.Attach(null, Ctx);

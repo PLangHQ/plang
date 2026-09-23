@@ -47,7 +47,7 @@ public partial class upload : IContext
 
     /// <summary>Goal to call with TransferProgress updates during upload.</summary>
     [GoalCallback("progress")]
-    public partial data.@this<GoalCall>? OnProgress { get; init; }
+    public partial data.@this<global::app.goal.step.action.@this>? OnProgress { get; init; }
 
     /// <summary>Base URL for resolving relative URLs. Unset = URLs must be absolute.</summary>
     public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }

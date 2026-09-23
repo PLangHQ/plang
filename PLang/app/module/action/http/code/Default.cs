@@ -11,6 +11,7 @@ using PlangType = app.type.@this;
 using app.module.action.signing;
 using AppType = app.@this;
 using SysHttpMethod = System.Net.Http.HttpMethod;
+using Call = app.goal.step.action.@this;
 
 namespace app.module.action.http.code;
 
@@ -618,7 +619,7 @@ public sealed class Default : IHttp
     private async Task<data.@this> HandleStreamingAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
-        GoalCall onStream,
+        Call onStream,
         StreamFormat? streamAs,
         bool unsigned,
         AppType app,
@@ -680,26 +681,23 @@ public sealed class Default : IHttp
     }
 
     /// <summary>
-    /// Creates a new GoalCall with the given value injected as the callback parameter, then runs it.
-    /// Parameter name comes from the template GoalCall's first parameter, or the defaultName.
+    /// Runs the held callback call once for one runtime value. The value is run-state: it binds as
+    /// the variable <paramref name="name"/> (the name the slot's <c>[GoalCallback]</c> advertises —
+    /// <c>%chunk%</c>, <c>%progress%</c>) in the context the call runs under; the held call then runs
+    /// as itself, binding its authored arguments after, so an authored name wins a collision.
     /// </summary>
     private static async Task RunCallbackAsync(
-        GoalCall template, object? value, PlangType? type, string defaultName,
+        Call held, object? value, PlangType? type, string name,
         AppType app, actor.context.@this context, CancellationToken ct)
     {
-        var paramName = template.Parameter?.Count > 0 ? template.Parameter[0].Name : defaultName;
-        // A Data payload rides AS the parameter (parameters are Data boxes) —
-        // re-boxing would nest a bare Data, which the store seam rejects.
-        data.@this param;
-        if (value is data.@this dv) { dv.Name = paramName; param = dv; }
-        else param = new data.@this(paramName, value, type, context: context);
-        var call = new GoalCall
-        {
-            Name = template.Name,
-            PrPath = template.PrPath,
-            Parameter = new List<data.@this> { param }
-        };
-        var result = await app.RunGoalAsync(call, context, ct);
+        // A Data payload rides AS the variable — re-boxing would nest a bare Data, which the store
+        // seam rejects.
+        data.@this bound;
+        if (value is data.@this dv) { dv.Name = name; bound = dv; }
+        else bound = new data.@this(name, value, type, context: context);
+        await context.Variable.Set(name, bound);
+
+        var result = await held.Run(context);
         if (!result.Success)
             await app.System.Channel.WriteTextAsync(global::app.channel.list.@this.Error, result.Error?.Message ?? "");
     }
@@ -712,7 +710,7 @@ public sealed class Default : IHttp
     }
 
     private static async Task StreamLinesAsync(
-        Stream stream, GoalCall onStream,
+        Stream stream, Call onStream,
         AppType app, actor.context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -727,7 +725,7 @@ public sealed class Default : IHttp
     }
 
     private static async Task StreamSSEAsync(
-        Stream stream, GoalCall onStream,
+        Stream stream, Call onStream,
         AppType app, actor.context.@this context, long maxBufferSize, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -778,7 +776,7 @@ public sealed class Default : IHttp
     }
 
     private static async Task StreamBytesAsync(
-        Stream stream, GoalCall onStream,
+        Stream stream, Call onStream,
         AppType app, actor.context.@this context, CancellationToken ct)
     {
         var buffer = new byte[8192];
@@ -793,7 +791,7 @@ public sealed class Default : IHttp
     }
 
     private async Task StreamPlangAsync(
-        Stream stream, GoalCall onStream,
+        Stream stream, Call onStream,
         AppType app, actor.context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -844,7 +842,7 @@ public sealed class Default : IHttp
         Stream destination,
         long? totalBytes,
         long maxBytes,
-        GoalCall? onProgress,
+        Call? onProgress,
         AppType app,
         actor.context.@this context,
         CancellationToken ct)

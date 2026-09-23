@@ -67,7 +67,11 @@ public static class Make
     {
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         if (arguments.Length == 0) return Action("goal", "call", ("Name", goal));
-        var rows = arguments.Select(a => new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
+        // A %ref% argument is an authored template, as the builder stamps it — it renders against
+        // live variables when the callee reads it.
+        var rows = arguments.Select(a => a.value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
+            ? new global::app.data.@this(a.name, s, new global::app.type.@this("text", template: "plang"), context: ctx)
+            : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
         return Action("goal", "call", ("Name", goal),
             ("Parameter", new global::app.type.item.list.@this(rows, ctx)));
     }

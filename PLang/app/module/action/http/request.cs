@@ -49,7 +49,7 @@ public partial class request : IContext
 
     /// <summary>Goal to call for each streamed chunk.</summary>
     [GoalCallback("chunk")]
-    public partial data.@this<GoalCall>? OnStream { get; init; }
+    public partial data.@this<global::app.goal.step.action.@this>? OnStream { get; init; }
 
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>
     public partial data.@this<global::app.type.item.choice.@this<StreamFormat>>? StreamAs { get; init; }

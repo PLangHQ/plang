@@ -39,7 +39,7 @@ public class RequestActionTests
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
 
-        // Register stub goals for streaming callbacks — GoalCall needs to find them
+        // Register stub goals for streaming callbacks — the held call needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
             _app.Goal.Add(new global::app.goal.@this { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) });
     }
@@ -369,7 +369,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = new global::app.goal.GoalCall { Name = "ProcessChunk" },
+            OnStream = Make.Call("ProcessChunk"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -481,7 +481,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
+            OnStream = Make.Call("HandleLine"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -504,7 +504,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/sse",
-            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
+            OnStream = Make.Call("HandleSSE"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -525,7 +525,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/sse-multi",
-            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
+            OnStream = Make.Call("HandleSSE"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -548,7 +548,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/bytes",
-            OnStream = new global::app.goal.GoalCall { Name = "HandleBytes" },
+            OnStream = Make.Call("HandleBytes"),
             StreamAs = (global::app.type.item.choice.@this<global::app.module.action.http.StreamFormat>)StreamFormat.Bytes,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -572,7 +572,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream-err",
-            OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
+            OnStream = Make.Call("HandleLine"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -583,19 +583,17 @@ public class RequestActionTests
     }
 
     [Test]
-    public async Task Stream_CustomVarName_UsesParameterVariable()
+    public async Task Stream_AuthoredArgument_RenamesTheChunk()
     {
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent("chunk1\n", Encoding.UTF8, "text/plain")
         });
 
+        // `on stream call HandleChunk myChunk=%chunk%` — the chunk binds as %chunk%, then the held
+        // call binds its authored argument over it.
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = new global::app.goal.GoalCall
-            {
-                Name = "HandleChunk",
-                Parameter = new List<Data> { new Data("myChunk", context: Ctx) }
-            },
+            OnStream = Make.Call("HandleChunk", ("myChunk", "%chunk%")),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -603,7 +601,7 @@ public class RequestActionTests
         await result.IsSuccess();
         var lastValue = await Ctx.Variable.Get("myChunk");
         await Assert.That(lastValue).IsNotNull();
-        await Assert.That(lastValue!.ToString()).IsEqualTo("chunk1");
+        await Assert.That((await lastValue!.Value())?.RawText).IsEqualTo("chunk1");
     }
 
     [Test]
@@ -615,7 +613,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/plang-stream",
-            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
+            OnStream = Make.Call("HandlePlang"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -737,7 +735,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/sse-overflow",
-            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
+            OnStream = Make.Call("HandleSSE"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
