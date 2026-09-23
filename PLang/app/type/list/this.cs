@@ -101,17 +101,6 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Static-friendly subset of <see cref="GetTypeName"/> covering the primitive table only —
-    /// returns null for domain/[Choices]/array/generic types. Used as a no-context fallback by
-    /// <see cref="data.@this"/> when inferring a Type from a value without an active Context.
-    /// </summary>
-    public static string? GetPrimitiveName(System.Type type)
-    {
-        var underlying = Nullable.GetUnderlyingType(type) ?? type;
-        return app.type.primitive.@this.Canonical.TryGetValue(underlying, out var name) ? name : null;
-    }
-
-    /// <summary>
     /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
     /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
     /// directly off the type via reflection (no per-App registry). For callers that don't
@@ -191,6 +180,10 @@ public sealed partial class @this
     /// <summary>Alias for <see cref="Get(string)"/> — preserves existing <c>app.type.Clr</c> caller habit.</summary>
     public System.Type? Clr(string plangName) => Get(plangName);
 
+    /// <summary>True when <paramref name="typeName"/> names a plang type — the presence question
+    /// beside the indexer, which selects and throws on a miss.</summary>
+    public bool Contains(string typeName) => Get(typeName) != null;
+
     // --- Stage 3 accessor surface ---
 
     // Catalog cache keyed by PLang type name.  The no-module catalog walk is
@@ -227,20 +220,11 @@ public sealed partial class @this
                     dict[entry.Name] = entry;
                     continue;
                 }
-                if (Rank(entry) > Rank(existing))
+                if (entry.Richness > existing.Richness)
                     dict[entry.Name] = entry;
             }
             return dict;
         });
-    }
-
-    // Higher = catalog-richer.  Used to break same-name ties deterministically.
-    private static int Rank(app.type.@this entry)
-    {
-        if (entry.Fields != null && entry.Fields.Count > 0) return 3;  // Record
-        if (entry.Values != null && entry.Values.Count > 0) return 2;  // Enum
-        if (entry.Shape != null || entry.ConstructorSignature != null) return 1;  // Scalar
-        return 0;  // barren
     }
 
     /// <summary>
@@ -515,18 +499,6 @@ public sealed partial class @this
         RegisterRuntime(plangName, clrType);
     }
 
-    /// <summary>
-    /// Registers domain types needed for settings store rehydration.
-    /// Called by App constructor. Today this is a no-op — Identity carries
-    /// <c>[PlangType("identity")]</c> on the class itself, which the assembly
-    /// scan picks up. The hook stays so future domain types that need
-    /// runtime registration (test harness shims, dynamically loaded plugins)
-    /// have an obvious entry point.
-    /// </summary>
-    public void RegisterDomainTypes()
-    {
-    }
-
 
     // --- Constrained-value catalog ---
 
@@ -558,40 +530,6 @@ public sealed partial class @this
     public string[]? ValidValues(System.Type type, actor.context.@this? context = null) => GetValidValues(type, context);
 
     // --- Type-kind queries ---
-
-    /// <summary>
-    /// True for [PlangType] domain types whose wire form is a primitive (typically string).
-    /// Pure reflection — kept static so it's reachable from <see cref="Utils.TypeConverter"/>'s
-    /// static path without needing an App instance.
-    /// </summary>
-    public static bool IsScalarPlangType(System.Type type)
-    {
-        // A type is catalog-visible when it's named via [PlangType] override OR is
-        // an @this class (last-namespace-segment convention).
-        var hasPlangName = type
-            .GetCustomAttributes(typeof(PlangTypeAttribute), inherit: false)
-            .Length > 0;
-        var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
-        if (!hasPlangName && !isThisClass) return false;
-
-        // Resolve(input, context) factory → catalog derives the wire shape from the
-        // first parameter. Marks the type as scalar without further checks.
-        if (type.GetMethod("Resolve", BindingFlags.Public | BindingFlags.Static) != null)
-            return true;
-
-        // Static Shape property → caller asserts the wire form explicitly.
-        if (ReadStaticString(type, "Shape") != null)
-            return true;
-
-        // Final fallback: a catalog-named type with no [LlmBuilder] properties is, by
-        // convention, a wrapped primitive. The catalog renders it as a string.
-        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (System.Attribute.IsDefined(prop, typeof(LlmBuilderAttribute)))
-                return false;
-        }
-        return true;
-    }
 
     /// <summary>
     /// True when <paramref name="type"/> is a primitive PLang type. Pure logic — static.
@@ -793,15 +731,6 @@ public sealed partial class @this
 
         return entries;
     }
-
-    /// <summary>
-    /// Returns the catalog's record/enum entries, keyed by name. When two distinct
-    /// CLR types resolve to the same PLang name (e.g. two <c>@this</c> classes
-    /// sharing a last-namespace-segment), the first one wins — the registry's
-    /// <c>ResolveName</c> follows the same first-wins rule so consumers stay
-    /// consistent across the catalog and the type lookup.
-    /// </summary>
-    public Dictionary<string, app.type.@this> ComplexSchemas() => CatalogByName;
 
     /// <summary>
     /// Reads a public-static string property by name from <paramref name="type"/>.

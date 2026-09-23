@@ -586,14 +586,6 @@ public class EngineTypesTests
         await Assert.That(stringCount).IsEqualTo(1);
     }
 
-    [Test]
-    public async Task ComplexSchemas_ReturnsDict()
-    {
-        var schemas = _types.ComplexSchemas();
-
-        await Assert.That(schemas).IsNotNull();
-    }
-
     // --- Finding #7: Lazy derivation distinguishes context path from fallback ---
 
     [Test]

@@ -26,8 +26,6 @@ internal static class TypeMapping
     public static List<global::app.type.@this> BuildTypeEntries(global::app.module.list.@this? modules)
         => _app.Type.BuildTypeEntries(modules);
 
-    public static bool IsScalarPlangType(System.Type type) => global::app.type.list.@this.IsScalarPlangType(type);
-
     public static bool IsPrimitive(System.Type type) => global::app.type.list.@this.IsPrimitive(type);
 }
 

@@ -558,10 +558,19 @@ public sealed class @this : item.@this
     public global::app.type.item.path.scheme.@this? Scheme
         => Name == "path" ? Context?.App.Type.Scheme : null;
 
+    /// <summary>How much catalog this entry carries — a record (fields) over a closed set (values)
+    /// over a scalar (shape) over a bare name. Breaks a same-name tie in the catalog
+    /// deterministically.</summary>
+    internal int Richness =>
+        _fields is { Count: > 0 } ? 3
+        : _values is { Count: > 0 } ? 2
+        : _shape != null || _constructorSignature != null ? 1
+        : 0;
+
     // Construct with a stamped ClrType (used by BuildTypeEntries and by the
     // type-list indexer's primitive fallback path; both spare the registry
     // round-trip).  The primitive path also has no fold data — primitives are
-    // not in ComplexSchemas — so mark fold as already-loaded; that keeps
+    // not in the catalog — so mark fold as already-loaded; that keeps
     // Promote()'s Context check from firing for `app.Type["string"]`.
     internal @this(string name, System.Type? clrType) : this(name)
     {
@@ -594,7 +603,9 @@ public sealed class @this : item.@this
                 + "This is a producer bug: whoever minted this type without a context "
                 + "did not propagate Context. Primitive identity reads "
                 + "(.Name/.ClrType) do not hit this path.");
-        if (!Context.App.Type.ComplexSchemas().TryGetValue(Name, out var match)) return this;
+        if (!Context.App.Type.Contains(Name)) return this;
+        var match = Context.App.Type[Name];
+        if (ReferenceEquals(match, this)) return this;
         _fields = match._fields;
         _values = match._values;
         _properties = match._properties;

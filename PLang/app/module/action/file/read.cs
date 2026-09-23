@@ -131,7 +131,7 @@ public partial class Read : IContext
         // — {file, <ext>} — and the content type appears only when runtime
         // examination narrows.
         var inferred = p.Kind;
-        if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return Context.Ok();
+        if (inferred.IsNull || !Context.App.Type.Contains(inferred.Name)) return Context.Ok();
         if (inferred.Name != "image")
             inferred = global::app.type.@this.Create("file", p.Extension.TrimStart('.'), context: Context);
         inferred.Context = Context;

@@ -34,7 +34,7 @@ internal static class HttpBuildHelpers
         // Stage 6: same shared {name, kind} derivation file.read uses, so the
         // URL-extension build stamp matches the runtime response-body stamp.
         var inferred = fmt.TypeFromExtension(ext);
-        if (inferred.IsNull || app.Type.Get(inferred.Name) == null)
+        if (inferred.IsNull || !app.Type.Contains(inferred.Name))
             return Task.FromResult(data.@this.Ok());
 
         return Task.FromResult(app.User.Context.Ok(inferred));

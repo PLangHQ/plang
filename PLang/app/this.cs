@@ -291,7 +291,6 @@ public sealed partial class @this : IAsyncDisposable
         _goals = new global::app.goal.list.@this { App = this };
 
         Code.RegisterDefaults();
-        Type.RegisterDomainTypes();
         // Closed sets (choice<T>: operator, httpmethod, …) surface only through handler params
         // and enum choices carry no [Choices] marker, so the choice registry discovers them by
         // scanning the assembly's choice<T> usages — reverse-resolvable ("operator" → choice<T>)
