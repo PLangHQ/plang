@@ -90,7 +90,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                         // plang's own %var% syntax, parsed — never a guessed type: a string carrying a
                         // variable reference is born a template of its row's type.
                         if (typeRef.Template == null && global::app.type.item.text.@this.HasVariable(slice))
-                            typeRef = global::app.type.@this.Create(typeRef.Name, typeRef.Kind?.Name, typeRef.Strict, ctx.Context, "plang");
+                            typeRef = ctx.Context.App.Type[new global::app.type.@this(typeRef.Name, typeRef.Kind?.Name, typeRef.Strict, "plang")];
                         // A SEMANTIC string — a %ref%/template (the IsVariable birth gate needs the
                         // decoded content) or a variable NAME (type.Create resolves it to its binding) —
                         // takes the content door; the kind-parse stays lazy on the content source. A

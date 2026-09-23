@@ -33,6 +33,18 @@ public sealed class @this
     /// <summary>True when <paramref name="clr"/> (through its wrappers) carries options.</summary>
     public bool Contains(System.Type clr) => _sets.GetOrAdd(Unwrap(clr), t => new set.@this(t)).IsClosed;
 
+    /// <summary>The closed set named <paramref name="kind"/> — a choice's kind names its set
+    /// (<c>{choice, operator}</c>). Sets are known once met (boot, <c>code.load</c>, a CLR ask).
+    /// Throws on a miss.</summary>
+    public set.@this this[string kind]
+        => Named(kind) ?? throw new KeyNotFoundException($"No closed set named '{kind}'.");
+
+    /// <summary>True when a closed set named <paramref name="kind"/> is known.</summary>
+    public bool Contains(string kind) => Named(kind) != null;
+
+    private set.@this? Named(string kind)
+        => _sets.Values.FirstOrDefault(s => s.IsClosed && string.Equals(s.Name, kind, System.StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// Registers every closed set drawn on by a <c>choice&lt;T&gt;</c> reachable in
     /// <paramref name="assembly"/> — a reader per <c>(choice, kind)</c>. A set is only identifiable by

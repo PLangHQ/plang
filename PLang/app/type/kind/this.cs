@@ -50,7 +50,7 @@ public class @this
             string name = Context.App.Type.Reader.TypeOf(Name)
                           ?? Context.App.Format.TypeOf(Name)
                           ?? "binary";
-            return new global::app.type.@this(name, Name) { Context = Context };
+            return new global::app.type.@this(name, Name);
         }
     }
 

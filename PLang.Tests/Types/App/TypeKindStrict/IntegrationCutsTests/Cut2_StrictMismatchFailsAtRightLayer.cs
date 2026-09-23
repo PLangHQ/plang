@@ -26,12 +26,9 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         0x42,0x60,0x82
     };
 
-    private global::app.type.@this Type(string name, string? kind = null, bool strict = false)
-    {
-        var t = new global::app.type.@this(name, kind, strict);
-        t.Context = _app.User.Context;
-        return t;
-    }
+    // A declared type holds no context — the handler asks the registry with its own.
+    private static global::app.type.@this Type(string name, string? kind = null, bool strict = false)
+        => new(name, kind, strict);
 
     // The bound variable.set handler with a strict image/gif Type — as the build pass holds it.
     private global::app.module.action.variable.Set Handler(object value)

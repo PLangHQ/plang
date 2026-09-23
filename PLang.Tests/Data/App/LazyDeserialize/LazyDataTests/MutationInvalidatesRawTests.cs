@@ -16,7 +16,7 @@ public class MutationInvalidatesRawTests
             "plang-mutraw-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static data RawBacked(global::app.actor.context.@this ctx)
-        => global::PLang.Tests.Shared.Make.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
+        => global::PLang.Tests.Shared.Make.FromRaw("5", ctx.App.Type[new type("number", "int")], ctx, "n");
 
     [Test] public async Task SetValueDirect_InvalidatesRaw()
     {
@@ -47,7 +47,7 @@ public class MutationInvalidatesRawTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("item", "json", context: ctx), ctx, "cfg");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.Type[new type("item", "json")], ctx, "cfg");
         d.SetValue("mutated");   // mutation clears _raw — raw is no longer authoritative
 
         var wire = (await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;

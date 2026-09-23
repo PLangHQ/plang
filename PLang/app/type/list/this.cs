@@ -176,14 +176,59 @@ public sealed partial class @this
         get
         {
             if (CatalogByName.TryGetValue(typeName, out var built)) return built;
+            // A spelled form — "text/markdown" is {text, markdown}: the name before the first
+            // slash, the rest the kind, which the identity door canonicalises.
+            var slash = typeName.IndexOf('/');
+            if (slash > 0 && !typeName.Contains('<'))
+                return this[new app.type.@this(typeName[..slash], typeName[(slash + 1)..])];
             if (Get(typeName) == null)
                 throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
-            // Primitive / MIME / generic-shape: not in the catalog (catalog covers
-            // domain types only) but the name resolves.  Hand back a bare entity
-            // with ClrType pre-stamped from the static path — no Promote() rebuild
-            // can populate fold data for primitives, so this is the right answer.
-            return new app.type.@this(typeName, Get(typeName));
+            // An alias lands on its canonical type: "string" → the "text" entry, "int" → {number, int}.
+            var named = new app.type.@this(typeName, Get(typeName));
+            if (named.Kind != null) return this[named];
+            if (CatalogByName.TryGetValue(named.Name, out var canonical)) return canonical;
+            // Primitive / generic-shape: not in the catalog (catalog covers domain types only)
+            // but the name resolves — a type born knowing its class, no facts to carry.
+            return named;
         }
+    }
+
+    // The full types built per identity {name, kind, strict, template} — each built once.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(string Name, string? Kind, bool Strict, string? Template), app.type.@this> _full = new();
+
+    /// <summary>
+    /// The full type for a value's type — its identity (name, kind, strict, template) with the
+    /// entry's facts. A choice's kind names its set, so a <c>{choice, operator}</c> carries that
+    /// set's options. The kind is canonicalised (<c>markdown</c> → <c>md</c>). A name the registry
+    /// doesn't know answers as its bare identity. Holds no context; cached per identity.
+    /// </summary>
+    public app.type.@this this[app.type.@this type]
+    {
+        get
+        {
+            var kind = type.Kind?.Name is { } k ? Context?.App.Format.CanonicaliseKind(k) ?? k : null;
+            return _full.GetOrAdd((type.Name.ToLowerInvariant(), kind?.ToLowerInvariant(), type.Strict, type.Template),
+                id => Full(type.Name, kind, id.Strict, id.Template));
+        }
+    }
+
+    private app.type.@this Full(string name, string? kind, bool strict, string? template)
+    {
+        if (!Contains(name)) return new app.type.@this(name, kind, strict, template);
+        var entry = this[name];
+        if (kind == null && !strict && template == null) return entry;
+        // A number's precision kind carries its own class ({number, int} → Int32), stamped at birth.
+        return new app.type.@this(entry.Name, entry.Name == "number" && kind != null ? null : entry.ClrType, kind, strict, template)
+        {
+            Fields = entry.Fields,
+            Values = entry.Name == "choice" && kind != null && Choice.Contains(kind) ? Choice[kind].Values : entry.Values,
+            Properties = entry.Properties,
+            Shape = entry.Shape,
+            ConstructorSignature = entry.ConstructorSignature,
+            Example = entry.Example,
+            Description = entry.Description,
+            Kinds = entry.Kinds,
+        };
     }
 
     /// <summary>
@@ -200,10 +245,7 @@ public sealed partial class @this
             // entity's face and the catalog can never disagree. A kinded family is born here with
             // its kind; a choice carries its set's options; every other name is the named entity.
             var (name, kind) = PlangName(clrType);
-            if (kind == null) return this[name];
-            return name == "choice"
-                ? new app.type.@this(name, kind) { Values = Choice[clrType].Values }
-                : new app.type.@this(name, kind);
+            return kind == null ? this[name] : this[new app.type.@this(name, kind)];
         }
     }
 

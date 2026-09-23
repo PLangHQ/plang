@@ -26,7 +26,7 @@ public class ConvertBuiltValueTests
         var ctx = app.User.Context;
         var built = new global::app.type.item.text.@this("5");
         // Create re-types a built leaf directly (leaf branch) — eager, no Data wrapper.
-        var result = type.Create("number", null, context: ctx).Create(built, ctx);
+        var result = ctx.App.Type["number"].Create(built, ctx);
         await Assert.That(result).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(((global::app.type.item.number.@this)result).Clr<long>()).IsEqualTo(5L);
     }
@@ -40,7 +40,7 @@ public class ConvertBuiltValueTests
         // never be silently held as the original text (which would pass validation).
         // A throw rides MaterializeFailed at the source boundary; validateResponse
         // catches it to record a build error.
-        await Assert.That(() => type.Create("number", null, context: ctx).Create(built, ctx))
+        await Assert.That(() => ctx.App.Type["number"].Create(built, ctx))
             .Throws<System.Exception>();
     }
 
@@ -52,7 +52,7 @@ public class ConvertBuiltValueTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var built = ((global::app.type.item.number.@this)(5L));
-        var result = type.Create("number", null, context: ctx).Create(built, ctx);
+        var result = ctx.App.Type["number"].Create(built, ctx);
         await Assert.That(((global::app.type.item.number.@this)result).Clr<long>()).IsEqualTo(5L);
     }
 }

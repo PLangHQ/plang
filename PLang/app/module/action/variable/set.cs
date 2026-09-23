@@ -84,7 +84,7 @@ public partial class Set : IContext
         var source = (await Context.Variable.Get("!buildData")).Peek();
         var inferred = source as global::app.type.@this
             ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
-                ? global::app.type.@this.Create(n, context: Context) : null);
+                && Context.App.Type.Contains(n) ? Context.App.Type[n] : null);
         if (inferred is { IsNull: false })
             __action.Parameter.Add(new data.@this("Type", inferred, context: Context));
         return Context.Ok();
@@ -197,7 +197,7 @@ public partial class Set : IContext
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
             // still names a type by name. No dict rebuild — that was the pre-reader path.
             var type = typeValue as global::app.type.@this
-                ?? Context.Type.Create(typeValue.ToString()!);
+                ?? Context.App.Type[typeValue.ToString()!];
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The declared type object is the program's (shared by every run), so a
             // changed kind is this run's own type object — the declared one is never written.

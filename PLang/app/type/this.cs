@@ -99,15 +99,6 @@ public sealed class @this : item.@this
         + "Emit as a JSON object, NEVER a slash string. Wrong: `\"text/md\"`. "
         + "Right: `{\"name\":\"text\",\"kind\":\"md\"}`. The slash form leaks past the wire.";
 
-    // Context is the *runtime* invariant — once a Data is stamped (Variables.Set,
-    // Action.RunAsync), the entity reads through the registry.  Before stamping,
-    // the entity falls through to the static primitive surface so type-entity
-    // instantiated purely for its identity (e.g. `new type("string")`, file
-    // mime-deriving an extension before any Data wraps it) still answers the
-    // ClrType question without an App in scope.
-    [JsonIgnore]
-    internal actor.context.@this? Context { get; set; }
-
     [JsonConstructor]
     public @this(string name, string? kind = null, bool strict = false, string? template = null)
     {
@@ -145,13 +136,8 @@ public sealed class @this : item.@this
         // (e.g. `int`→`number`, `text` whose CLR is typeof(string)), stamp
         // ClrType from the alias the caller passed in so the entity still
         // answers the .ClrType question without a registry round-trip.
-        // Primitives have no catalog fold data, so mark fold as loaded too —
-        // keeps Promote()'s Context guard from firing on fold-prop reads.
         if (app.type.primitive.@this.Aliases.TryGetValue(rawName.ToLowerInvariant(), out var clr))
-        {
             _clrType = clr;
-            _foldLoaded = true;
-        }
     }
 
     /// <summary>
@@ -372,46 +358,6 @@ public sealed class @this : item.@this
                m => m.Name == nameof(Create) && m.IsGenericMethodDefinition
                     && m.GetParameters()[1].ParameterType == second)!;
 
-    /// <summary>
-    /// Normalising factory — the single entry point the LLM, build pipeline,
-    /// and tests reach. Canonicalises <paramref name="name"/> (currently
-    /// preserves the input via <c>primitive.Aliases</c>; stage 2 lands
-    /// <c>string</c>→<c>text</c>), splits a single-string slash form
-    /// ("text/markdown" → name=text, kind=markdown) onto first slash, rejects
-    /// empty/whitespace names. Multi-slash splits on the first; the rest is a
-    /// free-string <paramref name="kind"/>.
-    /// </summary>
-    public static @this Create(string name, string? kind = null, bool strict = false,
-        actor.context.@this? context = null, string? template = null)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new System.ArgumentException("type name is required (empty or whitespace not allowed).", nameof(name));
-
-        // Single-string slash form: "text/markdown" → name=text, kind=markdown.
-        // Only fold the slash into kind when caller did NOT pass a kind
-        // explicitly — Create("text", "md") stays as-is, even if name itself
-        // had no slash.
-        if (kind == null && name.Contains('/'))
-        {
-            var slash = name.IndexOf('/');
-            kind = name[(slash + 1)..];
-            name = name[..slash];
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentException("type name is required (empty or whitespace not allowed).", nameof(name));
-        }
-
-        // Canonicalise name through the primitive alias table — `Text`→`text`,
-        // `STRING`→`text` (post-Stage-2). Unknown names lowercase through.
-        name = Canonicalise(name);
-
-        // Canonicalise kind through the format registry when a context is
-        // available — `markdown`→`md`, `jpeg`→`jpg`. Unknown kinds pass through.
-        if (kind != null && context != null)
-            kind = context.App.Format.CanonicaliseKind(kind);
-
-        return new @this(name, kind, strict, template) { Context = context };
-    }
-
     private static string Canonicalise(string name)
     {
         // PLang type names are case-insensitive. Fold through the alias table
@@ -484,113 +430,58 @@ public sealed class @this : item.@this
         return string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase);
     }
 
-    // --- Catalog properties (init-only; promoted lazily) ---
-
-    private IReadOnlyList<Field>? _fields;
-    private IReadOnlyList<string>? _values;
-    private IReadOnlyList<Field>? _properties;
-    private string? _shape;
-    private string? _constructorSignature;
-    private string? _example;
-    private string? _description;
-    private IReadOnlyList<string>? _kinds;
-    private bool _foldLoaded;
-
-    // --- Catalog fold props ---
-    // The entity's JSON wire form is owned by JsonConverter ({name, kind?,
-    // strict?}); STJ never reflects these. They are in-memory catalog
-    // navigation (%x.Type.Fields%) + the builder schema's typed reads.
+    // --- The facts ---
+    // Set by app.type when it builds a full type; a value's bare type carries none. Navigation
+    // (%x!type.Description%) answers them through the full type — see Get below. The wire form is
+    // Write's {name, kind?, strict?, template?}; these never ride it.
 
     /// <summary>Record fields. Non-null marks this as a record-shape type.</summary>
-    public IReadOnlyList<Field>? Fields { get => Promote()._fields; init => _fields = value; }
+    public IReadOnlyList<Field>? Fields { get; init; }
 
     /// <summary>Enum values. Non-null marks this as an enum-shape type.</summary>
-    public IReadOnlyList<string>? Values { get => Promote()._values; init => _values = value; }
+    public IReadOnlyList<string>? Values { get; init; }
 
     /// <summary>Read-only navigation properties for scalar types.</summary>
-    public IReadOnlyList<Field>? Properties { get => Promote()._properties; init => _properties = value; }
+    public IReadOnlyList<Field>? Properties { get; init; }
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
-    public string? Shape { get => Promote()._shape; init => _shape = value; }
+    public string? Shape { get; init; }
 
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
-    public string? ConstructorSignature { get => Promote()._constructorSignature; init => _constructorSignature = value; }
+    public string? ConstructorSignature { get; init; }
 
     /// <summary>Canonical example from a static <c>Example</c> property on the type.</summary>
-    public string? Example { get => Promote()._example; init => _example = value; }
+    public string? Example { get; init; }
 
     /// <summary>Semantic description from a static <c>Description</c> property on the type.</summary>
-    public string? Description { get => Promote()._description; init => _description = value; }
+    public string? Description { get; init; }
 
     /// <summary>
     /// Developer-meaningful kind vocabulary from a static <c>Kinds</c> property.
     /// Advertised vocabulary the LLM may emit; distinct from <see cref="Kind"/>
     /// (the per-value subtype).
     /// </summary>
-    public IReadOnlyList<string>? Kinds { get => Promote()._kinds; init => _kinds = value; }
-
-    /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
-    [JsonIgnore]
-    public global::app.type.item.path.scheme.@this? Scheme
-        => Name == "path" ? Context?.App.Type.Scheme : null;
+    public IReadOnlyList<string>? Kinds { get; init; }
 
     /// <summary>How much catalog this entry carries — a record (fields) over a closed set (values)
     /// over a scalar (shape) over a bare name. Breaks a same-name tie in the catalog
     /// deterministically.</summary>
     internal int Richness =>
-        _fields is { Count: > 0 } ? 3
-        : _values is { Count: > 0 } ? 2
-        : _shape != null || _constructorSignature != null ? 1
+        Fields is { Count: > 0 } ? 3
+        : Values is { Count: > 0 } ? 2
+        : Shape != null || ConstructorSignature != null ? 1
         : 0;
 
-    // Construct with a stamped ClrType (used by BuildTypeEntries and by the
-    // type-list indexer's primitive fallback path; both spare the registry
-    // round-trip).  The primitive path also has no fold data — primitives are
-    // not in the catalog — so mark fold as already-loaded; that keeps
-    // Promote()'s Context check from firing for `app.Type["string"]`.
-    internal @this(string name, System.Type? clrType) : this(name)
+    /// <summary>A type born knowing its C# class — the registry's entries and the full types it
+    /// builds for an identity.</summary>
+    internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, string? template = null)
+        : this(name, kind, strict, template)
     {
-        _clrType = clrType;
-        _foldLoaded = true;
+        _clrType = clrType ?? _clrType;
     }
 
-    private @this Promote()
-    {
-        if (_foldLoaded) return this;
-        // Already populated by an init-only setter — no promotion needed.
-        if (_fields != null || _values != null || _properties != null
-            || _shape != null || _constructorSignature != null
-            || _example != null || _description != null || _kinds != null)
-        {
-            _foldLoaded = true;
-            return this;
-        }
-        _foldLoaded = true;
-        // Fold properties (Fields/Values/Example/Shape/...) are App-keyed —
-        // resolving them requires the registry, which requires Context. An
-        // unstamped entity reaching this point means a producer forgot to
-        // propagate Context onto a `type.@this` minted without a context;
-        // returning null silently would mask the bug at the read site and
-        // surface it as wrong LLM prompts / wrong schema decisions far away.
-        if (Context == null)
-            throw new System.InvalidOperationException(
-                $"type.@this(\"{Name}\") has no Context — schema properties "
-                + "(Fields/Values/Example/Shape/etc.) require a stamped entity. "
-                + "This is a producer bug: whoever minted this type without a context "
-                + "did not propagate Context. Primitive identity reads "
-                + "(.Name/.ClrType) do not hit this path.");
-        if (!Context.App.Type.Contains(Name)) return this;
-        var match = Context.App.Type[Name];
-        if (ReferenceEquals(match, this)) return this;
-        _fields = match._fields;
-        _values = match._values;
-        _properties = match._properties;
-        _shape = match._shape;
-        _constructorSignature = match._constructorSignature;
-        _example = match._example;
-        _description = match._description;
-        _kinds = match._kinds;
-        if (_clrType == null) _clrType = match._clrType;
-        return this;
-    }
+    /// <summary>A type answers navigation as its full type — the registry's, found with the
+    /// asker's context. A full type is its own answer.</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => new global::app.type.clr.@this(parent.Context.App.Type[this], parent.Context).Get(parent, key);
 }

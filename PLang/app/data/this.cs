@@ -188,9 +188,7 @@ public partial class @this
     public bool Is(string typeName)
     {
         if (_item == null || string.IsNullOrWhiteSpace(typeName)) return false;
-        var other = _context?.App.Type[typeName] ?? new type(typeName);
-        other.Context ??= _context;
-        return _item.Is(other);
+        return _item.Is(_context?.App.Type[typeName] ?? new type(typeName));
     }
 
     /// <summary>Is this value (now or in its narrow history) the given type? Asks the value's own
@@ -418,13 +416,10 @@ public partial class @this
     {
         get
         {
-            // Pure forward — the instance owns its identity and mints the
-            // entity (chain included) itself; Data only stamps Context so
-            // registry-backed reads (Is, fold properties) resolve.
+            // Pure forward — the instance owns its identity and mints the entity itself. The
+            // facts come from its full type when someone navigates in with a context.
             if (_item == null) return type.Null;
-            var minted = _item.Type;
-            minted.Context ??= _context;   // registry-backed reads (Is, fold properties) resolve
-            return minted;
+            return _item.Type;
         }
     }
 

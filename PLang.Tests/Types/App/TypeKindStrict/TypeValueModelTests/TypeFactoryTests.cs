@@ -5,86 +5,96 @@ using TypeEntity = global::app.type.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
-// The normalising `type.Create(name, kind?, strict?)` factory — the single
-// entry point the LLM, build pipeline, and tests reach to construct a type
-// value. Slash-tolerance lives here too: a single "text/markdown" must split
-// to {name:text, kind:markdown} so the LLM's occasional slash-emission doesn't
-// escape into the wire.
+// `app.Type[...]` is the one door for a type by name: it takes the spelled forms ("string",
+// "text/markdown", any case) and hands back the canonical type. The identity door
+// `app.Type[type]` carries name, kind and strict through, the kind canonicalised.
 public class TypeFactoryTests
 {
-    [Test] public async Task Factory_NameKindStrict_CarriesAllThree()
+    private global::app.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup() => _app = TestApp.Create("/tmp/typedoor-" + System.Guid.NewGuid().ToString("N")[..8]);
+
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
+
+    [Test] public async Task Door_NameKindStrict_CarriesAllThree()
     {
-        var t = TypeEntity.Create("image", "gif", strict: true);
+        var t = _app.Type[new TypeEntity("image", "gif", strict: true)];
         await Assert.That(t.Name).IsEqualTo("image");
         await Assert.That(t.Kind?.Name).IsEqualTo("gif");
         await Assert.That(t.Strict).IsTrue();
     }
 
-    [Test] public async Task Factory_String_CanonicalisesNameToText()
+    [Test] public async Task Door_String_CanonicalisesNameToText()
     {
-        var t = TypeEntity.Create("string");
+        var t = _app.Type["string"];
         await Assert.That(t.Name).IsEqualTo("text");
     }
 
-    [Test] public async Task Factory_SingleStringWithSlash_SplitsToNameAndKind()
+    [Test] public async Task Door_SingleStringWithSlash_SplitsToNameAndCanonicalKind()
     {
-        var t = TypeEntity.Create("text/markdown");
+        var t = _app.Type["text/markdown"];
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind?.Name).IsEqualTo("markdown");
+        await Assert.That(t.Kind?.Name).IsEqualTo("md");
     }
 
-    [Test] public async Task Factory_SingleStringNoSlash_KindIsNull()
+    [Test] public async Task Door_SingleStringNoSlash_KindIsNull()
     {
-        var t = TypeEntity.Create("text");
+        var t = _app.Type["text"];
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.Kind?.Name).IsNull();
     }
 
-    [Test] public async Task Factory_MultiSlash_SplitsOnFirst()
+    [Test] public async Task Door_MultiSlash_SplitsOnFirst()
     {
         // First slash splits; the rest is the (free-string) kind, not an error.
-        var t = TypeEntity.Create("a/b/c");
+        var t = _app.Type["a/b/c"];
         await Assert.That(t.Name).IsEqualTo("a");
         await Assert.That(t.Kind?.Name).IsEqualTo("b/c");
     }
 
-    [Test] public async Task Factory_StrictDefaultsFalse()
+    [Test] public async Task Door_StrictDefaultsFalse()
     {
-        var a = TypeEntity.Create("text");
-        var b = TypeEntity.Create("text", "md");
+        var a = _app.Type["text"];
+        var b = _app.Type[new TypeEntity("text", "md")];
         await Assert.That(a.Strict).IsFalse();
         await Assert.That(b.Strict).IsFalse();
     }
 
-    [Test] public async Task Factory_CaseInsensitiveName()
+    [Test] public async Task Door_CaseInsensitiveName()
     {
-        // primitive.Aliases is OrdinalIgnoreCase. Pinned: factory lowercases
-        // through the canonicaliser so unknown-but-aliased names resolve.
-        var a = TypeEntity.Create("Text");
-        var b = TypeEntity.Create("TEXT");
+        var a = _app.Type["Text"];
+        var b = _app.Type["TEXT"];
         await Assert.That(a.Name).IsEqualTo("text");
         await Assert.That(b.Name).IsEqualTo("text");
     }
 
-    [Test] public async Task Factory_EmptyName_Rejected()
+    [Test] public async Task Door_EmptyName_Rejected()
     {
-        await Assert.That(() => TypeEntity.Create("")).Throws<System.ArgumentException>();
-        await Assert.That(() => TypeEntity.Create("   ")).Throws<System.ArgumentException>();
+        await Assert.That(() => _app.Type[""]).Throws<KeyNotFoundException>();
+        await Assert.That(() => _app.Type["   "]).Throws<KeyNotFoundException>();
     }
 
-    [Test] public async Task Factory_NullSentinel_NameKindStrictPreserved()
+    [Test] public async Task Door_SameIdentity_SameFullType()
+    {
+        var a = _app.Type[new TypeEntity("image", "gif")];
+        var b = _app.Type[new TypeEntity("image", "gif")];
+        await Assert.That(ReferenceEquals(a, b)).IsTrue();
+    }
+
+    [Test] public async Task NullSentinel_NameKindStrictPreserved()
     {
         await Assert.That(TypeEntity.Null.Name).IsEqualTo("null");
         await Assert.That(TypeEntity.Null.Kind?.Name).IsNull();
         await Assert.That(TypeEntity.Null.Strict).IsFalse();
     }
 
-    [Test] public async Task Factory_StrictTrueOnTextFamily_NoThrowAtConstruction()
+    [Test] public async Task Door_StrictTrueOnTextFamily_NoThrow()
     {
-        // strict on a family without IKindValidatable degrades to "kind-name-
-        // accepted" — construction never throws; the byte-sniff path simply
-        // never runs. Pinned: factory does not vet against the marker.
-        var t = TypeEntity.Create("text", "md", strict: true);
+        // strict on a family without IKindValidatable degrades to "kind-name-accepted" —
+        // the door never throws; the byte-sniff path simply never runs.
+        var t = _app.Type[new TypeEntity("text", "md", strict: true)];
         await Assert.That(t.Strict).IsTrue();
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.Kind?.Name).IsEqualTo("md");

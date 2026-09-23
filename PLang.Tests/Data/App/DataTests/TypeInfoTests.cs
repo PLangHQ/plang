@@ -26,9 +26,10 @@ public class TypeTests
     [Test]
     public async Task FromName_WithString_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("string");
+        // "string" is a spelling of text: the door hands back the text type itself.
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["string"];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(type).IsSameReferenceAs(global::PLang.Tests.TestApp.SharedContext.App.Type["text"]);
         await Assert.That(type.Name).IsEqualTo("text");
     }
 
@@ -43,15 +44,15 @@ public class TypeTests
     [Test]
     public async Task FromName_WithList_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("list");
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["list"];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.item.list.@this));
+        await Assert.That(type.Name).IsEqualTo("list");
     }
 
     [Test]
     public async Task FromName_WithDict_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("dict");
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["dict"];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.item.dict.@this));
     }
@@ -59,7 +60,9 @@ public class TypeTests
     [Test]
     public async Task FromName_WithUnknownType_ReturnsNullClrType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("unknowntype");
+        // The name door throws on a miss; a bare type of an unknown name knows no class.
+        await Assert.That(() => global::PLang.Tests.TestApp.SharedContext.App.Type["unknowntype"]).Throws<KeyNotFoundException>();
+        var type = new Type("unknowntype");
 
         await Assert.That(type.Name).IsEqualTo("unknowntype");
         await Assert.That(type.ClrType).IsNull();

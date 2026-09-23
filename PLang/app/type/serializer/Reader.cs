@@ -35,6 +35,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
         if (name == null) return new global::app.type.item.@null.@this("type", kind);
-        return new global::app.type.@this(name, typeKind, strict, template) { Context = ctx.Context };
+        return new global::app.type.@this(name, typeKind, strict, template);
     }
 }

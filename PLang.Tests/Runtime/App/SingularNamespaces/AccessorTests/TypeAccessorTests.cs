@@ -53,15 +53,6 @@ public class TypeAccessorTests
         await Assert.That(app.Type.Contains("choice")).IsTrue();
     }
 
-    [Test] public async Task AppType_IndexByName_Scheme_OnPathScheme_IsReachable()
-    {
-        await using var app = TestApp.Create("/test");
-        var p = app.Type["path"];
-        // Scheme is actor-Context-dependent (per-app scheme registry); stamp once for that.
-        p.Context = app.User.Context;
-        await Assert.That(p.Scheme).IsNotNull();
-    }
-
     [Test] public async Task AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry()
     {
         await using var app = TestApp.Create("/test");

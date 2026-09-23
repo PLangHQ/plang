@@ -287,7 +287,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // type reads its own raw. Content off I/O is bytes and rides as bytes (no eager split).
         var context = Actor?.Context;
         var type = Channels?.App?.Format?.TypeFromMime(Mime ?? "")
-                   ?? global::app.type.@this.Create("binary", null, context: context);
+                   ?? new global::app.type.@this("binary");
         return new global::app.data.@this(Name, type.Create(raw, context), context: context);
     }
 

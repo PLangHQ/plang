@@ -112,6 +112,13 @@ public class source : @this, module.IContext
         // source on a shared program row is read by every run, and each run's Data carries its
         // own actor (its variables, its permissions).
         var asking = data.Context;
+        if (asking is null)
+        {
+            data.Fail(new global::app.error.Error(
+                $"'{data.Name}' has no context to load with — it is a shared program row; a run reads its own copy (action[name]).",
+                "NoContextToLoad", 500));
+            return Absent;
+        }
 
         // A full-match %ref% names a binding — hand back what it holds through its OWN door,
         // never parse the name through the declared type's reader (a `list` reader on the string
@@ -199,7 +206,7 @@ public class source : @this, module.IContext
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, type.Context ?? Context);
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, Context);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),

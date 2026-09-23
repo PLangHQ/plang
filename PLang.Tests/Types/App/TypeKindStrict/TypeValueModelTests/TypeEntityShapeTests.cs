@@ -43,14 +43,15 @@ public class TypeEntityShapeTests
     {
         // The old `type.Kind` that resolved via App.Format.FamilyOf(Value) is gone.
         // Pin: `type("image", null).Kind` reads null (no family-derivation), and
-        // a `type("image/jpeg")` factory splits to {Name:"image", Kind:"jpeg"}
-        // — Name carries the family directly; Kind is the subtype.
+        // the door splits "image/jpeg" to {Name:"image", Kind:"jpg"} — Name
+        // carries the family directly; Kind is the (canonical) subtype.
         var noSubtype = new TypeEntity("image");
         await Assert.That(noSubtype.Kind?.Name).IsNull();
 
-        var split = TypeEntity.Create("image/jpeg");
+        await using var app = TestApp.Create("/test");
+        var split = app.Type["image/jpeg"];
         await Assert.That(split.Name).IsEqualTo("image");
-        await Assert.That(split.Kind?.Name).IsEqualTo("jpeg");
+        await Assert.That(split.Kind?.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Entity_Kinds_PopulatedForNumber()
@@ -72,13 +73,12 @@ public class TypeEntityShapeTests
         await Assert.That(app.Format.Compressible(image)).IsFalse();
     }
 
-    [Test] public async Task Promote_StillThrows_WhenContextUnstamped()
+    [Test] public async Task BareType_CarriesNoFacts_ItsFullTypeDoes()
     {
-        // Existing producer-bug guard: an entity minted from FromName without
-        // Context, then reading a fold property (Fields, Description, …), must
-        // throw the InvalidOperationException so the bug surfaces at the read
-        // site rather than silently returning null.
-        var orphan = new global::app.type.@this("identity");  // catalog-shaped name; no Context stamped
-        await Assert.That(() => { var _ = orphan.Fields; }).Throws<System.InvalidOperationException>();
+        // A bare type object is identity only; the facts live on its full type in app.type.
+        await using var app = TestApp.Create("/test");
+        var bare = new global::app.type.@this("identity");
+        await Assert.That(bare.Fields).IsNull();
+        await Assert.That(app.Type[bare].Fields).IsNotNull();
     }
 }

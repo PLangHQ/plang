@@ -313,7 +313,7 @@ public class ValidateActionsTests
             0x05,0x00,0x01,0x0D,0x0A,0x2D,0xB4,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
             0x42,0x60,0x82
         };
-        var gifStrict = new global::app.type.@this("image", "gif", true) { Context = _app.User.Context };
+        var gifStrict = new global::app.type.@this("image", "gif", true);
         var actions = new StepActions
         {
             new Action

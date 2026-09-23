@@ -84,7 +84,7 @@ public class Default : ICrypto
         // value's KIND; stamp {name: hash, kind: <algorithm>} so verify reads
         // the algorithm off the value instead of a loose, mismatch-prone param.
         return action.Context.Ok<global::app.module.action.crypto.type.hash.@this>(new global::app.module.action.crypto.type.hash.@this(hashBytes, algorithm),
-            global::app.type.@this.Create("hash", kind: algorithm));
+            action.Context.App.Type[new global::app.type.@this("hash", algorithm)]);
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Verify(Verify action)

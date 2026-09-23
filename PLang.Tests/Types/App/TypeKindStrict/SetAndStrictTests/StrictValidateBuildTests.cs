@@ -27,12 +27,8 @@ public class StrictValidateBuildTests
         0x42,0x60,0x82
     };
 
-    private global::app.type.@this Type(string name, string? kind = null, bool strict = false)
-    {
-        var t = new global::app.type.@this(name, kind, strict);
-        t.Context = _app.User.Context;
-        return t;
-    }
+    private static global::app.type.@this Type(string name, string? kind = null, bool strict = false)
+        => new(name, kind, strict);
 
     // The bound handler, as the build pass holds it after Resolve: its own properties set.
     private global::app.module.action.variable.Set Handler(object value, global::app.type.@this typeEntity)

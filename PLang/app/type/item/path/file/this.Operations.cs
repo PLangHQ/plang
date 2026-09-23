@@ -64,7 +64,6 @@ public sealed partial class @this
         // here; materialization is deferred (see below).
         var mime = Context.App.Format.Mime(Extension);
         var type = Context.App.Format.TypeFromMime(mime);
-        type.Context = Context;
 
         // During build: a .pr may be mid-rewrite on disk — read the snapshotted bytes.
         // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.

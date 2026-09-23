@@ -33,7 +33,6 @@ public class TypeEntityHomeTests
         await using var app = TestApp.Create("/test");
         var d = new global::app.data.@this("", System.Guid.NewGuid(), context: app.User.Context);
         var fromRegistry = app.Type[d.Type!.Name];
-        fromRegistry.Context = app.User.Context;
         await Assert.That(d.Type.Name).IsEqualTo(fromRegistry.Name);
     }
 
@@ -53,7 +52,6 @@ public class TypeEntityHomeTests
         var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
         var typeFromData = d.Type;
         var entityFromRegistry = app.Type["int"];
-        entityFromRegistry.Context = app.User.Context;
         await Assert.That(typeFromData).IsNotNull();
         await Assert.That(typeFromData!.GetType()).IsEqualTo(typeof(global::app.type.@this));
         await Assert.That(typeFromData.ClrType).IsEqualTo(entityFromRegistry.ClrType);

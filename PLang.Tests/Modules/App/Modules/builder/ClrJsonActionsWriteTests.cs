@@ -60,7 +60,7 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         // content (the json kind rides on JsonElement, not JsonNode).
         var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();
         var clrJsonActions = new global::app.data.@this("actions",
-            Type.Create("object", "json", context: context).Create(element, context), context: context);
+            context.App.Type[new Type("object", "json")].Create(element, context), context: context);
 
         // The builder write: the STEP constructs its children from the incoming json.
         await context.Variable.Set("goal.Step[0].Action", clrJsonActions);

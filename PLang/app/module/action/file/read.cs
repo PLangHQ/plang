@@ -39,7 +39,7 @@ public partial class Read : IContext
         // first examination through the door.
         if (path is global::app.type.item.path.http.@this)
             return new data.@this("url", new global::app.type.item.url.@this(path!),
-                global::app.type.@this.Create("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null, context: Context),
+                Context.App.Type[new global::app.type.@this("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null)],
                 context: Context);
 
         // Stat once: NotFound surfaces at the read step (not at first touch),
@@ -53,7 +53,7 @@ public partial class Read : IContext
 
         if (info.IsFile == false)
             return new data.@this("directory", new global::app.type.item.directory.@this(path),
-                global::app.type.@this.Create("directory", null, context: Context), context: Context);
+                Context.App.Type["directory"], context: Context);
 
         // The plang container (.pr) IS structured Data — a Goal, not content to
         // narrow. Deserialize eagerly through the channel as before.
@@ -98,7 +98,7 @@ public partial class Read : IContext
         // inference input — `.json` narrows to dict, `.csv` to table/list).
         var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
         return new data.@this(path.FileName, new global::app.type.item.file.@this(path),
-            global::app.type.@this.Create("file", kind, context: Context), context: Context);
+            Context.App.Type[new global::app.type.@this("file", kind)], context: Context);
     }
 
     /// <summary>
@@ -133,8 +133,7 @@ public partial class Read : IContext
         var inferred = p.Kind;
         if (inferred.IsNull || !Context.App.Type.Contains(inferred.Name)) return Context.Ok();
         if (inferred.Name != "image")
-            inferred = global::app.type.@this.Create("file", p.Extension.TrimStart('.'), context: Context);
-        inferred.Context = Context;
+            inferred = Context.App.Type[new global::app.type.@this("file", p.Extension.TrimStart('.'))];
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.
