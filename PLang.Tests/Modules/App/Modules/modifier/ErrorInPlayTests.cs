@@ -52,8 +52,7 @@ public class ErrorInPlayTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
             Parameter = new List<global::app.data.@this>
             {
-                new("goalname", new Dictionary<string, object?> { ["name"] = goalName },
-                    context: global::PLang.Tests.TestApp.SharedContext)
+                new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
             }
         });
         return handler;

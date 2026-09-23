@@ -28,7 +28,7 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" })))));
+                    ("name", "ProcessItem")))));
         var step = goal.Step[0];
 
         var result = await step.Run(context);
@@ -66,7 +66,7 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%items%"), Make.Param("item", "%myItem%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
+                    ("name", "DoNothing")))));
         var step = goal.Step[0];
 
         var result = await step.Run(context);
@@ -89,7 +89,7 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" })))));
+                    ("name", "DictGoal")))));
         var step = goal.Step[0];
 
         var result = await step.Run(context);
@@ -112,7 +112,7 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
+                    ("name", "Noop")))));
         var step = goal.Step[0];
 
         var result = await step.Run(context);

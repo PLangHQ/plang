@@ -336,63 +336,11 @@ public class Default : IBuilder
                 string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes });
         }
 
-        // Per-action Build() pass — each handler may stamp a type on the step's
-        // terminal variable.set. See IClass.Build for the contract.
-        var buildErrors = await RunBuildPass(actions, context);
-        if (buildErrors.Count > 0)
-        {
-            return context.Error(new global::app.error.ActionError(
-                string.Join("; ", buildErrors),
-                "BuildValidation", 400));
-        }
+        // The chain finishes itself — each action binds its handler, runs its Validate()/Build()
+        // hooks and walks what it holds (modifiers, recovery, branch body). The builder reacts.
+        if (await step.Action.Build(context) is { } failed) return context.Error(failed);
 
         return context.Ok(true);
-    }
-
-    /// <summary>
-    /// Walks each action's IClass.Build() — Build is the compile-time hook that lets
-    /// a handler infer a Type for the step's terminal variable.set from its own
-    /// parameters (file.read on a literal .csv → "csv", llm.query with a schema →
-    /// "json"). A returned typeName stamps onto the terminal variable.set's "Type"
-    /// parameter; Fail aborts validation; bare Ok contributes nothing.
-    /// </summary>
-    internal static async Task<List<string>> RunBuildPass(Actions actions,
-        actor.context.@this context)
-    {
-        var errors = new List<string>();
-        foreach (var a in actions)
-        {
-            var (instance, _) = a.Instance(context);
-            if (instance == null) continue;
-            // Resolve builds a populated instance (params decoded); Build() reads them.
-            var (handler, resolveErr) = await instance.Resolve(a, context);
-            if (resolveErr != null)
-            {
-                errors.Add($"{a.Module}.{a.Name}: {resolveErr.Message}");
-                break;
-            }
-            if (handler is not global::app.module.IClass classified) continue;
-            // The bound handler judges its own properties (typed views, unresolved).
-            if (await classified.Validate() is { } complaint)
-            {
-                errors.Add($"{a.Module}.{a.Name}: {complaint.Message}");
-                break;
-            }
-            var buildResult = await classified.Build();
-            if (!buildResult.Success)
-            {
-                errors.Add($"{a.Module}.{a.Name}: {buildResult.Error?.Message ?? "Build() failed"}");
-                break;
-            }
-            // Publish this action's Build() result as %!buildData% — the handle the
-            // NEXT action's Build() reads to see what it captures (mirrors runtime's
-            // %!data%, but build-scoped so it can't clobber the runtime %!data% the
-            // System actor uses while the builder runs). The pass stays generic: it
-            // never special-cases variable.set; each handler decides whether to use
-            // %!buildData% (variable.set.Build does).
-            await context.Variable.Set("!buildData", buildResult);
-        }
-        return errors;
     }
 
     // --- Merge ---

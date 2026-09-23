@@ -39,7 +39,7 @@ public class ForeachErrorPropagationTests
                 Make.Action("loop", "foreach",
                     ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" })))));
+                    ("name", "NonExistentGoal")))));
         var step = goal.Step[0];
 
         var result = await step.Run(context);
@@ -79,7 +79,7 @@ public class ForeachErrorPropagationTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
             Parameter = new List<Data>
             {
-                new Data("goalname", new Dictionary<string, object?> { ["name"] = "MissingGoal" }, context: context)
+                new Data("name", "MissingGoal", context: context)
             }
         };
         // Goal first, then its step — a step is born knowing its goal (Goal is init).
@@ -106,7 +106,7 @@ public class ForeachErrorPropagationTests
                 Make.Action("loop", "foreach",
                     ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" })))));
+                    ("name", "Inner")))));
         var outerStep = outerGoal.Step[0];
 
         var result = await outerStep.Run(context);
@@ -137,7 +137,7 @@ public class ForeachErrorPropagationTests
                 Make.Action("loop", "foreach",
                     ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
+                    ("name", "Noop")))));
         var step = goal.Step[0];
 
         var result = await step.Run(context);

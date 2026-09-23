@@ -67,6 +67,20 @@ public sealed class @this : global::app.type.item.list.@this<Action>
             string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes };
     }
 
+    /// <summary>Finishes every action in this chain at build, in order — each walks what it holds.
+    /// Null when nothing is wrong; otherwise one error for the chain with each action's as a cause.
+    /// An empty chain has nothing to build — emptiness is <see cref="Validate"/>'s verdict.</summary>
+    public async System.Threading.Tasks.Task<global::app.error.IError?> Build(actor.context.@this context)
+    {
+        var causes = new List<global::app.error.IError>();
+        for (int i = 0; i < Count; i++)
+            if (await this[i].Build(context) is { } failed) causes.Add(failed);
+
+        if (causes.Count == 0) return null;
+        return new global::app.error.Error(
+            string.Join("; ", causes.Select(c => c.Message)), "BuildFailed", 400) { list = causes };
+    }
+
     /// <summary>Writes itself to the wire as the bare <c>.pr</c> action array — each element writes its
     /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
     /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Run"/>.</summary>

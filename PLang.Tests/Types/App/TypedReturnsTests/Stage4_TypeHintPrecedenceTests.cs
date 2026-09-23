@@ -80,8 +80,13 @@ public class Stage4_TypeHintPrecedenceTests
         await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)xml);
     }
 
+    // The chain finishes itself (action.list.Build); an empty list means nothing failed.
     private static async Task<List<string>> RunBuildPass(StepActions actions, global::app.@this app)
-        => await Default.RunBuildPass(actions, app.User.Context);
+    {
+        var chain = new global::app.goal.step.action.list.@this();
+        foreach (var a in actions) chain.Add(a);
+        return await chain.Build(app.User.Context) is { } failed ? new() { failed.Message } : new();
+    }
 
     [Test]
     public async Task BuilderValidate_UserHintWinsOverBuildInference()

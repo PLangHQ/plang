@@ -40,7 +40,7 @@ public class IfErrorOrchestrationTests : IDisposable
             Make.Step("if true, call DoesNotExist",
                 Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
                 Make.Action("goal", "call",
-                    ("goalname", new Dictionary<string, object?> { ["name"] = "DoesNotExist" })))));
+                    ("name", "DoesNotExist")))));
         var step = goal.Step[0];
 
         var result = await step.Run(_app.User.Context);
