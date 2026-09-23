@@ -139,7 +139,7 @@ public sealed partial class @this
         context.Step = this;
         var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeStep);
+        var beforeResult = await lifecycle.Before.Run(context, new app.@event.moment.@this(app.@event.Trigger.BeforeStep, this));
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
@@ -164,7 +164,7 @@ public sealed partial class @this
                 ex.Message, key, 400) { Exception = ex });
         }
 
-        var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterStep);
+        var afterResult = await lifecycle.After.Run(context, new app.@event.moment.@this(app.@event.Trigger.AfterStep, this));
         if (!afterResult.Success) return afterResult;
 
         return result;

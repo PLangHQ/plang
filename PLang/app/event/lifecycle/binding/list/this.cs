@@ -19,22 +19,21 @@ public sealed class @this
 
     public IReadOnlyList<EventBinding> ToList() => _bindings.ToList();
 
-    public Task<data.@this> Run(actor.context.@this context) => RunBindings(_bindings, context, null, null);
+    public Task<data.@this> Run(actor.context.@this context) => RunBindings(_bindings, context, null);
 
     /// <summary>
-    /// Dispatches matching bindings. Payload-carrying events (AfterAction) pass the
-    /// action and its result; other events leave action/result null.
+    /// Dispatches the bindings for the moment that fired — built by the node it fired on (a goal,
+    /// step or action passes itself, an action its result too).
     /// </summary>
-    public Task<data.@this> Run(actor.context.@this context, Trigger type,
-        Action? action = null, data.@this? result = null)
-        => RunBindings(_bindings.Where(b => b.Type == type), context, action, result);
+    public Task<data.@this> Run(actor.context.@this context, global::app.@event.moment.@this moment)
+        => RunBindings(_bindings.Where(b => b.Type == moment.Trigger), context, moment);
 
     private static async Task<data.@this> RunBindings(IEnumerable<EventBinding> bindings,
-        actor.context.@this context, Action? action, data.@this? actionResult)
+        actor.context.@this context, global::app.@event.moment.@this? moment)
     {
         foreach (var binding in bindings.OrderByDescending(b => b.Priority))
         {
-            var result = await binding.Run(context, action, actionResult);
+            var result = await binding.Run(context, moment);
             if (!result.Success) return result;
             if (result.Handled) return result;
         }

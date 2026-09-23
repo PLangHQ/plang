@@ -180,7 +180,7 @@ public partial class @this
 
         var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeAction, this);
+        var beforeResult = await lifecycle.Before.Run(context, new app.@event.moment.@this(app.@event.Trigger.BeforeAction, this));
         if (!beforeResult.Success) return beforeResult;
 
         global::app.data.@this data;
@@ -211,7 +211,7 @@ public partial class @this
             data = await execute();
             foreach (var modifier in Modifier)
                 await context.LifecycleFor(modifier).After.Run(
-                    context, app.@event.Trigger.AfterAction, modifier, data);
+                    context, new app.@event.moment.@this(app.@event.Trigger.AfterAction, modifier, data));
         }
 
         // %!data% is the last action's result, stored AS-IS. A reference stays a
@@ -221,7 +221,7 @@ public partial class @this
         if (data.Success)
             await context.Variable.Set("!data", data);
 
-        var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, this, data);
+        var afterResult = await lifecycle.After.Run(context, new app.@event.moment.@this(app.@event.Trigger.AfterAction, this, data));
         if (!afterResult.Success) return afterResult;
 
         return data;

@@ -223,9 +223,12 @@ public class EventHandlerTests
         await Assert.That((await callbackRan!.Value())?.ToString()).IsEqualTo("true");
     }
 
-    // The binding sets %!event% before running its held call: the trigger, and the goal the flow is in.
+    // The binding sets %!event% — the moment that fired, built by the node it fired on.
+    private async Task<global::app.@event.moment.@this?> Moment()
+        => (await _app.User.Context.Variable.Get("!event"))?.Peek() as global::app.@event.moment.@this;
+
     [Test]
-    public async Task On_BeforeGoal_CallbackSees_Event()
+    public async Task On_BeforeGoal_CallbackSees_TheGoal()
     {
         var context = _app.User.Context;
         _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
@@ -234,10 +237,49 @@ public class EventHandlerTests
 
         await Make.Call("Target").Run(context);
 
-        var @event = await (await context.Variable.Get("!event"))!.Value() as global::app.type.item.dict.@this;
-        await Assert.That(@event).IsNotNull();
-        await Assert.That(@event!.Get("goal")?.Peek() is Goal { Name: "Target" }).IsTrue();
-        await Assert.That(@event.Get("trigger")?.Peek()?.ToString()).IsEqualTo("BeforeGoal");
+        var moment = await Moment();
+        await Assert.That(moment).IsNotNull();
+        await Assert.That(moment!.Trigger).IsEqualTo(global::app.@event.Trigger.BeforeGoal);
+        await Assert.That(moment.Goal?.Name).IsEqualTo("Target");
+        await Assert.That(moment.Action).IsNull();
+    }
+
+    [Test]
+    public async Task On_BeforeStep_CallbackSees_ThatStep_AndItsGoal()
+    {
+        var context = _app.User.Context;
+        _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
+        await (await MakeOn(context, global::app.@event.Trigger.BeforeStep, "Watch", stepPattern: "*").Run()).IsSuccess();
+
+        var goal = new Goal { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var step = new Step { Goal = goal, Index = 0, Text = "say hi" };
+        goal.Step.Add(step);
+        await step.Run(context);
+
+        var moment = await Moment();
+        await Assert.That(moment!.Step).IsSameReferenceAs(step);
+        await Assert.That(moment.Goal).IsSameReferenceAs(goal);
+    }
+
+    [Test]
+    public async Task On_AfterAction_CallbackSees_TheResult_AndReachesTheGoal()
+    {
+        var context = _app.User.Context;
+        _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
+        await (await MakeOn(context, global::app.@event.Trigger.AfterAction, "Watch", actionPattern: "variable.set").Run()).IsSuccess();
+
+        var goal = new Goal { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var step = new Step { Goal = goal, Index = 0, Text = "set %x% = 1" };
+        goal.Step.Add(step);
+        var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
+        set.Step = step;   // an action is born holding its step
+        step.Action.Add(set);
+        await step.Run(context);
+
+        var moment = await Moment();
+        await Assert.That(moment!.Action).IsSameReferenceAs(set);
+        await Assert.That(moment.Result).IsNotNull();
+        await Assert.That(moment.Goal).IsSameReferenceAs(goal);
     }
 
     #endregion

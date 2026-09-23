@@ -43,28 +43,13 @@ public partial class On : IContext
         // Resolve target actor — default to current context's actor
         var targetActor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor ?? Context.App.User;
 
+        // The binding sets %!event% (the moment that fired) before the handler runs the held call.
         var call = (await Goal.Value())!;
-        var trigger = await Trigger.Value();
-
-        // The binding knows what happened: it sets %!event% — the trigger, the goal and step the flow
-        // is in, and for action events the action and its result — then runs the held call, which reads
-        // it like any other variable.
         Func<actor.context.@this, global::app.goal.step.action.@this?, data.@this?, Task<data.@this>> handler =
-            async (flow, action, result) =>
-            {
-                var target = targetActor.Context;
-                var @event = new global::app.type.item.dict.@this(target)
-                    .Set(new data.@this("trigger", Trigger.Peek(), context: target))
-                    .Set(new data.@this("goal", flow.Goal, context: target))
-                    .Set(new data.@this("step", flow.Step, context: target))
-                    .Set(new data.@this("action", action, context: target));
-                if (result != null) @event.Set(result.ShallowClone("result"));
-                await target.Variable.Set("!event", @event);
-                return await call.Run(target);
-            };
+            async (_, _, _) => await call.Run(targetActor.Context);
 
         var binding = new EventBinding(
-            trigger!,
+            await Trigger.Value(),
             handler,
             goalNamePattern: GoalPattern == null ? null : (await GoalPattern.Value())?.Clr<string>(),
             stepPattern: StepPattern == null ? null : (await StepPattern.Value())?.Clr<string>(),

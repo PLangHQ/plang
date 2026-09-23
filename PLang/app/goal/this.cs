@@ -292,7 +292,7 @@ public sealed partial class @this
         var lifecycle = context.LifecycleFor(this);
 
         // BeforeGoal events
-        var beforeResult = await lifecycle.Before.Run(context, Trigger.BeforeGoal);
+        var beforeResult = await lifecycle.Before.Run(context, new global::app.@event.moment.@this(Trigger.BeforeGoal, this));
         if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
         if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
 
@@ -331,7 +331,7 @@ public sealed partial class @this
             }
 
             // AfterGoal events
-            var afterResult = await lifecycle.After.Run(context, Trigger.AfterGoal);
+            var afterResult = await lifecycle.After.Run(context, new global::app.@event.moment.@this(Trigger.AfterGoal, this));
             if (!afterResult.Success) return afterResult;
 
             return result;

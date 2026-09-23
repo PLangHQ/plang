@@ -38,10 +38,10 @@ public sealed class @this
     public List<object> Targets { get; } = new();
 
     /// <summary>
-    /// Runs this binding's handler, skipping if already executing (re-entry guard).
-    /// Payload-carrying events pass the action that just ran and its result; other events pass null.
+    /// Runs this binding's handler, skipping if already executing (re-entry guard). The moment
+    /// that fired is set as <c>%!event%</c> first, so whatever the handler runs can read it.
     /// </summary>
-    public async Task<data.@this> Run(actor.context.@this context, Action? action = null, data.@this? result = null)
+    public async Task<data.@this> Run(actor.context.@this context, global::app.@event.moment.@this? moment = null)
     {
         if (!context.TryEnterEvent(Id))
             return context.Ok();
@@ -49,7 +49,8 @@ public sealed class @this
         data.@this handlerResult;
         try
         {
-            handlerResult = await Handler(context, action, result);
+            if (moment != null) await context.Variable.Set("!event", moment);
+            handlerResult = await Handler(context, moment?.Action, moment?.Result);
         }
         finally
         {
