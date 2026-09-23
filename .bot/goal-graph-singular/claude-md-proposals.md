@@ -44,3 +44,9 @@ A body written as an expression (recovery actions stored in a parameter) and a r
 **Why:** `loop.foreach`'s variable-naming slots were renamed `ItemName`/`KeyName` → `Item`/`Key` (Ingi: "Name" restates what the variable type already says). CLAUDE.md's Property-kinds bullet still names the old slots.
 **Proposed change:** in the "Property kinds (PLNG001 build-time gate)" bullet, replace
 `` `loop.foreach` ItemName/KeyName `` with `` `loop.foreach` Item/Key ``.
+
+## architect — 2026-09-23
+**Target:** /CLAUDE.md — Runtime2 Conventions, directly after "**Registry = selection + lifecycle; all behavior lives on the element** …"
+**Why:** Ingi named it "the key in OBP" while ruling on the build pass: the builder-side walker over a step's actions (the build pass in the builder's Default provider) skipped modifiers and recovery, so a goal.call-specific pass grew its own modifier walk beside it. Run, Output and Validate are already node-owned; Build was the holdout, and every future pass will face the same choice.
+**Proposed change:**
+- **Walks are node-owned.** Every pass over the program graph — `Run`, `Output`, `Validate`, `Build` — is the node iterating itself and recursing into its own children (`Modifier`, `Recovery`, `Child`, and any parameter whose DECLARED type is `action` / `list<action>`). A static or builder-side walker over `List<action>` is the stray helper of walks: it reaches only what its author remembered, and every feature then grows its own walk beside it. The holder says `step.Build(context)`; the node does the rest. This is "all behavior lives on the element" applied to traversal.
