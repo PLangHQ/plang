@@ -12,16 +12,14 @@ public partial class Set : IContext
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
     public partial data.@this? Value { get; init; }
 
-    public async Task<data.@this<type.setting>> Run()
+    /// <summary>Stores the value. Returns no value — a setting is often a secret, and a result
+    /// would carry it onto %!data%, the debug output and the wire.</summary>
+    public async Task<data.@this> Run()
     {
         var key = (await Key.Value())!.Clr<string>()!;
         var val = Value == null ? null : await Value.Value();
         var store = await Context.App.SettingsStore;
         var result = await store.Set("settings", key, new data.@this(key, val, context: Context));
-
-        if (!result.Success)
-            return data.@this<type.setting>.From(result);
-
-        return Context.Ok<type.setting>(new type.setting { key = key, value = val });
+        return result.Success ? Context.Ok() : result;
     }
 }

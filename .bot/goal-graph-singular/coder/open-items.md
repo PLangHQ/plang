@@ -59,14 +59,6 @@ text"; `Type["snapshot"].Create(json)` reads raw text through the scalar-only va
 text holding the plang wire convert into a snapshot — (a) no, wire door only; (b) yes, generally: a content source
 of a STRUCTURED type reads its raw text through the transport format's parser. `resume.cs:6-12` doc waits on it.
 
-**19. Three item types name `clr`** (they declare no name — not @this, no [PlangType]): with Ingi.
-- `app.module.action.list.type.list` — returned by 10 list actions; names itself "list" beside the native list, a
-  {count, value} wrapper around what the native list already carries.
-- `app.module.action.setting.type+setting` — returned by setting.set / remove; a static class used as a namespace
-  around a {key, value} record.
-- `app.module.action.signing.sign` — the SignOptions slot on http.request / download / upload; an action handler
-  doubling as a value type.
-
 **20. Actor literal becomes a choice** — the actor set as a named-set choice (resolves to the live actor at use);
 `actor.Convert` dies; slots goal.call / event.on / channel.set / channel.remove / environment.run. After the births
 pass (needs the one naming door + births).
@@ -80,10 +72,19 @@ strings), notes/examples in stage 3. With Ingi; needs a running builder.
 **23. Security regressions — PARKED by Ingi.** Tamper pair (production regression in `da067599c..3e87c6d3b`, real
 signing) and masking (`da067599c^..3e87c6d3b`); the test signing mock verifies everything (flip at `6071d0f13`).
 Everything to resume is in `security-bisect.md` (candidate lists, driver, oracle `REAL_SIGNING=1`, probes done,
-open rulings: blast-radius list, honest mock).
+open rulings: blast-radius list, honest mock). Also parked here:
+- `app.module.action.signing.sign` — the SignOptions slot on http.request / download / upload; an action handler
+  doubling as a value type (the last of #19's three `clr`-named items).
+- Secrets as a value type — a secret that writes itself `****` on Out and in clear on Store, so `[Masked]` could
+  retire. Until then the `[Masked]` machinery (`item/this.cs:583`, `kind/reflection:259`, `filter/Tagged:127`) has
+  no production user; it stays covered by the test-only `MaskedItem` (`MaskedAttributeTests`). Belongs with the
+  births/value-type work.
 
 ## Done
 
+- **19 `clr`-named wrappers** — list actions return the native list (`6031fdfd7`); setting.set/remove return no
+  value, `{key, value}` wrapper + static `type` class gone, `[Masked]` covered by a test-only item (see commit
+  after `6031fdfd7`). signing.sign moved to #23.
 - **8 Tag rework** — goal owns its tags (`.pr` wire), `test.tag` Build stamps `%goal%`, `IClass.Callee`,
   `test.Create`, `app.Test.Exclusion`, discover collapsed; DiscoverActionTests 10/10: `22e6dafd6`.
 - **0b Ignored errors** — marked Handled, stay in the audit, one line under --debug: `10829ad4f`.

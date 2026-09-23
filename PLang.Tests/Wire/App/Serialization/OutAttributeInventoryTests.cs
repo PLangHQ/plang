@@ -129,14 +129,14 @@ public class OutAttributeInventoryTests
         await Assert.That(HasOut(t, "Match")).IsTrue();
     }
 
-    // 9. setting -------------------------------------------------------------
-    [Test] public async Task Setting_Key_HasOut()
+    // 9. masked (test-only MaskedItem) ----------------------------------------
+    [Test] public async Task Masked_Key_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.setting.type.setting), "key")).IsTrue();
+        await Assert.That(HasOut(typeof(MaskedItem), "key")).IsTrue();
     }
-    [Test] public async Task Setting_Value_HasOut_AndMasked()
+    [Test] public async Task Masked_Value_HasOut_AndMasked()
     {
-        var t = typeof(global::app.module.action.setting.type.setting);
+        var t = typeof(MaskedItem);
         await Assert.That(HasOut(t, "value")).IsTrue();
         await Assert.That(HasMasked(t, "value")).IsTrue();
     }
