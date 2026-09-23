@@ -627,6 +627,18 @@
           "category": "doc",
           "confidence": "high",
           "context": "Graft typing decided by Ingi: the LLM always gives the type (item allowed); never guess. Ruled: type required on every parameter row (schema + prompt reversed), untyped throw stays loud with retry-teaching wording, row type kept, declared type converts at the typed ask, literal verdict in action.Validate through the same door, templates by %var% syntax, NormalizeParameterTypes/IsCatalogDescription/empty-string repair die. Withdrawn: my declared-type fallback, token-typing, and the per-message channel frame (the channel's own not-a-fork contract is right; fix the frame doc instead)."
+        },
+        {
+          "paths": [
+            "PLang/app/event/lifecycle/binding/this.cs",
+            "PLang/app/goal/this.cs",
+            "PLang/app/goal/step/this.cs",
+            "PLang/app/module/IEvent.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "%!event% decided by Ingi (changed from the dict): firing sites pass the node that fired (goal and step passed nothing); the firing site builds a typed event value holding trigger, one node, result; Step/Goal are navigation; the binding sets it as %!event% before running its held call. IEvent/EventContext/context.Event/generator detection die."
         }
       ],
       "after": {
