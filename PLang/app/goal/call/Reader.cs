@@ -6,7 +6,7 @@ namespace app.goal.call;
 /// type name can't be derived from a <c>serializer</c> namespace, so this lives OUTSIDE
 /// <c>*.serializer</c> (discovery skips it) and the reader registry registers it explicitly under
 /// <c>goal.call</c> — no discovery fork. A GoalCall is a host shape, so it reads through the
-/// reflection kind (its <c>[Store]</c> face: <c>Name</c>, <c>Parallel</c>, <c>Parameters</c>,
+/// reflection kind (its <c>[Store]</c> face: <c>Name</c>, <c>Parallel</c>, <c>Parameter</c>,
 /// <c>PrPath</c>) — the same reader that reads every tagged host, routing the <c>List&lt;Data&gt;</c>
 /// params through the <c>@schema:data</c> reader sign-identically. No STJ.
 /// </summary>

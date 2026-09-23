@@ -19,7 +19,7 @@ public sealed class @this : global::app.type.item.list.@this
     // Value→slot materialization: adopt the rows a generic list reader produced.
     public @this(global::app.type.item.list.@this source) : base(source) { }
 
-    /// <summary>Reads the node from a raw wire "parameters" slot — a native <c>list</c> of
+    /// <summary>Reads the node from a raw wire "parameter" slot — a native <c>list</c> of
     /// <c>Data</c>-wrapped <c>{name, value}</c> dict entries (collections-are-data), or the CLR
     /// <c>IEnumerable</c> of <c>IDictionary</c> shape. Each entry becomes a named Data row still
     /// holding its <c>%var%</c>/literal/container form — a goal call shares the caller's scope, so

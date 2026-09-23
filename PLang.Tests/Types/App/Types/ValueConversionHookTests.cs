@@ -72,4 +72,24 @@ public class ValueConversionHookTests
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Name).IsEqualTo("MyGoal");
     }
+
+    // A goal call's arguments ride under the key its own writer emits — `parameter`, the wire name of
+    // GoalCall.Parameter — and survive a keyed (dict) read.
+    [Test]
+    public async Task GoalCallConversion_FromDict_KeepsArguments()
+    {
+        var (_, ctx) = MakeApp();
+        var slots = new Dictionary<string, object?>
+        {
+            ["name"] = "SendMail",
+            ["parameter"] = new List<object?>
+            {
+                new Dictionary<string, object?> { ["name"] = "to", ["value"] = "%email%" }
+            }
+        };
+        var v = (await global::app.goal.GoalCall.Convert(slots, null, ctx).Value()) as global::app.goal.GoalCall;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.Parameter).IsNotNull();
+        await Assert.That(v.Parameter!.Count).IsEqualTo(1);
+    }
 }

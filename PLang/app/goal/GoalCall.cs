@@ -140,9 +140,10 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
                 d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
             _ => ResolveRelative(prRaw.ToString(), context),
         };
-        // The parameters slot builds its own node (parameter.list reads the wire shape); an empty
-        // set collapses to null so the call carries no parameter node at all.
-        var parameters = slot("parameters") is { } p
+        // The parameter slot — the wire name of Parameter, what Output writes — builds its own node
+        // (parameter.list reads the wire shape); an empty set collapses to null so the call carries
+        // no parameter node at all.
+        var parameters = slot("parameter") is { } p
             ? new global::app.goal.step.action.parameter.list.@this(p, context)
             : null;
         if (parameters != null && parameters.Count == 0) parameters = null;
