@@ -563,6 +563,26 @@
           "category": "doc",
           "confidence": "high",
           "context": "Plural gate closed (coder 5f749a689); grep gate re-verified at 0. Two rulings on next: (A) the goal.call 'data-loss fix' (aeeb8206f, FromSlots key) patches an arm ruled dead in July — root is the ingest boundary: a stage-3 answer row without type is born with its DECLARED type from the element's rows and reads through that type's reader; NormalizeParameterTypes dissolves; FromSlots/dict arms/JsonElement arm/ToGoalCall die as ruled; fork for Ingi: catalog-at-read (recommended) vs required type on every answer row. (B) open-items #3 BuildError→action.Error is superseded by the settled error model (no error state on the node); surviving content: the BuildError reflection getter dissolves into action.Validate; Ingi confirms before start. (C) foreach.notes wrong; Ingi's content call."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/goalcall-is-an-action-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi decided A/B/C (coder e5f019a7b): goal.call is an ordinary action (Name text + Parameter list<data>), callback slots hold a goal.call action, GoalCall deleted; keep the error model (BuildError dissolves into action.Validate); foreach ItemName/KeyName → Item/Key. Plan checked vs July: July demolition list dies plus the value type, reader, PrPath, GoalCall.Event. Ruled the two misses: GetGoalAsync/LoadFromFile duplicate app.goal.list's selection/lifecycle (caller-chain walk folds into GetAsync; the handler asks the collection); App.RunGoalAsync(GoalCall) becomes the call handler's Run. Q1 Parallel → one bool on llm.query. Q2 held node runs itself via action.Run(context); runtime args are variables set by the callback. Q3 Name acceptable, Goal preferred, Ingi's call. Q4 order stands, A1 widened."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/goalcall-is-an-action-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi's answers on goal.call: Parallel is a bool on the call class (accepted, llm.query placement withdrawn); Name; order approved; on callbacks he leans app.Run and asked for the reason it cannot. Answered from code: app.Run<TAction> (app/this, lines 449-467) makes a node for a C#-composed handler (Step from the invoking frame, no modifiers); a held goal.call already is a node with its own step, parameters, modifiers, recovery — node.Run(context) (action/this, line 159) pushes its frame and folds its modifiers; a second composed node drops authored on-error/timeout and mis-parents the frame. Two operations, not two ways."
         }
       ],
       "after": {
