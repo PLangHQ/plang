@@ -4,4 +4,4 @@
 [{"Role":"system","Content":"…"},{"Role":"user","Content":"…"}]
 ```
 
-`schema=…` → `Schema` parameter. If JSON-shaped, set `"type": "json"` and emit as a structured object (not a string containing JSON).
+`schema=…` → `Schema` parameter. If JSON-shaped, set `"type": {"name": "json"}` and emit as a structured object (not a string containing JSON).
