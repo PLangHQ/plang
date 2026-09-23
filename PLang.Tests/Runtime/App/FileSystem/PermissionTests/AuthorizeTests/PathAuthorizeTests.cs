@@ -101,6 +101,47 @@ public class PathAuthorizeTests
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
+    /// Stub channel whose Ask fails with the given key — the stream's EOF answer ("ChannelEof") or any other.
+    private sealed class FailingAskChannel(string key) : global::app.channel.@this
+    {
+        public FailingAskChannel() : this("ChannelEof") { }
+        private readonly string _key = key;
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(
+            global::app.module.action.output.ask action, CancellationToken ct = default)
+            => Task.FromResult(action.Context.Error(new global::app.error.ServiceError(
+                $"Channel 'input' failed ({_key})", _key, 400)));
+    }
+
+    [Test] public async Task Authorize_NobodyCanAnswer_IsPermissionDenied_WithTheChannelFailureAsCause()
+    {
+        var app = NewApp();
+        app.User.Channel.Register(new FailingAskChannel("ChannelEof") { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
+        var path = new Path("/p", app.User.Context);
+
+        var result = await path.Authorize(global::app.type.item.permission.Verb.Read);
+
+        await result.IsFailure();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>()
+            .Because($"{result.Error?.Key}: {result.Error?.Message}");
+        await Assert.That(result.Error!.list.Single().Key).IsEqualTo("ChannelEof");
+    }
+
+    [Test] public async Task Authorize_OtherAskFailure_SurfacesAsItself()
+    {
+        var app = NewApp();
+        app.User.Channel.Register(new FailingAskChannel("ChannelBroken") { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
+        var path = new Path("/p", app.User.Context);
+
+        var result = await path.Authorize(global::app.type.item.permission.Verb.Read);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("ChannelBroken");
+    }
+
     [Test] public async Task Authorize_StatefulAnswerGarbage_RecursesWithInvalidPrefix()
     {
         var app = NewApp();

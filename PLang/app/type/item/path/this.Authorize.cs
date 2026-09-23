@@ -57,7 +57,13 @@ public partial class @this
             // Value-side opt-out so a resolved Data<Ask> (Answer bound) flows
             // through; a pending Ask (Answer null) or a Type-only Exit Data
             // short-circuits as before.
+            // Nobody could answer (a closed / non-interactive input) — no consent could be had, which is
+            // the permission's verdict: denied, the channel failure carried whole as its cause. Decided
+            // before the exit check, which would otherwise bubble the failed ask as itself.
+            if (!askResult.Success && askResult.Error!.Key == "ChannelEof")
+                return Context!.Error(new global::app.error.PermissionDenied(BuildRequest(actor, verb)) { list = [askResult.Error] });
             if (askResult.ShouldExit()) return askResult;
+            // Any other ask failure surfaces as itself.
             if (!askResult.Success) return askResult;
 
             // output.ask returns Data<Ask>; the user's reply rides on Ask.Answer.

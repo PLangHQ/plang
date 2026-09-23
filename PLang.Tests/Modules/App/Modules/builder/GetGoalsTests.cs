@@ -65,9 +65,8 @@ public class GetGoalsTests
             await Assert.That(result.Error.Message).Contains("A.goal");
             await Assert.That(result.Error.Message).Contains("B.goal");
             await Assert.That(result.Error.list.Count).IsEqualTo(2);
-            // Each cause is the read's own error, whole: the gate refused the read (no consent could be
-            // had — the ask found no answerer, or the answer was no).
-            await Assert.That(result.Error.list.All(e => e.Key is "PermissionDenied" or "ChannelEof")).IsTrue()
+            // Each cause is the read's own error, whole: the gate denied the read (no consent could be had).
+            await Assert.That(result.Error.list.All(e => e.Key == "PermissionDenied")).IsTrue()
                 .Because(string.Join(" || ", result.Error.list.Select(e => $"{e.Key}: {e.Message}")));
         }
         finally { System.IO.Directory.Delete(outside, true); }
