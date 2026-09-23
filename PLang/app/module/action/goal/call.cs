@@ -104,13 +104,15 @@ public partial class Call : IContext
         // that forks (a tool invocation) runs this call inside a frame born with the arguments it
         // supplies, and a supplied name wins. A call in the flow (plain, or a callback) has no such
         // frame, so its rows always bind.
-        if (Parameter?.Peek() is global::app.type.item.list.@this args)
+        // Each argument binds as its own Data born with the CALLER's context: `place=%city%` loads
+        // from the caller's memory whoever reads it, stays unresolved until read, and the shared row
+        // never enters the callee's variables. The list loads on this run's own copy, never the row.
+        if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this args)
             foreach (var arg in args.Items)
             {
                 if (arg.Peek() is not { IsNull: false }) continue;
                 if (execContext.Variable.Supplies(__action, arg.Name)) continue;
-                arg.Context = execContext;
-                await execContext.Variable.Set(arg.Name, arg);
+                await execContext.Variable.Set(arg.Name, arg.Copy(Context));
             }
 
         return await goal.Run(execContext);

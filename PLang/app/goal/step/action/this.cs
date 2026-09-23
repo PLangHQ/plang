@@ -133,21 +133,13 @@ public partial class @this
 
 
     /// <summary>
-    /// Looks up a parameter by name. Walks Parameters first, falls back to Defaults,
-    /// returns Data.NotFound when missing. Pure lookup — no resolution side effects.
-    /// Resolution happens later via Data.As&lt;T&gt;(context). Context is part of the
-    /// contract for symmetry with As&lt;T&gt;(context); kept as a hook even though
-    /// today's lookup is context-free.
+    /// The parameter row by name — Parameter first, then Default; null when neither holds it.
+    /// The row is program structure, shared by every run: a run never binds or reads it in place,
+    /// it takes its own copy (<c>Copy(context)</c> / <c>As&lt;T&gt;(context)</c>).
     /// </summary>
-    public global::app.data.@this GetParameter(string name, actor.context.@this context)
-    {
-        var data = Parameter?.FirstOrDefault(p =>
-            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
-        if (data != null) return data;
-        data = Default?.FirstOrDefault(p =>
-            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
-        return data ?? context.NotFound(name);
-    }
+    public global::app.data.@this? this[string name]
+        => Parameter?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+           ?? Default?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.

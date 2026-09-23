@@ -312,8 +312,9 @@ public static class @this
                             // The channel name is the PARSED value's string face — await Value(), not
                             // Peek(): Peek() hands back the lazy source's RAW wire slice, which for a
                             // .pr text param is the JSON-quoted form (`"builder"`) and misses the
-                            // channel registered under the clean name.
-                            var __channelParam = action?.Parameter?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase));
+                            // channel registered under the clean name. Read on this run's own copy of
+                            // the row, never the shared row itself.
+                            var __channelParam = action?["channel"]?.Copy(context);
                             var __channelName = __channelParam == null ? null : (await __channelParam.Value())?.ToString();
                             Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)
@@ -367,14 +368,17 @@ public static class @this
     private static void EmitHelpers(StringBuilder sb)
     {
         sb.Append("""
-                private static global::app.data.@this __ResolveData(
+                // The parameter row is the shared program — every run reads the same one, so a run
+                // never binds it in place: a plain slot gets this run's own copy, a typed slot this
+                // run's own view, each born under the running context.
+                private static global::app.data.@this __Copy(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                {
-                    var data = action?.GetParameter(name, context);
-                    if (data == null) return global::app.data.@this.NotFound(name);
-                    data.Context = context;
-                    return data;
-                }
+                    => action?[name]?.Copy(context) ?? global::app.data.@this.NotFound(name);
+
+                private static global::app.data.@this<T> __View<T>(
+                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
+                    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+                    => action?[name]?.As<T>(context) ?? global::app.data.@this.NotFound(name).As<T>();
 
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>

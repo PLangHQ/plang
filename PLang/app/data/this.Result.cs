@@ -47,7 +47,7 @@ public partial class @this
 
     /// <summary>The door-failure seam — the failing TYPE authors its own error
     /// and reports it here (the blessed binding surface for door/Create
-    /// implementations, beside ShallowClone/CloneError).</summary>
+    /// implementations, beside As&lt;T&gt;(answer)/CloneError).</summary>
     public void Fail(IError error) { _error = error; _errorObserved = false; }
 
     /// <summary>True when a failure was recorded and no one has looked at it —

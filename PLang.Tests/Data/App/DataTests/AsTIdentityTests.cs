@@ -48,7 +48,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
         source.Properties.Set("meta", "abc");
-        var result = source.ShallowClone<global::app.type.item.number.@this>(await source.Value<global::app.type.item.number.@this>());
+        var result = source.As<global::app.type.item.number.@this>(await source.Value<global::app.type.item.number.@this>());
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
         await Assert.That(((await result.Properties.Value("meta")))?.ToString()).IsEqualTo("abc");
     }
@@ -63,7 +63,7 @@ public class AsTIdentityTests
     {
         var inner = (global::app.type.item.number.@this)42;
         var source = new global::app.data.@this<global::app.type.item.number.@this>("n", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.item.@this>(await source.Value<global::app.type.item.@this>());
+        var wrapped = source.As<global::app.type.item.@this>(await source.Value<global::app.type.item.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(ReferenceEquals((await wrapped.Value()), inner)).IsTrue();
     }
@@ -76,7 +76,7 @@ public class AsTIdentityTests
     {
         var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.User.Context);
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
+        var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
         await Assert.That(((await wrapped.Properties.Value("annot")))?.ToString()).IsEqualTo("via-source");
@@ -89,7 +89,7 @@ public class AsTIdentityTests
     {
         var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
+        var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
@@ -106,7 +106,7 @@ public class AsTIdentityTests
     {
         var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
+        var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
@@ -121,7 +121,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
         source.Properties.Set("note", "hello");
-        var wrapped = source.ShallowClone<global::app.type.item.text.@this>(await source.Value<global::app.type.item.text.@this>());
+        var wrapped = source.As<global::app.type.item.text.@this>(await source.Value<global::app.type.item.text.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();

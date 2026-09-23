@@ -135,7 +135,7 @@ public sealed record @this(
             // setting layer: a %var%/template resolves lazily on its own door (await Value()),
             // so the action decides (variable.set stores verbatim; a reader renders). Data flows.
             // A C#-composed Seed's set value passes through untouched.
-            sb.AppendLine($"        {TypeName} {Local} = (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) ? __sv{Name} : __ResolveData(action, \"{ParamName}\", context);");
+            sb.AppendLine($"        {TypeName} {Local} = (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) ? __sv{Name} : __Copy(action, \"{ParamName}\", context);");
             sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
             return;
         }
@@ -155,15 +155,15 @@ public sealed record @this(
         sb.AppendLine($"        if (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) {Local} = __sv{Name};");
         sb.AppendLine("        else");
         sb.AppendLine("        {");
-        sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
-        sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d.As<{InnerType}>();");
+        sb.AppendLine($"            var __d = __View<{InnerType}>(action, \"{ParamName}\", context);");
+        sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d;");
         sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)
             sb.AppendLine($"            else {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
         else
-            sb.AppendLine($"            else {Local} = __d.As<{InnerType}>();");
+            sb.AppendLine($"            else {Local} = __d;");
         sb.AppendLine("        }");
         sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).

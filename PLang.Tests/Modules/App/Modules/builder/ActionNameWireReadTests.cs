@@ -61,7 +61,8 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
         await Assert.That(held!.Module.Name).IsEqualTo("goal");
         await Assert.That(held.Name).IsEqualTo("call");
         await Assert.That(held.Step).IsSameReferenceAs(goal.Step[0]);
-        await Assert.That((await held.Parameter.First(p => p.Name == "Name").Value())?.RawText).IsEqualTo("LogIt");
+        // A reader of the program reads its own copy, with its own context — never the shared row.
+        await Assert.That((await held["Name"]!.Copy(_app.User.Context).Value())?.RawText).IsEqualTo("LogIt");
     }
 
     [Test]

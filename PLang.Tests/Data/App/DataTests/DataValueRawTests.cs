@@ -107,7 +107,7 @@ public class DataValueRawTests
 
     // Data flows through Action.GetParameter unchanged — the same Data instance is returned.
     [Test]
-    public async Task DataFlow_ThroughGetParameter_ReferenceIdentityPreserved()
+    public async Task DataFlow_ThroughActionIndex_ReferenceIdentityPreserved()
     {
         var stored = _app.Data("greeting", "Hello %name%");
         var action = new PrAction
@@ -117,10 +117,10 @@ public class DataValueRawTests
             Parameter = new List<Data> { stored }
         };
 
-        var found = action.GetParameter("greeting", _app.User.Context);
+        var found = action["greeting"];
 
         await Assert.That(ReferenceEquals(found, stored)).IsTrue();
-        await Assert.That((await found.Value())?.ToString()).IsEqualTo("Hello %name%");
+        await Assert.That((await found!.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
 
     // Two parallel readers of the same Data → no race, no shared mutation, same .Value reference.

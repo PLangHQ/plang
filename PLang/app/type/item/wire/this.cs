@@ -21,8 +21,8 @@ public sealed class @this : global::app.type.item.source
         : base(slice, type, context)
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
 
-    private protected override global::app.type.item.@this Read()
-        => _reader.Read(this, new global::app.type.reader.ReadContext(Context, Type.Template));
+    private protected override global::app.type.item.@this Read(actor.context.@this context)
+        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template));
 
     // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
     // slice); any other writer is a USE — the wire graduates to its decoded value and that writes
@@ -33,7 +33,7 @@ public sealed class @this : global::app.type.item.source
         if (_reader.Owns(w)) { w.Raw((string)Raw); return; }
         // Graduate to the decoded value: the kind owns the json decode (one Parse, the same value
         // Value() materializes to); a kind that declines (csv, png) falls to the type reader.
-        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read();
+        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read(Context);
         decoded.Write(w);
     }
 
@@ -48,7 +48,7 @@ public sealed class @this : global::app.type.item.source
         global::app.actor.context.@this? context)
     {
         if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
-        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read();
+        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read(Context);
         await decoded.Output(writer, mode, context ?? Context);
     }
 
@@ -57,7 +57,7 @@ public sealed class @this : global::app.type.item.source
     // value lowers itself (a clr(json) → its kind's reflection read).
     internal override object? Clr(System.Type target)
     {
-        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read();
+        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read(Context);
         return decoded.Clr(target);
     }
 

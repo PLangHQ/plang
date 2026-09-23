@@ -49,12 +49,7 @@ public partial class @this
     internal actor.context.@this Context
     {
         get => _context;
-        set
-        {
-            _context = value;
-            foreach (var data in _variables.Values)
-                data.Context = value;
-        }
+        set => _context = value;
     }
 
     /// <summary>
@@ -109,17 +104,19 @@ public partial class @this
     {
         // A reference value (%x%) binds the referenced VALUE, not the reference marker. The
         // instance Gets itself (lazy name-hop: the target's value door is never opened here — no
-        // eager read), and `name` gets a ShallowClone of it — the documented `set %y% = %x%` rule:
+        // eager read), and `name` gets a Copy of it — the documented `set %y% = %x%` rule:
         // the value INSTANCE is shared (immutable, so safe) so it stays lazy, while the Properties
         // bag is COPIED so a later `%y%!prop` write never bleeds onto x. Copy semantics: y captures
         // x's CURRENT value, not its future reassignments. Storing the marker verbatim would go
         // stale (!data rebinds every action) and a self-assign (`set %a% = %a%`) would cycle on the
-        // value door; the shallow-clone avoids both. Each reference carrier resolves its own name
-        // (variable/source/text) — the courier just asks. A miss flows through as-is.
+        // value door; the copy avoids both. Each reference carrier resolves its own name
+        // (variable/source/text) — the courier just asks. A miss flows through as-is. The
+        // reference resolves with the context of the Data that carries it (a goal-call argument
+        // `place=%city%` reads the CALLER's memory, whichever store it lands in).
         if (value is data.@this reference && reference.IsVariable)
         {
-            var bound = await reference.Get(_context);
-            value = bound is { IsInitialized: true } ? bound.ShallowClone(name) : bound;
+            var bound = await reference.Get(reference.Context);
+            value = bound is { IsInitialized: true } ? bound.Copy(name) : bound;
         }
 
         // Names arrive clean — the builder normalizes them before the .pr, and runtime C# callers
@@ -145,11 +142,9 @@ public partial class @this
             // attached to a name survive a re-mint. In-place mutation of prev is wrong: a
             // Data may be aliased under multiple keys (e.g. Action stores the step result
             // both under its own name AND under "!data"), so mutating prev would bleed
-            // across keys.
+            // across keys. A stored Data keeps the context it was born with.
             if (value is data.@this dv)
             {
-                dv.Context = _context;
-
                 if (frame != null)
                 {
                     var hadPrev = frame.TryGet(name, out var prevFrame);

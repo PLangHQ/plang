@@ -93,7 +93,7 @@ public partial class Set : IContext
     public async Task<data.@this> Run()
     {
         // Resolve the name door up front; the VALUE door stays closed on this path —
-        // a plain `set %x% = %y%` forwards the binding (ShallowClone shares the lazy
+        // a plain `set %x% = %y%` forwards the binding (Copy shares the lazy
         // raw), so opening the door here would parse a lazily-read file on store and
         // defeat verbatim passthrough. Only the branches that genuinely need content
         // (a Properties write, a forced-type conversion) open it below.

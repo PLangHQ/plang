@@ -59,6 +59,16 @@ text"; `Type["snapshot"].Create(json)` reads raw text through the scalar-only va
 text holding the plang wire convert into a snapshot — (a) no, wire door only; (b) yes, generally: a content source
 of a STRUCTURED type reads its raw text through the transport format's parser. `resume.cs:6-12` doc waits on it.
 
+**28. Same-actor concurrent `list.add` races** — 25 parallel runs of one goal under the SAME actor, each
+`add %x% to %l%`, throw a NullReferenceException inside list.add (the shared %l% list and its creation are not
+guarded). Cross-actor concurrency is fine (each actor has its own memory); within one actor, concurrent runs of
+the same goal share variables unguarded. Found writing `SharedProgramTests.OneGoal_RunConcurrently…`, which runs
+System+User in parallel and never one actor twice at once.
+
+**29. `file://` not stripped** — a `.pr` path literal `file:///tmp/x` resolves to `<root>/file:/tmp/x`:
+`Scheme.From` / `FilePath` keep the scheme prefix as part of a root-relative path. Tests use a relative
+out-of-root path instead.
+
 **26. Plugin loader registers closed sets as types** — `type/list/Loader.cs:106-125` (runtime-loaded DLLs)
 registers every `[PlangType]`, enums included, with no item check; `Registry.cs:172` skips non-items. A plugin's
 closed set would land as a type there.

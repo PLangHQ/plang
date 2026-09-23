@@ -108,13 +108,18 @@ public class source : @this, module.IContext
 
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
+        // The value loads with the context of the Data that asks — never the source's own: a
+        // source on a shared program row is read by every run, and each run's Data carries its
+        // own actor (its variables, its permissions).
+        var asking = data.Context;
+
         // A full-match %ref% names a binding — hand back what it holds through its OWN door,
         // never parse the name through the declared type's reader (a `list` reader on the string
         // "%!data%" has nothing to read). Same resolve door as text's full-match / variable.@this;
         // the declared {type,kind} was only the pre-resolution label. IsVariable decided at birth.
         if (IsVariable)
         {
-            var resolved = await Get(Context);
+            var resolved = await Get(asking);
             // Get returns a NotFound Data (IsInitialized == false) on a miss, never null for a
             // reference. A variable set to null IS initialized, so it resolves (to null); only a
             // genuinely-absent name fails here.
@@ -135,13 +140,13 @@ public class source : @this, module.IContext
             // reader below (png→image, csv→table, …). Covers both entrances — a content source and
             // an inherited wire both parse here. A bad parse rides the catch → MaterializeFailed.
             if (_type.Kind is { } kind
-                && await Context.App.Type.Kind[kind.Name].Load(_value, Context) is { } loaded)
+                && await asking.App.Type.Kind[kind.Name].Load(_value, asking) is { } loaded)
             {
                 var decoded = await loaded.Value();
                 decoded.list.Add(this);   // the source rides the materialized value's prior chain
                 return decoded;
             }
-            var item = Read();
+            var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;
             // Container round-trip guard: a value DECLARED a container (dict/list) that
             // materialized to a non-container leaf is a round-trip loss (a json object that
@@ -183,12 +188,12 @@ public class source : @this, module.IContext
     /// bytes). A structured value never rides here — it is a <see cref="wire.@this"/>, whose
     /// override reads through its held serializer. (source.Value owns the try/catch + the
     /// binding-named failure story.)</summary>
-    private protected virtual global::app.type.item.@this Read()
+    private protected virtual global::app.type.item.@this Read(actor.context.@this context)
     {
-        var typeReader = Context.App.Type.Reader.Reader(_type.Name, _type.Kind?.Name, Context);
+        var typeReader = context.App.Type.Reader.Reader(_type.Name, _type.Kind?.Name, context);
         var reader = new global::app.channel.serializer.value.Reader(_value);
         return typeReader.Read(ref reader, _type.Kind?.Name,
-            new global::app.type.reader.ReadContext(Context, _type.Template));
+            new global::app.type.reader.ReadContext(context, _type.Template));
     }
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the

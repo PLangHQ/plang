@@ -39,7 +39,7 @@ public partial class CacheWrap : IContext, IModifier
             var cached = await cache.GetAsync(cacheKey);
             if (cached != null)
             {
-                var hit = cached.ShallowClone();
+                var hit = cached.Copy();
                 context.Variable.Set("!data", hit);
                 return hit;
             }

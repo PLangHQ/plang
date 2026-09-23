@@ -251,7 +251,8 @@ public class StartGoalTests
 
         public async Task<Data> Execute()
         {
-            var contentData = Action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
+            // The run's own copy of the row, born with this run's context — never the shared row.
+            var contentData = Action?["Data"]?.Copy(Context);
             if (contentData != null)
             {
                 // Resolve via the value's OWN door — a template (text- or source-born) fills

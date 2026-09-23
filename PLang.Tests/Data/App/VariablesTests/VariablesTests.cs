@@ -767,7 +767,7 @@ public class VariablesTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task PLangContext_Put_StampsContext()
+    public async Task PLangContext_Put_KeepsTheDatasBirthContext()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
@@ -775,7 +775,8 @@ public class VariablesTests : System.IAsyncDisposable
         var data = new Data("test", "hello", context: engine.User.Context);
         context.Variable.Set(data);
 
-        await Assert.That(data.Context).IsEqualTo(context);
+        // A stored Data keeps the context it was born with — storing never re-points it.
+        await Assert.That(data.Context).IsEqualTo(engine.User.Context);
     }
 
     [Test]
@@ -793,7 +794,7 @@ public class VariablesTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task ChildContext_StampsClonedData()
+    public async Task ChildContext_ClonedData_KeepsItsBirthContext()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var parentContext = new global::app.actor.context.@this(engine, engine.User);
@@ -801,8 +802,10 @@ public class VariablesTests : System.IAsyncDisposable
 
         var childContext = parentContext.CreateChild();
 
-        // Child context stamps its own context on the cloned data
-        await Assert.That((await childContext.Variable.Get("name"))!.Context).IsEqualTo(childContext);
+        // The child sees the variable; the Data keeps the context it was born with — never re-pointed.
+        var seen = (await childContext.Variable.Get("name"))!;
+        await Assert.That((await seen.Value())!.ToString()).IsEqualTo("John");
+        await Assert.That(seen.Context).IsEqualTo(parentContext);
     }
 }
 

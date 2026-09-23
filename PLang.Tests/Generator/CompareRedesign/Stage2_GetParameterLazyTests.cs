@@ -64,7 +64,7 @@ public class Stage2_GetParameterLazyTests
         await using var app = TestApp.Create("/app");
         var context = app.User.Context;
         var slot = new Data("path", "s3://bucket/key", context: context);
-        var failedPath = slot.ShallowClone<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
+        var failedPath = slot.As<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
         await failedPath.IsFailure();
         await Assert.That(failedPath.Error!.Key).IsEqualTo("SchemeNotRegistered");
     }

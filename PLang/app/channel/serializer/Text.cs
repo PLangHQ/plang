@@ -71,6 +71,6 @@ public sealed class Text : ISerializer
         // to this serializer. Everything else: the Data converts ITSELF to T
         // through T's own Convert hook (As<T> is the typed resolution door).
         if (await result.IsEmpty()) return result.Context.Ok<T>(default!);
-        return result.ShallowClone<T>(await result.Value<T>());
+        return result.As<T>(await result.Value<T>());
     }
 }

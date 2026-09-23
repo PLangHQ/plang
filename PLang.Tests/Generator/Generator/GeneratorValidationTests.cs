@@ -140,29 +140,30 @@ public class GeneratorValidationTests
         var intPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
             "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
-        // Lazy resolution: the property resolves its slot to a typed VIEW via As<T>
+        // Lazy resolution: the property resolves its slot to this run's typed VIEW
         // (conversion/errors surface later, at the value door) — not an eager
         // materialize-and-clone.
-        await Assert.That(stringPlainSrc).Contains("__d.As<global::app.type.item.text.@this>()");
-        await Assert.That(intPlainSrc).Contains("__d.As<global::app.type.item.number.@this>()");
+        await Assert.That(stringPlainSrc).Contains("__View<global::app.type.item.text.@this>(action,");
+        await Assert.That(intPlainSrc).Contains("__View<global::app.type.item.number.@this>(action,");
     }
 
     [Test]
-    public async Task GeneratedPropertyBody_UsesGetParameterAndAsT()
+    public async Task GeneratedPropertyBody_TakesTheRunsOwnViewOfTheRow()
     {
         var generated = ReadAnyGeneratedHandler();
-        // The lookup-then-resolve idiom: __ResolveData(name) → As<T>() (a lazy typed
-        // view). __ResolveData itself delegates to Action.GetParameter under the hood.
-        await Assert.That(generated).Contains("__ResolveData");
-        await Assert.That(generated).Contains(".As<");
+        // The row is the shared program: a typed slot takes this run's own view
+        // (action[name].As<T>(context)), a plain slot this run's own copy — the row is never stamped.
+        await Assert.That(generated).Contains("action?[name]?.As<T>(context)");
+        await Assert.That(generated).Contains("action?[name]?.Copy(context)");
+        await Assert.That(generated.Contains("data.Context = context")).IsFalse();
     }
 
     [Test]
     public async Task Generator_DoesNotEmitOldHelperFamily()
     {
         // The old helper family was: __TryConvert, __FormatValue, __HasParam,
-        // __StripPercent, __Resolve<T>. Post-v5, all are gone — only __ResolveData
-        // remains (Data emit's lookup helper).
+        // __StripPercent, __Resolve<T>. All are gone — only __Copy / __View remain
+        // (the run's own copy / view of a parameter row).
         var generated = ReadAnyGeneratedHandler();
         await Assert.That(generated.Contains("__TryConvert")).IsFalse();
         await Assert.That(generated.Contains("__FormatValue")).IsFalse();

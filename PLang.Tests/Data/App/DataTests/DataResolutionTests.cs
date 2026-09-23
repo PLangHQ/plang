@@ -24,9 +24,9 @@ public class DataResolutionTests
         var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         _app.User.Context.Variable.Set("x", "first");
-        var first = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
+        var first = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         _app.User.Context.Variable.Set("x", "second");
-        var second = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
+        var second = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
@@ -57,7 +57,7 @@ public class DataResolutionTests
     {
         var data = new Data("v", "%scope%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
         _app.User.Context.Variable.Set("scope", "parent");
-        var parentView = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
+        var parentView = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await using var subApp = global::PLang.Tests.TestApp.Create("/sub");
         subApp.User.Context.Variable.Set("scope", "sub");
@@ -65,7 +65,7 @@ public class DataResolutionTests
         // sub scope, mirroring how a goal call injects the value into the sub-goal's
         // context before that goal resolves it.
         data.Context = subApp.User.Context;
-        var subView = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
+        var subView = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await Assert.That((await parentView.Value())?.ToString()).IsEqualTo("parent");
         await Assert.That((await subView.Value())?.ToString()).IsEqualTo("sub");
@@ -81,7 +81,7 @@ public class DataResolutionTests
         _app.User.Context.Variable.Set("count", 42);
         var data = new Data("c", "%count%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
+        var result = data.As<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 
@@ -96,11 +96,11 @@ public class DataResolutionTests
         var data = TemplateStamp.Container("messages", raw, _app.User.Context);
 
         _app.User.Context.Variable.Set("comment", "value1");
-        var first = data.ShallowClone<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
+        var first = data.As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
         await Assert.That(first.GetValue<List<global::app.module.action.llm.LlmMessage>>()![0].Content).IsEqualTo("value1");
 
         _app.User.Context.Variable.Set("comment", "value2");
-        var second = data.ShallowClone<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
+        var second = data.As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
         await Assert.That(second.GetValue<List<global::app.module.action.llm.LlmMessage>>()![0].Content).IsEqualTo("value2");
     }
 
@@ -115,7 +115,7 @@ public class DataResolutionTests
         {
             for (int i = 0; i < 100; i++)
             {
-                var r = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
+                var r = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
                 if (r.Peek()?.ToString() != "value") return false;
             }
             return true;

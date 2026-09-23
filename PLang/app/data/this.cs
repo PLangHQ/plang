@@ -529,18 +529,17 @@ public partial class @this
     /// binding's failure across (the typed ask's decline landed it here via
     /// <c>Fail</c>), so the formed slot's <c>Success</c> mirrors the source.
     /// </summary>
-    public @this<T> ShallowClone<T>(T? answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    internal @this<T> As<T>(T? answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var clone = new @this<T>(Name, null, null, Parent)
+        // Context rides the value — prefer the answer's own (born at I/O / resolve), fall back to
+        // this binding's.
+        var clone = new @this<T>(Name, default, null, Parent, (answer as module.IContext)?.Context ?? _context)
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Properties = Properties,
         };
         clone._item = answer ?? global::app.type.item.@this.Absent;
-        // Context rides the value — prefer the answer's own (born at I/O /
-        // resolve), fall back to this binding's. Never push null down.
-        clone.Context = (answer as module.IContext)?.Context ?? Context;
         clone.OnCreate = OnCreate;
         clone.OnChange = OnChange;
         clone.OnDelete = OnDelete;
@@ -563,9 +562,19 @@ public partial class @this
     /// already-<c>Data&lt;T&gt;</c> binding is returned as itself.
     /// </summary>
     internal @this<T> As<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        => this is @this<T> already ? already : Face<T>(_context);
+
+    /// <summary>The typed view born under the run's <paramref name="context"/>, so the handler's
+    /// later <c>.Value()</c> resolves in that run's scope. The dispatch form over a shared
+    /// parameter row: <c>action[name].As&lt;T&gt;(context)</c> — the view is the run's own; the
+    /// row is never written.</summary>
+    internal @this<T> As<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        => Face<T>(context ?? _context);
+
+    // The typed face over this binding's value, born under the given context.
+    private @this<T> Face<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        if (this is @this<T> already) return already;
-        var view = new @this<T>(Name, null, null, Parent)
+        var view = new @this<T>(Name, default, null, Parent, context)
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
@@ -573,21 +582,10 @@ public partial class @this
             IsInitialized = IsInitialized,
         };
         view._item = _item;
-        view.Context = _context;
         view.OnCreate = OnCreate;
         view.OnChange = OnChange;
         view.OnDelete = OnDelete;
         if (_error != null) view.Fail(_error);
-        return view;
-    }
-
-    /// <summary>The typed view, stamped with the execution <paramref name="context"/> so
-    /// the handler's later <c>.Value()</c> resolves in the right scope. The dispatch form:
-    /// <c>action.Parameters["name"].As&lt;T&gt;(context)</c>.</summary>
-    internal @this<T> As<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var view = As<T>();
-        if (context != null) view.Context = context;
         return view;
     }
 
@@ -688,36 +686,31 @@ public partial class @this
     }
 
     /// <summary>
-    /// Creates a new Data wrapper around the same value (no deep copy).
-    /// Use when renaming — the value stays shared so mutations propagate.
-    /// Events (OnChange/OnCreate/OnDelete) are intentionally not copied —
-    /// clones that go through Variables.Set() get events wired at storage time.
+    /// A new Data over the same value (no deep copy — see <see cref="Clone"/>): the value is shared by
+    /// reference (values are immutable, so sharing is safe; signed/typed values survive), the property
+    /// BAG is copied while the values inside it stay shared, so `set %y!NewProp% = 1` lands on %y%
+    /// only. Events are not copied — a copy that goes through Variables.Set() gets its events there.
     /// </summary>
-    public @this ShallowClone() => ShallowClone(Name);
+    public @this Copy() => Copy(Name, _context);
 
-    /// <summary>
-    /// Shallow clone under a new name — same value instance, type and signature
-    /// (shared by reference); the property BAG is copied while the values inside
-    /// it stay shared by pointer, so `set %y!NewProp% = 1` lands on %y% only.
-    /// Renaming a value into a new slot (a goal-call parameter, `set %y% = %x%`)
-    /// without copying or re-serializing it, so signed/typed values survive.
-    /// </summary>
-    public @this ShallowClone(string newName)
+    /// <summary>The copy under a new name — renaming a value into a new slot (a goal-call argument,
+    /// `set %y% = %x%`).</summary>
+    public @this Copy(string name) => Copy(name, _context);
+
+    /// <summary>The copy born under <paramref name="context"/> — a run's own Data over a shared
+    /// parameter row, so the run resolves in its own scope and never writes the row.</summary>
+    public @this Copy(actor.context.@this context) => Copy(Name, context);
+
+    private @this Copy(string name, actor.context.@this? context)
     {
-        var clone = new @this(newName)
+        return new @this(name, _item, context: context)
         {
             Error = Error,
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone()
+            Properties = Properties.Clone(),
         };
-        // The instance is shared by reference — values are immutable, so
-        // sharing is always safe; the clone is a new Data pointing at the same
-        // value (the `set %y% = %x%` rule).
-        clone._item = _item;
-        clone.Context = _context;
-        return clone;
     }
 
     /// <summary>
