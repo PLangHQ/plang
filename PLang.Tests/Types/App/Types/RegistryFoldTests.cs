@@ -81,11 +81,14 @@ public class RegistryFoldTests
     [Test]
     public async Task Formats_ExtensionToPlangName_ReadsThroughRegistry()
     {
-        // Once an extension like "csv" / "json" resolves to a PLang name, the
-        // registry's Get must accept that name. (app.formats produces the name;
-        // the registry resolves it — the two halves meet at the same lookup.)
-        await Assert.That(_types.Get("csv")).IsEqualTo(typeof(string));
-        await Assert.That(_types.Get("json")).IsEqualTo(typeof(System.Text.Json.Nodes.JsonNode));
-        await Assert.That(_types.Get("yaml")).IsEqualTo(typeof(string));
+        // The format registry names a file's type ({binary, kind: <extension>} — the bytes, with
+        // the extension as the decode hint); the type registry must know that name. The two halves
+        // meet at the same lookup.
+        foreach (var extension in new[] { ".csv", ".json", ".yaml" })
+        {
+            var type = _app.Format.TypeFromExtension(extension);
+            await Assert.That(_app.Type.Contains(type.Name)).IsTrue();
+            await Assert.That(type.Kind).IsNotNull();   // the extension's canonical kind (.yaml → yml)
+        }
     }
 }
