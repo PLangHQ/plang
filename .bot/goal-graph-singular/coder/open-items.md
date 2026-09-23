@@ -5,22 +5,16 @@ Done at the bottom, one line each with its landing commit. Verified 2026-09-23 a
 
 ## Open
 
-**0b. Ignored errors are silently swallowed.** `error/handle.cs`:
-`if (await IgnoreError.ToBooleanAsync()) return context.Ok();` — no push, no log. Emitting them on a
-redirectable channel was discussed and explicitly deferred by Ingi ("thinking out loud… swallowed for now").
-
 **5b. The live builder `.pr` hashes are stale — still true.** `goal.Hash` = SHA256(Name + concat(step.Text)),
 stored in the `.pr`. Recomputed 2026-09-23 over `os/system/builder/**/.build/*.pr`: **3 of 6 goals stale** —
 `Build` (`.build/build.pr`), `Start` and `HandleBuildFailure` (`BuildGoal/.build/start.pr`). The decider-harness
 rebuilds write to `tools/decider/out/`, never over the live files, so they did not refresh these. Anything using
 the hash for staleness sees a lie. Not recomputed unilaterally on a bootstrap artifact (ties to #12).
 
-**8. `DiscoverActionTests` is 7/10 red — cause found.** The fixture writes its `.pr` through STJ reflection
-(`JsonSerializer.Serialize(goal, Json.CamelCaseIndented)`, `PLang.Tests/Runtime/App/Testing/DiscoverActionTests.cs:105,114`),
-not through the goal's own writer (`goal.Output`, the `.pr` wire). The reader reads that shape as "pr corrupt", so
-every test comes out Stale ("expected Skipped but found Stale", "expected 'rebuild needed' but found 'pr corrupt'")
-and tags are never extracted (both auto-tag tests). Fix is a test fix: write the fixture through the goal's own
-serializer. `action.Requirement` still has no green coverage until then.
+**8. `DiscoverActionTests` — 2 user-tag reds left.** Fixture writes through the goal's own writer (`338448a04`);
+the list writer bug it exposed is fixed (`143b5ad9d`). `Discover_UserTags_*` wait on the tag rework
+(goal.Tag stamped by `test.tag` Build, `test.Create`, discover collapses — ruled July 24, confirmed by Ingi
+2026-09-23; plan sent, awaiting ruling on regex delete / Run no-op / call-target owner).
 
 **9. `PathSerializerMigrationTests` / `KindViaCreateTests` path-kind flake.** Not reproduced in 6 isolated runs +
 3 full sweeps; the helpers now print the decline's key + message (`a5cf9e221`), so the next occurrence names its
@@ -87,6 +81,9 @@ open rulings: blast-radius list, honest mock).
 
 ## Done
 
+- **0b Ignored errors** — marked Handled, stay in the audit, one line under --debug: `10829ad4f`.
+- **List writer bug** — only a chunk dissolves; list-valued parameters write as one row: `143b5ad9d`.
+- **GoalPathTypingTests** — round-trip through the goal's own writer/reader: `cf0fbe647`.
 - **0 Error model** — frame owns recording, `CallStack.Error`, `app.Error` deleted: `f74f484cc`, `a4108b2c2`, `54ab44cd5`.
 - **1 Stage D** — `action.Validate` / `action.list` / `step` / `goal.Validate`, `build.validate step=`: `804062686`, `61fc439ea`.
 - **2 `action.Requires` → `Requirement`** (Stage C): `a4108b2c2`.
