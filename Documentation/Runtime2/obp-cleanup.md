@@ -251,3 +251,13 @@ Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in 
 a module by name — what `app.module["x"].Action` already is. Verb+noun + middleman: the registry
 proxies what the element owns. Callers: `test/report.cs:171`, `type/list/this.cs:653`,
 `module/list/this.cs:228`. Fix: callers select the element and walk its `Action` node.
+
+## `EventBinding` is fed opened carriers [logged 2026-09-23, Ingi's question]
+
+`event.on.Run` opens every typed slot to hand `EventBinding`'s constructor plain values —
+`await Trigger.Value()`, the patterns via `.Clr<string>()`, `Priority.ToInt32()`, `IsRegex.Value`.
+Opened box: the leaf cracks carriers for another type's constructor. The binding needs a concrete
+trigger to MATCH (`GetMatchingBindings` compares `b.Type == trigger` on every event), so the owner
+resolving means the binding reading its own carriers ONCE at registration — born from the `event.on`
+action's typed slots, or taking the `Data` carriers. 72 test sites construct `EventBinding` with the
+plain enum; its own item.

@@ -2080,3 +2080,10 @@ surface") emits nothing, and `context.Event` (`%!event%`) is never set. Remove `
 entries in the host-param filters (`action/property/list`, `module/list`, `build/code/Default`) — or,
 if `%!event%` should exist, give the event binding (which IS the event context) the job of setting it
 when it runs its held call. Ingi's call which.
+
+## 2026-09-23 — the type registry answers two names for one type (found in graft typing)
+`GetTypeName(choice<Operator>)` answers "operator" (`type/list/this.cs:133-135`, `:440-443`), while the
+entity door answers `{choice, kind: operator}` ("the choice precedent", `:302-307`) and the choice
+reader is registered per `(choice, kind)` (`type/item/choice/serializer/Reader.cs:5`). The builder menu
+shows the first name; the entity door cannot read it (`type("operator").Create("==")` → "no reader for
+type 'operator'"). One type, one name. For Ingi — not fixed on goal-graph-singular.
