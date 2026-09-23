@@ -583,6 +583,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Ingi's answers on goal.call: Parallel is a bool on the call class (accepted, llm.query placement withdrawn); Name; order approved; on callbacks he leans app.Run and asked for the reason it cannot. Answered from code: app.Run<TAction> (app/this, lines 449-467) makes a node for a C#-composed handler (Step from the invoking frame, no modifiers); a held goal.call already is a node with its own step, parameters, modifiers, recovery — node.Run(context) (action/this, line 159) pushes its frame and folds its modifiers; a second composed node drops authored on-error/timeout and mis-parents the frame. Two operations, not two ways."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/goalcall-is-an-action-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi disagrees on PrPath (wants the stamped path for speed) and asks whether Parallel should be a class; both put to him directly. From code: the stamp is today the slow door — GetGoalAsync lines 174-176 go straight to LoadFromFile, which re-reads and parses the pr file on every call and never registers the goal; the collection (goal.list Get dictionary hit, GetAsync caches via Add) is the fast door. Recommendation: no stamp; else stamp the canonical goal NAME, and any path hint is a collection lookup key, never a cache bypass. Parallel: call-level class can honestly hold Enabled + Max (instances of this call); batch degree/order belong to the runner; bool now, class when the second property has a caller."
         }
       ],
       "after": {
