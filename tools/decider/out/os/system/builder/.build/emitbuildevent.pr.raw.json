@@ -25,6 +25,20 @@
           "name": "text"
          },
          "value": "/system/builder/templates/output/build-output.template"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": []
+        },
+        {
+         "name": "IsFile",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
         }
        ]
       },
@@ -78,7 +92,7 @@
             "type": {
              "name": "text"
             },
-            "value": "output.write"
+            "value": "EmitBuildEvent"
            },
            {
             "name": "Parameter",
@@ -87,7 +101,7 @@
             },
             "value": [
              {
-              "name": "Data",
+              "name": "msg",
               "type": {
                "name": "item"
               },
@@ -97,6 +111,19 @@
            }
           ]
          }
+        }
+       ]
+      },
+      {
+       "module": "output",
+       "name": "write",
+       "parameter": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "item"
+         },
+         "value": "%msg%"
         }
        ]
       }

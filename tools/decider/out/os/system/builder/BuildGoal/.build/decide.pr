@@ -155,6 +155,27 @@
    "waitForExecution": true,
    "action": [
     {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
+      {
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%modules%"
+      },
+      {
+       "name": "Item",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%module%"
+      }
+     ],
+     "modifier": []
+    },
+    {
      "module": "goal",
      "name": "call",
      "parameter": [
@@ -179,27 +200,6 @@
          "value": "%module%"
         }
        ]
-      }
-     ],
-     "modifier": []
-    },
-    {
-     "module": "loop",
-     "name": "foreach",
-     "parameter": [
-      {
-       "name": "Collection",
-       "type": {
-        "name": "item"
-       },
-       "value": "%modules%"
-      },
-      {
-       "name": "Item",
-       "type": {
-        "name": "variable"
-       },
-       "value": "%module%"
       }
      ],
      "modifier": []
@@ -483,13 +483,6 @@
           "index": "%step.Index%",
           "text": "%step.Text%"
          }
-        },
-        {
-         "name": "AtIndex",
-         "type": {
-          "name": "number"
-         },
-         "value": 0
         }
        ],
        "modifier": []
@@ -518,7 +511,7 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.modules%"
+         "value": "%state.modules% key %module.Name%"
         },
         {
          "name": "Value",

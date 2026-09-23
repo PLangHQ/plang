@@ -149,7 +149,15 @@
           "type": {
            "name": "list"
           },
-          "value": []
+          "value": [
+           {
+            "name": "buffer",
+            "type": {
+             "name": "number"
+            },
+            "value": 1024
+           }
+          ]
          }
         ],
         "modifier": []

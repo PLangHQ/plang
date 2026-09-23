@@ -19,20 +19,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/propertiesUser.template"
-      },
-      {
-       "name": "Parameter",
-       "type": {
-        "name": "list"
-       },
-       "value": []
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -76,20 +62,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/Properties.llm"
-      },
-      {
-       "name": "Parameter",
-       "type": {
-        "name": "list"
-       },
-       "value": []
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -170,7 +142,7 @@
        "type": {
         "name": "number"
        },
-       "value": 60000
+       "value": 600000
       },
       {
        "name": "Sliding",
@@ -178,76 +150,60 @@
         "name": "bool"
        },
        "value": true
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "llm",
+     "name": "query",
+     "parameter": [
+      {
+       "name": "Message",
+       "type": {
+        "name": "list"
+       },
+       "value": "%messages%"
       },
       {
-       "name": "Key",
+       "name": "Model",
        "type": {
         "name": "text"
        },
-       "value": "goal-properties-llm-query"
+       "value": "gpt-5.4-nano"
+      },
+      {
+       "name": "Schema",
+       "type": {
+        "name": "item"
+       },
+       "value": {
+        "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>"
+       }
       }
      ],
-     "modifier": [
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
       {
-       "module": "llm",
-       "name": "query",
-       "parameter": [
-        {
-         "name": "Message",
-         "type": {
-          "name": "list"
-         },
-         "value": "%messages%"
-        },
-        {
-         "name": "Model",
-         "type": {
-          "name": "text"
-         },
-         "value": "gpt-5.4-nano"
-        },
-        {
-         "name": "Schema",
-         "type": {
-          "name": "item"
-         },
-         "value": {
-          "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>"
-         }
-        },
-        {
-         "name": "Cache",
-         "type": {
-          "name": "bool"
-         },
-         "value": true
-        }
-       ],
-       "modifier": [
-        {
-         "module": "variable",
-         "name": "set",
-         "parameter": [
-          {
-           "name": "Name",
-           "type": {
-            "name": "variable"
-           },
-           "value": "%properties%"
-          },
-          {
-           "name": "Value",
-           "type": {
-            "name": "item"
-           },
-           "value": "%!data%"
-          }
-         ],
-         "modifier": []
-        }
-       ]
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%properties%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
       }
-     ]
+     ],
+     "modifier": []
     }
    ]
   },

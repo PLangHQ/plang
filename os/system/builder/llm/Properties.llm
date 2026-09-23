@@ -91,6 +91,25 @@ row names its value's type: `"Hi"` is text, `5` a number; a %variable% whose typ
 say is `item`. `Parameter` is
 left out when the step passes no arguments; `Actor` is left out because the step names no actor.
 
+A property typed `action` holds an action to run later — its value is that action, written in the
+same shape as any action, and its own rows are typed too. Given:
+
+  step 1: set channel "log" call Logger
+     menu:
+       channel.set
+          Name (text, required)
+          Goal (action, required)
+
+the step's entry is:
+
+  {"index": 1, "action": [
+    {"module": "channel", "name": "set",
+     "parameter": [{"name": "Name", "type": {"name": "text"}, "value": "log"},
+                   {"name": "Goal", "type": {"name": "action"}, "value":
+                      {"module": "goal", "name": "call",
+                       "parameter": [{"name": "Name", "type": {"name": "text"}, "value": "Logger"}]}}]}
+  ]}
+
 Filling a property:
 - An action has only the properties listed under it on the menu. Never add one that is not listed.
 - A value the step writes goes in as written — a quoted text as that text, a %variable% with its

@@ -164,13 +164,20 @@
         {
          "module": "error",
          "name": "handle",
-         "parameter": [
+         "parameter": [],
+         "recovery": [
           {
-           "name": "Key",
-           "type": {
-            "name": "text"
-           },
-           "value": "HandleBuildFailure"
+           "module": "goal",
+           "name": "call",
+           "parameter": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ]
           }
          ]
         }
@@ -345,7 +352,7 @@
          "type": {
           "name": "item"
          },
-         "value": "%!math.result%"
+         "value": "%!math.subtract%"
         }
        ]
       }
@@ -390,7 +397,7 @@
          "type": {
           "name": "item"
          },
-         "value": "%!math.result%"
+         "value": "%!math.divide%"
         }
        ]
       }
@@ -488,37 +495,8 @@
          "type": {
           "name": "text"
          },
-         "value": "build.fold"
-        },
-        {
-         "name": "Parameter",
-         "type": {
-          "name": "list"
-         },
-         "value": [
-          {
-           "name": "Goal",
-           "type": {
-            "name": "item"
-           },
-           "value": "%goal%"
-          }
-         ]
-        }
-       ],
-       "modifier": [
-        {
-         "module": "error",
-         "name": "handle",
-         "parameter": [
-          {
-           "name": "Key",
-           "type": {
-            "name": "text"
-           },
-           "value": "HandleBuildFailure"
-          }
-         ]
+         "value": "%goal%",
+         "}],": "value placeholder"
         }
        ]
       }
@@ -603,7 +581,9 @@
          },
          "value": "%item%"
         }
-       ]
+       ],
+       "modifier": [],
+       "recovery": []
       },
       {
        "module": "goal",
@@ -674,7 +654,9 @@
          },
          "value": "%item%"
         }
-       ]
+       ],
+       "modifier": [],
+       "recovery": []
       },
       {
        "module": "goal",
@@ -734,6 +716,20 @@
           "name": "item"
          },
          "value": "%modules%"
+        },
+        {
+         "name": "Item",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%item%"
+        },
+        {
+         "name": "Key",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%menu[step.Index]%"
         }
        ]
       },
@@ -861,7 +857,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "<"
+         "value": "lessThan"
         },
         {
          "name": "Right",
@@ -873,8 +869,18 @@
        ],
        "modifier": [
         {
-         "module": "goal",
-         "name": "return"
+         "module": "error",
+         "name": "handle",
+         "parameter": [
+          {
+           "name": "RetryCount",
+           "type": {
+            "name": "number"
+           },
+           "value": 0
+          }
+         ],
+         "recovery": []
         }
        ]
       },
@@ -883,11 +889,11 @@
        "name": "return",
        "parameter": [
         {
-         "name": "Data",
+         "name": "Depth",
          "type": {
-          "name": "item"
+          "name": "number"
          },
-         "value": "%!data%"
+         "value": 0
         }
        ]
       }
@@ -912,7 +918,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "=="
+         "value": "equals"
         },
         {
          "name": "Right",
@@ -964,7 +970,7 @@
          "type": {
           "name": "choice"
          },
-         "value": ">"
+         "value": "moreThan"
         },
         {
          "name": "Right",
@@ -1217,7 +1223,7 @@
          "value": [
           {
            "Role": "user",
-           "Content": "Your answer was rejected by the validator: %!error.Message%\\n\\nReturn the corrected answer in the same shape."
+           "Content": "Your answer was rejected by the validator: %!error.Message%\n\nReturn the corrected answer in the same shape."
           }
          ]
         }
@@ -1247,18 +1253,18 @@
          "value": "gpt-5.4-nano"
         },
         {
-         "name": "Cache",
-         "type": {
-          "name": "bool"
-         },
-         "value": "%!build.cache%"
-        },
-        {
          "name": "ContinuePreviousConversation",
          "type": {
           "name": "bool"
          },
          "value": true
+        },
+        {
+         "name": "Cache",
+         "type": {
+          "name": "bool"
+         },
+         "value": "%!build.cache%"
         },
         {
          "name": "OnValidateResponse",
@@ -1274,76 +1280,45 @@
             "type": {
              "name": "text"
             },
-            "value": ""
-           },
-           {
-            "name": "Parameter",
-            "type": {
-             "name": "list"
-            },
-            "value": []
+            "value": "FixProperties"
            }
           ]
          }
-        },
+        }
+       ],
+       "modifier": [
         {
-         "name": "OnStream",
+         "module": "cache",
+         "name": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "type": {
+            "name": "number"
+           },
+           "value": 600000
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
          "type": {
-          "name": "action"
+          "name": "variable"
          },
-         "value": {
-          "module": "goal",
-          "name": "call",
-          "parameter": [
-           {
-            "name": "Name",
-            "type": {
-             "name": "text"
-            },
-            "value": ""
-           },
-           {
-            "name": "Parameter",
-            "type": {
-             "name": "list"
-            },
-            "value": []
-           }
-          ]
-         }
+         "value": "%properties%"
         },
         {
-         "name": "OnToolCall",
-         "type": {
-          "name": "action"
-         },
-         "value": {
-          "module": "goal",
-          "name": "call",
-          "parameter": [
-           {
-            "name": "Name",
-            "type": {
-             "name": "text"
-            },
-            "value": ""
-           },
-           {
-            "name": "Parameter",
-            "type": {
-             "name": "list"
-            },
-            "value": []
-           }
-          ]
-         }
-        },
-        {
-         "name": "Schema",
+         "name": "Value",
          "type": {
           "name": "item"
          },
-         "value": "%properties%"
+         "value": "%!data%"
         }
        ]
       }
@@ -1380,7 +1355,6 @@
     "variable.set"
    ],
    "7": [
-    "build.actions",
     "goal.call"
    ]
   },
@@ -1488,39 +1462,20 @@
          "type": {
           "name": "item"
          },
-         "value": "Compile"
+         "value": "%subGoal%"
         }
-       ]
-      },
-      {
-       "module": "error",
-       "name": "handle",
+       ],
        "modifier": [
         {
          "module": "error",
          "name": "handle",
          "parameter": [
           {
-           "name": "RetryCount",
+           "name": "Key",
            "type": {
-            "name": "number"
+            "name": "text"
            },
-           "value": 0
-          }
-         ],
-         "recovery": [
-          {
-           "module": "goal",
-           "name": "call",
-           "parameter": [
-            {
-             "name": "Name",
-             "type": {
-              "name": "text"
-             },
-             "value": "HandleBuildFailure"
-            }
-           ]
+           "value": "HandleBuildFailure"
           }
          ]
         }
@@ -1536,43 +1491,6 @@
           "name": "text"
          },
          "value": "Compile"
-        }
-       ],
-       "modifier": [
-        {
-         "module": "error",
-         "name": "handle",
-         "parameter": [
-          {
-           "name": "Key",
-           "type": {
-            "name": "text"
-           },
-           "value": "build.validate"
-          },
-          {
-           "name": "RetryCount",
-           "type": {
-            "name": "number"
-           },
-           "value": 0
-          }
-         ],
-         "recovery": [
-          {
-           "module": "goal",
-           "name": "call",
-           "parameter": [
-            {
-             "name": "Name",
-             "type": {
-              "name": "text"
-             },
-             "value": "HandleBuildFailure"
-            }
-           ]
-          }
-         ]
         }
        ]
       }
@@ -1601,6 +1519,13 @@
           "goal": "%goal%",
           "menu": "%menu%"
          }
+        },
+        {
+         "name": "AtIndex",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
         }
        ]
       }
@@ -1806,8 +1731,7 @@
           }
          ]
         }
-       ],
-       "modifier": []
+       ]
       }
      ]
     },
@@ -1830,7 +1754,11 @@
          "type": {
           "name": "item"
          },
-         "value": "{\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}"
+         "value": {
+          "key": "%!error.Key%",
+          "message": "%!error.Message%",
+          "goal": "%goal.Name%"
+         }
         }
        ]
       }

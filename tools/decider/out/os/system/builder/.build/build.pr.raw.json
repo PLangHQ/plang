@@ -161,11 +161,25 @@
           "parameter": [
            {
             "name": "Name",
+            "type": {
+             "name": "text"
+            },
             "value": "BuilderChannel"
            },
            {
             "name": "Parameter",
-            "value": []
+            "type": {
+             "name": "list"
+            },
+            "value": [
+             {
+              "name": "buffer",
+              "type": {
+               "name": "number"
+              },
+              "value": 1024
+             }
+            ]
            }
           ]
          }
