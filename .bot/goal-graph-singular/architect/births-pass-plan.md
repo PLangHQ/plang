@@ -100,11 +100,10 @@ Goal, step, action, modifier and their lists store no context; they reach the re
 
 ## Order — each step compiles and is its own commit
 
-1. **Shared-row fix** as built on the step-1 tree + tests 1-3 (red first). Commit.
-2. **The slot** on the App, the run doors, boot in `Start()`, the TUnit hook; tests 5-6.
-3. **App as birth fact** for values and Data; setters and stamps die; `Context.App` → `App`; `Authorize` in-root first; `action[name]` hands out the copy; test 4. The step that clears the prototype's four clusters — six suites by name after it.
-4. **The type object is the registry's own** — values ask `App.Type[...]`; `Promote()`, the static fallback and primitive statics die; the menu template gets choice values (#27).
-5. **#15 and #24.**
+1. **The slot** on the App, the run doors, boot in `Start()`, the TUnit hook; tests 5-6. Adds no value behavior yet — green on its own. (`Authorize` in-root first can land here or as its own commit; it is independent.)
+2. **App as birth fact + the shared-row fix, together** — values and Data keep their App, `Context` through it; setters and stamps die; `Context.App` → `App`; `action[name]` hands out the run's copy (absorbing the step-1 tree's `Copy(context)`), no generator stamp, `Copy` / `As<T>(answer)` (internal, like `As<T>()`); tests 1-4. The no-stamp change can't land before this: without it a `%var%` source or path keeps its reader's context and resolves/authorizes as the wrong actor (coder's run of the step-1 tree: #20's `VariableHoldingAName_Selects`, two foreach, one render, two strict-image tests). The step that clears the prototype's four clusters — six suites by name after it.
+3. **The type object is the registry's own** — values ask `App.Type[...]`; `Promote()`, the static fallback and primitive statics die; the menu template gets choice values (#27).
+4. **#15 and #24.**
 
 Six suites by name after each step; tests move with the code they exercise.
 
