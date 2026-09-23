@@ -41,19 +41,19 @@ public class DiscoverActionTests
     }
 
     // Variant that lets the caller pass fully-constructed Data parameters (with Type hints).
-    private string CreateTestFileWithAction(string relativePath, string goalName, string[] stepTexts,
+    private async Task<string> CreateTestFileWithAction(string relativePath, string goalName, string[] stepTexts,
         (string module, string actionName, List<Data> parameters)[] actions,
         string? prBuilderVersion = null)
     {
         var normalized = actions.Select(a => (a.module, a.actionName,
             a.parameters.Select(p => (p.Name, (object?)p.Peek())).ToArray())).ToArray();
-        return CreateTestFile(relativePath, goalName, stepTexts, normalized, prBuilderVersion,
+        return await CreateTestFile(relativePath, goalName, stepTexts, normalized, prBuilderVersion,
             preConstructedParams: actions);
     }
 
     // Creates a .test.goal file and a matching .pr that share the same Goal.Hash.
     // Returns the relative path (forward slashes).
-    private string CreateTestFile(string relativePath, string goalName, string[] stepTexts,
+    private async Task<string> CreateTestFile(string relativePath, string goalName, string[] stepTexts,
         (string module, string actionName, (string name, object? value)[] parameters)[]? actions = null,
         string? prBuilderVersion = null,
         bool corruptHash = false,
@@ -99,20 +99,16 @@ public class DiscoverActionTests
         var prFile = System.IO.Path.Combine(prDir,
             System.IO.Path.GetFileNameWithoutExtension(absFile).ToLowerInvariant() + ".pr");
 
+        // Store the .pr with a deliberately bogus hash so the freshness check flips stale.
         if (corruptHash)
-        {
-            // Store the .pr with a deliberately bogus hash so freshness check flips stale.
-            var json = JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented);
-            var doc = JsonSerializer.Deserialize<Dictionary<string, object?>>(json);
-            doc!["hash"] = "0000000000000000000000000000000000000000000000000000000000000000";
-            json = JsonSerializer.Serialize(doc, global::app.Utils.Json.CamelCaseIndented);
-            System.IO.File.WriteAllText(prFile, json);
-        }
-        else
-        {
-            System.IO.File.WriteAllText(prFile,
-                JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
-        }
+            goal.Hash = "0000000000000000000000000000000000000000000000000000000000000000";
+
+        // The goal writes its OWN .pr — the Store view through the plang serializer, as goalsSave does.
+        var serializer = (global::app.channel.serializer.plang.@this)
+            _app.User.Channel.Serializers.GetOrDefault("application/plang");
+        using var ms = new System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
+        System.IO.File.WriteAllBytes(prFile, ms.ToArray());
 
         return relativePath;
     }
@@ -133,9 +129,9 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_RecursiveWalk_FindsAllTestGoalFiles()
     {
-        CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });
-        CreateTestFile("sub/Bar.test.goal", "Start", new[] { "set %x% = 2" });
-        CreateTestFile("sub/deep/Baz.test.goal", "Start", new[] { "set %x% = 3" });
+        await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });
+        await CreateTestFile("sub/Bar.test.goal", "Start", new[] { "set %x% = 2" });
+        await CreateTestFile("sub/deep/Baz.test.goal", "Start", new[] { "set %x% = 3" });
 
         var files = await Discover();
 
@@ -149,7 +145,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_NoPrFile_MarksStaleWithReasonNoPr()
     {
-        CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" }, prMissing: true);
+        await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" }, prMissing: true);
 
         var files = await Discover();
         var file = files.Single();
@@ -164,7 +160,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_GoalAndPrHashMismatch_MarksStaleRebuildNeeded()
     {
-        CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" }, corruptHash: true);
+        await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" }, corruptHash: true);
 
         var files = await Discover();
         var file = files.Single();
@@ -178,7 +174,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_UserTags_ExtractedFromTestTagActionInPr()
     {
-        CreateTestFile("Foo.test.goal", "Start",
+        await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'fast'", "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
             {
@@ -201,7 +197,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_AutoTags_ExtractedFromHandlerAttributes()
     {
-        CreateTestFile("Foo.test.goal", "Start",
+        await CreateTestFile("Foo.test.goal", "Start",
             new[] { "http get https://example.com" },
             new (string, string, (string, object?)[])[]
             {
@@ -243,7 +239,7 @@ public class DiscoverActionTests
         };
         _app.Goal.Add(helper);
 
-        CreateTestFileWithAction("Foo.test.goal", "Start",
+        await CreateTestFileWithAction("Foo.test.goal", "Start",
             new[] { "call Helper" },
             new (string module, string actionName, List<Data> parameters)[]
             {
@@ -266,7 +262,7 @@ public class DiscoverActionTests
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
     {
         _app.Test.Include.Add(new global::app.type.item.text.@this("fast"));
-        CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
+        await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
 
         var files = await Discover();
         var file = files.Single();
@@ -280,7 +276,7 @@ public class DiscoverActionTests
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
         _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
-        CreateTestFile("Foo.test.goal", "Start",
+        await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
             {
@@ -302,7 +298,7 @@ public class DiscoverActionTests
     {
         _app.Test.Include.Add(new global::app.type.item.text.@this("http"));
         _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
-        CreateTestFile("Foo.test.goal", "Start",
+        await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
             {
