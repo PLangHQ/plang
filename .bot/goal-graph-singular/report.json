@@ -673,6 +673,19 @@
           "category": "code",
           "confidence": "high",
           "context": "Type-registry inventory answered: Q1 Contains beside the throwing indexer (collection convention); Q2 drop the ? suffix (nullability is the slot's); Q3 kill GetPrimitiveOrMime by fixing the 21 context-less type entity births this pass; Q4 delete ComplexSchemas, Rank→entity Richness, log the goal name collision; Q5 closed sets declare [PlangType], choice<T> reads it, missing attribute fails loud."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/this.Item.cs",
+            "PLang/app/goal/step/this.Item.cs",
+            "PLang/app/goal/step/action/this.Item.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/type/item/ICreate.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Investigated why goal/step/action are items (Ingi). Decided: no value/reference marker (graph slots never hold literals); actor literal becomes a choice from the closed actor set, actor.Convert dies; goal/step dict Create arms die (dead second parser — .pr reads go through the readers); Data<T> keeps its constraint; graph Create answers pass-through or loud decline, action stops inheriting the reflection deserialize fallback."
         }
       ],
       "after": {
