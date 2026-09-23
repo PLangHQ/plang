@@ -204,7 +204,7 @@ public partial class run : IContext
             // Goal.PrPath is derived from Goal.Path, anchored at the App root the child shares. The
             // child App loads it through its own goal collection, resolved in the child's context.
             var child = childApp.User.Context;
-            var loaded = await childApp.Goal.LoadFromFileAsync(childApp,
+            var loaded = await childApp.Goal.LoadFromFileAsync(
                 global::app.type.item.path.@this.Resolve(test.Goal.PrPath!.ToString(), child));
             var result = loaded.Success
                 ? await ((await loaded.Value()) as global::app.goal.@this)!.Run(child)

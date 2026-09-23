@@ -21,7 +21,7 @@ public sealed class @this
     // a different question from Path equality and want OrdinalIgnoreCase
     // semantics regardless of OS.
     private readonly ConcurrentDictionary<string, goal.@this> _byName = new(StringComparer.OrdinalIgnoreCase);
-    internal app.@this App { get; set; } = null!;
+    internal app.@this App { get; }
 
     /// <summary>
     /// Run-once setup execution system.
@@ -29,8 +29,10 @@ public sealed class @this
     /// </summary>
     public setup.@this Setup { get; }
 
-    public @this()
+    /// <summary>The goals of <paramref name="app"/> — the list is born knowing the App it loads for.</summary>
+    public @this(app.@this app)
     {
+        App = app;
         Setup = new setup.@this(this);
     }
 
@@ -185,7 +187,7 @@ public sealed class @this
         var rootExists = await rootCandidate.ExistsAsync();
         if (rootExists.Success && await rootExists.ToBooleanAsync())
         {
-            var result = await LoadFromFileAsync(App, rootCandidate, cancellationToken: ct);
+            var result = await LoadFromFileAsync(rootCandidate, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = (await result.Value()) as global::app.goal.@this;
@@ -211,7 +213,7 @@ public sealed class @this
             var sysExists = await sysCandidate.ExistsAsync();
             if (sysExists.Success && await sysExists.ToBooleanAsync())
             {
-                var result = await LoadFromFileAsync(App, sysCandidate, cancellationToken: ct);
+                var result = await LoadFromFileAsync(sysCandidate, cancellationToken: ct);
                 if (result.Success)
                 {
                     var goal = (await result.Value()) as global::app.goal.@this;
@@ -338,13 +340,12 @@ public sealed class @this
         if (_byPath.TryGetValue(key, out cached))
             return cached.IsSetup ? null : cached;
 
-        if (App == null) return null;
         var resolved = global::app.type.item.path.@this.Resolve(prPath, App.System.Context!);
         var exists = await resolved.ExistsAsync();
         if (!exists.Success || (await exists.Value())?.Value != true)
             return null;
 
-        var loadResult = await LoadFromFileAsync(App, resolved, cancellationToken: ct);
+        var loadResult = await LoadFromFileAsync(resolved, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 
@@ -358,7 +359,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<data.@this> LoadFromFileAsync(app.@this app, global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromFileAsync(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -367,16 +368,16 @@ public sealed class @this
             // land wired). This collection only wires the parsed goal into the registry.
             var readResult = await prPath.ReadText();
             if (!readResult.Success || readResult.Peek().IsNull)
-                return app.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
+                return App.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
             var materialized = await readResult.Value();
             if (materialized as global::app.goal.@this is not { } primary)
-                return app.System.Context.Error(readResult.Error ?? new Error(
+                return App.System.Context.Error(readResult.Error ?? new Error(
                     $"Failed to parse goal file: {prPath} — read produced {materialized.GetType().Name}, not a goal"));
 
             // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
             // relative file.read resolves against the goal's actual on-disk folder.
             primary.LoadedFromPrPath = prPath;
-            foreach (var child in primary.Child) { child.LoadedFromPrPath = prPath; child.App = app; }
+            foreach (var child in primary.Child) { child.LoadedFromPrPath = prPath; child.App = App; }
 
             Add(primary);
 
@@ -387,14 +388,14 @@ public sealed class @this
         }
         catch (Exception ex)
         {
-            return app.System.Context.Error(Error.FromException(ex));
+            return App.System.Context.Error(Error.FromException(ex));
         }
     }
 
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<data.@this> LoadFromDirectoryAsync(app.@this app, string directory, actor.context.@this context, string pattern = "*.pr", CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromDirectoryAsync(string directory, actor.context.@this context, string pattern = "*.pr", CancellationToken cancellationToken = default)
     {
         try
         {
@@ -411,7 +412,7 @@ public sealed class @this
             {
                 var file = await row.Value<global::app.type.item.path.@this>();
                 if (file == null) continue;
-                var result = await LoadFromFileAsync(app, file, cancellationToken);
+                var result = await LoadFromFileAsync(file, cancellationToken);
                 if (result) loadedCount++;
             }
             return context.Ok(loadedCount);

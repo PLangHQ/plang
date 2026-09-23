@@ -28,7 +28,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "a.pr"), "{\"name\":\"A\",\"path\":\"/A.goal\"}");
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "b.pr"), "{\"name\":\"B\",\"path\":\"/B.goal\"}");
 
-        var result = await app.Goal.LoadFromDirectoryAsync(app, root, app.System.Context);
+        var result = await app.Goal.LoadFromDirectoryAsync(root, app.System.Context);
         await result.IsSuccess();
         await Assert.That(app.Goal.Get("A")).IsNotNull();
         await Assert.That(app.Goal.Get("B")).IsNotNull();
@@ -41,7 +41,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(sub);
         System.IO.File.WriteAllText(System.IO.Path.Combine(sub, "deepgoal.pr"),
             "{\"name\":\"DeepGoal\",\"path\":\"/sub/deep/DeepGoal.goal\"}");
-        var result = await app.Goal.LoadFromDirectoryAsync(app, root, app.System.Context);
+        var result = await app.Goal.LoadFromDirectoryAsync(root, app.System.Context);
         await result.IsSuccess();
         await Assert.That(app.Goal.Get("DeepGoal")).IsNotNull();
     }
@@ -53,7 +53,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.Goal.LoadFromFileAsync(app, global::app.type.item.path.@this.Resolve("/.build/start.pr", app.System.Context!));
+        var result = await app.Goal.LoadFromFileAsync(global::app.type.item.path.@this.Resolve("/.build/start.pr", app.System.Context!));
         await result.IsSuccess();
         var goal = (await result.Value()) as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");
