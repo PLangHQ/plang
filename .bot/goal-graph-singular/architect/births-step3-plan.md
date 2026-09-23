@@ -1,6 +1,6 @@
 # Births step 3 — a type object holds no context; the asker brings it
 
-Designed with Ingi 2026-09-23 (read the "why" there). **Written, not yet sent to coder.** Step 1 is `ee03f91f2`.
+Designed with Ingi 2026-09-23. **Released to coder 2026-09-23.** Step 1 is `ee03f91f2`.
 
 > **You (coder) own this.** The rules are settled with Ingi. Shapes, names not fixed below, and the commit split are yours. Code below is direction; NEW marks what does not exist.
 
