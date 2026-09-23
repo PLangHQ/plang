@@ -16,7 +16,7 @@ The id is `s<step>_<module>` so the answers can be matched back.
   {%- for m in modules -%}
   {{ sep }}"s{{ s.Index }}_{{ m.Name }}": {
     "type": "noul",
-    "instructions": "Does `steps[{{ s.Index }}].text` use the plang module `{{ m.Name }}` (described at `modules.{{ m.Name }}`) to do what it says?"
+    "instructions": "Does `step[{{ s.Index }}].text` use the plang module `{{ m.Name }}` (described at `modules.{{ m.Name }}`) to do what it says?"
   }
   {%- assign sep = "," -%}
   {%- endfor -%}

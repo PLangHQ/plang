@@ -33,7 +33,7 @@ Decide
 
 AddStepToState
 / The decider sees a step as its position and its words — nothing it has been compiled into yet.
-- add {"index": %step.Index%, "text": %step.Text%} to %state.steps%
+- add {"index": %step.Index%, "text": %step.Text%} to %state.step%
 
 
 AddModuleToState

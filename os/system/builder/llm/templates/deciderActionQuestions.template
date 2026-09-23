@@ -18,7 +18,7 @@ than producing a name, which is what stops an action being invented.
   {%- if answer.noul >= threshold and m.Action.size > 1 -%}
   {{ sep }}"{{ key }}": {
     "type": "choice",
-    "instructions": "`steps[{{ s.Index }}].text` uses the plang module `{{ m.Name }}`. Which action of `{{ m.Name }}` does it call?",
+    "instructions": "`step[{{ s.Index }}].text` uses the plang module `{{ m.Name }}`. Which action of `{{ m.Name }}` does it call?",
     "criteria": [
       {%- assign asep = "" -%}
       {%- for a in m.Action -%}
