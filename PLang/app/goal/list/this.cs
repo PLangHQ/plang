@@ -391,35 +391,4 @@ public sealed class @this
             return App.System.Context.Error(Error.FromException(ex));
         }
     }
-
-    /// <summary>
-    /// Loads all goals from a directory.
-    /// </summary>
-    public async Task<data.@this> LoadFromDirectoryAsync(string directory, actor.context.@this context, string pattern = "*.pr", CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            // Lift to path.List — gated through AuthGate(Read). In-root walks
-            // fast-pass; out-of-root would prompt or deny.
-            var dirPath = global::app.type.item.path.@this.Resolve(directory, context);
-            var listed = await dirPath.List(pattern, recursive: true);
-            if (!listed.Success || listed.Peek().IsNull)
-                return context.Ok(0);
-
-            var loadedCount = 0;
-            var list = await listed.Value();
-            foreach (var row in list!)
-            {
-                var file = await row.Value<global::app.type.item.path.@this>();
-                if (file == null) continue;
-                var result = await Load(file, cancellationToken);
-                if (result) loadedCount++;
-            }
-            return context.Ok(loadedCount);
-        }
-        catch (Exception ex)
-        {
-            return context.Error(Error.FromException(ex));
-        }
-    }
 }

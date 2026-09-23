@@ -19,33 +19,6 @@ public class AppGoalsThroughPathVerbsTests
         return (TestApp.Create(root), root);
     }
 
-    [Test] public async Task LoadFromDirectoryAsync_UsesPathListNotDirectoryGetFiles()
-    {
-        var (app, root) = await NewApp();
-        // Write a couple of .pr files at root/.build/.
-        var buildDir = System.IO.Path.Combine(root, ".build");
-        System.IO.Directory.CreateDirectory(buildDir);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "a.pr"), "{\"name\":\"A\",\"path\":\"/A.goal\"}");
-        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "b.pr"), "{\"name\":\"B\",\"path\":\"/B.goal\"}");
-
-        var result = await app.Goal.LoadFromDirectoryAsync(root, app.System.Context);
-        await result.IsSuccess();
-        await Assert.That(app.Goal.Get("A")).IsNotNull();
-        await Assert.That(app.Goal.Get("B")).IsNotNull();
-    }
-
-    [Test] public async Task LoadFromDirectoryAsync_DeepTree_LoadsEveryGoalFile()
-    {
-        var (app, root) = await NewApp();
-        var sub = System.IO.Path.Combine(root, "sub", "deep", ".build");
-        System.IO.Directory.CreateDirectory(sub);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(sub, "deepgoal.pr"),
-            "{\"name\":\"DeepGoal\",\"path\":\"/sub/deep/DeepGoal.goal\"}");
-        var result = await app.Goal.LoadFromDirectoryAsync(root, app.System.Context);
-        await result.IsSuccess();
-        await Assert.That(app.Goal.Get("DeepGoal")).IsNotNull();
-    }
-
     [Test] public async Task Load_UsesPathReadTextNotFileReadAllText()
     {
         var (app, root) = await NewApp();
