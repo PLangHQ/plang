@@ -18,7 +18,8 @@ public partial class @this : ISnapshot
     /// </summary>
     public void Capture(snapshot.@this s)
     {
-        var captured = new List<data.@this>();
+        // Each captured variable is its own entry of the section — the snapshot's native shape, a
+        // dict of Data — so %snap.variables.x% navigates straight to it.
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;
@@ -27,9 +28,8 @@ public partial class @this : ISnapshot
             // the Data subtype (a store re-wrap loses the subtype).
             if (kvp.Value is data.DynamicData
                 || kvp.Value.Item is global::app.type.item.computed) continue;
-            captured.Add(kvp.Value.Clone());
+            s.Entries.Set(kvp.Value.Clone());
         }
-        s.Write("variables", captured);
     }
 
     /// <summary>
@@ -37,18 +37,13 @@ public partial class @this : ISnapshot
     /// (Now, NowUtc, GUID) are left in place — the snapshot only carries user-visible state, so
     /// adding restored entries on top is the correct merge.
     /// </summary>
-    public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
+    public System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
-        var entry = s.Entries.Get("variables");
-        if (entry == null) return;
-
-        // The rows of the captured list ARE the captured Data — read as values, never lowered.
-        var captured = await entry.Value<global::app.type.item.list.@this>();
-        foreach (var row in captured)
-        {
-            // Clone again so the snapshot can be re-Restored independently.
-            Set(row.Name, row.Clone());
-        }
+        // Every entry of the section IS a captured variable (edited in place or not) — cloned so the
+        // snapshot can be re-restored independently.
+        foreach (var entry in s.Entries.Entries)
+            Set(entry.Name, entry.Clone());
+        return System.Threading.Tasks.Task.CompletedTask;
     }
 
 }

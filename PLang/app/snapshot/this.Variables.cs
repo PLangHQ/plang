@@ -1,41 +1,22 @@
 namespace app.snapshot;
 
 /// <summary>
-/// Snapshot — captured-variable navigate/get/set.
-///
-/// <para>DISABLED (2026-07-09) — these doors throw. They existed only for the
-/// <c>%snap.variables.x%</c> fix-and-replay developer feature (edit a captured
-/// variable, then resume) and have no production plang consumer — only snapshot unit
-/// tests exercise them, which are expected to fail while this is disabled. They embed
-/// variable-domain knowledge INTO snapshot, the wrong owner. The real model is
-/// <c>ISnapshot</c> — each app property snapshots/restores itself, snapshot becomes a
-/// dumb serializable container. That redesign is its own branch; see
-/// <c>Documentation/v0.2/todos.md</c> (2026-07-09 — Snapshot redesign).</para>
-///
-/// <para>Kept as throwing stubs (not deleted) so the doors stay named and any caller
-/// fails LOUD with this pointer rather than degrading to a silent <c>NotFound</c>.</para>
+/// Snapshot — navigation. A snapshot is a plain container: its entries are a dict of Data, and a
+/// section is an entry whose value is a snapshot. So navigating and editing it is the dict's own
+/// navigation over its entries — <c>%snap.variables.x%</c> reads section "variables", entry "x", and
+/// <c>set %snap.variables.x% = 2</c> edits that entry. The snapshot knows nothing of what an owner
+/// keeps in its section; the owner reads its section back on restore.
 /// </summary>
 public sealed partial class @this
 {
-    private const string ReplayDisabled =
-        "snapshot captured-variable navigate/replay is disabled pending the ISnapshot redesign — " +
-        "see Documentation/v0.2/todos.md (2026-07-09 — Snapshot redesign).";
-
-    /// <summary>Was: <c>%snap.variables%</c> navigation. Throws — see the class remarks.</summary>
+    /// <summary>A child read — one of this snapshot's entries (a section, or an entry of one).</summary>
     public override System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
-        => throw new System.NotSupportedException(ReplayDisabled);
+        => Entries.Get(parent, key);
 
-    /// <summary>
-    /// Was: in-place set of a captured variable (<c>set %snap.variables.x% = 2</c>).
-    /// The child-write door for a snapshot — routes to <see cref="SetVariable"/>, which throws
-    /// (disabled). Snapshot owns this rather than the write path type-switching on snapshot.
-    /// </summary>
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    /// <summary>A child write — sets one of this snapshot's entries (create or overwrite).</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
     {
-        SetVariable(key, value);   // throws ReplayDisabled — see the class remarks
-        return new(this);
+        await Entries.Set(key, isIndex, value);
+        return this;
     }
-
-    public void SetVariable(string name, object? value)
-        => throw new System.NotSupportedException(ReplayDisabled);
 }

@@ -39,7 +39,7 @@ public class VariablesSnapshotTests
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
         var snap = src.Snapshot(src.User.Context);
-        var captured = await snap.Section("Variables").Rows("variables");
+        var captured = snap.Section("Variables").Entries.Entries;   // each captured variable is its own entry
 
         var names = captured.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         await Assert.That(names.Contains("user")).IsTrue();
