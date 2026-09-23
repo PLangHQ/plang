@@ -46,6 +46,6 @@ public class RealCatalogRenderTests
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s4-realcat-3");
         var file = app.Module["file"];
-        await Assert.That(file.Actions.CountRaw).IsGreaterThan(0);
+        await Assert.That(file.Action.CountRaw).IsGreaterThan(0);
     }
 }

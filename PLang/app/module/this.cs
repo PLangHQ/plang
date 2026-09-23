@@ -24,8 +24,8 @@ public sealed class @this
 
     // The module's actions — ITS OWN storage, filled as each one registers. One map, because the
     // ROLE is decided once, here: an action carrying [Modifier] is minted as the modifier subtype
-    // at registration, so "the type IS the role" needs no second home and no flag. Actions and
-    // Modifiers are filtered views over this one map.
+    // at registration, so "the type IS the role" needs no second home and no flag. Action and
+    // Modifier are filtered views over this one map.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Row> _action
         = new(System.StringComparer.OrdinalIgnoreCase);
 
@@ -63,11 +63,11 @@ public sealed class @this
 
     /// <summary>The module's standalone actions as the NATIVE plang list — a view over the one map;
     /// the type IS the role. Filterable by the list module, renderable by templates.</summary>
-    public global::app.type.item.list.@this Actions => View(modifiers: false);
+    public global::app.type.item.list.@this Action => View(modifiers: false);
 
     /// <summary>The module's modifiers as the NATIVE plang list — the catalog's "# Modifiers"
     /// section renders from here.</summary>
-    public global::app.type.item.list.@this Modifiers => View(modifiers: true);
+    public global::app.type.item.list.@this Modifier => View(modifiers: true);
 
     private global::app.type.item.list.@this View(bool modifiers)
         => new(_action.Values.Select(r => r.Element)

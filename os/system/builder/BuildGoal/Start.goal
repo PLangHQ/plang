@@ -41,8 +41,8 @@ Menu
 MenuModule
 - set %key% = "s%step.Index%_%module.Name%"
 - if %moduleAnswer[key].noul% is less than %threshold%, return
-- if %module.Actions.Count% is 1, add "%module.Name%.%module.Actions[0].Name%" to %choices%
-- if %module.Actions.Count% is more than 1, add "%module.Name%.%actionAnswer[key].choice%" to %choices%
+- if %module.Action.Count% is 1, add "%module.Name%.%module.Action[0].Name%" to %choices%
+- if %module.Action.Count% is more than 1, add "%module.Name%.%actionAnswer[key].choice%" to %choices%
 
 
 Settle
