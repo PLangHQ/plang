@@ -20,7 +20,7 @@ Start
 - add %goal.Name% to %traceGoals%
 / Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save.
 - build.fold Goal=%goal%, on error call HandleBuildFailure
-- build.goalsSave Goal=%goal%, App=%app%
+- build.goalsSave Goal=%goal%
 
 
 Compile
@@ -30,8 +30,7 @@ Compile
 - call Decide
 - foreach %goal.Step%, call Menu step=%item%
 - call Properties
-- foreach %goal.Step%, call Apply step=%item%
-- foreach %goal.Step%, call ValidateStep step=%item%
+- foreach %goal.Step%, call Settle step=%item%
 
 
 Menu
@@ -46,22 +45,24 @@ MenuModule
 - if %module.Actions.Count% is more than 1, add "%module.Name%.%actionAnswer[key].choice%" to %choices%
 
 
+Settle
+/ Graft and judge are one unit: a bad literal fails at the graft, a missing property at the
+/ judge — either way the properties conversation gets the complaint and both run again.
+- call Apply step=%step%, on error call FixProperties, then retry 2 times
+
+
 Apply
 / The step constructs its own actions from the rows the LLM answered — each born holding the step.
 - set %goal.step[step.Index].action% = %properties.steps[step.Index].actions%
-
-
-ValidateStep
-- build.validate actions=%goal.step[step.Index].action%, on error call FixProperties, then retry 2 times
+- build.validate actions=%goal.step[step.Index].action%
 
 
 FixProperties
-/ The validator rejected this step's actions. Continue the properties conversation with its
-/ complaint — it is the correction prompt — then re-apply the step.
+/ The graft or the judge rejected this step's actions. Continue the properties conversation with
+/ its complaint — it is the correction prompt; the retry runs Apply again.
+- call /system/builder/EmitBuildEvent kind="step-validation-error", step=%step%, errorMessage=%!error.Message%
 - set %fixMessages% = [{"Role":"user", "Content":"Your answer was rejected by the validator: %!error.Message%\n\nReturn the corrected answer in the same shape."}]
 - llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %properties%
-- call Apply step=%step%
-- call /system/builder/EmitBuildEvent kind="step-validation-error", step=%step%, errorMessage=%!error.Message%
 
 
 BuildSubGoal

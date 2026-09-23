@@ -17,7 +17,7 @@ public class ErrorBuryingReproTest
     {
         var nre = ThrownNRE();
         var rootError = new global::app.error.ServiceError(
-            $"builder.validateStepActions: NullReferenceException: {nre.Message}",
+            $"build.validate: NullReferenceException: {nre.Message}",
             "NullReferenceException", 500)
         { Exception = nre };
 

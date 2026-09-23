@@ -17,116 +17,6 @@ public class Default : IBuilder
 
     private readonly Stopwatch _buildTimer = new();
 
-    // --- Actions ---
-
-    public async Task<data.@this> Actions(GetActions action)
-    {
-        var catalog = await action.Context.App.Module.Describe();
-
-        // Optional filter: restrict the catalog to the named module.action
-        // entries. The Compile step passes the planner's action set so the
-        // prompt carries only the relevant rows. Null/empty → full catalog.
-        var filter = action.Actions == null || await action.Actions.IsEmpty() ? null
-            : (await action.Actions.Value()).Clr<List<string>>();
-        if (filter is { Count: > 0 })
-        {
-            var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
-            var subset = new List<global::app.goal.step.action.@this>();
-            foreach (var a in catalog)
-                if (wanted.Contains($"{a.Module}.{a.Name}"))
-                    subset.Add(a);
-            return action.Context.Ok(new global::app.type.item.list.@this<global::app.goal.step.action.@this>(subset, action.Context));
-        }
-
-        // The catalog rides as a plang list<action> — action is an item, so it lives in the plang
-        // list directly (no clr<> carrier); the consumer reads action items, no CLR peel.
-        return action.Context.Ok(new global::app.type.item.list.@this<global::app.goal.step.action.@this>(catalog, action.Context));
-    }
-
-    // --- Types ---
-
-    public async Task<data.@this> Types(types action)
-    {
-
-        // The catalog is a structured object now — Build assembles primitives and
-        // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
-        // the Liquid template, and keeps Types/PrimitiveNames for introspection
-        // (JSON, UI, trace viewer).
-        var modules = action.Context.App.Module;
-        var schema = modules.Schema.Build();
-
-        // Optional Actions filter: restrict the Types list to entries actually
-        // referenced by the named module.action set. Primitive types and the
-        // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
-        // filter → full catalog (back-compat).
-        var filter = action.Actions == null || await action.Actions.IsEmpty() ? null
-            : (await action.Actions.Value()).Clr<List<string>>();
-        if (filter is { Count: > 0 })
-        {
-            var allTypeNames = new HashSet<string>(
-                schema.Types.Select(t => t.Name), StringComparer.OrdinalIgnoreCase);
-            var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var tokenRx = new System.Text.RegularExpressions.Regex(@"\b[a-zA-Z][\w]*\b");
-            var wantedActions = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
-
-            // Walk every catalog-described action; for the ones in the filter,
-            // collect type tokens from each parameter's rendered description and
-            // from the return-type name. The Parameter.Value strings already
-            // carry PLang type names (e.g. "path", "actor?", "%var% string"), so
-            // tokenize on word boundaries and intersect with the type catalog.
-            foreach (var a in await modules.Describe())
-            {
-                if (!wantedActions.Contains($"{a.Module}.{a.Name}")) continue;
-                foreach (var p in a.Parameter ?? new())
-                {
-                    var desc = ((await p.Value()) as global::app.type.item.text.@this)?.Clr<string>() ?? string.Empty;
-                    foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
-                        if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
-                }
-                if (!string.IsNullOrEmpty(a.Return)
-                    && allTypeNames.Contains(a.Return))
-                    refs.Add(a.Return);
-            }
-
-            // Transitive closure: types referenced by kept types should also be
-            // kept (a record field might reference another record). The pass is
-            // cheap — Types is in the dozens, and we only re-walk newly added
-            // entries each iteration.
-            bool changed = true;
-            while (changed)
-            {
-                changed = false;
-                foreach (var t in schema.Types)
-                {
-                    if (!refs.Contains(t.Name)) continue;
-                    var pieces = new[] { t.ConstructorSignature ?? "" };
-                    foreach (var s in pieces)
-                        foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(s))
-                            if (allTypeNames.Contains(m.Value) && refs.Add(m.Value))
-                                changed = true;
-                    if (t.Fields != null)
-                        foreach (var f in t.Fields)
-                            if (allTypeNames.Contains(f.TypeName) && refs.Add(f.TypeName))
-                                changed = true;
-                    if (t.Properties != null)
-                        foreach (var pr in t.Properties)
-                            if (allTypeNames.Contains(pr.TypeName) && refs.Add(pr.TypeName))
-                                changed = true;
-                }
-            }
-
-            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
-            schema = new global::app.type.list.view.@this(modules)
-            {
-                PrimitiveNames = schema.PrimitiveNames,
-                Types = filteredTypes,
-                Kinds = schema.Kinds,
-            };
-        }
-
-        return action.Context.Ok(schema);
-    }
-
     // --- Goals ---
 
     public async Task<data.@this> Goals(goals action)
@@ -330,24 +220,9 @@ public class Default : IBuilder
         // modifiers and fail at runtime (a modifier's no-op Run wipes %!data%).
         goal.NestRecursive(app.Module);
 
-        // Final safety net before persisting. Re-runs structural validation against the
-        // goal's current Steps — catches any mismatch (step count, missing actions on
-        // non-keep steps) that slipped past the in-pipeline validateResponse and
-        // ApplyStep stages. Refusing to write the .pr is preferable to saving a half-
-        // built artifact that the runtime can't execute.
-        // The builder is self-hosted: context.App is the BUILDER's own app, not the app being
-        // built. The goal being saved belongs to the TARGET app, passed in as the App parameter
-        // (`build.goalsSave Goal=%goal%, App=%app%`) — the runtime never guesses a plang variable
-        // name. Validate resolves the goal's types/valid-values against it; fall back to
-        // context.App only when App is absent (isolated tests that save a hand-built goal).
-        var targetApp = (action.App == null ? null : (await action.App.Value())?.Value)
-            ?? throw new global::app.error.AppException(
-                "build.goalsSave requires the target App — call it as `build.goalsSave Goal=%goal%, App=%app%`. "
-                + "The self-hosted builder's own context.App is a DIFFERENT app; validating the built goal against it is wrong.",
-                "MissingApp", 500);
-        var validation = await BuildResponse.FromGoalState(goal).Validate(goal, targetApp);
-        if (!validation.Success) return validation;
-
+        // Final safety net before persisting: the goal judges itself. Refusing to write the .pr is
+        // preferable to saving a half-built artifact the runtime can't execute.
+        if (await goal.Validate(context) is { } invalid) return context.Error(invalid);
 
         // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,
         // structural (no @schema — a param is a Data by its List<Data> position). Symmetric with the
@@ -371,95 +246,6 @@ public class Default : IBuilder
         _buildTimer.Restart();
 
         return saveResult.Success ? context.Ok(true) : saveResult;
-    }
-
-    // --- ValidateStepActions ---
-
-    public async System.Threading.Tasks.Task<data.@this> ValidateStepActions(validateStepActions action)
-    {
-        var step = await action.Step.Value();
-        if (step == null)
-        {
-            // Dump what the planner actually returned so the user can see the
-            // malformed shape instead of guessing. Skip system/user/usage —
-            // those are stamped by the parent goal (input we sent + cost
-            // bookkeeping), not the LLM's planning output.
-            string planDetail = "(no plan was produced)";
-            try
-            {
-                var planValue = action.Context.Variable.Peek("plan")?.Peek();
-                if (planValue != null)
-                {
-                    // Round-trip whatever shape the planner produced
-                    // (JsonElement, JsonNode, Dictionary, anonymous record) into
-                    // a JsonNode so we can extract just description + steps.
-                    var raw = System.Text.Json.JsonSerializer.Serialize(planValue);
-                    var node = System.Text.Json.Nodes.JsonNode.Parse(raw);
-                    var steps = node?["steps"];
-                    if (steps != null)
-                    {
-                        var preview = new System.Text.Json.Nodes.JsonObject
-                        {
-                            ["description"] = node!["description"]?.DeepClone(),
-                            ["steps"] = steps.DeepClone(),
-                        };
-                        planDetail = "the LLM returned this plan:\n" +
-                            preview.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                    }
-                    else
-                    {
-                        planDetail = "the LLM never returned a steps array — usually means the response failed to parse or the retry chain exhausted before any valid plan came back.";
-                    }
-                }
-            }
-            catch (System.Exception) { /* fall through with the default planDetail */ }
-
-            return action.Context.Error(new global::app.error.ActionError(
-                "The LLM couldn't produce a usable plan for this goal — its proposed step count didn't match the goal, and the retry didn't recover. " +
-                "Try running plang build again (the LLM is non-deterministic). " +
-                "If it keeps failing, simplify or reword your goal text — long quoted strings or phrases that look like instructions can confuse the planner.\n\n" +
-                $"What we got back: {planDetail}",
-                "BuilderPlannerFailed", 400));
-        }
-        // Sync build surface — read the in-memory backing (the planner's list
-        // is authored in this process; no door to open).
-        var input = (await action.Actions.Value()).Clr<List<string>>() ?? new List<string>();
-        var modules = action.Context.App.Module;
-
-        var result = new List<string>();
-
-        // Validate the planner's suggestions — drop any that don't exist in the
-        // runtime catalog. A hallucinated entry would feed the compiler a
-        // non-resolving row and degrade into "missing-actions" anyway.
-        foreach (var entry in input)
-        {
-            if (string.IsNullOrWhiteSpace(entry)) continue;
-            var parts = entry.Split('.', 2);
-            if (parts.Length != 2) continue;
-            if (!modules.Contains(parts[0]) || modules[parts[0]][parts[1]] == null) continue;
-            result.Add(entry);
-        }
-
-        // Scan step text for explicit `<module>.<action>` tokens. Append any
-        // that exist in the runtime catalog and aren't already in the set.
-        // Append-only — the planner's order survives; explicit-mentions land
-        // after. Word-boundary regex keeps false positives (%goal.Name%,
-        // result.actions, dotted property paths) out — they get filtered
-        // again by the catalog Contains check.
-        foreach (var m in System.Text.RegularExpressions.Regex.Matches(
-                     step.Text, @"\b([a-z][a-zA-Z0-9_]*)\.([a-z][a-zA-Z0-9_]*)\b")
-                 .Cast<System.Text.RegularExpressions.Match>())
-        {
-            var mod = m.Groups[1].Value;
-            var act = m.Groups[2].Value;
-            if (!modules.Contains(mod) || modules[mod][act] == null) continue;
-
-            var key = $"{mod}.{act}";
-            if (result.Any(s => s.Equals(key, StringComparison.OrdinalIgnoreCase))) continue;
-            result.Add(key);
-        }
-
-        return action.Context.Ok(result);
     }
 
     // --- Validate ---
@@ -645,114 +431,6 @@ public class Default : IBuilder
         return await action.Context.App.Save();
     }
 
-    // --- Promote Groups ---
-
-    public async Task<data.@this> PromoteGroups(promoteGroups action)
-    {
-
-        var steps = ToStepList((await action.Steps.Value()));
-        if (steps == null || steps.Count == 0)
-            return action.Context.Ok((await action.Steps.Value()));
-
-        // Collect groups and find the lowest level in each
-        var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var step in steps)
-        {
-            var group = GetString(step, "group");
-            if (string.IsNullOrEmpty(group)) continue;
-
-            var level = GetString(step, "level") ?? "high";
-            if (!groupLevels.TryGetValue(group, out var current))
-            {
-                groupLevels[group] = level;
-            }
-            else
-            {
-                groupLevels[group] = LowestLevel(current, level);
-            }
-        }
-
-        // Promote: if any group has a non-high level, set all members to that level
-        int promoted = 0;
-        foreach (var step in steps)
-        {
-            var group = GetString(step, "group");
-            if (string.IsNullOrEmpty(group)) continue;
-
-            if (!groupLevels.TryGetValue(group, out var groupLevel)) continue;
-            if (string.Equals(groupLevel, "high", StringComparison.OrdinalIgnoreCase)) continue;
-
-            var currentLevel = GetString(step, "level") ?? "high";
-            if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
-            {
-                if (!SetValue(step, "level", groupLevel))
-                    return action.Context.Error(new global::app.error.ActionError(
-                        $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
-                        $"Step type: {step.GetType().FullName}. Group: '{group}'.",
-                        "PromoteGroupsImmutableStep", 500));
-                promoted++;
-            }
-        }
-
-        if (promoted > 0)
-            await action.Context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
-                $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
-
-        return action.Context.Ok((await action.Steps.Value()));
-    }
-
-    private static string LowestLevel(string a, string b)
-    {
-        int Rank(string l) => l.ToLowerInvariant() switch
-        {
-            "low" => 0,
-            "medium" => 1,
-            _ => 2
-        };
-        return Rank(a) <= Rank(b) ? a : b;
-    }
-
-    private static List<object>? ToStepList(object? steps)
-    {
-        if (steps is List<object> list) return list;
-        if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
-        // The steps value is the native list type now — read each element's value.
-        if (steps is app.type.item.list.@this nativeList)
-            return nativeList.Items.Select(d => (object?)d.Peek()).Where(v => v != null).Select(v => v!).ToList();
-        if (steps is System.Collections.IList rawList)
-        {
-            var result = new List<object>();
-            foreach (var item in rawList)
-                if (item != null) result.Add(item);
-            return result;
-        }
-        return null;
-    }
-
-    private static string? GetString(object step, string key)
-    {
-        if (step is IDictionary<string, object?> dict && dict.TryGetValue(key, out var val))
-            return val?.ToString();
-        if (step is JsonElement je && je.TryGetProperty(key, out var prop))
-            return prop.GetString();
-        return null;
-    }
-
-    /// <summary>
-    /// Returns false if the step can't be mutated (e.g. immutable JsonElement),
-    /// so the caller can surface a structured error instead of silently skipping.
-    /// </summary>
-    private static bool SetValue(object step, string key, string value)
-    {
-        if (step is IDictionary<string, object?> dict)
-        {
-            dict[key] = value;
-            return true;
-        }
-        // JsonElement is immutable — caller decides how to surface this.
-        return false;
-    }
-
     /// <summary>
     /// Normalizes parameter values to match their declared type.
     /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
@@ -829,14 +507,11 @@ public class Default : IBuilder
                 if (face != null && face.StartsWith("%") && face.EndsWith("%")) continue; // variable reference
                 if (p.Type == null) continue;
 
-                // LLM-emitted "" for an unset nullable slot — same shape as
-                // validateResponse's normalization, repeated here so detail-pass
-                // results (which bypass validateResponse) also get the fix instead
-                // of failing in TryConvert below. For non-nullable slots leave the
-                // empty string in place so the conversion error surfaces and
-                // LlmFixer retries.
+                // LLM-emitted "" for an unset nullable slot is an unset slot, not a value to
+                // convert. For a non-nullable slot the empty string stays, so the conversion
+                // error surfaces and the build retries.
                 if (face is { } emptyFace && !emptyFace.IsTruthy()
-                    && global::app.module.action.build.ValidateResponseHelpers.IsNullableSchemaProp(rows, p.Name))
+                    && rows?.FirstOrDefault(r => string.Equals(r.Name, p.Name, StringComparison.OrdinalIgnoreCase))?.Nullable == true)
                 {
                     p.SetValue(null);
                     continue;

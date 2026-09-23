@@ -35,26 +35,8 @@ public class Stage2_MechanicalTypings_Part2Tests
         await Assert.That(t.Name).IsEqualTo("this");
     }
 
-    [Test]
-    public async Task BuilderTypes_Run_ReturnsTaskDataOfBuilderTypesRecord()
-    {
-        var ret = RunReturnType<global::app.module.action.build.types>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.view.@this>>);
-        await Assert.That(ret).IsEqualTo(expected);
-    }
-
-    // builder.actions and builder.goals are typed directly to their natural
-    // collection shapes (StepActions and List<Goal>) rather than wrapped in
-    // dedicated record types — PLang call sites (Build.goal) iterate them as
-    // lists, which a wrapper would break without adding observable value.
-    [Test]
-    public async Task BuilderActions_Run_ReturnsTaskDataOfBuilderActionsRecord()
-    {
-        var ret = RunReturnType<global::app.module.action.build.GetActions>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>>);
-        await Assert.That(ret).IsEqualTo(expected);
-    }
-
+    // build.goals is typed directly to its natural collection shape (list<goal>) rather than
+    // wrapped in a dedicated record — Build.goal iterates it as a list.
     [Test]
     public async Task BuilderGoals_Run_ReturnsTaskDataOfBuilderGoalsRecord()
     {
@@ -100,14 +82,11 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
         var rendered = await _app.Module.Describe();
-        var types  = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "types");
-        var goals  = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "goals");
-        var acts   = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "actions");
+        var goals = rendered.FirstOrDefault(a => a.Module.Name == "build" && a.Name == "goals");
 
-        await Assert.That(types!.Return).IsEqualTo("type");
-        // goals/actions render as collection shapes — PLang's foreach over
-        // them needs the list semantics, hence no wrapper record.
+        // goals renders as a collection shape — PLang's foreach over it needs the list
+        // semantics, hence no wrapper record.
+        await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Return).IsEqualTo("list<goal>");
-        await Assert.That(acts!.Return).Contains("action");
     }
 }
