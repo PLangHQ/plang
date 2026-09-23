@@ -21,6 +21,13 @@
        "value": "/system/builder/llm/templates/propertiesUser.template"
       },
       {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      },
+      {
        "name": "Parameter",
        "type": {
         "name": "list"
@@ -69,6 +76,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/Properties.llm"
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       },
       {
        "name": "Parameter",
@@ -156,53 +170,24 @@
        "type": {
         "name": "number"
        },
-       "value": 300000
-      },
-      {
-       "name": "Key",
-       "type": {
-        "name": "text"
-       },
-       "value": "goal-properties:gpt-5.4-nano:%goal%"
+       "value": 0
       },
       {
        "name": "Sliding",
        "type": {
         "name": "bool"
        },
-       "value": true
+       "value": false
+      },
+      {
+       "name": "Key",
+       "type": {
+        "name": "text"
+       },
+       "value": "%!build.cache%"
       }
      ],
-     "modifier": [
-      {
-       "module": "cache",
-       "name": "wrap",
-       "parameter": [
-        {
-         "name": "DurationMs",
-         "type": {
-          "name": "number"
-         },
-         "value": 300000
-        },
-        {
-         "name": "Key",
-         "type": {
-          "name": "text"
-         },
-         "value": "goal-properties:gpt-5.4-nano:%goal%"
-        },
-        {
-         "name": "Sliding",
-         "type": {
-          "name": "bool"
-         },
-         "value": true
-        }
-       ],
-       "modifier": []
-      }
-     ]
+     "modifier": []
     },
     {
      "module": "llm",
@@ -228,12 +213,7 @@
         "name": "item"
        },
        "value": {
-        "step": [
-         {
-          "index": "int",
-          "action": "list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>"
-         }
-        ]
+        "step": "list<{index:int, action:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, modifier?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, recovery?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>}>}>}>}>"
        }
       },
       {
@@ -242,45 +222,9 @@
         "name": "bool"
        },
        "value": true
-      },
-      {
-       "name": "MaxTokens",
-       "type": {
-        "name": "number"
-       },
-       "value": 1024
       }
      ],
-     "modifier": [
-      {
-       "module": "cache",
-       "name": "wrap",
-       "parameter": [
-        {
-         "name": "DurationMs",
-         "type": {
-          "name": "number"
-         },
-         "value": 300000
-        },
-        {
-         "name": "Sliding",
-         "type": {
-          "name": "bool"
-         },
-         "value": true
-        },
-        {
-         "name": "Key",
-         "type": {
-          "name": "text"
-         },
-         "value": "goal-properties:gpt-5.4-nano:%goal%"
-        }
-       ],
-       "modifier": []
-      }
-     ]
+     "modifier": []
     },
     {
      "module": "variable",
@@ -321,7 +265,7 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "/system/builder/EmitBuildEvent",
+        "/name": "/system/builder/EmitBuildEvent",
         "parameter": [
          {
           "name": "kind",

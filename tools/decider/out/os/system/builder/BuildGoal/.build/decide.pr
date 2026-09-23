@@ -208,6 +208,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -228,7 +235,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%(!ui.render)%"
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -301,6 +308,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -321,7 +335,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%(!ui.render)%"
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -420,7 +434,7 @@
    "step": [
     {
      "index": 0,
-     "text": "add {\"index\": %step.Index%, \"text\": %step.Text%} to %state.steps%",
+     "text": "add {\"index\": %step.Index%, \"text\": %step.Text%} to %state.step%",
      "lineNumber": 36,
      "comment": "The decider sees a step as its position and its words \u2014 nothing it has been compiled into yet.",
      "waitForExecution": true,
@@ -434,7 +448,7 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.steps%"
+         "value": "%state.step%"
         },
         {
          "name": "Value",
@@ -451,7 +465,7 @@
          "type": {
           "name": "number"
          },
-         "value": "%step.Index%"
+         "value": 0
         }
        ],
        "modifier": []

@@ -54,6 +54,13 @@
         "name": "item"
        },
        "value": "%!data%"
+      },
+      {
+       "name": "AsDefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -76,16 +83,6 @@
         "name": "text"
        },
        "value": "builder"
-      },
-      {
-       "name": "Goal",
-       "type": {
-        "name": "goal.call"
-       },
-       "value": {
-        "name": "EmitBuildEvent",
-        "parameter": []
-       }
       }
      ],
      "modifier": []

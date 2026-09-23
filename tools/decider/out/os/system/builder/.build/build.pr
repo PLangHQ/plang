@@ -155,7 +155,8 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "BuilderChannel"
+        "name": "BuilderChannel",
+        "parameter": []
        }
       }
      ],
@@ -339,7 +340,7 @@
        "type": {
         "name": "variable"
        },
-       "value": "%item%"
+       "value": "item"
       }
      ],
      "modifier": []

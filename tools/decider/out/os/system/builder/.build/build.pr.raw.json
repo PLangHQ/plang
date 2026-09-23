@@ -135,7 +135,8 @@
         {
          "name": "Goal",
          "value": {
-          "name": "BuilderChannel"
+          "name": "BuilderChannel",
+          "parameter": []
          }
         }
        ]
@@ -267,7 +268,7 @@
         },
         {
          "name": "ItemName",
-         "value": "%item%"
+         "value": "item"
         }
        ]
       },

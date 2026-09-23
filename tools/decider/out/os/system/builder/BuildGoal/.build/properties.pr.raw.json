@@ -35,6 +35,10 @@
          "value": "/system/builder/llm/templates/propertiesUser.template"
         },
         {
+         "name": "IsFile",
+         "value": true
+        },
+        {
          "name": "Parameter",
          "value": []
         }
@@ -66,6 +70,10 @@
         {
          "name": "Template",
          "value": "/system/builder/llm/Properties.llm"
+        },
+        {
+         "name": "IsFile",
+         "value": true
         },
         {
          "name": "Parameter",
@@ -126,37 +134,19 @@
        "parameter": [
         {
          "name": "DurationMs",
-         "value": 300000
-        },
-        {
-         "name": "Key",
-         "value": "goal-properties:gpt-5.4-nano:%goal%"
+         "value": 0
         },
         {
          "name": "Sliding",
-         "value": true
+         "value": false
+        },
+        {
+         "name": "Key",
+         "value": "%!build.cache%"
         }
        ],
-       "modifier": [
-        {
-         "module": "cache",
-         "name": "wrap",
-         "parameter": [
-          {
-           "name": "DurationMs",
-           "value": 300000
-          },
-          {
-           "name": "Key",
-           "value": "goal-properties:gpt-5.4-nano:%goal%"
-          },
-          {
-           "name": "Sliding",
-           "value": true
-          }
-         ]
-        }
-       ]
+       "modifier": [],
+       "recovery": []
       },
       {
        "module": "llm",
@@ -173,41 +163,12 @@
         {
          "name": "Schema",
          "value": {
-          "step": [
-           {
-            "index": "int",
-            "action": "list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>"
-           }
-          ]
+          "step": "list<{index:int, action:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, modifier?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, recovery?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>}>}>}>}>"
          }
         },
         {
          "name": "Cache",
          "value": true
-        },
-        {
-         "name": "MaxTokens",
-         "value": 1024
-        }
-       ],
-       "modifier": [
-        {
-         "module": "cache",
-         "name": "wrap",
-         "parameter": [
-          {
-           "name": "DurationMs",
-           "value": 300000
-          },
-          {
-           "name": "Sliding",
-           "value": true
-          },
-          {
-           "name": "Key",
-           "value": "goal-properties:gpt-5.4-nano:%goal%"
-          }
-         ]
         }
        ]
       },
@@ -237,7 +198,7 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "/system/builder/EmitBuildEvent",
+          "/name": "/system/builder/EmitBuildEvent",
           "parameter": [
            {
             "name": "kind",

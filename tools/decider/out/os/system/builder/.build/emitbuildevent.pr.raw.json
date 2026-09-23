@@ -44,6 +44,10 @@
         {
          "name": "Value",
          "value": "%!data%"
+        },
+        {
+         "name": "AsDefault",
+         "value": true
         }
        ]
       }
@@ -59,13 +63,6 @@
         {
          "name": "Name",
          "value": "builder"
-        },
-        {
-         "name": "Goal",
-         "value": {
-          "name": "EmitBuildEvent",
-          "parameter": []
-         }
         }
        ]
       },

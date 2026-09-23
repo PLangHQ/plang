@@ -181,6 +181,10 @@
         {
          "name": "Template",
          "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+        },
+        {
+         "name": "IsFile",
+         "value": true
         }
        ]
       },
@@ -194,7 +198,7 @@
         },
         {
          "name": "Value",
-         "value": "%!data%(!ui.render)%"
+         "value": "%!data%"
         }
        ]
       }
@@ -243,6 +247,10 @@
         {
          "name": "Template",
          "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+        },
+        {
+         "name": "IsFile",
+         "value": true
         }
        ]
       },
@@ -256,7 +264,7 @@
         },
         {
          "name": "Value",
-         "value": "%!data%(!ui.render)%"
+         "value": "%!data%"
         }
        ]
       }
@@ -342,7 +350,7 @@
        "parameter": [
         {
          "name": "ListName",
-         "value": "%state.steps%"
+         "value": "%state.step%"
         },
         {
          "name": "Value",
@@ -353,7 +361,7 @@
         },
         {
          "name": "AtIndex",
-         "value": "%step.Index%"
+         "value": 0
         }
        ]
       }
