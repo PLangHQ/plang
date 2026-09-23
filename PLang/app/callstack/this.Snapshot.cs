@@ -114,6 +114,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         }
     }
 
+    /// <summary>The call stack's section.</summary>
+    public string Section => "CallStack";
+
     /// <summary>
     /// Captures the active Caller chain — outer frames first, throwing/bottom frame last.
     /// Empty when no Push has happened. Completed children are dropped (history not state).
@@ -130,17 +133,26 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     }
 
     /// <summary>
-    /// Captures a supplied call chain (an error's throw-time <c>CallFrames</c>,
-    /// bottom-first) rather than the live stack. By handler time the live stack
-    /// has unwound past the failing action, so an error callback must snapshot
-    /// the chain the error carried from its throw point.
+    /// This stack as it stood at a throw point — the chain an error carried (<c>CallFrames</c>,
+    /// bottom-first). By handler time the live stack has unwound past the failing action, so an
+    /// error callback snapshots the chain from the throw; restoring it restores into this stack.
     /// </summary>
-    public void Capture(global::app.snapshot.@this s, IReadOnlyList<call.@this> chainBottomFirst)
+    public global::app.snapshot.ISnapshot At(IReadOnlyList<call.@this> chainBottomFirst) => new Thrown(this, chainBottomFirst);
+
+    private sealed class Thrown(@this stack, IReadOnlyList<call.@this> chainBottomFirst) : global::app.snapshot.ISnapshot
     {
-        var ordered = new List<call.@this>(chainBottomFirst.Count);
-        for (int i = chainBottomFirst.Count - 1; i >= 0; i--) // bottom-first → outer-first
-            ordered.Add(chainBottomFirst[i]);
-        CaptureFrames(s, ordered);
+        public string Section => stack.Section;
+
+        public void Capture(global::app.snapshot.@this s)
+        {
+            var ordered = new List<call.@this>(chainBottomFirst.Count);
+            for (int i = chainBottomFirst.Count - 1; i >= 0; i--) // bottom-first → outer-first
+                ordered.Add(chainBottomFirst[i]);
+            CaptureFrames(s, ordered);
+        }
+
+        public System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+            => stack.Restore(s, context);
     }
 
     private static void CaptureFrames(global::app.snapshot.@this s, List<call.@this> orderedOuterFirst)
@@ -165,11 +177,11 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// (<see cref="CallbackGoalHashMismatch"/>). Does not mutate the live AsyncLocal Current —
     /// the resumed action is dispatched separately via App.Run from <see cref="BottomFrame"/>.
     /// </summary>
-    public static async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var framesEntry = s.Entries.Get("frames");
         var restored = new List<call.Position>();
-        if (framesEntry == null) { context.CallStack._restoredChain = restored; return; }
+        if (framesEntry == null) { _restoredChain = restored; return; }
 
         // Values all the way down: the rows of the frames list ARE snapshots, and each frame's
         // entries answer the typed ask. The conversion to a CLR int/string happens at the USE,
@@ -209,7 +221,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             restored.Add(new call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
         }
 
-        context.CallStack._restoredChain = restored;
+        _restoredChain = restored;
     }
 
 

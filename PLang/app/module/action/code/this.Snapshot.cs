@@ -13,6 +13,9 @@ public sealed partial class @this : ISnapshot
     // They were CLR records read back by reflection, which could not construct them (positional,
     // no parameterless way in) and would have had to birth them blank and fill them afterwards.
 
+    /// <summary>The providers' section.</summary>
+    public string Section => "Providers";
+
     /// <summary>
     /// Captures the registry layer (NOT the provider instances themselves):
     ///  - non-built-in registrations as (typeName, providerName, source) tuples
@@ -72,9 +75,9 @@ public sealed partial class @this : ISnapshot
     ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
     /// The fresh App boot has already run RegisterDefaults so built-ins are present.
     /// </summary>
-    public static async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var providers = context.App.Code;
+        var providers = this;
 
         var registrations = await Rows<Registration>(s, "registrations");
         var overrides = await Rows<DefaultOverride>(s, "defaultOverrides");

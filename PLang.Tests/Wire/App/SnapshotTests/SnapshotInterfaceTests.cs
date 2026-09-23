@@ -23,16 +23,17 @@ public class SnapshotInterfaceTests
     }
 
     [Test]
-    public async Task ISnapshotted_RestoreIsStaticFactory_NotInstanceMethod()
+    public async Task ISnapshotted_RestoreIsInstance_AndTheOwnerNamesItsSection()
     {
-        // Pins the `static abstract Restore(Snapshot.@this s, Context.@this context)` shape.
+        // The owner owns both halves: Restore reads its section back into THIS instance (no static
+        // factory rebuilding it elsewhere), and the owner names its own section.
         var iface = typeof(ISnapshot);
         var restore = iface.GetMethod("Restore",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
         await Assert.That(restore).IsNotNull();
-        await Assert.That(restore!.IsStatic).IsTrue();
-        await Assert.That(restore.IsAbstract).IsTrue();
+        await Assert.That(restore!.IsStatic).IsFalse();
+        await Assert.That(iface.GetProperty("Section")).IsNotNull();
 
         var pars = restore.GetParameters();
         await Assert.That(pars.Length).IsEqualTo(2);

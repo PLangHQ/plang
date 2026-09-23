@@ -1,68 +1,69 @@
 namespace app;
 
-public sealed partial class @this
+public sealed partial class @this : global::app.snapshot.ISnapshot
 {
+    /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
+    /// testing when it has a Test, otherwise running. Not a stored field, so there is no second truth
+    /// beside the presence.</summary>
+    public global::app.type.item.choice.@this<global::app.Mode> Mode
+        => Build != null ? global::app.Mode.Build
+         : Test != null ? global::app.Mode.Test
+         : global::app.Mode.Run;
+
+    /// <summary>The App's snapshot owners, in restore order — providers first, since a later owner may
+    /// consume them. Each names its own section; adding an owner is adding it here.</summary>
+    private IEnumerable<global::app.snapshot.ISnapshot> Snapshotted(
+        global::app.snapshot.ISnapshot variables, global::app.snapshot.ISnapshot callStack)
+        => [Code, variables, Statics, this, callStack];
+
     /// <summary>
-    /// Walks the App's ISnapshot properties and aggregates them into a typed
-    /// Snapshot tree. Only subsystems implementing <see cref="ISnapshot"/>
-    /// participate — the ones that don't (Modules, Goals, Channels, Cache, Events,
-    /// Settings, Navigators, Types, Config, FileSystem, …) are reconstruct-on-build
-    /// and stay invisible to the snapshot.
-    ///
-    /// The wire shape mirrors the App tree: each subsystem owns a named section.
-    /// Adding a new subsystem to the snapshot is just implementing ISnapshot
-    /// and adding a one-liner here — no central registry, no ordering coupling.
+    /// The App's state as a snapshot: each owner captures its own section. Only owners implementing
+    /// <see cref="global::app.snapshot.ISnapshot"/> participate — the rest (Modules, Goals, Channels,
+    /// Cache, Events, Settings, Types, Config, FileSystem, …) reconstruct on build.
     /// </summary>
     public snapshot.@this Snapshot(actor.context.@this context)
-    {
-        var s = new snapshot.@this(context);
-        context.Variable.Capture(s.Section("Variables"));
-        Code.Capture(s.Section("Providers"));
-        Statics.Capture(s.Section("Statics"));
-        Build?.Capture(s.Section("Build"));
-        Test?.Capture(s.Section("Test"));
-        context.CallStack.Capture(s.Section("CallStack"));
-        return s;
-    }
+        => Capture(context, Snapshotted(context.Variable, context.CallStack));
 
     /// <summary>
-    /// Throw-time snapshot for an error callback. By the time an error reaches its
-    /// handler the live CallStack has unwound past the failing action, so the
-    /// snapshot must use the chain the error carried from its throw point
-    /// (<see cref="global::app.error.IError.CallFrames"/>) and the throw-time
-    /// variable view (<see cref="global::app.variable.list.@this.SnapshotAt"/>).
-    /// Everything else (modes, providers, statics) is unchanged across handling,
-    /// so it captures live.
+    /// Throw-time snapshot for an error callback. By the time an error reaches its handler the live
+    /// CallStack has unwound past the failing action, so the variables and the call stack are taken
+    /// as they stood at the throw (<see cref="global::app.variable.list.@this.SnapshotAt"/>, the chain
+    /// the error carried). Everything else is unchanged across handling, so it captures live.
     /// </summary>
     public snapshot.@this Snapshot(global::app.error.IError error, actor.context.@this context)
+        => Capture(context, Snapshotted(context.Variable.SnapshotAt(error), context.CallStack.At(error.CallFrames)));
+
+    private snapshot.@this Capture(actor.context.@this context, IEnumerable<global::app.snapshot.ISnapshot> owners)
     {
         var s = new snapshot.@this(context);
-        context.Variable.SnapshotAt(error).Capture(s.Section("Variables"));
-        Code.Capture(s.Section("Providers"));
-        Statics.Capture(s.Section("Statics"));
-        Build?.Capture(s.Section("Build"));
-        Test?.Capture(s.Section("Test"));
-        context.CallStack.Capture(s.Section("CallStack"), error.CallFrames);
+        foreach (var owner in owners) owner.Capture(s.Section(owner.Section));
         return s;
     }
 
     /// <summary>
-    /// Dispatches each captured subtree to the matching subsystem's static
-    /// Restore. Order matches Snapshot — Providers' two-step replay must run
-    /// before any subsystem that might consume providers, but for the Stage 1
-    /// inventory the subsystems are independent.
-    ///
-    /// Hard-errors propagate (e.g. <see cref="Providers.ProviderRestoreException"/>):
-    /// the App is left in a partially-restored state and the caller is responsible
-    /// for treating the failure as a referent-integrity violation.
+    /// Restores each captured section into its owner on this App, in <see cref="Snapshotted"/>
+    /// order. Hard-errors propagate (e.g. <see cref="Providers.ProviderRestoreException"/>): the App
+    /// is left partially restored and the caller treats the failure as a referent-integrity violation.
     /// </summary>
     public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
-        if (s.HasSection("Providers")) await global::app.module.action.code.@this.Restore(s.Section("Providers"), context);
-        if (s.HasSection("Variables")) await global::app.variable.list.@this.Restore(s.Section("Variables"), context);
-        if (s.HasSection("Statics"))   await global::app.Statics.@this.Restore(s.Section("Statics"), context);
-        if (s.HasSection("Build"))     await global::app.module.action.build.@this.Restore(s.Section("Build"), context);
-        if (s.HasSection("Test"))   await global::app.test.list.@this.Restore(s.Section("Test"), context);
-        if (s.HasSection("CallStack")) await global::app.callstack.@this.Restore(s.Section("CallStack"), context);
+        foreach (var owner in Snapshotted(context.Variable, context.CallStack))
+            if (s.HasSection(owner.Section))
+                await owner.Restore(s.Section(owner.Section), context);
+    }
+
+    // The App as its own owner: its section carries its Mode.
+    string global::app.snapshot.ISnapshot.Section => "App";
+
+    void global::app.snapshot.ISnapshot.Capture(snapshot.@this s)
+        => s.Write("mode", Mode);
+
+    async System.Threading.Tasks.Task global::app.snapshot.ISnapshot.Restore(snapshot.@this s, actor.context.@this context)
+    {
+        var entry = s.Entries.Get("mode");
+        if (entry == null) return;
+        var mode = (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>())!.Value;
+        Build = mode == global::app.Mode.Build ? new global::app.module.action.build.@this(context) : null;
+        Test = mode == global::app.Mode.Test ? new global::app.test.list.@this(context) : null;
     }
 }

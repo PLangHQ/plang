@@ -161,9 +161,9 @@ public class CallSnapshotTests
     {
         // The restore path raises a typed exception — there is no boolean Success / Failure
         // bubbling up. Restore returns a bare Task: it carries no result, so a failure has
-        // nowhere to hide except a throw.
+        // nowhere to hide except a throw. The call stack restores ITSELF (an instance member).
         var restoreMethod = typeof(global::app.callstack.@this).GetMethod("Restore",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         await Assert.That(restoreMethod).IsNotNull();
         await Assert.That(restoreMethod!.ReturnType).IsEqualTo(typeof(Task));
     }

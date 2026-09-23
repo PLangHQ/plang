@@ -38,12 +38,13 @@ public class StaticsAndModesSnapshotTests
     [Test]
     public async Task Testing_RoundTrip_PreservesIsEnabled()
     {
-        // App.Test is a @this with IsEnabled; Capture/Restore round-trips that bool.
+        // The App's Mode (testing) round-trips: a running destination comes back testing.
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.Test = new global::app.test.list.@this(src.System.Context);
 
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
+        dst.Test = null;   // a running app — TestApp.Create gives it a Test
         await Assert.That(dst.Test != null).IsFalse();
         await dst.Restore(snap, dst.User.Context);
 

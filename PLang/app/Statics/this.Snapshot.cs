@@ -4,6 +4,9 @@ namespace app.Statics;
 
 public sealed partial class @this : ISnapshot
 {
+    /// <summary>The statics' section.</summary>
+    public string Section => "Statics";
+
     /// <summary>
     /// Captures the bag tree as a Dictionary<string, Dictionary<string, object?>>.
     /// Values are emitted by reference — Statics is provisional (see todos.md), so
@@ -22,12 +25,11 @@ public sealed partial class @this : ISnapshot
     }
 
     /// <summary>
-    /// Replaces the live App's Statics bag tree with the captured one.
+    /// Replaces this bag tree with the captured one. The captured bags are read BEFORE anything is
+    /// cleared — a section without its bags entry leaves the live bags as they are.
     /// </summary>
-    public static async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var target = context.App.Statics;
-        target._bags.Clear();
         var entry = s.Entries.Get("bags");
         if (entry == null) return;
 
@@ -35,9 +37,10 @@ public sealed partial class @this : ISnapshot
         // Statics' problem: that storage is itself an untyped bag — the same disease one level
         // down — so the values land there as the items they are until Statics is typed.
         var bags = await entry.Value<global::app.type.item.dict.@this>();
+        _bags.Clear();
         foreach (var outer in bags.Entries)
         {
-            var bag = target.GetBag(outer.Name);
+            var bag = GetBag(outer.Name);
             foreach (var inner in (await outer.Value<global::app.type.item.dict.@this>()).Entries)
                 bag[inner.Name] = inner.Peek();
         }

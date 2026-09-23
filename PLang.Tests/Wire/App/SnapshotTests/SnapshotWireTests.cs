@@ -31,9 +31,10 @@ public class SnapshotWireTests
     [Test]
     public async Task BuildAndTestingBits_SurviveWireRoundTrip()
     {
+        // The App's Mode rides the wire as one value: building here, so the destination builds
+        // and its Test (TestApp.Create sets one) is cleared.
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.Build = new global::app.module.action.build.@this(src.System.Context);
-        src.Test = new global::app.test.list.@this(src.System.Context);
 
         var wired = await RoundTrip(src, src.Snapshot(src.User.Context));
 
@@ -41,7 +42,7 @@ public class SnapshotWireTests
         await dst.Restore(wired, dst.User.Context);
 
         await Assert.That(dst.Build != null).IsTrue();
-        await Assert.That(dst.Test != null).IsTrue();
+        await Assert.That(dst.Test == null).IsTrue();
     }
 
     // The errors-trail wire test is gone with the trail itself: the run-wide error log is

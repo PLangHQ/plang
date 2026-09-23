@@ -1,34 +1,29 @@
 namespace app.snapshot;
 
 /// <summary>
-/// Marker for any subsystem `@this` that participates in App snapshot/restore.
-/// The type system is the classifier — implementing this interface puts the
-/// subsystem in the snapshot-and-restore bucket; not implementing it keeps it
-/// in the reconstruct-on-build bucket (Modules, Goals, Channels, Cache, …).
+/// A part of the App that snapshots and restores ITSELF. The type system is the classifier —
+/// implementing this interface puts the owner in the snapshot-and-restore bucket; not implementing
+/// it keeps it in the reconstruct-on-build bucket (Modules, Goals, Channels, Cache, …).
 ///
-/// Each implementer captures values into its own <see cref="@this"/> subtree
-/// and reconstructs from that subtree on Restore. References across subsystems
-/// are by name (the way PLang already works at runtime) — Restore never depends
-/// on inter-subsystem ordering or pointer fixup.
+/// The owner names its own section and owns both halves of its shape: <see cref="Capture"/> writes
+/// the section, <see cref="Restore"/> reads it back into THIS instance (the destination's live
+/// owner). References across owners are by name (the way PLang already works at runtime) — Restore
+/// never depends on pointer fixup.
 /// </summary>
 public interface ISnapshot
 {
-    /// <summary>
-    /// Writes this subsystem's state into <paramref name="s"/>. The subsystem
-    /// owns its subtree's wire shape — callers never inspect the entries.
-    /// </summary>
+    /// <summary>The name of this owner's section in the snapshot.</summary>
+    string Section { get; }
+
+    /// <summary>Writes this owner's state into its section <paramref name="s"/>.</summary>
     void Capture(@this s);
 
     /// <summary>
-    /// Static factory: rebuilds the subsystem from <paramref name="s"/> into the
-    /// live App reachable via <paramref name="context"/>. Hard-errors on referent-integrity
-    /// violations (unresolvable name, hash mismatch, missing source). No silent fallback.
+    /// Reads this owner's section <paramref name="s"/> back into this instance. Hard-errors on
+    /// referent-integrity violations (unresolvable name, hash mismatch, missing source). No
+    /// silent fallback.
     /// </summary>
     /// <remarks>Async because entries are plang values and the typed ask that reads them is async —
     /// the same door every other value read goes through. Nothing here lowers to CLR.</remarks>
-    static abstract System.Threading.Tasks.Task Restore(@this s, actor.context.@this context);
-
-    // Read(Io, @this) — the per-section wire rebuild — is removed with the STJ read cursor.
-    // Snapshot RESTORE is deferred to the ISnapshot redesign, where the read moves onto an
-    // IReader (symmetric with the IWriter write side). See snapshot/this.Wire.cs::Create.
+    System.Threading.Tasks.Task Restore(@this s, actor.context.@this context);
 }

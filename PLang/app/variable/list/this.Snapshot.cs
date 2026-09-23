@@ -2,6 +2,9 @@ namespace app.variable.list;
 
 public partial class @this : ISnapshot
 {
+    /// <summary>The variables' section.</summary>
+    public string Section => "Variables";
+
     /// <summary>
     /// Captures user-visible variables into the snapshot. Honours the existing
     /// partition (the <see cref="Snapshot()"/> method documents the rules):
@@ -30,23 +33,21 @@ public partial class @this : ISnapshot
     }
 
     /// <summary>
-    /// Restores user variables onto the given context's actor Variables. System
-    /// variables created by the constructor (Now, NowUtc, GUID) are left in place
-    /// — the snapshot only carries user-visible state, so adding restored entries
-    /// on top is the correct merge.
+    /// Restores user variables into this list. System variables created by the constructor
+    /// (Now, NowUtc, GUID) are left in place — the snapshot only carries user-visible state, so
+    /// adding restored entries on top is the correct merge.
     /// </summary>
-    public static async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
         var entry = s.Entries.Get("variables");
         if (entry == null) return;
 
         // The rows of the captured list ARE the captured Data — read as values, never lowered.
         var captured = await entry.Value<global::app.type.item.list.@this>();
-        var target = context.Variable;
         foreach (var row in captured)
         {
             // Clone again so the snapshot can be re-Restored independently.
-            target.Set(row.Name, row.Clone());
+            Set(row.Name, row.Clone());
         }
     }
 
