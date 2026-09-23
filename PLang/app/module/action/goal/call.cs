@@ -44,9 +44,8 @@ public partial class Call : IContext
         // the file's root) stays bare — it wins by rule and cannot be shadowed. A goal not found yet
         // may be built later in the same run, so the name is left as written.
         var caller = __action?.Step?.Goal;
-        var authored = Name.HasVariableReference ? null : (await Name.Value())?.RawText;
-        if (!string.IsNullOrEmpty(authored)
-            && await Context.App.Goal.GetAsync(authored, caller) is { } target
+        if (await Callee() is { } target
+            && (await Name.Value())?.RawText is { } authored
             && !Equals(target.Path, caller?.Path) && target.Address is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
             foreach (var row in __action!.Parameter)
@@ -72,6 +71,15 @@ public partial class Call : IContext
                 if (string.Equals(row.Name, "Parameter", System.StringComparison.OrdinalIgnoreCase))
                     row.SetValue(new global::app.type.item.list.@this(kept, Context));
         return Context.Ok();
+    }
+
+    /// <summary>The goal this call names, selected through the goal collection as seen from the goal
+    /// this call sits in — the selection <see cref="Run"/> makes. A %variable% name answers none.</summary>
+    public async Task<global::app.goal.@this?> Callee()
+    {
+        if (Name.HasVariableReference) return null;
+        var authored = (await Name.Value())?.RawText;
+        return string.IsNullOrEmpty(authored) ? null : await Context.App.Goal.GetAsync(authored, __action?.Step?.Goal);
     }
 
     public async Task<data.@this> Run()

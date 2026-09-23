@@ -57,6 +57,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         writer.Name("isEvent"); writer.Bool(IsEvent);
         writer.Name("isSystem"); writer.Bool(IsSystem);
         writer.Name("isTest"); writer.Bool(IsTest);
+        if (Tag.CountRaw > 0) { writer.Name("tag"); await Tag.Output(writer, mode, context); }
         writer.EndObject();
     }
 }

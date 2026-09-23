@@ -94,6 +94,13 @@ public class DiscoverActionTests
         // the hash is locked in, so the stored .pr's hash diverges from a fresh parse.
         var _ = goal.Hash;
 
+        // The build pass stamps the goal's build-birth facts (test.tag → goal.Tag), reading the goal
+        // being built from %goal%, as the builder's build.validate does.
+        var buildContext = _app.User.Context;
+        await buildContext.Variable.Set("goal", goal);
+        foreach (var step in goal.Step.Elements)
+            await step.Action.Build(buildContext);
+
         var prDir = System.IO.Path.Combine(absDir, ".build");
         System.IO.Directory.CreateDirectory(prDir);
         var prFile = System.IO.Path.Combine(prDir,
@@ -186,9 +193,9 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains("http").IsTrue();
-        await file.Tags.Contains("fast").IsTrue();
-        await file.Tags.Contains("slow").IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("http")).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("fast")).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("slow")).IsTrue();
     }
 
     // For each action in the .pr, resolves the handler class (via App.Modules.
@@ -207,7 +214,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains("network").IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network")).IsTrue();
     }
 
     // Sub-goal reached via static goal.call: its actions' capabilities propagate up
@@ -252,7 +259,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains("network").IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network")).IsTrue();
     }
 
     // Config.Include=["fast"]: tests without the "fast" tag are returned as

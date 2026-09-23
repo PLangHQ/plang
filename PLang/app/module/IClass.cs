@@ -37,4 +37,10 @@ public interface IClass
     System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.IError>> Parse()
         => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.IError>>(
             System.Array.Empty<global::app.error.IError>());
+
+    /// <summary>The goal this handler calls, as its properties name it now — selected the way its run
+    /// selects it, on the bound handler (typed views, unresolved). A %var% name is only known at run,
+    /// so it answers none. None — the default — for a handler that calls no goal.</summary>
+    System.Threading.Tasks.Task<global::app.goal.@this?> Callee()
+        => System.Threading.Tasks.Task.FromResult<global::app.goal.@this?>(null);
 }

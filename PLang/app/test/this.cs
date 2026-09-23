@@ -19,8 +19,36 @@ public sealed class @this : global::app.type.item.@this
 
     public @this(actor.context.@this context)
     {
-        Tags = new global::app.type.item.list.@this<global::app.type.item.text.@this>(context);
+        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>(context);
         Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>(context);
+    }
+
+    /// <summary>The test a test goal is. Its tags are the goal's own (<c>goal.Tag</c>, stamped at
+    /// build) and the capabilities every action it reaches requires — its own and those of each goal
+    /// its calls reach, as they are now. Seeds the run's coverage with the declared branch chains of
+    /// the same goals. A goal tagged <c>skip</c> is Skipped; otherwise Ready.</summary>
+    public static async Task<@this> Create(global::app.goal.@this goal, actor.context.@this context)
+    {
+        var test = new @this(context) { Goal = goal };
+        test.Tags.Add(goal.Tag);
+
+        var reached = new List<global::app.goal.@this> { goal };
+        reached.AddRange(await goal.Callee(context));
+        foreach (var g in reached)
+        {
+            foreach (var step in g.Step.Elements)
+                foreach (var action in step.Action.Elements)
+                    foreach (var required in action.Requirement)
+                        if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
+            context.App.Test.Coverage.Add(g);
+        }
+
+        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip")))
+        {
+            test.Status = Status.Skipped;
+            test.StatusReason = "tagged 'skip'";
+        }
+        return test;
     }
 
     // --- Discovery (populated by test.discover) ---
@@ -37,9 +65,9 @@ public sealed class @this : global::app.type.item.@this
     /// <summary>Human-readable reason for a non-Ready discovery status (e.g., "no .pr", "rebuild needed").</summary>
     [Out] public global::app.type.item.text.@this? StatusReason { get; set; }
 
-    /// <summary>Tags (case-insensitive): user-declared (test.tag) ∪ auto (handler
-    /// [RequiresCapability]), discovery-seeded and run-appended into one set.</summary>
-    [Out] public global::app.type.item.list.@this<global::app.type.item.text.@this> Tags { get; }
+    /// <summary>The test's tags: the goal's own (test.tag) ∪ the capabilities its reached
+    /// actions require. Set by <see cref="Create"/>.</summary>
+    [Out] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
 
     // --- Execution (stamped by test.run; empty until the test runs) ---
 

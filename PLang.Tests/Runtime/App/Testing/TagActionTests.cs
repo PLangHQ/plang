@@ -1,18 +1,16 @@
-using app.test;
 using Tag = global::app.module.action.test.Tag;
 
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
-/// Batch 9 — test.tag action.
-/// Declarative metadata: "- set test tag 'http', 'fast'". Parameter Tags: list&lt;text&gt;.
-/// Runtime behavior moves the tags into Test.Current.Tags + Data.Ok. The real work
-/// (extracting tags from .pr) happens at discovery — see Batch 8. Outside test mode
-/// (Current == null), this action no-ops so users can embed test.tag in shared goals.
+/// test.tag — "- tag this test 'http', 'fast'". The tags are the goal's own build-birth fact: Build()
+/// stamps them on the goal being built (%goal%), the goal writes them into its .pr and reads them
+/// back. Running the step does nothing.
 /// </summary>
 public class TagActionTests
 {
     private global::app.@this _app = null!;
+    private global::app.actor.context.@this Ctx => _app.User.Context;
 
     [Before(Test)]
     public void Setup()
@@ -23,78 +21,73 @@ public class TagActionTests
     [After(Test)]
     public async Task Teardown() => await _app.DisposeAsync();
 
-    private static global::app.test.@this NewTest() =>
-        new(global::PLang.Tests.TestApp.SharedContext)
-        {
-            Goal = new Goal { Name = "T", Path = global::app.type.item.path.@this.Resolve("/Tests/T.test.goal", global::PLang.Tests.TestApp.SharedContext) }
-        };
-
-    private static IEnumerable<string> TagStrings(global::app.test.@this test) =>
-        test.Tags.Select(r => r.Peek().Clr<string>() ?? "");
+    private global::app.goal.@this Goal() =>
+        global::PLang.Tests.Shared.Make.Goal("Start", "/Tests/T.test.goal",
+            global::PLang.Tests.Shared.Make.Step("set %x% = 1",
+                global::PLang.Tests.Shared.Make.Action("variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", 1) })));
 
     private global::app.data.@this<global::app.type.item.list.@this> Tags(params string[] tags) =>
-        new("Tags", global::PLang.Tests.Shared.Make.List(tags, _app.User.Context));
+        new("Tags", global::PLang.Tests.Shared.Make.List(tags, Ctx));
 
-    // When Test.Current is set (test in flight), test.tag with Tags=["http","fast"]
-    // moves both tags into Current.Tags.
+    private static global::app.type.item.tag.@this T(string value) => new(value);
+
     [Test]
-    public async Task Tag_InsideTest_WritesToCurrentTags()
+    public async Task Build_StampsTheGoalBeingBuilt()
     {
-        _app.Test.Current = NewTest();
+        var goal = Goal();
+        await Ctx.Variable.Set("goal", goal);
 
-        var result = await new Tag(_app.User.Context) { Tags = Tags("http", "fast") }.Run();
+        var result = await new Tag(Ctx) { Tags = Tags("http", "Fast") }.Build();
 
         await result.IsSuccess();
-        await _app.Test.Current!.Tags.Contains("http").IsTrue();
-        await _app.Test.Current!.Tags.Contains("fast").IsTrue();
+        await Assert.That(goal.Tag.Has(T("http"))).IsTrue();
+        await Assert.That(goal.Tag.Has(T("fast"))).IsTrue();
     }
 
-    // test.tag always returns Data.Ok; does not write to MemoryStack, does not touch
-    // Variables or the test collection. Pure tag-metadata action.
     [Test]
-    public async Task Tag_ReturnsDataOk_NoSideEffectsBeyondTags()
+    public async Task Build_SameTagTwice_StampedOnce()
     {
-        _app.Test.Current = NewTest();
-        var beforeResultCount = _app.Test.Count;
-        var beforeVarCount = _app.User.Context.Variable.GetNames().Count();
+        var goal = Goal();
+        await Ctx.Variable.Set("goal", goal);
 
-        var result = await new Tag(_app.User.Context) { Tags = Tags("t1") }.Run();
+        await new Tag(Ctx) { Tags = Tags("http") }.Build();
+        await new Tag(Ctx) { Tags = Tags("HTTP", "slow") }.Build();
+
+        await Assert.That(goal.Tag.CountRaw).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Build_VariableTags_StampNothing()
+    {
+        var goal = Goal();
+        await Ctx.Variable.Set("goal", goal);
+
+        var action = global::PLang.Tests.Shared.Make.Action("test", "tag", new (string, object?)[] { ("Tags", "%myTags%") });
+        await Assert.That(await action.Build(Ctx)).IsNull();
+
+        await Assert.That(goal.Tag.CountRaw).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Run_IsPlainOk_NoValue()
+    {
+        var result = await new Tag(Ctx) { Tags = Tags("http") }.Run();
 
         await result.IsSuccess();
-        await Assert.That(_app.Test.Count).IsEqualTo(beforeResultCount);
-        await Assert.That(_app.User.Context.Variable.GetNames().Count()).IsEqualTo(beforeVarCount);
+        await Assert.That(result.HasValue).IsFalse();
     }
 
-    // Current == null (normal plang run, not --test mode) → test.tag is a no-op:
-    // returns Data.Ok, does not throw, does not write. Lets users embed test.tag in
-    // shared goals without breaking production.
     [Test]
-    public async Task Tag_OutsideTest_CurrentNull_NoOpsSafely()
+    public async Task GoalTag_RoundTripsThroughTheGoalsOwnWire()
     {
-        _app.Test.Current = null;
+        var goal = Goal();
+        goal.Tag.Add(T("http"));
+        goal.Tag.Add(T("skip"));
 
-        var result = await new Tag(_app.User.Context) { Tags = Tags("ignored") }.Run();
+        var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(_app, goal);
 
-        await result.IsSuccess();
-        await Assert.That(_app.Test.Current).IsNull();
-    }
-
-    // Two test.tag calls: ["http"], then ["fast","slow"], then a duplicate ["http"]
-    // → Current.Tags has three DISTINCT tags {"http","fast","slow"} (storage keeps the
-    // dup; the report de-dups on display).
-    [Test]
-    public async Task Tag_MultipleInvocations_TagsAccumulate()
-    {
-        _app.Test.Current = NewTest();
-
-        await new Tag(_app.User.Context) { Tags = Tags("http") }.Run();
-        await new Tag(_app.User.Context) { Tags = Tags("fast", "slow") }.Run();
-        await new Tag(_app.User.Context) { Tags = Tags("http") }.Run(); // duplicate
-
-        var distinct = TagStrings(_app.Test.Current!).Distinct().ToList();
-        await Assert.That(distinct.Count).IsEqualTo(3);
-        await Assert.That(distinct.Contains("http")).IsTrue();
-        await Assert.That(distinct.Contains("fast")).IsTrue();
-        await Assert.That(distinct.Contains("slow")).IsTrue();
+        await Assert.That(loaded.Tag.CountRaw).IsEqualTo(2);
+        await Assert.That(loaded.Tag.Has(T("http"))).IsTrue();
+        await Assert.That(loaded.Tag.Has(T("skip"))).IsTrue();
     }
 }

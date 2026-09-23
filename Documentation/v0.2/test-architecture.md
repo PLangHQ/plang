@@ -54,7 +54,7 @@ Each `.test.goal` file gets its own child `App` rooted at that file's directory 
 `Coverage.Merge(other)` unions module/action observations and branch indices/labels/chains into the parent. `ConcurrentDictionary.TryAdd` makes repeated calls with the same site/label a no-op. This is what makes `test.run` parallel-safe: each child App has its own `Coverage`, merge happens once on completion, no cross-talk.
 
 ### Site key = `goalPath:stepIndex`
-The branch-coverage site identifier includes the source path, not just the goal name. A `Start` step in two files never collides. The format is fixed by `run.cs:99` and the same format is rendered in the console and `results.json`. Don't change it without updating both seed (`discover.cs:SeedBranchChains`) and observe (`run.cs` AfterAction binding) in lockstep.
+The branch-coverage site identifier includes the source path, not just the goal name. A `Start` step in two files never collides. The format is fixed by `run.cs:99` and the same format is rendered in the console and `results.json`. Don't change it without updating both seed (`Coverage.Add(goal)`, called from `test.Create`) and observe (`run.cs` AfterAction binding) in lockstep.
 
 ### `test.discover` seeds declared branch chains
 Before a single test runs, `test.discover` walks every `condition.if` site in every discovered test's goal tree — including statically-reachable `goal.call` targets — and records each site's declared chain on `Testing.Coverage`. Purpose: unreached sites (branches that exist in source but no test visits) still appear in the coverage report. Runtime observation unions in later without overwriting; seed-then-observe is safe by design (`Coverage.RecordBranchChain` stores only the first chain per site).

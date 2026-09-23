@@ -54,6 +54,20 @@ public sealed partial class @this
     /// <summary>Exclude tag filter (empty = nothing excluded). Applied after include — exclude wins on conflict.</summary>
     public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
 
+    /// <summary>Why this run leaves <paramref name="test"/> out — a tag in <see cref="Exclude"/> (exclude
+    /// wins), or no tag in a non-empty <see cref="Include"/>. Null when the run takes it. Tags compare
+    /// by the tag's own equality.</summary>
+    public global::app.type.item.text.@this? Exclusion(global::app.test.@this test)
+    {
+        var tags = test.Tags.Items.Select(r => (global::app.type.item.tag.@this)r.Peek()!).ToHashSet();
+        bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
+            => filter.Items.Any(r => global::app.type.item.tag.@this.Create(r.Peek()) is { } tag && tags.Contains(tag));
+
+        if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
+        if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";
+        return null;
+    }
+
     /// <summary>Back-reference to the App that owns this session (derived from the born
     /// context). Used by reporters to surface App.Version for drift comparisons.</summary>
     internal app.@this App => _context.App;

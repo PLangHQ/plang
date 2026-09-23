@@ -78,6 +78,14 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "isEvent": goal.IsEvent = reader.Bool(); break;
                 case "isSystem": goal.IsSystem = reader.Bool(); break;
                 case "isTest": goal.IsTest = reader.Bool(); break;
+                case "tag":
+                    // Each tag reads itself through its own reader.
+                    var tag = new global::app.type.item.tag.serializer.Reader();
+                    reader.BeginArray();
+                    while (reader.NextElement())
+                        goal.Tag.Add(tag.Read(ref reader, null, ctx));
+                    reader.EndArray();
+                    break;
                 default: reader.Skip(); break;
             }
         }

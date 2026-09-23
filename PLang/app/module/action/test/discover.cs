@@ -12,12 +12,11 @@ namespace app.module.action.test;
 /// <summary>
 /// Walks a directory tree for *.test.goal files (via <c>rootPath.List</c>, which
 /// routes through <see cref="app.type.item.path.file.@this.AuthGate"/>), loads each
-/// file's .pr through path verbs, checks freshness against the current .goal
-/// text (SHA-256 of Name + concat(Step.Text)), extracts user tags (via
-/// test.tag actions) and auto-tags (via [RequiresCapability] on the action
-/// handlers referenced in the .pr, recursing through static goal.call chains),
-/// then applies the Testing.Include/Exclude tag filters. Returns a
-/// List&lt;global::app.test.@this&gt; that test.run consumes.
+/// file's .pr through path verbs and checks freshness against the current .goal
+/// text (SHA-256 of Name + concat(Step.Text)). A fresh goal becomes its test
+/// (<see cref="app.test.@this.Create"/>); the run's tag filter
+/// (<see cref="app.test.list.@this.Exclusion"/>) decides which tests it takes. Returns a
+/// list&lt;test&gt; that test.run consumes.
 ///
 /// <para>The pre-AuthGate scan that this handler used to do —
 /// <c>StartsWith(rootPrefix)</c> hand-rolled containment + raw
@@ -42,7 +41,6 @@ public partial class discover : IContext
 
     public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Run()
     {
-        var app = Context.App;
         var empty = data.@this<global::app.type.item.list.@this<global::app.test.@this>>.Ok(new global::app.type.item.list.@this<global::app.test.@this>(Context));
 
         var root = await Path.Value();
@@ -53,11 +51,6 @@ public partial class discover : IContext
         if (!listed.Success) return Context.Error<global::app.type.item.list.@this<global::app.test.@this>>(listed.Error!);
         if (await listed.Value() == null) return empty;
 
-        // text is a case-insensitive value (Equals/GetHashCode are OrdinalIgnoreCase),
-        // so tag matching is text-to-text — no lowering to string.
-        var include = Context.App.Test.Include.Select(r => (global::app.type.item.text.@this)r.Peek()).ToHashSet();
-        var exclude = Context.App.Test.Exclude.Select(r => (global::app.type.item.text.@this)r.Peek()).ToHashSet();
-
         var files = new List<data.@this>();
         var list = await listed.Value();
         foreach (var row in list!)
@@ -65,15 +58,14 @@ public partial class discover : IContext
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
             if (await row.Value<global::app.type.item.path.@this>() is not FilePath fileMatch) continue;
-            files.Add(new data.@this("", await DiscoverOne(fileMatch, app, include, exclude), context: Context));
+            files.Add(new data.@this("", await DiscoverOne(fileMatch), context: Context));
         }
         return Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
             new global::app.type.item.list.@this<global::app.test.@this>(files, Context));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
-    private async Task<global::app.test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
-        HashSet<global::app.type.item.text.@this> include, HashSet<global::app.type.item.text.@this> exclude)
+    private async Task<global::app.test.@this> DiscoverOne(FilePath goalFile)
     {
         // Read the .goal source first — even when the .pr is missing or
         // corrupt, the source goal is enough to identify the file.
@@ -96,18 +88,6 @@ public partial class discover : IContext
         var sourceGoal = (await goalRead.Value()) as Goal
             ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile)
             ?? new Goal { Path = goalFile };
-
-        // A goal whose source has a `tag this test 'skip'` step is PARKED: it registers
-        // Skipped straight from the source text — before any build/freshness/.pr check — so
-        // a deferred but REAL test reads honestly as Skipped, never as a no-op pass and never
-        // as a stale failure. The tag step needn't be built or run. Re-enable by removing it.
-        if (HasSkipTag(sourceGoal))
-            return new global::app.test.@this(Context)
-            {
-                Goal = sourceGoal,
-                Status = global::app.test.Status.Skipped,
-                StatusReason = "tagged 'skip'"
-            };
 
         // PrPath is derived on the goal from its Path. The corresponding
         // build artefact may or may not exist.
@@ -167,150 +147,14 @@ public partial class discover : IContext
             };
         }
 
-        var file = new global::app.test.@this(Context)
+        // The fresh goal becomes its test; the run's filter decides whether it is taken.
+        var test = await global::app.test.@this.Create(prGoal, Context);
+        if (test.Status == global::app.test.Status.Ready && Context.App.Test.Exclusion(test) is { } reason)
         {
-            Goal = prGoal,
-        };
-
-        // Tags on the test as text: user-declared (test.tag actions, moved as text)
-        // + auto (handler [RequiresCapability], string→text at the attribute perimeter).
-        ExtractUserTags(prGoal, file);
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await ExtractAutoTags(prGoal, file, visited);
-
-        // Seed branch-coverage chains.
-        var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await SeedBranchChains(prGoal, Context.App.Test.Coverage, chainVisited);
-
-        // Filter: exclude wins over include. Match the test's tags against the CLI
-        // include/exclude sets — text-to-text (case-insensitive lives on text).
-        var fileTags = file.Tags.Select(r => (global::app.type.item.text.@this)r.Peek()).ToHashSet();
-        if (exclude.Count > 0 && exclude.Overlaps(fileTags))
-        {
-            file.Status = global::app.test.Status.Skipped;
-            file.StatusReason = "excluded by tag";
+            test.Status = global::app.test.Status.Skipped;
+            test.StatusReason = reason;
         }
-        else if (include.Count > 0 && !include.Overlaps(fileTags))
-        {
-            file.Status = global::app.test.Status.Skipped;
-            file.StatusReason = "no include match";
-        }
-        else
-        {
-            file.Status = global::app.test.Status.Ready;
-        }
-        return file;
+        return test;
     }
 
-    // The `skip` tag, read from the SOURCE step text (not built actions) so it works
-    // before/without a build. Matches `tag this test 'skip'` (any quoting/casing/spacing).
-    private static readonly System.Text.RegularExpressions.Regex SkipTagRegex = new(
-        @"^\s*tag\s+this\s+test\s+['""]skip['""]\s*$",
-        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    private static bool HasSkipTag(Goal goal)
-    {
-        foreach (var step in goal.Step.Elements)
-            if (IsSkipTagStep(step.Text)) return true;
-        return false;
-    }
-
-    /// <summary>
-    /// True when a step's source text is exactly the skip directive
-    /// <c>tag this test 'skip'</c> (any quoting / casing / spacing). This is the gate
-    /// between an honest Skipped and a run, so it matches only the literal <c>skip</c> tag —
-    /// a different tag value, or trailing args, does not match. Exposed for tests to pin the
-    /// boundary.
-    /// </summary>
-    public static bool IsSkipTagStep(string text) => SkipTagRegex.IsMatch(text);
-
-    private static void ExtractUserTags(Goal goal, global::app.test.@this file)
-    {
-        goal.ForEachAction((step, action) =>
-        {
-            if (!string.Equals(action.Module.Name, "test", StringComparison.OrdinalIgnoreCase)) return;
-            if (!string.Equals(action.Name, "tag", StringComparison.OrdinalIgnoreCase)) return;
-            var tagsParam = action.Parameter.FirstOrDefault(p =>
-                string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-            switch (tagsParam?.Peek())
-            {
-                // The Tags param IS a list<text> — move its text rows straight in.
-                case app.type.item.list.@this nativeList:
-                    file.Tags.Add(nativeList);
-                    break;
-                case global::app.type.item.text.@this single when single.IsTruthy():
-                    file.Tags.Add(single);
-                    break;
-            }
-        });
-    }
-
-    private async Task ExtractAutoTags(Goal goal, global::app.test.@this file, HashSet<string> visited, int depth = 0)
-    {
-        if (depth > 50) return;
-        if (!visited.Add(goal.Name)) return;
-
-        var calls = new List<app.goal.step.action.@this>();
-        goal.ForEachAction((step, action) =>
-        {
-            // The action answers what it reaches; discovery just collects it.
-            foreach (var required in action.Requirement)
-                file.Tags.Add(required);
-
-            if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
-                calls.Add(action);
-        });
-        foreach (var sub in await StaticTargets(calls))
-            await ExtractAutoTags(sub, file, visited, depth + 1);
-    }
-
-    // The goals these goal.call actions statically reach. A %variable% name is only known at run,
-    // so it has no static target; a literal name is its row's value (read, never resolved).
-    private async Task<List<Goal>> StaticTargets(List<app.goal.step.action.@this> calls)
-    {
-        var targets = new List<Goal>();
-        foreach (var call in calls)
-        {
-            var row = call.Parameter.FirstOrDefault(p =>
-                string.Equals(p.Name, "Name", StringComparison.OrdinalIgnoreCase));
-            if (row == null || row.HasVariableReference) continue;
-            var name = (await row.Value())?.RawText;
-            if (!string.IsNullOrEmpty(name) && Context.App.Goal.Get(name) is { } sub) targets.Add(sub);
-        }
-        return targets;
-    }
-
-    private async Task SeedBranchChains(Goal goal, app.test.Coverage coverage, HashSet<string> visited, int depth = 0)
-    {
-        if (depth > 50) return;
-        if (!visited.Add(goal.Name)) return;
-
-        var goalId = goal.Path?.ToString() ?? goal.Name ?? "?";
-        var seededSteps = new HashSet<int>();
-        var calls = new List<app.goal.step.action.@this>();
-
-        goal.ForEachAction((step, action) =>
-        {
-            if (seededSteps.Add(step.Index))
-            {
-                // Declared chain = the step's condition actions walked in order (no Decision type).
-                var conds = step.Action.Elements.Where(a => a.IsCondition).ToList();
-                if (conds.Count > 0)
-                {
-                    var chain = new List<string>();
-                    if (conds.Count == 1) { chain.Add("true"); chain.Add("false"); }
-                    else foreach (var c in conds) chain.Add(c.Name);
-                    coverage.RecordBranchChain($"{goalId}:{step.Index}", chain);
-                }
-            }
-
-            if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
-                calls.Add(action);
-        });
-
-        foreach (var sub in await StaticTargets(calls))
-            await SeedBranchChains(sub, coverage, visited, depth + 1);
-    }
 }

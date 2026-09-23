@@ -68,7 +68,7 @@ public sealed class Coverage
             kvp => kvp.Key,
             kvp => (IReadOnlySet<string>)new HashSet<string>(kvp.Value.Keys));
 
-    // Per-site declared chain, preserving author order. Seeded by test.discover
+    // Per-site declared chain, preserving author order. Seeded when a test is created
     // ahead of execution so truly-unreached sites still appear in the report, and
     // also populated at runtime when condition.if fires (first fire wins;
     // subsequent fires at the same site are a no-op).
@@ -82,6 +82,22 @@ public sealed class Coverage
     {
         if (chain == null || chain.Count == 0) return;
         _branchChains.TryAdd(site, new List<string>(chain));
+    }
+
+    /// <summary>Seeds the declared branch chain of every condition step in <paramref name="goal"/>, so a
+    /// site that never runs still shows in the report. One condition: {true, false}; several: their
+    /// names in author order.</summary>
+    public void Add(global::app.goal.@this goal)
+    {
+        var goalId = goal.Path?.ToString() ?? goal.Name ?? "?";
+        foreach (var step in goal.Step.Elements)
+        {
+            var conditions = step.Action.Elements.Where(a => a.IsCondition).ToList();
+            if (conditions.Count == 0) continue;
+            RecordBranchChain($"{goalId}:{step.Index}", conditions.Count == 1
+                ? new[] { "true", "false" }
+                : conditions.Select(c => c.Name).ToArray());
+        }
     }
 
     /// <summary>Read-only view of the declared chain per site (author order).</summary>
