@@ -284,7 +284,6 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> Run(actor.context.@this context)
     {
-        context.App.Context = context;
         var previousGoal = context.Goal;
         context.Goal = this;
 

@@ -150,7 +150,6 @@ public partial class @this
     /// </summary>
     public async Task<global::app.data.@this> Run(actor.context.@this context)
     {
-        context.App.Context = context;
         // ONE FRAME PER ACTION. The frame spans the action's whole run — its lifecycle events,
         // its modifiers, and its dispatch — not just the dispatch. A modifier recovering from a
         // failure (error.handle) therefore runs INSIDE the frame that failed, which is where the
