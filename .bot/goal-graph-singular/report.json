@@ -717,6 +717,55 @@
         "health": "no production code changed by architect",
         "notes": "Ingi discounted the object count as stale-corpus noise"
       }
+    },
+    {
+      "id": "b873d91d-c7f5-43e4-ad86-ef7ab7f073c9",
+      "bot": "architect",
+      "timestamp_start": "2026-09-23T00:00:00",
+      "timestamp_end": "2026-09-23T19:05:00",
+      "intent": "Births pass: rule the running-context design with Ingi after coder's prototype and release the rewritten plan",
+      "before": {
+        "assumptions": "Values read the ambient running context set by the run door; prototype would confirm",
+        "risk": "Ambient state leaking across flows; paths changing meaning across apps"
+      },
+      "plan": ".bot/goal-graph-singular/architect/births-pass-plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/goal-graph-singular/coder/proto-running-context.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Prototype: 6/6 reds green, 73 new failures in four clusters (sync set leaks, TUnit hooks, 811 outside-run sites, cross-app path meaning)"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/path/this.Authorize.cs",
+            "PLang/app/type/item/file/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified os/ is in-root for any actor; file caches bytes on the value; Data.Value keeps its answer on the called row; Start() is the async boot entry"
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/births-pass-plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Values/Data store their App (birth fact) and read the running context through it; instance AsyncLocal on the root App (no static); set only by async run doors; in-root before actor; action[name] hands out the run copy"
+        }
+      ],
+      "after": {
+        "status": "Plan rewritten and released to coder",
+        "health": "good",
+        "notes": "Reverses the earlier item-holds-its-own-context; flagged to Ingi in chat"
+      }
     }
   ]
 }

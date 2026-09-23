@@ -1,80 +1,122 @@
-# Births pass — every value is born with its context; the type object is the registry's own
+# Births pass — a value knows its App; the run knows who is running
 
-Designed with Ingi 2026-09-23. **Released to coder 2026-09-23** (after #20). Numbers from coder's inventory (`coder/births-inventory.md`, `dff9f80a7`, a Roslyn pass over the real compilation).
+Designed with Ingi 2026-09-23, rewritten after coder's prototype (`coder/proto-running-context.md`, `7d86272f6`). **Released to coder 2026-09-23.**
 
-> **You (coder) own this** once it is released. Rules and order are settled with Ingi; shapes and commit split are yours. Code below is direction; NEW marks what does not exist.
+> **You (coder) own this.** The rules and the order are settled with Ingi. Shapes, names not fixed below, and the commit split are yours. Code below is direction; NEW marks what does not exist yet.
 
 ## Why
 
-A plang value is usually born without its context, and where a context exists it is stamped on later.
+A run reaches the shared program and writes its context onto it. The generated parameter binding stamps the shared row (`PLang.Generators/Emission/Action/this.cs:370-377`, `data.Context = context`); `Data.Value()` stamps what it materializes (`data/this.cs:324`); context-aware values resolve `%var%` and check permissions with the context they STORE. Two actors running one goal at once read each other's variables and permissions — proven by coder's reds (System's handler read User's `%x%`; a literal path checked as System, its loader).
 
-- **The type object can't reach the registry.** Every item builds a bare copy of its own type (`Type => new("goal", typeof(@this))`, 34 overrides). Asked for more than its name — a choice's values, a record's fields — it reaches for the registry from inside itself (`Promote()`), has no context, and throws (`type/this.cs:593`) or falls back to a static table (`type/this.cs:163` → `GetPrimitiveOrMime`). This is why the menu can't show a choice's values.
-- **Context is nullable or stamped.** `list`/`dict` declare `_context = null!` (`list/this.cs:176`, `dict/this.cs:136`); Data's context is set after birth in many places.
-- **A run writes its context onto the shared program graph** — a live concurrency and security bug, below.
+And a value that needs more than its name can't reach the registry (the type object has no context, `type/this.cs:593`; static fallback `:163`).
 
-Ingi: "items should have their own context — it's just a reference."
+## What the prototype taught (`proto-running-context.md`)
 
-## The design: an ambient context, set by the one run door
+Values that read the running context instead of a stored one turned all six reds green. It also showed four things the first design got wrong:
 
-Every place that runs something under a context goes through one door — `goal.Run(context)` / a held call's `Run(context)` → `action.Run(context)`: the app entry (`app/this.cs:531`, User), the builder (`build/this.cs:115`, User), `goal.call` on another actor (`goal/call.cs:115`), `event.on` (`event/on.cs:49`, the target actor), the test runner (`test/run.cs:206`, the child app's User). In .NET an `AsyncLocal` set inside an async method is seen by everything it calls and is gone when it returns — the caller keeps its own. So:
+1. **A context is two things.** The ACTOR (permissions, variables, later culture) is whoever is running. The APP (root, type registry, formats) is where the value lives — a birth fact. Reading the App from the running context moved paths to another app's root (145 cross-app reads) and forced program nodes to need an actor (322 sites at `goal.PrPath` → `path.Parent`).
+2. **A synchronous `AsyncLocal` set leaks to the caller.** Setting it in the App constructor made every later flow "run as System".
+3. **TUnit doesn't flow `AsyncLocal` from a `[Before(Test)]` hook** to the test body without `TestContext.AddAsyncLocalValues()`.
+4. **Most reads outside a run need only the App.** Of 666 non-cross-app sites: ~450 are `Combine`/`Parent`/`Relative`/`MimeType`/root/`Clr` (App only); ~100 are file verbs through `Authorize` (App only when in-root); ~34 are `%var%` resolution (the running actor).
 
-- **`action.Run(context)` (and `goal.Run(context)`) set the ambient context at entry.** Every actor switch sets it by construction; there is no second place to forget. App boot sets it to the System context; the test app sets it for C# tests.
-- **A value takes the ambient context in its constructor and stores it:** private, non-nullable, never stamped. The 237 implicit conversions and ~390 direct `new`s need no call-site change — they are born under the running action's context. Implicit conversions INTO an item therefore **stay** (their only problem was having no context).
-- **A value is owned by the actor that is running when it is born.** A value computed while actor B runs belongs to B — B's variables, B's permissions.
-- **Explicit `T.Create(raw, context)` stays** for the rare site that deliberately mints a value for another context (e.g. setting up a child app's bindings from the parent).
-- **Program nodes** (goal, step, action, modifier, their lists) stay context-free by law: they store no context and reach the registry through their App (a birth fact). A value they hand out is born under the asker's ambient.
-- The existing, unused `AsyncLocal` accessor (`actor/context/this.cs:564-581`, `IContextAccessor`) becomes the ambient's home (named in the pass).
+## The design
 
-## The shared-row rule — and the live bug it fixes (first commit)
+### 1. The running context lives on the App — no static
 
-The program graph is shared by every run. Today a run writes onto it. The generated parameter binding (`PLang.Generators/Emission/Action/this.cs:370-377`):
+An `AsyncLocal` doesn't have to be static: the value lives in the async flow, the field is only the key. The root App holds it; a child app hands up to its `Parent` (`app/this.cs:78`), so a parent-loaded goal run inside a child app (the test runner) sees the child's run.
 
 ```csharp
-var data = action?.GetParameter(name, context);   // the row inside the program graph — shared by every run
-data.Context = context;                            // ← this run's context written onto the SHARED row
-return data;                                       // a plain-Data slot gets the shared row itself
+// app/this.cs — NEW
+private readonly AsyncLocal<actor.context.@this?> _running = new();
+public actor.context.@this Context
+{
+    get => Parent?.Context ?? _running.Value
+           ?? throw new InvalidOperationException("No run in progress");   // named error — yours
+    internal set { if (Parent != null) Parent.Context = value; else _running.Value = value; }
+}
 ```
 
-and `Data.Value()` keeps what it materializes on that same row (`data/this.cs:321-326`). Two runs of one goal under different actors at the same time: B's stamp overwrites A's, and A's handler resolves `%x%` in B's variables and checks path permissions as B. Typed slots copy the row's context at the same moment (`As<T>`, `data/this.cs:575-576`), so they share the window. (From reading the code; the first commit proves it with a test.)
+- **Only the run doors set it, and only inside async methods:** `action.Run(context)` (`goal/step/action/this.cs:159`) and `goal.Run(context)` (`goal/this.cs:~285`), first line: `context.App.Context = context;`. App boot sets System's in `Start()` (`app/this.cs:482`, async) — never in the constructor. Verify every door that runs under a context (app entry, builder, goal.call on another actor, event.on, test run) goes through `goal.Run`/`action.Run`; one that doesn't sets it the same way.
+- **An empty slot is a loud error** naming the value that asked. No fallback to a stored context (the prototype's was for mapping only).
+- **Thread safety is by construction:** each run sets the slot in its own flow; parallel runs each see their own; a task started inside a run inherits it; a set inside a run never flows back to the caller. Work started outside any run (timers, listener callbacks) sees whoever started it — it must come in through a run door (event.on already does).
+- **C# tests:** one TUnit-wide hook sets the test app's User context into the test body (coder: `[BeforeEvery(Test)]` + `AddAsyncLocalValues()`, or what TUnit offers). Tests that call handlers directly keep working.
+- The comment at `app/this.cs:494-495` ("there is no global current actor") is updated to the fact: the current context is per flow, on the App.
 
-**Rule: a run never writes to the shared graph.** Each run takes its own Data over the row's value, born under the running context; materialization is kept on that copy:
+### 2. What stores a context today stores its App instead
+
+Path family (`path`; `file`/`url`/`directory` delegate to it), `source`, `list`, `dict`, `computed`, `clr`, **and `Data`**. One rule, no exceptions:
 
 ```csharp
-var path = action["Path"].Copy();     // this run's own Data over the shared value, born under the running context
+// NEW on each: the birth fact, and the running context through it
+private readonly app.@this _app;                    // root, registry, formats — set at birth, non-null
+public app.@this App => _app;                        // where the value lives
+public actor.context.@this Context => _app.Context;  // who is running: actor, variables
 ```
 
-- `action[name]` — the action selects its parameter by name (parameters first, then defaults). **Replaces `GetParameter`** (verb+noun).
-- `Copy()` — a new Data over the same value (value shared, property bag copied). **Replaces `ShallowClone`**; the deep `Clone()` keeps its name.
-- `__ResolveData`'s stamp dies; plain-Data slots get a copy like typed slots.
-- **Test:** one goal run concurrently under two actors; each run sees its own variables and its own permission checks.
+- **Constructors keep taking a context** and keep its App — none of the ~600 creation sites change. No context-aware value has an implicit conversion in (`path` has only `string` out, `path/this.cs:333`), so every birth already has a context in hand.
+- **`Context` setters die** — every post-birth stamp: `data/this.cs:113-126` setter, `:324` (`contextual.Context = _context`), `Copy`'s stamp; list/dict setters that walk and stamp elements (`list/this.cs:157-176`, `dict/this.cs:95-110`) and their element stamps (`list :134, :147, :335, :345, :495, :503`; `dict :123, :279, :291`); `path`/`source` `{ get; set; }` → getter; `file`/`url`/`directory` `set => Path.Context = value`; `_context = null!`.
+- **Two questions, two members:** `x.App` = where the value lives (root, registry, formats); `x.Context` = who is running. Inside values and Data, `Context.App` reads become `App` (101 `Context.App` reads in 49 files under `PLang/app`; handlers holding their run's explicit context are fine as they are). Example: `path/file/this.Derivation.cs:20` `new @this(dir, Context)` → the derived path is born with this path's App, not the running one.
+- A Data with no value (the sentinels: `NotFound`, `new Data(name)`) may have no App; its `Context` is never asked. Shape that yours.
+
+### 3. In-root is decided by the App, before any actor
+
+`Authorize` (`path/this.Authorize.cs:27-33`) asks for the actor first. Reorder: `IsInRoot()` (`:110-124`, reads only the App: its root, its os folder, its parent apps) returns Ok before the actor is asked. Reading anything in-root then needs no actor at all: `.pr` loads, the module catalog under `os/` (Ingi: os/system reads run as the running actor — User in the builder — and pass as in-root), the settings store (`/.db/system.sqlite`, `app/this.cs:538`). Only out-of-root paths ask the running actor.
+
+### 4. A run never writes to the shared program — the owner hands out the run's copy
+
+The program graph is shared by every run. With values reading the running context, a direct read of a row no longer mixes actors' variables — but `Data.Value()` still keeps its answer on the row it was called on (`data/this.cs:322-326`). A file row read once would keep the loaded content on the shared row: the next run, any actor, is served without `Authorize` and never sees the file change.
+
+So the copy can't be optional (Ingi: "what happens when we forget Copy"):
+
+- **`action[name]` returns the run's own copy** of the parameter (value shared, property bag copied, born with the row's App). Replaces `GetParameter`. There is no runtime door to the row itself; structure readers (build, validate, the `.pr` writer) use the `Parameter`/`Default` lists, which they own.
+- The generator calls `action[name]` and never stamps (`__ResolveData`'s stamp dies). Typed slots take their view from that copy.
+- `Copy()` replaces `ShallowClone`; the deep `Clone()` keeps its name.
+- Step 1 as already built (the generator copies with the run's context) lands first; `action[name]` absorbs the copy once §1-2 exist.
+
+### 5. Program nodes stay context-free
+
+Goal, step, action, modifier and their lists store no context; they reach the registry through their App (a birth fact, already true). `goal.Path` is a path value — with §2 it answers `Parent`/`Relative` from its own App, no actor needed.
+
+## Tests (red first, then green)
+
+1. The six `SharedProgramTests` with coder's corrected premises (typed slot through `list.split Value`; list/dict literals written and read through the goal's own `.pr` writer/reader).
+2. **Concurrent:** one goal run by System and User at the same time; each run sees its own `%x%` and its own permission checks.
+3. **Literal file, two actors:** User holds the read grant, a second actor does not; the second is denied, not served from a cache. Then the file changes between runs; the second run reads the new content.
+4. **Child app:** a parent-loaded goal run in a child app resolves `%x%` in the child's run and paths against the path's own App.
+5. **Empty slot:** a value asked for its actor outside any run fails loud with its name.
+6. **No leak to the caller:** creating an App (and a second App) leaves the caller's slot unchanged.
 
 ## Demolition — what must not survive
 
-- `__ResolveData`'s `data.Context = context` on the shared row; `GetParameter`; `ShallowClone` (→ `Copy`).
-- Every post-birth context stamp on a value or Data: `clone.Context = _context` (`data/this.cs:719`), `contextual.Context = _context` (`data/this.cs:324`), list/dict `Context` setters that walk and stamp elements, `list.Row` stamping, `_context = null!`.
-- `type.@this`'s `Context` and `Promote()` with its throw; `ClrType`'s static fallback (`type/this.cs:163`); the static primitive table, `GetPrimitiveOrMime`, `ClrFromMime` (open-items #14).
-- The 34 `Type => new(...)` overrides (a value asks the registry through its context; a program node through its App); `new app.type.@this` outside the registry.
-- `test.Create` as a static factory (#24) — the test collection mints its tests.
-- `action.ReturnTypeName` as a string (#15) — the return type is the type object.
+- Statics: the unused `IContextAccessor` / `actor.context.@thisAccessor` (`actor/context/this.cs:561-581`) and `IVariablesAccessor` / `variable.list.@thisAccessor` (`variable/list/this.cs:617-632`) — tests only; die with their tests. No static slot is added.
+- `GetParameter`; `ShallowClone` (→ `Copy`); `__ResolveData`'s stamp.
+- Every `Context` setter and post-birth context stamp listed in §2; `_context = null!`.
+- `Context.App` reads inside values and Data (→ `App`).
+- `type.@this`'s `Context` and `Promote()` with its throw; `ClrType`'s static fallback (`type/this.cs:163`); the static primitive table, `GetPrimitiveOrMime`, `ClrFromMime` (#14).
+- The 34 `Type => new(...)` overrides and `new app.type.@this` outside the registry — a value asks `App.Type[...]`.
+- `test.Create` as a static factory (#24); `action.ReturnTypeName` as a string (#15).
 
-**Stays:** program nodes context-free with their birth facts; readers; the typed ask; the result doors; implicit conversions in both directions; `ICreate`'s static members (C#-mandated); `Clone()` (deep).
+**Stays:** program nodes context-free with their App; explicit `context` parameters on constructors and `Run(context)`; implicit conversions in both directions; `ICreate`'s static members (C#-mandated); `Clone()` (deep); one context per actor and the variable overlay for forks.
 
 ## Order — each step compiles and is its own commit
 
-1. **The shared-row fix** — `action[name]`, `Copy()`, no stamp on the shared row; the two-actor concurrency test first (red), then green. Cost (agreed with Ingi): typed slots already get a new view per run from `As<T>()` (`data/this.cs:568`) — that view becomes the run's copy, born under the running context instead of copying the row's; plain-Data slots gain one `Copy()` per parameter per action run. `.Value()` never creates a Data: the first call opens the value and keeps it on the run's copy.
-2. **The ambient** — set in `action.Run`/`goal.Run`, at boot, in the test app.
-3. **Values born with the ambient** — the private non-nullable context in the value constructors; the stamps and `null!` die. The list's behaviour moves to a context-free base the program lists derive; the value list adds its context (Ingi confirmed the direction).
-4. **The type object is the registry's own** — values ask through their context, program nodes through their App; `Promote()`, the static fallback and primitive statics die; the menu template gets choice values.
+1. **Shared-row fix** as built on the step-1 tree + tests 1-3 (red first). Commit.
+2. **The slot** on the App, the run doors, boot in `Start()`, the TUnit hook; tests 5-6.
+3. **App as birth fact** for values and Data; setters and stamps die; `Context.App` → `App`; `Authorize` in-root first; `action[name]` hands out the copy; test 4. The step that clears the prototype's four clusters — six suites by name after it.
+4. **The type object is the registry's own** — values ask `App.Type[...]`; `Promote()`, the static fallback and primitive statics die; the menu template gets choice values (#27).
 5. **#15 and #24.**
-Six suites by name after each; tests move with the code they exercise.
+
+Six suites by name after each step; tests move with the code they exercise.
 
 ## OBP validation
 
 | Surface | Check |
 |---|---|
-| value context | private, non-nullable, set at birth from the ambient — no late stamp |
-| the ambient | set by the one run door every execution goes through; scoped by async flow, never leaks back to a caller |
-| program graph | read-only for runs; no context field; birth facts only |
-| `action[name]` | the owner selects its own parameter; no verb+noun |
+| `app.Context` | the App owns "who runs in me now"; instance `AsyncLocal`, no static; set only by the run doors |
+| value/Data `App` | birth fact, private, non-null, never stamped |
+| value/Data `Context` | a getter through the App — no stored copy, no setter (no late stamp, no flat copy) |
+| `x.App` vs `x.Context` | two questions, two members; `Context.App` inside values would be a second way to the App |
+| `action[name]` | the owner hands out the run's parameter; no verb+noun; no door to the shared row at run time |
 | `Copy()` / `Clone()` | two honest operations: new wrapper over the same value / deep copy |
+| `Authorize` | in-root answered by the App (the path's own), the actor only when needed |
 | registry `Type[...]` | selection + lifecycle; each type object minted once |
