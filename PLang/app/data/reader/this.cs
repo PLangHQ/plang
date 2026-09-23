@@ -74,21 +74,36 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                         value = eager.Read(ref reader, null, ctx);
                     else if (typeRef is not { IsNull: false })
                     {
+                        // Loud, never a guess — plang is strongly typed. The build's retry hands this
+                        // message to the LLM, so it says what every row must carry.
                         var preview = System.Text.Encoding.UTF8.GetString(reader.RawValue());
                         if (preview.Length > 120) preview = preview[..120] + "…";
+                        var slot = string.IsNullOrEmpty(name) ? "(unnamed)" : name;
                         throw new JsonException(
-                            $"invalid .pr schema: value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}' "
-                            + $"has no declared type. Value was: {preview}");
+                            $"parameter '{slot}' has no type. Every parameter carries its type — "
+                            + $"{{\"name\": \"{slot}\", \"type\": {{\"name\": \"text\"}}, \"value\": …}}, "
+                            + $"the type as the menu declares it ('item' where the slot is open). Value was: {preview}");
                     }
-                    else if (reader.Peek() == global::app.channel.serializer.TokenKind.String
-                             && (typeRef.Template != null
-                                 || ctx.Context.App.Type[typeRef.Name]?.ClrType == typeof(global::app.variable.@this)))
-                        // A builder-authored SEMANTIC string — a %ref%/template (the IsVariable
-                        // birth gate needs the decoded content) or a variable NAME (type.Create
-                        // resolves it to its binding). The content door owns these; the kind-parse
-                        // stays lazy on the content source. A literal string under any other type
-                        // is NOT semantic — it rides the wire arm below (strict, byte-identical).
-                        value = typeRef.Create(reader.String(), ctx.Context);
+                    else if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
+                    {
+                        var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
+                        // plang's own %var% syntax, parsed — never a guessed type: a string carrying a
+                        // variable reference is born a template of its row's type.
+                        if (typeRef.Template == null && global::app.type.item.text.@this.HasVariable(slice))
+                            typeRef = global::app.type.@this.Create(typeRef.Name, typeRef.Kind?.Name, typeRef.Strict, ctx.Context, "plang");
+                        // A SEMANTIC string — a %ref%/template (the IsVariable birth gate needs the
+                        // decoded content) or a variable NAME (type.Create resolves it to its binding) —
+                        // takes the content door; the kind-parse stays lazy on the content source. A
+                        // literal string under any other type rides the wire (strict, byte-identical).
+                        value = typeRef.Template != null
+                                || ctx.Context.App.Type[typeRef.Name]?.ClrType == typeof(global::app.variable.@this)
+                            ? typeRef.Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
+                            : typeRef.Create(slice, ctx.Context,
+                                ctx.Context.Actor?.Channel.Serializers?.Transport
+                                    ?? throw new JsonException(
+                                        "wire capture reached before the actor channel wired its "
+                                        + "transport serializer — cannot decode a .pr value slot."));
+                    }
                     else
                         // EVERY other slot — string tokens included — is a wire: a VERBATIM Slice
                         // (RawValue decodes strings, so it can't serve here), with the capturing

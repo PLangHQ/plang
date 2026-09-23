@@ -34,6 +34,12 @@ public abstract record @this(string Name, string TypeName)
     /// </summary>
     public virtual void EmitAttach(StringBuilder sb) { }
 
+    /// <summary>
+    /// Emits this property's literal verdict inside <c>Parse()</c> — open a literal through its
+    /// typed view and collect the decline. Default: nothing ([Code] slots hold no literal).
+    /// </summary>
+    public virtual void EmitParse(StringBuilder sb) { }
+
     /// <summary>Lowercased parameter name used in .pr lookups.</summary>
     protected string ParamName => Name.ToLowerInvariant();
     /// <summary>Internal backing field name (used by [Code] service slots).</summary>

@@ -23,13 +23,23 @@ public partial class @this
             causes.Add(bindError);
         else if (handler is global::app.module.IClass own)
         {
-            if (await own.Validate() is { } complaint)
-                causes.Add(complaint);
-            else
+            // Each literal must be a value its slot can take — the build names the fix to the LLM.
+            var declined = await own.Parse();
+            foreach (var decline in declined)
+                causes.Add(new global::app.error.Error(
+                    $"{decline.Message} Leave it out if the step does not name it — never emit \"\" as a placeholder.",
+                    decline.Key, decline.StatusCode));
+            // The handler judges and finishes only values its slots could take.
+            if (declined.Count == 0)
             {
-                var built = await own.Build();
-                if (!built.Success) causes.Add(built.Error ?? new global::app.error.Error("Build() failed", "BuildFailed", 400));
-                else await context.Variable.Set("!buildData", built);
+                if (await own.Validate() is { } complaint)
+                    causes.Add(complaint);
+                else
+                {
+                    var built = await own.Build();
+                    if (!built.Success) causes.Add(built.Error ?? new global::app.error.Error("Build() failed", "BuildFailed", 400));
+                    else await context.Variable.Set("!buildData", built);
+                }
             }
         }
 

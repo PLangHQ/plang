@@ -265,13 +265,39 @@ public class ValidateActionsTests
             }
         };
 
+        // The .pr reader stamps a %ref% row a template of its type — author it the same way.
+        global::PLang.Tests.TemplateStamp.Apply(actions[0]);
+
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        // %flag% should NOT be converted — it's a variable reference
+        // %flag% is unknown at build — it stays the authored template, never judged as a bool
         var leftParam = actions[0].Parameter.First(p => p.Name == "Left");
-        await Assert.That((await leftParam.Value())?.ToString()).IsEqualTo("%flag%");
+        await Assert.That(leftParam.HasVariableReference).IsTrue();
+        await Assert.That(leftParam.Peek().RawText).IsEqualTo("%flag%");
+    }
+
+    // A literal its slot's declared type cannot take is the action's own verdict — asked through the
+    // declared type's create, the door the typed read opens at run.
+    [Test]
+    public async Task ValidateActions_LiteralTheSlotCannotTake_FailsWithTeaching()
+    {
+        var actions = new StepActions
+        {
+            new Action
+            {
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
+                Name = "sleep",
+                Parameter = new List<Data> { new("Ms", "not a number", context: _app.User.Context) }
+            }
+        };
+
+        var result = await _app.Run(For(actions), _app.User.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("parameter 'Ms' cannot be a number");
+        await Assert.That(result.Error!.Message).Contains("never emit \"\" as a placeholder");
     }
 
     // The build pass asks each bound handler for its own verdict: variable.set judges a strict

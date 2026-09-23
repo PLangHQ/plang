@@ -29,4 +29,12 @@ public interface IClass
     /// needs it. Null when nothing is wrong — the default.</summary>
     System.Threading.Tasks.Task<global::app.error.IError?> Validate()
         => System.Threading.Tasks.Task.FromResult<global::app.error.IError?>(null);
+
+    /// <summary>Build-time verdict on the handler's LITERAL parameters — each opened through its own
+    /// typed view, the door the run opens. A template, a variable, an absent slot and a slot holding
+    /// a domain object are skipped; nothing resolves, nothing reads a resource. One error per literal
+    /// its slot declines, carrying the type's own reason. Generated per handler; empty by default.</summary>
+    System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.IError>> Parse()
+        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.IError>>(
+            System.Array.Empty<global::app.error.IError>());
 }

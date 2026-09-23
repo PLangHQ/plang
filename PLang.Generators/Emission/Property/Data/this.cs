@@ -171,6 +171,31 @@ public sealed record @this(
             sb.AppendLine($"        else if ({Local}.Peek() is global::app.type.item.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
     }
 
+    /// <summary>
+    /// A literal this slot can judge: a typed value slot (not plain Data, not a name slot) whose
+    /// type is a value type under <c>app.type.item</c> — the open <c>item</c> slot takes anything,
+    /// and a domain object (action, actor, goal, …) is built by its own walk, not parsed here.
+    /// </summary>
+    private bool IsLiteralSlot => !IsPlainData && !IsName && InnerType != null
+        && InnerType.StartsWith("global::app.type.item.", System.StringComparison.Ordinal)
+        && InnerType != "global::app.type.item.@this";
+
+    public override void EmitParse(StringBuilder sb)
+    {
+        if (!IsLiteralSlot) return;
+        // A template or a variable is unknown at build (judging must not resolve); an absent
+        // optional slot has nothing to judge. The typed view's own door is the verdict — a
+        // decline lands on the view (Success false, the type's reason in Error).
+        sb.AppendLine($"        if (!{Name}.HasVariableReference && {Name}.Peek() is {{ IsNull: false }} and not global::app.variable.@this)");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            await {Name}.Value();");
+        sb.AppendLine($"            if (!{Name}.Success)");
+        sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
+        sb.AppendLine($"                    $\"parameter '{Name}' cannot be a {{Context.App.Type.Name(typeof({InnerType}))}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
+        sb.AppendLine($"                    \"ParameterValue\", 400));");
+        sb.AppendLine("        }");
+    }
+
     public override void EmitSnapshotEntry(StringBuilder sb)
     {
         // TypeName comes from the type system — no quote/backslash escapes needed.

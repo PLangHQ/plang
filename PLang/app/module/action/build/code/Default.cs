@@ -259,35 +259,19 @@ public class Default : IBuilder
 
         var step = (await action.Step.Value())!;
 
-        // The same instances the step holds, for the construction passes that still take a plain list.
-        var actions = new List<global::app.goal.step.action.@this>();
-        for (int i = 0; i < step.Action.Count; i++) actions.Add(step.Action[i]);
-
-        var normalizationErrors = NormalizeParameterTypes(actions, modules, context);
-
-        foreach (var a in actions)
+        for (int i = 0; i < step.Action.Count; i++)
         {
+            var a = step.Action[i];
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (a.Parameter != null)
-                foreach (var p in a.Parameter) paramNames.Add(p.Name);
+            foreach (var p in a.Parameter) paramNames.Add(p.Name);
             a.Default = modules.GetDefaults(a.Module.Name, a.Name, paramNames) is { } defs
                 ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
         }
 
         // Construction is done; the step judges itself and the builder only reacts. The verdict stays
-        // whole — it names the step, which the re-prompt needs. Normalization failures are the
-        // builder's own — it did the converting — so they ride as causes beside it.
-        var verdict = await step.Validate(context);
-        if (verdict != null || normalizationErrors.Count > 0)
-        {
-            var causes = normalizationErrors
-                .Select(e => (global::app.error.IError)new global::app.error.Error(e, "NormalizeParameter", 400))
-                .ToList();
-            if (verdict != null) causes.Add(verdict);
-
-            return context.Error(new global::app.error.Error(
-                string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes });
-        }
+        // whole — it names the step, which the re-prompt needs.
+        if (await step.Validate(context) is { } verdict)
+            return context.Error(verdict);
 
         // The chain finishes itself — each action binds its handler, runs its Validate()/Build()
         // hooks and walks what it holds (modifiers, recovery, branch body). The builder reacts.
@@ -328,193 +312,6 @@ public class Default : IBuilder
     {
 
         return await action.Context.App.Save();
-    }
-
-    /// <summary>
-    /// Normalizes parameter values to match their declared type.
-    /// LLMs are non-deterministic — they may produce "false" (string) instead of false (bool).
-    /// This runs at build time so the .pr file has correct types.
-    /// Returns conversion errors so the caller can carry them as causes beside the graph's own
-    /// verdicts — without this, an LLM-emitted value that can't convert to the declared type
-    /// would silently keep the wrong-typed value and the runtime would fail later.
-    /// </summary>
-    internal static List<string> NormalizeParameterTypes(System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> actions, global::app.module.list.@this modules,
-        actor.context.@this context)
-    {
-        var errors = new List<string>();
-        foreach (var a in actions)
-        {
-            if (a.Parameter == null) continue;
-
-            // Stamp types from the action schema, OVERRIDING any LLM-emitted type that
-            // disagrees. The LLM tags the value's content shape (404 → "int"); the schema
-            // tags the parameter's declared CLR type (Key → "string"). The schema wins —
-            // it's the contract, not the LLM's view of the value.
-            var actionType = modules.GetActionType(a.Module.Name, a.Name);
-            // The catalog element's declared rows — the ONE reflection site, read for nullable-slot
-            // detection below instead of re-reflecting with a NullabilityInfoContext.
-            var rows = a.Module[a.Name]?.Property.Rows;
-            if (actionType != null)
-            {
-                var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                foreach (var p in a.Parameter)
-                {
-                    var schemaProp = props.FirstOrDefault(sp =>
-                        string.Equals(sp.Name, p.Name, StringComparison.OrdinalIgnoreCase));
-                    if (schemaProp == null) continue;
-                    var typeName = context.App.Type.GetTypeName(schemaProp.PropertyType);
-                    if (typeName != "object")
-                        p.Declare(app.type.@this.Create(typeName, context: context), context);
-
-                    // plang-types: stamp kind alongside type when the declared
-                    // type carries a static Build(value) hook. Separate field
-                    // on the .pr — never "type:kind". Skip variable refs
-                    // (%var% values resolve at runtime); an authored string
-                    // rides as text and presents its string face here.
-                    var sv = p.Peek() as global::app.type.item.text.@this;
-                    if (p.Peek() is not null && !(sv != null && sv.StartsWith("%") && sv.EndsWith("%")))
-                    {
-                        var declared = schemaProp.PropertyType;
-                        var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
-                        if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
-                            underlying = underlying.GetGenericArguments()[0];
-                        // Build through the family's eager door and stamp the param with the built
-                        // value's OWN type descriptor ({name, kind}) — one construction door (image
-                        // parses its path extension → jpg, number reads the literal's precision → int).
-                        // A decline (null, or an error on the throwaway carrier) → no stamp; never
-                        // fail the build over a kind probe.
-                        // `underlying` is the DECLARED param CLR type — an identity lookup ("what plang
-                        // type IS this"). The indexer is never-null; a POCO param answers the clr entity,
-                        // which wraps the authored value in a generic carrier (kind `*`). That is not a
-                        // real kind refinement — only a value with its OWN item type (image → jpg, number
-                        // → int) stamps; a clr carrier leaves the param on its declared type.
-                        var entity = context.App.Type[underlying];
-                        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name), context: context);
-                        if (entity.Create(p.Peek(), carrier) is { Type.Kind: not null } built
-                            && built is not global::app.type.clr.@this)
-                            p.Declare(built.Type, context);
-                    }
-                }
-            }
-
-            foreach (var p in a.Parameter)
-            {
-                if (p.Peek() is null) continue;
-                // An authored string rides as text — its string face carries
-                // the %var%-reference / empty / catalog-description judgements.
-                var face = p.Peek() as global::app.type.item.text.@this;
-                if (face != null && face.StartsWith("%") && face.EndsWith("%")) continue; // variable reference
-                if (p.Type == null) continue;
-
-                // LLM-emitted "" for an unset nullable slot is an unset slot, not a value to
-                // convert. For a non-nullable slot the empty string stays, so the conversion
-                // error surfaces and the build retries.
-                if (face is { } emptyFace && !emptyFace.IsTruthy()
-                    && rows?.FirstOrDefault(r => string.Equals(r.Name, p.Name, StringComparison.OrdinalIgnoreCase))?.Nullable == true)
-                {
-                    p.SetValue(null);
-                    continue;
-                }
-
-                // Catalog descriptions ("int = 1", "%var% string", "list<int>?") are schema
-                // metadata produced by Modules.Describe(), not values to normalize. They
-                // surface when the catalog is fed back through validate (BuilderValidateValid
-                // smoke test). Skip — coercing a description string to its declared type fails.
-                if (face is { } desc && IsCatalogDescription(desc, p.Type.Name)) continue;
-
-                var targetType = context.App.Type.Get(p.Type.Name);
-                if (targetType == null) continue;
-
-                // Scalar PlangType domain types (Path, etc.) carry their wire representation
-                // AS the primitive — `Resolve(rawInput, context)` is the runtime constructor.
-                // If we eagerly convert here, the saved .pr inflates the primitive into a
-                // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
-                // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
-                // generator's Resolve convention when the action actually executes.
-                if (global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
-
-                // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
-                // the .pr — runtime resolves the chosen name via the type's own path
-                // (App.GetActor, ctor registry, ...). Eagerly constructing here would
-                // either fail (Actor has no usable string ctor) or produce a stateful
-                // object that doesn't round-trip cleanly. Same shape as the scalar carve-out.
-                if (context.App.Type.Choice.Has(targetType)) continue;
-
-                // Already correctly typed? Skip (e.g. value is bool, target is bool).
-                if (targetType.IsInstanceOfType(p.Peek())) continue;
-
-                // Normalize the value to its declared type: p.Type builds itself from the value
-                // item (kind from p.Type, declared in loop 1) — string → bool/int, numeric/bool →
-                // text. The LLM emitting `Key=404 (int)` for a string-declared Key becomes a text
-                // value here. The content door is the throw-on-decline boundary, so a bad value
-                // collects into errors for LlmFixer to retry.
-                try { p.SetValue(p.Type.Create(p.Peek(), context)); }
-                catch (System.InvalidOperationException ex)
-                { errors.Add($"{a.Module}.{a.Name}.{p.Name}: {ex.Message}"); }
-            }
-
-            // Template flag — the ONE %var% detection, done at build. A param whose value
-            // carries a %var% is an authored template; stamp type.template="plang" so the
-            // .pr carries it and runtime read/render trust it (never re-scan content). Runs
-            // LAST so type/kind normalization + conversion can't clobber the flag. The leaf
-            // answers its own raw string face (text's chars, a source's raw).
-            foreach (var p in a.Parameter)
-            {
-                var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
-                if (raw == null || !global::app.type.item.text.@this.HasVariable(raw)) continue;
-                var t = p.Type;
-                p.Declare(app.type.@this.Create(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, context, "plang"), context);
-            }
-        }
-        return errors;
-    }
-
-    /// <summary>
-    /// Recognizes catalog description strings produced by <see cref="global::app.module.list.@this.Describe"/>:
-    /// the four forms <c>"X"</c>, <c>"X?"</c>, <c>"X = default"</c>, <c>"%var% X"</c> (and
-    /// combinations). When the catalog itself is fed back through validate, every parameter's
-    /// Value is one of these — coercing them through TypeMapping fails because they're
-    /// metadata, not data. The match is anchored on <paramref name="typeName"/> (already
-    /// stamped from the schema) so an LLM-emitted real value can't accidentally trip it.
-    /// </summary>
-    // internal-static for unit tests — the helper has 4 distinct match shapes and the
-    // production callers only exercise the match-true path through integration tests.
-    internal static bool IsCatalogDescription(global::app.type.item.text.@this value, string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName)) return false;
-        // Span matching is the BCL edge — the text lowers here, inside the
-        // method that owns the parse, never at call sites.
-        var v = value.Clr<string>()!.AsSpan().Trim();
-        if (v.StartsWith("%var% ")) v = v[6..];
-        if (!v.StartsWith(typeName)) return false;
-        var rest = v[typeName.Length..];
-        if (rest.Length == 0) return true;
-        if (rest[0] == '?') rest = rest[1..];
-        if (rest.Length == 0) return true;
-        return rest.StartsWith(" = ");
-    }
-
-    /// <summary>
-    /// Capability-interface properties (Context, Step, Channels, Event, Static) are
-    /// wired by the source generator from the execution context — they're not
-    /// user-supplied parameters and the LLM never emits them. Skip them when
-    /// computing the required-parameter set. Mirrors the filter in <c>Modules.Describe()</c>.
-    /// </summary>
-    private static bool CapabilityPropName(System.Reflection.PropertyInfo prop)
-    {
-        var declaring = prop.DeclaringType;
-        if (declaring == null) return false;
-
-        System.Type[] capabilityIfaces =
-        [
-            typeof(global::app.module.IContext),
-            typeof(global::app.module.IStep),
-            typeof(global::app.module.IChannel),
-            typeof(global::app.module.IStatic),
-        ];
-
-        return capabilityIfaces.Any(iface =>
-            iface.GetProperty(prop.Name) != null && iface.IsAssignableFrom(declaring));
     }
 
 

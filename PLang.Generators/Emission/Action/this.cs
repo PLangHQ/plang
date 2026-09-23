@@ -51,6 +51,7 @@ public static class @this
         EmitDataAndErrorHelpers(sb, info);
         EmitResolve(sb, info);
         EmitAttach(sb, info);
+        EmitParse(sb, info);
         EmitExecute(sb);
         EmitHelpers(sb);
         EmitSnapshotPublic(sb);
@@ -252,6 +253,33 @@ public static class @this
                 }
 
             """);
+    }
+
+    /// <summary>
+    /// The build-time literal verdict (<c>IClass.Parse</c>): each literal parameter opened through
+    /// its own typed view on this bound instance, a decline collected per parameter.
+    /// </summary>
+    private static void EmitParse(StringBuilder sb, ActionClassInfo info)
+    {
+        var body = new StringBuilder();
+        foreach (var prop in info.Properties)
+            prop.EmitParse(body);
+        const string returns = "System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.IError>>";
+        if (body.Length == 0)
+        {
+            // No literal slot — nothing to open, so nothing to await.
+            sb.AppendLine($"    public {returns} Parse()");
+            sb.AppendLine($"        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.IError>>(System.Array.Empty<global::app.error.IError>());");
+            sb.AppendLine();
+            return;
+        }
+        sb.AppendLine($"    public async {returns} Parse()");
+        sb.AppendLine("    {");
+        sb.AppendLine("        var __declined = new System.Collections.Generic.List<global::app.error.IError>();");
+        sb.Append(body);
+        sb.AppendLine("        return __declined;");
+        sb.AppendLine("    }");
+        sb.AppendLine();
     }
 
     private static void EmitAttach(StringBuilder sb, ActionClassInfo info)
