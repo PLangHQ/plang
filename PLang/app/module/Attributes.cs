@@ -60,23 +60,3 @@ public sealed class IsInitiatedAttribute : Attribute { }
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class IsNotNullAttribute : Attribute { }
-
-
-/// <summary>
-/// Provides a PLang step example and its expected parameter mapping for the builder.
-/// Multiple examples per action help the LLM map natural language to the correct parameters.
-/// </summary>
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public sealed class ExampleAttribute : Attribute
-{
-    /// <summary>PLang step text (e.g., "before step, call LogStep").</summary>
-    public string Plang { get; }
-    /// <summary>Expected parameter mapping (e.g., "Type=BeforeStep, Goal=LogStep").</summary>
-    public string Mapping { get; }
-
-    public ExampleAttribute(string plang, string mapping)
-    {
-        Plang = plang;
-        Mapping = mapping;
-    }
-}

@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using app.variable;
 
 namespace app.module.action.goal;
@@ -11,7 +10,6 @@ public partial class Return : IContext
 {
     public partial data.@this? Data { get; init; }
 
-    [Description("Number of goal levels to exit. 1 = current goal, 2 = current + caller.")]
     [Default(1)]
     public partial data.@this<global::app.type.item.number.@this> Depth { get; init; }
 
