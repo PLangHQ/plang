@@ -500,11 +500,10 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>
-    /// Returns matching event GoalCalls for the given owner and phase.
+    /// Returns the calls the matching event bindings run for the given owner and phase.
     /// Owner type determines scope: Step → step bindings, Goal → goal bindings.
-    /// Used by Event resolver (IEvent) during dot-path traversal.
     /// </summary>
-    public List<GoalCall> GetEventBindings(object owner, module.EventPhase phase)
+    public List<Action> GetEventBindings(object owner, module.EventPhase phase)
     {
         var events = Events;
         var (beforeType, afterType) = owner switch
@@ -530,8 +529,8 @@ public sealed class @this : IDisposable
 
         var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: moduleName, actionName: actionName);
         return bindings
-            .Where(b => b.GoalToCall != null)
-            .Select(b => b.GoalToCall!)
+            .Where(b => b.Call != null)
+            .Select(b => b.Call!)
             .ToList();
     }
 

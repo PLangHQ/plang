@@ -1,6 +1,6 @@
 using app.variable;
 
-namespace app.module.@event;
+namespace app.module.action.@event;
 
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext

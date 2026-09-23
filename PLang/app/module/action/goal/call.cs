@@ -39,8 +39,8 @@ public partial class Call : IContext
         // the file's root) stays bare — it wins by rule and cannot be shadowed. A goal not found yet
         // may be built later in the same run, so the name is left as written.
         var caller = __action?.Step?.Goal;
-        var authored = Name.Peek()?.ToString();
-        if (!string.IsNullOrEmpty(authored) && !Name.HasVariableReference
+        var authored = Name.HasVariableReference ? null : (await Name.Value())?.RawText;
+        if (!string.IsNullOrEmpty(authored)
             && await Context.App.Goal.GetAsync(authored, caller) is { } target
             && !Equals(target.Path, caller?.Path) && target.Address is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))

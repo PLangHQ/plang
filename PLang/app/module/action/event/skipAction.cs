@@ -1,6 +1,6 @@
 using app.variable;
 
-namespace app.module.@event;
+namespace app.module.action.@event;
 
 /// <summary>
 /// Skips the current action and returns a custom value instead.

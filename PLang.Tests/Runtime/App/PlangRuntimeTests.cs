@@ -89,8 +89,8 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
 
         // Register a before-step event
-        var onAction = new global::app.module.@event.On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
-            GoalToCall = new GoalCall { Name = "LogBefore" },
+        var onAction = new global::app.module.action.@event.On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
+            Goal = Make.Call("LogBefore"),
             StepPattern = (global::app.type.item.text.@this)"*"
         };
         await onAction.Run();
@@ -100,7 +100,7 @@ public class PlangRuntimeTests : IDisposable
 
         var bindings = step.Events.Before;
         await Assert.That(bindings.Count).IsGreaterThan(0);
-        await Assert.That(bindings[0].Name).IsEqualTo("LogBefore");
+        await Assert.That(bindings[0].Parameter.First(p => p.Name == "Name").Peek()?.ToString()).IsEqualTo("LogBefore");
     }
 
     // --- Step 5: Full PLang runtime loop ---

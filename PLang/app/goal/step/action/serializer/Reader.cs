@@ -58,7 +58,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "parameter":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Parameter.Add(dataReader.Read(reader.RawValue(), ctx));
+                        action.Parameter.Add(Parameter(reader.RawValue(), ctx, dataReader));
                     reader.EndArray();
                     break;
                 case "default":
@@ -103,5 +103,38 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
+    }
+
+    // One parameter row. A row whose declared type is `action` holds program, not a value: its
+    // action is read HERE, by the reader born with the step, so it is born holding that step — the
+    // same birth fact as recovery and child; the type-reader registry cannot mint one. Every other
+    // row is a value and rides the data reader.
+    private global::app.data.@this Parameter(byte[] raw, global::app.type.reader.ReadContext ctx,
+        global::app.data.reader.@this dataReader)
+    {
+        var utf8 = new System.Text.Json.Utf8JsonReader(raw);
+        utf8.Read();
+        var row = new global::app.channel.serializer.json.Reader(utf8, raw);
+
+        var name = "";
+        global::app.type.@this? type = null;
+        row.BeginObject();
+        while (row.NextName(out var key))
+        {
+            switch (key)
+            {
+                case "name": name = row.String(); break;
+                case "type":
+                    type = ctx.Context.App.Type.Reader.Reader("type", null, ctx.Context)
+                        .Read(ref row, null, ctx) as global::app.type.@this;
+                    break;
+                case "value" when type?.Name == "action":
+                    return new global::app.data.@this(name, Read(ref row, null, ctx), context: ctx.Context);
+                case "value":
+                    return dataReader.Read(raw, ctx);
+                default: row.Skip(); break;
+            }
+        }
+        return dataReader.Read(raw, ctx);
     }
 }

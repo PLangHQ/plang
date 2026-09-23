@@ -61,6 +61,17 @@ public static class Make
         return action;
     }
 
+    /// <summary>A <c>goal.call</c> action: <c>Name</c> is the goal, each argument one row of its
+    /// <c>Parameter</c> list — the shape a callback slot holds.</summary>
+    public static global::app.goal.step.action.@this Call(string goal, params (string name, object? value)[] arguments)
+    {
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        if (arguments.Length == 0) return Action("goal", "call", ("Name", goal));
+        var rows = arguments.Select(a => new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
+        return Action("goal", "call", ("Name", goal),
+            ("Parameter", new global::app.type.item.list.@this(rows, ctx)));
+    }
+
     /// <summary>
     /// A parameter with an explicitly-declared type — used inside
     /// <see cref="Action"/>'s parameter list when the declared type differs from the

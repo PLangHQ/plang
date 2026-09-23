@@ -42,6 +42,28 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
         await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
     }
 
+    // A row declared `action` holds program: the holding action's reader reads it, so the held action
+    // is born holding the same step (the registry could not mint one).
+    [Test]
+    public async Task ActionTypedRow_ReadsAsHeldAction_BornWithTheStep()
+    {
+        var goal = await ReadOneAction("""
+        [ { "module": "event", "name": "on",
+            "parameter": [
+              { "name": "Trigger", "type": { "name": "text" }, "value": "BeforeGoal" },
+              { "name": "Goal", "type": { "name": "action" },
+                "value": { "module": "goal", "name": "call",
+                           "parameter": [ { "name": "Name", "type": { "name": "text" }, "value": "LogIt" } ] } } ] } ]
+        """);
+        var on = goal.Step[0].Action[0];
+        var held = on.Parameter.First(p => p.Name == "Goal").Peek() as global::app.goal.step.action.@this;
+        await Assert.That(held).IsNotNull();
+        await Assert.That(held!.Module.Name).IsEqualTo("goal");
+        await Assert.That(held.Name).IsEqualTo("call");
+        await Assert.That(held.Step).IsSameReferenceAs(goal.Step[0]);
+        await Assert.That((await held.Parameter.First(p => p.Name == "Name").Value())?.RawText).IsEqualTo("LogIt");
+    }
+
     [Test]
     public async Task WireKey_parameter_PopulatesParameter()
     {

@@ -15,32 +15,15 @@ public class Events : IContext
 
     public Events(object owner) => _owner = owner;
 
-    public List<GoalCall> Before => Stamp(GetBindings(EventPhase.Before), EventPhase.Before);
-    public List<GoalCall> After => Stamp(GetBindings(EventPhase.After), EventPhase.After);
+    /// <summary>The calls bound to run before this owner — resolved from this owner's context,
+    /// where <c>event.on</c> registered them. One context per actor, so the owner's context IS its
+    /// actor's context.</summary>
+    public List<app.goal.step.action.@this> Before
+        => Context == null ? [] : Context.GetEventBindings(_owner, EventPhase.Before);
 
-    /// <summary>
-    /// Resolves event bindings from this owner's context — where <c>event.on</c> registered
-    /// them. One context per actor, so the owner's context IS its actor's context.
-    /// </summary>
-    private List<GoalCall> GetBindings(EventPhase phase)
-    {
-        if (Context == null) return [];
-        return Context.GetEventBindings(_owner, phase);
-    }
-
-    private List<GoalCall> Stamp(List<GoalCall> calls, EventPhase phase)
-    {
-        if (_owner is app.goal.step.@this step)
-        {
-            var placeholder = new app.goal.step.action.@this { Step = step };
-            foreach (var gc in calls)
-            {
-                gc.Action = placeholder;
-                gc.Event = new EventContext { Step = step, Phase = phase };
-            }
-        }
-        return calls;
-    }
+    /// <summary>The calls bound to run after this owner.</summary>
+    public List<app.goal.step.action.@this> After
+        => Context == null ? [] : Context.GetEventBindings(_owner, EventPhase.After);
 }
 
 public enum EventPhase

@@ -28,7 +28,9 @@ public sealed class @this
     /// that don't use the payload should take the arguments as (_, _, _) — architect §4.4.
     /// </summary>
     public Func<actor.context.@this, Action?, data.@this?, Task<data.@this>> Handler { get; }
-    public GoalCall? GoalToCall { get; }
+    /// <summary>The action this binding runs when it fires (event.on's held call) — null for a
+    /// binding registered from C# with only a handler.</summary>
+    public Action? Call { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
     public bool IsRegex { get; }
@@ -83,7 +85,7 @@ public sealed class @this
         int priority = 0,
         bool stopOnError = true,
         bool isRegex = false,
-        GoalCall? goalToCall = null,
+        Action? call = null,
         string? channelName = null)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
@@ -95,7 +97,7 @@ public sealed class @this
         Priority = priority;
         StopOnError = stopOnError;
         IsRegex = isRegex;
-        GoalToCall = goalToCall;
+        Call = call;
         ChannelName = channelName;
     }
 

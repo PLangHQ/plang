@@ -85,7 +85,7 @@ public sealed class ExampleAttribute : Attribute
 {
     /// <summary>PLang step text (e.g., "before step, call LogStep").</summary>
     public string Plang { get; }
-    /// <summary>Expected parameter mapping (e.g., "Type=BeforeStep, GoalToCall=LogStep").</summary>
+    /// <summary>Expected parameter mapping (e.g., "Type=BeforeStep, Goal=LogStep").</summary>
     public string Mapping { get; }
 
     public ExampleAttribute(string plang, string mapping)

@@ -176,11 +176,11 @@ public partial class discover : IContext
         // + auto (handler [RequiresCapability], string→text at the attribute perimeter).
         ExtractUserTags(prGoal, file);
         var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        ExtractAutoTags(prGoal, file, visited);
+        await ExtractAutoTags(prGoal, file, visited);
 
         // Seed branch-coverage chains.
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        SeedBranchChains(prGoal, Context.App.Test.Coverage, chainVisited);
+        await SeedBranchChains(prGoal, Context.App.Test.Coverage, chainVisited);
 
         // Filter: exclude wins over include. Match the test's tags against the CLI
         // include/exclude sets — text-to-text (case-insensitive lives on text).
@@ -245,12 +245,12 @@ public partial class discover : IContext
         });
     }
 
-    private void ExtractAutoTags(Goal goal, global::app.test.@this file, HashSet<string> visited, int depth = 0)
+    private async Task ExtractAutoTags(Goal goal, global::app.test.@this file, HashSet<string> visited, int depth = 0)
     {
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
-        var subGoals = new List<Goal>();
+        var calls = new List<app.goal.step.action.@this>();
         goal.ForEachAction((step, action) =>
         {
             // The action answers what it reaches; discovery just collects it.
@@ -259,37 +259,36 @@ public partial class discover : IContext
 
             if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
-            {
-                var targetName = ResolveStaticGoalName(action);
-                if (targetName != null)
-                {
-                    var sub = Context.App.Goal.Get(targetName);
-                    if (sub != null) subGoals.Add(sub);
-                }
-            }
+                calls.Add(action);
         });
-        foreach (var sub in subGoals)
-            ExtractAutoTags(sub, file, visited, depth + 1);
+        foreach (var sub in await StaticTargets(calls))
+            await ExtractAutoTags(sub, file, visited, depth + 1);
     }
 
-    // A goal.call's Name row, as authored — a %variable% name is only known at run, so it has no
-    // static target.
-    private static string? ResolveStaticGoalName(app.goal.step.action.@this action)
+    // The goals these goal.call actions statically reach. A %variable% name is only known at run,
+    // so it has no static target; a literal name is its row's value (read, never resolved).
+    private async Task<List<Goal>> StaticTargets(List<app.goal.step.action.@this> calls)
     {
-        var name = action.Parameter.FirstOrDefault(p =>
-            string.Equals(p.Name, "Name", StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
-        if (string.IsNullOrEmpty(name) || name.Contains('%')) return null;
-        return name;
+        var targets = new List<Goal>();
+        foreach (var call in calls)
+        {
+            var row = call.Parameter.FirstOrDefault(p =>
+                string.Equals(p.Name, "Name", StringComparison.OrdinalIgnoreCase));
+            if (row == null || row.HasVariableReference) continue;
+            var name = (await row.Value())?.RawText;
+            if (!string.IsNullOrEmpty(name) && Context.App.Goal.Get(name) is { } sub) targets.Add(sub);
+        }
+        return targets;
     }
 
-    private void SeedBranchChains(Goal goal, app.test.Coverage coverage, HashSet<string> visited, int depth = 0)
+    private async Task SeedBranchChains(Goal goal, app.test.Coverage coverage, HashSet<string> visited, int depth = 0)
     {
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
         var goalId = goal.Path?.ToString() ?? goal.Name ?? "?";
         var seededSteps = new HashSet<int>();
-        var subGoals = new List<Goal>();
+        var calls = new List<app.goal.step.action.@this>();
 
         goal.ForEachAction((step, action) =>
         {
@@ -308,17 +307,10 @@ public partial class discover : IContext
 
             if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
-            {
-                var targetName = ResolveStaticGoalName(action);
-                if (targetName != null)
-                {
-                    var sub = Context.App.Goal.Get(targetName);
-                    if (sub != null) subGoals.Add(sub);
-                }
-            }
+                calls.Add(action);
         });
 
-        foreach (var sub in subGoals)
-            SeedBranchChains(sub, coverage, visited, depth + 1);
+        foreach (var sub in await StaticTargets(calls))
+            await SeedBranchChains(sub, coverage, visited, depth + 1);
     }
 }

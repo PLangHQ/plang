@@ -30,6 +30,7 @@ def plang_type(cs):
     if not cs: return 'item'
     outer = cs.split('<', 1)[0].strip()
     if 'GoalCall' in outer: return 'goal.call'
+    if 'goal.step.action.@this' in outer: return 'action'
     if 'variable' in outer.lower(): return 'variable'
     m = re.search(r'app\.type\.item\.@?(\w+)', outer)
     return m.group(1) if m else 'item'
@@ -191,7 +192,10 @@ def pr_action(a, where=''):
     for p in rows(a.get('parameter'), where):
         t = p.get('type') or {'name': (props.get(p['name']) or {}).get('type', 'item')}
         if isinstance(t, str): t = {'name': t}
-        params.append({'name': p['name'], 'type': t, 'value': p.get('value')})
+        value = p.get('value')
+        # A held action (a callback slot) is program: it is written in the action's own shape.
+        if t.get('name') == 'action' and isinstance(value, dict): value = pr_action(value, where)
+        params.append({'name': p['name'], 'type': t, 'value': value})
     out = {'module': module, 'name': name, 'parameter': params,
            'modifier': [pr_action(m, where) for m in a.get('modifier') or []]}
     if a.get('recovery'): out['recovery'] = [pr_action(r, where) for r in a['recovery']]

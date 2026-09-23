@@ -2,7 +2,7 @@ using app.actor.context;
 using app;
 using app.variable;
 using app.@event;
-using app.module.@event;
+using app.module.action.@event;
 
 namespace PLang.Tests.App.actions.EventTests;
 
@@ -23,7 +23,7 @@ public class EventHandlerTests
         {
             
             Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)type,
-            GoalToCall = new GoalCall { Name = goalName },
+            Goal = Make.Call(goalName),
             GoalPattern = (global::app.type.item.text.@this)goalPattern,
             StepPattern = (global::app.type.item.text.@this)stepPattern,
             ActionPattern = (global::app.type.item.text.@this)actionPattern,
@@ -176,8 +176,7 @@ public class EventHandlerTests
         _app.Goal.Add(new Goal { Name = "TargetGoal", Path = global::app.type.item.path.@this.Resolve("/TargetGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Set a marker so we can detect the callback ran
-        // The event handler passes GoalToCall with parameters — RunGoalAsync injects them
-        // But since GoalToCall has no explicit params, we verify via a different mechanism:
+        // The held call has no arguments, so verify via a different mechanism:
         // Register BeforeGoal event, run TargetGoal, check that the callback goal was resolved
         var onAction = MakeOn(context, global::app.@event.Trigger.BeforeGoal, "OnBeforeCallback", goalPattern: "TargetGoal");
         var regResult = await onAction.Run();
@@ -190,7 +189,7 @@ public class EventHandlerTests
         var goalCall = new GoalCall { Name = "TargetGoal" };
         await _app.RunGoalAsync(goalCall, context);
 
-        // The event handler calls RunGoalAsync(GoalToCall, targetActor.Context)
+        // The event handler runs the held call on targetActor.Context
         // OnBeforeCallback runs — since it has no steps, it returns Ok
         // We can verify the event system invoked the handler by checking the lifecycle ran
         // The strongest signal: if BeforeGoal didn't fire, TargetGoal still runs
@@ -209,14 +208,9 @@ public class EventHandlerTests
         _app.Goal.Add(new Goal { Name = "AfterCallback", Path = global::app.type.item.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
         _app.Goal.Add(new Goal { Name = "MainGoal", Path = global::app.type.item.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
-        // Register AfterGoal event with a GoalCall that has a parameter
-        var goalToCall = new GoalCall
-        {
-            Name = "AfterCallback",
-            Parameter = new List<Data> { new Data("callbackRan", true, context: context) }
-        };
+        // Register AfterGoal event with a held goal.call that passes an argument
         var onAction = new On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
-            GoalToCall = goalToCall,
+            Goal = Make.Call("AfterCallback", ("callbackRan", true)),
             GoalPattern = (global::app.type.item.text.@this)"MainGoal"
         };
         await onAction.Run();

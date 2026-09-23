@@ -7,7 +7,8 @@ namespace app.goal.step.action;
 public partial class @this
 {
     /// <summary>Binds this action's handler and runs its build-time hooks — <c>Validate()</c>, then
-    /// <c>Build()</c> — then does the same for every action it holds. Null when nothing is wrong;
+    /// <c>Build()</c> — then does the same for every action it holds: one held in a parameter (a
+    /// callback), its modifiers, its recovery, the steps of its branch body. Null when nothing is wrong;
     /// otherwise one error naming this action, with each finding as a cause.
     /// <para>A handler's <c>Build()</c> result is published as <c>%!buildData%</c> — the handle the
     /// next action's <c>Build()</c> reads to see what it captures (build-scoped, so it never clobbers
@@ -35,6 +36,8 @@ public partial class @this
             }
         }
 
+        foreach (var parameter in Parameter)
+            if (parameter.Peek() is @this held && await held.Build(context) is { } heldFailed) causes.Add(heldFailed);
         foreach (var modifier in Modifier)
             if (await modifier.Build(context) is { } invalid) causes.Add(invalid);
         if (await Recovery.Build(context) is { } recovery) causes.Add(recovery);

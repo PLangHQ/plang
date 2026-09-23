@@ -3,7 +3,7 @@ using app.variable;
 using app.@event;
 using EventBinding = app.@event.lifecycle.binding.@this;
 
-namespace app.module.@event;
+namespace app.module.action.@event;
 
 /// <summary>
 /// Registers an event binding on the execution lifecycle.
@@ -16,8 +16,9 @@ public partial class On : IContext
     /// <summary>Lifecycle moment the callback binds to (a <c>trigger</c> enum value, e.g. BeforeGoal, OnAsk).</summary>
     [IsNotNull]
     public partial data.@this<global::app.type.item.choice.@this<Trigger>> Trigger { get; init; }
-    /// <summary>Goal to execute when the event fires.</summary>
-    public partial data.@this<GoalCall> GoalToCall { get; init; }
+    /// <summary>The call to run when the event fires — a <c>goal.call</c> action, held whole and
+    /// run as itself (its own step, arguments and modifiers).</summary>
+    public partial data.@this<global::app.goal.step.action.@this> Goal { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
     public partial data.@this<global::app.type.item.text.@this>? GoalPattern { get; init; }
     /// <summary>Glob or regex pattern to match step text. Only for step-level events.</summary>
@@ -42,9 +43,9 @@ public partial class On : IContext
         // Resolve target actor — default to current context's actor
         var targetActor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor ?? Context.App.User;
 
-        var goalToCall = (await GoalToCall.Value())!;
+        var call = (await Goal.Value())!;
         Func<actor.context.@this, global::app.goal.step.action.@this?, data.@this?, Task<data.@this>> handler =
-            async (context, _, _) => await context.App!.RunGoalAsync(goalToCall, targetActor.Context, context.CancellationToken);
+            async (_, _, _) => await call.Run(targetActor.Context);
 
         var binding = new EventBinding(
             await Trigger.Value(),
@@ -54,7 +55,7 @@ public partial class On : IContext
             actionPattern: ActionPattern == null ? null : (await ActionPattern.Value())?.Clr<string>(),
             priority: (await Priority.Value())!.ToInt32(),
             isRegex: (await IsRegex.Value())!.Value,
-            goalToCall: goalToCall,
+            call: call,
             channelName: ChannelName == null ? null : (await ChannelName.Value())?.Clr<string>());
 
         // Register on the target actor's event scope
