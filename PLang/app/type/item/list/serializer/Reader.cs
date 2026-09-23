@@ -4,7 +4,7 @@ namespace app.type.item.list.serializer;
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for
 /// <see cref="app.type.item.list.@this"/> — the list streams its own elements off the
 /// single decode pass (store raw, type on read). Each slot is read raw via
-/// <see cref="app.type.item.serializer.json.ReadSlot"/>: a scalar streams with no
+/// <see cref="app.type.item.serializer.json.Entry"/>: a scalar streams with no
 /// DOM, a nested container / <c>@schema:data</c> element narrows through the parser.
 /// The element walk lives on the container, not in Wire.
 /// </summary>
@@ -33,7 +33,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         while (reader.NextElement())
             list.AddRaw(elementReader is { } er
                 ? er.Read(ref reader, null, ctx)
-                : parser.ReadSlot(ref reader, ctx));
+                : parser.Entry(ref reader, ctx));
         reader.EndArray();
         return list;
     }

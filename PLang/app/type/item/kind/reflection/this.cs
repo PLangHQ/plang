@@ -177,7 +177,7 @@ public sealed class @this : global::app.type.kind.@this
         if (ElementTypeOf(t) != null || t.IsClass) return Read(ref reader, t, ctx);
 
         // Scalar fallback: raw slot lowered to the target.
-        var raw = new global::app.type.item.serializer.json(ctx.Context).ReadSlot(ref reader, ctx);
+        var raw = new global::app.type.item.serializer.json(ctx.Context).Entry(ref reader, ctx);
         return raw is global::app.type.item.@this iv ? iv.Clr(t) : raw;
     }
 

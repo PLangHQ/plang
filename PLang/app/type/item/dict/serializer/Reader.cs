@@ -4,7 +4,7 @@ namespace app.type.item.dict.serializer;
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for
 /// <see cref="app.type.item.dict.@this"/> — the dict streams its own entries off the
 /// single decode pass (store raw, type on read). Each entry value is read raw via
-/// <see cref="app.type.item.serializer.json.ReadSlot"/>: a scalar streams with no
+/// <see cref="app.type.item.serializer.json.Entry"/>: a scalar streams with no
 /// DOM, a nested container / <c>@schema:data</c> value narrows through the parser.
 /// The entry walk lives on the container, not in Wire.
 /// </summary>
@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // dict.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
         if (ctx.Template != null) dict.Template = ctx.Template;
         while (reader.NextName(out var name))
-            dict.Set(name, parser.ReadSlot(ref reader, ctx));
+            dict.Set(name, parser.Entry(ref reader, ctx));
         reader.EndObject();
         return dict;
     }

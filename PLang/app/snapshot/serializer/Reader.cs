@@ -33,7 +33,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // not to whoever captured it.
         var snapshot = new global::app.snapshot.@this(ctx.Context);
         while (reader.NextName(out var name))
-            snapshot.Entries.Set(name, parser.ReadSlot(ref reader, ctx));
+            snapshot.Entries.Set(name, parser.Entry(ref reader, ctx));
         reader.EndObject();
         return snapshot;
     }

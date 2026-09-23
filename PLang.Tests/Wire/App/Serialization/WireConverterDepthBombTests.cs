@@ -29,6 +29,13 @@ public class WireConverterDepthBombTests
         var json = DeeplyNestedWireJson(16);
         var result = plang.Deserialize(json);
         await result.IsSuccess();
+        // The open item slot's content opens as a VALUE — a dict, never a bare Data — and the
+        // next level rides as that dict's `value` entry (a container entry may be a Data).
+        var outer = await result.Value();
+        await Assert.That(outer).IsTypeOf<global::app.type.item.dict.@this>();
+        var next = ((global::app.type.item.dict.@this)outer).Get("value");
+        await Assert.That(next).IsNotNull();
+        await Assert.That(await next!.Value()).IsTypeOf<global::app.type.item.dict.@this>();   // level 2 opens the same way
     }
 
     [Test] public async Task Deserialize_DepthBomb_RejectsAsTypedError_NotCrash()

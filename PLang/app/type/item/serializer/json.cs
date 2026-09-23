@@ -3,8 +3,7 @@ namespace app.type.item.serializer;
 /// <summary>
 /// Reader for the <c>item</c> shape encoded as <c>json</c>. Born-native names a json
 /// payload of unknown shape <c>item</c> (the universal value), so a read of <c>.json</c>
-/// stamps <c>{item, json}</c> and materializes through <c>(item, json)</c> here. Same
-/// json-string → CLR decode as the <c>(object, json)</c> reader — delegated, one pipeline.
+/// stamps <c>{item, json}</c> and materializes through <c>(item, json)</c> here.
 /// </summary>
 public partial class json
 {
@@ -18,24 +17,13 @@ public partial class json
     private const int MaxDepth = 128;
 
     /// <summary>
-    /// THE json entry parse — a deserialized System.Text.Json graph narrows to
-    /// born-native items, once, at the parse leaf: every scalar leaf is its
-    /// wrapper (string→text unless it carries a %ref%, number→number with the
-    /// exact tower, true/false→bool, null→the null VALUE singleton); an object
-    /// is a native dict, an array a native list (collections hold Data end to
-    /// end); a <c>@schema:data</c>-marked object reconstructs as the Data it
-    /// is. This lives with the json reader — the parse belongs to the format,
-    /// not to Data.
-    /// </summary>
-    /// <summary>
-    /// Streaming sibling of <see cref="RawSlot"/> — reads ONE value off an
-    /// <see cref="app.channel.serializer.IReader"/> into a raw container slot
-    /// (store raw, type on read). A scalar streams directly off the pass — no DOM;
-    /// a nested container / <c>@schema:data</c> element reuses the proven DOM narrow
-    /// via <c>RawValue()</c> (the structured minority). Cursor lands on the value's
+    /// Reads ONE value off an <see cref="app.channel.serializer.IReader"/> — the open
+    /// <c>item</c> slot's content. A value is never a Data: a root object is a dict and a root
+    /// array a list, whatever their shape (the typed-entry rule belongs to a container's
+    /// entries). A scalar streams directly off the pass — no DOM. Cursor lands on the value's
     /// last token, per the reader contract.
     /// </summary>
-    internal object? ReadSlot<TReader>(ref TReader reader,
+    internal object? Read<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
         => reader.Peek() switch
@@ -44,10 +32,33 @@ public partial class json
             global::app.channel.serializer.TokenKind.Bool => reader.Bool(),
             global::app.channel.serializer.TokenKind.Number => reader.Number(),
             global::app.channel.serializer.TokenKind.String => StringSlot(reader.String(), ctx),
-            // Array / Object — a nested container or a @schema:data Data. Capture the
-            // encoded value and narrow through the same parser the eager path uses.
             _ => ParseRaw(reader.RawValue(), ctx),
         };
+
+    /// <summary>
+    /// Reads ONE container entry off an <see cref="app.channel.serializer.IReader"/> into a raw
+    /// slot (store raw, type on read) — a dict's / list's / snapshot's entries. An entry that is a
+    /// typed value (<c>{type:{name,…}, value:…}</c>) or a <c>@schema:data</c> element IS a Data;
+    /// any other object/array is a native container. A scalar streams directly off the pass — no
+    /// DOM. Cursor lands on the value's last token, per the reader contract.
+    /// </summary>
+    internal object? Entry<TReader>(ref TReader reader,
+        global::app.type.reader.ReadContext ctx)
+        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        => reader.Peek() switch
+        {
+            global::app.channel.serializer.TokenKind.Null => null,
+            global::app.channel.serializer.TokenKind.Bool => reader.Bool(),
+            global::app.channel.serializer.TokenKind.Number => reader.Number(),
+            global::app.channel.serializer.TokenKind.String => StringSlot(reader.String(), ctx),
+            _ => RawEntry(reader.RawValue(), ctx),
+        };
+
+    private object? RawEntry(byte[] utf8, global::app.type.reader.ReadContext? ctx)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(utf8);
+        return RawSlot(doc.RootElement, ctx, 0);
+    }
 
     // A %ref% string slot in an authored container rides as a stamped text item (so the
     // template survives the container's fresh-per-read); a literal slot stays a raw scalar
@@ -78,6 +89,14 @@ public partial class json
         return Parse(doc.RootElement, ctx);
     }
 
+    /// <summary>
+    /// THE json value parse — a deserialized System.Text.Json graph narrows to born-native items,
+    /// once, at the parse leaf: every scalar leaf is its wrapper (string→text unless it carries a
+    /// %ref%, number→number with the exact tower, true/false→bool, null→the null VALUE singleton);
+    /// an object is a native dict, an array a native list. A value is never a Data — a typed /
+    /// <c>@schema:data</c> element reconstructs as a Data only as a container's entry. This lives
+    /// with the json reader — the parse belongs to the format, not to Data.
+    /// </summary>
     internal object? Parse(object? value, global::app.type.reader.ReadContext? ctx = null, int depth = 0)
     {
         if (depth > MaxDepth)
@@ -93,12 +112,9 @@ public partial class json
                 System.Text.Json.JsonValueKind.False => new @bool.@this(false),
                 System.Text.Json.JsonValueKind.Null => @null.@this.Instance,
                 System.Text.Json.JsonValueKind.Undefined => @null.@this.Instance,
-                System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element)
-                    // A nested Data reads through a CONTEXT-FUL Wire (the parser is born with
-                    // its context) — never the bare [JsonConverter] default, which is a
-                    // context-less Wire and leaves the nested read unable to reach App.
-                    ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
-                    : ObjectLeaf(element, ctx, depth),
+                // A value object is a dict, whatever its shape — a Data rides only as a
+                // container's entry (RawSlot, reached through the leaves for the children).
+                System.Text.Json.JsonValueKind.Object => ObjectLeaf(element, ctx, depth),
                 System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
                 _ => element,
             };
