@@ -615,6 +615,18 @@
           "category": "code",
           "confidence": "high",
           "context": "A2/A3 landed (GoalCall deleted; no new reds vs dbf4782e0). Read the landed code: comment fix sent (call.cs says callbacks run in a frame; only the tool fork does). Put to Ingi: channel.set extracts the held call's goal (Bind + is goal.Call) and runs the goal directly — authored args/modifiers dropped; recommend the channel holds and runs the call per message in a frame born with the message. IEvent/EventContext/%!event% dead — recommend delete."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/summary.md",
+            "os/system/builder/BuildGoal/Properties.goal",
+            "os/system/builder/llm/Properties.llm",
+            "PLang/app/data/reader/this.cs"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Graft typing decided by Ingi: the LLM always gives the type (item allowed); never guess. Ruled: type required on every parameter row (schema + prompt reversed), untyped throw stays loud with retry-teaching wording, row type kept, declared type converts at the typed ask, literal verdict in action.Validate through the same door, templates by %var% syntax, NormalizeParameterTypes/IsCatalogDescription/empty-string repair die. Withdrawn: my declared-type fallback, token-typing, and the per-message channel frame (the channel's own not-a-fork contract is right; fix the frame doc instead)."
         }
       ],
       "after": {
