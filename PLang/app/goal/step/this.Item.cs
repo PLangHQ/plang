@@ -8,38 +8,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The step's own type entity — an item names its own type.</summary>
     protected internal override global::app.type.@this Type => new("step", typeof(@this));
 
-    /// <summary>The step builds ITSELF from a dict — the read-side twin of <see cref="Output"/>, the
-    /// same <c>{index, text, lineNumber, comment?, action, …}</c> shape. Its actions read through their
-    /// own door (a step owns its action chain). A non-dict, non-step raw is surfaced as a keyed error,
-    /// never swallowed to null.</summary>
+    /// <summary>A step passes through; anything else is declined. A step is built by its goal, never
+    /// converted from a value.</summary>
     public static @this? Create(object? raw, global::app.data.@this data)
     {
         if (raw is @this s) return s;
-        if (raw is not global::app.type.item.dict.@this d)
-        {
-            data.Fail(new global::app.error.Error(
-                $"cannot build a step from a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
-                $"a step reads from a dict of {{index, text, action}}.", "StepShape", 400));
-            return null;
-        }
-        var step = new @this
-        {
-            Index = d.Get("index")?.Clr<int>() ?? 0,
-            Text = d.Get("text")?.Peek()?.ToString() ?? "",
-            LineNumber = d.Get("lineNumber")?.Clr<int>() ?? 0,
-            Indent = d.Get("indent")?.Clr<int>() ?? 0,
-            Comment = d.Get("comment")?.Peek()?.ToString(),
-            Intent = d.Get("intent")?.Peek()?.ToString(),
-        };
-        step.Source = d.Get("source")?.Peek()?.ToString();
-        if (d.Get("action")?.Peek() is global::app.type.item.list.@this acts)
-        {
-            var node = new global::app.goal.step.action.list.@this();
-            foreach (var row in acts.Items)
-                if (Made<global::app.goal.step.action.@this>(row.Peek(), data) is { } a) node.Add(a);
-            step.Action = node;
-        }
-        return step;
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
+            "a step is built by its goal, never converted from a value.", "CreateItemDeclined", 400));
+        return null;
     }
 
     /// <summary>A structure, never a single-token leaf.</summary>

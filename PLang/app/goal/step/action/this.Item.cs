@@ -17,11 +17,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The action's own type entity — an item names its own type (no namespace reflection).</summary>
     protected internal override global::app.type.@this Type => new("action", typeof(@this));
 
-    // ICreate<@this> is carried for the Data<action> slot constraint only — the action takes the
-    // interface's DEFAULT Create (pass-through / typed-ask decline). It owns no hand-written dict
-    // Convert: the real read is its registered ITypeReader (serializer/Reader.cs) — the one reader
-    // for the .pr wire, value→slot materialization, and a nested modifier chain. So the wire key
-    // lives in ONE place (Reader + Output below), never duplicated across a dict-walker twin.
+    /// <summary>An action passes through; anything else is declined. The one way in is its reader
+    /// (<c>serializer/Reader.cs</c>) — the .pr wire, a held callback and a nested modifier chain all
+    /// read there — so an action is built by its step, never converted from a value.</summary>
+    public static @this? Create(object? raw, global::app.data.@this data)
+    {
+        if (raw is @this a) return a;
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
+            "an action is built by its step, never converted from a value.", "CreateItemDeclined", 400));
+        return null;
+    }
 
     /// <summary>A structure, never a single-token leaf — drives the serializer's structure branch.</summary>
     public override bool IsLeaf => false;
