@@ -20,7 +20,7 @@ public partial class Set : IContext
     /// <summary>The call that backs the channel — a <c>goal.call</c> action, run as itself (its own
     /// arguments and modifiers) for each message.</summary>
     public partial data.@this<global::app.goal.step.action.@this> Goal { get; init; }
-    public partial data.@this<global::app.actor.@this>? Actor { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? Actor { get; init; }
     public partial data.@this<global::app.type.item.number.@this>? Buffer { get; init; }
     public partial data.@this<global::app.type.item.duration.@this>? Timeout { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Mime { get; init; }
@@ -37,7 +37,8 @@ public partial class Set : IContext
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ServiceError("Channel name is required", "ValueRequired", 400));
 
-        var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
+        var named = Actor == null ? null : await Actor.Value();
+        var actor = named == null ? Context.Actor : Context.App.Actor[named];
 
         if ((await Goal.Value()) is not { } call)
             return Context.Error(new ServiceError("Goal is required", "ValueRequired", 400));

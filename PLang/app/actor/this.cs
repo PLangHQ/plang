@@ -11,29 +11,6 @@ namespace app.actor;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable
 {
-    /// <summary>
-    /// OBP: actor is reached by NAME, not constructed. A name ("system"/"service"/
-    /// "user") resolves to the App's existing actor — so `set channel … actor "system"`
-    /// converts the name to the live actor. Self-owns conversion (OwnerOf discovers
-    /// any type with a Convert hook). Born-native: the name arrives as text — unwrap.
-    /// </summary>
-    public static global::app.data.@this Convert(object? value, string? kind,
-        global::app.actor.context.@this context)
-    {
-        if (value is global::app.type.item.text.@this t) value = t.Clr<string>();
-        switch (value)
-        {
-            case null: return context.Ok(value);
-            case @this self: return context.Ok(self);
-            case string name:
-                return context.Ok(context.App.GetActor(name));
-            default:
-                return context.Error(new global::app.error.Error(
-                    $"Cannot convert {value.GetType().Name} to actor — expected an actor name (system/service/user).",
-                    "ActorConversionFailed", 400));
-        }
-    }
-
     private readonly CancellationTokenSource _cts;
 
     /// <summary>
@@ -91,20 +68,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// For User/Service: set externally by HTTP/signing layer.
     /// </summary>
     public Identity? Identity { get; set; }
-
-    /// <summary>
-    /// Resolves an actor by name using the app.
-    /// Convention: types with this signature are auto-resolved by the source generator.
-    /// </summary>
-    public static @this? Resolve(string name, context.@this context) => context.App.GetActor(name);
-
-    /// <summary>
-    /// Closed list of actor names the LLM may emit for an Actor-typed slot.
-    /// Build-time validation membership-checks against this; runtime resolves the
-    /// chosen name via <see cref="Resolve"/> → <c>App.GetActor</c>.
-    /// </summary>
-    [app.Attributes.Choices]
-    public static string[] Choices(context.@this? context) => ["user", "system"];
 
     public @this(string name, app.@this app, CancellationToken parentToken = default)
     {

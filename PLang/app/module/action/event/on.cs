@@ -32,8 +32,8 @@ public partial class On : IContext
     [Default(0)]
     public partial data.@this<global::app.type.item.number.@this> Priority { get; init; }
 
-    /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial data.@this<actor.@this>? Actor { get; init; }
+    /// <summary>The actor to bind the event to, by name. If null, uses the current actor.</summary>
+    public partial data.@this<global::app.type.item.choice.@this<actor.Name>>? Actor { get; init; }
 
     /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
     public partial data.@this<global::app.type.item.text.@this>? ChannelName { get; init; }
@@ -41,7 +41,8 @@ public partial class On : IContext
     public async Task<data.@this<global::app.type.item.text.@this>> Run()
     {
         // Resolve target actor — default to current context's actor
-        var targetActor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor ?? Context.App.User;
+        var named = Actor == null ? null : await Actor.Value();
+        var targetActor = (named == null ? null : Context.App.Actor[named]) ?? Context.Actor ?? Context.App.User;
 
         // The binding sets %!event% (the moment that fired) before the handler runs the held call.
         var call = (await Goal.Value())!;

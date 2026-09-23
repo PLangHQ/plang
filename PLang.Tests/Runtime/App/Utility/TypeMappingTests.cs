@@ -514,7 +514,7 @@ public class TypeMappingTests
     [Test]
     public async Task Values_DataOfActor_ReturnsValues()
     {
-        var values = TypeMapping.Values(typeof(global::app.data.@this<global::app.actor.@this>));
+        var values = TypeMapping.Values(typeof(global::app.data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!.Count).IsGreaterThan(0);

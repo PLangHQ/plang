@@ -43,12 +43,13 @@ public class TypeSchemasRendererTests
         await Assert.That(record).IsNotNull();
     }
 
-    [Test] public async Task Schema_Types_StillCarriesEnumValues()
+    [Test] public async Task Schema_Types_CarryNoClosedSet()
     {
+        // A closed set's options ride on its {choice, kind} slot entity, never as a catalog entry.
         await using var app = TestApp.Create("/test");
         var anEnum = (app.Module.Schema.Build()).Types
             .FirstOrDefault(t => t.Values != null && t.Values.Count > 0);
-        await Assert.That(anEnum).IsNotNull();
+        await Assert.That(anEnum).IsNull();
     }
 
     [Test] public async Task Schema_Types_DoesNotIncludeTheTypeEntity()

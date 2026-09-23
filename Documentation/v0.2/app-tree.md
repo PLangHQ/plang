@@ -97,7 +97,7 @@ app
 ├── Run(action, ctx, cause?)                    // dispatch one action through CallStack
 ├── RunAction<T>(action, ctx)                   // strongly-typed C# composition
 ├── RunGoalAsync(goal|GoalCall, ctx?, ct)       // run a goal in-flow
-├── GetActor(name)                              // resolve "system" | "user"
+├── Actor[name]                                 // the actor collection: select system | user
 ├── RequestShutdown()                           // cancel ShutdownToken
 └── DisposeAsync()
 ```

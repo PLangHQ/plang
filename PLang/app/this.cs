@@ -24,8 +24,6 @@ public sealed partial class @this : IAsyncDisposable
     private readonly global::app.goal.list.@this _goals;
     private bool _disposed;
 
-    private readonly actor.@this _system;
-    private readonly actor.@this _user;
     private global::app.service.list.@this? _services;
 
     /// <summary>
@@ -209,17 +207,20 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public format.list.@this Format { get; } = new();
 
+    /// <summary>The app's actors — select by name with <c>app.Actor[name]</c>.</summary>
+    public actor.list.@this Actor { get; }
+
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
     /// Cancelling System cascades to User and Service.
     /// Links to App's shutdown token so RequestShutdown() cascades through everything.
     /// </summary>
-    public actor.@this System => _system;
+    public actor.@this System => Actor.System;
 
     /// <summary>
     /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
-    public actor.@this User => _user;
+    public actor.@this User => Actor.User;
 
     /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
@@ -228,21 +229,6 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public global::app.service.list.@this Services => _services ??= new global::app.service.list.@this(this);
 
-
-    /// <summary>
-    /// Resolves an actor by name. The actor set is closed and hardcoded
-    /// (system/user), so an unknown name is a critical miss, not a soft one —
-    /// throws and returns a non-null actor. The conversion pipeline wraps the
-    /// throw into a graceful error for untrusted (LLM) input.
-    /// </summary>
-    public actor.@this GetActor(string name)
-        => name?.ToLowerInvariant() switch
-        {
-            "system" => System,
-            "user" => User,
-            _ => throw new ArgumentException(
-                $"Unknown actor '{name}' — the actor set is closed (system/user).", nameof(name))
-        };
 
     /// <summary>
     /// Requests graceful shutdown.
@@ -277,8 +263,7 @@ public sealed partial class @this : IAsyncDisposable
         // values from. System is the cancellation root; User links to its token.
         // The actor/context ctor touches App only lazily (Settings/Code via deferred
         // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
-        _system = new actor.@this("System", this, _shutdownCts.Token);
-        _user = new actor.@this("User", this, _system.CancellationToken);
+        Actor = new actor.list.@this(this, _shutdownCts.Token);
 
         Event = new global::app.@event.list.@this();
         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
@@ -565,11 +550,7 @@ public sealed partial class @this : IAsyncDisposable
         _shutdownCts.Cancel();
         _shutdownCts.Dispose();
 
-        // Dispose created actors
-        if (_system != null)
-            await _system.DisposeAsync();
-        if (_user != null)
-            await _user.DisposeAsync();
+        await Actor.DisposeAsync();
 
         await _modules.DisposeAsync();
         await Code.DisposeAsync();

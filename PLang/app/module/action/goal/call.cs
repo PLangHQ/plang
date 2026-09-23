@@ -22,9 +22,9 @@ public partial class Call : IContext
     public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>
-    /// Target actor to run the goal on. If null, runs on the current context.
+    /// The actor to run the goal on, by name. If null, runs on the current context.
     /// </summary>
-    public partial data.@this<actor.@this>? Actor { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<actor.Name>>? Actor { get; init; }
 
     /// <summary>Safe to run beside its siblings — a fact about this call. How many run at once is
     /// the runner's decision (e.g. llm.query's tool loop).</summary>
@@ -93,7 +93,8 @@ public partial class Call : IContext
         // No actor given (param absent OR its value is null) → run in the current
         // actor's context. Only resolve Actor when it actually holds one, so a null
         // value never tries to convert into an actor.
-        var execContext = (Actor == null || await Actor.IsEmpty() ? null : await Actor.Value())?.Context ?? Context;
+        var named = Actor == null || await Actor.IsEmpty() ? null : await Actor.Value();
+        var execContext = named == null ? Context : Context.App.Actor[named].Context;
 
         // Data just flows — each argument binds under its name as-is, no inspection, no resolve;
         // it resolves on its own door when the callee reads it. Goal-call is not a fork: the writes

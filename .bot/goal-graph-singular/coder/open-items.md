@@ -59,9 +59,13 @@ text"; `Type["snapshot"].Create(json)` reads raw text through the scalar-only va
 text holding the plang wire convert into a snapshot — (a) no, wire door only; (b) yes, generally: a content source
 of a STRUCTURED type reads its raw text through the transport format's parser. `resume.cs:6-12` doc waits on it.
 
-**20. Actor literal becomes a choice** — the actor set as a named-set choice (resolves to the live actor at use);
-`actor.Convert` dies; slots goal.call / event.on / channel.set / channel.remove / environment.run. After the births
-pass (needs the one naming door + births).
+**26. Plugin loader registers closed sets as types** — `type/list/Loader.cs:106-125` (runtime-loaded DLLs)
+registers every `[PlangType]`, enums included, with no item check; `Registry.cs:172` skips non-items. A plugin's
+closed set would land as a type there.
+
+**27. The LLM sees no closed-set options until the menu renders choice values** — the actor's `[Choices]` class
+was the only closed set that ever reached `Schema.Types`; closed sets now ride only on their slot's
+`{choice, kind}` entity (`app.Type[slotClr].Values`). The births plan's "menu template gets choice values" closes it.
 
 **21. `plang --test` loud readers + zero-discovered guard** — a test run that discovers nothing, or whose graph
 readers fail quietly, must fail loud. Needs a running builder.
@@ -82,6 +86,8 @@ open rulings: blast-radius list, honest mock). Also parked here:
 
 ## Done
 
+- **20 Actor as a choice** — `choice<actor>` over `{system, user}` on the 5 slots, `app.Actor[name]` collection,
+  GetActor/Convert/Resolve/Choices gone; environment.run's dead `Actor` slot now wired (see commit).
 - **19 `clr`-named wrappers** — list actions return the native list (`6031fdfd7`); setting.set/remove return no
   value, `{key, value}` wrapper + static `type` class gone, `[Masked]` covered by a test-only item (see commit
   after `6031fdfd7`). signing.sign moved to #23.

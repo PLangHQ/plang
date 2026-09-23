@@ -75,7 +75,7 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task ActorChoices_DropsToUserAndSystem()
     {
-        var values = global::app.actor.@this.Choices(null);
+        var values = System.Enum.GetNames<global::app.actor.Name>();
         await Assert.That(values).Contains("user");
         await Assert.That(values).Contains("system");
         await Assert.That(values).DoesNotContain("service");

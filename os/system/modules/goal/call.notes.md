@@ -3,9 +3,9 @@
 `goal.call` has:
 - `Name` (required) — the goal identifier.
 - `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
-- `Actor` (optional, almost always omitted) — explicit cross-actor delegation only.
+- `Actor` (optional, almost always omitted) — explicit cross-actor delegation only: the actor's name, `system` or `user`.
 
-**`Actor`: omit unless the step text NAMES an actor** (`call X on actor "logger"`, `call X as %userActor%`, `actor=%audit%`). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
+**`Actor`: omit unless the step text NAMES an actor** (`call X on actor "system"`, `call X as user`, `actor=%who%` where `%who%` holds the name). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
 
 `foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
 ```json

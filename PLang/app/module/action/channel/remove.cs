@@ -13,7 +13,7 @@ namespace app.module.action.channel;
 public partial class Remove : IContext
 {
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
-    public partial data.@this<global::app.actor.@this>? Actor { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? Actor { get; init; }
 
     public async Task<data.@this> Run()
     {
@@ -26,7 +26,8 @@ public partial class Remove : IContext
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));
 
-        var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
+        var named = Actor == null ? null : await Actor.Value();
+        var actor = named == null ? Context.Actor : Context.App.Actor[named];
         var removed = await actor.Channel.RemoveAsync(name);
         if (!removed)
             return Context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
