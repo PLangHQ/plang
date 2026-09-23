@@ -13,10 +13,10 @@ public class WireConverterDepthBombTests
 {
     private static string DeeplyNestedWireJson(int depth)
     {
-        // Each level: {"name":"a","value": ... }   value slot drives the
-        // LiftDataIfShaped recursion that resets STJ's depth budget.
+        // Each level: {"name":"a","type":{"name":"item"},"value": ... } — every row carries its type;
+        // the open item slot's value is the next level, which drives the nested read.
         var sb = new StringBuilder();
-        for (int i = 0; i < depth; i++) sb.Append("{\"name\":\"a\",\"value\":");
+        for (int i = 0; i < depth; i++) sb.Append("{\"name\":\"a\",\"type\":{\"name\":\"item\"},\"value\":");
         sb.Append("\"leaf\"");
         for (int i = 0; i < depth; i++) sb.Append('}');
         return sb.ToString();
@@ -41,6 +41,8 @@ public class WireConverterDepthBombTests
         var result = plang.Deserialize(json);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PlangDeserializeError");
+        // Rejected for its depth — by the reader's own depth budget or the nested-Data MaxReadDepth.
+        await Assert.That(result.Error!.Message).Contains("depth");
     }
 
     [Test] public async Task Deserialize_DepthBomb_FromStream_RejectsAsTypedError()
