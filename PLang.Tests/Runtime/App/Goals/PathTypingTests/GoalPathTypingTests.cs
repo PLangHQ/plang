@@ -97,21 +97,10 @@ public class GoalPathTypingTests
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", ctx1)
         };
-        var opts1 = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.channel.serializer.json.Converter(ctx1) }
-        };
-        var json = JsonSerializer.Serialize(goal, opts1);
-        // Load under a different App / Context.
+        // The goal writes its own .pr and is read back under a different App / Context.
         var (app2, _) = MakeApp();
         var ctx2 = app2.User.Context;
-        var opts2 = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.channel.serializer.json.Converter(ctx2) }
-        };
-        var loaded = JsonSerializer.Deserialize<Goal>(json, opts2);
+        var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app2, goal);
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.Path).IsNotNull();
         await Assert.That(loaded.Path!.Context).IsEqualTo(ctx2);
@@ -126,14 +115,8 @@ public class GoalPathTypingTests
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", context)
         };
-        var opts = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.channel.serializer.json.Converter(context) }
-        };
-        var json = JsonSerializer.Serialize(goal, opts);
-        var loaded = JsonSerializer.Deserialize<Goal>(json, opts);
+        // The goal writes its own .pr and reads itself back.
+        var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, goal);
         await Assert.That(loaded!.Path!.Context).IsEqualTo(context);
     }
 
