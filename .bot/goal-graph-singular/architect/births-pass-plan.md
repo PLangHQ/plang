@@ -1,6 +1,6 @@
 # Births pass — every value is born with its context; the type object is the registry's own
 
-Designed with Ingi 2026-09-23. **Draft — Ingi is not done; not sent to coder.** Numbers from coder's inventory (`coder/births-inventory.md`, `dff9f80a7`, a Roslyn pass over the real compilation).
+Designed with Ingi 2026-09-23. **Released to coder 2026-09-23** (after #20). Numbers from coder's inventory (`coder/births-inventory.md`, `dff9f80a7`, a Roslyn pass over the real compilation).
 
 > **You (coder) own this** once it is released. Rules and order are settled with Ingi; shapes and commit split are yours. Code below is direction; NEW marks what does not exist.
 
@@ -61,7 +61,7 @@ var path = action["Path"].Copy();     // this run's own Data over the shared val
 
 ## Order — each step compiles and is its own commit
 
-1. **The shared-row fix** — `action[name]`, `Copy()`, no stamp on the shared row; the two-actor concurrency test first (red), then green.
+1. **The shared-row fix** — `action[name]`, `Copy()`, no stamp on the shared row; the two-actor concurrency test first (red), then green. Cost (agreed with Ingi): typed slots already get a new view per run from `As<T>()` (`data/this.cs:568`) — that view becomes the run's copy, born under the running context instead of copying the row's; plain-Data slots gain one `Copy()` per parameter per action run. `.Value()` never creates a Data: the first call opens the value and keeps it on the run's copy.
 2. **The ambient** — set in `action.Run`/`goal.Run`, at boot, in the test app.
 3. **Values born with the ambient** — the private non-nullable context in the value constructors; the stamps and `null!` die. The list's behaviour moves to a context-free base the program lists derive; the value list adds its context (Ingi confirmed the direction).
 4. **The type object is the registry's own** — values ask through their context, program nodes through their App; `Promote()`, the static fallback and primitive statics die; the menu template gets choice values.

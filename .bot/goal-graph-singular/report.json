@@ -698,6 +698,18 @@
           "category": "code",
           "confidence": "high",
           "context": "Docs design settled with Ingi: descriptions teach the builder's LLM; only module descriptions are read today. C# fix approved and sent: module.Folder (one folder rule), one-line Description/Notes/Examples members on owners, action reaches the folder via its Module; Prose, facet, Module* proxies, module Notes/Examples, MarkdownTeaching and WarnOrphansAsync die. Plang flow (action descriptions in stage 2, menu of actions, notes/examples in stage 3) still with Ingi. CLAUDE.md proposal filed."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/births-pass-plan.md",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/actor/context/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Births pass designed with Ingi and released to coder (after #20): ambient context set by the run door (action.Run/goal.Run, boot, test app); values born with it, private non-nullable, creation sites unchanged, implicit conversions stay; runs never write to the shared program (first commit, two-actor concurrency test first; action[name] replaces GetParameter, Copy replaces ShallowClone); then the type object becomes the registry's own; #15, #24. #20 answered by Ingi: choice<actor> {system, user} (service skipped, no service actor exists), app.Actor collection, names only."
         }
       ],
       "after": {
