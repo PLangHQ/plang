@@ -14,23 +14,27 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "/system/builder/EmitBuildEvent",
-        "parameter": [
-         {
-          "name": "kind",
-          "value": "goalHeader"
-         },
-         {
-          "name": "goal",
-          "value": "%goal%"
-         }
-        ]
-       }
+       "value": "/system/builder/EmitBuildEvent"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "kind",
+         "value": "goalHeader"
+        },
+        {
+         "name": "goal",
+         "value": "%goal%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -106,20 +110,26 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "Compile"
-       }
+       "value": "Compile"
       }
      ],
      "modifier": [
       {
        "module": "error",
        "name": "handle",
-       "parameter": [],
+       "parameter": [
+        {
+         "name": "Key",
+         "type": {
+          "name": "text"
+         },
+         "value": "HandleBuildFailure"
+        }
+       ],
        "modifier": [],
        "recovery": [
         {
@@ -127,13 +137,11 @@
          "name": "call",
          "parameter": [
           {
-           "name": "GoalName",
+           "name": "Name",
            "type": {
-            "name": "goal.call"
+            "name": "text"
            },
-           "value": {
-            "name": "HandleBuildFailure"
-           }
+           "value": "HandleBuildFailure"
           }
          ],
          "modifier": []
@@ -218,6 +226,13 @@
         "name": "item"
        },
        "value": "%parentGoal.Child%"
+      },
+      {
+       "name": "Item",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%item%"
       }
      ],
      "modifier": []
@@ -227,19 +242,23 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "BuildSubGoal",
-        "parameter": [
-         {
-          "name": "subGoal",
-          "value": "%item%"
-         }
-        ]
-       }
+       "value": "BuildSubGoal"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "subGoal",
+         "value": "%item%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -298,27 +317,6 @@
         "name": "item"
        },
        "value": "%buildStart%"
-      },
-      {
-       "name": "Overflow",
-       "type": {
-        "name": "choice"
-       },
-       "value": "wrap"
-      },
-      {
-       "name": "Precision",
-       "type": {
-        "name": "choice"
-       },
-       "value": "exact"
-      },
-      {
-       "name": "write to %elapsedTicks%",
-       "type": {
-        "name": "item"
-       },
-       "value": "%elapsedTicks%"
       }
      ],
      "modifier": []
@@ -369,27 +367,6 @@
         "name": "item"
        },
        "value": 10000
-      },
-      {
-       "name": "Overflow",
-       "type": {
-        "name": "choice"
-       },
-       "value": "wrap"
-      },
-      {
-       "name": "Precision",
-       "type": {
-        "name": "choice"
-       },
-       "value": "exact"
-      },
-      {
-       "name": "write to %elapsedMs%",
-       "type": {
-        "name": "item"
-       },
-       "value": "%elapsedMs%"
       }
      ],
      "modifier": []
@@ -513,50 +490,45 @@
    "action": [
     {
      "module": "build",
-     "name": "promoteGroups",
-     "parameter": [],
-     "modifier": []
-    },
-    {
-     "module": "build",
-     "name": "promoteGroups",
-     "parameter": [],
-     "modifier": []
-    },
-    {
-     "module": "build",
-     "name": "promoteGroups",
-     "parameter": [],
-     "modifier": []
-    },
-    {
-     "module": "build",
-     "name": "promoteGroups",
-     "parameter": [],
-     "modifier": []
-    },
-    {
-     "module": "build",
-     "name": "promoteGroups",
-     "parameter": [],
-     "modifier": []
-    },
-    {
-     "module": "build",
-     "name": "promoteGroups",
-     "parameter": [],
-     "modifier": []
-    },
-    {
-     "module": "error",
-     "name": "handle",
-     "parameter": [],
+     "name": "fold",
+     "parameter": [
+      {
+       "name": "Goal",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goal%"
+      }
+     ],
      "modifier": [
       {
        "module": "error",
        "name": "handle",
        "parameter": [],
-       "modifier": []
+       "modifier": [],
+       "recovery": [
+        {
+         "module": "build",
+         "name": "merge",
+         "parameter": [
+          {
+           "name": "Step",
+           "type": {
+            "name": "item"
+           },
+           "value": "%step%"
+          },
+          {
+           "name": "StepFromLlm",
+           "type": {
+            "name": "item"
+           },
+           "value": "%step%"
+          }
+         ],
+         "modifier": []
+        }
+       ]
       }
      ]
     }
@@ -602,14 +574,11 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "Decide",
-          "parameter": []
-         }
+         "value": "Decide"
         }
        ],
        "modifier": []
@@ -639,6 +608,13 @@
           "name": "variable"
          },
          "value": "%item%"
+        },
+        {
+         "name": "Key",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%key%"
         }
        ],
        "modifier": []
@@ -648,19 +624,23 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "Menu",
-          "parameter": [
-           {
-            "name": "step",
-            "value": "%item%"
-           }
-          ]
-         }
+         "value": "Menu"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "step",
+           "value": "%item%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -678,14 +658,11 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "Properties",
-          "parameter": []
-         }
+         "value": "Properties"
         }
        ],
        "modifier": []
@@ -715,6 +692,13 @@
           "name": "variable"
          },
          "value": "%item%"
+        },
+        {
+         "name": "Key",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%key%"
         }
        ],
        "modifier": []
@@ -724,19 +708,23 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "Settle",
-          "parameter": [
-           {
-            "name": "step",
-            "value": "%item%"
-           }
-          ]
-         }
+         "value": "Settle"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "step",
+           "value": "%item%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -766,20 +754,6 @@
           "name": "item"
          },
          "value": "%modules%"
-        },
-        {
-         "name": "Item",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%item%"
-        },
-        {
-         "name": "Key",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%step.Index%"
         }
        ],
        "modifier": []
@@ -789,19 +763,23 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "MenuModule",
-          "parameter": [
-           {
-            "name": "module",
-            "value": "%item%"
-           }
-          ]
-         }
+         "value": "MenuModule"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "module",
+           "value": "%item%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -869,6 +847,34 @@
         }
        ],
        "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%key%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "s%step.Index%_%module.Name%"
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": false
+        }
+       ],
+       "modifier": []
       }
      ]
     },
@@ -909,7 +915,15 @@
       {
        "module": "goal",
        "name": "return",
-       "parameter": [],
+       "parameter": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "item"
+         },
+         "value": "%moduleAnswer[key]%"
+        }
+       ],
        "modifier": []
       }
      ]
@@ -1046,19 +1060,23 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "Apply",
-          "parameter": [
-           {
-            "name": "step",
-            "value": "%step%"
-           }
-          ]
-         }
+         "value": "Apply"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "step",
+           "value": "%step%"
+          }
+         ]
         }
        ],
        "modifier": [
@@ -1081,14 +1099,11 @@
            "name": "call",
            "parameter": [
             {
-             "name": "GoalName",
+             "name": "Name",
              "type": {
-              "name": "goal.call"
+              "name": "text"
              },
-             "value": {
-              "name": "FixProperties",
-              "parameter": []
-             }
+             "value": "FixProperties"
             }
            ],
            "modifier": []
@@ -1175,27 +1190,31 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "/system/builder/EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "step-validation-error"
-           },
-           {
-            "name": "step",
-            "value": "%step%"
-           },
-           {
-            "name": "errorMessage",
-            "value": "%!error.Message%"
-           }
-          ]
-         }
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "value": "step-validation-error"
+          },
+          {
+           "name": "step",
+           "value": "%step%"
+          },
+          {
+           "name": "errorMessage",
+           "value": "%!error.Message%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -1224,19 +1243,7 @@
          "type": {
           "name": "item"
          },
-         "value": [
-          {
-           "Role": "user",
-           "Content": "Your answer was rejected by the validator: %!error.Message%\\n\\nReturn the corrected answer in the same shape."
-          }
-         ]
-        },
-        {
-         "name": "Type",
-         "type": {
-          "name": "item"
-         },
-         "value": "list"
+         "value": "[{\"Role\":\"user\",\"Content\":\"Your answer was rejected by the validator: %!error.Message%\\n\\nReturn the corrected answer in the same shape.\"}]"
         }
        ],
        "modifier": []
@@ -1272,7 +1279,7 @@
          "type": {
           "name": "bool"
          },
-         "value": "%!build.cache%"
+         "value": "%build.cache%"
         },
         {
          "name": "ContinuePreviousConversation",
@@ -1280,13 +1287,42 @@
           "name": "bool"
          },
          "value": true
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "name": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "type": {
+            "name": "number"
+           },
+           "value": 60000
+          }
+         ],
+         "modifier": []
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%properties%"
         },
         {
-         "name": "Schema",
+         "name": "Value",
          "type": {
           "name": "item"
          },
-         "value": "%properties%"
+         "value": "%!data%"
         }
        ],
        "modifier": []
@@ -1340,23 +1376,27 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "/system/builder/EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "subGoalHeader"
-           },
-           {
-            "name": "goal",
-            "value": "%goal%"
-           }
-          ]
-         }
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "value": "subGoalHeader"
+          },
+          {
+           "name": "goal",
+           "value": "%goal%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -1407,7 +1447,21 @@
          "type": {
           "name": "item"
          },
-         "value": "%goal%"
+         "value": "%subGoal%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
         }
        ],
        "modifier": [
@@ -1416,52 +1470,16 @@
          "name": "handle",
          "parameter": [
           {
-           "name": "RetryCount",
+           "name": "Key",
            "type": {
-            "name": "number"
+            "name": "text"
            },
-           "value": 1
+           "value": "HandleBuildFailure"
           }
          ],
-         "modifier": [],
-         "recovery": [
-          {
-           "module": "goal",
-           "name": "call",
-           "parameter": [
-            {
-             "name": "GoalName",
-             "type": {
-              "name": "goal.call"
-             },
-             "value": {
-              "name": "HandleBuildFailure",
-              "parameter": []
-             }
-            }
-           ],
-           "modifier": []
-          }
-         ]
+         "modifier": []
         }
        ]
-      },
-      {
-       "module": "goal",
-       "name": "call",
-       "parameter": [
-        {
-         "name": "GoalName",
-         "type": {
-          "name": "goal.call"
-         },
-         "value": {
-          "name": "Compile",
-          "parameter": []
-         }
-        }
-       ],
-       "modifier": []
       }
      ]
     },
@@ -1608,27 +1626,31 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "/system/builder/EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "subGoalDone"
-           },
-           {
-            "name": "goal",
-            "value": "%goal%"
-           },
-           {
-            "name": "subgoalMs",
-            "value": "%subgoalMs%"
-           }
-          ]
-         }
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "value": "subGoalDone"
+          },
+          {
+           "name": "goal",
+           "value": "%goal%"
+          },
+          {
+           "name": "subgoalMs",
+           "value": "%subgoalMs%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -1653,27 +1675,31 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
+         "name": "Name",
          "type": {
-          "name": "goal.call"
+          "name": "text"
          },
-         "value": {
-          "name": "/system/builder/EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "goalError"
-           },
-           {
-            "name": "goal",
-            "value": "%goal%"
-           },
-           {
-            "name": "errorMessage",
-            "value": "%!error.Message%"
-           }
-          ]
-         }
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "value": "goalError"
+          },
+          {
+           "name": "goal",
+           "value": "%goal%"
+          },
+          {
+           "name": "errorMessage",
+           "value": "%!error.Message%"
+          }
+         ]
         }
        ],
        "modifier": []
@@ -1702,7 +1728,18 @@
          "type": {
           "name": "item"
          },
-         "value": "{\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}"
+         "value": {
+          "key": "%!error.Key%",
+          "message": "%!error.Message%",
+          "goal": "%goal.Name%"
+         }
+        },
+        {
+         "name": "Type",
+         "type": {
+          "name": "item"
+         },
+         "value": "dict"
         }
        ],
        "modifier": []

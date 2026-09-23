@@ -116,49 +116,52 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets a goal by name. Loads the .pr file from disk if not already cached.
-    /// When callingFolderPath is provided, resolves relative to that folder first.
-    /// Names starting with / are resolved from app root.
+    /// Selects the goal a call names, as seen from the goal it is called FROM. The caller's own
+    /// chain answers first — the caller itself, one of its children, then each ancestor and ITS
+    /// children — so a child goal in the same file cannot be shadowed. Then the cache. Not cached →
+    /// the .pr loads: from the caller's folder (a slash-qualified name also walks the caller's
+    /// ancestor folders — it may live in a sibling's), then the app root with its /system fallback.
+    /// An app-absolute name (<c>/system/builder/X</c>) skips the caller's folders. Null when no goal
+    /// answers to the name.
     /// </summary>
-    public async Task<goal.@this?> GetAsync(string name, string? callingFolderPath = null, CancellationToken cancellationToken = default)
+    public async Task<goal.@this?> GetAsync(string name, goal.@this? caller = null, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(name)) return null;
+
+        for (var g = caller; g != null; g = g.Parent)
+        {
+            if (string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) return g;
+            var child = g.Child.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (child != null) return child;
+        }
+
         var goal = Get(name);
         if (goal != null)
             return goal;
 
-        // Not cached — try to load the .pr file
-        var cleanName = name ?? "";
-        if (cleanName.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
-            cleanName = cleanName[..^5];
-
-        // Check if the name is absolute (starts with / meaning resolve from app root)
-        bool isAbsolute = cleanName.StartsWith("/") || cleanName.StartsWith("\\");
-        if (isAbsolute)
-            cleanName = cleanName.TrimStart('/', '\\');
-
-        // Split on the last separator without reaching for System.IO.Path —
-        // this is pure name math and shouldn't pretend to be a filesystem op.
-        var lastSep = cleanName.LastIndexOfAny(new[] { '/', '\\' });
+        // Not cached — load the .pr. Pure name math, not a filesystem op.
+        var cleanName = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name[..^5] : name;
+        bool isAbsolute = cleanName.StartsWith('/') || cleanName.StartsWith('\\');
+        cleanName = cleanName.TrimStart('/', '\\').Replace('\\', '/');
+        var lastSep = cleanName.LastIndexOf('/');
         var file = lastSep >= 0 ? cleanName[(lastSep + 1)..] : cleanName;
         var nameDir = lastSep >= 0 ? cleanName[..lastSep] : "";
 
-        // If relative and we have a calling folder, try resolving relative to it first
-        if (!isAbsolute && !string.IsNullOrEmpty(callingFolderPath))
+        if (!isAbsolute && caller?.Path?.ToString() is { } callerPath)
         {
-            var relativeDir = callingFolderPath.Trim('/', '\\');
-            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : (relativeDir + "/" + nameDir);
-
-            var loaded = await TryLoadPr(combinedDir, file, name, cancellationToken);
-            if (loaded != null) return loaded;
+            var cut = callerPath.Replace('\\', '/').LastIndexOf('/');
+            var dir = (cut >= 0 ? callerPath[..cut] : "").Trim('/', '\\');
+            // A bare name looks in the caller's own folder only; a slash-qualified one walks up.
+            for (var first = true; first || (nameDir.Length > 0 && dir.Length > 0); first = false)
+            {
+                var combined = nameDir.Length == 0 ? dir : dir.Length == 0 ? nameDir : $"{dir}/{nameDir}";
+                if (await TryLoadPr(combined, file, name, cancellationToken) is { } near) return near;
+                var up = dir.LastIndexOf('/');
+                dir = up > 0 ? dir[..up] : "";
+            }
         }
 
-        // Fall back to root-relative resolution, then system directory
-        {
-            var loaded = await TryLoadPr(nameDir, file, name, cancellationToken);
-            if (loaded != null) return loaded;
-        }
-
-        return null;
+        return await TryLoadPr(nameDir, file, name, cancellationToken);
     }
 
     /// <summary>
@@ -369,6 +372,11 @@ public sealed class @this
             if (materialized as global::app.goal.@this is not { } primary)
                 return app.System.Context.Error(readResult.Error ?? new Error(
                     $"Failed to parse goal file: {prPath} — read produced {materialized.GetType().Name}, not a goal"));
+
+            // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
+            // relative file.read resolves against the goal's actual on-disk folder.
+            primary.LoadedFromPrPath = prPath;
+            foreach (var child in primary.Child) { child.LoadedFromPrPath = prPath; child.App = app; }
 
             Add(primary);
 

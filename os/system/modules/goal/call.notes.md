@@ -1,12 +1,17 @@
-`call X, param=value` (standalone or inside `foreach`) → the named params are the CALLEE's params: they go **inside `GoalName.value.parameter`**, NOT as top-level `goal.call` params.
+`call X, param=value` (standalone or inside `foreach`) → `Name` is the goal, and each named argument is one row in `Parameter` — `{"name": <argument>, "value": <value>}`. The arguments belong to the CALLEE; they never become properties of `goal.call` itself.
 
-Top-level `goal.call` has only:
-- `GoalName` (required) — `{"name":"X", "parameter":[...]}`; `parameter` carries the args to X.
+`goal.call` has:
+- `Name` (required) — the goal identifier.
+- `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
 - `Actor` (optional, almost always omitted) — explicit cross-actor delegation only.
 
 **`Actor`: omit unless the step text NAMES an actor** (`call X on actor "logger"`, `call X as %userActor%`, `actor=%audit%`). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
 
-`foreach %list%, call X, section=%item%` → set is `loop.foreach` + `goal.call`; `section=%item%` goes inside the payload:
-`{"name":"GoalName","value":{"name":"X","parameter":[{"name":"section","value":"%item%"}]},"type":{"name":"goal.call"}}`
+`foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
+```json
+{"module":"goal","name":"call","parameter":[
+  {"name":"Name","value":"X"},
+  {"name":"Parameter","value":[{"name":"section","value":"%item%"}]}]}
+```
 
-**Payload `name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime NotFound. Never put a type token in the value slot: `"goal.call"` is the parameter's TYPE descriptor, not the name; the name is the user's goal identifier. Any dotted identifier here is wrong.
+**`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.

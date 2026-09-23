@@ -22,11 +22,12 @@ public class GoalCallTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
+    private static global::app.type.item.text.@this Text(string s) => new(s);
+
     [Test]
     public async Task Call_ExistingGoal_RunsSuccessfully()
     {
-        var action = new Call(_app.User.Context) { GoalName = new GoalCall { Name = "TestGoal" }
-        };
+        var action = new Call(_app.User.Context) { Name = Text("TestGoal") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -35,21 +36,21 @@ public class GoalCallTests
     [Test]
     public async Task Call_MissingGoal_ReturnsError()
     {
-        var action = new Call(_app.User.Context) { GoalName = new GoalCall { Name = "NonExistent" }
-        };
+        var action = new Call(_app.User.Context) { Name = Text("NonExistent") };
         var result = await action.Run();
 
         await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
     }
 
     [Test]
     public async Task Call_WithParameters_InjectsOnContext()
     {
-        var action = new Call(_app.User.Context) { GoalName = new GoalCall
-            {
-                Name = "TestGoal",
-                Parameter = new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) }
-            }
+        var action = new Call(_app.User.Context)
+        {
+            Name = Text("TestGoal"),
+            Parameter = new global::app.type.item.list.@this(
+                new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) }, _app.User.Context)
         };
         var result = await action.Run();
 
@@ -63,9 +64,7 @@ public class GoalCallTests
     public async Task Call_NullActor_UsesCurrentContext()
     {
         _app.User.Context.Variable.Set("marker", "fromCaller");
-        var action = new Call(_app.User.Context) { GoalName = new GoalCall { Name = "TestGoal" },
-            Actor = null
-        };
+        var action = new Call(_app.User.Context) { Name = Text("TestGoal"), Actor = null };
         var result = await action.Run();
 
         await result.IsSuccess();

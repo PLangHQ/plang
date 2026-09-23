@@ -37,10 +37,6 @@
         {
          "name": "Parameter",
          "value": []
-        },
-        {
-         "name": "IsFile",
-         "value": true
         }
        ]
       },
@@ -74,10 +70,6 @@
         {
          "name": "Parameter",
          "value": []
-        },
-        {
-         "name": "IsFile",
-         "value": true
         }
        ]
       },
@@ -129,36 +121,6 @@
      "index": 3,
      "action": [
       {
-       "module": "cache",
-       "name": "wrap",
-       "parameter": [
-        {
-         "name": "DurationMs",
-         "value": 600000
-        },
-        {
-         "name": "Sliding",
-         "value": true
-        }
-       ],
-       "modifier": [
-        {
-         "module": "cache",
-         "name": "wrap",
-         "parameter": [
-          {
-           "name": "DurationMs",
-           "value": 600000
-          },
-          {
-           "name": "Sliding",
-           "value": true
-          }
-         ]
-        }
-       ]
-      },
-      {
        "module": "llm",
        "name": "query",
        "parameter": [
@@ -173,28 +135,16 @@
         {
          "name": "Schema",
          "value": {
-          "step": [
-           {
-            "index": 0,
-            "action": [
-             {
-              "module": "string",
-              "name": "string",
-              "parameter": [],
-              "modifier": []
-             }
-            ]
-           }
-          ]
+          "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>}"
          }
         },
         {
          "name": "Cache",
-         "value": true
+         "value": "%!build.cache%"
         },
         {
-         "name": "Format",
-         "value": "json"
+         "name": "write to",
+         "value": "%properties%"
         }
        ]
       },
@@ -209,10 +159,6 @@
         {
          "name": "Value",
          "value": "%!data%"
-        },
-        {
-         "name": "Type",
-         "value": "list"
         }
        ]
       }
@@ -226,20 +172,21 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "/system/builder/EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "goal-properties"
-           },
-           {
-            "name": "goal",
-            "value": "%goal%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "kind",
+           "value": "goal-properties"
+          },
+          {
+           "name": "goal",
+           "value": "%goal%"
+          }
+         ]
         }
        ]
       }

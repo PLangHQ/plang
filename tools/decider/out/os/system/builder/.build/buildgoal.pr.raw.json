@@ -2,8 +2,7 @@
  "BuildGoal": {
   "menu": {
    "0": [
-    "goal.call",
-    "variable.get"
+    "goal.call"
    ]
   },
   "answer": {
@@ -16,16 +15,17 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "BuildGoal/Start",
-          "parameter": [
-           {
-            "name": "goal",
-            "value": "%goal%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "BuildGoal/Start"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "goal",
+           "value": "%goal%"
+          }
+         ]
         }
        ]
       }

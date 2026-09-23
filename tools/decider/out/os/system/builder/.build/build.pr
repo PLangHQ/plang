@@ -28,13 +28,6 @@
        "value": "/"
       },
       {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "path"
-      },
-      {
        "name": "AsDefault",
        "type": {
         "name": "bool"
@@ -69,13 +62,6 @@
         "name": "item"
        },
        "value": true
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "bool"
       },
       {
        "name": "AsDefault",
@@ -114,13 +100,6 @@
        "value": true
       },
       {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "bool"
-      },
-      {
        "name": "AsDefault",
        "type": {
         "name": "bool"
@@ -155,7 +134,8 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "BuilderChannel"
+        "name": "BuilderChannel",
+        "parameter": []
        }
       }
      ],
@@ -174,23 +154,27 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "EmitBuildEvent",
-        "parameter": [
-         {
-          "name": "kind",
-          "value": "build-path"
-         },
-         {
-          "name": "path",
-          "value": "%path%"
-         }
-        ]
-       }
+       "value": "EmitBuildEvent"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "kind",
+         "value": "build-path"
+        },
+        {
+         "name": "path",
+         "value": "%path%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -294,23 +278,27 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "EmitBuildEvent",
-        "parameter": [
-         {
-          "name": "kind",
-          "value": "goals-found"
-         },
-         {
-          "name": "goals",
-          "value": "%goals%"
-         }
-        ]
-       }
+       "value": "EmitBuildEvent"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "kind",
+         "value": "goals-found"
+        },
+        {
+         "name": "goals",
+         "value": "%goals%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -349,19 +337,23 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "BuildGoal",
-        "parameter": [
-         {
-          "name": "goal",
-          "value": "%item%"
-         }
-        ]
-       }
+       "value": "BuildGoal"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "goal",
+         "value": "%item%"
+        }
+       ]
       }
      ],
      "modifier": []

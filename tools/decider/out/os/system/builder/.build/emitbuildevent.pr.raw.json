@@ -24,10 +24,6 @@
          "value": "/system/builder/templates/output/build-output.template"
         },
         {
-         "name": "Parameter",
-         "value": []
-        },
-        {
          "name": "IsFile",
          "value": true
         }
@@ -59,6 +55,18 @@
         {
          "name": "Name",
          "value": "builder"
+        },
+        {
+         "name": "Goal",
+         "value": {
+          "name": "EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "msg",
+            "value": "%msg%"
+           }
+          ]
+         }
         }
        ]
       },

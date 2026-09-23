@@ -118,7 +118,7 @@ public class ValidateActionsTests
     [Test]
     public async Task ValidateActions_DynamicNames_Skipped()
     {
-        var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "%dynamicGoal%" }, context: _app.User.Context);
+        var goalCallData = new Data("Name", "%dynamicGoal%", context: _app.User.Context);
 
         var actions = new StepActions
         {

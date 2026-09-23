@@ -5,13 +5,21 @@ using app.variable;
 namespace app.module.action.goal;
 
 /// <summary>
-/// Calls a named goal, optionally on a different actor.
-/// Parameters are injected into the target goal's context by the GoalCall resolver.
+/// Calls a named goal, optionally on a different actor. The goal is selected through the goal
+/// collection as seen from the goal this call sits in; each argument binds as a variable in the
+/// context the goal runs under.
 /// </summary>
 [Action("call")]
 public partial class Call : IContext
 {
-    public partial data.@this<GoalCall> GoalName { get; init; }
+    /// <summary>The goal to call — a bare name (a child or a goal in the caller's folder), a
+    /// slash-qualified one (<c>BuildGoal/Start</c>), an app-absolute one
+    /// (<c>/system/builder/EmitBuildEvent</c>), or a %variable% that holds one.</summary>
+    public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
+
+    /// <summary>The arguments — one named, typed row each, bound as a variable of that name in the
+    /// called goal.</summary>
+    public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>
     /// Target actor to run the goal on. If null, runs on the current context.
@@ -26,40 +34,50 @@ public partial class Call : IContext
     /// </summary>
     public async Task<data.@this> Build()
     {
-        var goalCall = await GoalName.Value();
-        if (goalCall?.Parameter == null) return Context.Ok();
+        if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
 
-        // Drop redundant self-references (`x=%x%`) — the parameter node is read-only, so keep the
-        // survivors in a fresh list and rebind rather than mutating in place.
         var kept = new List<data.@this>();
-        foreach (var p in goalCall.Parameter)
+        foreach (var arg in args.Items)
         {
-            if (string.Equals(p.Peek()?.ToString(), $"%{p.Name}%", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(arg.Peek()?.ToString(), $"%{arg.Name}%", System.StringComparison.OrdinalIgnoreCase))
             {
                 await (Context.App.Debug?.Write(
-                    $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}") ?? Task.CompletedTask);
+                    $"build: dropped redundant self-reference '{arg.Name}=%{arg.Name}%' in call to {Name.Peek()}") ?? Task.CompletedTask);
                 continue;
             }
-            kept.Add(p);
+            kept.Add(arg);
         }
-        if (kept.Count != goalCall.Parameter.Count)
-            goalCall.Parameter = kept;   // implicit List<Data> -> parameter.list
+        // The argument list is the action's own row — rebind it with the survivors.
+        if (kept.Count != args.Items.Count)
+            foreach (var row in __action.Parameter)
+                if (string.Equals(row.Name, "Parameter", System.StringComparison.OrdinalIgnoreCase))
+                    row.SetValue(new global::app.type.item.list.@this(kept, Context));
         return Context.Ok();
     }
 
     public async Task<data.@this> Run()
     {
-        var goalCall = (await GoalName.Value())!;
-        // Stamp THIS action as the anchor so GetGoalAsync can navigate step → goal → sub-goals.
-        // Using __action (source-generator self-reference) instead of the step's first action
-        // means nested goal.call instances — e.g. inside error.handle's Actions chain —
-        // navigate from themselves, not from the outer action that owns the step.
-        if (goalCall.Action == null)
-            goalCall.Action = __action;
+        // A %variable% name resolves here, at dispatch, in the caller's context.
+        var name = (await Name.Value())?.ToString() ?? "";
+        var goal = await Context.App.Goal.GetAsync(name, __action?.Step?.Goal);
+        if (goal == null)
+            return Context.Error(new global::app.error.ActionError($"Goal '{name}' not found.", "GoalNotFound", 404));
+
         // No actor given (param absent OR its value is null) → run in the current
         // actor's context. Only resolve Actor when it actually holds one, so a null
         // value never tries to convert into an actor.
         var execContext = (Actor == null || await Actor.IsEmpty() ? null : await Actor.Value())?.Context ?? Context;
-        return await Context.App.RunGoalAsync(goalCall, execContext);
+
+        // Data just flows — each argument binds under its name as-is, no inspection, no resolve;
+        // it resolves on its own door when the callee reads it. Goal-call is not a fork: the writes
+        // land in whatever scope the caller's flow is in.
+        if (Parameter?.Peek() is global::app.type.item.list.@this args)
+            foreach (var arg in args.Items)
+            {
+                arg.Context = execContext;
+                await execContext.Variable.Set(arg.Name, arg);
+            }
+
+        return await goal.Run(execContext);
     }
 }

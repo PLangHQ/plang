@@ -26,6 +26,13 @@
         "name": "item"
        },
        "value": 0.5
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "number"
       }
      ],
      "modifier": []
@@ -72,14 +79,7 @@
      "name": "set",
      "parameter": [
       {
-       "name": "Name",
-       "type": {
-        "name": "variable"
-       },
-       "value": "%state.goal%"
-      },
-      {
-       "name": "Value",
+       "name": "%state.goal%",
        "type": {
         "name": "item"
        },
@@ -122,19 +122,23 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "AddStepToState",
-        "parameter": [
-         {
-          "name": "item",
-          "value": "%step%"
-         }
-        ]
-       }
+       "value": "AddStepToState"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "item",
+         "value": "%step%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -173,19 +177,23 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "AddModuleToState",
-        "parameter": [
-         {
-          "name": "item",
-          "value": "%module%"
-         }
-        ]
-       }
+       "value": "AddModuleToState"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "item",
+         "value": "%module%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -208,13 +216,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -286,6 +287,13 @@
         "name": "item"
        },
        "value": "%!data%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "dict"
       }
      ],
      "modifier": []
@@ -308,13 +316,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderActionQuestions.template"
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -386,6 +387,13 @@
         "name": "item"
        },
        "value": "%!data%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "dict"
       }
      ],
      "modifier": []
@@ -403,11 +411,27 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
        "value": "/system/builder/EmitBuildEvent"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "kind",
+         "value": "goal-decided"
+        },
+        {
+         "name": "goal",
+         "value": "%goal%"
+        }
+       ]
       }
      ],
      "modifier": []
@@ -482,9 +506,35 @@
          "type": {
           "name": "item"
          },
-         "value": {
-          "name": "%module.Name%"
-         }
+         "value": "%module.Name%"
+        },
+        {
+         "name": "Type",
+         "type": {
+          "name": "item"
+         },
+         "value": "text"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.modules%[%module.Name%]%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%module.Description%"
         },
         {
          "name": "Type",

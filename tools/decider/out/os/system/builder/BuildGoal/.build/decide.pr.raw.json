@@ -55,6 +55,10 @@
         {
          "name": "Value",
          "value": 0.5
+        },
+        {
+         "name": "Type",
+         "value": "number"
         }
        ]
       }
@@ -87,11 +91,7 @@
        "name": "set",
        "parameter": [
         {
-         "name": "Name",
-         "value": "%state.goal%"
-        },
-        {
-         "name": "Value",
+         "name": "%state.goal%",
          "value": "%goal.Name%"
         }
        ]
@@ -113,25 +113,30 @@
          "name": "Item",
          "value": "%step%"
         }
-       ]
+       ],
+       "modifier": [],
+       "recovery": []
       },
       {
        "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "AddStepToState",
-          "parameter": [
-           {
-            "name": "item",
-            "value": "%step%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "AddStepToState"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "item",
+           "value": "%step%"
+          }
+         ]
         }
-       ]
+       ],
+       "modifier": [],
+       "recovery": []
       }
      ]
     },
@@ -150,25 +155,30 @@
          "name": "Item",
          "value": "%module%"
         }
-       ]
+       ],
+       "modifier": [],
+       "recovery": []
       },
       {
        "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "AddModuleToState",
-          "parameter": [
-           {
-            "name": "item",
-            "value": "%module%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "AddModuleToState"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "item",
+           "value": "%module%"
+          }
+         ]
         }
-       ]
+       ],
+       "modifier": [],
+       "recovery": []
       }
      ]
     },
@@ -182,10 +192,6 @@
         {
          "name": "Template",
          "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
-        },
-        {
-         "name": "IsFile",
-         "value": true
         }
        ]
       },
@@ -233,6 +239,10 @@
         {
          "name": "Value",
          "value": "%!data%"
+        },
+        {
+         "name": "Type",
+         "value": "dict"
         }
        ]
       }
@@ -248,10 +258,6 @@
         {
          "name": "Template",
          "value": "/system/builder/llm/templates/deciderActionQuestions.template"
-        },
-        {
-         "name": "IsFile",
-         "value": true
         }
        ]
       },
@@ -299,6 +305,10 @@
         {
          "name": "Value",
          "value": "%!data%"
+        },
+        {
+         "name": "Type",
+         "value": "dict"
         }
        ]
       }
@@ -312,9 +322,12 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": "/system/builder/EmitBuildEvent",
-         "parameter": [
+         "name": "Name",
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "value": [
           {
            "name": "kind",
            "value": "goal-decided"
@@ -386,9 +399,25 @@
         },
         {
          "name": "Value",
-         "value": {
-          "name": "%module.Name%"
-         }
+         "value": "%module.Name%"
+        },
+        {
+         "name": "Type",
+         "value": "text"
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%state.modules%[%module.Name%]%"
+        },
+        {
+         "name": "Value",
+         "value": "%module.Description%"
         },
         {
          "name": "Type",

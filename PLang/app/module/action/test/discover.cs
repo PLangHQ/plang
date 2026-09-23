@@ -272,24 +272,12 @@ public partial class discover : IContext
             ExtractAutoTags(sub, file, visited, depth + 1);
     }
 
+    // A goal.call's Name row, as authored — a %variable% name is only known at run, so it has no
+    // static target.
     private static string? ResolveStaticGoalName(app.goal.step.action.@this action)
     {
-        var nameParam = action.Parameter.FirstOrDefault(p =>
-            string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));
-        var value = nameParam?.Peek();
-        var name = value switch
-        {
-            GoalCall gc => gc.Name,
-            global::app.type.item.text.@this s => s.Clr<string>(),
-            Clr { Value: System.Text.Json.JsonElement je }
-                when je.ValueKind == System.Text.Json.JsonValueKind.Object
-                && je.TryGetProperty("Name", out var np) => np.GetString(),
-            // A goal.call param read back from the .pr is the native dict value type.
-            app.type.item.dict.@this nd when nd.Get("Name") is { } nameData => nameData.Peek()?.ToString(),
-            Clr { Value: System.Collections.Generic.IDictionary<string, object?> dict }
-                when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
-            _ => null
-        };
+        var name = action.Parameter.FirstOrDefault(p =>
+            string.Equals(p.Name, "Name", StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
         if (string.IsNullOrEmpty(name) || name.Contains('%')) return null;
         return name;
     }

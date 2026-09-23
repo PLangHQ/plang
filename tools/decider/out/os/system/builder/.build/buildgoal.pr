@@ -14,19 +14,23 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "BuildGoal/Start",
-        "parameter": [
-         {
-          "name": "goal",
-          "value": "%goal%"
-         }
-        ]
-       }
+       "value": "BuildGoal/Start"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "goal",
+         "value": "%goal%"
+        }
+       ]
       }
      ],
      "modifier": []

@@ -26,13 +26,6 @@
         "name": "list"
        },
        "value": []
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -83,13 +76,6 @@
         "name": "list"
        },
        "value": []
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -162,49 +148,6 @@
    "waitForExecution": true,
    "action": [
     {
-     "module": "cache",
-     "name": "wrap",
-     "parameter": [
-      {
-       "name": "DurationMs",
-       "type": {
-        "name": "number"
-       },
-       "value": 600000
-      },
-      {
-       "name": "Sliding",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
-      }
-     ],
-     "modifier": [
-      {
-       "module": "cache",
-       "name": "wrap",
-       "parameter": [
-        {
-         "name": "DurationMs",
-         "type": {
-          "name": "number"
-         },
-         "value": 600000
-        },
-        {
-         "name": "Sliding",
-         "type": {
-          "name": "bool"
-         },
-         "value": true
-        }
-       ],
-       "modifier": []
-      }
-     ]
-    },
-    {
      "module": "llm",
      "name": "query",
      "parameter": [
@@ -228,19 +171,7 @@
         "name": "item"
        },
        "value": {
-        "step": [
-         {
-          "index": 0,
-          "action": [
-           {
-            "module": "string",
-            "name": "string",
-            "parameter": [],
-            "modifier": []
-           }
-          ]
-         }
-        ]
+        "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>}"
        }
       },
       {
@@ -248,14 +179,14 @@
        "type": {
         "name": "bool"
        },
-       "value": true
+       "value": "%!build.cache%"
       },
       {
-       "name": "Format",
+       "name": "write to",
        "type": {
-        "name": "text"
+        "name": "item"
        },
-       "value": "json"
+       "value": "%properties%"
       }
      ],
      "modifier": []
@@ -277,13 +208,6 @@
         "name": "item"
        },
        "value": "%!data%"
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "list"
       }
      ],
      "modifier": []
@@ -301,23 +225,27 @@
      "name": "call",
      "parameter": [
       {
-       "name": "GoalName",
+       "name": "Name",
        "type": {
-        "name": "goal.call"
+        "name": "text"
        },
-       "value": {
-        "name": "/system/builder/EmitBuildEvent",
-        "parameter": [
-         {
-          "name": "kind",
-          "value": "goal-properties"
-         },
-         {
-          "name": "goal",
-          "value": "%goal%"
-         }
-        ]
-       }
+       "value": "/system/builder/EmitBuildEvent"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "kind",
+         "value": "goal-properties"
+        },
+        {
+         "name": "goal",
+         "value": "%goal%"
+        }
+       ]
       }
      ],
      "modifier": []

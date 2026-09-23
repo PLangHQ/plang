@@ -21,13 +21,6 @@
        "value": "/system/builder/templates/output/build-output.template"
       },
       {
-       "name": "Parameter",
-       "type": {
-        "name": "list"
-       },
-       "value": []
-      },
-      {
        "name": "IsFile",
        "type": {
         "name": "bool"
@@ -76,6 +69,21 @@
         "name": "text"
        },
        "value": "builder"
+      },
+      {
+       "name": "Goal",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "EmitBuildEvent",
+        "parameter": [
+         {
+          "name": "msg",
+          "value": "%msg%"
+         }
+        ]
+       }
       }
      ],
      "modifier": []

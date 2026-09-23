@@ -56,10 +56,6 @@
          "value": "/"
         },
         {
-         "name": "Type",
-         "value": "path"
-        },
-        {
          "name": "AsDefault",
          "value": true
         }
@@ -81,10 +77,6 @@
         {
          "name": "Value",
          "value": true
-        },
-        {
-         "name": "Type",
-         "value": "bool"
         },
         {
          "name": "AsDefault",
@@ -110,10 +102,6 @@
          "value": true
         },
         {
-         "name": "Type",
-         "value": "bool"
-        },
-        {
          "name": "AsDefault",
          "value": true
         }
@@ -135,7 +123,8 @@
         {
          "name": "Goal",
          "value": {
-          "name": "BuilderChannel"
+          "name": "BuilderChannel",
+          "parameter": []
          }
         }
        ]
@@ -150,20 +139,21 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "build-path"
-           },
-           {
-            "name": "path",
-            "value": "%path%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "kind",
+           "value": "build-path"
+          },
+          {
+           "name": "path",
+           "value": "%path%"
+          }
+         ]
         }
        ]
       }
@@ -235,20 +225,21 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "goals-found"
-           },
-           {
-            "name": "goals",
-            "value": "%goals%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "kind",
+           "value": "goals-found"
+          },
+          {
+           "name": "goals",
+           "value": "%goals%"
+          }
+         ]
         }
        ]
       }
@@ -276,18 +267,20 @@
        "name": "call",
        "parameter": [
         {
-         "name": "GoalName",
-         "value": {
-          "name": "BuildGoal",
-          "parameter": [
-           {
-            "name": "goal",
-            "value": "%item%"
-           }
-          ]
-         }
+         "name": "Name",
+         "value": "BuildGoal"
+        },
+        {
+         "name": "Parameter",
+         "value": [
+          {
+           "name": "goal",
+           "value": "%item%"
+          }
+         ]
         }
-       ]
+       ],
+       "modifier": []
       }
      ]
     },

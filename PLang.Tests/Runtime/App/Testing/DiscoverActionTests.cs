@@ -249,7 +249,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("GoalName", new GoalCall { Name = "Helper" }, global::PLang.Tests.TestApp.SharedContext.Type.Create("goal.call"), context: _app.User.Context)
+                    new("Name", "Helper", context: _app.User.Context)
                 })
             });
 

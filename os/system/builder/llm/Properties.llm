@@ -45,7 +45,8 @@ actions, the same shape as the step's own. Given:
   step 3: call Compile, on error call HandleFailure, then retry 2 times
      menu:
        goal.call
-          GoalName (goal.call, required)
+          Name (text, required)
+          Parameter (list, optional)
        error.handle  [modifier]
           Key (text, optional)
           RetryCount (number, optional)
@@ -54,35 +55,36 @@ the step's entry is:
 
   {"index": 3, "action": [
     {"module": "goal", "name": "call",
-     "parameter": [{"name": "GoalName", "value": {"name": "Compile"}}],
+     "parameter": [{"name": "Name", "value": "Compile"}],
      "modifier": [
        {"module": "error", "name": "handle",
         "parameter": [{"name": "RetryCount", "value": 2}],
         "recovery": [
           {"module": "goal", "name": "call",
-           "parameter": [{"name": "GoalName", "value": {"name": "HandleFailure"}}]}]}]}
+           "parameter": [{"name": "Name", "value": "HandleFailure"}]}]}]}
   ]}
 
-A goal call names the goal and carries the arguments the step passes, each as its own row.
+A goal call names the goal in `Name`, and each argument the step passes is one row in `Parameter`.
 Given:
 
   step 2: call SendMail to=%email%, subject="Hi"
      menu:
        goal.call
-          GoalName (goal.call, required)
+          Name (text, required)
+          Parameter (list, optional)
           Actor (item, optional)
 
 the step's entry is:
 
   {"index": 2, "action": [
     {"module": "goal", "name": "call",
-     "parameter": [{"name": "GoalName", "value": {"name": "SendMail", "parameter": [
-        {"name": "to", "value": "%email%"}, {"name": "subject", "value": "Hi"}]}}]}
+     "parameter": [{"name": "Name", "value": "SendMail"},
+                   {"name": "Parameter", "value": [
+                      {"name": "to", "value": "%email%"}, {"name": "subject", "value": "Hi"}]}]}
   ]}
 
-Every `name=value` after the goal name is an argument; dropping one breaks the call. The arguments
-go INSIDE GoalName's value — never beside it as properties of goal.call. `Actor` is left out
-because the step names no actor.
+Every `name=value` after the goal name is an argument; dropping one breaks the call. `Parameter` is
+left out when the step passes no arguments; `Actor` is left out because the step names no actor.
 
 Filling a property:
 - An action has only the properties listed under it on the menu. Never add one that is not listed.
