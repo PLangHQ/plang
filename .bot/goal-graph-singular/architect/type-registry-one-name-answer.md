@@ -49,6 +49,14 @@ Private statics — each gets the ownership question ("whose knowledge is this?"
 
 Out of scope unless it falls out naturally: statics elsewhere in the codebase. This pass is the type registry and the choice type.
 
+## Inventory answers (coder `ed5d15fb6`, ruled 2026-09-23)
+
+- **Q1 plang→CLR:** `Contains(name)` beside the throwing indexer — the collection convention (`goal/list:231`, `module/list:108`, `channel/list:152`). `Get`/`Clr` die; `Get(name, depth)` stays private.
+- **Q2:** the face drops the `?` suffix — nullability is the slot's fact (`Nullable` on the row).
+- **Q3:** `GetPrimitiveOrMime` dies in this pass by fixing the births: a type entity is born knowing its context (21 production sites; own commit, last). Context-less test births build through the test app. A site with no context at hand is reported, not excused.
+- **Q4:** `ComplexSchemas()` dies; `Rank` → the entity's `Richness`. Logged: `Rank` hides a name collision (`app.goal.@this` and `app.channel.type.goal.@this` both "goal") — the inverse of named-twice; todos, not this pass.
+- **Q5:** every closed set declares its name with `[PlangType("…")]`; `choice<T>` reads T's attribute; the registry indexes the same attribute; a closed set without one fails loud at registration.
+
 ## Verify
 
 1. `condition.if` Operator: the menu shows `choice<operator>`; an LLM row `{"name":"Operator","type":{"name":"choice","kind":"operator"},"value":"=="}` grafts, builds, runs; `"=+"` fails at the build with choice's own message.

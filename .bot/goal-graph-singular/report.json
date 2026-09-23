@@ -662,6 +662,17 @@
           "category": "doc",
           "confidence": "high",
           "context": "Ingi decided A for choice (one face {choice, kind}) and the type-registry cleanup: one door per question, no aliases, no statics. Investigation: choice<Operator> has four answers (value 'choice', naming 'operator' twice, CLR-type door entity 'operator', reader (choice, operator)). Answer doc written, queued after %!event% and graft (b). CLAUDE.md proposal filed: named twice + static smells."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/type-registry-one-name-answer.md",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Type-registry inventory answered: Q1 Contains beside the throwing indexer (collection convention); Q2 drop the ? suffix (nullability is the slot's); Q3 kill GetPrimitiveOrMime by fixing the 21 context-less type entity births this pass; Q4 delete ComplexSchemas, Rank→entity Richness, log the goal name collision; Q5 closed sets declare [PlangType], choice<T> reads it, missing attribute fails loud."
         }
       ],
       "after": {
