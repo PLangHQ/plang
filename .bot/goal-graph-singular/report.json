@@ -553,6 +553,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Q3 reported blocked (Action member on every handler) — misread: the generator emits Action/Step only under ImplementsIAction/ImplementsIStep (Emission/Action/this.cs:76-85); validate : IContext; environment/run.cs:14-15 already declares both slots. Ruled the step shape on merit: build.validate step=%goal.step[i]%, slot Step, verdict via step.Validate (pass the whole; one door with goal.Validate; verdict names the step for FixProperties). Chain rejected."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/plural-gate-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plural gate closed (coder 5f749a689); grep gate re-verified at 0. Two rulings on next: (A) the goal.call 'data-loss fix' (aeeb8206f, FromSlots key) patches an arm ruled dead in July — root is the ingest boundary: a stage-3 answer row without type is born with its DECLARED type from the element's rows and reads through that type's reader; NormalizeParameterTypes dissolves; FromSlots/dict arms/JsonElement arm/ToGoalCall die as ruled; fork for Ingi: catalog-at-read (recommended) vs required type on every answer row. (B) open-items #3 BuildError→action.Error is superseded by the settled error model (no error state on the node); surviving content: the BuildError reflection getter dissolves into action.Validate; Ingi confirms before start. (C) foreach.notes wrong; Ingi's content call."
         }
       ],
       "after": {
