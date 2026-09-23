@@ -3,9 +3,9 @@ using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
-// Which wire key populates action.Name when reading a clr(json) action host onto a
-// list<action> slot — the builder's `set %goal.step[i].action% = %compileResult.actions%` path.
-// The LLM returns {"module":..,"action":..}; the proof test used {"module":..,"name":..}.
+// The .pr's own keys populate an action read from a clr(json) host onto a list<action> slot —
+// the builder's `set %goal.step[i].action% = %properties.step[i].action%` graft. The LLM answers
+// in those keys; no alias is read.
 public class ActionNameWireReadTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
@@ -34,29 +34,20 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task WireKey_action_PopulatesActionName()
+    public async Task WireKey_name_PopulatesActionName()
     {
-        var goal = await ReadOneAction("""[ { "module": "output", "action": "write" } ]""");
+        var goal = await ReadOneAction("""[ { "module": "output", "name": "write" } ]""");
         await Assert.That(goal.Step[0].Action.Count).IsEqualTo(1);
         await Assert.That(goal.Step[0].Action[0].Module.Name).IsEqualTo("output");
         await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
     }
 
     [Test]
-    public async Task WireKey_name_PopulatesActionName()
-    {
-        var goal = await ReadOneAction("""[ { "module": "output", "name": "write" } ]""");
-        await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
-    }
-
-    // The LLM pluralizes an array field name (`parameters`) regardless of the schema hint; the
-    // reader tolerates it. Canonical wire stays singular (`parameter`).
-    [Test]
-    public async Task WireKey_parameters_Plural_PopulatesParameter()
+    public async Task WireKey_parameter_PopulatesParameter()
     {
         var goal = await ReadOneAction("""
-        [ { "module": "output", "action": "write",
-            "parameters": [ { "name": "Data", "type": { "name": "text" }, "value": "hi" } ] } ]
+        [ { "module": "output", "name": "write",
+            "parameter": [ { "name": "Data", "type": { "name": "text" }, "value": "hi" } ] } ]
         """);
         await Assert.That(goal.Step[0].Action[0].Parameter.Count).IsEqualTo(1);
         await Assert.That(goal.Step[0].Action[0].Parameter[0].Name).IsEqualTo("Data");

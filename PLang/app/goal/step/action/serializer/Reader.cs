@@ -52,16 +52,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // means a .pr naming a module that no longer exists fails at LOAD (the registry
                 // indexer throws) instead of mid-execution.
                 case "module": action.Module = ctx.Context.App.Module[reader.String()]; break;
-                // `name` is the canonical wire key (what Output writes and every .pr carries).
-                // `action` is the LLM's clearer alias — the compile schema asks the model for
-                // `action`, so the compile-response read accepts it here. One read door, both keys;
-                // the persisted wire stays `name` (no .pr migration).
-                case "name": case "action": action.Name = reader.String(); break;
-                // `parameter` is canonical (Output writes it, the schema teaches it). `parameters` is
-                // accepted too: the schema rides as a prompt hint, and the LLM naturally pluralizes an
-                // array field name regardless — so the read tolerates the plural. Persisted wire stays
-                // singular. Same for modifier/modifiers below.
-                case "parameter": case "parameters":
+                // The .pr's own keys are the only keys — the LLM answers in them too, so the answer
+                // reads through the same door a built .pr does.
+                case "name": action.Name = reader.String(); break;
+                case "parameter":
                     reader.BeginArray();
                     while (reader.NextElement())
                         action.Parameter.Add(dataReader.Read(reader.RawValue(), ctx));
@@ -74,7 +68,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         action.Default.Add(dataReader.Read(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
-                case "modifier": case "modifiers":
+                case "modifier":
                     reader.BeginArray();
                     while (reader.NextElement())
                     {

@@ -21,30 +21,30 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
       "name": "MarkBig",
       "description": null,
       "comment": null,
-      "steps": [
+      "step": [
         {
           "index": 0,
           "text": "set %label% = 'big'",
           "lineNumber": 2,
           "indent": 0,
-          "actions": [
+          "action": [
             {
               "module": "variable",
-              "action": "set",
-              "parameters": [
+              "name": "set",
+              "parameter": [
                 { "name": "Name",  "type": { "name": "variable" }, "value": "%label%" },
                 { "name": "Value", "type": { "name": "text" },     "value": "big" }
               ],
-              "defaults": [
+              "default": [
                 { "name": "asdefault", "type": { "name": "bool" }, "value": false }
               ],
-              "modifiers": []
+              "modifier": []
             }
           ],
           "waitForExecution": true
         }
       ],
-      "goals": [],
+      "child": [],
       "visibility": 1,
       "path": "/BuilderSanity/MarkBig.goal",
       "isSetup": false
