@@ -88,3 +88,11 @@ injection seam differs.
 
 **11. Stale test** — `ModulesDescribe_BuilderRecordHandlers` NREs looking up module `"builder"`; the
 module is `"build"`.
+
+## Unfinished demolition (not live design)
+
+**13. `app/Info.cs`** — on the branch plan's demolition list ("app/Info.cs, the four List<Info>
+properties", replaced by Warning). Its last builder holder (BuildResponse) is gone and it is no longer
+registered as a type (only items are indexed). Remaining holders: `Data.Warnings`
+(`PLang/app/data/this.Result.cs:62`, copied at `PLang/app/data/this.cs` ×4) and
+`PLang/app/module/action/build/code/Default.cs` ×4 (the build's error list and `MergePrData`).
