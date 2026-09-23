@@ -2057,3 +2057,12 @@ Context: the builder now compiles a simple goal end-to-end on a clean LLM pass
    foreach correctly). On-theme for goal-graph-singular. Not the blocker for the stale-Goals
    bug (correct property name navigates fine), but the right cleanup. The getter side-effect
    (`g.Parent ??= this`) + parser line 567 + Merge/NestRecursive + serialization all move with it.
+
+## 2026-09-23 — callback holders: warn when an authored row shadows the injected name
+A callback slot (`http.request.OnStream` → `%chunk%`, `download/upload.OnProgress` → `%progress%`,
+`llm.query.OnToolCall` → `%name%/%arguments%/%status%/%result%`, `OnValidateResponse` → `%response%`)
+sets its value into the caller's flow, then the held `goal.call` runs and its authored rows bind after —
+so an authored row NAMED like the injected value silently replaces it. That is a developer error; its
+home is build time: the holder knows its `[GoalCallback]` name, so its `Validate()` can add a Warning
+"row 'chunk' shadows the value the callback injects". Six holders — logged beside the graft-typing item
+rather than folded into the A2 llm.query commit (architect ruling, goal-graph-singular).

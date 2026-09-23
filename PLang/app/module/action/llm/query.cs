@@ -36,16 +36,19 @@ public partial class query : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.list.@this<LlmMessage>> Message { get; init; }
 
-    /// <summary>Goals available as tools for the LLM to call.</summary>
-    public partial data.@this<global::app.type.item.list.@this<GoalCall>>? Tool { get; init; }
+    /// <summary>Goals available as tools for the LLM to call — each a <c>goal.call</c> action whose
+    /// Parameter rows declare what the model must supply (a row with no value is required).</summary>
+    public partial data.@this<global::app.type.item.list.@this>? Tool { get; init; }
 
-    /// <summary>Callback fired before/after each tool execution. Receives: name, arguments, status, result.</summary>
-    [GoalCallback("toolCallInfo")]
-    public partial data.@this<GoalCall>? OnToolCall { get; init; }
+    /// <summary>The call run before and after each tool execution, with %name%, %arguments%,
+    /// %status% (starting/completed) and, once completed, %result%.</summary>
+    [GoalCallback("status")]
+    public partial data.@this<global::app.goal.step.action.@this>? OnToolCall { get; init; }
 
-    /// <summary>Callback to validate the LLM's response. Return error to trigger retry.</summary>
+    /// <summary>The call that validates the LLM's response, with %response%. Returning an error
+    /// triggers a retry.</summary>
     [GoalCallback("response")]
-    public partial data.@this<GoalCall>? OnValidateResponse { get; init; }
+    public partial data.@this<global::app.goal.step.action.@this>? OnValidateResponse { get; init; }
 
     /// <summary>The call run for each streaming chunk — the response streams through http.request's
     /// OnStream, so the chunk arrives as %chunk%.</summary>

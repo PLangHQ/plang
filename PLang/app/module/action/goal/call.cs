@@ -26,6 +26,11 @@ public partial class Call : IContext
     /// </summary>
     public partial data.@this<actor.@this>? Actor { get; init; }
 
+    /// <summary>Safe to run beside its siblings — a fact about this call. How many run at once is
+    /// the runner's decision (e.g. llm.query's tool loop).</summary>
+    [Default(false)]
+    public partial data.@this<global::app.type.item.@bool.@this> Parallel { get; init; }
+
     /// <summary>
     /// Build-time hook: drop a self-reference arg — one whose name equals the variable it
     /// references (<c>path=%path%</c>). It is redundant: the callee already reads that variable
@@ -85,9 +90,16 @@ public partial class Call : IContext
         // Data just flows — each argument binds under its name as-is, no inspection, no resolve;
         // it resolves on its own door when the callee reads it. Goal-call is not a fork: the writes
         // land in whatever scope the caller's flow is in.
+        // A row that carries no value is a declaration ("this goal takes a city"), not an argument —
+        // it binds nothing. A valued row is "this value unless the invocation supplied one": a runner
+        // that supplies arguments (a tool loop, a callback) runs this call inside a frame born with
+        // them, and a supplied name wins. A plain call has no such frame, so its rows always bind.
+        var supplier = execContext.Variable.Calls.Current is { } frame && ReferenceEquals(frame.Held, __action) ? frame : null;
         if (Parameter?.Peek() is global::app.type.item.list.@this args)
             foreach (var arg in args.Items)
             {
+                if (arg.Peek() is not { IsNull: false }) continue;
+                if (supplier?.Supplies(arg.Name) == true) continue;
                 arg.Context = execContext;
                 await execContext.Variable.Set(arg.Name, arg);
             }

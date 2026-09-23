@@ -76,12 +76,12 @@ public class QueryEdgeCaseTests
             {
                 new LlmMessage { Role = "user", Content = "multi tools" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "ToolA" },
-                new GoalCall { Name = "ToolB" },
-                new GoalCall { Name = "ToolC" }
-            }.ToListData<GoalCall>(),
+                Make.Call("ToolA"),
+                Make.Call("ToolB"),
+                Make.Call("ToolC")
+            }.ToListData(),
             MaxToolCalls = (global::app.type.item.number.@this)5
         };
         await action.Attach(null, Ctx);
@@ -119,10 +119,10 @@ public class QueryEdgeCaseTests
             {
                 new LlmMessage { Role = "user", Content = "null args" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "NoArgTool" }
-            }.ToListData<GoalCall>()
+                Make.Call("NoArgTool")
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();

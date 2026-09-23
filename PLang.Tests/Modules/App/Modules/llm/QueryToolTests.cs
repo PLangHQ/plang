@@ -66,10 +66,10 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "What's the weather?" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "GetWeather", Parameter = new List<Data> { new Data("city", null, global::app.type.@this.String, context: Ctx) } }
-            }.ToListData<GoalCall>()
+                Make.Tool("GetWeather", parameter: new List<Data> { new Data("city", null, global::app.type.@this.String, context: Ctx) })
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -103,11 +103,11 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "do both" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "ToolA", Parallel = false },
-                new GoalCall { Name = "ToolB", Parallel = false }
-            }.ToListData<GoalCall>()
+                Make.Tool("ToolA", parallel: false),
+                Make.Tool("ToolB", parallel: false)
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -138,11 +138,11 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "do both parallel" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "ToolA", Parallel = true },
-                new GoalCall { Name = "ToolB", Parallel = true }
-            }.ToListData<GoalCall>()
+                Make.Tool("ToolA", parallel: true),
+                Make.Tool("ToolB", parallel: true)
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -173,11 +173,11 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "mixed" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "ToolA", Parallel = true },
-                new GoalCall { Name = "ToolB", Parallel = false }
-            }.ToListData<GoalCall>()
+                Make.Tool("ToolA", parallel: true),
+                Make.Tool("ToolB", parallel: false)
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -209,10 +209,10 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "call failing tool" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "FailTool" }
-            }.ToListData<GoalCall>()
+                Make.Call("FailTool")
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -243,10 +243,10 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "call unknown" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "KnownTool" }
-            }.ToListData<GoalCall>()
+                Make.Call("KnownTool")
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -271,10 +271,10 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "loop forever" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "InfiniteTool" }
-            }.ToListData<GoalCall>(),
+                Make.Call("InfiniteTool")
+            }.ToListData(),
             MaxToolCalls = (global::app.type.item.number.@this)3
         };
         await action.Attach(null, Ctx);
@@ -309,18 +309,14 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall
-                {
-                    Name = "TestTool",
-                    Parameter = new List<Data>
+                Make.Tool("TestTool", parameter: new List<Data>
                     {
                         new Data("city", null, global::app.type.@this.String, context: Ctx),     // required (no default)
                         new Data("units", "metric", global::app.type.@this.String, context: Ctx) // optional (has default)
-                    }
-                }
-            }.ToListData<GoalCall>()
+                    })
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -341,17 +337,13 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall
-                {
-                    Name = "TestTool",
-                    Parameter = new List<Data>
+                Make.Tool("TestTool", parameter: new List<Data>
                     {
                         new Data("query", null, global::app.type.@this.String, context: Ctx)
-                    }
-                }
-            }.ToListData<GoalCall>()
+                    })
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         await action.Run();
@@ -371,14 +363,10 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall
-                {
-                    Name = "NoParamTool",
-                    Parameter = new List<Data>()
-                }
-            }.ToListData<GoalCall>()
+                Make.Tool("NoParamTool", parameter: new List<Data>())
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         await action.Run();
@@ -413,18 +401,14 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "Weather in London?" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall
-                {
-                    Name = "GetWeather",
-                    Parameter = new List<Data>
+                Make.Tool("GetWeather", parameter: new List<Data>
                     {
                         new Data("city", null, global::app.type.@this.String, context: Ctx),       // required
                         new Data("units", "metric", global::app.type.@this.String, context: Ctx)   // optional, default "metric"
-                    }
-                }
-            }.ToListData<GoalCall>()
+                    })
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -452,21 +436,17 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall
-                {
-                    Name = "TypedTool",
-                    Parameter = new List<Data>
+                Make.Tool("TypedTool", parameter: new List<Data>
                     {
                         new Data("name", null, global::app.type.@this.String, context: Ctx),
                         new Data("count", null, new global::app.type.@this("int"), context: Ctx),
                         new Data("enabled", null, new global::app.type.@this("bool"), context: Ctx),
                         new Data("items", null, new global::app.type.@this("list"), context: Ctx),
                         new Data("config", null, new global::app.type.@this("object"), context: Ctx)
-                    }
-                }
-            }.ToListData<GoalCall>()
+                    })
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         await action.Run();
@@ -506,10 +486,10 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "mixed types" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "MixedTool" }
-            }.ToListData<GoalCall>()
+                Make.Call("MixedTool")
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -547,11 +527,11 @@ public class QueryToolTests
             {
                 new LlmMessage { Role = "user", Content = "parallel" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "ToolA", Parallel = true },
-                new GoalCall { Name = "ToolB", Parallel = true }
-            }.ToListData<GoalCall>()
+                Make.Tool("ToolA", parallel: true),
+                Make.Tool("ToolB", parallel: true)
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();

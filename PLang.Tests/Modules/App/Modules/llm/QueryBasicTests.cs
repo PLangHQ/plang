@@ -270,10 +270,10 @@ public class QueryBasicTests
             {
                 new LlmMessage { Role = "user", Content = "go" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "Echo" }
-            }.ToListData<GoalCall>()
+                Make.Call("Echo")
+            }.ToListData()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();

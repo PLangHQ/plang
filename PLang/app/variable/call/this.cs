@@ -19,21 +19,35 @@ public sealed class @this : IAsyncDisposable
     private readonly Dictionary<string, data.@this> _entries =
         new(StringComparer.OrdinalIgnoreCase);
     private readonly call.list.@this _owner;
+    // The names this frame was born with — what its runner supplied. A birth fact, kept apart from
+    // _entries, which also grows with every Set inside the invocation.
+    private readonly HashSet<string> _born = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Outer Call (the one that was Current when this was pushed). Null at root.</summary>
     public @this? Caller { get; }
 
-    internal @this(IEnumerable<data.@this>? parameters, @this? caller, call.list.@this owner)
+    /// <summary>The held action this frame was pushed to run (a tool, a callback) — the one call its
+    /// supplied names are FOR. A call nested deeper in the same flow is not it.</summary>
+    public global::app.goal.step.action.@this? Held { get; }
+
+    internal @this(IEnumerable<data.@this>? parameters, @this? caller, call.list.@this owner,
+        global::app.goal.step.action.@this? held = null)
     {
         Caller = caller;
         _owner = owner;
+        Held = held;
         if (parameters == null) return;
         foreach (var p in parameters)
         {
             if (p == null || string.IsNullOrEmpty(p.Name)) continue;
             _entries[p.Name] = p;   // last wins on duplicate names
+            _born.Add(p.Name);
         }
     }
+
+    /// <summary>True when this frame was BORN with <paramref name="name"/> — its runner supplied it
+    /// (a tool's argument, a callback's value). A name set later in the flow is not supplied.</summary>
+    public bool Supplies(string name) => _born.Contains(name);
 
     /// <summary>
     /// Looks up <paramref name="name"/> in this overlay, walking up <see cref="Caller"/>

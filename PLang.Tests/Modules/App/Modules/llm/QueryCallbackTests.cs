@@ -66,11 +66,11 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "use tool" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "TestTool" }
-            }.ToListData<GoalCall>(),
-            OnToolCall = new GoalCall { Name = "LogToolCall" }
+                Make.Call("TestTool")
+            }.ToListData(),
+            OnToolCall = Make.Call("LogToolCall")
         };
 
         // Should complete without crashing even though LogToolCall goal doesn't exist
@@ -104,11 +104,11 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "get data" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "GetData" }
-            }.ToListData<GoalCall>(),
-            OnToolCall = new GoalCall { Name = "ToolCallHandler" }
+                Make.Call("GetData")
+            }.ToListData(),
+            OnToolCall = Make.Call("ToolCallHandler")
         };
 
         await action.Attach(null, Ctx);
@@ -160,7 +160,7 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "validate me" }
             }.ToListData<LlmMessage>(),
-            OnValidateResponse = new GoalCall { Name = "NonExistentValidator" },
+            OnValidateResponse = Make.Call("NonExistentValidator"),
             MaxValidationRetries = (global::app.type.item.number.@this)2
         };
 
@@ -186,7 +186,7 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "validate" }
             }.ToListData<LlmMessage>(),
-            OnValidateResponse = new GoalCall { Name = "AlwaysFails" },
+            OnValidateResponse = Make.Call("AlwaysFails"),
             MaxValidationRetries = (global::app.type.item.number.@this)3
         };
 
@@ -217,11 +217,11 @@ public class QueryCallbackTests
             {
                 new LlmMessage { Role = "user", Content = "tools then validate" }
             }.ToListData<LlmMessage>(),
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "TestTool" }
-            }.ToListData<GoalCall>(),
-            OnValidateResponse = new GoalCall { Name = "Validator" },
+                Make.Call("TestTool")
+            }.ToListData(),
+            OnValidateResponse = Make.Call("Validator"),
             MaxValidationRetries = (global::app.type.item.number.@this)1
         };
 

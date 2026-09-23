@@ -155,7 +155,7 @@ public sealed class OpenAi : ILlm
         // unthreaded action.Cache resolves to false without this layer knowing build mode exists
         // (build-mode-inversion §6.D, Case A). Gating cacheKey also skips the write below (guarded
         // by cacheKey != null), so cache:false is a full bypass: no read, no stale entry left behind.
-        List<GoalCall>? goalTools = await ToolsOf(action);
+        List<Tool>? goalTools = await ToolsOf(action);
         string? cacheKey = null;
         if (await action.Cache.ToBooleanAsync() && goalTools == null)
         {
@@ -180,7 +180,7 @@ public sealed class OpenAi : ILlm
                 {
                     ["name"] = t.Name,
                     ["description"] = "",
-                    ["parameters"] = BuildParamSchema(t.Parameter)
+                    ["parameters"] = BuildParamSchema(t.Declared)
                 }
             }).ToList();
         }
@@ -343,15 +343,19 @@ public sealed class OpenAi : ILlm
                     ToolCalls = toolCalls
                 });
 
-                // Determine parallel execution
-                bool allParallel = toolCalls.All(tc =>
-                    goalTools?.Find(t => t.Name == tc.Name)?.Parallel == true);
+                // Determine parallel execution — each called tool says whether it may run beside
+                // its siblings; the loop runs them together only when all of them may.
+                bool allParallel = true;
+                foreach (var tc in toolCalls)
+                    if (goalTools?.Find(t => t.Name == tc.Name) is not { } tool
+                        || !await tool.Call.Parallel.ToBooleanAsync())
+                        allParallel = false;
 
                 // Execute tools
                 List<string> results;
                 if (allParallel && toolCalls.Count > 1)
                 {
-                    var tasks = toolCalls.Select(tc => ExecuteToolAsync(action, tc));
+                    var tasks = toolCalls.Select(tc => ExecuteToolAsync(action, tc, goalTools));
                     results = (await Task.WhenAll(tasks)).ToList();
                 }
                 else
@@ -359,7 +363,7 @@ public sealed class OpenAi : ILlm
                     results = new List<string>();
                     foreach (var tc in toolCalls)
                     {
-                        results.Add(await ExecuteToolAsync(action, tc));
+                        results.Add(await ExecuteToolAsync(action, tc, goalTools));
                     }
                 }
 
@@ -413,15 +417,10 @@ public sealed class OpenAi : ILlm
             }
 
             // --- Custom validation ---
-            if ((action.OnValidateResponse == null ? null : await action.OnValidateResponse.Value()) != null)
+            if ((action.OnValidateResponse == null ? null : await action.OnValidateResponse.Value()) is { } validator)
             {
-                var validationCall = new GoalCall
-                {
-                    Name = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.Name,
-                    PrPath = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.PrPath,
-                    Parameter = new List<data.@this> { new data.@this("response", extracted, context: context) }
-                };
-                var validationResult = await app.RunGoalAsync(validationCall, context);
+                await context.Variable.Set("response", extracted);
+                var validationResult = await validator.Run(context);
 
                 if (!validationResult.Success)
                 {
@@ -527,38 +526,32 @@ public sealed class OpenAi : ILlm
 
     // --- Tool execution ---
 
-    private static async Task<string> ExecuteToolAsync(query action, ToolCall toolCall)
+    private static async Task<string> ExecuteToolAsync(query action, ToolCall toolCall, List<Tool>? tools)
     {
-        var app = action.Context.App;
         var context = action.Context;
+        var onToolCall = action.OnToolCall == null ? null : await action.OnToolCall.Value();
 
-        // OnToolCall — starting
-        if ((action.OnToolCall == null ? null : await action.OnToolCall.Value()) != null)
+        // OnToolCall — starting. The run-state binds as variables; the held call runs as itself.
+        if (onToolCall != null)
         {
-            var startCall = new GoalCall
-            {
-                Name = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.Name,
-                PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
-                Parameter = new List<data.@this>
-                {
-                    new data.@this("name", toolCall.Name, context: context),
-                    new data.@this("arguments", toolCall.Arguments, context: context),
-                    new data.@this("status", "starting", context: context)
-                }
-            };
-            await app.RunGoalAsync(startCall, context);
+            await context.Variable.Set("name", toolCall.Name);
+            await context.Variable.Set("arguments", toolCall.Arguments);
+            await context.Variable.Set("status", "starting");
+            await onToolCall.Run(context);
         }
 
         string result;
-        var goalCall = (await ToolsOf(action))?.Find(t => t.Name == toolCall.Name);
-        if (goalCall == null)
+        var tool = tools?.Find(t => t.Name == toolCall.Name);
+        if (tool == null)
         {
             result = $"Error: unknown tool '{toolCall.Name}'";
         }
         else
         {
-            // Parse arguments and build GoalCall
-            var parameters = ParseToolArguments(toolCall.Arguments, goalCall.Parameter, context);
+            // The model's arguments are what this invocation supplies: the held call runs inside a
+            // frame born with them, FOR it — its declaration rows bind nothing, its valued rows are
+            // defaults that yield to a supplied name, and a parallel sibling sees its own frame.
+            var parameters = ParseToolArguments(toolCall.Arguments, context);
             var parseError = parameters.Find(p => !p.Success);
             if (parseError != null)
             {
@@ -566,13 +559,9 @@ public sealed class OpenAi : ILlm
             }
             else
             {
-                var execCall = new GoalCall
-                {
-                    Name = goalCall.Name,
-                    PrPath = goalCall.PrPath,
-                    Parameter = parameters
-                };
-                var goalResult = await app.RunGoalAsync(execCall, context);
+                data.@this goalResult;
+                await using (context.Variable.Calls.Push(parameters, tool.Held))
+                    goalResult = await tool.Held.Run(context);
 
                 if (goalResult.Success)
                 {
@@ -591,30 +580,23 @@ public sealed class OpenAi : ILlm
         }
 
         // OnToolCall — completed
-        if ((action.OnToolCall == null ? null : await action.OnToolCall.Value()) != null)
+        if (onToolCall != null)
         {
-            var endCall = new GoalCall
-            {
-                Name = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.Name,
-                PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
-                Parameter = new List<data.@this>
-                {
-                    new data.@this("name", toolCall.Name, context: context),
-                    new data.@this("arguments", toolCall.Arguments, context: context),
-                    new data.@this("result", result, context: context),
-                    new data.@this("status", "completed", context: context)
-                }
-            };
-            await app.RunGoalAsync(endCall, context);
+            await context.Variable.Set("name", toolCall.Name);
+            await context.Variable.Set("arguments", toolCall.Arguments);
+            await context.Variable.Set("result", result);
+            await context.Variable.Set("status", "completed");
+            await onToolCall.Run(context);
         }
 
         return result;
     }
 
     /// <summary>
-    /// Parses the LLM's JSON arguments string into List&lt;Data&gt; matching the GoalCall's parameter definitions.
+    /// Parses the model's JSON arguments into the arguments it supplied — only those. A tool row with
+    /// a value is a default the held call binds itself where the model was silent.
     /// </summary>
-    private static List<data.@this> ParseToolArguments(string argumentsJson, global::app.goal.step.action.parameter.list.@this? parameterDefs, actor.context.@this context)
+    private static List<data.@this> ParseToolArguments(string argumentsJson, actor.context.@this context)
     {
         var result = new List<data.@this>();
 
@@ -626,7 +608,6 @@ public sealed class OpenAi : ILlm
             using var doc = JsonDocument.Parse(argumentsJson);
             foreach (var prop in doc.RootElement.EnumerateObject())
             {
-                var paramDef = parameterDefs?.FirstOrDefault(p => p.Name == prop.Name);
                 object? value = prop.Value.ValueKind switch
                 {
                     JsonValueKind.String => prop.Value.GetString(),
@@ -646,16 +627,6 @@ public sealed class OpenAi : ILlm
             {
                 context.Error(ActionError.FromException(ex, "JsonParseError", 400))
             };
-        }
-
-        // Fill in defaults for parameters not provided by the LLM
-        if (parameterDefs != null)
-        {
-            foreach (var def in parameterDefs)
-            {
-                if (!result.Any(r => r.Name == def.Name) && !def.Peek().IsNull)
-                    result.Add(new data.@this(def.Name, def.Peek(), context: context));
-            }
         }
 
         return result;
@@ -863,9 +834,9 @@ public sealed class OpenAi : ILlm
 
     // --- Parameter schema ---
 
-    private static Dictionary<string, object> BuildParamSchema(global::app.goal.step.action.parameter.list.@this? parameters)
+    private static Dictionary<string, object> BuildParamSchema(IReadOnlyList<data.@this> parameters)
     {
-        if (parameters == null || parameters.Count == 0)
+        if (parameters.Count == 0)
             return new Dictionary<string, object>
             {
                 ["type"] = "object",
@@ -1065,15 +1036,32 @@ public sealed class OpenAi : ILlm
         data.Properties[name] = value;
     }
 
-    // The tools ride as a plang list<goalcall> — each row opens through its own goalcall door
-    // (params intact), never a CLR peel. Null when no tools were passed.
-    private static async Task<List<GoalCall>?> ToolsOf(query action)
+    // A tool as the loop needs it: the held goal.call (run as itself) and its bound handler, whose own
+    // typed properties answer the goal, the declared parameters and whether it may run in parallel.
+    // The function name the model sees is the goal's leaf name — a model function name cannot carry
+    // the '/' of an app-absolute address.
+    private sealed record Tool(global::app.goal.step.action.@this Held, global::app.module.action.goal.Call Call, string Name)
+    {
+        public IReadOnlyList<data.@this> Declared
+            => (Call.Parameter?.Peek() as global::app.type.item.list.@this)?.Items ?? System.Array.Empty<data.@this>();
+    }
+
+    // The tools ride as a plang list of held goal.call actions. Null when no tools were passed.
+    private static async Task<List<Tool>?> ToolsOf(query action)
     {
         if (action.Tool == null || await action.Tool.IsEmpty()) return null;
         if (await action.Tool.Value() is not global::app.type.item.list.@this list) return null;
-        var tools = new List<GoalCall>();
+        var tools = new List<Tool>();
         foreach (var row in list.Items)
-            if (await row.Value<GoalCall>() is { } gc) tools.Add(gc);
+        {
+            if (row.Peek() is not global::app.goal.step.action.@this held) continue;
+            var (code, _) = held.Instance(action.Context);
+            if (code == null) continue;
+            var (handler, _) = await code.Resolve(held, action.Context);
+            if (handler is not global::app.module.action.goal.Call call) continue;
+            var goal = (await call.Name.Value())?.RawText ?? "";
+            tools.Add(new Tool(held, call, goal[(goal.LastIndexOf('/') + 1)..]));
+        }
         return tools;
     }
 

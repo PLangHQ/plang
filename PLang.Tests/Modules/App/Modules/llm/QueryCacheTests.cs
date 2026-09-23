@@ -113,10 +113,10 @@ public class QueryCacheTests
                 new LlmMessage { Role = "user", Content = "use tools" }
             }.ToListData<LlmMessage>(),
             Cache = (global::app.type.item.@bool.@this)true,
-            Tool = new List<GoalCall>
+            Tool = new List<global::app.goal.step.action.@this>
             {
-                new GoalCall { Name = "TestTool" }
-            }.ToListData<GoalCall>()
+                Make.Call("TestTool")
+            }.ToListData()
         };
 
         await action.Attach(null, Ctx);

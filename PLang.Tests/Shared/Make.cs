@@ -76,6 +76,20 @@ public static class Make
             ("Parameter", new global::app.type.item.list.@this(rows, ctx)));
     }
 
+    /// <summary>An llm.query tool: a <c>goal.call</c> action whose <c>Parameter</c> rows declare what
+    /// the model supplies (a row with no value is required), optionally safe to run in parallel.</summary>
+    public static global::app.goal.step.action.@this Tool(string goal, bool parallel = false,
+        List<global::app.data.@this>? parameter = null)
+    {
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var tool = Action("goal", "call", ("Name", goal));
+        if (parameter is { Count: > 0 })
+            tool.Parameter.Add(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter, ctx), context: ctx));
+        if (parallel)
+            tool.Parameter.Add(new global::app.data.@this("Parallel", true, context: ctx));
+        return tool;
+    }
+
     /// <summary>
     /// A parameter with an explicitly-declared type — used inside
     /// <see cref="Action"/>'s parameter list when the declared type differs from the

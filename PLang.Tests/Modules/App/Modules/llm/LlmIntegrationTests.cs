@@ -171,16 +171,12 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "What is the weather in London right now?" }
         };
 
-        var tools = new List<GoalCall>
+        var tools = new List<global::app.goal.step.action.@this>
         {
-            new GoalCall
+            Make.Tool("GetWeather", parameter: new List<Data>
             {
-                Name = "GetWeather",
-                Parameter = new List<Data>
-                {
-                    new Data("city", null, global::app.type.@this.String, context: Ctx)
-                }
-            }
+                new Data("city", null, global::app.type.@this.String, context: Ctx)
+            })
         };
 
         // For tool calls, we use multi-snapshot (multiple HTTP round trips)
@@ -235,7 +231,7 @@ public class LlmIntegrationTests
     /// Runs a tool-call query with multi-turn snapshot support.
     /// The HTTP handler captures all responses during live calls.
     /// </summary>
-    private async Task<Data?> RunToolCallWithSnapshot(string testName, List<LlmMessage> messages, List<GoalCall> tools)
+    private async Task<Data?> RunToolCallWithSnapshot(string testName, List<LlmMessage> messages, List<global::app.goal.step.action.@this> tools)
     {
         var multiSnapshot = LlmSnapshotHelper.TryLoadMultiSnapshot(testName, messages);
 
@@ -262,7 +258,7 @@ public class LlmIntegrationTests
         }
 
         var action = new query(Ctx) { Message = messages.ToListData<LlmMessage>(),
-            Tool = tools.ToListData<GoalCall>(),
+            Tool = tools.ToListData(),
             Temperature = (global::app.type.item.number.@this)0.0,
             MaxTokens = (global::app.type.item.number.@this)200,
             Cache = (global::app.type.item.@bool.@this)false

@@ -28,11 +28,13 @@ public sealed class @this
     /// Returns the Call — <c>await using</c> for automatic Pop.
     /// Null or empty parameter sequence still pushes a frame (so an outer Get falls through cleanly);
     /// passing null for parameters yields an empty frame.
+    /// <para>A runner that supplies arguments to a held action passes it as <paramref name="held"/>:
+    /// the frame is FOR that action, whose own rows yield to the supplied names.</para>
     /// </summary>
-    public call.@this Push(IEnumerable<data.@this>? parameters)
+    public call.@this Push(IEnumerable<data.@this>? parameters, global::app.goal.step.action.@this? held = null)
     {
         var caller = _current.Value;
-        var call = new call.@this(parameters, caller, this);
+        var call = new call.@this(parameters, caller, this, held);
         _current.Value = call;
         return call;
     }
