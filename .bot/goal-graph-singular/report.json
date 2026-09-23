@@ -722,7 +722,7 @@
       "id": "b873d91d-c7f5-43e4-ad86-ef7ab7f073c9",
       "bot": "architect",
       "timestamp_start": "2026-09-23T00:00:00",
-      "timestamp_end": "2026-09-23T19:05:00",
+      "timestamp_end": "2026-09-23T20:01:13",
       "intent": "Births pass: rule the running-context design with Ingi after coder's prototype and release the rewritten plan",
       "before": {
         "assumptions": "Values read the ambient running context set by the run door; prototype would confirm",
@@ -759,12 +759,32 @@
           "category": "doc",
           "confidence": "high",
           "context": "Values/Data store their App (birth fact) and read the running context through it; instance AsyncLocal on the root App (no static); set only by async run doors; in-root before actor; action[name] hands out the run copy"
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/coder/births-B-blocker.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Step B: 155 reds — result births need a run; C# callers outside a run"
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/births-pass-plan.md",
+            "PLang/app/type/item/source.cs",
+            "PLang/app/module/action/goal/call.cs"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "With Ingi: step B dropped; values keep birth context; generator gives each run its own Data; Value(data) loads with the asking Data context; rows unloaded; goal.call argument copies born with the caller context"
         }
       ],
       "after": {
-        "status": "Plan rewritten and released to coder",
+        "status": "Final births rule released to coder",
         "health": "good",
-        "notes": "Reverses the earlier item-holds-its-own-context; flagged to Ingi in chat"
+        "notes": "Reversal of step B direction, told to Ingi in chat; step A stays until type-object step"
       }
     }
   ]
