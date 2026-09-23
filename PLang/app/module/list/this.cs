@@ -158,15 +158,6 @@ public sealed class @this : IAsyncDisposable
         _modules.Clear();
     }
 
-    /// <summary>
-    /// Describes all registered actions with parameter metadata for the LLM builder prompt.
-    /// global::app.module.list.@this owns this because it knows its own types.
-    /// </summary>
-    /// <summary>
-    /// Returns the inventory of channel names visible to the given actor at build time
-    /// (registered on actor.Channel). The builder catalog passes this to the LLM so it
-    /// can pick a channel from real names — no `to <name>` pattern parsing.
-    /// </summary>
     /// <summary>Where per-action LLM teaching markdown lives — <c>/system/modules</c>, resolved
     /// through <c>path.Resolve</c> so every downstream read passes <c>AuthGate</c>. FilePath's
     /// ValidatePath redirects <c>/system/*</c> to <c>&lt;OsDirectory&gt;/system/*</c> when the path
@@ -174,34 +165,6 @@ public sealed class @this : IAsyncDisposable
     public global::app.type.item.path.@this? Teaching
         => App?.System?.Context == null ? null
             : global::app.type.item.path.@this.Resolve("/system/modules", App.System.Context);
-
-    /// <summary>
-    /// Scans <see cref="Teaching"/> for orphan teaching files
-    /// (stem is not <c>module</c> and not a registered action in its module folder).
-    /// Writes one line per orphan to the supplied actor's <c>Output</c> channel —
-    /// CLAUDE.md "No Console.* writes in production C#" applies, and architect's
-    /// coder plan pins the channel: <c>WriteTextAsync(Output, …)</c>. Returns the
-    /// orphans seen (handy for tests / instrumentation); throws nothing — orphans
-    /// must never block a build.
-    /// </summary>
-    public async Task<IReadOnlyList<MarkdownTeaching.Orphan>> WarnOrphansAsync(
-        global::app.actor.@this actor,
-        CancellationToken cancellationToken = default)
-    {
-        var root = Teaching;
-        var orphans = await MarkdownTeaching.ScanOrphans(root,
-            moduleName => _modules.TryGetValue(moduleName, out var m)
-                ? m.ActionNames
-                : Array.Empty<string>());
-
-        foreach (var o in orphans)
-        {
-            var msg = $"Orphan teaching markdown: {o.Path} (no registered action '{o.Module}.{o.Stem}'). Rename the file, register the action, or delete the file.\n";
-            await actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, msg, cancellationToken);
-        }
-
-        return orphans;
-    }
 
     /// <summary>
     /// Returns default values for an action's parameters that aren't already provided.

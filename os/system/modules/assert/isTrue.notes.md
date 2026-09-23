@@ -1,0 +1,1 @@
+`isTrue` asserts that the value IS the boolean true — ONLY for an actual boolean. It is not a catch-all for "the check passes": `assert %name% is not empty` is `notEquals` with `Expected` empty, not `isTrue`.

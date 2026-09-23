@@ -84,50 +84,22 @@ public partial class @this
         }
     }
 
-    // Action-level teaching prose — file handles over os/system/modules/{Module}/{Name}.{facet}.md,
-    // the twins of the module element's module.{facet}.md doors. Lazy references: born unread, content
-    // materializes at the Value door, an absent file is falsy (existence truthiness) so
-    // `{% if action.Notes %}` guards presence without reading. The template concats module-first + action.
+    // The action's docs — lazy file handles in its module's folder: born unread, content materializes
+    // at the Value door, and an absent file is falsy (existence truthiness), so `{% if action.Notes %}`
+    // guards presence without reading.
     private global::app.type.item.file.@this? _description;
     private global::app.type.item.file.@this? _notes;
     private global::app.type.item.file.@this? _examples;
 
-    /// <summary>The action's description prose — {Name}.description.md as a lazy file handle.</summary>
+    /// <summary>The action's description — {Name}.description.md.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Description => _description ??= Prose("description");
+    public global::app.type.item.file.@this Description => _description ??= new(Module.Folder.Combine($"{Name}.description.md"));
 
-    /// <summary>The action's notes prose — {Name}.notes.md as a lazy file handle.</summary>
+    /// <summary>The action's notes — {Name}.notes.md.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Notes => _notes ??= Prose("notes");
+    public global::app.type.item.file.@this Notes => _notes ??= new(Module.Folder.Combine($"{Name}.notes.md"));
 
-    /// <summary>The action's examples prose — {Name}.examples.md as a lazy file handle.</summary>
+    /// <summary>The action's examples — {Name}.examples.md.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Examples => _examples ??= Prose("examples");
-
-    // The module's teaching prose, reached THROUGH the module element the action already holds
-    // (module.{facet}.md) — navigation, not copy. The per-action detail template concats
-    // module-first + action for a full teaching block.
-
-    /// <summary>The module's description prose (module.description.md), through the module element.</summary>
-    [JsonIgnore]
-    public global::app.type.item.file.@this ModuleDescription => Module.Description;
-
-    /// <summary>The module's notes prose (module.notes.md), through the module element.</summary>
-    [JsonIgnore]
-    public global::app.type.item.file.@this ModuleNotes => Module.Notes;
-
-    /// <summary>The module's examples prose (module.examples.md), through the module element.</summary>
-    [JsonIgnore]
-    public global::app.type.item.file.@this ModuleExamples => Module.Examples;
-
-    private global::app.type.item.file.@this Prose(string facet)
-    {
-        var app = App ?? throw new System.InvalidOperationException(
-            "action prose needs the catalog — this action has no module, so it was built outside a construction door.");
-        var root = app.Module.Teaching
-            ?? throw new System.InvalidOperationException(
-                "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
-        var path = root.Combine(Module.Name).Combine($"{Name}.{facet}.md");
-        return new global::app.type.item.file.@this(path);
-    }
+    public global::app.type.item.file.@this Examples => _examples ??= new(Module.Folder.Combine($"{Name}.examples.md"));
 }

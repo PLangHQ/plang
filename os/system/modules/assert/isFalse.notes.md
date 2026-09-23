@@ -1,0 +1,1 @@
+`isFalse` asserts that the value IS the boolean false — ONLY for an actual boolean. It is not a catch-all for "the check fails": `assert %name% is empty` is `equals` with `Expected` empty, not `isFalse`.

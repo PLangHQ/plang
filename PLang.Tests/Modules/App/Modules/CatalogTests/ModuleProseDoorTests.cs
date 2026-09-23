@@ -5,11 +5,10 @@ using FileItem = global::app.type.item.file.@this;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// The module element exposes its teaching prose as lazy <c>file</c> handles over
-/// <c>os/system/modules/&lt;module&gt;/module.{description,notes,examples}.md</c>.
-/// A handle is born unread: truthiness is EXISTENCE (so <c>{% if module.Notes %}</c>
-/// guards presence without reading), and the content materializes only at the value
-/// door. This is the navigation face that replaces the eager <c>Describe()</c> load.
+/// The module knows its docs folder (<c>os/system/modules/&lt;module&gt;</c>); its description and its
+/// actions' description/notes/examples are lazy <c>file</c> handles in it. A handle is born unread:
+/// truthiness is EXISTENCE (so <c>{% if action.Notes %}</c> guards presence without reading), and the
+/// content materializes only at the value door.
 /// </summary>
 public class ModuleProseDoorTests
 {
@@ -48,14 +47,20 @@ public class ModuleProseDoorTests
     private void Stage(string fileName, string body)
         => File.WriteAllText(Path.Combine(_mdRoot, FixtureModule, fileName), body);
 
-    private FileItem Notes() => _app.Module[FixtureModule]!.Notes;
+    private FileItem Notes() => _app.Module[FixtureModule]![FixtureAction1]!.Notes;
 
     [Test]
-    public async Task Prose_IsAFileHandle_OverTheModuleFacet()
+    public async Task ModuleDescription_IsAFileHandle_InTheModuleFolder()
     {
         var handle = _app.Module[FixtureModule]!.Description;
         await Assert.That(handle).IsTypeOf<FileItem>();
         await Assert.That(handle.Path.FileName).IsEqualTo("module.description.md");
+    }
+
+    [Test]
+    public async Task ActionNotes_IsAFileHandle_InItsModulesFolder()
+    {
+        await Assert.That(Notes().Path.FileName).IsEqualTo(FixtureAction1 + ".notes.md");
     }
 
     [Test]
@@ -69,20 +74,22 @@ public class ModuleProseDoorTests
     [Test]
     public async Task Prose_StagedFile_IsTruthy_AndReadsContentAtTheValueDoor()
     {
-        Stage("module.notes.md", "Module-wide rule.");
+        Stage(FixtureAction1 + ".notes.md", "Action rule.");
 
         var handle = Notes();
         await Assert.That(handle.IsTruthy()).IsTrue();   // existence, no content read yet
         await Assert.That(handle.IsLoaded).IsFalse();
 
         var content = await new data("prose", handle, context: _app.System.Context).Value();
-        await Assert.That(content?.ToString()).IsEqualTo("Module-wide rule.");
+        await Assert.That(content?.ToString()).IsEqualTo("Action rule.");
     }
 
     [Test]
     public async Task Prose_Handles_CacheOnTheElement()
     {
-        var element = _app.Module[FixtureModule]!;
-        await Assert.That(element.Notes).IsSameReferenceAs(element.Notes);
+        var module = _app.Module[FixtureModule]!;
+        var action = module[FixtureAction1]!;
+        await Assert.That(module.Description).IsSameReferenceAs(module.Description);
+        await Assert.That(action.Notes).IsSameReferenceAs(action.Notes);
     }
 }
