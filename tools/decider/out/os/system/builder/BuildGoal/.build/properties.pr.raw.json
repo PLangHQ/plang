@@ -35,12 +35,12 @@
          "value": "/system/builder/llm/templates/propertiesUser.template"
         },
         {
-         "name": "IsFile",
-         "value": true
-        },
-        {
          "name": "Parameter",
          "value": []
+        },
+        {
+         "name": "IsFile",
+         "value": true
         }
        ]
       },
@@ -72,12 +72,12 @@
          "value": "/system/builder/llm/Properties.llm"
         },
         {
-         "name": "IsFile",
-         "value": true
-        },
-        {
          "name": "Parameter",
          "value": []
+        },
+        {
+         "name": "IsFile",
+         "value": true
         }
        ]
       },
@@ -134,19 +134,29 @@
        "parameter": [
         {
          "name": "DurationMs",
-         "value": 0
+         "value": 600000
         },
         {
          "name": "Sliding",
-         "value": false
-        },
-        {
-         "name": "Key",
-         "value": "%!build.cache%"
+         "value": true
         }
        ],
-       "modifier": [],
-       "recovery": []
+       "modifier": [
+        {
+         "module": "cache",
+         "name": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "value": 600000
+          },
+          {
+           "name": "Sliding",
+           "value": true
+          }
+         ]
+        }
+       ]
       },
       {
        "module": "llm",
@@ -163,12 +173,28 @@
         {
          "name": "Schema",
          "value": {
-          "step": "list<{index:int, action:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, modifier?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, recovery?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>}>}>}>}>"
+          "step": [
+           {
+            "index": 0,
+            "action": [
+             {
+              "module": "string",
+              "name": "string",
+              "parameter": [],
+              "modifier": []
+             }
+            ]
+           }
+          ]
          }
         },
         {
          "name": "Cache",
          "value": true
+        },
+        {
+         "name": "Format",
+         "value": "json"
         }
        ]
       },
@@ -183,6 +209,10 @@
         {
          "name": "Value",
          "value": "%!data%"
+        },
+        {
+         "name": "Type",
+         "value": "list"
         }
        ]
       }
@@ -198,7 +228,7 @@
         {
          "name": "GoalName",
          "value": {
-          "/name": "/system/builder/EmitBuildEvent",
+          "name": "/system/builder/EmitBuildEvent",
           "parameter": [
            {
             "name": "kind",

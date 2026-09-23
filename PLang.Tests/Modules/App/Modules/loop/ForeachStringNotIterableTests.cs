@@ -35,7 +35,7 @@ public class ForeachStringNotIterableTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("StringRunner",
             Make.Step("foreach %s%, call DoNothing",
                 Make.Action("loop", "foreach",
-                    ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
+                    ("collection", "%s%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
         var step = goal.Step[0];
@@ -59,7 +59,7 @@ public class ForeachStringNotIterableTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("WholeStringRunner",
             Make.Step("foreach %s%, call DoNothing",
                 Make.Action("loop", "foreach",
-                    ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
+                    ("collection", "%s%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
         var step = goal.Step[0];
@@ -81,7 +81,7 @@ public class ForeachStringNotIterableTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NumberRunner",
             Make.Step("foreach %n%, call DoNothing",
                 Make.Action("loop", "foreach",
-                    ("collection", "%n%"), Make.Param("itemname", "%item%", "variable")),
+                    ("collection", "%n%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
         var step = goal.Step[0];

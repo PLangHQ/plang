@@ -37,7 +37,7 @@ public class ForeachErrorPropagationTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("MissingGoalRunner",
             Make.Step("foreach %items%, call NonExistentGoal item=%item%",
                 Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                    ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" })))));
         var step = goal.Step[0];
@@ -104,7 +104,7 @@ public class ForeachErrorPropagationTests
         var outerGoal = await RealGoalLoad.ViaChannel(_app, Make.Goal("InnerCallRunner",
             Make.Step("foreach %items%, call Inner item=%item%",
                 Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                    ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" })))));
         var outerStep = outerGoal.Step[0];
@@ -135,7 +135,7 @@ public class ForeachErrorPropagationTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",
                 Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                    ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
         var step = goal.Step[0];

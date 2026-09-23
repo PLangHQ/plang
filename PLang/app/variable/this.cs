@@ -4,7 +4,7 @@ namespace app.variable;
 /// Identifies a variable by name. Used as the wrapped type in <c>Data&lt;Variable&gt;</c>
 /// for action handler parameters that name a variable rather than carry its value
 /// (write targets, read-by-name lookups: <c>variable.set</c>, <c>list.add</c>,
-/// <c>loop.foreach</c> ItemName/KeyName, etc.).
+/// <c>loop.foreach</c> Item/Key, etc.).
 ///
 /// <see cref="Resolve(string, Actor.Context.@this)"/> is invoked by the source
 /// generator's <c>Data&lt;T&gt;</c> emit through the <c>Data.As&lt;T&gt;</c> raw-name

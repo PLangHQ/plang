@@ -21,18 +21,18 @@
        "value": "/system/builder/llm/templates/propertiesUser.template"
       },
       {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
-      },
-      {
        "name": "Parameter",
        "type": {
         "name": "list"
        },
        "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -78,18 +78,18 @@
        "value": "/system/builder/llm/Properties.llm"
       },
       {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
-      },
-      {
        "name": "Parameter",
        "type": {
         "name": "list"
        },
        "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -170,24 +170,39 @@
        "type": {
         "name": "number"
        },
-       "value": 0
+       "value": 600000
       },
       {
        "name": "Sliding",
        "type": {
         "name": "bool"
        },
-       "value": false
-      },
-      {
-       "name": "Key",
-       "type": {
-        "name": "text"
-       },
-       "value": "%!build.cache%"
+       "value": true
       }
      ],
-     "modifier": []
+     "modifier": [
+      {
+       "module": "cache",
+       "name": "wrap",
+       "parameter": [
+        {
+         "name": "DurationMs",
+         "type": {
+          "name": "number"
+         },
+         "value": 600000
+        },
+        {
+         "name": "Sliding",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
     },
     {
      "module": "llm",
@@ -213,7 +228,19 @@
         "name": "item"
        },
        "value": {
-        "step": "list<{index:int, action:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, modifier?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>, recovery?:list<{module:string, name:string, parameter?:list<{name:string, type?:{name:string, kind?:string}, value?:object}>}>}>}>}>"
+        "step": [
+         {
+          "index": 0,
+          "action": [
+           {
+            "module": "string",
+            "name": "string",
+            "parameter": [],
+            "modifier": []
+           }
+          ]
+         }
+        ]
        }
       },
       {
@@ -222,6 +249,13 @@
         "name": "bool"
        },
        "value": true
+      },
+      {
+       "name": "Format",
+       "type": {
+        "name": "text"
+       },
+       "value": "json"
       }
      ],
      "modifier": []
@@ -243,6 +277,13 @@
         "name": "item"
        },
        "value": "%!data%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "list"
       }
      ],
      "modifier": []
@@ -265,7 +306,7 @@
         "name": "goal.call"
        },
        "value": {
-        "/name": "/system/builder/EmitBuildEvent",
+        "name": "/system/builder/EmitBuildEvent",
         "parameter": [
          {
           "name": "kind",

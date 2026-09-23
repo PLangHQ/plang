@@ -44,10 +44,6 @@
         {
          "name": "Value",
          "value": "%!data%"
-        },
-        {
-         "name": "AsDefault",
-         "value": true
         }
        ]
       }

@@ -35,6 +35,7 @@
     "variable.set"
    ],
    "9": [
+    "event.on",
     "goal.call"
    ]
   },
@@ -109,7 +110,7 @@
          "value": "%goal.Step%"
         },
         {
-         "name": "ItemName",
+         "name": "Item",
          "value": "%step%"
         }
        ]
@@ -146,7 +147,7 @@
          "value": "%modules%"
         },
         {
-         "name": "ItemName",
+         "name": "Item",
          "value": "%module%"
         }
        ]
@@ -312,19 +313,17 @@
        "parameter": [
         {
          "name": "GoalName",
-         "value": {
-          "name": "/system/builder/EmitBuildEvent",
-          "parameter": [
-           {
-            "name": "kind",
-            "value": "goal-decided"
-           },
-           {
-            "name": "goal",
-            "value": "%goal%"
-           }
-          ]
-         }
+         "value": "/system/builder/EmitBuildEvent",
+         "parameter": [
+          {
+           "name": "kind",
+           "value": "goal-decided"
+          },
+          {
+           "name": "goal",
+           "value": "%goal%"
+          }
+         ]
         }
        ]
       }
@@ -358,10 +357,6 @@
           "index": "%step.Index%",
           "text": "%step.Text%"
          }
-        },
-        {
-         "name": "AtIndex",
-         "value": 0
         }
        ]
       }
@@ -387,11 +382,17 @@
        "parameter": [
         {
          "name": "Name",
-         "value": "%state.modules%[%module.Name%]"
+         "value": "%state.modules%"
         },
         {
          "name": "Value",
-         "value": "%module.Description%"
+         "value": {
+          "name": "%module.Name%"
+         }
+        },
+        {
+         "name": "Type",
+         "value": "text"
         }
        ]
       }

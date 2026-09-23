@@ -26,7 +26,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ForeachRunner",
             Make.Step("foreach %items%, call ProcessItem item=%item%",
                 Make.Action("loop", "foreach",
-                    Make.Template("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                    Make.Template("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" })))));
         var step = goal.Step[0];
@@ -44,7 +44,7 @@ public class ForeachTests
         context.Variable.Set("items", new List<object?>());
 
         var action = TestAction.Create("loop", "foreach",
-            ("collection", "%items%"), ("itemname", "%item%"));
+            ("collection", "%items%"), ("item", "%item%"));
         var result = await action.Run(context);
 
         await result.IsSuccess();
@@ -64,7 +64,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SetsItemRunner",
             Make.Step("foreach %items%, call DoNothing item=%myItem%",
                 Make.Action("loop", "foreach",
-                    Make.Template("collection", "%items%"), Make.Param("itemname", "%myItem%", "variable")),
+                    Make.Template("collection", "%items%"), Make.Param("item", "%myItem%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
         var step = goal.Step[0];
@@ -87,7 +87,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictRunner",
             Make.Step("foreach %dict%, call DictGoal item=%val%",
                 Make.Action("loop", "foreach",
-                    Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
+                    Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" })))));
         var step = goal.Step[0];
@@ -110,7 +110,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictKeyRunner",
             Make.Step("foreach %dict%, call Noop",
                 Make.Action("loop", "foreach",
-                    Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
+                    Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
         var step = goal.Step[0];
@@ -132,7 +132,7 @@ public class ForeachTests
         var context = _app.User.Context;
 
         var action = TestAction.Create("loop", "foreach",
-            ("collection", null), ("itemname", "%item%"));
+            ("collection", null), ("item", "%item%"));
         var result = await action.Run(context);
 
         await result.IsSuccess();
@@ -152,7 +152,7 @@ public class ForeachTests
         cts.Cancel();
 
         var action = TestAction.Create("loop", "foreach",
-            ("collection", "%items%"), ("itemname", "%item%"));
+            ("collection", "%items%"), ("item", "%item%"));
         var result = await action.Run(context);
 
         await result.IsSuccess();
@@ -183,7 +183,7 @@ public class ForeachTests
         await (await setChild.Run(context)).IsSuccess();
 
         var action = TestAction.Create("loop", "foreach",
-            ("collection", "%plan.steps%"), ("itemname", "%planStep%"));
+            ("collection", "%plan.steps%"), ("item", "%planStep%"));
         var result = await action.Run(context);
 
         await result.IsSuccess();

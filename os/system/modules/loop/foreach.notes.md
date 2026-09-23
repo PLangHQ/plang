@@ -1,4 +1,4 @@
-`loop.foreach` has ONE parameter: `Collection`. The runtime binds the current element to the well-known transient `%item%` (like `%!data%`). There is no `ItemName`, no `KeyName`, no rename — they don't exist.
+`loop.foreach` has three properties: `Collection` (required), and `Item` / `Key` (optional variables). Each element is bound to `%item%` unless the step names another variable (`as %product%` → `Item`). The key — a dict key or a list index — is bound only when the step names one (`with key %sku%` → `Key`). Leave `Item` and `Key` out when the step names neither.
 
 Step text: `foreach %sections%, call ParseSection`
 
@@ -6,6 +6,6 @@ Step text: `foreach %sections%, call ParseSection`
 {"module":"loop","name":"foreach","parameter":[{"name":"Collection","value":"%sections%"}]}
 ```
 
-Inside the called goal (`ParseSection`), `%item%` is the current element. If the called goal needs the value under a different name, pass it explicitly: `foreach %sections%, call ParseSection section=%item%` — that's a normal `goal.call` parameter (see `goal.call.notes` for where `section=%item%` lives in the JSON).
+Inside the called goal (`ParseSection`), `%item%` is the current element. `foreach %sections%, call ParseSection section=%item%` passes it under another name — `section=%item%` is an argument of the `goal.call`, not a `loop.foreach` property.
 
 `loop.foreach` is a **peer** of its body action — `goal.call` (or whatever runs per iteration) sits as a separate top-level entry in the step's `action` list. Never nest the body inside `loop.foreach`'s `modifier` list; the runtime rejects that with "goal.call is not a modifier".

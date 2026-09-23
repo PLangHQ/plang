@@ -38,3 +38,9 @@ A body written as an expression (recovery actions stored in a parameter) and a r
 ```markdown
 - **Build-time code judges SHAPE, never evaluates authored values ("judging must not resolve").** Anything that runs at build time — validation, Nest, Normalize, the repair loops — reads an action's declared types, catalog rows and structural slots, and never opens a parameter's VALUE except on a slot whose declared type is the thing being judged (`p.Type?.Name == "goal.call"` first, ask second). Authored values are constructed at load and evaluated on read; evaluating one at build time does the run's job at the wrong moment, and a failed evaluation poisons the binding for the run that follows — the error lands far from its cause. Corollary: `await p.Value() is X` is not a guard, it is the opened box; check the declared type, then ask.
 ```
+
+## coder — v1 — 2026-09-23
+**Target:** /CLAUDE.md
+**Why:** `loop.foreach`'s variable-naming slots were renamed `ItemName`/`KeyName` → `Item`/`Key` (Ingi: "Name" restates what the variable type already says). CLAUDE.md's Property-kinds bullet still names the old slots.
+**Proposed change:** in the "Property kinds (PLNG001 build-time gate)" bullet, replace
+`` `loop.foreach` ItemName/KeyName `` with `` `loop.foreach` Item/Key ``.

@@ -64,19 +64,17 @@
         {
          "name": "GoalName",
          "value": {
-          "name": {
-           "name": "/system/builder/EmitBuildEvent",
-           "parameter": [
-            {
-             "name": "kind",
-             "value": "goalHeader"
-            },
-            {
-             "name": "goal",
-             "value": "%goal%"
-            }
-           ]
-          }
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "goalHeader"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           }
+          ]
          }
         }
        ]
@@ -207,10 +205,6 @@
         {
          "name": "Collection",
          "value": "%parentGoal.Child%"
-        },
-        {
-         "name": "ItemName",
-         "value": "%item%"
         }
        ]
       },
@@ -267,18 +261,32 @@
         {
          "name": "B",
          "value": "%buildStart%"
-        }
-       ],
-       "modifier": [
+        },
         {
-         "module": "variable",
-         "name": "set",
-         "parameter": [
-          {
-           "name": "Name",
-           "value": "%elapsedTicks%"
-          }
-         ]
+         "name": "Overflow",
+         "value": "wrap"
+        },
+        {
+         "name": "Precision",
+         "value": "exact"
+        },
+        {
+         "name": "write to %elapsedTicks%",
+         "value": "%elapsedTicks%"
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -298,18 +306,32 @@
         {
          "name": "B",
          "value": 10000
-        }
-       ],
-       "modifier": [
+        },
         {
-         "module": "variable",
-         "name": "set",
-         "parameter": [
-          {
-           "name": "Name",
-           "value": "%elapsedMs%"
-          }
-         ]
+         "name": "Overflow",
+         "value": "wrap"
+        },
+        {
+         "name": "Precision",
+         "value": "exact"
+        },
+        {
+         "name": "write to %elapsedMs%",
+         "value": "%elapsedMs%"
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%elapsedMs%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -381,6 +403,31 @@
        "parameter": []
       },
       {
+       "module": "build",
+       "name": "promoteGroups",
+       "parameter": []
+      },
+      {
+       "module": "build",
+       "name": "promoteGroups",
+       "parameter": []
+      },
+      {
+       "module": "build",
+       "name": "promoteGroups",
+       "parameter": []
+      },
+      {
+       "module": "build",
+       "name": "promoteGroups",
+       "parameter": []
+      },
+      {
+       "module": "build",
+       "name": "promoteGroups",
+       "parameter": []
+      },
+      {
        "module": "error",
        "name": "handle",
        "parameter": [],
@@ -388,7 +435,8 @@
         {
          "module": "error",
          "name": "handle",
-         "parameter": []
+         "parameter": [],
+         "recovery": []
         }
        ]
       }
@@ -441,7 +489,8 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "Decide"
+          "name": "Decide",
+          "parameter": []
          }
         }
        ]
@@ -451,6 +500,20 @@
     {
      "index": 1,
      "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "Item",
+         "value": "%item%"
+        }
+       ]
+      },
       {
        "module": "goal",
        "name": "call",
@@ -468,20 +531,6 @@
          }
         }
        ]
-      },
-      {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "ItemName",
-         "value": "item"
-        }
-       ]
       }
      ]
     },
@@ -495,7 +544,8 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "Properties"
+          "name": "Properties",
+          "parameter": []
          }
         }
        ]
@@ -505,6 +555,20 @@
     {
      "index": 3,
      "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "Item",
+         "value": "%item%"
+        }
+       ]
+      },
       {
        "module": "goal",
        "name": "call",
@@ -522,20 +586,6 @@
          }
         }
        ]
-      },
-      {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "ItemName",
-         "value": "item"
-        }
-       ]
       }
      ]
     }
@@ -546,8 +596,7 @@
   "menu": {
    "0": [
     "goal.call",
-    "loop.foreach",
-    "module.add"
+    "loop.foreach"
    ],
    "1": [
     "variable.set"
@@ -567,8 +616,12 @@
          "value": "%modules%"
         },
         {
-         "name": "ItemName",
+         "name": "Item",
          "value": "%item%"
+        },
+        {
+         "name": "Key",
+         "value": "%step.Index%"
         }
        ]
       },
@@ -674,19 +727,12 @@
          "name": "Right",
          "value": "%threshold%"
         }
-       ],
-       "modifier": [
-        {
-         "module": "goal",
-         "name": "return",
-         "parameter": [
-          {
-           "name": "Data",
-           "value": "%moduleAnswer%"
-          }
-         ]
-        }
        ]
+      },
+      {
+       "module": "goal",
+       "name": "return",
+       "parameter": []
       }
      ]
     },
@@ -709,21 +755,19 @@
          "name": "Right",
          "value": 1
         }
-       ],
-       "modifier": [
+       ]
+      },
+      {
+       "module": "list",
+       "name": "add",
+       "parameter": [
         {
-         "module": "list",
-         "name": "add",
-         "parameter": [
-          {
-           "name": "ListName",
-           "value": "%choices%"
-          },
-          {
-           "name": "Value",
-           "value": "%module.Name%.%module.Action[0].Name%"
-          }
-         ]
+         "name": "ListName",
+         "value": "%choices%"
+        },
+        {
+         "name": "Value",
+         "value": "%module.Name%.%module.Action[0].Name%"
         }
        ]
       }
@@ -748,21 +792,19 @@
          "name": "Right",
          "value": 1
         }
-       ],
-       "modifier": [
+       ]
+      },
+      {
+       "module": "list",
+       "name": "add",
+       "parameter": [
         {
-         "module": "list",
-         "name": "add",
-         "parameter": [
-          {
-           "name": "ListName",
-           "value": "%choices%"
-          },
-          {
-           "name": "Value",
-           "value": "%module.Name%.%actionAnswer[key].choice%"
-          }
-         ]
+         "name": "ListName",
+         "value": "%choices%"
+        },
+        {
+         "name": "Value",
+         "value": "%module.Name%.%actionAnswer[key].choice%"
         }
        ]
       }
@@ -818,7 +860,8 @@
             {
              "name": "GoalName",
              "value": {
-              "name": "FixProperties"
+              "name": "FixProperties",
+              "parameter": []
              }
             }
            ]
@@ -946,6 +989,10 @@
            "Content": "Your answer was rejected by the validator: %!error.Message%\\n\\nReturn the corrected answer in the same shape."
           }
          ]
+        },
+        {
+         "name": "Type",
+         "value": "list"
         }
        ]
       }
@@ -968,14 +1015,14 @@
         },
         {
          "name": "Cache",
-         "value": "%build.cache%"
+         "value": "%!build.cache%"
         },
         {
          "name": "ContinuePreviousConversation",
          "value": true
         },
         {
-         "name": "write to %properties%",
+         "name": "Schema",
          "value": "%properties%"
         }
        ]
@@ -1013,6 +1060,7 @@
     "variable.set"
    ],
    "7": [
+    "build.actions",
     "goal.call"
    ]
   },
@@ -1092,14 +1140,19 @@
        "parameter": [
         {
          "name": "Step",
-         "value": "%subGoal%"
+         "value": "%goal%"
         }
        ],
        "modifier": [
         {
          "module": "error",
          "name": "handle",
-         "parameter": [],
+         "parameter": [
+          {
+           "name": "RetryCount",
+           "value": 1
+          }
+         ],
          "recovery": [
           {
            "module": "goal",
@@ -1108,12 +1161,26 @@
             {
              "name": "GoalName",
              "value": {
-              "name": "HandleBuildFailure"
+              "name": "HandleBuildFailure",
+              "parameter": []
              }
             }
            ]
           }
          ]
+        }
+       ]
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "value": {
+          "name": "Compile",
+          "parameter": []
+         }
         }
        ]
       }
@@ -1302,11 +1369,7 @@
         },
         {
          "name": "Value",
-         "value": {
-          "key": "%!error.Key%",
-          "message": "%!error.Message%",
-          "goal": "%goal.Name%"
-         }
+         "value": "{\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}"
         }
        ]
       }

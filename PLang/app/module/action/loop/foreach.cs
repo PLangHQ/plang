@@ -13,8 +13,10 @@ namespace app.module.action.loop;
 public partial class Foreach : IContext, IStep
 {
     public partial data.@this Collection { get; init; }
-    public partial data.@this<app.variable.@this>? ItemName { get; init; }
-    public partial data.@this<app.variable.@this>? KeyName { get; init; }
+    /// <summary>The variable each element is bound to — <c>%item%</c> when not named.</summary>
+    public partial data.@this<app.variable.@this>? Item { get; init; }
+    /// <summary>The variable each key (dict key or list index) is bound to — unbound when not named.</summary>
+    public partial data.@this<app.variable.@this>? Key { get; init; }
 
     public async Task<data.@this> Run()
     {
@@ -25,8 +27,8 @@ public partial class Foreach : IContext, IStep
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
             return Context.Ok(Result(Context, itemCount: 0, completed: true));
 
-        var variableName = (ItemName == null ? null : (await ItemName.Value())?.Name) ?? "item";
-        var keyVariableName = KeyName is { IsInitialized: true } ? (await KeyName.Value())?.Name : null;
+        var variableName = (Item == null ? null : (await Item.Value())?.Name) ?? "item";
+        var keyVariableName = Key is { IsInitialized: true } ? (await Key.Value())?.Name : null;
         int count = 0;
 
         // Loop-in-a-loop: an inner loop reuses the same %item%/%key% names and would
@@ -52,9 +54,9 @@ public partial class Foreach : IContext, IStep
 
             await Context.Variable.Set(variableName, item);
             // Optional param: absent slots are non-null Uninitialized (null model), so
-            // "was keyname supplied?" is IsInitialized, not a C# null check.
-            if (KeyName is { IsInitialized: true })
-                await Context.Variable.Set(await KeyName.Value(), key);
+            // "was a key named?" is IsInitialized, not a C# null check.
+            if (Key is { IsInitialized: true })
+                await Context.Variable.Set(await Key.Value(), key);
 
             foreach (var action in bodyActions)
             {

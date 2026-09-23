@@ -2,7 +2,8 @@
  "BuildGoal": {
   "menu": {
    "0": [
-    "goal.call"
+    "goal.call",
+    "variable.get"
    ]
   },
   "answer": {

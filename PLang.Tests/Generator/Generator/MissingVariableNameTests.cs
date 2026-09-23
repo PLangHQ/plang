@@ -11,7 +11,7 @@ namespace PLang.Tests.Generator;
 /// null Value; this test pins the contract one row per handler.
 ///
 /// One row per handler whose contract this pins. Foreach (loop) is intentionally
-/// excluded — its ItemName/KeyName slots are nullable Data&lt;Variable&gt; and the
+/// excluded — its Item/Key slots are nullable Data&lt;Variable&gt; and the
 /// nullable getter is permissive by design (Run() reads `?.Value?.Name ?? "item"`).
 /// </summary>
 public class MissingVariableNameTests
