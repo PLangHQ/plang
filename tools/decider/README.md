@@ -12,6 +12,21 @@ Accuracy of the typesafe two-stage pipeline against `Tests/**/.pr` as labels:
 - **stage 2** — `choice` per (step, module-in-set) → the action for each (step, module)
 - **stage 3** — parameters, via gpt-5.4-nano (NOT the decider): `stage3.py` / `stage3b.py`
 
+## Build the builder's .pr files — `build_pr.py`
+
+The python stand-in for the plang builder (`os/system/builder/**`, which is the same pipeline written
+in plang) until the runtime can run it. Stage 3 reads `os/system/builder/llm/Properties.llm`
+verbatim, so tuning that prompt here tunes the plang builder too.
+
+    python3 build_pr.py            # every .goal under os/system/builder, all goals in parallel
+    WORKERS=4 python3 build_pr.py  # fewer parallel goals
+
+Output goes to `out/<folder>/.build/<name>.pr` (+ `.raw.json`: menu + stage-3 answer per goal) —
+a staging tree, never over the live `.pr` files. Every prompt sent is written, per goal, to
+`/shared/coder/llm/plang/<file>/<Goal>/` (`1.decider.*`, `2.decider.*`, `3.llm.*`).
+
+Keys: `TYPESAFE_API_KEY` (env, else `/shared/hopkaup/secrets/typesafe.txt`), `OPENAI_API_KEY`.
+
 ## Run
 
     python3 harness.py <runname> <goal-limit> <seed>   # writes runs/<runname>.jsonl

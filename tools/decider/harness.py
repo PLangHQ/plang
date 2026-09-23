@@ -7,10 +7,10 @@ Raw answers are written to runs/<name>.jsonl so threshold sweeps and re-analysis
 """
 import json, glob, os, sys, time, urllib.request, urllib.error, collections, concurrent.futures as cf
 
-ROOT = '/workspace/plang'
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 URL = 'https://api.typesafe.ai/v1/systemone'
 MODEL = 'jev-latest'
-KEY = open('/shared/hopkaup/secrets/typesafe.txt').read().strip()
+KEY = os.environ.get('TYPESAFE_API_KEY') or open('/shared/hopkaup/secrets/typesafe.txt').read().strip()
 OUT = os.path.join(os.path.dirname(__file__), 'runs')
 os.makedirs(OUT, exist_ok=True)
 
