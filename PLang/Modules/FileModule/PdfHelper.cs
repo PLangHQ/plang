@@ -45,7 +45,8 @@ public class PdfToMarkdownConverter
 		{
 			foreach (var page in pdfDocument.GetPages())
 			{	
-				var lines = format == "layout" ? ExtractPageLayout(page) : ExtractPageContent(page);
+				var lines = (format == "layout" ? ExtractPageLayout(page) : ExtractPageContent(page))
+					.Select(l => l.Replace('\0', '�'));
 				IEnumerable<string> images = new List<string>();
 				if (!string.IsNullOrEmpty(imagePath))
 				{
