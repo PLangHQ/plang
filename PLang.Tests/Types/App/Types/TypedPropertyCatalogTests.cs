@@ -11,8 +11,9 @@ namespace PLang.Tests.App.Types;
 
 public class TypedPropertyCatalogTests
 {
+    // Fixtures are values (items): only a value is a plang type the catalog lists.
     [global::app.Attributes.PlangType("kind-fixture-image")]
-    public sealed class FixtureImage
+    public sealed class FixtureImage : global::app.type.item.@this
     {
         public static string Shape => "string";
         public static string? Build(object? value) => "jpg";
@@ -21,7 +22,7 @@ public class TypedPropertyCatalogTests
     }
 
     [global::app.Attributes.PlangType("kind-fixture-number")]
-    public sealed class FixtureNumber
+    public sealed class FixtureNumber : global::app.type.item.@this
     {
         public static string Shape => "string";
         public static System.Collections.Generic.IReadOnlyList<string> Kinds { get; }
@@ -29,7 +30,7 @@ public class TypedPropertyCatalogTests
     }
 
     [global::app.Attributes.PlangType("kind-fixture-bare")]
-    public sealed class FixtureBare
+    public sealed class FixtureBare : global::app.type.item.@this
     {
         public static string Shape => "string";
     }

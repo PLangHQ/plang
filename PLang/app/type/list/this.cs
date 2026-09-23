@@ -119,9 +119,9 @@ public sealed partial class @this
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(data.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
-            // choice<T> surfaces under T's name — it IS T's closed named-set.
+            // choice<T> is the choice family with its set as the kind: choice<operator>.
             if (generic == typeof(app.type.item.choice.@this<>))
-                return GetTypeNameStatic(type.GetGenericArguments()[0]);
+                return $"choice<{new app.type.item.choice.set.@this(type.GetGenericArguments()[0]).Name}>";
             // Native typed list — list<T> carries its element type intrinsically.
             if (generic == typeof(app.type.item.list.@this<>))
                 return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
@@ -276,6 +276,13 @@ public sealed partial class @this
             // ONE identity door — "what plang type IS this CLR type" — split on the model's axis
             // (is this CLR type a plang item?), never null and never leaking a System.Type back.
             if (_clr.TryGetValue(clrType, out var owner)) return this[owner];   // conversion owner: int → number, string → text
+            // A choice is {choice, kind: <its set>}, carrying the set's options — the set's name is a
+            // kind, never a type of its own.
+            if (clrType.IsGenericType && clrType.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
+            {
+                var set = Choice[clrType];
+                return new app.type.@this("choice", set.Name) { Values = set.Values };
+            }
             // An item type IS vocabulary (path.file → path). The IsAssignableFrom guard is item ⟺
             // ICreate made machine-checkable: _typeToName is the NAMING index and legitimately holds
             // non-item hosts (goal, the serializers registry) for their teaching names — answering
@@ -421,10 +428,9 @@ public sealed partial class @this
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(data.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
-            // choice<T> surfaces under T's name — it IS T's closed named-set (the enum/[Choices]
-            // vocabulary), so the catalog renders "operator", "httpmethod", … not "choice".
+            // choice<T> is the choice family with its set as the kind: choice<operator>.
             if (generic == typeof(app.type.item.choice.@this<>))
-                return GetTypeName(type.GetGenericArguments()[0]);
+                return $"choice<{Choice[type].Name}>";
             // Native typed list — list<T> carries its element type intrinsically.
             if (generic == typeof(app.type.item.list.@this<>))
                 return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
@@ -472,9 +478,6 @@ public sealed partial class @this
         EnsureInitialized();
         if (_typeToName.TryGetValue(type, out var declared)) return declared;
 
-        if (Choice.Has(type))
-            return StripGenericArity(type.Name).ToLowerInvariant();
-
         return StripGenericArity(type.Name).ToLowerInvariant();
     }
 
@@ -499,35 +502,6 @@ public sealed partial class @this
         RegisterRuntime(plangName, clrType);
     }
 
-
-    // --- Constrained-value catalog ---
-
-    /// <summary>
-    /// Gets the valid values for a constrained type — enum names for real enums,
-    /// or the [Choices] vocabulary for types that declare one. Returns null when
-    /// the type is neither an enum nor a [Choices]-bearing type.
-    /// </summary>
-    public string[]? GetValidValues(System.Type type, actor.context.@this? context = null)
-    {
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null) type = underlying;
-
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
-            type = type.GetGenericArguments()[0];
-
-        // choice<T> carries T's closed option set — the validation surface is T's
-        // names (enum members, or T's static [Choices] vocabulary).
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-            type = type.GetGenericArguments()[0];
-
-        if (type.IsEnum)
-            return Enum.GetNames(type);
-
-        return Choice.Get(type, context);
-    }
-
-    /// <summary>Alias for <see cref="GetValidValues"/> — preserves existing <c>app.type.ValidValues</c> caller habit.</summary>
-    public string[]? ValidValues(System.Type type, actor.context.@this? context = null) => GetValidValues(type, context);
 
     // --- Type-kind queries ---
 
@@ -603,11 +577,6 @@ public sealed partial class @this
                         if (unwrapped is { IsGenericType: true } u
                             && u.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
                             Enqueue(u.GetGenericArguments()[0]);
-                        // choice<T> carries its closed named-set on T (enum / [Choices]); walk it
-                        // so the option vocabulary surfaces under T's name (operator, httpmethod, …).
-                        if (unwrapped is { IsGenericType: true } c
-                            && c.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-                            Enqueue(c.GetGenericArguments()[0]);
                     }
                 }
             }
@@ -647,7 +616,7 @@ public sealed partial class @this
             string? staticShape = ReadStaticString(type, "Shape");
             IReadOnlyList<string>? staticKinds = ReadStaticStringList(type, "Kinds");
 
-            var values = GetValidValues(type);
+            var values = Choice.Contains(type) ? Choice[type].Values : null;
             if (values != null)
             {
                 entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)

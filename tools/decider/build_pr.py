@@ -24,11 +24,35 @@ SYSTEM = open(f'{ROOT}/os/system/builder/llm/Properties.llm', encoding='utf-8').
 # ---------------------------------------------------------------- the catalogue, from the C#
 PROP = re.compile(r'public\s+partial\s+(?:global::app\.)?data\.@this(?:<(?P<type>.+?)>)?(?P<opt>\?)?\s+(?P<name>\w+)\s*\{\s*get;\s*init;\s*\}')
 
+_sets = {}
+def closed_set(cs_name):
+    """(kind, options) of a closed set, read off its C# declaration: the name it declares with
+    [PlangType("…")], and its enum members — or, for a named-set class, its Registry keys."""
+    short = cs_name.split('.')[-1]
+    if short in _sets: return _sets[short]
+    for p in glob.glob(f'{ROOT}/PLang/app/**/*.cs', recursive=True):
+        src = open(p, encoding='utf-8').read()
+        m = re.search(rf'\[global::app\.Attributes\.PlangType\("(?P<kind>\w+)"\)\]\s*public\s+(?:sealed\s+)?(?P<what>enum|class)\s+{short}\b', src)
+        if not m: continue
+        if m.group('what') == 'enum':
+            body = src[m.end():].split('{', 1)[1].split('}', 1)[0]
+            body = re.sub(r'/\*.*?\*/', '', re.sub(r'//[^\n]*', '', body), flags=re.S)
+            options = [re.sub(r'\s*=.*', '', v).strip() for v in body.split(',') if v.strip()]
+        else:
+            options = re.findall(r'\["([^"]+)"\]\s*=', src)
+        _sets[short] = (m.group('kind'), options)
+        return _sets[short]
+    _sets[short] = (short.lower(), [])
+    return _sets[short]
+
 def plang_type(cs):
     """A C# slot type as its plang name. Generic arguments are stripped FIRST, so list<X> is list
-    and never X; a bare Data slot is item."""
+    and never X; a bare Data slot is item. A choice is choice<kind>, its kind the set's own name."""
     if not cs: return 'item'
     outer = cs.split('<', 1)[0].strip()
+    if 'choice' in outer:
+        kind, _ = closed_set(cs.split('<')[-1].rstrip('>'))
+        return f'choice<{kind}>'
     if 'goal.step.action.@this' in outer: return 'action'
     if 'variable' in outer.lower(): return 'variable'
     m = re.search(r'app\.type\.item\.@?(\w+)', outer)
@@ -52,7 +76,9 @@ def declared(module, action):
         m = PROP.search(line)
         if not m: continue
         has_default = any('[Default' in l for l in lines[max(0, i - 3):i])
-        props[m.group('name')] = {'type': plang_type(m.group('type')),
+        t = plang_type(m.group('type'))
+        options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
+        props[m.group('name')] = {'type': t, 'options': options,
                                   'optional': bool(m.group('opt')) or has_default}
     _decl[key] = (props, '[Modifier(' in src)
     return _decl[key]
@@ -138,7 +164,8 @@ def user_message(goal, menu):
             out.append(f'     {choice}' + ('  [modifier]' if is_mod else ''))
             for name, p in props.items():
                 shape = f' = {SHAPES[p["type"]]}' if p['type'] in SHAPES else ''
-                out.append(f'        {name} ({p["type"]}, {"optional" if p["optional"] else "required"}){shape}')
+                options = f': {", ".join(p["options"])}' if p.get('options') else ''
+                out.append(f'        {name} ({p["type"]}{options}, {"optional" if p["optional"] else "required"}){shape}')
         out.append('')
     return '\n'.join(out)
 
@@ -186,7 +213,10 @@ def typed(row, fallback, where):
     if not t:
         DEVIATIONS.append(f'{where}: row "{row.get("name")}" has no type')
         t = fallback
-    return {'name': t} if isinstance(t, str) else t
+    if isinstance(t, str):
+        m = re.fullmatch(r'(\w+)<(\w+)>', t)
+        t = {'name': m.group(1), 'kind': m.group(2)} if m else {'name': t}
+    return t
 
 def pr_action(a, where=''):
     """One answered action in the .pr's own shape. Every row carries the type the model gave it —

@@ -60,6 +60,13 @@
           "name": "item"
          },
          "value": 0.5
+        },
+        {
+         "name": "Type",
+         "type": {
+          "name": "item"
+         },
+         "value": "number"
         }
        ]
       }
@@ -119,6 +126,26 @@
      "index": 3,
      "action": [
       {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "Item",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%step%"
+        }
+       ]
+      },
+      {
        "module": "goal",
        "name": "call",
        "parameter": [
@@ -143,27 +170,6 @@
            "value": "%step%"
           }
          ]
-        }
-       ],
-       "modifier": []
-      },
-      {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "type": {
-          "name": "item"
-         },
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "Item",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%step%"
         }
        ]
       }
@@ -218,8 +224,7 @@
           }
          ]
         }
-       ],
-       "modifier": []
+       ]
       }
      ]
     },
@@ -505,7 +510,7 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.modules% key %module.Name%"
+         "value": "%state.modules%"
         },
         {
          "name": "Value",
@@ -513,6 +518,13 @@
           "name": "item"
          },
          "value": "%module.Description%"
+        },
+        {
+         "name": "Type",
+         "type": {
+          "name": "item"
+         },
+         "value": "object"
         }
        ]
       }

@@ -10,6 +10,7 @@ namespace app.module.action.condition;
 /// means adding one entry to the Registry.
 /// Receives Data objects — unwraps to raw values only at the point of comparison.
 /// </summary>
+[global::app.Attributes.PlangType("operator")]
 public sealed class Operator
 {
     // Evaluators are async: a Data value may be IBooleanResolvable (a path,

@@ -32,11 +32,10 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     IChoice
     where T : notnull
 {
-    // A choice knows how to resolve its OWN option set — computed once per closed type
-    // (static members on a generic are per-T). An enum reads its members directly; a
-    // named-set class exposes a static Choices(context?) + a ctor(string).
-    private static readonly MethodInfo? _choicesMethod = typeof(T).IsEnum ? null
-        : typeof(T).GetMethod("Choices", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+    // The closed set this choice draws from — its name (the kind) and its options. Per closed
+    // type (a static on a generic is per-T): the reader and Parse have no context to ask the
+    // registry, and the set is T's own fact. A named-set class resolves a name via ctor(string).
+    private static readonly set.@this _set = new(typeof(T));
     private static readonly ConstructorInfo? _nameCtor = typeof(T).IsEnum ? null
         : typeof(T).GetConstructor(new[] { typeof(string) });
 
@@ -57,28 +56,8 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     string IChoice.Symbol => ToString();
 
-    /// <summary>The set of valid option names — the validation surface (LLM [Choices]).
-    /// The choice reads its OWN options: an enum's member names, or a static Choices(context?).</summary>
-    public static System.Collections.Generic.IReadOnlyList<string> ValidValues => Names(null);
-
-    private static System.Collections.Generic.IReadOnlyList<string> Names(global::app.actor.context.@this? context)
-    {
-        if (typeof(T).IsEnum) return System.Enum.GetNames(typeof(T));
-        if (_choicesMethod != null)
-        {
-            object?[] args = _choicesMethod.GetParameters().Length == 1
-                ? new object?[] { context } : System.Array.Empty<object?>();
-            return _choicesMethod.Invoke(null, args) switch
-            {
-                string[] arr => arr,
-                System.Collections.Generic.IReadOnlyList<string> list => list,
-                System.Collections.Generic.IEnumerable<string> seq => new System.Collections.Generic.List<string>(seq),
-                _ => System.Array.Empty<string>(),
-            };
-        }
-        throw new System.InvalidOperationException(
-            $"choice<{typeof(T).Name}>: not a named-set type — needs an enum, or a static Choices(context?) method.");
-    }
+    /// <summary>A choice names itself by its set: <c>{choice, kind: operator}</c>.</summary>
+    protected internal override global::app.type.@this Type => new("choice", _set.Name);
 
     /// <summary>The one symbol→choice resolution home — the wire form is the option's SYMBOL
     /// (an enum member's name, a named-set registry key like "=="). Shared by the ICreate core
@@ -109,7 +88,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         {
             // ctor.Invoke wraps the named-set ctor's ArgumentException in TargetInvocationException — unwrap to one story.
             throw new System.FormatException(
-                $"'{symbol}' is not a {typeof(T).Name} option. Valid: {string.Join(", ", ValidValues)}", ex);
+                $"'{symbol}' is not a {_set.Name} option. Valid: {string.Join(", ", _set.Values)}", ex);
         }
     }
 
@@ -131,7 +110,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         catch (System.FormatException ex)
         {
             data.Fail(new global::app.error.Error(ex.Message, "ChoiceInvalid", 400)
-                { FixSuggestion = $"Valid options: {string.Join(", ", ValidValues)}" });
+                { FixSuggestion = $"Valid options: {string.Join(", ", _set.Values)}" });
             return null;
         }
         data.Fail(new global::app.error.Error(

@@ -3,6 +3,7 @@ namespace app.module.action.http;
 /// <summary>
 /// HTTP method for requests. Maps from PLang step text via LLM builder.
 /// </summary>
+[global::app.Attributes.PlangType("httpmethod")]
 public enum HttpMethod
 {
     GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, QUERY
@@ -11,6 +12,7 @@ public enum HttpMethod
 /// <summary>
 /// Stream format for OnStream callbacks.
 /// </summary>
+[global::app.Attributes.PlangType("streamformat")]
 public enum StreamFormat
 {
     /// <summary>Newline-delimited lines (covers NDJSON, OpenAI-style, most streaming APIs).</summary>
@@ -24,6 +26,7 @@ public enum StreamFormat
 /// <summary>
 /// Explicit content hint for upload action. Null = auto-detect.
 /// </summary>
+[global::app.Attributes.PlangType("contentas")]
 public enum ContentAs
 {
     File, Base64, Form, Text

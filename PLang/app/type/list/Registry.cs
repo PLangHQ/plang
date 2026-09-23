@@ -166,6 +166,11 @@ public sealed partial class @this
             if (type.IsAbstract && !type.IsSealed && attrs.Count == 0 && !IsThisClass(type)) continue;
             string? canonical = null;
 
+            // Only a PLang value is a type (same rule as the @this arm below). A non-item's
+            // [PlangType] declares a name its OWNER reads — a closed set's name is the KIND of
+            // choice ({choice, kind: operator}), never a type, a catalog entry, or an index key.
+            if (attrs.Count > 0 && !typeof(app.type.item.@this).IsAssignableFrom(type)) continue;
+
             if (attrs.Count > 0)
             {
                 var inferred = InferName(type);
@@ -173,6 +178,7 @@ public sealed partial class @this
                 {
                     var name = attr.Name ?? inferred;
                     if (name == null) continue;
+                    canonical ??= name;
                     // A name that matches the type's own inference is its natural
                     // claim — register now. A name the attribute redirects to
                     // (kind label that diverges from the type's namespace/class)
@@ -181,7 +187,6 @@ public sealed partial class @this
                         _nameToType.TryAdd(name, type);
                     else
                         deferredAliases.Add((name, type));
-                    canonical ??= name;
                 }
             }
             else if (IsThisClass(type))

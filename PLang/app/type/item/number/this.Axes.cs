@@ -11,6 +11,7 @@ public sealed partial class @this
     /// smallest kind that holds it — <c>int+int</c> overflow → <c>long</c>. Never wraps.
     /// <c>Throw</c>: strict-width — keep the operand kind; error if the result doesn't fit.
     /// </summary>
+    [global::app.Attributes.PlangType("overflow")]
     public enum Overflow { Promote, Throw }
 
     /// <summary>
@@ -19,5 +20,6 @@ public sealed partial class @this
     /// promote to double (IEEE wins). <c>Decimal</c>: promote to decimal (throws if the double is
     /// NaN/Infinity/out of range).
     /// </summary>
+    [global::app.Attributes.PlangType("precision")]
     public enum Precision { Error, Double, Decimal }
 }

@@ -549,10 +549,6 @@ public sealed class @this : item.@this
     /// </summary>
     public IReadOnlyList<string>? Kinds { get => Promote()._kinds; init => _kinds = value; }
 
-    /// <summary>Alias for <see cref="Values"/> — enum members the LLM may emit.</summary>
-    [JsonIgnore]
-    public IReadOnlyList<string>? ValidValues => Values;
-
     /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
     [JsonIgnore]
     public global::app.type.item.path.scheme.@this? Scheme

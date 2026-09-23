@@ -3,6 +3,7 @@ namespace app.@event;
 /// <summary>
 /// Types of events in the PLang runtime lifecycle.
 /// </summary>
+[global::app.Attributes.PlangType("trigger")]
 public enum Trigger
 {
     BeforeAppStart,

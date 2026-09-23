@@ -119,6 +119,8 @@ Filling a property:
   the property should be left out. Never put in a placeholder and never repeat a default.
 - A `variable` property is a variable name with its % signs.
 - Every parameter row names its `type` — PLang is strongly typed and nothing guesses it later.
-  Copy the type the menu writes for that property (`Path (path, …)` → `{"name": "path"}`). Where the
+  Copy the type the menu writes for that property (`Path (path, …)` → `{"name": "path"}`; a kind rides
+  in angle brackets: `Operator (choice<operator>: ==, <, …)` → `{"name": "choice", "kind": "operator"}`,
+  and the value is one of the listed options, written exactly as listed). Where the
   menu says `item` the slot is open: name the value's own type when you know it (`as text`, a quoted
   text, a number), otherwise `item`. A step that forces a type (`as text`, `(json)`) wins.

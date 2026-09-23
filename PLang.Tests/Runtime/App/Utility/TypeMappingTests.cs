@@ -595,12 +595,12 @@ public class TypeMappingTests
     }
 
     [Test]
-    public async Task GetValidValues_DataOfActor_ReturnsValues()
+    public async Task Values_DataOfActor_ReturnsValues()
     {
-        var values = TypeMapping.GetValidValues(typeof(global::app.data.@this<global::app.actor.@this>));
+        var values = TypeMapping.Values(typeof(global::app.data.@this<global::app.actor.@this>));
 
         await Assert.That(values).IsNotNull();
-        await Assert.That(values!.Length).IsGreaterThan(0);
+        await Assert.That(values!.Count).IsGreaterThan(0);
     }
 
 }

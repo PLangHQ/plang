@@ -1,6 +1,7 @@
 namespace app.test;
 
 /// <summary>Test report file artefact format. Console output is written regardless.</summary>
+[global::app.Attributes.PlangType("format")]
 public enum Format
 {
     /// <summary>Structured JSON at <c>.test/results.json</c> (default).</summary>

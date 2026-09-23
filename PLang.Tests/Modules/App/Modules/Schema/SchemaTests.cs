@@ -38,18 +38,20 @@ public class SchemaTests
         await Assert.That(schema.Types).IsNotEmpty();
     }
 
-    // The schema surfaces enum-shape types as entities with Values populated.
-    // The `operator` enum reached via condition.if's Operator param is the canonical case.
+    // The schema surfaces a value type with options as an entity with Values populated
+    // (actor: user, system). A closed set drawn on by a choice is never a type of its own —
+    // its options ride on the {choice, kind} entity of the slot, so `operator` is absent.
     [Test]
     public async Task Build_SurfacesEnumAsKindEnumWithValues()
     {
         var schema = _app.Module.Schema.Build();
-        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
+        var actor = schema.Types.FirstOrDefault(t => t.Name == "actor");
 
-        await Assert.That(op).IsNotNull();
-        await Assert.That(op!.Values).IsNotNull();
-        await Assert.That(op.Values!).Contains("==");
-        await Assert.That(op.Fields).IsNull();
+        await Assert.That(actor).IsNotNull();
+        await Assert.That(actor!.Values).IsNotNull();
+        await Assert.That(actor.Values!).Contains("system");
+        await Assert.That(actor.Fields).IsNull();
+        await Assert.That(schema.Types.Any(t => t.Name == "operator")).IsFalse();
     }
 
     // Record-shape types surface with Fields populated. Goal is the canonical example —
@@ -80,10 +82,10 @@ public class SchemaTests
         await Assert.That(goal!.Fields).IsNotNull();
         await Assert.That(goal.Fields!.Count).IsGreaterThan(0);
 
-        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
-        await Assert.That(op).IsNotNull();
-        await Assert.That(op!.Values).IsNotNull();
-        await Assert.That(op.Values!).Contains("==");
+        var actor = schema.Types.FirstOrDefault(t => t.Name == "actor");
+        await Assert.That(actor).IsNotNull();
+        await Assert.That(actor!.Values).IsNotNull();
+        await Assert.That(actor.Values!).Contains("system");
     }
 
     // The schema is a structured object — PrimitiveNames + Types (strongly
@@ -98,11 +100,11 @@ public class SchemaTests
         await Assert.That(schema.PrimitiveNames).IsNotEmpty();
         await Assert.That(schema.Types).IsNotEmpty();
 
-        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
-        await Assert.That(op).IsNotNull();
-        await Assert.That(op!.Values).IsNotNull();        // enum-shape: Values populated
-        await Assert.That(op.Values!).Contains("==");
-        await Assert.That(op.Fields).IsNull();             // not a record
+        var actor = schema.Types.FirstOrDefault(t => t.Name == "actor");
+        await Assert.That(actor).IsNotNull();
+        await Assert.That(actor!.Values).IsNotNull();      // enum-shape: Values populated
+        await Assert.That(actor.Values!).Contains("system");
+        await Assert.That(actor.Fields).IsNull();          // not a record
 
         // ClrType is internal — never on the public/serializable surface.
         await Assert.That(typeof(global::app.type.@this)

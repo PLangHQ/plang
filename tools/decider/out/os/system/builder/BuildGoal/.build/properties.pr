@@ -113,12 +113,32 @@
        },
        "value": [
         {
-         "Role": "system",
-         "Content": "%propertiesSystemMsg%"
+         "name": "Role",
+         "type": {
+          "name": "item"
+         },
+         "value": "system"
         },
         {
-         "Role": "user",
-         "Content": "%propertiesUserMsg%"
+         "name": "Content",
+         "type": {
+          "name": "item"
+         },
+         "value": "%propertiesSystemMsg%"
+        },
+        {
+         "name": "Role",
+         "type": {
+          "name": "item"
+         },
+         "value": "user"
+        },
+        {
+         "name": "Content",
+         "type": {
+          "name": "item"
+         },
+         "value": "%propertiesUserMsg%"
         }
        ]
       }
@@ -142,14 +162,14 @@
        "type": {
         "name": "number"
        },
-       "value": 600000
+       "value": 300000
       },
       {
-       "name": "Sliding",
+       "name": "Key",
        "type": {
-        "name": "bool"
+        "name": "text"
        },
-       "value": true
+       "value": "goal-properties:properties"
       }
      ],
      "modifier": []
@@ -178,29 +198,22 @@
         "name": "item"
        },
        "value": {
-        "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>"
+        "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}"
        }
-      }
-     ],
-     "modifier": []
-    },
-    {
-     "module": "variable",
-     "name": "set",
-     "parameter": [
-      {
-       "name": "Name",
-       "type": {
-        "name": "variable"
-       },
-       "value": "%properties%"
       },
       {
-       "name": "Value",
+       "name": "Cache",
+       "type": {
+        "name": "bool"
+       },
+       "value": "%!build.cache%"
+      },
+      {
+       "name": "write to",
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
+       "value": "%properties%"
       }
      ],
      "modifier": []

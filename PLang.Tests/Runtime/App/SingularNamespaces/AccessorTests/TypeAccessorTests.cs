@@ -35,18 +35,22 @@ public class TypeAccessorTests
         await Assert.That(app.Type.Name(typeof(string))).IsEqualTo("text");
     }
 
-    // Stage 4 — Entry-fold properties are populated at construction by BuildTypeEntries.
-    [Test] public async Task AppType_IndexByName_ValidValues_OnEnumType_AreReachable()
+    // A choice is {choice, kind: <its set>}, and its entity carries the set's options.
+    [Test] public async Task AppType_IndexByClr_Choice_IsChoiceWithSetKindAndValues()
     {
         await using var app = TestApp.Create("/test");
-        // Find a known enum-shape type in the catalog.
-        var entries = app.Type.BuildTypeEntries(app.Module);
-        var enumEntry = entries.FirstOrDefault(e => e.Values != null && e.Values.Count > 0);
-        await Assert.That(enumEntry).IsNotNull();
+        var t = app.Type[typeof(global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)];
+        await Assert.That(t.Name).IsEqualTo("choice");
+        await Assert.That(t.Kind?.Name).IsEqualTo("operator");
+        await Assert.That(t.Values!).Contains("==");
+    }
 
-        var t = app.Type[enumEntry!.Name];
-        await Assert.That(t.ValidValues).IsNotNull();
-        await Assert.That(t.ValidValues!.Count).IsGreaterThan(0);
+    // A closed set's name is a kind, never a type of its own.
+    [Test] public async Task AppType_SetName_IsNotATypeName()
+    {
+        await using var app = TestApp.Create("/test");
+        await Assert.That(app.Type.Contains("operator")).IsFalse();
+        await Assert.That(app.Type.Contains("choice")).IsTrue();
     }
 
     [Test] public async Task AppType_IndexByName_Scheme_OnPathScheme_IsReachable()

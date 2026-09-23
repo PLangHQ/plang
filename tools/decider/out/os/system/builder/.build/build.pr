@@ -26,13 +26,6 @@
         "name": "item"
        },
        "value": "/"
-      },
-      {
-       "name": "AsDefault",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -62,13 +55,6 @@
         "name": "item"
        },
        "value": true
-      },
-      {
-       "name": "AsDefault",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -96,13 +82,6 @@
        "name": "Value",
        "type": {
         "name": "item"
-       },
-       "value": true
-      },
-      {
-       "name": "AsDefault",
-       "type": {
-        "name": "bool"
        },
        "value": true
       }
@@ -143,21 +122,6 @@
            "name": "text"
           },
           "value": "BuilderChannel"
-         },
-         {
-          "name": "Parameter",
-          "type": {
-           "name": "list"
-          },
-          "value": [
-           {
-            "name": "buffer",
-            "type": {
-             "name": "number"
-            },
-            "value": 1024
-           }
-          ]
          }
         ],
         "modifier": []
@@ -194,7 +158,7 @@
         {
          "name": "kind",
          "type": {
-          "name": "text"
+          "name": "item"
          },
          "value": "build-path"
         },
@@ -324,7 +288,7 @@
         {
          "name": "kind",
          "type": {
-          "name": "text"
+          "name": "item"
          },
          "value": "goals-found"
         },

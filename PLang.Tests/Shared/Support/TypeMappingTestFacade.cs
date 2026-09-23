@@ -18,8 +18,9 @@ internal static class TypeMapping
 
     public static void Register(string plangName, System.Type clrType) => _app.Type.Register(plangName, clrType);
 
-    public static string[]? GetValidValues(System.Type type, global::app.actor.context.@this? context = null)
-        => _app.Type.GetValidValues(type, context);
+    /// <summary>The options of the closed set <paramref name="type"/> draws from, or null when it has none.</summary>
+    public static IReadOnlyList<string>? Values(System.Type type)
+        => _app.Type.Choice.Contains(type) ? _app.Type.Choice[type].Values : null;
 
     public static List<string> GetBuilderTypeNames() => _app.Type.GetBuilderTypeNames();
 
