@@ -523,6 +523,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Bisect result (d965eaeeb) disproved the Verify:false suspect: both tamper tests already fail at da067599c^ (range 0ea5a4b94..da067599c^), the masking test breaks later (da067599c^..HEAD) — two independent regressions. Blind git bisect run is unreliable on this branch (mid-branch test-layout switch, stale obj/ makes msbuild emit nothing while reporting success). Ruled: tamper pair first, masking second; narrow-then-test is the procedure (test files in the narrowing paths, narrow on both verify-skipped and properties-outside-signed-bytes, binary-search candidates, confirm only by parent-passes/commit-fails, close gaps with the oracle); oracle script committed under coder .bot; culprit + diff recorded before any code."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/plural-gate-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plural gate (coder c3d27cecf): builder replaced by the decider pipeline mid-branch. Measured: old planner/compiler has no callers; BuildResponse still used at Default.cs:348 (live GoalsSave); four reader aliases not two; the 811 plural .pr files are unloadable regardless (goal reader has no steps arm — loads empty; data reader throws on bare-string type). Ruled: Q1 delete dead builder + its C# (build.actions D3 lapsed), :348 becomes goal.Validate→step.Validate→action.list.Validate; Q2 drop all four aliases, teach the LLM the wire keys, no migration script; Q3 rename build.validate.Actions→Action now; Q4 rename only — modifiers-through-the-decider is one design item (four gaps) for Ingi; role-flag list rejected. Flagged for Ingi: silent-empty load of stale .pr under plang --test."
         }
       ],
       "after": {
