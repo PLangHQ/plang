@@ -7,13 +7,21 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
-/// Tests for builder.validateActions — validates LLM-returned actions exist in engine.Modules,
-/// resolves GoalCall paths, fills defaults from [Default] attributes.
+/// Tests for build.validate — finishes a step's grafted actions (resolves GoalCall paths, fills
+/// defaults from [Default] attributes, normalizes literal types) and returns the step's verdict.
 /// </summary>
 public class ValidateActionsTests
 {
     private string _tempDir = null!;
     private PLangEngine _app = null!;
+
+    // build.validate takes the step whole; the actions under test are that step's actions.
+    private validate For(StepActions actions)
+    {
+        var step = new Step { Text = "step under validation", Index = 0 };
+        foreach (var a in actions) step.Action.Add(a);
+        return new validate(_app.User.Context) { Step = new("", step) };
+    }
 
     [Before(Test)]
     public void Setup()
@@ -45,7 +53,7 @@ public class ValidateActionsTests
             new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -60,7 +68,7 @@ public class ValidateActionsTests
             new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "fake" }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsFailure();
@@ -96,7 +104,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -122,7 +130,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -142,7 +150,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -175,7 +183,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -206,7 +214,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -235,7 +243,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
+        var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();

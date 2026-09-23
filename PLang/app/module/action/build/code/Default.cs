@@ -257,19 +257,11 @@ public class Default : IBuilder
         var context = action.Context;
         var modules = app.Module;
 
-        var actionList = action.Actions == null ? null : await action.Actions.Value() as global::app.type.item.list.@this;
+        var step = (await action.Step.Value())!;
 
-        // Each row opens through its own action door — params intact, no CLR peel. The chain is the
-        // node the graph judges itself through; `actions` is the same instances, for the
-        // construction passes that still take a plain list.
+        // The same instances the step holds, for the construction passes that still take a plain list.
         var actions = new List<global::app.goal.step.action.@this>();
-        var chain = new global::app.goal.step.action.list.@this();
-        foreach (var row in actionList?.Items ?? (IReadOnlyList<data.@this>)System.Array.Empty<data.@this>())
-            if (await row.Value<global::app.goal.step.action.@this>() is { } ae)
-            {
-                actions.Add(ae);
-                chain.Add(ae);
-            }
+        for (int i = 0; i < step.Action.Count; i++) actions.Add(step.Action[i]);
 
         await ResolveGoalCallPaths(actions, app, context);
         var normalizationErrors = NormalizeParameterTypes(actions, modules, context);
@@ -329,16 +321,16 @@ public class Default : IBuilder
 
         }
 
-        // Construction is done; the graph judges itself and the builder only reacts. Normalization
-        // failures are the builder's own — it did the converting — so they ride as causes beside
-        // the chain's.
-        var verdict = await chain.Validate(context);
+        // Construction is done; the step judges itself and the builder only reacts. The verdict stays
+        // whole — it names the step, which the re-prompt needs. Normalization failures are the
+        // builder's own — it did the converting — so they ride as causes beside it.
+        var verdict = await step.Validate(context);
         if (verdict != null || normalizationErrors.Count > 0)
         {
             var causes = normalizationErrors
                 .Select(e => (global::app.error.IError)new global::app.error.Error(e, "NormalizeParameter", 400))
                 .ToList();
-            if (verdict != null) causes.AddRange(verdict.list.Count > 0 ? verdict.list : new() { verdict });
+            if (verdict != null) causes.Add(verdict);
 
             return context.Error(new global::app.error.Error(
                 string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes });
