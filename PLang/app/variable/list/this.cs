@@ -610,28 +610,3 @@ public partial class @this
         return name.Trim().TrimStart('%').TrimEnd('%');
     }
 }
-
-/// <summary>
-/// Provides async-local access to Variables.
-/// </summary>
-public interface IVariablesAccessor
-{
-    @this Current { get; set; }
-}
-
-/// <summary>
-/// Default implementation using AsyncLocal.
-/// </summary>
-public class @thisAccessor : IVariablesAccessor
-{
-    private static readonly AsyncLocal<@this> _current = new();
-
-    public @this Current
-    {
-        // No lazy-create: a Variables store is always Set on the async flow before it is
-        // read (born from its owning context). A null here is a caller reading before set —
-        // surface it, never paper it over with a context-less store.
-        get => _current.Value!;
-        set => _current.Value = value;
-    }
-}

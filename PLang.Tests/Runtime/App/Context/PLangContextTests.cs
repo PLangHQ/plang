@@ -366,38 +366,76 @@ public class PLangContextTests
     }
 }
 
-public class PLangContextAccessorTests
+/// <summary>A C# test runs as its test app's User — set where the app is built (a Setup hook) and
+/// flowed into the test body.</summary>
+public class TestAppRunsAsUserTests
 {
-    [Test]
-    public async Task Current_ReturnsNullInitially()
-    {
-        var accessor = new global::app.actor.context.@thisAccessor();
+    private global::app.@this _app = null!;
 
-        await Assert.That(accessor.Current).IsNull();
+    [Before(Test)]
+    public void Setup() => _app = TestApp.Create("/tmp/runsasuser-" + System.Guid.NewGuid().ToString("N")[..6]);
+
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
+
+    [Test]
+    public async Task TestBody_SeesTheUserContext_SetInSetup()
+        => await Assert.That(ReferenceEquals(_app.Context, _app.User.Context)).IsTrue();
+}
+
+/// <summary>
+/// The running context lives on the App, per async flow: set only by the run doors (and Start for
+/// boot), gone when the run returns, never leaked to the caller, loud when asked outside any run.
+/// </summary>
+public class RunningContextTests
+{
+    // An app built without TestApp — nothing has run in this flow.
+    private static global::app.@this Bare() => new("/tmp/running-" + System.Guid.NewGuid().ToString("N")[..6]);
+
+    [Test]
+    public async Task OutsideAnyRun_Throws_Loud()
+    {
+        await using var app = Bare();
+
+        await Assert.That(() => app.Context).Throws<InvalidOperationException>()
+            .WithMessageContaining("No run in progress");
     }
 
     [Test]
-    public async Task Current_SetAndGet_ReturnsSameContext()
+    public async Task CreatingAnApp_LeavesTheCallersSlotUnchanged()
     {
-        var accessor = new global::app.actor.context.@thisAccessor();
-        await using var engine = TestApp.Create("/app");
-        using var context = new global::app.actor.context.@this(engine, engine.User);
+        await using var first = Bare();
+        first.Context = first.System.Context;
 
-        accessor.Current = context;
+        await using var second = Bare();
 
-        await Assert.That(accessor.Current).IsEqualTo(context);
+        await Assert.That(ReferenceEquals(first.Context, first.System.Context)).IsTrue();
+        await Assert.That(() => second.Context).Throws<InvalidOperationException>();
     }
 
     [Test]
-    public async Task Current_SetNull_ReturnsNull()
+    public async Task ARun_NeverLeaksToItsCaller()
     {
-        var accessor = new global::app.actor.context.@thisAccessor();
-        await using var engine = TestApp.Create("/app");
-        using var context = new global::app.actor.context.@this(engine, engine.User);
-        accessor.Current = context;
+        await using var app = Bare();
+        app.Context = app.System.Context;
+        var action = global::PLang.Tests.Shared.Make.Action("variable", "set",
+            new (string, object?)[] { ("Name", "x"), ("Value", 1) });
 
-        accessor.Current = null;
+        await action.Run(app.User.Context);
 
-        await Assert.That(accessor.Current).IsNull();
+        await Assert.That(ReferenceEquals(app.Context, app.System.Context)).IsTrue();
+    }
+
+    [Test]
+    public async Task ChildApp_HandsUpToItsParent()
+    {
+        await using var parent = Bare();
+        await using var child = Bare();
+        child.Parent = parent;
+
+        child.Context = child.User.Context;
+
+        await Assert.That(ReferenceEquals(parent.Context, child.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(child.Context, child.User.Context)).IsTrue();
     }
 }

@@ -24,7 +24,19 @@ public static class TestApp
         // Source, so a captured registration would fail ProviderRestore). Restore
         // targets are themselves TestApp.Create'd, so they already carry the mock.
         UseTestSigning(app);
+        RunAsUser(app);
         return app;
+    }
+
+    /// <summary>
+    /// A C# test runs as the test app's User — the running context a handler would see inside
+    /// action.Run. Set here, in the flow that built the app (usually a [Before(Test)] hook), and
+    /// flowed into the test body: TUnit carries a hook's AsyncLocal values only when asked.
+    /// </summary>
+    private static void RunAsUser(global::app.@this app)
+    {
+        app.Context = app.User.Context;
+        TUnit.Core.TestContext.Current?.AddAsyncLocalValues();
     }
 
     /// <summary>
@@ -70,6 +82,7 @@ public static class TestApp
     {
         var app = new global::app.@this(absolutePath);
         UseTestSigning(app);
+        RunAsUser(app);
         return app;
     }
 

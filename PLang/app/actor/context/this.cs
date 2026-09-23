@@ -557,25 +557,3 @@ public sealed class @this : IDisposable
         _data.Clear();
     }
 }
-
-/// <summary>
-/// Provides async-local access to @this.
-/// </summary>
-public interface IContextAccessor
-{
-    @this? Current { get; set; }
-}
-
-/// <summary>
-/// Default implementation using AsyncLocal.
-/// </summary>
-public class @thisAccessor : IContextAccessor
-{
-    private static readonly AsyncLocal<@this?> _current = new();
-
-    public @this? Current
-    {
-        get => _current.Value;
-        set => _current.Value = value;
-    }
-}

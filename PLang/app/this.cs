@@ -77,6 +77,30 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public app.@this? Parent { get; internal set; }
 
+    // The running context, per async flow. The field is only the key; the value lives in the flow,
+    // so parallel runs each see their own, a task started inside a run inherits it, and a set inside
+    // a run never flows back to its caller.
+    private readonly AsyncLocal<actor.context.@this?> _running = new();
+
+    /// <summary>
+    /// The context that is running now — whose actor, variables and permissions apply. Set only by
+    /// the run doors (<c>action.Run</c>, <c>goal.Run</c>) and by <see cref="Start"/> for boot, each
+    /// inside its own async flow. A child app hands up to its <see cref="Parent"/>, so a
+    /// parent-loaded goal run inside a child app sees the child's run. Outside any run it fails
+    /// loud — there is no fallback.
+    /// </summary>
+    public actor.context.@this Context
+    {
+        get => Parent?.Context ?? _running.Value
+               ?? throw new InvalidOperationException(
+                   "No run in progress — the running context exists only inside action.Run / goal.Run (or Start).");
+        internal set
+        {
+            if (Parent != null) Parent.Context = value;
+            else _running.Value = value;
+        }
+    }
+
     /// <summary>
     /// The computed <c>os/</c> folder next to the executable. App-level constant
     /// (not file-scheme-specific): the path base's <c>Authorize</c> and
@@ -481,6 +505,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task<data.@this> Start()
     {
+        Context = System.Context;
         await Load();
 
         // Invariant: every I/O actor must have all three role-channels registered
@@ -491,8 +516,8 @@ public sealed partial class @this : IAsyncDisposable
             if (!invariant.Success) return invariant;
         }
 
-        // Bootstrap runs under System's context; user code runs under User's context (below).
-        // Execution flows the actor via its context — there is no global "current actor".
+        // Bootstrap runs under System's context; user code runs under User's context (below). The
+        // running context is per async flow, on the App — set here for boot, by each run door after.
         var context = System.Context;
 
         // Build → PLang builder (runs as User — user is building their code).
