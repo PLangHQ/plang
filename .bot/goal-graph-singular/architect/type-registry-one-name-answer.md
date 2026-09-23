@@ -60,6 +60,13 @@ Out of scope unless it falls out naturally: statics elsewhere in the codebase. T
 - **Q5 follow-up:** none of the 12 sets carries `[PlangType]` today (names come from the lowered-CLR fallback); each gains it with today's name, and `PlangTypeAttribute`'s doc changes to say a closed set declares its name.
 - **Stale `.pr` rows (16 tracked `Tests/**/.build/*.pr` carry `"type":{"name":"operator"|"trigger"|"errororder"}`):** delete `choice/list:53` in the same commit anyway. The stale corpus is not a constraint (plural-gate Q2 reasoning): 467 of 468 test `.pr` files already load as empty goals. A C# test that goes red on one is listed as a stale fixture that regenerates with the builder; no temporary second name, no translate-on-read door.
 
+## Commit 3 scope (ruled 2026-09-23)
+
+- `module.list.Describe()` is deleted (obsolete, no production caller in C# or `os/`, a stored-twice of the property rows); its tests go or repoint to the property rows; `GetTypeNameStatic` dies with it.
+- Accepted shifts of the fold: the `?` suffix drops; `dict<k,v>` → `dict<v>`; `Data<T>` is unwrapped by the slot holder; a raw CLR type answers `clr`.
+- **`object` dies as a plang type name.** The open slot had two names: the catalog row for a plain `Data` slot said `object` (`property/this.cs:36`, `primitive/this.cs:65,109`, `type/list/this.cs:112,140,418,458`) while the prompt teaches `item`. One name: `item`.
+- Coder reports any live handler parameter or `Run()` return typed as a raw CLR type (now naming `clr`) — leaves that should be plang types; not converted in this pass.
+
 ## Verify
 
 1. `condition.if` Operator: the menu shows `choice<operator>`; an LLM row `{"name":"Operator","type":{"name":"choice","kind":"operator"},"value":"=="}` grafts, builds, runs; `"=+"` fails at the build with choice's own message.
