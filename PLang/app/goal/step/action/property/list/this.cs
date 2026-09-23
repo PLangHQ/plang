@@ -20,7 +20,7 @@ public sealed class @this : global::app.type.item.list.@this
     private static readonly System.Type[] CapabilityInterfaces =
     {
         typeof(global::app.module.IContext), typeof(global::app.module.IStep),
-        typeof(global::app.module.IChannel), typeof(global::app.module.IEvent),
+        typeof(global::app.module.IChannel),
         typeof(global::app.module.IStatic),
     };
 

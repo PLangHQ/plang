@@ -4,8 +4,9 @@ namespace app.variable.call;
 /// One forked flow's variable scope — a mutable overlay over the actor-shared
 /// <see cref="Variables.@this"/> dictionary.
 ///
-/// Push points are the operators that fork a new flow (channel fire, parallel
-/// foreach iteration, concurrent task) — not the goal-call boundary. Sequential
+/// Push points are the operators that fork a new flow (a tool invocation, a parallel
+/// foreach iteration, a listener accept loop) — not the goal-call boundary, and not a
+/// channel write or a callback, which are calls in the caller's flow. Sequential
 /// <c>goal.call</c> stays in the caller's flow and writes/reads pass through
 /// whatever scope (or none) is currently active.
 ///

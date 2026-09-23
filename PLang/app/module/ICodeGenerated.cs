@@ -12,7 +12,7 @@ namespace app.module;
 ///     populated handler instance (params bound via the object initializer). Called on
 ///     a throwaway registry-created shell; returns the real ready instance (or an error).
 ///   Attach  — set runtime markers (Context / Action / Step / Static / Channel / [Code]
-///     provider / IEvent) on THIS instance. Called by Resolve, and directly on prebound
+///     provider) on THIS instance. Called by Resolve, and directly on prebound
 ///     (inline C#-composed) handlers whose params are already set.
 ///   Execute — run the handler's typed Run(), wrapping bare exceptions with the action's
 ///     module.action context.

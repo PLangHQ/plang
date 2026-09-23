@@ -176,7 +176,6 @@ public sealed class @this : IAsyncDisposable
         typeof(IContext),
         typeof(IStep),
         typeof(IChannel),
-        typeof(IEvent),
         typeof(IStatic),
     };
 

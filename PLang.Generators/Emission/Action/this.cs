@@ -14,7 +14,7 @@ namespace PLang.Generators.Emission.Action;
 ///     constructs a fresh instance via the object initializer (init auto-props), then
 ///     Attach()es runtime markers. Returns the ready handler (or a resolution error).
 ///   Attach(action, context)  — sets Context / Action / Step / Static / Channel / [Code]
-///     provider / IEvent on THIS instance. Called by Resolve, and directly on prebound
+///     provider on THIS instance. Called by Resolve, and directly on prebound
 ///     (inline C#-composed) handlers whose params are already set.
 ///   Execute()                — runs the handler's typed Run(), wrapping bare exceptions
 ///     with the action's module.action context.
@@ -299,16 +299,6 @@ public static class @this
         // [Code] providers
         foreach (var prop in info.Properties.OfType<CodeProperty>())
             prop.EmitAttach(sb);
-
-        // IEvent surface — reads the (now-populated) param props.
-        foreach (var name in info.IEventPropertyNames)
-        {
-            sb.Append($$"""
-                        if ({{name}}?.Event != null)
-                            context.Event = {{name}}.Event;
-
-                """);
-        }
 
         sb.Append("""
                     await System.Threading.Tasks.Task.CompletedTask;

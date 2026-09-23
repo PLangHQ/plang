@@ -81,19 +81,6 @@ public class AppRunScaffoldingTests
         await Assert.That(ReferenceEquals(_app.User.Context.Goal, goalBefore)).IsTrue();
     }
 
-    // Context.Event is preserved across the handler call.
-    [Test]
-    public async Task AppRun_SavesAndRestoresContextEvent()
-    {
-        MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var eventBefore = _app.User.Context.Event;
-
-        var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
-        await action.Run(_app.User.Context);
-
-        await Assert.That(_app.User.Context.Event).IsEqualTo(eventBefore);
-    }
-
     // Handler throws → catch translates to Data.FromError with a ServiceError, frame is popped.
     [Test]
     public async Task AppRun_HandlerThrows_TranslatesToServiceError_AndPopsFrame()

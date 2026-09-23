@@ -71,7 +71,6 @@ public static class @this
         var implementsIStatic = ImplementsModule("IStatic");
 
         var properties = new List<PropertyBase>();
-        var ievents = new List<string>();
         var diagnostics = new List<DiagnosticInfo>();
         foreach (var member in classSymbol.GetMembers())
         {
@@ -81,9 +80,7 @@ public static class @this
                 || prop.IsStatic)
                 continue;
 
-            var (actionProp, implementsIEvent) = BuildProperty(prop);
-            if (actionProp != null) properties.Add(actionProp);
-            if (implementsIEvent) ievents.Add(prop.Name);
+            if (BuildProperty(prop) is { } actionProp) properties.Add(actionProp);
 
             // Raw-scalar diagnostic: anything that doesn't qualify as Data<T>, plain Data,
             // or [Code] T is rejected. Variable-name slots are Data<Variable>.
@@ -111,7 +108,6 @@ public static class @this
             implementsIStep,
             implementsIStatic,
             new EquatableArray<PropertyBase>(properties),
-            new EquatableArray<string>(ievents),
             HasIsNotNull(classSymbol),
             new EquatableArray<string>(ScanIsNotNullProperties(classSymbol)),
             new EquatableArray<DiagnosticInfo>(diagnostics));
@@ -139,10 +135,8 @@ public static class @this
 
     /// <summary>
     /// Picks the right ActionProperty leaf for a Roslyn IPropertySymbol.
-    /// Returns (property, implementsIEvent) — the latter is needed by Action emission
-    /// for context.Event wiring.
     /// </summary>
-    private static (PropertyBase? Prop, bool ImplementsIEvent) BuildProperty(IPropertySymbol prop)
+    private static PropertyBase? BuildProperty(IPropertySymbol prop)
     {
         // [Code] takes priority — these aren't parameter-sourced.
         var isCode = prop.GetAttributes().Any(a =>
@@ -153,7 +147,7 @@ public static class @this
             // ImplementsIContext is used for the engine-resolution expression — read off the parent class.
             var parentImplsCtx = prop.ContainingType.AllInterfaces.Any(i =>
                 i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "app.module");
-            return (new CodeProperty(prop.Name, typeName, parentImplsCtx), false);
+            return new CodeProperty(prop.Name, typeName, parentImplsCtx);
         }
 
         // [Default] literal expression
@@ -164,15 +158,6 @@ public static class @this
         // feeds Error.Params, which prints to logs/CI artefacts, so secrets must be masked.
         var isSensitive = prop.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "SensitiveAttribute");
-
-        // Strip Nullable<T> wrap for IEvent detection
-        var rawType = prop.Type;
-        if (rawType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
-            rawType = nullable.TypeArguments[0];
-        var implementsIEvent = rawType is INamedTypeSymbol evt
-            && evt.AllInterfaces.Any(i =>
-                i.Name == "IEvent"
-                && i.ContainingNamespace.ToDisplayString() == "app.module");
 
         // Detect Data<T> and plain Data
         var typeNameStr = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -207,12 +192,12 @@ public static class @this
                     isName = true;
                 }
             }
-            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isName), implementsIEvent);
+            return new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isName);
         }
 
         // No leaf matches — PLNG001 has already flagged this property; emit nothing
         // so the build error surfaces without a follow-on NRE elsewhere.
-        return (null, implementsIEvent);
+        return null;
     }
 
     private static string? ReadDefaultValueExpression(IPropertySymbol prop)
@@ -263,7 +248,6 @@ public sealed record ActionClassInfo(
     bool ImplementsIStep,
     bool ImplementsIStatic,
     EquatableArray<PropertyBase> Properties,
-    EquatableArray<string> IEventPropertyNames,
     bool HasAnyIsNotNull,
     EquatableArray<string> IsNotNullProperties,
     EquatableArray<DiagnosticInfo> Diagnostics);

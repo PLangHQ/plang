@@ -2067,7 +2067,10 @@ home is build time: the holder knows its `[GoalCallback]` name, so its `Validate
 "row 'chunk' shadows the value the callback injects". Six holders — logged beside the graft-typing item
 rather than folded into the A2 llm.query commit (architect ruling, goal-graph-singular).
 
-## 2026-09-23 — IEvent / EventContext / %!event% are inert since GoalCall died
+## 2026-09-23 — IEvent / EventContext / %!event% are inert since GoalCall died — RESOLVED
+Ingi chose: the event binding sets `%!event%` (a dict: trigger, goal, step, action, result) before
+running its held call; IEvent, EventContext, context.Event and the generator's detection are deleted.
+The original note:
 `GoalCall` was the only type implementing `app.module.IEvent`; its `Event` was stamped only by
 `module.Events.Stamp`, whose output nothing in production read. With `GoalCall` deleted (A3,
 goal-graph-singular), no parameter type implements `IEvent`, so the source generator's IEvent

@@ -40,7 +40,6 @@ public class IncrementalCacheTests
             ImplementsIStep: false,
             ImplementsIStatic: false,
             Properties: new EquatableArray<PropertyBase>(props),
-            IEventPropertyNames: EquatableArray<string>.Empty,
             HasAnyIsNotNull: false,
             IsNotNullProperties: EquatableArray<string>.Empty,
             Diagnostics: EquatableArray<DiagnosticInfo>.Empty);

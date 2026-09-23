@@ -223,5 +223,22 @@ public class EventHandlerTests
         await Assert.That((await callbackRan!.Value())?.ToString()).IsEqualTo("true");
     }
 
+    // The binding sets %!event% before running its held call: the trigger, and the goal the flow is in.
+    [Test]
+    public async Task On_BeforeGoal_CallbackSees_Event()
+    {
+        var context = _app.User.Context;
+        _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "Target", Path = global::app.type.item.path.@this.Resolve("/Target.goal", global::PLang.Tests.TestApp.SharedContext) });
+        await (await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "Watch", goalPattern: "Target").Run()).IsSuccess();
+
+        await Make.Call("Target").Run(context);
+
+        var @event = await (await context.Variable.Get("!event"))!.Value() as global::app.type.item.dict.@this;
+        await Assert.That(@event).IsNotNull();
+        await Assert.That(@event!.Get("goal")?.Peek() is Goal { Name: "Target" }).IsTrue();
+        await Assert.That(@event.Get("trigger")?.Peek()?.ToString()).IsEqualTo("BeforeGoal");
+    }
+
     #endregion
 }

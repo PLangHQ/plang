@@ -510,7 +510,6 @@ public class Default : IBuilder
             typeof(global::app.module.IContext),
             typeof(global::app.module.IStep),
             typeof(global::app.module.IChannel),
-            typeof(global::app.module.IEvent),
             typeof(global::app.module.IStatic),
         ];
 

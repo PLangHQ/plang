@@ -125,13 +125,6 @@ public sealed class @this : IDisposable
     public data.@this? Test { get; set; }
 
     /// <summary>
-    /// The current event context. Set by the source generator when a parameter implements IEvent.
-    /// Accessible via %!event%. Contains .step (triggering step), .phase, etc.
-    /// Null when not in an event handler.
-    /// </summary>
-    public module.EventContext? Event { get; set; }
-
-    /// <summary>
     /// Set during setup execution, null otherwise.
     /// Steps check this to implement run-once semantics.
     /// Propagates through goal.call since Goal.RunAsync uses the same context object.
@@ -192,7 +185,6 @@ public sealed class @this : IDisposable
         // shadows for free, and parallel branches don't cross (the stack is AsyncLocal).
         vars.Set(new data.DynamicData("!error", () => CallStack.Error, this));
         vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.Peek("data")?.Peek(), this));
-        vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event, this));
         vars.Set(new data.DynamicData("!test", () => Test, this));
     }
 
@@ -358,21 +350,18 @@ public sealed class @this : IDisposable
         private readonly @this _ctx;
         private readonly Step? _previousStep;
         private readonly Goal? _previousGoal;
-        private readonly module.EventContext? _previousEvent;
 
         public AnchorScopeDisposable(@this context, Action action)
         {
             _ctx = context;
             _previousStep = context.Step;
             _previousGoal = context.Goal;
-            _previousEvent = context.Event;
         }
 
         public void Dispose()
         {
             _ctx.Step = _previousStep;
             _ctx.Goal = _previousGoal;
-            _ctx.Event = _previousEvent;
         }
     }
 
