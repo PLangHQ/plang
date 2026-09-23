@@ -8,7 +8,6 @@ namespace app.module.action.code.defaultoverride;
 /// so its presence IS the fact that a choice was made. A plang value, read back through its own
 /// reader.
 /// </summary>
-[PlangType("defaultoverride")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     protected internal override global::app.type.@this Type => new("defaultoverride", typeof(@this));

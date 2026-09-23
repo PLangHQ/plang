@@ -10,7 +10,6 @@ namespace app.module.action.code.registration;
 /// <para><c>Source</c> is null for an in-process registration on the same App — a registration the
 /// fresh side cannot reproduce, which Restore rejects rather than guesses at.</para>
 /// </summary>
-[PlangType("registration")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     protected internal override global::app.type.@this Type => new("registration", typeof(@this));

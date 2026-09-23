@@ -53,16 +53,17 @@ public class Stage0_PlangTypeRemovalTests
             var attr = type.GetCustomAttribute<PlangTypeAttribute>(inherit: false);
             if (attr == null || attr.Name == null) continue;
 
-            var derivable = type.Name == "this"
-                ? (type.Namespace?.Split('.').LastOrDefault() ?? "")
-                : type.Name.ToLowerInvariant();
+            // Only an @this class has a derived name (its namespace tail). Any other class has no
+            // derivation — its declared name is its only name (a closed set, a non-@this item).
+            if (type.Name != "this") continue;
+            var derivable = type.Namespace?.Split('.').LastOrDefault() ?? "";
 
             if (string.Equals(attr.Name, derivable, StringComparison.Ordinal))
                 offenders.Add($"{type.FullName} → [PlangType(\"{attr.Name}\")] is identical to derivation");
         }
 
         await Assert.That(offenders).IsEmpty()
-            .Because("Named [PlangType(name)] is reserved for names that can't be derived from class/@this.");
+            .Because("An @this class is named by its namespace; a [PlangType] repeating it names it twice.");
     }
 
 
