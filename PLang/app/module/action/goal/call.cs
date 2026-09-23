@@ -96,8 +96,9 @@ public partial class Call : IContext
         // land in whatever scope the caller's flow is in.
         // A row that carries no value is a declaration ("this goal takes a city"), not an argument —
         // it binds nothing. A valued row is "this value unless the invocation supplied one": a runner
-        // that supplies arguments (a tool loop, a callback) runs this call inside a frame born with
-        // them, and a supplied name wins. A plain call has no such frame, so its rows always bind.
+        // that forks (a tool invocation) runs this call inside a frame born with the arguments it
+        // supplies, and a supplied name wins. A call in the flow (plain, or a callback) has no such
+        // frame, so its rows always bind.
         if (Parameter?.Peek() is global::app.type.item.list.@this args)
             foreach (var arg in args.Items)
             {
