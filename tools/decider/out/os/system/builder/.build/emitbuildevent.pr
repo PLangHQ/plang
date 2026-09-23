@@ -83,7 +83,8 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "EmitBuildEvent"
+        "name": "EmitBuildEvent",
+        "parameter": []
        }
       }
      ],

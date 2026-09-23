@@ -10,13 +10,16 @@ Use only actions on the step's own menu.
 
 Answer with JSON only — every step, in order, each with its actions in the order they run:
 
-  {"steps": [
-    {"index": 0, "actions": [
-      {"module": "file", "action": "read", "parameter": [{"name": "Path", "value": "notes.txt"}]},
-      {"module": "variable", "action": "set", "parameter": [{"name": "Name", "value": "%content%"},
-                                                            {"name": "Value", "value": "%!data%"}]}
+  {"step": [
+    {"index": 0, "action": [
+      {"module": "file", "name": "read", "parameter": [{"name": "Path", "value": "notes.txt"}]},
+      {"module": "variable", "name": "set", "parameter": [{"name": "Name", "value": "%content%"},
+                                                          {"name": "Value", "value": "%!data%"}]}
     ]}
   ]}
+
+An action is `{"module", "name", "parameter"}` — `name` is the action's name as the menu writes it
+after the dot (`file.read` → `"module": "file", "name": "read"`).
 
 Worked example. Given:
 
@@ -49,14 +52,14 @@ actions, the same shape as the step's own. Given:
 
 the step's entry is:
 
-  {"index": 3, "actions": [
-    {"module": "goal", "action": "call",
+  {"index": 3, "action": [
+    {"module": "goal", "name": "call",
      "parameter": [{"name": "GoalName", "value": {"name": "Compile"}}],
      "modifier": [
-       {"module": "error", "action": "handle",
+       {"module": "error", "name": "handle",
         "parameter": [{"name": "RetryCount", "value": 2}],
         "recovery": [
-          {"module": "goal", "action": "call",
+          {"module": "goal", "name": "call",
            "parameter": [{"name": "GoalName", "value": {"name": "HandleFailure"}}]}]}]}
   ]}
 
@@ -71,8 +74,8 @@ Given:
 
 the step's entry is:
 
-  {"index": 2, "actions": [
-    {"module": "goal", "action": "call",
+  {"index": 2, "action": [
+    {"module": "goal", "name": "call",
      "parameter": [{"name": "GoalName", "value": {"name": "SendMail", "parameter": [
         {"name": "to", "value": "%email%"}, {"name": "subject", "value": "Hi"}]}}]}
   ]}

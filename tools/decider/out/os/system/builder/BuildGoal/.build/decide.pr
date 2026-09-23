@@ -208,13 +208,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -235,7 +228,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
+       "value": "%!data%(!ui.render)%"
       }
      ],
      "modifier": []
@@ -308,13 +301,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderActionQuestions.template"
-      },
-      {
-       "name": "IsFile",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
       }
      ],
      "modifier": []
@@ -335,7 +321,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
+       "value": "%!data%(!ui.render)%"
       }
      ],
      "modifier": []
@@ -459,6 +445,13 @@
           "index": "%step.Index%",
           "text": "%step.Text%"
          }
+        },
+        {
+         "name": "AtIndex",
+         "type": {
+          "name": "number"
+         },
+         "value": "%step.Index%"
         }
        ],
        "modifier": []
@@ -487,14 +480,14 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.modules%"
+         "value": "%state.modules%[%module.Name%]"
         },
         {
          "name": "Value",
          "type": {
           "name": "item"
          },
-         "value": "%module.Name%=%module.Description%"
+         "value": "%module.Description%"
         }
        ],
        "modifier": []

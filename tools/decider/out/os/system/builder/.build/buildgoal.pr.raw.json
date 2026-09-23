@@ -6,13 +6,13 @@
    ]
   },
   "answer": {
-   "steps": [
+   "step": [
     {
      "index": 0,
-     "actions": [
+     "action": [
       {
        "module": "goal",
-       "action": "call",
+       "name": "call",
        "parameter": [
         {
          "name": "GoalName",

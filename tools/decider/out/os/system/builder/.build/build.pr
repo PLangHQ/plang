@@ -28,6 +28,13 @@
        "value": "/"
       },
       {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "path"
+      },
+      {
        "name": "AsDefault",
        "type": {
         "name": "bool"
@@ -62,6 +69,13 @@
         "name": "item"
        },
        "value": true
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "bool"
       },
       {
        "name": "AsDefault",
@@ -100,6 +114,13 @@
        "value": true
       },
       {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "bool"
+      },
+      {
        "name": "AsDefault",
        "type": {
         "name": "bool"
@@ -134,13 +155,7 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "<goal>",
-        "parameter": [
-         {
-          "name": "<argument>",
-          "value": "<value>"
-         }
-        ]
+        "name": "BuilderChannel"
        }
       }
      ],
@@ -212,6 +227,13 @@
         "name": "variable"
        },
        "value": "%app%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -248,6 +270,13 @@
         "name": "variable"
        },
        "value": "%goals%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
       }
      ],
      "modifier": []

@@ -22,23 +22,27 @@
    ]
   },
   "answer": {
-   "steps": [
+   "step": [
     {
      "index": 0,
-     "actions": [
+     "action": [
       {
        "module": "ui",
-       "action": "render",
+       "name": "render",
        "parameter": [
         {
          "name": "Template",
          "value": "/system/builder/llm/templates/propertiesUser.template"
+        },
+        {
+         "name": "Parameter",
+         "value": []
         }
        ]
       },
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -54,20 +58,24 @@
     },
     {
      "index": 1,
-     "actions": [
+     "action": [
       {
        "module": "ui",
-       "action": "render",
+       "name": "render",
        "parameter": [
         {
          "name": "Template",
          "value": "/system/builder/llm/Properties.llm"
+        },
+        {
+         "name": "Parameter",
+         "value": []
         }
        ]
       },
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -83,10 +91,10 @@
     },
     {
      "index": 2,
-     "actions": [
+     "action": [
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -111,10 +119,48 @@
     },
     {
      "index": 3,
-     "actions": [
+     "action": [
+      {
+       "module": "cache",
+       "name": "wrap",
+       "parameter": [
+        {
+         "name": "DurationMs",
+         "value": 300000
+        },
+        {
+         "name": "Key",
+         "value": "goal-properties:gpt-5.4-nano:%goal%"
+        },
+        {
+         "name": "Sliding",
+         "value": true
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "name": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "value": 300000
+          },
+          {
+           "name": "Key",
+           "value": "goal-properties:gpt-5.4-nano:%goal%"
+          },
+          {
+           "name": "Sliding",
+           "value": true
+          }
+         ]
+        }
+       ]
+      },
       {
        "module": "llm",
-       "action": "query",
+       "name": "query",
        "parameter": [
         {
          "name": "Message",
@@ -127,33 +173,39 @@
         {
          "name": "Schema",
          "value": {
-          "steps": {
-           "type": "list",
-           "kind": "list<{index: int, actions: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}"
-          }
+          "step": [
+           {
+            "index": "int",
+            "action": "list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>"
+           }
+          ]
          }
         },
         {
          "name": "Cache",
-         "value": "%!build.cache%"
+         "value": true
         },
         {
-         "name": "Format",
-         "value": "json"
+         "name": "MaxTokens",
+         "value": 1024
         }
        ],
        "modifier": [
         {
          "module": "cache",
-         "action": "wrap",
+         "name": "wrap",
          "parameter": [
           {
            "name": "DurationMs",
-           "value": 600000
+           "value": 300000
           },
           {
            "name": "Sliding",
            "value": true
+          },
+          {
+           "name": "Key",
+           "value": "goal-properties:gpt-5.4-nano:%goal%"
           }
          ]
         }
@@ -161,7 +213,7 @@
       },
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -177,10 +229,10 @@
     },
     {
      "index": 4,
-     "actions": [
+     "action": [
       {
        "module": "goal",
-       "action": "call",
+       "name": "call",
        "parameter": [
         {
          "name": "GoalName",

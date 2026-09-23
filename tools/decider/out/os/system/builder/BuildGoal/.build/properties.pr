@@ -19,6 +19,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/propertiesUser.template"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
       }
      ],
      "modifier": []
@@ -62,6 +69,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/Properties.llm"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
       }
      ],
      "modifier": []
@@ -129,10 +143,67 @@
   },
   {
    "index": 3,
-   "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", Schema={steps: list<{index: int, actions: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}, cache=%!build.cache%, write to %properties%",
+   "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", Schema={step: list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>}>}, cache=%!build.cache%, write to %properties%",
    "lineNumber": 16,
    "waitForExecution": true,
    "action": [
+    {
+     "module": "cache",
+     "name": "wrap",
+     "parameter": [
+      {
+       "name": "DurationMs",
+       "type": {
+        "name": "number"
+       },
+       "value": 300000
+      },
+      {
+       "name": "Key",
+       "type": {
+        "name": "text"
+       },
+       "value": "goal-properties:gpt-5.4-nano:%goal%"
+      },
+      {
+       "name": "Sliding",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": [
+      {
+       "module": "cache",
+       "name": "wrap",
+       "parameter": [
+        {
+         "name": "DurationMs",
+         "type": {
+          "name": "number"
+         },
+         "value": 300000
+        },
+        {
+         "name": "Key",
+         "type": {
+          "name": "text"
+         },
+         "value": "goal-properties:gpt-5.4-nano:%goal%"
+        },
+        {
+         "name": "Sliding",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
     {
      "module": "llm",
      "name": "query",
@@ -157,10 +228,12 @@
         "name": "item"
        },
        "value": {
-        "steps": {
-         "type": "list",
-         "kind": "list<{index: int, actions: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}"
-        }
+        "step": [
+         {
+          "index": "int",
+          "action": "list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>"
+         }
+        ]
        }
       },
       {
@@ -168,14 +241,14 @@
        "type": {
         "name": "bool"
        },
-       "value": "%!build.cache%"
+       "value": true
       },
       {
-       "name": "Format",
+       "name": "MaxTokens",
        "type": {
-        "name": "text"
+        "name": "number"
        },
-       "value": "json"
+       "value": 1024
       }
      ],
      "modifier": [
@@ -188,7 +261,7 @@
          "type": {
           "name": "number"
          },
-         "value": 600000
+         "value": 300000
         },
         {
          "name": "Sliding",
@@ -196,6 +269,13 @@
           "name": "bool"
          },
          "value": true
+        },
+        {
+         "name": "Key",
+         "type": {
+          "name": "text"
+         },
+         "value": "goal-properties:gpt-5.4-nano:%goal%"
         }
        ],
        "modifier": []

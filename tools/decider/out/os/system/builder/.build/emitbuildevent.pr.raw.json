@@ -11,13 +11,13 @@
    ]
   },
   "answer": {
-   "steps": [
+   "step": [
     {
      "index": 0,
-     "actions": [
+     "action": [
       {
        "module": "ui",
-       "action": "render",
+       "name": "render",
        "parameter": [
         {
          "name": "Template",
@@ -35,7 +35,7 @@
       },
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -51,10 +51,10 @@
     },
     {
      "index": 1,
-     "actions": [
+     "action": [
       {
        "module": "channel",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -63,14 +63,15 @@
         {
          "name": "Goal",
          "value": {
-          "name": "EmitBuildEvent"
+          "name": "EmitBuildEvent",
+          "parameter": []
          }
         }
        ]
       },
       {
        "module": "output",
-       "action": "write",
+       "name": "write",
        "parameter": [
         {
          "name": "Data",

@@ -39,13 +39,13 @@
    ]
   },
   "answer": {
-   "steps": [
+   "step": [
     {
      "index": 0,
-     "actions": [
+     "action": [
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -54,6 +54,10 @@
         {
          "name": "Value",
          "value": "/"
+        },
+        {
+         "name": "Type",
+         "value": "path"
         },
         {
          "name": "AsDefault",
@@ -65,10 +69,10 @@
     },
     {
      "index": 1,
-     "actions": [
+     "action": [
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -77,6 +81,10 @@
         {
          "name": "Value",
          "value": true
+        },
+        {
+         "name": "Type",
+         "value": "bool"
         },
         {
          "name": "AsDefault",
@@ -88,10 +96,10 @@
     },
     {
      "index": 2,
-     "actions": [
+     "action": [
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -100,6 +108,10 @@
         {
          "name": "Value",
          "value": true
+        },
+        {
+         "name": "Type",
+         "value": "bool"
         },
         {
          "name": "AsDefault",
@@ -111,10 +123,10 @@
     },
     {
      "index": 3,
-     "actions": [
+     "action": [
       {
        "module": "channel",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
@@ -123,13 +135,7 @@
         {
          "name": "Goal",
          "value": {
-          "name": "<goal>",
-          "parameter": [
-           {
-            "name": "<argument>",
-            "value": "<value>"
-           }
-          ]
+          "name": "BuilderChannel"
          }
         }
        ]
@@ -138,10 +144,10 @@
     },
     {
      "index": 4,
-     "actions": [
+     "action": [
       {
        "module": "goal",
-       "action": "call",
+       "name": "call",
        "parameter": [
         {
          "name": "GoalName",
@@ -165,10 +171,10 @@
     },
     {
      "index": 5,
-     "actions": [
+     "action": [
       {
        "module": "build",
-       "action": "load",
+       "name": "load",
        "parameter": [
         {
          "name": "Path",
@@ -178,11 +184,15 @@
       },
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
          "value": "%app%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -190,10 +200,10 @@
     },
     {
      "index": 6,
-     "actions": [
+     "action": [
       {
        "module": "build",
-       "action": "goals",
+       "name": "goals",
        "parameter": [
         {
          "name": "Path",
@@ -203,11 +213,15 @@
       },
       {
        "module": "variable",
-       "action": "set",
+       "name": "set",
        "parameter": [
         {
          "name": "Name",
          "value": "%goals%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -215,10 +229,10 @@
     },
     {
      "index": 7,
-     "actions": [
+     "action": [
       {
        "module": "goal",
-       "action": "call",
+       "name": "call",
        "parameter": [
         {
          "name": "GoalName",
@@ -242,10 +256,10 @@
     },
     {
      "index": 8,
-     "actions": [
+     "action": [
       {
        "module": "loop",
-       "action": "foreach",
+       "name": "foreach",
        "parameter": [
         {
          "name": "Collection",
@@ -259,7 +273,7 @@
       },
       {
        "module": "goal",
-       "action": "call",
+       "name": "call",
        "parameter": [
         {
          "name": "GoalName",
@@ -279,10 +293,10 @@
     },
     {
      "index": 9,
-     "actions": [
+     "action": [
       {
        "module": "file",
-       "action": "save",
+       "name": "save",
        "parameter": [
         {
          "name": "Path",
@@ -298,10 +312,10 @@
     },
     {
      "index": 10,
-     "actions": [
+     "action": [
       {
        "module": "build",
-       "action": "appSave",
+       "name": "appSave",
        "parameter": []
       }
      ]

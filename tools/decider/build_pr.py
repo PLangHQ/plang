@@ -181,7 +181,10 @@ def rows(raw, where):
 def pr_action(a, where=''):
     """One answered action in the .pr's own shape. Every top-level property gets its DECLARED type
     — the .pr reader rejects a value slot that has none — and modifiers / recovery nest as given."""
-    module, name = a.get('module'), a.get('action') or a.get('name')
+    module, name = a.get('module'), a.get('name')
+    if name is None and 'action' in a:
+        DEVIATIONS.append(f'{where} {module}: element key "action", not "name"')
+        name = a['action']
     where = f'{where} {module}.{name}'
     props, _ = declared(module, name)
     params = []
@@ -195,7 +198,13 @@ def pr_action(a, where=''):
     return out
 
 def pr_goal(goal, answer, rel):
-    by_index = {e.get('index'): e.get('actions') or [] for e in answer.get('steps', [])}
+    """The answer is in the .pr's own keys — step, action, name, parameter, modifier, recovery. The
+    older plural keys are read but RECORDED, never silently absorbed."""
+    if 'steps' in answer: DEVIATIONS.append(f'{goal["name"]}: answer key "steps", not "step"')
+    by_index = {}
+    for e in answer.get('step', answer.get('steps', [])):
+        if 'actions' in e: DEVIATIONS.append(f'{goal["name"]}[{e.get("index")}]: key "actions", not "action"')
+        by_index[e.get('index')] = e.get('action', e.get('actions')) or []
     return {'name': goal['name'], 'path': '/' + rel,
             'step': [{'index': s['index'], 'text': s['text'], 'lineNumber': s['lineNumber'],
                       **({'comment': s['comment']} if s['comment'] else {}),
