@@ -159,31 +159,7 @@
        "value": {
         "steps": {
          "type": "list",
-         "item": {
-          "type": "dict",
-          "fields": {
-           "index": {
-            "type": "int"
-           },
-           "actions": {
-            "type": "list",
-            "item": {
-             "type": "dict",
-             "fields": {
-              "module": {
-               "type": "string"
-              },
-              "action": {
-               "type": "string"
-              },
-              "parameter": {
-               "type": "list"
-              }
-             }
-            }
-           }
-          }
-         }
+         "kind": "list<{index: int, actions: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}"
         }
        }
       },
@@ -192,14 +168,14 @@
        "type": {
         "name": "bool"
        },
-       "value": true
+       "value": "%!build.cache%"
       },
       {
-       "name": "Tool",
+       "name": "Format",
        "type": {
-        "name": "list"
+        "name": "text"
        },
-       "value": []
+       "value": "json"
       }
      ],
      "modifier": [
@@ -212,7 +188,14 @@
          "type": {
           "name": "number"
          },
-         "value": "%!build.cache%"
+         "value": 600000
+        },
+        {
+         "name": "Sliding",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
         }
        ],
        "modifier": []

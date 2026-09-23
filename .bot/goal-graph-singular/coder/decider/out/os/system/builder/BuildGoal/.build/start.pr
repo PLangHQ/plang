@@ -111,7 +111,8 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "Compile"
+        "name": "Compile",
+        "parameter": []
        }
       }
      ],
@@ -119,7 +120,15 @@
       {
        "module": "error",
        "name": "handle",
-       "parameter": [],
+       "parameter": [
+        {
+         "name": "Key",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildFailure"
+        }
+       ],
        "modifier": [],
        "recovery": [
         {
@@ -132,7 +141,8 @@
             "name": "goal.call"
            },
            "value": {
-            "name": "HandleBuildFailure"
+            "name": "HandleBuildFailure",
+            "parameter": []
            }
           }
          ],
@@ -208,6 +218,27 @@
    "lineNumber": 12,
    "waitForExecution": true,
    "action": [
+    {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
+      {
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%parentGoal.Child%"
+      },
+      {
+       "name": "ItemName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%item%"
+      }
+     ],
+     "modifier": []
+    },
     {
      "module": "goal",
      "name": "call",
@@ -286,7 +317,28 @@
        "value": "%buildStart%"
       },
       {
-       "name": "write to",
+       "name": "write to %elapsedTicks%",
+       "type": {
+        "name": "item"
+       },
+       "value": "%elapsedTicks%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%elapsedTicks%"
+      },
+      {
+       "name": "Value",
        "type": {
         "name": "item"
        },
@@ -322,7 +374,28 @@
        "value": 10000
       },
       {
-       "name": "write to",
+       "name": "write to %elapsedMs%",
+       "type": {
+        "name": "item"
+       },
+       "value": "%elapsedMs%"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%elapsedMs%"
+      },
+      {
+       "name": "Value",
        "type": {
         "name": "item"
        },
@@ -370,7 +443,7 @@
    "action": [
     {
      "module": "file",
-     "name": "write",
+     "name": "save",
      "parameter": [
       {
        "name": "Path",
@@ -398,11 +471,18 @@
    "waitForExecution": true,
    "action": [
     {
-     "module": "build",
-     "name": "goalsSave",
+     "module": "list",
+     "name": "add",
      "parameter": [
       {
-       "name": "Goal",
+       "name": "ListName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%traceGoals%"
+      },
+      {
+       "name": "Value",
        "type": {
         "name": "item"
        },
@@ -422,10 +502,10 @@
    "action": [
     {
      "module": "build",
-     "name": "goalsSave",
+     "name": "promoteGroups",
      "parameter": [
       {
-       "name": "Goal",
+       "name": "Steps",
        "type": {
         "name": "item"
        },
@@ -436,7 +516,15 @@
       {
        "module": "error",
        "name": "handle",
-       "parameter": [],
+       "parameter": [
+        {
+         "name": "Key",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildFailure"
+        }
+       ],
        "modifier": [],
        "recovery": [
         {
@@ -449,7 +537,8 @@
             "name": "goal.call"
            },
            "value": {
-            "name": "HandleBuildFailure"
+            "name": "HandleBuildFailure",
+            "parameter": []
            }
           }
          ],
@@ -528,34 +617,6 @@
      "waitForExecution": true,
      "action": [
       {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "type": {
-          "name": "item"
-         },
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "ItemName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%item%"
-        },
-        {
-         "name": "KeyName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%key%"
-        }
-       ],
-       "modifier": []
-      },
-      {
        "module": "goal",
        "name": "call",
        "parameter": [
@@ -565,17 +626,56 @@
           "name": "goal.call"
          },
          "value": {
-          "name": "Menu"
+          "name": "Menu",
+          "parameter": [
+           {
+            "name": "step",
+            "value": "%item%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
-         },
-         "value": "%item%"
         }
        ],
+       "modifier": [
+        {
+         "module": "loop",
+         "name": "foreach",
+         "parameter": [
+          {
+           "name": "Collection",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal.Step%"
+          },
+          {
+           "name": "ItemName",
+           "type": {
+            "name": "variable"
+           },
+           "value": "%item%"
+          }
+         ],
+         "modifier": []
+        }
+       ]
+      },
+      {
+       "module": null,
+       "name": null,
+       "parameter": [],
+       "modifier": []
+      },
+      {
+       "module": null,
+       "name": null,
+       "parameter": [],
+       "modifier": []
+      },
+      {
+       "module": null,
+       "name": null,
+       "parameter": [],
        "modifier": []
       }
      ]
@@ -585,142 +685,21 @@
      "text": "call Properties",
      "lineNumber": 32,
      "waitForExecution": true,
-     "action": [
-      {
-       "module": "goal",
-       "name": "call",
-       "parameter": [
-        {
-         "name": "GoalName",
-         "type": {
-          "name": "goal.call"
-         },
-         "value": {
-          "name": "Properties"
-         }
-        }
-       ],
-       "modifier": []
-      }
-     ]
+     "action": []
     },
     {
      "index": 3,
      "text": "foreach %goal.Step%, call Apply step=%item%",
      "lineNumber": 33,
      "waitForExecution": true,
-     "action": [
-      {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "type": {
-          "name": "item"
-         },
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "ItemName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%item%"
-        },
-        {
-         "name": "KeyName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%key%"
-        }
-       ],
-       "modifier": []
-      },
-      {
-       "module": "goal",
-       "name": "call",
-       "parameter": [
-        {
-         "name": "GoalName",
-         "type": {
-          "name": "goal.call"
-         },
-         "value": {
-          "name": "Apply"
-         }
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
-         },
-         "value": "%item%"
-        }
-       ],
-       "modifier": []
-      }
-     ]
+     "action": []
     },
     {
      "index": 4,
      "text": "foreach %goal.Step%, call ValidateStep step=%item%",
      "lineNumber": 34,
      "waitForExecution": true,
-     "action": [
-      {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "type": {
-          "name": "item"
-         },
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "ItemName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%item%"
-        },
-        {
-         "name": "KeyName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%key%"
-        }
-       ],
-       "modifier": []
-      },
-      {
-       "module": "goal",
-       "name": "call",
-       "parameter": [
-        {
-         "name": "GoalName",
-         "type": {
-          "name": "goal.call"
-         },
-         "value": {
-          "name": "ValidateStep"
-         }
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
-         },
-         "value": "%item%"
-        }
-       ],
-       "modifier": []
-      }
-     ]
+     "action": []
     }
    ]
   },
@@ -765,14 +744,15 @@
          "type": {
           "name": "goal.call"
          },
-         "value": "%MenuModule%"
-        },
-        {
-         "name": "module",
-         "type": {
-          "name": "item"
-         },
-         "value": "%item%"
+         "value": {
+          "name": "MenuModule",
+          "parameter": [
+           {
+            "name": "module",
+            "value": "%item%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -836,7 +816,7 @@
          "type": {
           "name": "item"
          },
-         "value": "\"s%step.Index%_%module.Name%\""
+         "value": "s%step.Index%_%module.Name%"
         }
        ],
        "modifier": []
@@ -865,7 +845,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "less_than"
+         "value": "<"
         },
         {
          "name": "Right",
@@ -873,6 +853,27 @@
           "name": "item"
          },
          "value": "%threshold%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "return",
+       "parameter": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "item"
+         },
+         "value": "%moduleAnswer%"
+        },
+        {
+         "name": "Depth",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
         }
        ],
        "modifier": []
@@ -886,34 +887,33 @@
      "waitForExecution": true,
      "action": [
       {
-       "module": "list",
-       "name": "add",
+       "module": "condition",
+       "name": "if",
        "parameter": [
         {
-         "name": "ListName",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%choices%"
-        },
-        {
-         "name": "Value",
+         "name": "Left",
          "type": {
           "name": "item"
          },
-         "value": "\"%module.Name%.%module.Actions[0].Name%\""
+         "value": "%module.Actions.Count%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "item"
+         },
+         "value": 1
         }
        ],
        "modifier": []
-      }
-     ]
-    },
-    {
-     "index": 3,
-     "text": "if %module.Actions.Count% is more than 1, add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%",
-     "lineNumber": 46,
-     "waitForExecution": true,
-     "action": [
+      },
       {
        "module": "list",
        "name": "add",
@@ -930,7 +930,64 @@
          "type": {
           "name": "item"
          },
-         "value": "\"%module.Name%.%actionAnswer[key].choice%\""
+         "value": "%module.Name%.%module.Actions[0].Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "text": "if %module.Actions.Count% is more than 1, add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%",
+     "lineNumber": 46,
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%module.Actions.Count%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice"
+         },
+         "value": ">"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "item"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "list",
+       "name": "add",
+       "parameter": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%choices%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%module.Name%.%actionAnswer[key].choice%"
         }
        ],
        "modifier": []
@@ -994,9 +1051,7 @@
          "type": {
           "name": "list"
          },
-         "value": [
-          "%goal.step[step.Index].action%"
-         ]
+         "value": "%goal.step[step.Index].action%"
         }
        ],
        "modifier": [
@@ -1050,6 +1105,41 @@
      "waitForExecution": true,
      "action": [
       {
+       "module": "file",
+       "name": "read",
+       "parameter": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "item"
+         },
+         "value": "notes.txt"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%fixMessages%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "[{\"Role\":\"user\",\"Content\":\"Your answer was rejected by the validator: %!error.Message%\\n\\nReturn the corrected answer in the same shape.\"}]"
+        }
+       ],
+       "modifier": []
+      },
+      {
        "module": "variable",
        "name": "set",
        "parameter": [
@@ -1101,7 +1191,7 @@
          "type": {
           "name": "bool"
          },
-         "value": "%!build.cache%"
+         "value": "%build.cache%"
         },
         {
          "name": "ContinuePreviousConversation",
@@ -1111,18 +1201,54 @@
          "value": true
         },
         {
-         "name": "Format",
+         "name": "MaxValidationRetries",
          "type": {
-          "name": "text"
+          "name": "number"
          },
-         "value": "json"
+         "value": 3
+        }
+       ],
+       "modifier": [
+        {
+         "module": "cache",
+         "name": "wrap",
+         "parameter": [
+          {
+           "name": "DurationMs",
+           "type": {
+            "name": "number"
+           },
+           "value": 300000
+          },
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "FixProperties-%!step%-%!error.Message%"
+          }
+         ],
+         "modifier": []
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%properties%"
         },
         {
-         "name": "Schema",
+         "name": "Value",
          "type": {
           "name": "item"
          },
-         "value": "%properties%"
+         "value": "%!data%"
         }
        ],
        "modifier": []
@@ -1145,15 +1271,14 @@
           "name": "goal.call"
          },
          "value": {
-          "name": "Apply"
+          "name": "Apply",
+          "parameter": [
+           {
+            "name": "step",
+            "value": "%step%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
-         },
-         "value": "%step%"
         }
        ],
        "modifier": []
@@ -1167,38 +1292,31 @@
      "waitForExecution": true,
      "action": [
       {
-       "module": "event",
-       "name": "on",
+       "module": "goal",
+       "name": "call",
        "parameter": [
         {
-         "name": "Trigger",
-         "type": {
-          "name": "choice"
-         },
-         "value": "step-validation-error"
-        },
-        {
-         "name": "GoalToCall",
+         "name": "GoalName",
          "type": {
           "name": "goal.call"
          },
          "value": {
-          "name": "/system/builder/EmitBuildEvent"
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "step-validation-error"
+           },
+           {
+            "name": "step",
+            "value": "%step%"
+           },
+           {
+            "name": "errorMessage",
+            "value": "%!error.Message%"
+           }
+          ]
          }
-        },
-        {
-         "name": "StepPattern",
-         "type": {
-          "name": "text"
-         },
-         "value": "%step%"
-        },
-        {
-         "name": "ActionPattern",
-         "type": {
-          "name": "text"
-         },
-         "value": "%!error.Message%"
         }
        ],
        "modifier": []
@@ -1254,18 +1372,20 @@
         {
          "name": "GoalName",
          "type": {
-          "name": "text"
-         },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
+          "name": "goal.call"
          },
          "value": {
-          "name": "kind",
-          "value": "subGoalHeader"
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "subGoalHeader"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           }
+          ]
          }
         }
        ],
@@ -1317,14 +1437,31 @@
          "type": {
           "name": "goal.call"
          },
-         "value": "Compile"
+         "value": {
+          "name": "Compile"
+         }
         }
        ],
        "modifier": [
         {
          "module": "error",
          "name": "handle",
-         "parameter": [],
+         "parameter": [
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "BuildFailure"
+          },
+          {
+           "name": "RetryCount",
+           "type": {
+            "name": "number"
+           },
+           "value": 0
+          }
+         ],
          "modifier": [],
          "recovery": [
           {
@@ -1336,7 +1473,9 @@
              "type": {
               "name": "goal.call"
              },
-             "value": "HandleBuildFailure"
+             "value": {
+              "name": "HandleBuildFailure"
+             }
             }
            ],
            "modifier": []
@@ -1369,7 +1508,10 @@
          "type": {
           "name": "item"
          },
-         "value": "{goal: %goal%, menu: %menu%}"
+         "value": {
+          "goal": "%goal%",
+          "menu": "%menu%"
+         }
         }
        ],
        "modifier": []
@@ -1401,14 +1543,7 @@
          "value": "%subgoalStart%"
         }
        ],
-       "modifier": [
-        {
-         "module": "cache",
-         "name": "wrap",
-         "parameter": [],
-         "modifier": []
-        }
-       ]
+       "modifier": []
       },
       {
        "module": "variable",
@@ -1496,18 +1631,24 @@
         {
          "name": "GoalName",
          "type": {
-          "name": "text"
-         },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
+          "name": "goal.call"
          },
          "value": {
-          "name": "kind",
-          "value": "subGoalDone"
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "subGoalDone"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           },
+           {
+            "name": "subgoalMs",
+            "value": "%subgoalMs%"
+           }
+          ]
          }
         }
        ],

@@ -36,6 +36,27 @@
       }
      ],
      "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%msg%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "modifier": []
     }
    ]
   },
@@ -46,6 +67,29 @@
    "waitForExecution": true,
    "action": [
     {
+     "module": "channel",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "text"
+       },
+       "value": "builder"
+      },
+      {
+       "name": "Goal",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "EmitBuildEvent"
+       }
+      }
+     ],
+     "modifier": []
+    },
+    {
      "module": "output",
      "name": "write",
      "parameter": [
@@ -55,13 +99,6 @@
         "name": "item"
        },
        "value": "%msg%"
-      },
-      {
-       "name": "channel",
-       "type": {
-        "name": "item"
-       },
-       "value": "builder"
       }
      ],
      "modifier": []

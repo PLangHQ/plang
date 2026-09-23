@@ -134,7 +134,13 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "BuilderChannel"
+        "name": "<goal>",
+        "parameter": [
+         {
+          "name": "<argument>",
+          "value": "<value>"
+         }
+        ]
        }
       }
      ],
@@ -158,15 +164,18 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "EmitBuildEvent"
+        "name": "EmitBuildEvent",
+        "parameter": [
+         {
+          "name": "kind",
+          "value": "build-path"
+         },
+         {
+          "name": "path",
+          "value": "%path%"
+         }
+        ]
        }
-      },
-      {
-       "name": "Actor",
-       "type": {
-        "name": "item"
-       },
-       "value": "builder"
       }
      ],
      "modifier": []
@@ -203,13 +212,6 @@
         "name": "variable"
        },
        "value": "%app%"
-      },
-      {
-       "name": "Value",
-       "type": {
-        "name": "item"
-       },
-       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -246,13 +248,6 @@
         "name": "variable"
        },
        "value": "%goals%"
-      },
-      {
-       "name": "Value",
-       "type": {
-        "name": "item"
-       },
-       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -275,15 +270,18 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "EmitBuildEvent"
+        "name": "EmitBuildEvent",
+        "parameter": [
+         {
+          "name": "kind",
+          "value": "goals-found"
+         },
+         {
+          "name": "goals",
+          "value": "%goals%"
+         }
+        ]
        }
-      },
-      {
-       "name": "Actor",
-       "type": {
-        "name": "item"
-       },
-       "value": "builder"
       }
      ],
      "modifier": []
@@ -327,15 +325,14 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "BuildGoal"
+        "name": "BuildGoal",
+        "parameter": [
+         {
+          "name": "goal",
+          "value": "%item%"
+         }
+        ]
        }
-      },
-      {
-       "name": "Actor",
-       "type": {
-        "name": "item"
-       },
-       "value": "builder"
       }
      ],
      "modifier": []

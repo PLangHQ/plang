@@ -10,22 +10,27 @@
    "waitForExecution": true,
    "action": [
     {
-     "module": "system",
-     "name": "EmitBuildEvent",
+     "module": "goal",
+     "name": "call",
      "parameter": [
       {
-       "name": "kind",
+       "name": "GoalName",
        "type": {
-        "name": "item"
+        "name": "goal.call"
        },
-       "value": "planner-validation-failed"
-      },
-      {
-       "name": "errorMessage",
-       "type": {
-        "name": "item"
-       },
-       "value": "%!error.Message%"
+       "value": {
+        "name": "/system/builder/EmitBuildEvent",
+        "parameter": [
+         {
+          "name": "kind",
+          "value": "planner-validation-failed"
+         },
+         {
+          "name": "errorMessage",
+          "value": "%!error.Message%"
+         }
+        ]
+       }
       }
      ],
      "modifier": []
@@ -60,6 +65,34 @@
          "Content": "Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\"module.action\"` strings from the catalog (e.g. `\"variable.set\"`, `\"file.read\"`). `index` is 0-based."
         }
        ]
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%plan%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": []
+      },
+      {
+       "name": "AsDefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
       }
      ],
      "modifier": []
@@ -98,7 +131,36 @@
        "type": {
         "name": "bool"
        },
-       "value": "%!build.cache%"
+       "value": true
+      },
+      {
+       "name": "ContinuePreviousConversation",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      },
+      {
+       "name": "OnValidateResponse",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "/system/builder/EmitBuildEvent",
+        "parameter": [
+         {
+          "name": "kind",
+          "value": "planner-validation-recovered"
+         }
+        ]
+       }
+      },
+      {
+       "name": "Tool",
+       "type": {
+        "name": "list"
+       },
+       "value": []
       },
       {
        "name": "previousConversation",
@@ -108,36 +170,14 @@
        "value": "%plan%"
       },
       {
-       "name": "writeTo",
+       "name": "write to",
        "type": {
         "name": "item"
        },
        "value": "%plan%"
       }
      ],
-     "modifier": [
-      {
-       "module": "cache",
-       "name": "wrap",
-       "parameter": [
-        {
-         "name": "DurationMs",
-         "type": {
-          "name": "number"
-         },
-         "value": 600000
-        },
-        {
-         "name": "Sliding",
-         "type": {
-          "name": "bool"
-         },
-         "value": true
-        }
-       ],
-       "modifier": []
-      }
-     ]
+     "modifier": []
     }
    ]
   }

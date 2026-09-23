@@ -7,28 +7,35 @@
    "1": [
     "variable.set"
    ],
-   "2": [],
+   "2": [
+    "variable.set"
+   ],
    "3": [
+    "goal.call",
     "loop.foreach"
    ],
    "4": [
+    "goal.call",
     "loop.foreach"
    ],
    "5": [
-    "ui.render"
+    "ui.render",
+    "variable.set"
    ],
    "6": [
     "llm.decider",
-    "ui.render"
+    "variable.set"
    ],
    "7": [
-    "ui.render"
+    "ui.render",
+    "variable.set"
    ],
    "8": [
-    "event.on"
+    "llm.decider",
+    "variable.set"
    ],
    "9": [
-    "event.on"
+    "goal.call"
    ]
   },
   "answer": {
@@ -105,26 +112,6 @@
          "name": "ItemName",
          "value": "%step%"
         }
-       ],
-       "recovery": null
-      }
-     ]
-    },
-    {
-     "index": 3,
-     "actions": [
-      {
-       "module": "loop",
-       "action": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "ItemName",
-         "value": "%step%"
-        }
        ]
       },
       {
@@ -134,12 +121,14 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "AddStepToState"
+          "name": "AddStepToState",
+          "parameter": [
+           {
+            "name": "item",
+            "value": "%step%"
+           }
+          ]
          }
-        },
-        {
-         "name": "item",
-         "value": "%step%"
         }
        ]
       }
@@ -169,12 +158,14 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "AddModuleToState"
+          "name": "AddModuleToState",
+          "parameter": [
+           {
+            "name": "item",
+            "value": "%module%"
+           }
+          ]
          }
-        },
-        {
-         "name": "item",
-         "value": "%module%"
         }
        ]
       }
@@ -190,10 +181,6 @@
         {
          "name": "Template",
          "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
-        },
-        {
-         "name": "Parameter",
-         "value": []
         },
         {
          "name": "IsFile",
@@ -262,10 +249,6 @@
          "value": "/system/builder/llm/templates/deciderActionQuestions.template"
         },
         {
-         "name": "Parameter",
-         "value": []
-        },
-        {
          "name": "IsFile",
          "value": true
         }
@@ -305,22 +288,6 @@
        ]
       },
       {
-       "module": "event",
-       "action": "on",
-       "parameter": [
-        {
-         "name": "Trigger",
-         "value": "goal-decided"
-        },
-        {
-         "name": "GoalToCall",
-         "value": {
-          "name": "AddActionToState"
-         }
-        }
-       ]
-      },
-      {
        "module": "variable",
        "action": "set",
        "parameter": [
@@ -340,18 +307,23 @@
      "index": 9,
      "actions": [
       {
-       "module": "event",
-       "action": "on",
+       "module": "goal",
+       "action": "call",
        "parameter": [
         {
-         "name": "Trigger",
-         "value": "goal-decided"
-        },
-        {
-         "name": "GoalToCall",
+         "name": "GoalName",
          "value": {
           "name": "/system/builder/EmitBuildEvent",
-          "parameter": []
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "goal-decided"
+           },
+           {
+            "name": "goal",
+            "value": "%goal%"
+           }
+          ]
          }
         }
        ]
@@ -411,11 +383,11 @@
        "parameter": [
         {
          "name": "Name",
-         "value": "%state.modules%[%module.Name%]"
+         "value": "%state.modules%"
         },
         {
          "name": "Value",
-         "value": "%module.Description%"
+         "value": "%module.Name%=%module.Description%"
         }
        ]
       }

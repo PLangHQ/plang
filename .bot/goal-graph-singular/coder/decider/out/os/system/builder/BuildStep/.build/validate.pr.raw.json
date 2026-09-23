@@ -29,7 +29,7 @@
         },
         {
          "name": "Operator",
-         "value": "not_empty"
+         "value": "is not empty"
         }
        ]
       },
@@ -45,7 +45,8 @@
          "name": "Key",
          "value": "GoalBug"
         }
-       ]
+       ],
+       "modifier": []
       }
      ]
     },
@@ -62,7 +63,7 @@
         },
         {
          "name": "Operator",
-         "value": "empty"
+         "value": "is empty"
         }
        ]
       },
@@ -78,7 +79,8 @@
          "name": "Key",
          "value": "GoalBug"
         }
-       ]
+       ],
+       "modifier": []
       }
      ]
     },
@@ -106,12 +108,14 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "ValidateAction"
+          "name": "ValidateAction",
+          "parameter": [
+           {
+            "name": "__vAct__",
+            "value": "%item%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actor",
-         "value": "%__vAct__%"
         }
        ]
       }
@@ -123,6 +127,7 @@
  "ValidateAction": {
   "menu": {
    "0": [
+    "condition.if",
     "error.throw"
    ]
   },
@@ -131,6 +136,43 @@
     {
      "index": 0,
      "actions": [
+      {
+       "module": "condition",
+       "action": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "value": "%__vAct__.errors%"
+        },
+        {
+         "name": "Operator",
+         "value": "not empty"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "action": "handle",
+         "parameter": [],
+         "recovery": [
+          {
+           "module": "error",
+           "action": "throw",
+           "parameter": [
+            {
+             "name": "Message",
+             "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
+            },
+            {
+             "name": "Key",
+             "value": "GoalBug"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
       {
        "module": "error",
        "action": "throw",
@@ -142,10 +184,6 @@
         {
          "name": "Key",
          "value": "GoalBug"
-        },
-        {
-         "name": "Data",
-         "value": "%__vAct__.errors%"
         }
        ]
       }

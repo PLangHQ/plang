@@ -149,11 +149,13 @@ def goals(limit=None, seed=0, chosen=True):
     return out[:limit] if limit else out
 
 # ---------------------------------------------------------------- api
-DUMP = None   # set to a (folder, label) to write the raw request/response of every call
+import threading
+_local = threading.local()   # _local.dump = (folder, label) writes the raw request/response of every call — per thread
 
 def ask(state, questions, retries=4):
     payload = {'state': state, 'model': MODEL, 'questions': questions}
     body = json.dumps(payload).encode()
+    DUMP = getattr(_local, 'dump', None)
     if DUMP:
         folder, label = DUMP
         json.dump(payload, open(os.path.join(folder, f'{label}.request.json'), 'w'), indent=2, ensure_ascii=False)

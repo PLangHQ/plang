@@ -127,15 +127,14 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "AddStepToState"
+        "name": "AddStepToState",
+        "parameter": [
+         {
+          "name": "item",
+          "value": "%step%"
+         }
+        ]
        }
-      },
-      {
-       "name": "item",
-       "type": {
-        "name": "item"
-       },
-       "value": "%step%"
       }
      ],
      "modifier": []
@@ -179,15 +178,14 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "AddModuleToState"
+        "name": "AddModuleToState",
+        "parameter": [
+         {
+          "name": "item",
+          "value": "%module%"
+         }
+        ]
        }
-      },
-      {
-       "name": "item",
-       "type": {
-        "name": "item"
-       },
-       "value": "%module%"
       }
      ],
      "modifier": []
@@ -210,13 +208,6 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
-      },
-      {
-       "name": "Parameter",
-       "type": {
-        "name": "list"
-       },
-       "value": []
       },
       {
        "name": "IsFile",
@@ -319,13 +310,6 @@
        "value": "/system/builder/llm/templates/deciderActionQuestions.template"
       },
       {
-       "name": "Parameter",
-       "type": {
-        "name": "list"
-       },
-       "value": []
-      },
-      {
        "name": "IsFile",
        "type": {
         "name": "bool"
@@ -386,29 +370,6 @@
      "modifier": []
     },
     {
-     "module": "event",
-     "name": "on",
-     "parameter": [
-      {
-       "name": "Trigger",
-       "type": {
-        "name": "choice"
-       },
-       "value": "goal-decided"
-      },
-      {
-       "name": "GoalToCall",
-       "type": {
-        "name": "goal.call"
-       },
-       "value": {
-        "name": "AddActionToState"
-       }
-      }
-     ],
-     "modifier": []
-    },
-    {
      "module": "variable",
      "name": "set",
      "parameter": [
@@ -438,24 +399,26 @@
    "waitForExecution": true,
    "action": [
     {
-     "module": "event",
-     "name": "on",
+     "module": "goal",
+     "name": "call",
      "parameter": [
       {
-       "name": "Trigger",
-       "type": {
-        "name": "choice"
-       },
-       "value": "goal-decided"
-      },
-      {
-       "name": "GoalToCall",
+       "name": "GoalName",
        "type": {
         "name": "goal.call"
        },
        "value": {
         "name": "/system/builder/EmitBuildEvent",
-        "parameter": []
+        "parameter": [
+         {
+          "name": "kind",
+          "value": "goal-decided"
+         },
+         {
+          "name": "goal",
+          "value": "%goal%"
+         }
+        ]
        }
       }
      ],
@@ -524,14 +487,14 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.modules%[%module.Name%]"
+         "value": "%state.modules%"
         },
         {
          "name": "Value",
          "type": {
           "name": "item"
          },
-         "value": "%module.Description%"
+         "value": "%module.Name%=%module.Description%"
         }
        ],
        "modifier": []

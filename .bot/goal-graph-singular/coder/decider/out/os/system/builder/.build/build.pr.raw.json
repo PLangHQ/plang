@@ -123,7 +123,13 @@
         {
          "name": "Goal",
          "value": {
-          "name": "BuilderChannel"
+          "name": "<goal>",
+          "parameter": [
+           {
+            "name": "<argument>",
+            "value": "<value>"
+           }
+          ]
          }
         }
        ]
@@ -140,12 +146,18 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "EmitBuildEvent"
+          "name": "EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "build-path"
+           },
+           {
+            "name": "path",
+            "value": "%path%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actor",
-         "value": "builder"
         }
        ]
       }
@@ -171,10 +183,6 @@
         {
          "name": "Name",
          "value": "%app%"
-        },
-        {
-         "name": "Value",
-         "value": "%!data%"
         }
        ]
       }
@@ -200,10 +208,6 @@
         {
          "name": "Name",
          "value": "%goals%"
-        },
-        {
-         "name": "Value",
-         "value": "%!data%"
         }
        ]
       }
@@ -219,12 +223,18 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "EmitBuildEvent"
+          "name": "EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "goals-found"
+           },
+           {
+            "name": "goals",
+            "value": "%goals%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actor",
-         "value": "builder"
         }
        ]
       }
@@ -254,12 +264,14 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "BuildGoal"
+          "name": "BuildGoal",
+          "parameter": [
+           {
+            "name": "goal",
+            "value": "%item%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actor",
-         "value": "builder"
         }
        ]
       }

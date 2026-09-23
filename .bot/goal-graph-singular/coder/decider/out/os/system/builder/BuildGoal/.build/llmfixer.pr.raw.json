@@ -1,11 +1,16 @@
 {
  "LlmFixer": {
   "menu": {
-   "0": [],
-   "1": [],
+   "0": [
+    "goal.call"
+   ],
+   "1": [
+    "variable.set"
+   ],
    "2": [
     "cache.wrap",
-    "llm.query"
+    "llm.query",
+    "variable.set"
    ]
   },
   "answer": {
@@ -14,16 +19,24 @@
      "index": 0,
      "actions": [
       {
-       "module": "system",
-       "action": "EmitBuildEvent",
+       "module": "goal",
+       "action": "call",
        "parameter": [
         {
-         "name": "kind",
-         "value": "planner-validation-failed"
-        },
-        {
-         "name": "errorMessage",
-         "value": "%!error.Message%"
+         "name": "GoalName",
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "planner-validation-failed"
+           },
+           {
+            "name": "errorMessage",
+            "value": "%!error.Message%"
+           }
+          ]
+         }
         }
        ]
       }
@@ -50,6 +63,24 @@
          ]
         }
        ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%plan%"
+        },
+        {
+         "name": "Value",
+         "value": []
+        },
+        {
+         "name": "AsDefault",
+         "value": false
+        }
+       ]
       }
      ]
     },
@@ -73,31 +104,35 @@
         },
         {
          "name": "Cache",
-         "value": "%!build.cache%"
+         "value": true
+        },
+        {
+         "name": "ContinuePreviousConversation",
+         "value": true
+        },
+        {
+         "name": "OnValidateResponse",
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "planner-validation-recovered"
+           }
+          ]
+         }
+        },
+        {
+         "name": "Tool",
+         "value": []
         },
         {
          "name": "previousConversation",
          "value": "%plan%"
         },
         {
-         "name": "writeTo",
+         "name": "write to",
          "value": "%plan%"
-        }
-       ],
-       "modifier": [
-        {
-         "module": "cache",
-         "action": "wrap",
-         "parameter": [
-          {
-           "name": "DurationMs",
-           "value": 600000
-          },
-          {
-           "name": "Sliding",
-           "value": true
-          }
-         ]
         }
        ]
       }

@@ -17,12 +17,14 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "BuildGoal/Start"
+          "name": "BuildGoal/Start",
+          "parameter": [
+           {
+            "name": "goal",
+            "value": "%goal%"
+           }
+          ]
          }
-        },
-        {
-         "name": "goal",
-         "value": "%goal%"
         }
        ]
       }

@@ -10,6 +10,41 @@
    "waitForExecution": true,
    "action": [
     {
+     "module": "condition",
+     "name": "if",
+     "parameter": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%plan.steps.Count%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice"
+       },
+       "value": "!="
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goal.step.Count%"
+      },
+      {
+       "name": "Negate",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    },
+    {
      "module": "error",
      "name": "throw",
      "parameter": [

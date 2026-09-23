@@ -61,7 +61,37 @@
        "type": {
         "name": "list"
        },
-       "value": "%modules%"
+       "value": [
+        "%modules%"
+       ]
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%actionSummary%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -90,7 +120,38 @@
        "type": {
         "name": "list"
        },
-       "value": "%modules%"
+       "value": [
+        "%actionSummary%",
+        "%modules%"
+       ]
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%goalForLlm%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -119,7 +180,38 @@
        "type": {
         "name": "list"
        },
-       "value": "%modules%"
+       "value": [
+        "%actionSummary%",
+        "%goalForLlm%"
+       ]
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%planPrompt%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -148,16 +240,14 @@
        "type": {
         "name": "item"
        },
-       "value": [
-        {
-         "Role": "system",
-         "Content": "%planPrompt%"
-        },
-        {
-         "Role": "user",
-         "Content": "%goalForLlm%"
-        }
-       ]
+       "value": "[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}]"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "list"
       }
      ],
      "modifier": []
@@ -181,7 +271,13 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "QueryAndValidatePlan"
+        "name": "QueryAndValidatePlan",
+        "parameter": [
+         {
+          "name": "messages",
+          "value": "%messages%"
+         }
+        ]
        }
       }
      ],
@@ -210,7 +306,13 @@
             "name": "goal.call"
            },
            "value": {
-            "name": "LlmFixer"
+            "name": "LlmFixer",
+            "parameter": [
+             {
+              "name": "messages",
+              "value": "%messages%"
+             }
+            ]
            }
           }
          ],
@@ -317,22 +419,7 @@
        "type": {
         "name": "item"
        },
-       "value": {
-        "model": "%plan.Model%",
-        "promptTokens": "%plan.PromptTokens%",
-        "cachedTokens": "%plan.CachedTokens%",
-        "completionTokens": "%plan.CompletionTokens%",
-        "totalTokens": "%plan.TotalTokens%",
-        "cost": "%plan.Cost%",
-        "cached": "%plan.Cached%"
-       }
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "dict"
+       "value": "{model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%}"
       }
      ],
      "modifier": []
@@ -367,7 +454,7 @@
          "type": {
           "name": "item"
          },
-         "value": "{\"description\": \"string\", \"steps\": \"list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>\"}"
+         "value": "{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}"
         },
         {
          "name": "Cache",
@@ -377,25 +464,32 @@
          "value": true
         },
         {
-         "name": "format",
+         "name": "Model",
          "type": {
-          "name": "item"
+          "name": "text"
          },
-         "value": "json"
+         "value": "default"
+        },
+        {
+         "name": "Temperature",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
         },
         {
          "name": "MaxValidationRetries",
          "type": {
           "name": "number"
          },
-         "value": 3
+         "value": 2
         },
         {
-         "name": "ContinuePreviousConversation",
+         "name": "MaxTokens",
          "type": {
-          "name": "bool"
+          "name": "number"
          },
-         "value": false
+         "value": 2000
         }
        ],
        "modifier": [
@@ -409,6 +503,20 @@
             "name": "number"
            },
            "value": 600000
+          },
+          {
+           "name": "Sliding",
+           "type": {
+            "name": "bool"
+           },
+           "value": true
+          },
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "%!build.cache%"
           }
          ],
          "modifier": []
@@ -454,7 +562,13 @@
           "name": "goal.call"
          },
          "value": {
-          "name": "Validate"
+          "name": "Validate",
+          "parameter": [
+           {
+            "name": "plan",
+            "value": "%plan%"
+           }
+          ]
          }
         }
        ],

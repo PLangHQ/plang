@@ -2,6 +2,7 @@
  "Validate": {
   "menu": {
    "0": [
+    "condition.if",
     "error.throw"
    ]
   },
@@ -10,6 +11,28 @@
     {
      "index": 0,
      "actions": [
+      {
+       "module": "condition",
+       "action": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "value": "%plan.steps.Count%"
+        },
+        {
+         "name": "Operator",
+         "value": "!="
+        },
+        {
+         "name": "Right",
+         "value": "%goal.step.Count%"
+        },
+        {
+         "name": "Negate",
+         "value": false
+        }
+       ]
+      },
       {
        "module": "error",
        "action": "throw",

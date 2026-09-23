@@ -60,15 +60,34 @@ the step's entry is:
            "parameter": [{"name": "GoalName", "value": {"name": "HandleFailure"}}]}]}]}
   ]}
 
-A goal call's value is the goal's name and, when the step passes any, its arguments:
-`{"name": "SendMail", "parameter": [{"name": "to", "value": "%email%"}]}`.
+A goal call names the goal and carries the arguments the step passes, each as its own row.
+Given:
+
+  step 2: call SendMail to=%email%, subject="Hi"
+     menu:
+       goal.call
+          GoalName (goal.call, required)
+          Actor (item, optional)
+
+the step's entry is:
+
+  {"index": 2, "actions": [
+    {"module": "goal", "action": "call",
+     "parameter": [{"name": "GoalName", "value": {"name": "SendMail", "parameter": [
+        {"name": "to", "value": "%email%"}, {"name": "subject", "value": "Hi"}]}}]}
+  ]}
+
+Every `name=value` after the goal name is an argument; dropping one breaks the call. The arguments
+go INSIDE GoalName's value — never beside it as properties of goal.call. `Actor` is left out
+because the step names no actor.
 
 Filling a property:
+- An action has only the properties listed under it on the menu. Never add one that is not listed.
 - A value the step writes goes in as written — a quoted text as that text, a %variable% with its
   % signs, a number as a number.
 - A required property the step does not write is yours to work out from what the step means.
-- Leave an optional property out unless the step asks for it. Never put in a placeholder and never
-  repeat a default.
+- Leave an optional property out unless the step's text names it. A value you had to invent means
+  the property should be left out. Never put in a placeholder and never repeat a default.
 - A `variable` property is a variable name with its % signs.
 - Give a `type` only when the step forces one (`as text`, `(json)`); otherwise the value speaks for
   itself. Type names are PLang's: text, number, bool, list, dict, path, date, duration.

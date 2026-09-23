@@ -2,9 +2,11 @@
  "EmitBuildEvent": {
   "menu": {
    "0": [
-    "ui.render"
+    "ui.render",
+    "variable.set"
    ],
    "1": [
+    "channel.set",
     "output.write"
    ]
   },
@@ -30,6 +32,20 @@
          "value": true
         }
        ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%msg%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
+        }
+       ]
       }
      ]
     },
@@ -37,16 +53,28 @@
      "index": 1,
      "actions": [
       {
+       "module": "channel",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "builder"
+        },
+        {
+         "name": "Goal",
+         "value": {
+          "name": "EmitBuildEvent"
+         }
+        }
+       ]
+      },
+      {
        "module": "output",
        "action": "write",
        "parameter": [
         {
          "name": "Data",
          "value": "%msg%"
-        },
-        {
-         "name": "channel",
-         "value": "builder"
         }
        ]
       }

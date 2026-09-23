@@ -85,7 +85,7 @@ PROMPTS = '/shared/coder/llm/plang'   # every prompt sent, per goal, readable
 def dump_to(folder, label):
     """Point the harness's raw dump at this goal's folder under this stage's label."""
     os.makedirs(folder, exist_ok=True)
-    h.DUMP = (folder, label)
+    h._local.dump = (folder, label)
 
 def readable(folder, label):
     """Split a raw decider request into the state as plain text and the questions as JSON, and the
@@ -113,7 +113,7 @@ def menu_for(goal, cat, folder=None):
     # reaches stage 2 as a module; it puts variable.set on the menu directly.
     chosen = {i: [m for m, p in probs[i].items() if m in cat and p is not None and p >= 0.5] for i in probs}
     acts, *_ = h.stage2(goal, cat, chosen)
-    if folder: readable(folder, '2.decider'); h.DUMP = None
+    if folder: readable(folder, '2.decider'); h._local.dump = None
     menu = {}
     for s in goal['steps']:
         i = s['index']
@@ -122,6 +122,9 @@ def menu_for(goal, cat, folder=None):
             entries.append('variable.set')
         menu[i] = entries
     return menu, probs
+
+# A type whose value is not a scalar shows its shape on the menu line, where the model reads it.
+SHAPES = {'goal.call': '{"name": <goal>, "parameter": [{"name": <argument>, "value": <value>}, ...]}'}
 
 def user_message(goal, menu):
     out = [goal['name'], '']
@@ -133,7 +136,8 @@ def user_message(goal, menu):
             props, is_mod = declared(module, action)
             out.append(f'     {choice}' + ('  [modifier]' if is_mod else ''))
             for name, p in props.items():
-                out.append(f'        {name} ({p["type"]}, {"optional" if p["optional"] else "required"})')
+                shape = f' = {SHAPES[p["type"]]}' if p['type'] in SHAPES else ''
+                out.append(f'        {name} ({p["type"]}, {"optional" if p["optional"] else "required"}){shape}')
         out.append('')
     return '\n'.join(out)
 
@@ -201,43 +205,50 @@ def pr_goal(goal, answer, rel):
                      for s in goal['steps']]}
 
 # ---------------------------------------------------------------- run
-def build(path):
-    cat = h.catalogue()
-    rel = os.path.relpath(path, ROOT)
-    goals = parse(path)
-    built, raw = [], {}
-    for g in goals:
-        if not g['steps']:
-            # A goal of only comments has nothing to decide; it builds to an empty goal.
-            built.append(({'name': g['name'], 'path': '/' + rel, 'step': []}, {}))
-            print(f'  {g["name"]:<24}   0 steps  (nothing to build)', flush=True)
-            continue
-        folder = os.path.join(PROMPTS, rel[:-5], g['name'])
-        t0 = time.time()
-        menu, probs = menu_for(g, cat, folder)
-        t1 = time.time()
-        answer = properties(g, menu, folder)
-        t2 = time.time()
-        raw[g['name']] = {'menu': menu, 'answer': answer}
-        built.append((pr_goal(g, answer, rel), menu))
-        print(f'  {g["name"]:<24} {len(g["steps"]):>3} steps  {t2 - t0:5.1f}s'
-              f'   decider {t1 - t0:4.1f}s  llm {t2 - t1:4.1f}s', flush=True)
-    root, children = built[0][0], [b[0] for b in built[1:]]
-    root['child'] = children
-    dest = os.path.join(OUT, os.path.dirname(rel), '.build', os.path.basename(path)[:-5].lower() + '.pr')
+def build_goal(g, rel, cat):
+    """One goal: decider menu, then stage 3. Goals are independent, so these run in parallel."""
+    if not g['steps']:
+        # A goal of only comments has nothing to decide; it builds to an empty goal.
+        return {'name': g['name'], 'path': '/' + rel, 'step': []}, None, f'{g["name"]:<24}   0 steps  (nothing to build)'
+    folder = os.path.join(PROMPTS, rel[:-5], g['name'])
+    t0 = time.time()
+    menu, probs = menu_for(g, cat, folder)
+    t1 = time.time()
+    answer = properties(g, menu, folder)
+    t2 = time.time()
+    return (pr_goal(g, answer, rel), {'menu': menu, 'answer': answer},
+            f'{g["name"]:<24} {len(g["steps"]):>3} steps  {t2 - t0:5.1f}s   decider {t1 - t0:4.1f}s  llm {t2 - t1:4.1f}s')
+
+def write(rel, results):
+    """A file's goals, in file order, as one .pr: the first goal is the root, the rest its children."""
+    root = results[0][0]
+    root['child'] = [r[0] for r in results[1:]]
+    dest = os.path.join(OUT, os.path.dirname(rel), '.build', os.path.basename(rel)[:-5].lower() + '.pr')
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     json.dump(root, open(dest, 'w'), indent=1)
     # The raw menu + answer per goal, so a wrong .pr can be traced to the stage that made it wrong.
-    json.dump(raw, open(dest + '.raw.json', 'w'), indent=1)
+    json.dump({r[0]['name']: r[1] for r in results if r[1]}, open(dest + '.raw.json', 'w'), indent=1)
     return dest
 
 if __name__ == '__main__':
+    import concurrent.futures as cf
     target = os.path.join(ROOT, sys.argv[1] if len(sys.argv) > 1 else 'os/system/builder')
     files = [target] if target.endswith('.goal') else sorted(
         f for f in glob.glob(f'{target}/**/*.goal', recursive=True) if '/.build/' not in f)
-    for f in files:
-        print(os.path.relpath(f, ROOT), flush=True)
-        try: print('  ->', os.path.relpath(build(f), ROOT))
-        except Exception as e: print('  FAILED:', type(e).__name__, e)
-    print(f'\nshape deviations: {len(DEVIATIONS)}')
+    cat = h.catalogue()
+    t0 = time.time()
+    jobs = {}   # rel -> [future per goal, in file order]
+    with cf.ThreadPoolExecutor(int(os.environ.get('WORKERS', 16))) as ex:
+        for f in files:
+            rel = os.path.relpath(f, ROOT)
+            jobs[rel] = [ex.submit(build_goal, g, rel, cat) for g in parse(f)]
+        for rel, futures in jobs.items():
+            print(rel, flush=True)
+            try:
+                results = [fu.result() for fu in futures]
+                for r in results: print('  ' + r[2])
+                print('  ->', os.path.relpath(write(rel, results), ROOT))
+            except Exception as e: print('  FAILED:', type(e).__name__, e)
+    print(f'\nwall clock: {time.time() - t0:.1f}s')
+    print(f'shape deviations: {len(DEVIATIONS)}')
     for d in DEVIATIONS: print('  ', d)

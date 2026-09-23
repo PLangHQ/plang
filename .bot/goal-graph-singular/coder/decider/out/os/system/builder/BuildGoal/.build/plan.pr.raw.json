@@ -5,17 +5,19 @@
     "variable.set"
    ],
    "1": [
-    "ui.render"
+    "ui.render",
+    "variable.set"
    ],
    "2": [
-    "ui.render"
+    "ui.render",
+    "variable.set"
    ],
    "3": [
-    "ui.render"
+    "ui.render",
+    "variable.set"
    ],
    "4": [
-    "error.handle",
-    "goal.call"
+    "variable.set"
    ],
    "5": [
     "error.handle",
@@ -69,7 +71,27 @@
         },
         {
          "name": "Parameter",
-         "value": "%modules%"
+         "value": [
+          "%modules%"
+         ]
+        },
+        {
+         "name": "IsFile",
+         "value": true
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%actionSummary%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -88,7 +110,28 @@
         },
         {
          "name": "Parameter",
-         "value": "%modules%"
+         "value": [
+          "%actionSummary%",
+          "%modules%"
+         ]
+        },
+        {
+         "name": "IsFile",
+         "value": true
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%goalForLlm%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -107,7 +150,28 @@
         },
         {
          "name": "Parameter",
-         "value": "%modules%"
+         "value": [
+          "%actionSummary%",
+          "%goalForLlm%"
+         ]
+        },
+        {
+         "name": "IsFile",
+         "value": true
+        }
+       ]
+      },
+      {
+       "module": "variable",
+       "action": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "value": "%planPrompt%"
+        },
+        {
+         "name": "Value",
+         "value": "%!data%"
         }
        ]
       }
@@ -126,16 +190,11 @@
         },
         {
          "name": "Value",
-         "value": [
-          {
-           "Role": "system",
-           "Content": "%planPrompt%"
-          },
-          {
-           "Role": "user",
-           "Content": "%goalForLlm%"
-          }
-         ]
+         "value": "[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}]"
+        },
+        {
+         "name": "Type",
+         "value": "list"
         }
        ]
       }
@@ -151,7 +210,13 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "QueryAndValidatePlan"
+          "name": "QueryAndValidatePlan",
+          "parameter": [
+           {
+            "name": "messages",
+            "value": "%messages%"
+           }
+          ]
          }
         }
        ],
@@ -173,7 +238,13 @@
             {
              "name": "GoalName",
              "value": {
-              "name": "LlmFixer"
+              "name": "LlmFixer",
+              "parameter": [
+               {
+                "name": "messages",
+                "value": "%messages%"
+               }
+              ]
              }
             }
            ]
@@ -243,19 +314,7 @@
         },
         {
          "name": "Value",
-         "value": {
-          "model": "%plan.Model%",
-          "promptTokens": "%plan.PromptTokens%",
-          "cachedTokens": "%plan.CachedTokens%",
-          "completionTokens": "%plan.CompletionTokens%",
-          "totalTokens": "%plan.TotalTokens%",
-          "cost": "%plan.Cost%",
-          "cached": "%plan.Cached%"
-         }
-        },
-        {
-         "name": "Type",
-         "value": "dict"
+         "value": "{model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%}"
         }
        ]
       }
@@ -268,7 +327,8 @@
   "menu": {
    "0": [
     "cache.wrap",
-    "llm.query"
+    "llm.query",
+    "variable.set"
    ],
    "1": [
     "goal.call"
@@ -289,23 +349,27 @@
         },
         {
          "name": "Schema",
-         "value": "{\"description\": \"string\", \"steps\": \"list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>\"}"
+         "value": "{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}"
         },
         {
          "name": "Cache",
          "value": true
         },
         {
-         "name": "format",
-         "value": "json"
+         "name": "Model",
+         "value": "default"
+        },
+        {
+         "name": "Temperature",
+         "value": 0
         },
         {
          "name": "MaxValidationRetries",
-         "value": 3
+         "value": 2
         },
         {
-         "name": "ContinuePreviousConversation",
-         "value": false
+         "name": "MaxTokens",
+         "value": 2000
         }
        ],
        "modifier": [
@@ -316,6 +380,14 @@
           {
            "name": "DurationMs",
            "value": 600000
+          },
+          {
+           "name": "Sliding",
+           "value": true
+          },
+          {
+           "name": "Key",
+           "value": "%!build.cache%"
           }
          ]
         }
@@ -347,7 +419,13 @@
         {
          "name": "GoalName",
          "value": {
-          "name": "Validate"
+          "name": "Validate",
+          "parameter": [
+           {
+            "name": "plan",
+            "value": "%plan%"
+           }
+          ]
          }
         }
        ]

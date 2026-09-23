@@ -88,11 +88,11 @@
          "value": "%planStep.actions%"
         },
         {
-         "name": "Step",
+         "name": "WriteTo",
          "type": {
           "name": "item"
          },
-         "value": "%step%"
+         "value": "%planStep.actions%"
         }
        ],
        "modifier": []
@@ -146,11 +146,11 @@
          "value": "%planStep.actions%"
         },
         {
-         "name": "Actions",
+         "name": "WriteTo",
          "type": {
-          "name": "list"
+          "name": "item"
          },
-         "value": "%planStep.actions%"
+         "value": "%typeInfo%"
         }
        ],
        "modifier": []
@@ -179,14 +179,28 @@
          "type": {
           "name": "list"
          },
-         "value": "[%planStep%,%typeInfo%,%step%]"
+         "value": "%typeInfo%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%stepForLlm%"
         },
         {
-         "name": "IsFile",
+         "name": "Value",
          "type": {
-          "name": "bool"
+          "name": "item"
          },
-         "value": true
+         "value": "%!data%"
         }
        ],
        "modifier": []
@@ -215,14 +229,28 @@
          "type": {
           "name": "list"
          },
-         "value": "[%planStep.actions%,%typeInfo%]"
+         "value": "%planStep.actions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionDetails%"
         },
         {
-         "name": "IsFile",
+         "name": "Value",
          "type": {
-          "name": "bool"
+          "name": "item"
          },
-         "value": true
+         "value": "%!data%"
         }
        ],
        "modifier": []
@@ -251,14 +279,28 @@
          "type": {
           "name": "list"
          },
-         "value": "[%stepForLlm%,%actionDetails%,%typeInfo%,%modules%]"
+         "value": "%stepForLlm%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStepPrompt%"
         },
         {
-         "name": "IsFile",
+         "name": "Value",
          "type": {
-          "name": "bool"
+          "name": "item"
          },
-         "value": true
+         "value": "%!data%"
         }
        ],
        "modifier": []
@@ -287,14 +329,28 @@
          "type": {
           "name": "list"
          },
-         "value": "[%stepForLlm%,%actionDetails%,%planStep%,%modules%]"
+         "value": "%actionDetails%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStepUserMsg%"
         },
         {
-         "name": "IsFile",
+         "name": "Value",
          "type": {
-          "name": "bool"
+          "name": "item"
          },
-         "value": true
+         "value": "%!data%"
         }
        ],
        "modifier": []
@@ -347,7 +403,13 @@
           "name": "goal.call"
          },
          "value": {
-          "name": "QueryAndVerify"
+          "name": "QueryAndVerify",
+          "parameter": [
+           {
+            "name": "Message",
+            "value": "%messages%"
+           }
+          ]
          }
         }
        ],
@@ -383,7 +445,13 @@
               "name": "goal.call"
              },
              "value": {
-              "name": "RefineActions"
+              "name": "RefineActions",
+              "parameter": [
+               {
+                "name": "Message",
+                "value": "%messages%"
+               }
+              ]
              }
             }
            ],
@@ -392,20 +460,6 @@
          ]
         }
        ]
-      },
-      {
-       "module": "llm",
-       "name": "query",
-       "parameter": [
-        {
-         "name": "Message",
-         "type": {
-          "name": "list"
-         },
-         "value": "%messages%"
-        }
-       ],
-       "modifier": []
       }
      ]
     },
@@ -432,7 +486,24 @@
          "type": {
           "name": "item"
          },
-         "value": "{goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, rawResponse: %compileResult!RawResponse%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}}"
+         "value": {
+          "goal": "%goal.Name%",
+          "index": "%step.Index%",
+          "stepText": "%step.Text%",
+          "actions": "%planStep.actions%",
+          "user": "%buildStepUserMsg%",
+          "response": "%compileResult%",
+          "rawResponse": "%compileResult!RawResponse%",
+          "usage": {
+           "model": "%compileResult.Model%",
+           "promptTokens": "%compileResult.PromptTokens%",
+           "cachedTokens": "%compileResult.CachedTokens%",
+           "completionTokens": "%compileResult.CompletionTokens%",
+           "totalTokens": "%compileResult.TotalTokens%",
+           "cost": "%compileResult.Cost%",
+           "cached": "%compileResult.Cached%"
+          }
+         }
         }
        ],
        "modifier": []
@@ -512,7 +583,13 @@
               "name": "goal.call"
              },
              "value": {
-              "name": "FixValidation"
+              "name": "FixValidation",
+              "parameter": [
+               {
+                "name": "Actions",
+                "value": "%goal.step[step.Index].action%"
+               }
+              ]
              }
             }
            ],
@@ -540,7 +617,17 @@
           "name": "goal.call"
          },
          "value": {
-          "name": "EmitSummary"
+          "name": "EmitSummary",
+          "parameter": [
+           {
+            "name": "goal",
+            "value": "%goal%"
+           },
+           {
+            "name": "step",
+            "value": "%step%"
+           }
+          ]
          }
         }
        ],
@@ -577,79 +664,12 @@
           "name": "item"
          },
          "value": {
-          "actions": {
-           "type": "list",
-           "items": {
-            "type": "dict",
-            "fields": {
-             "module": "string",
-             "action": "string",
-             "parameter": {
-              "type": "list",
-              "items": {
-               "type": "dict",
-               "fields": {
-                "name": "string",
-                "type": "object",
-                "value": "object"
-               }
-              }
-             },
-             "child": {
-              "type": "list",
-              "items": {
-               "type": "dict",
-               "fields": {
-                "text": "string",
-                "action": {
-                 "type": "list",
-                 "items": {
-                  "type": "dict",
-                  "fields": {
-                   "module": "string",
-                   "action": "string",
-                   "parameter": {
-                    "type": "list",
-                    "items": {
-                     "type": "dict",
-                     "fields": {
-                      "name": "string",
-                      "type": "object",
-                      "value": "object"
-                     }
-                    }
-                   }
-                  }
-                 }
-                }
-               }
-              }
-             },
-             "errors": {
-              "type": "list",
-              "items": {
-               "type": "dict",
-               "fields": {
-                "key": "string",
-                "message": "string"
-               }
-              }
-             }
-            }
-           }
-          },
+          "actions": [
+           "list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, child?: list<{text: string, action: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>, errors?: list<{key: string, message: string}>}"
+          ],
           "confidence": "string",
-          "explanation": "string",
-          "errors": {
-           "type": "list",
-           "items": {
-            "type": "dict",
-            "fields": {
-             "key": "string",
-             "message": "string"
-            }
-           }
-          }
+          "explanation?": "string",
+          "errors?": "list<{key: string, message: string}>"
          }
         },
         {
@@ -657,7 +677,22 @@
          "type": {
           "name": "bool"
          },
-         "value": true
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "OnValidateResponse",
+         "type": {
+          "name": "goal.call"
+         },
+         "value": {
+          "name": "ValidateResponse",
+          "parameter": [
+           {
+            "name": "input",
+            "value": "%messages%"
+           }
+          ]
+         }
         }
        ],
        "modifier": [
@@ -670,7 +705,7 @@
            "type": {
             "name": "number"
            },
-           "value": 600000
+           "value": 300000
           },
           {
            "name": "Sliding",
@@ -678,13 +713,6 @@
             "name": "bool"
            },
            "value": true
-          },
-          {
-           "name": "Key",
-           "type": {
-            "name": "text"
-           },
-           "value": "%!build.cache%"
           }
          ],
          "modifier": []
@@ -692,7 +720,54 @@
         {
          "module": "error",
          "name": "handle",
-         "parameter": [],
+         "parameter": [
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "QueryAndVerifyStep0"
+          },
+          {
+           "name": "RetryCount",
+           "type": {
+            "name": "number"
+           },
+           "value": 0
+          }
+         ],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "parameter": [
+            {
+             "name": "GoalName",
+             "type": {
+              "name": "goal.call"
+             },
+             "value": {
+              "name": "HandleStepFailure"
+             }
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        },
+        {
+         "module": "error",
+         "name": "handle",
+         "parameter": [
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "QueryAndVerifyStep0"
+          }
+         ],
          "modifier": [],
          "recovery": [
           {
@@ -760,7 +835,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "equals"
+         "value": "=="
         },
         {
          "name": "Right",
@@ -881,7 +956,12 @@
          "type": {
           "name": "item"
          },
-         "value": "{index: int, actions: list<string>, confidence: string, explanation?: string}"
+         "value": {
+          "index": "int",
+          "actions": "list<string>",
+          "confidence": "string",
+          "explanation?": "string"
+         }
         },
         {
          "name": "Cache",
@@ -889,6 +969,20 @@
           "name": "bool"
          },
          "value": true
+        },
+        {
+         "name": "ContinuePreviousConversation",
+         "type": {
+          "name": "bool"
+         },
+         "value": false
+        },
+        {
+         "name": "Temperature",
+         "type": {
+          "name": "number"
+         },
+         "value": 0.2
         }
        ],
        "modifier": [
@@ -902,11 +996,39 @@
             "name": "number"
            },
            "value": 600000
+          },
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "refine-step-missing-actions"
           }
          ],
          "modifier": []
         }
        ]
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%correction%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
       }
      ]
     },
@@ -983,14 +1105,19 @@
          "type": {
           "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "Actor",
-         "type": {
-          "name": "item"
-         },
-         "value": "step-missing-actions"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "step-missing-actions"
+           },
+           {
+            "name": "step",
+            "value": "%step%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -1048,18 +1175,24 @@
           "name": "item"
          },
          "value": {
-          "actions": "list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>, child?: list<{text: string, action: list<{module: string, action: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>, errors?: list<{key: string, message: string}>}>",
+          "actions": {
+           "type": "list",
+           "item": {
+            "type": "dict",
+            "keys": [
+             "module",
+             "action",
+             "parameter",
+             "modifier",
+             "child",
+             "errors"
+            ]
+           }
+          },
           "confidence": "string",
           "explanation": "string",
-          "errors": "list<{key: string, message: string}>"
+          "errors": "list"
          }
-        },
-        {
-         "name": "Cache",
-         "type": {
-          "name": "bool"
-         },
-         "value": true
         },
         {
          "name": "ContinuePreviousConversation",
@@ -1069,11 +1202,25 @@
          "value": true
         },
         {
-         "name": "Model",
+         "name": "Cache",
          "type": {
-          "name": "text"
+          "name": "bool"
          },
-         "value": "gpt-4.1"
+         "value": true
+        },
+        {
+         "name": "writeTo",
+         "type": {
+          "name": "item"
+         },
+         "value": "%compileResult%"
+        },
+        {
+         "name": "MaxValidationRetries",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
         }
        ],
        "modifier": [
@@ -1086,21 +1233,21 @@
            "type": {
             "name": "number"
            },
-           "value": 600000
-          },
-          {
-           "name": "Key",
-           "type": {
-            "name": "text"
-           },
-           "value": "%!build.cache%"
+           "value": 60000
           },
           {
            "name": "Sliding",
            "type": {
             "name": "bool"
            },
-           "value": true
+           "value": false
+          },
+          {
+           "name": "Key",
+           "type": {
+            "name": "text"
+           },
+           "value": "FixValidation:step"
           }
          ],
          "modifier": []
@@ -1145,18 +1292,11 @@
      "waitForExecution": true,
      "action": [
       {
-       "module": "event",
-       "name": "on",
+       "module": "goal",
+       "name": "call",
        "parameter": [
         {
-         "name": "Trigger",
-         "type": {
-          "name": "choice"
-         },
-         "value": "choice"
-        },
-        {
-         "name": "GoalToCall",
+         "name": "GoalName",
          "type": {
           "name": "goal.call"
          },
@@ -1196,46 +1336,31 @@
      "waitForExecution": true,
      "action": [
       {
-       "module": "build",
-       "name": "validateStepActions",
+       "module": "goal",
+       "name": "call",
        "parameter": [
         {
-         "name": "Step",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
          "value": {
-          "name": "%step%"
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "step-build-error"
+           },
+           {
+            "name": "step",
+            "value": "%step%"
+           },
+           {
+            "name": "errorMessage",
+            "value": "%!error.Message%"
+           }
+          ]
          }
-        },
-        {
-         "name": "Actions",
-         "type": {
-          "name": "list"
-         },
-         "value": [
-          {
-           "name": "call",
-           "parameter": [
-            {
-             "name": "path",
-             "value": "/system/builder/EmitBuildEvent"
-            },
-            {
-             "name": "kind",
-             "value": "step-build-error"
-            },
-            {
-             "name": "step",
-             "value": "%step%"
-            },
-            {
-             "name": "errorMessage",
-             "value": "%!error.Message%"
-            }
-           ]
-          }
-         ]
         }
        ],
        "modifier": []
@@ -1258,13 +1383,6 @@
           "name": "item"
          },
          "value": "%!error%"
-        },
-        {
-         "name": "Message",
-         "type": {
-          "name": "text"
-         },
-         "value": "%!error.Message%"
         }
        ],
        "modifier": []
@@ -1300,7 +1418,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "=="
+         "value": "="
         },
         {
          "name": "Right",
@@ -1313,29 +1431,27 @@
        "modifier": []
       },
       {
-       "module": "system",
+       "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "Path",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "kind",
-         "type": {
-          "name": "item"
-         },
-         "value": "step-cached"
-        },
-        {
-         "name": "step",
-         "type": {
-          "name": "item"
-         },
-         "value": "%step%"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "step-cached"
+           },
+           {
+            "name": "step",
+            "value": "%step%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -1377,29 +1493,27 @@
        "modifier": []
       },
       {
-       "module": "system",
+       "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "Path",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "kind",
-         "type": {
-          "name": "item"
-         },
-         "value": "step-fresh"
-        },
-        {
-         "name": "step",
-         "type": {
-          "name": "item"
-         },
-         "value": "%step%"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "step-fresh"
+           },
+           {
+            "name": "step",
+            "value": "%step%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -1428,7 +1542,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "=="
+         "value": "="
         },
         {
          "name": "Right",
@@ -1441,29 +1555,27 @@
        "modifier": []
       },
       {
-       "module": "system",
+       "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "Path",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "kind",
-         "type": {
-          "name": "item"
-         },
-         "value": "confidence-warning-planner"
-        },
-        {
-         "name": "planStep",
-         "type": {
-          "name": "item"
-         },
-         "value": "%planStep%"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "confidence-warning-planner"
+           },
+           {
+            "name": "planStep",
+            "value": "%planStep%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -1492,7 +1604,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "=="
+         "value": "="
         },
         {
          "name": "Right",
@@ -1505,29 +1617,27 @@
        "modifier": []
       },
       {
-       "module": "system",
+       "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "Path",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "kind",
-         "type": {
-          "name": "item"
-         },
-         "value": "confidence-warning-planner"
-        },
-        {
-         "name": "planStep",
-         "type": {
-          "name": "item"
-         },
-         "value": "%planStep%"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "confidence-warning-planner"
+           },
+           {
+            "name": "planStep",
+            "value": "%planStep%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -1556,7 +1666,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "=="
+         "value": "="
         },
         {
          "name": "Right",
@@ -1569,29 +1679,27 @@
        "modifier": []
       },
       {
-       "module": "system",
+       "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "Path",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "kind",
-         "type": {
-          "name": "item"
-         },
-         "value": "confidence-warning-compiler"
-        },
-        {
-         "name": "compileResult",
-         "type": {
-          "name": "item"
-         },
-         "value": "%compileResult%"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "confidence-warning-compiler"
+           },
+           {
+            "name": "compileResult",
+            "value": "%compileResult%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []
@@ -1620,7 +1728,7 @@
          "type": {
           "name": "choice"
          },
-         "value": "=="
+         "value": "="
         },
         {
          "name": "Right",
@@ -1633,29 +1741,27 @@
        "modifier": []
       },
       {
-       "module": "system",
+       "module": "goal",
        "name": "call",
        "parameter": [
         {
-         "name": "Path",
+         "name": "GoalName",
          "type": {
-          "name": "item"
+          "name": "goal.call"
          },
-         "value": "/system/builder/EmitBuildEvent"
-        },
-        {
-         "name": "kind",
-         "type": {
-          "name": "item"
-         },
-         "value": "confidence-warning-compiler"
-        },
-        {
-         "name": "compileResult",
-         "type": {
-          "name": "item"
-         },
-         "value": "%compileResult%"
+         "value": {
+          "name": "/system/builder/EmitBuildEvent",
+          "parameter": [
+           {
+            "name": "kind",
+            "value": "confidence-warning-compiler"
+           },
+           {
+            "name": "compileResult",
+            "value": "%compileResult%"
+           }
+          ]
+         }
         }
        ],
        "modifier": []

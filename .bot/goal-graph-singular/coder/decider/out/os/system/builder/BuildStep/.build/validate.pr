@@ -25,7 +25,7 @@
        "type": {
         "name": "choice"
        },
-       "value": "not_empty"
+       "value": "is not empty"
       }
      ],
      "modifier": []
@@ -75,7 +75,7 @@
        "type": {
         "name": "choice"
        },
-       "value": "empty"
+       "value": "is empty"
       }
      ],
      "modifier": []
@@ -140,15 +140,14 @@
         "name": "goal.call"
        },
        "value": {
-        "name": "ValidateAction"
+        "name": "ValidateAction",
+        "parameter": [
+         {
+          "name": "__vAct__",
+          "value": "%item%"
+         }
+        ]
        }
-      },
-      {
-       "name": "Actor",
-       "type": {
-        "name": "item"
-       },
-       "value": "%__vAct__%"
       }
      ],
      "modifier": []
@@ -168,6 +167,57 @@
      "waitForExecution": true,
      "action": [
       {
+       "module": "condition",
+       "name": "if",
+       "parameter": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%__vAct__.errors%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice"
+         },
+         "value": "not empty"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "parameter": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "error",
+           "name": "throw",
+           "parameter": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
+            },
+            {
+             "name": "Key",
+             "type": {
+              "name": "text"
+             },
+             "value": "GoalBug"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
        "module": "error",
        "name": "throw",
        "parameter": [
@@ -184,13 +234,6 @@
           "name": "text"
          },
          "value": "GoalBug"
-        },
-        {
-         "name": "Data",
-         "type": {
-          "name": "item"
-         },
-         "value": "%__vAct__.errors%"
         }
        ],
        "modifier": []
