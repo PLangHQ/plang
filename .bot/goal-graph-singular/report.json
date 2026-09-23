@@ -639,6 +639,17 @@
           "category": "code",
           "confidence": "high",
           "context": "%!event% decided by Ingi (changed from the dict): firing sites pass the node that fired (goal and step passed nothing); the firing site builds a typed event value holding trigger, one node, result; Step/Goal are navigation; the binding sets it as %!event% before running its held call. IEvent/EventContext/context.Event/generator detection die."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/step/action/this.Build.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/goal/step/action/property/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Graft literal verdict door ruled (b): a generated member on the bound handler opens each literal parameter through its typed view (the run's door), called by action.Build after Bind and before the handler Validate(); skips templates/variables/absent optionals; construction only. (a) carve-outs rejected (fork). Finding: type registry names choice<T> two ways (GetTypeName 'operator' vs entity door {choice, kind}) — logged for Ingi."
         }
       ],
       "after": {
