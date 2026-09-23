@@ -38,6 +38,42 @@ public class GetGoalsTests
     }
 
     [Test]
+    public async Task GetGoals_UnreadableSources_FailTheBuildOnce_NamingEveryFile_EachErrorWhole()
+    {
+        // Two .goal files outside the app root. The actor holds an EXACT read grant on their folder, so
+        // the listing passes; each file read is ungranted and asks — a closed input answers "no" — so
+        // both reads are denied. The build reads every file, then fails once naming each.
+        var outside = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang_test_unreadable_" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(outside);
+        try
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "A.goal"), "A\n- a step");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "B.goal"), "B\n- b step");
+
+            var ctx = _app.User.Context;
+            var folder = global::app.type.item.path.@this.Resolve("/" + outside, ctx);   // OS-absolute: out of root
+            var grant = global::app.type.item.permission.@this.Request(ctx.Actor!.Name, folder.Absolute,
+                global::app.type.item.permission.Verb.Read, global::app.type.item.permission.Match.Exact);
+            await ctx.Actor.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant) { Context = ctx }, false);
+
+            var action = new goals(ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(folder) };
+            var result = await _app.Run(action, ctx);
+
+            await result.IsFailure();
+            await Assert.That(result.Error!.Key).IsEqualTo("FileReadError");
+            await Assert.That(result.Error.Message).Contains("A.goal");
+            await Assert.That(result.Error.Message).Contains("B.goal");
+            await Assert.That(result.Error.list.Count).IsEqualTo(2);
+            // Each cause is the read's own error, whole: the gate refused the read (no consent could be
+            // had — the ask found no answerer, or the answer was no).
+            await Assert.That(result.Error.list.All(e => e.Key is "PermissionDenied" or "ChannelEof")).IsTrue()
+                .Because(string.Join(" || ", result.Error.list.Select(e => $"{e.Key}: {e.Message}")));
+        }
+        finally { System.IO.Directory.Delete(outside, true); }
+    }
+
+    [Test]
     public async Task GetGoals_ParsesGoalFilesFromFolder()
     {
         // Write a .goal file
