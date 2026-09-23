@@ -32,7 +32,7 @@ public class TypeAccessorTests
     {
         await using var app = TestApp.Create("/test");
         // Reverse — Name() gives PLang name for a CLR type.
-        await Assert.That(app.Type.Name(typeof(string))).IsEqualTo("text");
+        await Assert.That(app.Type[typeof(string)].ToString()).IsEqualTo("text");
     }
 
     // A choice is {choice, kind: <its set>}, and its entity carries the set's options.

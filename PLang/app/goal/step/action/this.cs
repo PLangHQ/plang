@@ -275,12 +275,6 @@ public partial class @this
     }
 
     /// <summary>
-    /// Return type properties for the builder summary. Null when Run() returns plain Data.
-    /// Derived from the concrete return type of Run() via reflection in Describe().
-    /// </summary>
-    public List<global::app.data.@this>? ReturnType { get; init; }
-
-    /// <summary>
     /// PLang name of the action's return type T (when Run() returns Task&lt;Data&lt;T&gt;&gt;).
     /// Null when Run() returns bare <c>Task&lt;Data&gt;</c> — i.e. void: the action has no
     /// meaningful value to write to a variable. Compile.llm uses this to choose the Type

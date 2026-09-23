@@ -74,8 +74,7 @@ public class MarkdownTeachingOrphanTests
         await Assert.That(output).Contains("unknownaction.notes.md");
 
         // Catalog still assembles — the registered fixture action is still there.
-        var catalog = await _app.Module.Describe();
-        await Assert.That(catalog.Any(a => a.Module.Name == "fixturemod" && a.Name == "setvalue")).IsTrue();
+        await Assert.That(_app.Module["fixturemod"]["setvalue"]).IsNotNull();
     }
 
     [Test]

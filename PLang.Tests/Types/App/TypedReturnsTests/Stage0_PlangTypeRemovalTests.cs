@@ -71,7 +71,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Mock_PlangTypeName_DerivesFromClassName()
     {
-        var name = _app.Type.Name(typeof(global::app.mock.@this));
+        var name = _app.Type[typeof(global::app.mock.@this)].ToString();
         await Assert.That(name).IsEqualTo("mock");
     }
 
@@ -80,7 +80,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Test_PlangTypeName_IsExplicitAttributeValue()
     {
-        var name = _app.Type.Name(typeof(global::app.test.@this));
+        var name = _app.Type[typeof(global::app.test.@this)].ToString();
         await Assert.That(name).IsEqualTo("test")
             .Because("[PlangType(\"test\")] sets the PLang type name explicitly.");
     }
@@ -90,7 +90,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task PlangTypeDerivation_OBPSingleNameFolders_UseFolderNameNotThisLiteral()
     {
-        var name = _app.Type.Name(typeof(global::app.type.list.view.@this));
+        var name = _app.Type[typeof(global::app.type.list.view.@this)].ToString();
         await Assert.That(name).IsNotEqualTo("this");
         await Assert.That(name).IsEqualTo("view")
             .Because("The @this in folder 'view/' derives cleanly to 'view' — no [PlangType] override needed.");

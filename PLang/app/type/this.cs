@@ -196,14 +196,12 @@ public sealed class @this : item.@this
     public override bool IsNull => Name == "null";
 
     /// <summary>
-    /// True for the bare polymorphic stamps ({object} / {item}, no kind, not
-    /// strict) — "any value" is a shape note, not a judgement; the entry fold
-    /// skips it and the value's own truth stands.
+    /// True for the bare polymorphic stamp ({item}, no kind, not strict) — "any value" is a
+    /// shape note, not a judgement; the entry fold skips it and the value's own truth stands.
     /// </summary>
     [JsonIgnore]
     public bool Polymorphic => Kind == null && !Strict
-        && (string.Equals(Name, "object", System.StringComparison.OrdinalIgnoreCase)
-            || string.Equals(Name, "item", System.StringComparison.OrdinalIgnoreCase));
+        && string.Equals(Name, "item", System.StringComparison.OrdinalIgnoreCase);
 
     // Static helpers — names match the new canonical primitives. The numeric
     // helpers carry their kind so callers don't have to re-stamp it: Int/Long/
@@ -215,7 +213,6 @@ public sealed class @this : item.@this
     public static @this Double => new("number", typeof(double)) { Kind = new kind.@this("double") };
     public static @this Bool => new("bool", typeof(bool));
     public static @this DateTime => new("datetime", typeof(System.DateTimeOffset));
-    public static @this Object => new("object", typeof(object));
 
     public static @this FromMime(string mimeType) => new(mimeType);
 
@@ -445,12 +442,11 @@ public sealed class @this : item.@this
         return lower;
     }
 
-    // The entity's face — the kind rides IN the name for a container family (a list<path> reads
-    // "list<path>", the compound's plang face), and stands alone for a scalar sub-kind (a "text"
-    // with kind "md" is still "text" to the vocabulary). Templates print this; parity with the
-    // old GetTypeName strings is the entity's own responsibility.
+    // The entity's face — the kind rides IN the name for a family whose kind is its content (a
+    // list<path>, a dict<number>, a choice<operator>), and stands alone for a scalar sub-kind (a
+    // "text" with kind "md" is still "text" to the vocabulary). Templates and catalog text print this.
     public override string ToString()
-        => Kind != null && (Name == "list" || Name == "dict") ? $"{Name}<{Kind.Name}>" : Name;
+        => Kind != null && (Name == "list" || Name == "dict" || Name == "choice") ? $"{Name}<{Kind.Name}>" : Name;
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two

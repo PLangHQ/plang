@@ -29,7 +29,7 @@ public class RawTypeShapeTests
     [Test] public async Task Raw_NoUtf8EncodeTax_OnTextRoundTrip()
     {
         const string json = "{\"a\":1}";
-        var d = global::PLang.Tests.Shared.Make.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(json, type.Create("item", "json"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(object.ReferenceEquals(d.Raw, json)).IsTrue();
     }
 }

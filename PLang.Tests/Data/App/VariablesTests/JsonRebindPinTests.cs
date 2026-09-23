@@ -21,7 +21,7 @@ public class JsonRebindPinTests : System.IAsyncDisposable
         // A clr(json) object value under %j% — an immutable JsonElement host.
         using var doc = System.Text.Json.JsonDocument.Parse("""{"a":"one","b":"two"}""");
         var j = new global::app.data.@this("j",
-            global::app.type.@this.Create("object", "json", context: _app.User.Context)
+            global::app.type.@this.Create("item", "json", context: _app.User.Context)
                 .Create(doc.RootElement.Clone(), _app.User.Context),
             context: _app.User.Context);
         await stack.Set("j", j);

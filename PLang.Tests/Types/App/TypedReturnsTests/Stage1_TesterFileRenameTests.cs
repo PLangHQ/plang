@@ -52,7 +52,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task TesterTest_PlangTypeName_IsTest_Not_TestFile()
     {
-        var name = _app.Type.Name(typeof(global::app.test.@this));
+        var name = _app.Type[typeof(global::app.test.@this)].ToString();
         await Assert.That(name).IsEqualTo("test");
         await Assert.That(name).IsNotEqualTo("testfile");
     }

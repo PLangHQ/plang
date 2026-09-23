@@ -166,15 +166,6 @@ public class TypeTests
     }
 
     [Test]
-    public async Task Object_StaticProperty_ReturnsObjectType()
-    {
-        var type = Type.Object;
-
-        await Assert.That(type.ClrType).IsEqualTo(typeof(object));
-        await Assert.That(type.Name).IsEqualTo("object");
-    }
-
-    [Test]
     public async Task ToString_ReturnsValue()
     {
         // Constructor canonicalises "string" → "text" (post-Stage-2).

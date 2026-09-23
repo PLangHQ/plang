@@ -54,7 +54,7 @@ public class WireForeignOutputTests
     [Test] public async Task WireObject_ForeignText_RendersJson_NotThrows()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/test");
-        var text = await TextOut(app, "{\"name\":\"x\"}", "object");
+        var text = await TextOut(app, "{\"name\":\"x\"}", "item");
         await Assert.That(text).Contains("name");
     }
 }

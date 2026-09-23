@@ -45,25 +45,17 @@ public static class @this
             ["guid"] = typeof(System.Guid),
             ["byte"] = typeof(byte),
             ["bytes"] = typeof(byte[]),
-            // list/array → the native list value type (collections hold Data).
-            // The raw List<object> entry that used to back "list" is retired;
-            // typed lists still surface as the generic `list<t>` shape via GetTypeName.
+            // list/array → the native list value type (collections hold Data). A typed list
+            // names itself {list, kind: element} through the entity door.
             ["list"] = typeof(app.type.item.list.@this),
             ["array"] = typeof(app.type.item.list.@this),
             // tag → the native tag value type (a normalized, case-insensitive label).
             ["tag"] = typeof(app.type.item.tag.@this),
-            // dict/dictionary/map → the native object value type (collections
-            // hold Data). The raw Dictionary<string,object> entry that used to
-            // back these is retired; typed dictionaries still surface as the
-            // generic `dict<k,v>` shape via GetTypeName, separate from this.
+            // dict/dictionary/map → the native object value type (collections hold Data). A
+            // typed dictionary names itself {dict, kind: value} through the entity door.
             ["dictionary"] = typeof(app.type.item.dict.@this),
             ["dict"] = typeof(app.type.item.dict.@this),
             ["map"] = typeof(app.type.item.dict.@this),
-            // `object` resolves for back-compat (a Data<object> slot, a CLR object
-            // value), but is NOT taught to the LLM — see InlineFundamentals. Data<object>
-            // is deprecated; new actions carry a concrete type or a clr-wrapped item.
-            ["object"] = typeof(object),
-            ["dynamic"] = typeof(object),
             // Text-shaped file extensions — registered as string aliases so
             // file.read.Build()'s extension-derived Type stamp ("csv", "txt", ...)
             // doesn't surface "Unknown type" at runtime. Annotation stays specific
@@ -106,7 +98,6 @@ public static class @this
             [typeof(System.Guid)] = "guid",
             [typeof(byte)] = "byte",
             [typeof(byte[])] = "bytes",
-            [typeof(object)] = "object",
             // Native object value type → "dict" (keeps the no-context Data.Type
             // derivation from collapsing to the @this class name "this").
             [typeof(app.type.item.dict.@this)] = "dict",
@@ -126,9 +117,6 @@ public static class @this
     /// precision or comes from an explicit <c>as</c> — never the literal's
     /// spelling.</para>
     /// </summary>
-    // `object` is intentionally absent — it is NOT taught to the LLM (a value is
-    // tagged by its real type, never `as object`). It still RESOLVES (see Aliases)
-    // for back-compat Data<object> slots, which are deprecated.
     public static IReadOnlyList<string> InlineFundamentals { get; } = new[]
         { "text", "number", "bool", "list", "dict", "datetime", "date", "time", "duration", "guid" };
 

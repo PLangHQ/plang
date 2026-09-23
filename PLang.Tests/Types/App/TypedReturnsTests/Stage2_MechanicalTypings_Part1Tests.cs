@@ -56,8 +56,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_TestDiscover_AdvertisesListOfTestReturnType()
     {
-        var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module.Name == "test" && a.Name == "discover");
+        var row = _app.Module["test"]["discover"];
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.Return).IsEqualTo("list<test>");
     }
@@ -65,8 +64,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_TestRun_AdvertisesListOfTestReturnType()
     {
-        var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module.Name == "test" && a.Name == "run");
+        var row = _app.Module["test"]["run"];
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.Return).IsEqualTo("list<test>");
     }
@@ -76,8 +74,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_OutputAsk_AdvertisesAskReturnType()
     {
-        var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module.Name == "output" && a.Name == "ask");
+        var row = _app.Module["output"]["ask"];
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.Return).IsEqualTo("ask");
     }
@@ -85,8 +82,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_ChannelSet_OmitsReturnsLine()
     {
-        var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module.Name == "channel" && a.Name == "set");
+        var row = _app.Module["channel"]["set"];
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.Return).IsEqualTo("item")
             .Because("An undefined T is the unconstrained plang type item, C#'s object.");

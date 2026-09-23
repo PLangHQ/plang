@@ -100,74 +100,6 @@ public sealed partial class @this
         return ClrFromMime(typeName);
     }
 
-    /// <summary>
-    /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
-    /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
-    /// directly off the type via reflection (no per-App registry). For callers that don't
-    /// have an App in scope (e.g. <see cref="app.module.list.@this"/> instances constructed
-    /// without an App backing in test fixtures).
-    /// </summary>
-    public static string GetTypeNameStatic(System.Type type)
-    {
-        if (type == null) return "object";
-
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null) return GetTypeNameStatic(underlying) + "?";
-
-        if (type.IsGenericType)
-        {
-            var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(data.@this<>))
-                return GetTypeNameStatic(type.GetGenericArguments()[0]);
-            // choice<T> is the choice family with its set as the kind: choice<operator>.
-            if (generic == typeof(app.type.item.choice.@this<>))
-                return $"choice<{new app.type.item.choice.set.@this(type.GetGenericArguments()[0]).Name}>";
-            // Native typed list — list<T> carries its element type intrinsically.
-            if (generic == typeof(app.type.item.list.@this<>))
-                return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
-            if (generic == typeof(List<>) || generic == typeof(IList<>)
-                || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
-                || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
-                || generic == typeof(HashSet<>))
-                return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
-            {
-                var args = type.GetGenericArguments();
-                return $"dict<{GetTypeNameStatic(args[0])},{GetTypeNameStatic(args[1])}>";
-            }
-        }
-
-        if (type == typeof(data.@this)) return "object";
-
-        if (type.IsArray)
-        {
-            var elementType = type.GetElementType()!;
-            if (elementType == typeof(byte)) return "bytes";
-            return $"list<{GetTypeNameStatic(elementType)}>";
-        }
-
-        if (app.type.primitive.@this.Canonical.TryGetValue(type, out var name)) return name;
-
-        var listIface = type.GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
-        if (listIface != null)
-            return $"list<{GetTypeNameStatic(listIface.GetGenericArguments()[0])}>";
-
-        // [PlangType("name")] direct attribute read — first non-null Name wins.
-        var plangAttr = type.GetCustomAttributes<PlangTypeAttribute>(inherit: false)
-            .FirstOrDefault(a => a.Name != null);
-        if (plangAttr?.Name != null) return plangAttr.Name;
-
-        // @this convention: last-namespace-segment lowercased.
-        if (string.Equals(type.Name, "this", StringComparison.Ordinal) && !string.IsNullOrEmpty(type.Namespace))
-        {
-            var ns = type.Namespace!;
-            var lastDot = ns.LastIndexOf('.');
-            return (lastDot >= 0 ? ns[(lastDot + 1)..] : ns).ToLowerInvariant();
-        }
-
-        return StripGenericArity(type.Name).ToLowerInvariant();
-    }
 
     // --- PLang name → CLR type ---
 
@@ -264,45 +196,22 @@ public sealed partial class @this
     {
         get
         {
-            EnsureInitialized();
-            // A plang list<T> NODE (action.list : list<action>, step.list : list<step>) IS
-            // {list, kind:element} — its element must ride as the kind, so resolve it BEFORE the
-            // name/conversion doors below (which would answer a plain "list" with no element, and the
-            // reader would then skip the element's own reader). Walk to the list<T> base for the element.
-            if (typeof(app.type.item.list.@this).IsAssignableFrom(clrType))
-                for (var t = clrType.BaseType; t != null; t = t.BaseType)
-                    if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
-                        return new app.type.@this("list", GetTypeName(t.GetGenericArguments()[0]));
-            // ONE identity door — "what plang type IS this CLR type" — split on the model's axis
-            // (is this CLR type a plang item?), never null and never leaking a System.Type back.
-            if (_clr.TryGetValue(clrType, out var owner)) return this[owner];   // conversion owner: int → number, string → text
-            // A choice is {choice, kind: <its set>}, carrying the set's options — the set's name is a
-            // kind, never a type of its own.
-            if (clrType.IsGenericType && clrType.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-            {
-                var set = Choice[clrType];
-                return new app.type.@this("choice", set.Name) { Values = set.Values };
-            }
-            // An item type IS vocabulary (path.file → path). Only an item answers by name:
-            // _typeToName also holds the concept names of non-item @this classes (callstack, the
-            // serializers registry) for reporting, and those are not plang types.
-            if (typeof(app.type.item.@this).IsAssignableFrom(clrType)
-                && _typeToName.TryGetValue(clrType, out var name)) return this[name];
-            // A container generic answers {family, kind: element} — the choice precedent
-            // (choice<Operator> = {choice, kind:operator}) generalized to list/dict. The kind is
-            // DERIVED from the C# generic argument, never stored beside the type; goal.variables
-            // reads it back (Type[kind] → the element entity) and the entity's face composes it.
-            if (ContainerFamily(clrType) is { } fam)
-                return new app.type.@this(fam.Family, GetTypeName(fam.Element));
-            return this["clr"];   // not a plang item → it IS clr(T); its Create builds the carrier (terminal)
+            // The name comes from PlangName — the same step the catalog names through, so the
+            // entity's face and the catalog can never disagree. A kinded family is born here with
+            // its kind; a choice carries its set's options; every other name is the named entity.
+            var (name, kind) = PlangName(clrType);
+            if (kind == null) return this[name];
+            return name == "choice"
+                ? new app.type.@this(name, kind) { Values = Choice[clrType].Values }
+                : new app.type.@this(name, kind);
         }
     }
 
     // The container families whose element rides as the KIND (list<path> = {list, kind:path}).
-    // Mirrors GetTypeName's generic recognition — the element is the kind; dict's kind is the VALUE
+    // The one generic recognition (PlangName names through it) — the element is the kind; dict's kind is the VALUE
     // (key defaults text; surface a keyed axis only if a real param needs one). Returns null for
     // non-containers (they resolve on the item/clr rungs).
-    private static (string Family, System.Type Element)? ContainerFamily(System.Type type)
+    private (string Family, System.Type Element)? ContainerFamily(System.Type type)
     {
         if (type.IsArray)
         {
@@ -410,83 +319,37 @@ public sealed partial class @this
 
     // --- CLR type → PLang name ---
 
-    /// <summary>
-    /// CLR type → PLang type name.
-    /// </summary>
-    public string GetTypeName(System.Type type)
+    // The plang name of a CLR type — {name, kind} — read off the registry's own indexes. The one
+    // naming step: the entity door (this[System.Type]) builds its entity from it, and the catalog fold
+    // names through it directly (the door reads the catalog, so the fold cannot ask the door).
+    // Nullability is the slot's fact, never part of a name; a Data<T> slot names T; plain Data is the
+    // open item slot; a family names its content as the kind; a raw CLR type no plang type owns is clr.
+    private (string Name, string? Kind) PlangName(System.Type type)
     {
-        if (type == null) return "object";
-
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null)
-            return GetTypeName(underlying) + "?";
-
-        if (type.IsGenericType)
-        {
-            var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(data.@this<>))
-                return GetTypeName(type.GetGenericArguments()[0]);
-            // choice<T> is the choice family with its set as the kind: choice<operator>.
-            if (generic == typeof(app.type.item.choice.@this<>))
-                return $"choice<{Choice[type].Name}>";
-            // Native typed list — list<T> carries its element type intrinsically.
-            if (generic == typeof(app.type.item.list.@this<>))
-                return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
-            if (generic == typeof(List<>) || generic == typeof(IList<>)
-                || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
-                || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
-                || generic == typeof(HashSet<>)
-                || (generic.FullName != null && (
-                    generic.FullName.StartsWith("System.Collections.Immutable.ImmutableList`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.Generic.ISet`", StringComparison.Ordinal))))
-            {
-                return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
-            }
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>)
-                || (generic.FullName != null && (
-                    generic.FullName.StartsWith("System.Collections.Concurrent.ConcurrentDictionary`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.ObjectModel.ReadOnlyDictionary`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.Generic.SortedDictionary`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal))))
-            {
-                var args = type.GetGenericArguments();
-                return $"dict<{GetTypeName(args[0])},{GetTypeName(args[1])}>";
-            }
-        }
-
-        if (type == typeof(data.@this))
-            return "object";
-
-        if (type.IsArray)
-        {
-            var elementType = type.GetElementType()!;
-            if (elementType == typeof(byte))
-                return "bytes";
-            return $"list<{GetTypeName(elementType)}>";
-        }
-
-        if (app.type.primitive.@this.Canonical.TryGetValue(type, out var name))
-            return name;
-
-        var listIface = type.GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
-        if (listIface != null)
-            return $"list<{GetTypeName(listIface.GetGenericArguments()[0])}>";
-
         EnsureInitialized();
-        if (_typeToName.TryGetValue(type, out var declared)) return declared;
-
-        return StripGenericArity(type.Name).ToLowerInvariant();
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
+            type = type.GetGenericArguments()[0];
+        if (type == typeof(data.@this)) return ("item", null);
+        // A plang list<T> NODE (action.list : list<action>) is {list, kind: element} — named before
+        // the item index, which would answer a plain "list" with no element.
+        if (typeof(app.type.item.list.@this).IsAssignableFrom(type) && ContainerFamily(type) is { } node)
+            return (node.Family, Face(PlangName(node.Element)));
+        if (_clr.TryGetValue(type, out var owner)) return (owner, null);   // conversion owner: int → number
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
+            return ("choice", Choice[type].Name);
+        // Only an item answers by its indexed name — _typeToName also holds the concept names of
+        // non-item @this classes (callstack, the serializers registry), and those are not plang types.
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _typeToName.TryGetValue(type, out var declared))
+            return (declared, null);
+        if (app.type.primitive.@this.Canonical.TryGetValue(type, out var primitive)) return (primitive, null);
+        if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
+        return ("clr", null);
     }
 
-    /// <summary>Alias for <see cref="GetTypeName"/> — preserves existing <c>app.type.Name</c> caller habit.</summary>
-    public string Name(System.Type clrType) => GetTypeName(clrType);
-
-    private static string StripGenericArity(string name)
-    {
-        var idx = name.IndexOf('`');
-        return idx >= 0 ? name[..idx] : name;
-    }
+    // A {name, kind} as the entity's face prints it — the kind rides in the name for a family.
+    private string Face((string Name, string? Kind) named)
+        => named.Kind == null ? named.Name : $"{named.Name}<{named.Kind}>";
 
     // --- Registration ---
 
@@ -503,10 +366,8 @@ public sealed partial class @this
 
     // --- Type-kind queries ---
 
-    /// <summary>
-    /// True when <paramref name="type"/> is a primitive PLang type. Pure logic — static.
-    /// </summary>
-    public static bool IsPrimitive(System.Type type)
+    // A CLR scalar the catalog fold never walks into (it has no fields to list).
+    private bool IsPrimitive(System.Type type)
     {
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
         return underlying.IsPrimitive
@@ -523,16 +384,6 @@ public sealed partial class @this
     // --- Conversion methods now live in Types/Conversion.cs (the partial). ---
 
     // --- Catalog support ---
-
-    /// <summary>
-    /// Returns the primitive type names exposed to the builder (excludes aliases like
-    /// "text"→"string" and all nullable variants). Domain types are surfaced through
-    /// the schemas block via [PlangType] declarations, not listed here.
-    /// </summary>
-    public List<string> GetBuilderTypeNames() => app.type.primitive.@this.BuilderNames.ToList();
-
-    /// <summary>Alias for <see cref="GetBuilderTypeNames"/> — preserves existing <c>app.type.BuilderNames</c> caller habit.</summary>
-    public List<string> BuilderNames() => GetBuilderTypeNames();
 
     /// <summary>
     /// Walks action parameter types and returns structured catalog entries.
@@ -590,7 +441,9 @@ public sealed partial class @this
             var type = queue.Dequeue();
             if (!seen.Add(type)) continue;
 
-            var typeName = GetTypeName(type);
+            var typeName = Face(PlangName(type));
+            // A CLR type no plang type owns is not a catalog entry.
+            if (typeName == "clr") continue;
 
             // Skip the type entity itself — its wire shape ({name, kind?, strict?})
             // and kind vocabulary are taught explicitly in the compile prompt's
@@ -636,7 +489,7 @@ public sealed partial class @this
                 if (resolveParams.Length >= 1)
                 {
                     var first = resolveParams[0];
-                    derivedShape = GetTypeName(first.ParameterType);
+                    derivedShape = Face(PlangName(first.ParameterType));
                     constructorSignature = $"{first.Name}: {derivedShape}";
                 }
             }
@@ -655,7 +508,7 @@ public sealed partial class @this
                 llmProps.Add(new app.type.Field
                 {
                     Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
-                    TypeName = GetTypeName(prop.PropertyType),
+                    TypeName = Face(PlangName(prop.PropertyType)),
                 });
                 Enqueue(UnwrapType(prop.PropertyType));
             }
@@ -706,7 +559,7 @@ public sealed partial class @this
     /// <see cref="BuildTypeEntries"/>. Returns null when the property is absent,
     /// non-string, or throws.
     /// </summary>
-    private static string? ReadStaticString(System.Type type, string propertyName)
+    private string? ReadStaticString(System.Type type, string propertyName)
     {
         var prop = type.GetProperty(propertyName,
             BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
@@ -726,7 +579,7 @@ public sealed partial class @this
     /// property — the catalog's opt-in <c>Kinds</c> vocabulary convention. Returns null when
     /// the property is absent, the wrong shape, or throws.
     /// </summary>
-    private static IReadOnlyList<string>? ReadStaticStringList(System.Type type, string propertyName)
+    private IReadOnlyList<string>? ReadStaticStringList(System.Type type, string propertyName)
     {
         var prop = type.GetProperty(propertyName,
             BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
@@ -747,7 +600,7 @@ public sealed partial class @this
     /// <summary>
     /// Unwraps generic wrappers (List&lt;T&gt;, Nullable&lt;T&gt;) to get the inner type.
     /// </summary>
-    private static System.Type? UnwrapType(System.Type type)
+    private System.Type? UnwrapType(System.Type type)
     {
         var underlying = Nullable.GetUnderlyingType(type);
         if (underlying != null) return UnwrapType(underlying);

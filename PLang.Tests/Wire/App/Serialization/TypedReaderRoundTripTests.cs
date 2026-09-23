@@ -69,12 +69,6 @@ public class TypedReaderRoundTripTests
         await Assert.That(((global::app.type.item.image.@this)item).Bytes).IsEquivalentTo(bytes);
     }
 
-    [Test] public async Task Object_Isolated()
-    {
-        var item = ReadScalar(new global::app.type.@object.serializer.Reader(), "{\"a\":1}", null);
-        await Assert.That(item).IsAssignableTo<global::app.type.item.dict.@this>();
-    }
-
     [Test] public async Task Item_Isolated()
     {
         var item = ReadScalar(new global::app.type.item.serializer.Reader(), "[1,2,3]", null);

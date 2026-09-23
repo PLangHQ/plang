@@ -46,22 +46,4 @@ public class ModifierRegistryTests
     }
 
     #endregion
-
-    #region Describe
-
-    [Test]
-    public async Task Describe_ModifierActions_AppearInSummary()
-    {
-        // Modifier modules appear in the action summary so the LLM can discover them
-        // — they go through the same [Action] registration as any other handler.
-        await using var app = TestApp.Create("/app");
-        var described = await app.Module.Describe();
-
-        var names = described.Select(a => $"{a.Module}.{a.Name}").ToHashSet();
-        await Assert.That(names).Contains("timeout.after");
-        await Assert.That(names).Contains("cache.wrap");
-        await Assert.That(names).Contains("error.handle");
-    }
-
-    #endregion
 }

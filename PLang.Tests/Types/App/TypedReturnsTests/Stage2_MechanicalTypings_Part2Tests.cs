@@ -72,8 +72,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task ModulesDescribe_MockIntercept_AdvertisesMockReturnType()
     {
-        var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module.Name == "mock" && a.Name == "intercept");
+        var row = _app.Module["mock"]["intercept"];
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.Return).IsEqualTo("mock");
     }
@@ -81,8 +80,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
-        var rendered = await _app.Module.Describe();
-        var goals = rendered.FirstOrDefault(a => a.Module.Name == "build" && a.Name == "goals");
+        var goals = _app.Module["build"]["goals"];
 
         // goals renders as a collection shape — PLang's foreach over it needs the list
         // semantics, hence no wrapper record.

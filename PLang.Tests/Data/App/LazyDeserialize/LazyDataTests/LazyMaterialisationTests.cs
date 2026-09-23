@@ -65,7 +65,7 @@ public class LazyMaterialisationTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("item", "json", context: ctx), ctx, "cfg");
         await Assert.That((await d.Value())).IsTypeOf<app.type.item.dict.@this>();
         var dict = (app.type.item.dict.@this)(await d.Value())!;
         await Assert.That(dict.Has("port")).IsTrue();

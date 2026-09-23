@@ -11,8 +11,8 @@ namespace app.goal.step.action.property;
 public sealed class @this
 {
     /// <summary>Reflects a declared parameter slot off its <see cref="PropertyInfo"/>: Name, PLang
-    /// type ENTITY (Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to T; bare Data is the polymorphic
-    /// "object"), nullability (Nullable&lt;T&gt; or a nullable reference), the %var% marker
+    /// type ENTITY (Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to T; bare Data is the open
+    /// <c>item</c> slot), nullability (Nullable&lt;T&gt; or a nullable reference), the %var% marker
     /// (Data&lt;variable&gt;), and the [Default] value. The row builds itself — the catalog loop
     /// only filters.</summary>
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembers]
@@ -33,7 +33,7 @@ public sealed class @this
         IsVariable = isDataGeneric && bare.GetGenericArguments()[0] == typeof(global::app.variable.@this);
 
         var value = isDataGeneric ? bare.GetGenericArguments()[0] : bare;
-        Type = value == typeof(global::app.data.@this) ? types["object"] : types[value];
+        Type = value == typeof(global::app.data.@this) ? types["item"] : types[value];
 
         Default = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
     }

@@ -143,61 +143,56 @@ public class EngineTypesTests
     [Test]
     public async Task Name_String_ReturnsString()
     {
-        await Assert.That(_types.Name(typeof(string))).IsEqualTo("text");
+        await Assert.That(_types[typeof(string)].ToString()).IsEqualTo("text");
     }
 
     [Test]
     public async Task Name_Int_ReturnsInt()
     {
-        await Assert.That(_types.Name(typeof(int))).IsEqualTo("number");
+        await Assert.That(_types[typeof(int)].ToString()).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Name_ByteArray_ReturnsBytes()
+    public async Task Name_ByteArray_ReturnsBinary()
     {
-        await Assert.That(_types.Name(typeof(byte[]))).IsEqualTo("bytes");
+        await Assert.That(_types[typeof(byte[])].ToString()).IsEqualTo("binary");
     }
 
     [Test]
     public async Task Name_NullableInt_ReturnsIntQuestionMark()
     {
-        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("number?");
+        await Assert.That(_types[typeof(int?)].ToString()).IsEqualTo("number");
     }
 
     [Test]
     public async Task Name_ListOfString_ReturnsListString()
     {
-        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<text>");
+        await Assert.That(_types[typeof(List<string>)].ToString()).IsEqualTo("list<text>");
     }
 
     [Test]
     public async Task Name_IListOfInt_ReturnsListInt()
     {
-        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<number>");
+        await Assert.That(_types[typeof(IList<int>)].ToString()).IsEqualTo("list<number>");
     }
 
     [Test]
     public async Task Name_DictionaryStringInt_ReturnsDictStringInt()
     {
-        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<text,number>");
+        await Assert.That(_types[typeof(Dictionary<string, int>)].ToString()).IsEqualTo("dict<number>");
     }
 
     [Test]
     public async Task Name_IntArray_ReturnsListInt()
     {
-        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<number>");
+        await Assert.That(_types[typeof(int[])].ToString()).IsEqualTo("list<number>");
     }
 
-    [Test]
-    public async Task Name_Null_ReturnsObject()
-    {
-        await Assert.That(_types.Name(null!)).IsEqualTo("object");
-    }
 
     [Test]
     public async Task Name_UnknownType_ReturnsLowercaseName()
     {
-        await Assert.That(_types.Name(typeof(Uri))).IsEqualTo("uri");
+        await Assert.That(_types[typeof(Uri)].ToString()).IsEqualTo("clr");
     }
 
     // --- Kind: extension → kind ---
@@ -535,22 +530,16 @@ public class EngineTypesTests
     {
         // Set/HashSet/IEnumerable all normalize to list<T> per catalog conventions
         // (commit 197729d "Catalog: normalize collection type names").
-        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<text>");
+        await Assert.That(_types[typeof(HashSet<string>)].ToString()).IsEqualTo("list<text>");
     }
 
-    [Test]
-    public async Task Name_GenericTypeNotInMap_StripsAritySuffix()
-    {
-        // SortedSet<int> is not in _clrToName — should return "sortedset" not "sortedset`1"
-        await Assert.That(_types.Name(typeof(SortedSet<int>))).IsEqualTo("sortedset");
-    }
 
     // --- Finding #4: BuilderNames/ComplexSchemas tests ---
 
     [Test]
     public async Task BuilderNames_ReturnsNonEmptyList()
     {
-        var names = _types.BuilderNames();
+        var names = global::app.type.primitive.@this.BuilderNames;
 
         await Assert.That(names).IsNotNull();
         await Assert.That(names.Count).IsGreaterThan(0);
@@ -559,7 +548,7 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ContainsCommonTypes()
     {
-        var names = _types.BuilderNames();
+        var names = global::app.type.primitive.@this.BuilderNames;
 
         await Assert.That(names).Contains("text");
         await Assert.That(names).Contains("number");
@@ -570,7 +559,7 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ExcludesNullableVariants()
     {
-        var names = _types.BuilderNames();
+        var names = global::app.type.primitive.@this.BuilderNames;
 
         await Assert.That(names).DoesNotContain("int?");
         await Assert.That(names).DoesNotContain("bool?");
@@ -579,7 +568,7 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ExcludesDuplicateClrTypes()
     {
-        var names = _types.BuilderNames();
+        var names = global::app.type.primitive.@this.BuilderNames;
 
         // "string" and "text" both map to typeof(string) — only the first should appear
         var stringCount = names.Count(n => n == "string" || n == "text");

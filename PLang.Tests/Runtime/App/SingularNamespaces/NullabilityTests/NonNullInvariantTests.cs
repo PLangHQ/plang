@@ -108,18 +108,6 @@ public class NonNullInvariantTests
         }
     }
 
-    [Test] public async Task GetTypeNameStatic_StaysAsLegitimateNoAppFallback()
-    {
-        // module.@this.Describe runs from test fixtures that new module directly
-        // (no App stamped), so the `App?.Type ?? GetTypeNameStatic` chain in
-        // module/this.cs is the legitimate fixture-supporting fallback. The static
-        // method stays as the documented no-App surface; the assertion here is
-        // that the static surface still returns the right answer.
-        var t = global::app.type.list.@this.GetTypeNameStatic(typeof(int));
-        // Post-Stage-2: typeof(int) canonicalises to "number".
-        await Assert.That(t).IsEqualTo("number");
-    }
-
     [Test] public async Task AppParent_OnRootApp_IsNull_ByDesign()
     {
         await using var app = new PLangEngine("/test");

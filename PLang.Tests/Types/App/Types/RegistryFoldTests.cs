@@ -36,19 +36,6 @@ public class RegistryFoldTests
     }
 
     [Test]
-    public async Task IsPrimitive_AllPriorTrueAnswers_StillTrue()
-    {
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(string))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(int))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(long))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(double))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(decimal))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(bool))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.DateTime))).IsTrue();
-        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.Guid))).IsTrue();
-    }
-
-    [Test]
     public async Task ResolveName_And_ResolveType_RoundTrip_PerBuiltIn()
     {
         // Round-trip for primitives whose CLR↔name mapping is 1:1.

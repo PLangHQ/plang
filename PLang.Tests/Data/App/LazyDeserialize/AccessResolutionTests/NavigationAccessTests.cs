@@ -19,7 +19,7 @@ public class NavigationAccessTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("item", "json", context: ctx), ctx, "cfg");
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount()).IsEqualTo(1); // navigation materialized via the reader
     }
@@ -30,7 +30,7 @@ public class NavigationAccessTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"host\":\"localhost\"}", type.Create("object", "json", context: ctx), ctx, "cfg");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"host\":\"localhost\"}", type.Create("item", "json", context: ctx), ctx, "cfg");
         await Assert.That((await (await d.Get("host")).Value())?.ToString()).IsEqualTo("localhost");
     }
 

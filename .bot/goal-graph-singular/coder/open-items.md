@@ -96,3 +96,21 @@ properties", replaced by Warning). Its last builder holder (BuildResponse) is go
 registered as a type (only items are indexed). Remaining holders: `Data.Warnings`
 (`PLang/app/data/this.Result.cs:62`, copied at `PLang/app/data/this.cs` ×4) and
 `PLang/app/module/action/build/code/Default.cs` ×4 (the build's error list and `MergePrData`).
+
+**14. Named survivors of the type registry pass** — executioner: the *type entities born with
+context* pass (shape with Ingi: item.Type(context) / items carry context / static data table / the
+entity never reaches the registry from inside itself). Until then these statics stay, by name:
+`type.list.@this.GetPrimitiveOrMime` (the context-less `ClrType` fallback, `type/this.cs:163`),
+`type.list.@this.ClrFromMime`, and the static `app.type.primitive.@this` table (read by the entity's
+context-less constructor: `Canonicalise`, `StampPrimitive`). `Get(name)` / `Clr(name)` die with them
+(`variable/set.cs:217`'s `type.ClrType ?? Type.Get(name)` fallback included).
+
+**16. Two descriptors for "a named, typed slot"** (for the type-entity pass) — `goal.step.action.property.@this`
+(an action's parameters: Name, Type entity, Nullable, Default, IsVariable) and `app.type.Field` (a record
+type's fields in the catalog fold: Name, `TypeName` — a string, the flat copy again). An action's
+parameters and a record's fields are the same concept; when the entity describes itself, a record's
+fields are read from its declaration by the same reflection `property.list` already does. Likely one type.
+
+**15. Action return type is a flat copy** — `action.Return` / `ReturnTypeName` is a string read off
+the entity's face (`goal/step/action/this.Schema.cs:83`), stored beside the type it names. It becomes
+the type entity; the catalog renders its face.

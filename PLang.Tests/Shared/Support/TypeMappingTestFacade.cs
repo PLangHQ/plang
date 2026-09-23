@@ -14,7 +14,8 @@ internal static class TypeMapping
 
     public static System.Type? GetType(string typeName) => _app.Type.Get(typeName);
 
-    public static string GetTypeName(System.Type type) => _app.Type.GetTypeName(type);
+    /// <summary>The face of the entity the CLR type names — what a catalog prints.</summary>
+    public static string GetTypeName(System.Type type) => _app.Type[type].ToString();
 
     public static void Register(string plangName, System.Type clrType) => _app.Type.Register(plangName, clrType);
 
@@ -22,12 +23,10 @@ internal static class TypeMapping
     public static IReadOnlyList<string>? Values(System.Type type)
         => _app.Type.Choice.Contains(type) ? _app.Type.Choice[type].Values : null;
 
-    public static List<string> GetBuilderTypeNames() => _app.Type.GetBuilderTypeNames();
 
     public static List<global::app.type.@this> BuildTypeEntries(global::app.module.list.@this? modules)
         => _app.Type.BuildTypeEntries(modules);
 
-    public static bool IsPrimitive(System.Type type) => global::app.type.list.@this.IsPrimitive(type);
 }
 
 /// <summary>

@@ -4,7 +4,7 @@
 
 Correct (`write out %message%`, no channel named):
 ```json
-{"module":"output","name":"write","parameter":[{"name":"Data","value":"%message%","type":{"name":"object"}}]}
+{"module":"output","name":"write","parameter":[{"name":"Data","value":"%message%","type":{"name":"item"}}]}
 ```
 
 Correct (`write out "hi" to logger channel`):
@@ -19,4 +19,4 @@ Correct (`write out "hi" to logger channel`):
 
 ## `Data` type for `output.write`
 
-`write out "Hello %name%"` → ONE `output.write`, `Data` is `text` (the template interpolates at runtime): `{"name":"Data","type":{"name":"text"},"value":"Hello %name%"}`. A plain literal string (no `%var%`) is also `text`. A bare `%var%` reference uses `{"name":"object"}` (runtime resolves the actual type).
+`write out "Hello %name%"` → ONE `output.write`, `Data` is `text` (the template interpolates at runtime): `{"name":"Data","type":{"name":"text"},"value":"Hello %name%"}`. A plain literal string (no `%var%`) is also `text`. A bare `%var%` reference uses `{"name":"item"}` (runtime resolves the actual type).

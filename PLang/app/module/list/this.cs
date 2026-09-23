@@ -167,18 +167,6 @@ public sealed class @this : IAsyncDisposable
     /// (registered on actor.Channel). The builder catalog passes this to the LLM so it
     /// can pick a channel from real names — no `to <name>` pattern parsing.
     /// </summary>
-    // Capability interfaces — their declared properties are wired by the source generator
-    // from the execution context (Step, Channels, Event, Static, Context) and are NOT
-    // user-supplied parameters. Describe() filters them so the catalog doesn't teach the
-    // LLM to emit fields it must never emit.
-    private static readonly System.Type[] CapabilityInterfaces =
-    {
-        typeof(IContext),
-        typeof(IStep),
-        typeof(IChannel),
-        typeof(IStatic),
-    };
-
     /// <summary>Where per-action LLM teaching markdown lives — <c>/system/modules</c>, resolved
     /// through <c>path.Resolve</c> so every downstream read passes <c>AuthGate</c>. FilePath's
     /// ValidatePath redirects <c>/system/*</c> to <c>&lt;OsDirectory&gt;/system/*</c> when the path
@@ -215,131 +203,6 @@ public sealed class @this : IAsyncDisposable
         return orphans;
     }
 
-    [System.Obsolete("Module discovery moves to app.module.action.list (list<module>) + a Fluid render — do not add new callers.")]
-    public async Task<List<global::app.goal.step.action.@this>> Describe()
-    {
-        var result = new List<global::app.goal.step.action.@this>();
-        var nCtx = new NullabilityInfoContext();
-        // Cache module descriptions by namespace — populated on first encounter per namespace
-
-        foreach (var ns in Names)
-        {
-            foreach (var actionName in GetActions(ns))
-            {
-                var parameterType = GetActionType(ns, actionName);
-                if (parameterType == null) continue;
-
-                // Collect the property names contributed by any capability interfaces this
-                // action implements. They'll be filtered out of the exposed catalog below.
-                var capabilityProps = new HashSet<string>(
-                    CapabilityInterfaces
-                        .Where(iface => iface.IsAssignableFrom(parameterType))
-                        .SelectMany(iface => iface.GetProperties().Select(p => p.Name)),
-                    StringComparer.OrdinalIgnoreCase);
-
-                var parameters = new List<data.@this>();
-
-                foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                {
-                    if (prop.Name == "EqualityContract") continue;
-                    if (capabilityProps.Contains(prop.Name)) continue;
-                    if (prop.GetCustomAttribute<CodeAttribute>() != null) continue;
-
-                    var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType)));
-
-                    bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
-                    if (!isNullable && !prop.PropertyType.IsValueType)
-                        isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
-                    if (isNullable && !typeName.EndsWith("?"))
-                        typeName += "?";
-
-                    // Enum valid-values (operator, httpmethod, trigger, ...) are NOT inlined
-                    // on each parameter any more — they're declared once in Type Information
-                    // so repeating them here would just bloat the prompt. The type name alone
-                    // (e.g. "operator") points the LLM to the Type Information entry.
-
-                    var hasVar = IsVariableNameSlot(prop.PropertyType);
-                    var defaultAttr = prop.GetCustomAttribute<DefaultAttribute>();
-
-                    // Variable slots advertise as "%var%" — the marker alone tells the LLM
-                    // this parameter takes a variable reference. Don't append a type token:
-                    // `Variable` only constrains the slot to *name* a variable; what the
-                    // variable resolves to at runtime is unconstrained (list, dict, bool,
-                    // object — anything). A trailing "string" was a lie that produced
-                    // spurious ambiguousMapping warnings when scope held a non-string.
-                    var desc = hasVar ? "%var%" : typeName;
-                    if (defaultAttr != null)
-                        desc += $" = {FormatDefault(defaultAttr.Value)}";
-
-                    parameters.Add(new data.@this(prop.Name, desc, context: App.System.Context));
-                }
-
-                // IChannel actions: source-gen reads action.Parameters["channel"] to resolve
-                // the Channel slot. Surface that parameter to the LLM so it can emit a name
-                // from the actor's channel inventory.
-                if (typeof(IChannel).IsAssignableFrom(parameterType))
-                    parameters.Add(new data.@this("channel", "string?", context: App.System.Context));
-
-                bool cacheable = true;
-                var actionAttr = parameterType.GetCustomAttribute<ActionAttribute>();
-                if (actionAttr != null)
-                    cacheable = actionAttr.Cacheable;
-
-
-                var returnType = DescribeReturnType(parameterType);
-
-                // Teaching prose (Description / Notes / Examples) is no longer assembled here — it
-                // rides as lazy `file` handles on the action/module elements (the class-zoom prose
-                // doors over os/system/modules/{module}/{...}.md). Describe now carries only the
-                // structural facts the param-desc parity still compares (params, return, cacheable).
-                result.Add(new global::app.goal.step.action.@this
-                {
-                    Module = this[ns],
-                    Name = actionName,
-                    Parameter = new global::app.goal.step.action.parameter.list.@this(parameters),
-                    Cacheable = cacheable,
-                    ReturnType = returnType,
-                });
-            }
-        }
-
-        return result;
-    }
-
-
-    private List<data.@this>? DescribeReturnType(System.Type actionType)
-    {
-        var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
-        if (runMethod == null) return null;
-
-        var returnType = runMethod.ReturnType;
-
-        // Unwrap Task<T> → T
-        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
-            returnType = returnType.GetGenericArguments()[0];
-
-        // Plain Data — no extra properties to describe
-        if (returnType == typeof(data.@this)) return null;
-
-        // Must be a Data subclass
-        if (!typeof(data.@this).IsAssignableFrom(returnType)) return null;
-
-        // Collect public properties that are NOT on the base Data class
-        var baseProps = typeof(data.@this).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Select(p => p.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var properties = new List<data.@this>();
-        foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (baseProps.Contains(prop.Name)) continue;
-            var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType)));
-            properties.Add(new data.@this(prop.Name, typeName, context: App.System.Context));
-        }
-
-        return properties.Count > 0 ? properties : null;
-    }
-
     /// <summary>
     /// Returns default values for an action's parameters that aren't already provided.
     /// Checks IConfigure&lt;TConfig&gt; first, falls back to [Default] attributes.
@@ -362,27 +225,6 @@ public sealed class @this : IAsyncDisposable
         return attrDefaults.Count > 0 ? attrDefaults : null;
     }
 
-    private static string FormatDefault(object? value) => value switch
-    {
-        null => "null",
-        string s => $"\"{s}\"",
-        bool b => b ? "true" : "false",
-        _ => value.ToString() ?? "null"
-    };
-
-    /// <summary>
-    /// True when <paramref name="propType"/> is <c>Data&lt;variable&gt;</c> (or its
-    /// nullable wrap). The property type is the carrier of "this slot names a variable" —
-    /// the catalog builder uses this to mark <c>%var%</c>-shape parameters in the LLM prompt.
-    /// </summary>
-    private static bool IsVariableNameSlot(Type propType)
-    {
-        var underlying = Nullable.GetUnderlyingType(propType) ?? propType;
-        if (!underlying.IsGenericType) return false;
-        if (underlying.GetGenericTypeDefinition() != typeof(data.@this<>)) return false;
-        var inner = underlying.GetGenericArguments()[0];
-        return inner == typeof(app.variable.@this);
-    }
 }
 
 /// <summary>

@@ -22,12 +22,12 @@ public class WireReadLazyTests
     // dict<…> values keep their eager path.
     [Test] public async Task WireRead_CapturesValueSlotRaw_DefersMaterialisation()
     {
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"a\":1}", global::app.type.@this.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"a\":1}", global::app.type.@this.Create("item", "json"), global::PLang.Tests.TestApp.SharedContext);
         d.Name = "cfg";
         var back = RoundTrip(d);
         await Assert.That(back.HasRaw).IsTrue();
         await Assert.That(back.MaterializeCount()).IsEqualTo(0);
-        await Assert.That(back.Type.Name).IsEqualTo("object");
+        await Assert.That(back.Type.Name).IsEqualTo("item");
     }
 
     // Deferral means the value slot is NOT eagerly parsed at read time — a value
@@ -36,8 +36,8 @@ public class WireReadLazyTests
     [Test] public async Task WireRead_DoesNotEagerlyDeserialiseValueSlot()
     {
         // value is a valid json *string* token whose content is malformed json,
-        // typed {object, json} — read defers it, no throw.
-        const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"object\",\"kind\":\"json\"},\"value\":\"{not json\"}";
+        // typed {item, json} — read defers it, no throw.
+        const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"item\",\"kind\":\"json\"},\"value\":\"{not json\"}";
         var back = new plang(global::PLang.Tests.TestApp.SharedContext).Deserialize(wire);
         await Assert.That(back.HasRaw).IsTrue();
         await Assert.That(back.MaterializeCount()).IsEqualTo(0);

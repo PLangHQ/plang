@@ -185,22 +185,6 @@ public class TypeMappingTests
     }
 
     [Test]
-    public async Task GetType_Object_ReturnsObjectType()
-    {
-        var type = TypeMapping.GetType("object");
-
-        await Assert.That(type).IsEqualTo(typeof(object));
-    }
-
-    [Test]
-    public async Task GetType_Dynamic_ReturnsObjectType()
-    {
-        var type = TypeMapping.GetType("dynamic");
-
-        await Assert.That(type).IsEqualTo(typeof(object));
-    }
-
-    [Test]
     public async Task GetType_NullableInt_ReturnsNullableIntType()
     {
         var type = TypeMapping.GetType("int?");
@@ -397,19 +381,19 @@ public class TypeMappingTests
     }
 
     [Test]
-    public async Task GetTypeName_Byte_ReturnsByte()
+    public async Task GetTypeName_Byte_ReturnsNumber()
     {
         var name = TypeMapping.GetTypeName(typeof(byte));
 
-        await Assert.That(name).IsEqualTo("byte");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task GetTypeName_ByteArray_ReturnsBytes()
+    public async Task GetTypeName_ByteArray_ReturnsBinary()
     {
         var name = TypeMapping.GetTypeName(typeof(byte[]));
 
-        await Assert.That(name).IsEqualTo("bytes");
+        await Assert.That(name).IsEqualTo("binary");
     }
 
     [Test]
@@ -417,7 +401,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(object));
 
-        await Assert.That(name).IsEqualTo("object");
+        await Assert.That(name).IsEqualTo("clr");
     }
 
     [Test]
@@ -425,7 +409,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(int?));
 
-        await Assert.That(name).IsEqualTo("number?");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
@@ -433,7 +417,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(DateTime?));
 
-        await Assert.That(name).IsEqualTo("datetime?");
+        await Assert.That(name).IsEqualTo("datetime");
     }
 
     [Test]
@@ -457,7 +441,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(Dictionary<string, int>));
 
-        await Assert.That(name).IsEqualTo("dict<text,number>");
+        await Assert.That(name).IsEqualTo("dict<number>");
     }
 
     [Test]
@@ -465,7 +449,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(IDictionary<string, object>));
 
-        await Assert.That(name).IsEqualTo("dict<text,object>");
+        await Assert.That(name).IsEqualTo("dict<clr>");
     }
 
     [Test]
@@ -489,76 +473,9 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(Uri));
 
-        await Assert.That(name).IsEqualTo("uri");
+        await Assert.That(name).IsEqualTo("clr");
     }
 
-    [Test]
-    public async Task GetTypeName_Null_ReturnsObject()
-    {
-        var name = TypeMapping.GetTypeName(null!);
-
-        await Assert.That(name).IsEqualTo("object");
-    }
-
-    [Test]
-    public async Task IsPrimitive_PrimitiveTypes_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(int))).IsTrue();
-        await Assert.That(TypeMapping.IsPrimitive(typeof(long))).IsTrue();
-        await Assert.That(TypeMapping.IsPrimitive(typeof(double))).IsTrue();
-        await Assert.That(TypeMapping.IsPrimitive(typeof(bool))).IsTrue();
-        await Assert.That(TypeMapping.IsPrimitive(typeof(byte))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_String_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(string))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_Decimal_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(decimal))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_DateTime_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(DateTime))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_DateTimeOffset_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(DateTimeOffset))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_TimeSpan_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(TimeSpan))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_Guid_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(Guid))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_NullableInt_ReturnsTrue()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(int?))).IsTrue();
-    }
-
-    [Test]
-    public async Task IsPrimitive_ComplexTypes_ReturnsFalse()
-    {
-        await Assert.That(TypeMapping.IsPrimitive(typeof(List<int>))).IsFalse();
-        await Assert.That(TypeMapping.IsPrimitive(typeof(Dictionary<string, object>))).IsFalse();
-        await Assert.That(TypeMapping.IsPrimitive(typeof(object))).IsFalse();
-    }
 
     // --- Data<T> unwrapping ---
 
@@ -591,7 +508,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(Data));
 
-        await Assert.That(name).IsEqualTo("object");
+        await Assert.That(name).IsEqualTo("item");
     }
 
     [Test]

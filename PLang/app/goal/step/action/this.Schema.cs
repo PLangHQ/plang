@@ -80,7 +80,7 @@ public partial class @this
             if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
                 return null;
             var t = ret.GetGenericArguments()[0];
-            return _return = t == typeof(object) ? "item" : App!.Type.GetTypeName(t);
+            return _return = t == typeof(object) ? "item" : App!.Type[t].ToString();
         }
     }
 

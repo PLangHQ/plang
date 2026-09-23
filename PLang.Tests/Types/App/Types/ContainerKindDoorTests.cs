@@ -35,20 +35,6 @@ public class ContainerKindDoorTests
     }
 
     [Test]
-    public async Task DoorFace_MatchesGetTypeName_ForContainers()
-    {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-3");
-        // The two owners agree: the entity's face == the legacy GetTypeName string.
-        foreach (var t in new[] {
-            typeof(ItemList),
-            typeof(System.Collections.Generic.List<string>),
-            typeof(string[]) })
-        {
-            await Assert.That(app.Type[t].ToString()).IsEqualTo(app.Type.GetTypeName(t));
-        }
-    }
-
-    [Test]
     public async Task ByteArray_IsBytes_NotList()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-4");

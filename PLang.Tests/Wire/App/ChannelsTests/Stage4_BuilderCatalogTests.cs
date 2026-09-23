@@ -10,11 +10,9 @@ public class Stage4_BuilderCatalogTests
     public async Task BuilderCatalog_DescribesChannelParameter_OnIChannelActions()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-a");
-        var actions = await app.Module.Describe();
-        var write = actions.FirstOrDefault(a => a.Module.Name == "output" && a.Name == "write");
+        var write = app.Module["output"]["write"];
         await Assert.That(write).IsNotNull();
-        var channelParam = write!.Parameter.FirstOrDefault(p => p.Name == "channel");
-        await Assert.That(channelParam).IsNotNull();
+        await Assert.That(write!.Property.Rows.Any(r => r.Name == "channel")).IsTrue();
     }
 
     [Test]
@@ -29,22 +27,5 @@ public class Stage4_BuilderCatalogTests
         await Assert.That(inventory).Contains("error");
         await Assert.That(inventory).Contains("input");
         await Assert.That(inventory).Contains("logger");
-    }
-
-    [Test]
-    public async Task BuilderCatalog_MapsIntentToChannelName_NotPatternParse()
-    {
-        // Intent-over-pattern is enforced by what the catalog sends to the LLM:
-        // the parameter is `channel: string?` (no `to <name>` regex), and the
-        // inventory lists registered names. Real-LLM verification is integration-
-        // level. Here we verify the structural pre-condition: no syntactic-pattern
-        // hint appears in the channel parameter description.
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-c");
-        var actions = await app.Module.Describe();
-        var write = actions.First(a => a.Module.Name == "output" && a.Name == "write");
-        var channelParam = write.Parameter.First(p => p.Name == "channel");
-        var desc = (await channelParam.Value())?.ToString() ?? "";
-        await Assert.That(desc.Contains("to ")).IsFalse();
-        await Assert.That(desc.Contains("pattern")).IsFalse();
     }
 }

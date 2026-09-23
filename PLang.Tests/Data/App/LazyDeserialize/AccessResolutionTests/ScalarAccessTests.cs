@@ -34,7 +34,7 @@ public class ScalarAccessTests
     [Test] public async Task Scalar_TextValue_ReturnsString_NoStructuredParse()
     {
         const string json = "{\"port\":8080}";
-        var d = global::PLang.Tests.Shared.Make.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(json, type.Create("item", "json"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Peek()?.ToString()).IsEqualTo(json); // the raw string, not a dict
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // never parsed
     }
@@ -47,7 +47,7 @@ public class ScalarAccessTests
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]));
         var ctx = app.User.Context;
-        ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg"));
+        ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("item", "json", context: ctx), ctx, "cfg"));
 
         await Assert.That(await ctx.Variable.Resolve("%cfg%")).IsEqualTo("{\"port\":8080}");
         await Assert.That(await ctx.Variable.Resolve("%cfg.port%")).IsEqualTo("8080");
