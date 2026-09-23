@@ -36,20 +36,12 @@ public partial class @this
 
     /// <summary>The action's declared parameter slots — its own <c>property.list</c> collection, the
     /// ONE reflection site (the collection owns the reflect + catalog filter). Build validation reads
-    /// Nullable / Default / Name off the rows; the catalog templates render each row. Needs the
-    /// catalog context (to resolve the handler) — a .pr-zoom action navigates via the clr carrier and
-    /// has none. Cached per element.</summary>
+    /// Nullable / Default / Name off the rows; the catalog templates render each row. Reached through
+    /// the module the action was born with (its handler and the type registry are the module's to
+    /// know). Cached per element.</summary>
     [JsonIgnore]
     public global::app.goal.step.action.property.list.@this Property
-    {
-        get
-        {
-            var app = App ?? throw new System.InvalidOperationException(
-                "action.Property needs the catalog — this action has no module, so it was built outside a construction door.");
-            return _properties ??= new global::app.goal.step.action.property.list.@this(
-                Handler, app.Type, app.System.Context);
-        }
-    }
+        => _properties ??= new(Handler, Module.App.Type);
 
     private string? _return;
     private bool _returnComputed;

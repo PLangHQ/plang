@@ -20,7 +20,7 @@ public class Stage5_ChannelActionsBuilderCatalogTests
         await Assert.That(add).IsNull();
 
         // set: Name (+ optional Actor + config); the Goal slot is action-typed structure, not a row
-        var setRows = set!.Property.Rows;
+        var setRows = set!.Property;
         await Assert.That(setRows.Any(r => r.Name == "Name")).IsTrue();
         await Assert.That(setRows.Any(r => r.Name == "Buffer")).IsTrue();
         await Assert.That(setRows.Any(r => r.Name == "Timeout")).IsTrue();
@@ -28,6 +28,6 @@ public class Stage5_ChannelActionsBuilderCatalogTests
         await Assert.That(setRows.Any(r => r.Name == "Encoding")).IsTrue();
 
         // remove: Name (+ optional Actor)
-        await Assert.That(remove!.Property.Rows.Any(r => r.Name == "Name")).IsTrue();
+        await Assert.That(remove!.Property.Any(r => r.Name == "Name")).IsTrue();
     }
 }

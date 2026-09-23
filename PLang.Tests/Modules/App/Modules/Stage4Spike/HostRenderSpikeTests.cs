@@ -117,15 +117,18 @@ public class HostRenderSpikeTests
     [Test]
     public async Task LegC_PropertyRowHost()
     {
+        // The REAL catalog: an action's property rows are a host list Fluid iterates, each row read
+        // through its own members (Name, Type.Name, IsVariable, Nullable) — the menu template's shape.
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-c");
-        var modules = SampleModules(app.User.Context);
+        var ctx = app.User.Context;
+        var actions = NativeList(ctx, app.Module["file"]["read"]!, app.Module["variable"]["set"]!);
         var outp = await Render(app,
-            "{% for m in modules %}{% for a in m.Action %}{% for p in a.Properties %}" +
-            "{{ p.Name }}:{% if p.IsVariable %}%var%{% else %}{{ p.TypeName }}{% if p.Nullable %}?{% endif %}{% endif %}" +
-            "{% if p.Default %}={{ p.Default }}{% endif %} {% endfor %}{% endfor %}{% endfor %}",
-            modules);
-        // file.read: Path:path Encoding:string?=utf-8 ; variable.set: Name:%var% Value:object
-        await Assert.That(outp).IsEqualTo("Path:path Encoding:string?=utf-8 Name:%var% Value:object ");
+            "{% for a in modules %}{{ a.Name }}:{% for p in a.Property %} {{ p.Name }}=" +
+            "{% if p.IsVariable %}%var%{% else %}{{ p.Type.Name }}{% if p.Nullable %}?{% endif %}{% endif %}" +
+            "{% endfor %};{% endfor %}",
+            actions);
+        await Assert.That(outp).Contains("read: Path=path");
+        await Assert.That(outp).Contains("set: Name=%var% Value=item");
     }
 
     // --- Leg (d): prose doors — which exposure form does Fluid actually read? ---

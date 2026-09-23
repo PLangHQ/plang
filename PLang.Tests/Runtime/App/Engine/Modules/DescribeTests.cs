@@ -13,7 +13,7 @@ public class DescribeTests
         var action = modules["testmod"]["datapath"];
         await Assert.That(action).IsNotNull();
 
-        var pathParam = action!.Property.Rows.First(r => r.Name == "Path");
+        var pathParam = action!.Property.First(r => r.Name == "Path");
         await Assert.That(pathParam.Type.Name).IsEqualTo("path");
     }
 }

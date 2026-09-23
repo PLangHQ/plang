@@ -40,7 +40,7 @@ public partial class @this
             if (Parameter != null)
                 foreach (var p in Parameter) emitted.Add(p.Name);
 
-            foreach (var row in element.Property.Rows)
+            foreach (var row in element.Property)
             {
                 if (row.Nullable || row.Default != null) continue;
                 if (!emitted.Contains(row.Name))
