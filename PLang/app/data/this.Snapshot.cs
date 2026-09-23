@@ -5,7 +5,7 @@ namespace app.data;
 
 /// <summary>
 /// Data — snapshot/resume concern. Any action whose result Type satisfies
-/// <c>Type.Exit()</c> MUST attach a non-null Snapshot here before returning.
+/// <c>Exits</c> MUST attach a non-null Snapshot here before returning.
 /// Snapshot capture happens via <c>action.Snapshot()</c> while the Call frame
 /// is still alive.
 /// </summary>

@@ -29,7 +29,7 @@ public partial class Set : IContext
         if (Type?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null
             && valueBacking != null && !Value.HasVariableReference)
         {
-            var clr = t.ClrType;
+            var clr = t.ClrType ?? Context.App.Type.Clr(t.Name);
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
             {
                 var probe = TryInstantiateValidator(clr, valueBacking);
@@ -207,15 +207,12 @@ public partial class Set : IContext
                 if (canon != null && canon != type.Kind!.Name)
                     type = new global::app.type.@this(type.Name, canon, type.Strict, type.Template) { Kind = Context.App.Type.Kind[canon] };
             }
-            // Stamp the entity's Context so ClrType resolves through the
-            // registry when the entity wasn't minted with a CLR mate.
-            type.Context ??= Context;
             var typeName = type.Name;
-            // Resolve the CLR target from the ENTITY, not Get(name). For
-            // `number` the name resolves to the number.@this domain class, but
-            // a numeric value is a CLR primitive (int/long/...) — the entity's
-            // ClrType carries the right mate (typeof(int) for {number, int}).
-            var targetType = type.ClrType ?? Context.App.Type.Get(typeName);
+            // Resolve the CLR target from the ENTITY first. For `number` the name resolves to the
+            // number.@this domain class, but a numeric value is a CLR primitive (int/long/...) — the
+            // entity's ClrType carries the right mate (typeof(int) for {number, int}); a bare name
+            // asks the registry with this handler's context.
+            var targetType = type.ClrType ?? Context.App.Type.Clr(typeName) ?? Context.App.Type.Get(typeName);
 
             // Stamp kind from the value by building through the family's eager door and
             // reading the kind off the built value (image parses its path's extension → jpg;

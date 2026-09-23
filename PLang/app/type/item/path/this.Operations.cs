@@ -40,7 +40,7 @@ public abstract partial class @this
     protected async Task<data.@this?> AuthGate(Verb verb)
     {
         var auth = await Authorize(verb);
-        if (auth.Type?.ClrType.Exit() == true) return auth;
+        if (auth.Exits) return auth;
         if (!auth.Success) return auth;
         return null;
     }
@@ -141,7 +141,7 @@ public abstract partial class @this
     public virtual async Task<data.@this<@this>> CopyTo(@this destination, bool overwrite, bool includeSubfolders)
     {
         var read = await ReadBytes();
-        if (!read.Success || read.Type?.ClrType.Exit() == true) return data.@this<@this>.From(read);
+        if (!read.Success || read.Exits) return data.@this<@this>.From(read);
         byte[]? copyBytes = (await read.Value())?.Value;
         if (copyBytes == null)
             return Context!.Error<@this>(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
@@ -155,7 +155,7 @@ public abstract partial class @this
     public virtual async Task<data.@this<@this>> MoveTo(@this destination, bool overwrite)
     {
         var copy = await CopyTo(destination, overwrite, includeSubfolders: true);
-        if (!copy.Success || copy.Type?.ClrType.Exit() == true) return copy;
+        if (!copy.Success || copy.Exits) return copy;
         return await Delete();
     }
 

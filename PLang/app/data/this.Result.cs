@@ -64,6 +64,35 @@ public partial class @this
 
     public static implicit operator bool(@this d) => d.Success;
 
+    /// <summary>
+    /// True when this Data's type exits the goal — an <see cref="global::app.IExitsGoal"/> class
+    /// (an ask awaiting its answer, a stateless suspend). Asked through this Data's own context:
+    /// a typed absence (`ask` with no value yet) names its type without carrying the class.
+    /// </summary>
+    [JsonIgnore]
+    public bool Exits
+    {
+        get
+        {
+            var clr = Type?.ClrType ?? (Type is { } t ? Context?.App.Type.Clr(t.Name) : null);
+            return clr != null && typeof(global::app.IExitsGoal).IsAssignableFrom(clr);
+        }
+    }
+
+    /// <summary>
+    /// The step loop's one stop test: an unhandled failure, an explicit return, or a result that
+    /// exits the goal. A value can declare itself resolved (<see cref="global::app.IExitsGoal.ShouldExit"/>)
+    /// — a typed return like Data&lt;Ask&gt; with its answer bound flows through. A raw-backed,
+    /// untouched payload is never a flow-control signal, so the probe never materializes it.
+    /// </summary>
+    public bool ShouldExit()
+    {
+        if (!Success && !Handled) return true;
+        if (Returned) return true;
+        if (!RawUntouched && Peek() is global::app.IExitsGoal eg) return eg.ShouldExit();
+        return Exits;
+    }
+
     // --- Static helpers (replace Return helpers) ---
 
     public static @this Ok() => new("");

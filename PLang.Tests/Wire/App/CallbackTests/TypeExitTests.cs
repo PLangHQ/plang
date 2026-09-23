@@ -2,34 +2,39 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using app;
-using app.type;
-using app.type.list;
 using app.module.action.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 3: `Type.Exit()` extension and the `Ask` IExitsGoal marker.
-/// `Type.Exit()` is the only engine-side discriminator for "this Data exits the
-/// goal" — query is `result.Type?.ClrType?.Exit() == true`.
+/// The one exit owner: a result Data answers whether it exits the goal (`Exits`, and the step
+/// loop's `ShouldExit()`), asking through its own context — an `ask` result stops the goal,
+/// including a typed absence (an `ask` slot with no answer yet) whose type names no class.
 public class TypeExitTests
 {
-    [Test] public async Task TypeExit_TrueFor_Ask()
-        => await Assert.That(typeof(Ask).Exit()).IsTrue();
+    private global::app.@this _app = null!;
+    private global::app.actor.context.@this Ctx => _app.User.Context;
 
-    [Test] public async Task TypeExit_FalseFor_String()
-        => await Assert.That(typeof(string).Exit()).IsFalse();
+    [Before(Test)]
+    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/tmp/typeexit-" + System.Guid.NewGuid().ToString("N")[..6]);
 
-    [Test] public async Task TypeExit_FalseFor_ByteArray()
-        => await Assert.That(typeof(byte[]).Exit()).IsFalse();
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
 
-    [Test] public async Task TypeExit_FalseFor_PlainClassWithoutMarker()
-        => await Assert.That(typeof(System.Text.StringBuilder).Exit()).IsFalse();
+    // An `ask` typed absence — the type names `ask`, the value carries no class.
+    private global::app.data.@this AskAbsent()
+        => new("", new global::app.type.item.@null.@this(_app.Type[typeof(Ask)].Name), context: Ctx);
 
-    [Test] public async Task TypeExit_FalseFor_GenericDataOfNonExitT()
-    {
-        var d = new global::app.data.@this<global::app.type.item.text.@this>("", "hello");
-        await Assert.That((await d.Value())?.GetType().Exit() ?? false).IsFalse();
-    }
+    [Test] public async Task Exits_TrueFor_TypedAbsentAsk()
+        => await Assert.That(AskAbsent().Exits).IsTrue();
+
+    [Test] public async Task ShouldExit_TrueFor_TypedAbsentAsk()
+        => await Assert.That(AskAbsent().ShouldExit()).IsTrue();
+
+    [Test] public async Task Exits_FalseFor_Text()
+        => await Assert.That(new global::app.data.@this("", "hello", context: Ctx).Exits).IsFalse();
+
+    [Test] public async Task ShouldExit_FalseFor_SuccessfulText()
+        => await Assert.That(new global::app.data.@this("", "hello", context: Ctx).ShouldExit()).IsFalse();
 
     [Test] public async Task Ask_ImplementsIExitsGoal()
         => await Assert.That(typeof(IExitsGoal).IsAssignableFrom(typeof(Ask))).IsTrue();

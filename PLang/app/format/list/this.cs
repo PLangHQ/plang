@@ -490,6 +490,18 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Whether content of <paramref name="type"/> benefits from compression. Binary content carries
+    /// its true family in the kind (jpg → image, mp3 → audio) — its name is just "binary"; a native
+    /// value carries it in the name (text, archive). The kind's family first, then the name's; no
+    /// family → not compressible.
+    /// </summary>
+    public bool Compressible(global::app.type.@this type)
+    {
+        var family = (type.Kind != null ? TypeOf(type.Kind.Name) : null) ?? FamilyOf(type.Name);
+        return family != null && Compressible(family);
+    }
+
+    /// <summary>
     /// PLang type value → Family ("image", "text", "spreadsheet"). Recognizes
     /// known family names and MIME types. Returns null for PLang type names
     /// (string, int, etc.) and unknown values. Renamed from <c>KindOf</c> —

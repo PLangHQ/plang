@@ -71,7 +71,7 @@ public partial class Read : IContext
         {
             var channel = new global::app.channel.type.file.@this(path);
             var read = await channel.Read();
-            if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+            if (!read.Success || read.Exits) return read;
             if (read.Raw is byte[] imageBytes)
                 return new data.@this(read.Name,
                     new global::app.type.item.image.@this(imageBytes, path), read.Type, context: Context);

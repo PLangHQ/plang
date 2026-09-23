@@ -356,7 +356,7 @@ public class EngineTypesTests
     [Test]
     public async Task Compressible_NullOrEmpty_ReturnsFalse()
     {
-        await Assert.That(_formats.Compressible(null!)).IsFalse();
+        await Assert.That(_formats.Compressible((string)null!)).IsFalse();
         await Assert.That(_formats.Compressible("")).IsFalse();
     }
 

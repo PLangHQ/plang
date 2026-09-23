@@ -155,30 +155,13 @@ public sealed class @this : item.@this
     }
 
     /// <summary>
-    /// CLR mate for this type's name. Internal — the public PLang surface is
-    /// name-keyed (the registry's <c>App.Type.Clr(name)</c> / <c>Get(name)</c>
-    /// is the door for interior consumers).
+    /// The C# class this type object was born knowing — a registry entry always carries it; a
+    /// value's own type carries it when the value stamped it. Null otherwise: a caller that needs
+    /// the class for a bare name asks the registry with its own context (<c>App.Type.Clr(name)</c>).
     /// </summary>
     [JsonIgnore]
-    internal System.Type? ClrType => _clrType ?? Context?.App.Type.Clr(Name) ?? AppTypes.GetPrimitiveOrMime(Name);
+    internal System.Type? ClrType => _clrType;
     private System.Type? _clrType;
-
-    /// <summary>True when content of this type benefits from compression.</summary>
-    [JsonIgnore]
-    public bool Compressible
-    {
-        get
-        {
-            var format = Context?.App.Format;
-            if (format == null) return false;
-            // Binary content carries its true family in the Kind (jpg→image,
-            // mp3→audio): the Name is just "binary". A native value carries it
-            // in the Name (text, archive). Resolve the Kind's family first, fall
-            // back to the Name's. Null family → not compressible.
-            var family = (Kind != null ? format.TypeOf(Kind.Name) : null) ?? format.FamilyOf(Name);
-            return family != null && format.Compressible(family);
-        }
-    }
 
 
     /// <summary>
@@ -338,7 +321,7 @@ public sealed class @this : item.@this
     // closed thunk (or the decline) and forwards, so every later door call is a bare invocation.
     private item.@this? Bind(object? raw, global::app.actor.context.@this? ctx)
     {
-        _byContext = Creatable is { } clr
+        _byContext = Creatable(ctx) is { } clr
             ? _openByContext.MakeGenericMethod(clr)
                 .CreateDelegate<System.Func<object?, global::app.actor.context.@this?, item.@this?>>()
             : static (_, _) => null;
@@ -347,19 +330,20 @@ public sealed class @this : item.@this
 
     private item.@this? Bind(object? raw, global::app.data.@this data)
     {
-        _byData = Creatable is { } clr
+        _byData = Creatable(data.Context) is { } clr
             ? _openByData.MakeGenericMethod(clr)
                 .CreateDelegate<System.Func<object?, global::app.data.@this, item.@this?>>()
             : static (_, _) => null;
         return _byData(raw, data);
     }
 
-    // The one eligibility check both binders share: the entity's ClrType when it is an ICreate<clr>
-    // family — ICreate<clr> SPECIFICALLY (a subtype implementing ICreate<base>, e.g. FilePath :
-    // ICreate<path>, can't close Create<subtype>); null for a primitive/host entity, whose doors
-    // decline so the collection perimeter falls to the next rung.
-    private System.Type? Creatable
-        => ClrType is { } clr
+    // The one eligibility check both binders share: this type's class — the one it was born with,
+    // else the registry's, asked with the caller's context — when it is an ICreate<clr> family —
+    // ICreate<clr> SPECIFICALLY (a subtype implementing ICreate<base>, e.g. FilePath : ICreate<path>,
+    // can't close Create<subtype>); null for a primitive/host entity, whose doors decline so the
+    // collection perimeter falls to the next rung.
+    private System.Type? Creatable(global::app.actor.context.@this? ctx)
+        => (ClrType ?? ctx?.App.Type.Clr(Name)) is { } clr
            && typeof(item.@this).IsAssignableFrom(clr)
            && System.Array.Exists(clr.GetInterfaces(),
                   i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)

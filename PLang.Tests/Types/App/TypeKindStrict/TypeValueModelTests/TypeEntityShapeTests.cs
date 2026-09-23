@@ -67,13 +67,9 @@ public class TypeEntityShapeTests
     [Test] public async Task Entity_Compressible_DerivesFromName()
     {
         await using var app = TestApp.Create("/test");
-        // Compressible reads App.Format.Compressible(Name). Pre-stamped image
-        // entity carries a Context, so the path runs end-to-end without throw.
+        // Compressibility is the format's knowledge about a type: image is already compressed.
         var image = app.Type["image"];
-        // No specific bool pinned — Compressible flips on family but the call
-        // must not throw and must return a stable bool.
-        var result = image.Compressible;
-        await Assert.That(result == true || result == false).IsTrue();
+        await Assert.That(app.Format.Compressible(image)).IsFalse();
     }
 
     [Test] public async Task Promote_StillThrows_WhenContextUnstamped()

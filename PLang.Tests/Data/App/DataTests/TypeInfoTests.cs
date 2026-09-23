@@ -71,7 +71,7 @@ public class TypeTests
         var type = Type.FromMime("text/plain");
 
         await Assert.That(type.Name).IsEqualTo("text/plain");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(string));
     }
 
     [Test]
@@ -80,7 +80,7 @@ public class TypeTests
         var type = Type.FromMime("text/markdown");
 
         await Assert.That(type.Name).IsEqualTo("text/markdown");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(string));
     }
 
     [Test]
@@ -89,7 +89,7 @@ public class TypeTests
         var type = Type.FromMime("image/jpeg");
 
         await Assert.That(type.Name).IsEqualTo("image/jpeg");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(byte[]));
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(byte[]));
     }
 
     [Test]
@@ -98,7 +98,7 @@ public class TypeTests
         var type = Type.FromMime("application/json");
 
         await Assert.That(type.Name).IsEqualTo("application/json");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(object));
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(object));
     }
 
     [Test]
@@ -107,7 +107,7 @@ public class TypeTests
         var type = Type.FromMime("application/octet-stream");
 
         await Assert.That(type.Name).IsEqualTo("application/octet-stream");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(byte[]));
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(byte[]));
     }
 
     [Test]

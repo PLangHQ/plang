@@ -74,13 +74,18 @@ public class NonNullInvariantTests
         await Assert.That(staticAnswer).IsNull()
             .Because("guard: if the static path ever learns about 'path', this test no longer proves what its name claims.");
 
+        // A bare type object answers only the class stamped at its birth; the asker brings the
+        // context and the registry answers by name.
         var d = new global::app.data.@this("", "any/raw/value",
             new global::app.type.@this("path"), context: app.User.Context);
-        await Assert.That(d.Type.ClrType).IsNotNull()
+        await Assert.That(d.Type.ClrType).IsNull()
+            .Because("a bare type holds no context — it never reaches the registry itself.");
+        var clr = d.Context!.App.Type.Clr(d.Type.Name);
+        await Assert.That(clr).IsNotNull()
             .Because("registry knows 'path' → typeof(global::app.type.item.path.@this); static fallback returns null.");
-        await Assert.That(d.Type.ClrType!.Name).IsEqualTo("this")
+        await Assert.That(clr!.Name).IsEqualTo("this")
             .Because("the registered CLR type for 'path' is app.type.item.path.@this — Type.Name strips the @-escape.");
-        await Assert.That(d.Type.ClrType!.Namespace).IsEqualTo("app.type.item.path");
+        await Assert.That(clr!.Namespace).IsEqualTo("app.type.item.path");
     }
 
     [Test] public async Task GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved()
