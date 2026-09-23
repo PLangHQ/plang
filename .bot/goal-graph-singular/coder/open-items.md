@@ -11,10 +11,13 @@ stored in the `.pr`. Recomputed 2026-09-23 over `os/system/builder/**/.build/*.p
 rebuilds write to `tools/decider/out/`, never over the live files, so they did not refresh these. Anything using
 the hash for staleness sees a lie. Not recomputed unilaterally on a bootstrap artifact (ties to #12).
 
-**8. `DiscoverActionTests` — 2 user-tag reds left.** Fixture writes through the goal's own writer (`338448a04`);
-the list writer bug it exposed is fixed (`143b5ad9d`). `Discover_UserTags_*` wait on the tag rework
-(goal.Tag stamped by `test.tag` Build, `test.Create`, discover collapses — ruled July 24, confirmed by Ingi
-2026-09-23; plan sent, awaiting ruling on regex delete / Run no-op / call-target owner).
+**24. `test.Create(goal, context)` is a static async factory** — the no-statics rule catches it (only the
+C#-mandated `ICreate` statics are exempt). OBP home: the test collection's lifecycle mints its elements
+(`app.Test` asked by discover, as the module list mints module elements). Decide with the births pass.
+
+**25. Births pass — inventory done** (`births-inventory.md` + `.tsv`, at `22e6dafd6`): readers 68, typed ask 39,
+pure core 4 external, implicit-in 237, direct `new` 526 (errors 270), raw result doors 150; 34 `Type => new(...)`
+getters; `new app.type` outside the registry at 7 sites.
 
 **9. `PathSerializerMigrationTests` / `KindViaCreateTests` path-kind flake.** Not reproduced in 6 isolated runs +
 3 full sweeps; the helpers now print the decline's key + message (`a5cf9e221`), so the next occurrence names its
@@ -81,6 +84,8 @@ open rulings: blast-radius list, honest mock).
 
 ## Done
 
+- **8 Tag rework** — goal owns its tags (`.pr` wire), `test.tag` Build stamps `%goal%`, `IClass.Callee`,
+  `test.Create`, `app.Test.Exclusion`, discover collapsed; DiscoverActionTests 10/10: `22e6dafd6`.
 - **0b Ignored errors** — marked Handled, stay in the audit, one line under --debug: `10829ad4f`.
 - **List writer bug** — only a chunk dissolves; list-valued parameters write as one row: `143b5ad9d`.
 - **GoalPathTypingTests** — round-trip through the goal's own writer/reader: `cf0fbe647`.
