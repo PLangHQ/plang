@@ -62,6 +62,29 @@ modifiers — the decider menu needs BOTH (known bug: `error.handle` can never r
 because the templates walk `m.Actions`). Rename only here, or do you want the menu fix (walk both,
 or one `module.Action` holding all with modifier as a role) folded in?
 
+## Measurement — `plang --test` from `Tests/` (asked in plural-gate-answer.md)
+
+Fresh binary (`dotnet build PlangConsole` on `c07cfdbfc`), `cd Tests && plang --test < /dev/null`:
+**no output at all, exit 0.** With `--debug`: one line, `--- DEBUG: Goal 'Test' completed ---`.
+
+Cause: the test RUNNER itself is a stale file. `os/system/.build/test.pr` (last touched 2026-05-22)
+has goal-level `steps` (4 of them) with element key `actions` — the goal reader skips `steps`, so
+`system/test.goal` loads with zero steps. Discovery never runs; no test goal is loaded at all.
+So it is worse than "467 vacuous passes": **`plang --test` on this branch runs nothing and reports
+green-by-silence.** There is no per-goal zero-step count to report, because nothing is reached.
+
+Static count instead (goal-level key, every `*.pr` under `os/` + `Tests/` `.build/`):
+
+| | goal `.pr` files | `steps` (plural, loads empty) | `step` (singular) |
+|---|---|---|---|
+| all | 804 | 790 | 14 |
+| `*.test.pr` | 468 | 467 | 1 |
+
+(The other 1369 `.pr` files are `app.pr` markers `{created,id,name,updated,version}` or not JSON.)
+
+This supports the "fail loud on an unknown key" change for Ingi: had the goal reader thrown, the
+runner's own stale `.pr` would have surfaced on the first `plang --test`.
+
 ## Order after your answers
 Q1 deletes → renames 1–5 (one commit each, Edit-tool, console-visible) → rebuild builder `.pr`
 with `tools/decider/build_pr.py` → Modules suite + grep gate report. No full sweep.
