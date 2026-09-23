@@ -18,17 +18,18 @@ namespace app.type.item.list;
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext,
-    global::app.data.IListLeaf, IEnumerable<Data>
+    IEnumerable<Data>
 {
-    /// <summary>The lazy read seam — yields each row as a <see cref="Data"/> (rich
-    /// carrier: name, type, context, the <c>.Value()</c> door), unresolved. The
-    /// consumer resolves what it needs per row (<c>await row.Value()</c>) or converts
-    /// it (<c>row.Clr&lt;T&gt;()</c>) — the list never materialises a resolved copy.</summary>
-    public IEnumerator<Data> GetEnumerator()
-    {
-        foreach (var slot in _items)
-            yield return slot is Data d ? d : new Data("", global::app.type.item.@this.Create(slot, _context), context: _context);
-    }
+    /// <summary>The lazy read seam — yields each element as a <see cref="Data"/> (rich
+    /// carrier: name, type, context, the <c>.Value()</c> door), unresolved — the same element
+    /// view as <see cref="Items"/>. The consumer resolves what it needs per element
+    /// (<c>await row.Value()</c>) — the list never materialises a resolved copy.</summary>
+    public IEnumerator<Data> GetEnumerator() => Items.GetEnumerator();
+
+    // A CHUNK row: another list's elements appended in O(1) by an extend (`Add(list)`), read in
+    // place as this list's elements. The meaning is recorded at ADD time — a row whose value is a
+    // list but that is NOT a chunk is ONE element (a nested array, a list-valued parameter).
+    private sealed record Chunk(@this Items);
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -54,7 +55,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // a plang wrapper. A raw CLR scalar or a raw nested container (List/Dictionary)
     // is NOT one: it rides verbatim and is handed back as-is.
     private static bool IsWrapped(object? slot)
-        => slot is Data or global::app.type.item.@this;
+        => slot is Data or global::app.type.item.@this or Chunk;
 
     public @this(actor.context.@this context) : this(new List<object?>(), context) { }
     public @this(IEnumerable<Data> items, actor.context.@this context) : this(new List<object?>(items), context) { _hasWrapped = true; }
@@ -128,22 +129,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var raw = _items[i];
         if (raw is Data d)
         {
-            d.Context = _context;
+            // A program node's _context is null — never stamp it onto an element (the element keeps
+            // the context it was read/born with; the shared node stays context-free).
+            if (_context != null) d.Context = _context;
             return d;
         }
         return new Data("", global::app.type.item.@this.Create(raw, _context), context: _context);
     }
-
-    // The structural face of a raw-or-Data slot — the item instance for the
-    // dissolve/locate checks (a row that IS a list dissolves into the container).
-    // A raw scalar answers null (it never dissolves); a native container / a
-    // Data's peeked value answers itself.
-    private static global::app.type.item.@this? Inner(object? slot) => slot switch
-    {
-        Data d => d.Peek(),
-        global::app.type.item.@this it => it,
-        _ => null,
-    };
 
     /// <summary>Appends a raw value (store raw, type on read) — the wire reader /
     /// literal-parse seam. A scalar rides verbatim; a native container holds its
@@ -185,15 +177,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // A list is a list of ROWS (`_items`). Each row holds its raw value (or the
     // Data it was added with) and types itself on read.
-    // The PUBLIC surface (Count/Items/At/...) is the FLATTENED view: a row whose value
-    // is itself a list contributes its leaves, everything else is one item. The row
-    // (chunk) structure is never observable — `add` appends a row without reading the
-    // existing ones, and reads walk the rows to present the flattened sequence.
+    // The PUBLIC surface (Count/Items/At/enumeration/...) is the ELEMENT view: a chunk row
+    // contributes its list's elements, every other row is one element (whatever its value —
+    // a list-valued row is one element that is a list). The row structure is never
+    // observable — an extend appends a chunk without reading the existing rows.
 
-    /// <summary>Number of leaves as the PLang <c>number</c> — the flattened item count
-    /// (a list row contributes its own count; a scalar/dict row contributes 1). Walked
-    /// on demand: a row may alias a list mutated elsewhere, so a stored counter would
-    /// stale.</summary>
+    /// <summary>Number of elements as the PLang <c>number</c> (a chunk contributes its list's
+    /// count; any other row contributes 1). Walked on demand: a chunk aliases a list that may be
+    /// mutated elsewhere, so a stored counter would stale.</summary>
     public global::app.type.item.number.@this Count => CountRaw;
 
     /// <summary>The interior raw count — index math and loop bounds.</summary>
@@ -207,13 +198,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
     }
 
-    // A row's leaf count — a value that dissolves into the list (IListLeaf, i.e. a list)
-    // contributes its own leaf count; anything else is one whole item. The value owns
-    // the answer, so there's no `is list` type-switch here.
-    private static int LeafCount(object? row) => Inner(row) is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
+    // A row's element count — a chunk contributes its list's elements; any other row is one.
+    private static int LeafCount(object? row) => row is Chunk chunk ? chunk.Items.CountRaw : 1;
 
-    /// <summary>The flattened element Data in order — a row that dissolves (IListLeaf)
-    /// yields its leaves; a scalar/dict/table row is yielded whole, weight 1.</summary>
+    /// <summary>The element Data in order — a chunk yields its list's elements; any other row is
+    /// one element, whatever its value.</summary>
     public IReadOnlyList<Data> Items
     {
         get
@@ -221,7 +210,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             var flat = new List<Data>();
             for (int r = 0; r < _items.Count; r++)
             {
-                if (Inner(_items[r]) is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
+                if (_items[r] is Chunk chunk) flat.AddRange(chunk.Items.Items);
                 else flat.Add(Row(r));
             }
             return flat;
@@ -261,12 +250,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             yield return (new Data("", i++, context: context), item);
     }
 
-    // IListLeaf — a list dissolves into its container list: its leaves are this list's
-    // flattened items. (The mutation-addressing helper Locate still resolves to the
-    // concrete list, since editing a nested element needs the mutable surface.)
-    int global::app.data.IListLeaf.LeafCount => CountRaw;
-    IReadOnlyList<Data> global::app.data.IListLeaf.Leaves => Items;
-
     /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
     internal Data? At(int index)
         => Locate(index, out int row, out int offset, out @this? inner)
@@ -279,16 +262,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Last flattened element, or null when empty.</summary>
     public Data? Last => At(CountRaw - 1);
 
-    // Resolve a flattened index to the owning row + the offset within it. `inner` is the
-    // row's list when the row is a list (offset indexes into it); null for a weight-1 row
-    // (offset 0). Returns false when the index is out of range.
+    // Resolve an element index to the owning row + the offset within it. `inner` is the
+    // chunk's list when the row is a chunk (offset indexes into it); null for a one-element
+    // row (offset 0). Returns false when the index is out of range.
     private bool Locate(int flatIndex, out int rowIndex, out int offset, out @this? inner)
     {
         rowIndex = 0; offset = 0; inner = null;
         if (flatIndex < 0) return false;
         for (int r = 0; r < _items.Count; r++)
         {
-            if (Inner(_items[r]) is @this list)
+            if (_items[r] is Chunk { Items: var list })
             {
                 int w = list.CountRaw;
                 if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
@@ -303,12 +286,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return false;
     }
 
-    /// <summary>Appends one row holding <paramref name="item"/> (build-at-edge for the
-    /// parse seam and list.add). O(1) — never reads or merges the existing rows; the
-    /// row's weight (1, or the item's flattened count when it is a list) surfaces via Count.</summary>
-    /// <summary>Appends a single native value as its own row — the list owns the
-    /// row-wrapping, callers hand over the bare value (a <c>text</c>, a <c>timing</c>,
-    /// …), never a hand-built <c>Data</c>.</summary>
+    /// <summary>Appends a single native value as ONE element — the list owns the row-wrapping,
+    /// callers hand over the bare value (a <c>text</c>, a <c>timing</c>, …), never a hand-built
+    /// <c>Data</c>. A list value is one element that is a list.</summary>
     public @this Add(global::app.type.item.@this value)
     {
         _hasWrapped = true;
@@ -316,14 +296,39 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return this;
     }
 
-    /// <summary>Appends every element of <paramref name="other"/> (the <c>Add(list)</c>
-    /// form — no separate AddRange). Resolves ahead of <see cref="Add(global::app.type.item.@this)"/>
-    /// for a list argument, so a list flattens in rather than nesting as one row.</summary>
+    /// <summary>Extends this list with every element of <paramref name="other"/> — O(1): appends a
+    /// chunk that reads <paramref name="other"/>'s elements in place, never copying them (the
+    /// <c>Add(list)</c> form — no separate AddRange). Resolves ahead of
+    /// <see cref="Add(global::app.type.item.@this)"/> for a list argument.</summary>
     public @this Add(@this other)
     {
-        foreach (Data row in other) Add(row);
+        _hasWrapped = true;
+        _items.Add(new Chunk(other));
         return this;
     }
+
+    /// <summary>Extends this list with every element of <paramref name="other"/> at the element
+    /// <paramref name="index"/> (clamped to [0, Count]) — one chunk, never a copy.</summary>
+    internal @this Insert(int index, @this other)
+    {
+        _hasWrapped = true;
+        if (index < 0) index = 0;
+        if (Locate(index, out int row, out int offset, out @this? inner) && inner == null)
+            _items.Insert(row, new Chunk(other));
+        else if (inner != null)
+        {
+            // inside a chunk: split it at the offset so the extend lands between its halves
+            var head = new @this(inner.Items.Take(offset), inner._context);
+            var tail = new @this(inner.Items.Skip(offset), inner._context);
+            _items[row] = new Chunk(tail);
+            _items.Insert(row, new Chunk(other));
+            _items.Insert(row, new Chunk(head));
+        }
+        else _items.Add(new Chunk(other));   // index >= Count → append
+        return this;
+    }
+
+    public @this Insert(global::app.type.item.number.@this index, @this other) => Insert(index.ToInt32(), other);
 
     public @this Add(Data item)
     {
@@ -671,8 +676,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// mixed list never errors a membership ask.</summary>
     public override async System.Threading.Tasks.ValueTask<bool> Contains(Data needle)
     {
-        for (int i = 0; i < _items.Count; i++)
-            if (await Row(i).Compare(needle) == global::app.data.Comparison.Equal) return true;
+        foreach (var element in Items)
+            if (await element.Compare(needle) == global::app.data.Comparison.Equal) return true;
         return false;
     }
 
@@ -684,9 +689,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(global::app.type.item.@this value)
         => await Contains(new Data("", value, context: _context));
 
-    /// <summary>The item emptiness hook — no entries.</summary>
+    /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(_items.Count == 0);
+        => System.Threading.Tasks.ValueTask.FromResult(CountRaw == 0);
 
     // ---- Comparison (the unified hook — see app.type.compare) ----
 

@@ -31,14 +31,23 @@ public partial class Add : IContext
         // semantics: `add %b% to %a%` shares %b%'s list instance (a later
         // in-place mutation of %b% is visible through %a%, like C#), while a
         // later `set %b% = ...` rebinds %b% and never touches the entry.
-        data.@this toAdd = new data.@this(Value.Name, await Value.Value(), Value.Type, context: Context);
+        var value = await Value.Value();
 
         // Typed read — number end to end; the list lowers inside its own boundary.
         var atIndex = (await AtIndex.Value())!;
-        if (atIndex >= 0 && atIndex <= list.Count)
-            list.Insert(atIndex, toAdd);
+        var positioned = atIndex >= 0 && atIndex <= list.Count;
+        if (value is app.type.item.list.@this items)
+        {
+            // Adding a list EXTENDS: its elements join this list (an O(1) chunk, nothing copied).
+            if (positioned) list.Insert(atIndex, items);
+            else list.Add(items);
+        }
         else
-            list.Add(toAdd);
+        {
+            data.@this toAdd = new data.@this(Value.Name, value, Value.Type, context: Context);
+            if (positioned) list.Insert(atIndex, toAdd);
+            else list.Add(toAdd);
+        }
 
         return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
     }

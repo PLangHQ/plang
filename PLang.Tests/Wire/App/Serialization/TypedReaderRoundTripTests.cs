@@ -112,11 +112,13 @@ public class TypedReaderRoundTripTests
 
     [Test] public async Task List_Nested_Isolated()
     {
-        // Items flattens leaves, so two nested pairs surface as four leaves —
-        // proving both nested lists and their elements were read off the pass.
+        // A nested array stays nested: two elements, each a list of two — both nested lists and
+        // their elements were read off the pass.
         var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[[1,2],[3,4]]", null);
         var list = (global::app.type.item.list.@this)item;
-        await Assert.That(list.Items.Count).IsEqualTo(4);
+        await Assert.That(list.Items.Count).IsEqualTo(2);
+        foreach (var element in list.Items)
+            await Assert.That(((global::app.type.item.list.@this)(await element.Value())!).Items.Count).IsEqualTo(2);
     }
 
     [Test] public async Task Dict_StreamsRawSlots_Isolated()

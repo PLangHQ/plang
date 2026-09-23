@@ -27,7 +27,7 @@ public class RowModelTests : System.IAsyncDisposable
         await Assert.That(a.Count).IsEqualTo(3);
 
         a.Add(D(40L));                          // scalar row, weight 1
-        a.Add(D(Of(50, 60)));                   // list row, weight 2 — merges on read
+        a.Add(Of(50, 60));                      // extend: a chunk, weight 2 — merges on read
 
         await Assert.That(a.Count).IsEqualTo(6);            // flattened, not row count
         await Assert.That((await a.At(0)!.Value())?.ToString()).IsEqualTo("10");
@@ -46,7 +46,7 @@ public class RowModelTests : System.IAsyncDisposable
         // exactly like List<T> in C#. The [1,2,3] rule.
         var b = Of(50, 60);
         var a = Of(10, 20);
-        a.Add(D(b));                            // the shared b instance itself
+        a.Add(b);                               // extend: a chunk reading the shared b instance itself
 
         await Assert.That(a.Count).IsEqualTo(4);
 
@@ -64,7 +64,7 @@ public class RowModelTests : System.IAsyncDisposable
     public async Task RemoveAt_FlattenedIndex_RemovesNestedLeaf()
     {
         var a = Of(10, 20);
-        a.Add(D(Of(50, 60)));                   // flat [10, 20, 50, 60]
+        a.Add(Of(50, 60));                      // extend → [10, 20, 50, 60]
         await Assert.That(a.Count).IsEqualTo(4);
 
         a.RemoveAt(2);                          // removes 50 (inside the nested row)
@@ -88,7 +88,7 @@ public class RowModelTests : System.IAsyncDisposable
     public async Task Sort_CollapsesRowsToFlat()
     {
         var a = Of(30, 10);
-        a.Add(D(Of(20, 5)));                    // flat [30, 10, 20, 5]
+        a.Add(Of(20, 5));                       // extend → [30, 10, 20, 5]
         a.SortByValue(descending: false);       // → [5, 10, 20, 30]
 
         await Assert.That(a.Count).IsEqualTo(4);
