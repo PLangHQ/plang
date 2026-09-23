@@ -1,75 +1,62 @@
 # Coder summary — branch `goal-graph-singular`
 
-## Retry-flake fix — `store` Fluid filter (DONE, green)
-The builder's compile-feedback render (`stepForLlm.template`) threw `VariableNotFoundException`
-on an authored runtime `%ref%` (e.g. `output.write Data="Hello %name%"`). Root cause: the template
-**hand-rolled** the action JSON and printed each value through `{{ p.Value }}` — the *resolve door* —
-executing an unset build-time `%var%`. Architect ruling (`template-value-view-answer.md`): the node
-writes itself; embed via `{{ step.Action | store }}`, no accessor fork / no render `View` input / no
-`.Value()` split.
+## Where things stand (2026-09-23)
 
-- **`store` Fluid filter** (`PLang/app/module/action/ui/code/Fluid.cs`) — serializes the navigated
-  container in **Store view** via the value's own writer. Fluid *flattens* a collection to its
-  elements before a filter runs (`object[]` of `item.@this`), so the filter handles the container
-  (`SerializeItemAsync`) **and** the flattened-elements case (`SerializeItemsAsync`).
-- **`SerializeItemsAsync`** (`PLang/app/channel/serializer/plang/this.cs`) — new array counterpart to
-  `SerializeItemAsync`: `BeginArray` + each element's `Output(Store)` + `EndArray`, byte-identical to
-  `action.list.Output`. The serializer owns the framing, not the filter.
-- **`stepForLlm.template:3`** — hand-rolled `{% for a %}…{{ p.Value | jsonval }}…` block replaced by
-  `{{ step.Action | store }}`. Embed verified = the real `.pr` action wire with `"value":"Hello %name%"`
-  literal + `type:{name:text,template:plang}`.
-- Reverted the earlier scaffolding: `render.cs` `View` input + `Fluid.cs` accessor/strategy view
-  plumbing (architect: view rides the filter, not the accessor).
-- Tests: `PLang.Tests/Runtime/App/SingularNamespaces/BuilderSchemaTests/RenderStoreViewTests.cs` — 2
-  green (`| store` embeds raw / no throw; `{{ p.Value }}` still throws on unset ref — doors stay
-  distinct). Full C# suites: **zero new failures** vs a stash+rebuild baseline (branch is broadly red
-  pre-existing, mid-refactor). Other catalog-walking templates (`stepActionDetails`, `actionFormal`)
-  are presentational — left as-is per the ruling.
+The live work list is `open-items.md` (open first, done at the bottom with commits). This summary covers the
+most recent work; older landed work is listed in open-items' Done section.
 
-## Landed (all pushed, `847e9b11f`)
+## What this is
 
-### Increment 3 + Gate-2 Phase A + §0 rename — DONE (green)
-Graph self-wire (Output + readers), `Visibility`→`choice`, `actions.@this` deleted, namespace
-`app.goal.steps.step`→`app.goal.step` / `…actions.action`→`app.goal.step.action`.
+The branch makes the goal graph singular and OBP-clean. The latest stretch:
 
-### Gate-2 Phase B — tree RUNTIME — DONE (green, validated)
-- `step.list` / `action.list` nodes (`goal/step/list/`, `goal/step/action/list/`) own `Run`; implement
-  `IReadOnlyList<T>` (reflection writes them as arrays, list-kind navigable, tests collection-init via
-  helpers) + `Add` (construction only) + `IndexOf`. Backed by a reused-not-copied `List` (no ToList glue).
-- `action.Child : step.list`; run chain `goal.Run→Step.Run→step.Run→Action.Run`; **fire in
-  `action.list.Run`** (`IsCondition && truthy → Child.Run; break`). `condition.if.Run` evaluate-only.
-- Deleted: `steps.@this`, `Decision`, `Orchestrate`, `skipBelowIndent`, `IsFirst`/`IsIfHead`.
-- Coverage **derives test-side** (no runtime stamping).
-- ~20 production + ~250 test consumers migrated. `RealGoalLoad` serializes the goal via its own Output
-  (not clr-reflection) — fixed a key-mismatch that broke round-trips.
+- the list model (only a chunk dissolves);
+- error-handling visibility;
+- goal tags as the goal's own fact;
+- the `clr`-named wrapper types;
+- the actor as a choice;
+- the births pass: making the shared program safe for concurrent actors.
 
-### Step 2 (partial) — child WIRE — DONE (additive, green round-trip)
-Action reader `case "child"` (lazy step-reader breaks the ctor cycle) + action Output writes `child`
-when non-empty. **Kept plural keys** (`steps`/`actions`) so disk `.pr` still reads — the singular-key
-flip rides the `.pr` migration (step 4).
+## What was done (latest first)
 
-**Test state:** core suites green (StepTests, ActionsTests, GroupModifiers, GoalTests back to its 2
-pre-existing). Remaining reds: pre-existing (StartGoal_Programmatic, ResolveValue_Full), deferred
-(SnapshotWire — snapshot restore deferred), and **condition tests** — expected: their fixtures build
-flat `if/elseif/else`, but the tree needs the branch bodies in `Child` (step 3 produces them).
+- **Births step 1 — `ee03f91f2`.** The program graph is shared by every run.
+  - A run never writes it: `action[name]` selects the row, and the generator gives each run its own Data
+    (`Copy(context)` / `As<T>(context)`) born with the run's context.
+  - A value loads with the context of the Data that asks (`source`/`wire`), never its own stored one.
+  - `goal.call` binds each argument as a caller-born copy. Behaviour fix: arguments from a real .pr never bound.
+  - A stored Data keeps its birth context: the Variables stamp and walk are gone.
+  - The generated channel lookup reads the run's copy.
+  - Tests: `PLang.Tests/Runtime/App/Goals/SharedProgramTests.cs` (8, rows from a real .pr).
+- **Births step A — `26823c1d1`.** The running context is an instance AsyncLocal on the App
+  (`app.Context`), set by `action.Run`/`goal.Run`/`Start()`. Kept for now; the type-object step decides
+  whether it stays.
+- **Births step B — dropped** (Ingi): values reading the running context was the wrong scope. It's parked
+  in a git stash for reference. `proto-running-context.md` and `births-B-blocker.md` record why.
+- **#20 actor as a choice — `1bf67dff4`.** `choice<actor>` over `{system, user}` on 5 slots, and `app.Actor[name]`.
+- **#19 — `6031fdfd7`, `23d9259fa`.** List actions return the native list; setting.set/remove return no value.
+  `[Masked]` is covered by a test-only item.
+- **#8 tags — `22e6dafd6`.** The goal owns its tags; `test.Create`; discover collapsed.
+- **#0b — `10829ad4f`.** List chunk rule `143b5ad9d`.
 
-## What's LEFT — steps 3–4 (the builder + migration; conditions not yet end-to-end)
+## Next
 
-The RUNTIME is correct (`action.list.Run` fires a truthy condition's `Child`). Conditions don't work
-end-to-end yet because nothing PRODUCES `Child`-nested `.pr`:
+- Births step 3 (the type object from the registry, which closes #27) is **on hold**. The architect is
+  taking the design to Ingi and will send the plan. After it: #15 and #24.
+- Open items: see `open-items.md` (#28 same-actor list.add race, #29 file:// not stripped, …).
 
-3. **Builder** — two producers:
-   - **Deterministic indent-fold** (C#, no eval risk): post-compile, fold a deeper-indented step into the
-     preceding condition action's `Child`. Makes indented-block conditions work.
-   - **LLM inline `if/elseif/else`** (the eval-risk piece): emit each branch body as `Child` steps with
-     per-branch `text`. Schema + prompt + goldens in `os/system/builder/**`.
-   - Condition test fixtures updated to build `Child` (or via the builder).
-4. **`.pr` migration** — flip wire keys to singular (`step`/`action`/`name`/`child`, drop `indent`),
-   hand-edit ~11 bootstrap `.pr` to `Child`-nest their conditions, rebuild the rest; verify the semantic
-   round-trip + branch coverage (architect §14).
+## Code example
 
-## Key files
-- `PLang/app/goal/step/list/this.cs`, `goal/step/action/list/this.cs` — nodes.
-- `goal/step/action/this.cs` — `Child`; `goal/step/action/serializer/Reader.cs` + `this.Item.cs` — child wire.
-- `goal/this.cs`, `goal/step/this.cs` — Step/Action node props + parser.
-- `module/action/condition/if.cs` — evaluate-only; `module/action/test/run.cs`+`discover.cs` — coverage.
+The generator's per-run binding. The row is never written; each run gets its own Data:
+
+```csharp
+private static global::app.data.@this __Copy(action, string name, context)
+    => action?[name]?.Copy(context) ?? global::app.data.@this.NotFound(name);   // plain slot
+private static global::app.data.@this<T> __View<T>(action, string name, context)
+    => action?[name]?.As<T>(context) ?? global::app.data.@this.NotFound(name).As<T>();   // typed slot
+```
+
+and a value loads with whoever asks:
+
+```csharp
+var asking = data.Context;                 // source.Value(data)
+var resolved = await Get(asking);          // %ref% resolves in the asking run's variables
+```
