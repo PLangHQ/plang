@@ -10,7 +10,7 @@ public partial class Add : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }
 
-    public async Task<data.@this<type.list>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var listName = (await ListName.Value());
         var data = await Context.Variable.Get(listName);
@@ -49,6 +49,6 @@ public partial class Add : IContext
             else list.Add(toAdd);
         }
 
-        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
+        return Context.Ok(list);
     }
 }

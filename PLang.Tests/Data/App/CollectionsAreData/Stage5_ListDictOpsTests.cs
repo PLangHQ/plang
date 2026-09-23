@@ -114,8 +114,8 @@ public class Stage5_ListDictOpsTests
         var action = new Unique(ctx) { ListName = new app.variable.@this("values") };
         var result = await action.Run();
         await result.IsSuccess();
-        await Assert.That((await result.Value())!.value as ListV).IsNotNull();
-        await Assert.That(((ListV)(await result.Value())!.value!).Count).IsEqualTo(2);
+        await Assert.That((await result.Value()) as ListV).IsNotNull();
+        await Assert.That(((ListV)(await result.Value())!).Count).IsEqualTo(2);
     }
 
     [Test]
@@ -130,7 +130,7 @@ public class Stage5_ListDictOpsTests
         var action = new Group(ctx) { ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.item.text.@this>("", "city", context: ctx) };
         var result = await action.Run();
         await result.IsSuccess();
-        var groups = (ListV)(await result.Value())!.value!;
+        var groups = (ListV)(await result.Value())!;
         await Assert.That(groups.Count).IsEqualTo(2);
         var reyk = (DictV)(await groups.At(0)!.Value())!;
         await Assert.That((await (reyk.Get("key"))!.Value())?.ToString()).IsEqualTo("Reyk");

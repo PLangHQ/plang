@@ -80,7 +80,7 @@ public class ListNestingTests
         }, ctx);
 
         await result.IsSuccess();
-        var flat = (global::app.type.item.list.@this)(await result.Value<global::app.module.action.list.type.list>())!.value!;
+        var flat = (global::app.type.item.list.@this)(await result.Value())!;
         await Assert.That(flat.CountRaw).IsEqualTo(3);
     }
 

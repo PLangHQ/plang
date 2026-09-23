@@ -9,7 +9,7 @@ public partial class Group : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
-    public async Task<data.@this<type.list>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var data = await Context.Variable.Get(await ListName.Value());
         var key = (await Key.Value())!.Clr<string>()!;
@@ -40,7 +40,6 @@ public partial class Group : IContext
             result.Add(new global::app.data.@this("", bucketDict, context: Context));
         }
 
-        return Context.Ok<type.list>(
-            new type.list { count = result.CountRaw, value = result }, Context.Type.Create("list"));
+        return Context.Ok(result);
     }
 }

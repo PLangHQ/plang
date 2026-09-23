@@ -2,7 +2,6 @@ using app.actor.context;
 using app;
 using app.variable;
 using app.module.action.list;
-using ListResult = global::app.module.action.list.type.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -280,7 +279,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var list = ((await result.Value()) as global::app.module.action.list.type.list)?.value as global::app.type.item.list.@this;
+        var list = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That(list!.Count).IsEqualTo(3);
     }
 
@@ -311,7 +310,7 @@ public class ListTests
         var action = new Unique(context) { ListName = new app.variable.@this("myList") };
         var result = await action.Run();
 
-        var list = ((await result.Value()) as global::app.module.action.list.type.list)?.value as global::app.type.item.list.@this;
+        var list = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
         var values = list.Items.Select(d => d.Peek()?.ToString()).ToList();
@@ -330,8 +329,8 @@ public class ListTests
         var action = new global::app.module.action.list.Range(context) { Start = (global::app.type.item.number.@this)1, End = (global::app.type.item.number.@this)5, Step = (global::app.type.item.number.@this)1 };
         var result = await action.Run();
 
-        var listResult = (await result.Value()) as ListResult;
-        await Assert.That(listResult!.count).IsEqualTo(5);
+        var listResult = (await result.Value()) as global::app.type.item.list.@this;
+        await Assert.That(listResult!.CountRaw).IsEqualTo(5);
     }
 
     // --- Any ---
@@ -433,7 +432,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var groups = ((await result.Value()) as global::app.module.action.list.type.list)?.value as global::app.type.item.list.@this;
+        var groups = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That(groups).IsNotNull();
         await Assert.That(groups!.Count).IsEqualTo(2);
 
@@ -463,7 +462,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var groups = ((await result.Value()) as global::app.module.action.list.type.list)?.value as global::app.type.item.list.@this;
+        var groups = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That(groups!.Count).IsEqualTo(0);
     }
 
@@ -481,7 +480,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var groups = ((await result.Value()) as global::app.module.action.list.type.list)?.value as global::app.type.item.list.@this;
+        var groups = (await result.Value()) as global::app.type.item.list.@this;
         // All items grouped under empty key since "category" doesn't exist
         await Assert.That(groups!.Count).IsEqualTo(1);
         await Assert.That((await ((global::app.type.item.dict.@this)(await groups.At(0)!.Value())!).Get("key")!.Value())?.ToString()).IsEqualTo("");
@@ -499,7 +498,7 @@ public class ListTests
         var action = new Flatten(context) { ListName = new app.variable.@this("myList") };
         var result = await action.Run();
 
-        var listResult = (await result.Value()) as ListResult;
-        await Assert.That(listResult!.count).IsEqualTo(5);
+        var listResult = (await result.Value()) as global::app.type.item.list.@this;
+        await Assert.That(listResult!.CountRaw).IsEqualTo(5);
     }
 }

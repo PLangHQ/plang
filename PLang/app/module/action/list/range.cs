@@ -10,13 +10,13 @@ public partial class Range : IContext
     [Default(1)]
     public partial data.@this<global::app.type.item.number.@this> Step { get; init; }
 
-    public async Task<data.@this<type.list>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         // Typed reads; the numbers lower at the loop bounds — the handler's
         // own int boundary.
         var stepN = (await Step.Value())!;
         if (stepN == 0)
-            return Context.Error<type.list>(
+            return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError("Step cannot be zero", "InvalidStep"));
 
         var list = new app.type.item.list.@this(Context);
@@ -32,6 +32,6 @@ public partial class Range : IContext
                 list.Add(new global::app.data.@this("", i, context: Context));
         }
 
-        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
+        return Context.Ok(list);
     }
 }

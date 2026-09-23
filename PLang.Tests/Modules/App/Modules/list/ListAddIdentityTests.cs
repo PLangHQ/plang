@@ -70,12 +70,8 @@ public class ListAddIdentityTests
         };
         var result = await action.Run();
 
-        // The result Data has a types.list Value; .value of that record points at the LIVE list.
-        await Assert.That((await result.Value())).IsNotNull();
-        var resultListProp = (await result.Value())!.GetType().GetProperty("value");
-        await Assert.That(resultListProp).IsNotNull();
-        var inner = resultListProp!.GetValue((await result.Value()));
-        await Assert.That(ReferenceEquals(inner, live)).IsTrue();
+        // The result's value IS the live list — the one %products% holds, not a copy.
+        await Assert.That(ReferenceEquals(await result.Value(), live)).IsTrue();
     }
 
     // The Item parameter is plain Data; for value="%item%" the AsCanonical resolution

@@ -10,11 +10,11 @@ public partial class Remove : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }
 
-    public async Task<data.@this<type.list>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var listName = (await ListName.Value());
         if (await (await Context.Variable.Get(listName)).Value() is not app.type.item.list.@this nl)
-            return Context.Error<type.list>(
+            return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
         // Persist the retrieved instance so the in-place remove sticks.
         await Context.Variable.Set(listName, nl);
@@ -23,6 +23,6 @@ public partial class Remove : IContext
         var atIndex = (await AtIndex.Value())!;
         if (atIndex >= 0) nl.RemoveAt(atIndex);
         else await nl.Remove((await Value.Value()));
-        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, Context.Type.Create("list"));
+        return Context.Ok(nl);
     }
 }

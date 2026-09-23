@@ -11,11 +11,11 @@ public partial class Sort : IContext
     /// <summary>Optional element field to sort by — `sort %people% by "age"`. Sorts by element value when absent.</summary>
     public partial data.@this<global::app.type.item.text.@this>? By { get; init; }
 
-    public async Task<data.@this<type.list>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var listName = (await ListName.Value())!;
         if (await (await Context.Variable.Get(listName)).Value() is not app.type.item.list.@this nl)
-            return Context.Error<type.list>(
+            return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
         // Persist the retrieved instance so the in-place sort sticks.
         await Context.Variable.Set(listName, nl);
@@ -36,9 +36,9 @@ public partial class Sort : IContext
         }
         catch (global::app.data.IncomparableException ex)
         {
-            return Context.Error<type.list>(
+            return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError(ex.Message));
         }
-        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, Context.Type.Create("list"));
+        return Context.Ok(nl);
     }
 }

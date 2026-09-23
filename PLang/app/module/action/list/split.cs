@@ -11,7 +11,7 @@ public partial class Split : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> RemoveEmpty { get; init; }
 
-    public async Task<data.@this<type.list>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var options = await RemoveEmpty.ToBooleanAsync()
             ? StringSplitOptions.RemoveEmptyEntries
@@ -22,7 +22,6 @@ public partial class Split : IContext
         foreach (var part in parts)
             list.Add(new global::app.data.@this("", part, context: Context));
 
-        return Context.Ok<type.list>(
-            new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
+        return Context.Ok(list);
     }
 }

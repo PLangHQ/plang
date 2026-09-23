@@ -77,16 +77,6 @@ public class OutAttributeInventoryTests
         await Assert.That(HasOut(t, "Context")).IsFalse();
     }
 
-    // 3. list (module.list.types.list) -------------------------------------
-    [Test] public async Task List_Count_HasOut()
-    {
-        await Assert.That(HasOut(typeof(global::app.module.action.list.type.list), "count")).IsTrue();
-    }
-    [Test] public async Task List_Value_HasOut()
-    {
-        await Assert.That(HasOut(typeof(global::app.module.action.list.type.list), "value")).IsTrue();
-    }
-
     // 4. Variable ------------------------------------------------------------
     [Test] public async Task Variable_Name_HasOut()
     {

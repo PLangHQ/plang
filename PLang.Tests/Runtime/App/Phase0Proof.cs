@@ -142,13 +142,11 @@ public class Phase0Proof
     [Test]
     public async Task Phase04_ListType_IsPreserved()
     {
-        // INPUT: Data.Ok with a list value and explicit list type
-        var listValue = new global::app.module.action.list.type.list
-        {
-            count = 3,
-            value = new List<object?> { 1, 2, 3 }
-        };
-        var result = global::PLang.Tests.TestApp.SharedContext.Ok(listValue, global::PLang.Tests.TestApp.SharedContext.Type.Create("list"));
+        // INPUT: Data.Ok with a native list — the list names its own type
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var listValue = new global::app.type.item.list.@this(ctx);
+        foreach (var n in new[] { 1, 2, 3 }) listValue.Add(new Data("", n, context: ctx));
+        var result = ctx.Ok(listValue);
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();
