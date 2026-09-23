@@ -604,6 +604,17 @@
           "category": "doc",
           "confidence": "high",
           "context": "Decided live with Ingi: Parallel stays a bool (batch run object parked); PrPath dies — determinism via the canonical app-absolute goal NAME written into the call's Name slot at build; ResolveGoalCallPaths (obpv) dies into the call handler's own Build(); the build pass walker (RunBuildPass, top-level actions only — no modifiers/recovery) becomes node-owned: action.Build recurses into Modifier/Recovery/Child/parameter-held actions, mirroring Run/Validate — Ingi: 'the key in OBP is: walk becomes node-owned'. Filed as a CLAUDE.md proposal (walks are node-owned). Goes in A1."
+        },
+        {
+          "paths": [
+            "PLang/app/module/action/channel/set.cs",
+            "PLang/app/module/IEvent.cs",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "A2/A3 landed (GoalCall deleted; no new reds vs dbf4782e0). Read the landed code: comment fix sent (call.cs says callbacks run in a frame; only the tool fork does). Put to Ingi: channel.set extracts the held call's goal (Bind + is goal.Call) and runs the goal directly — authored args/modifiers dropped; recommend the channel holds and runs the call per message in a frame born with the message. IEvent/EventContext/%!event% dead — recommend delete."
         }
       ],
       "after": {
