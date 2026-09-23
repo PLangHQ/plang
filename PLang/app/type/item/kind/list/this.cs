@@ -2,7 +2,7 @@ namespace app.type.item.kind.list;
 
 /// <summary>
 /// The list kind — a raw CLR <see cref="System.Collections.IList"/> host (a POCO's
-/// <c>List&lt;Step&gt;</c>, <c>List&lt;action&gt;</c>, …). Owns index-descend (<c>goal.Steps[0]</c>),
+/// <c>List&lt;Step&gt;</c>, <c>List&lt;action&gt;</c>, …). Owns index-descend (<c>goal.Step[0]</c>),
 /// element-enumeration (foreach), and array-Output. Claims <see cref="System.Collections.IList"/>
 /// by assignable match, so any concrete list resolves here (exact ClrForm wins first, so
 /// <c>JsonElement</c> stays json).
@@ -19,7 +19,7 @@ public sealed class @this : global::app.type.kind.@this
     // Index (`[0]`) → the element at that position. A member (`.Count`, `.Length`) → a real
     // property on the host's class, which the * kind reflects — the host declares it, the grammar
     // said "named, not positional". Positional access spans a non-generic IList (arrays, List<T>)
-    // AND a generic-only IList<T> (a domain collection like goal.Steps) — Positioned reaches both.
+    // AND a generic-only IList<T> (a domain collection like goal.Step) — Positioned reaches both.
     public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
         => isIndex
             ? int.TryParse(key, out var i) && i >= 0 && i < Length(obj)
@@ -44,7 +44,7 @@ public sealed class @this : global::app.type.kind.@this
     }
 
     // Positional access over any sequence host — a non-generic IList (array, List<T>) is direct;
-    // a generic-only IList<T> (goal.Steps) answers through its reflected Count + Item indexer.
+    // a generic-only IList<T> (goal.Step) answers through its reflected Count + Item indexer.
     private int Length(object host)
         => host is System.Collections.IList l ? l.Count
            : host.GetType().GetProperty("Count")?.GetValue(host) is int c ? c : -1;

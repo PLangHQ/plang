@@ -290,7 +290,7 @@ public sealed partial class @this
         // action runs. Push lives INSIDE the try so a CallStackOverflowException becomes
         // Data.FromError instead of a raw CLR exception escaping RunAsync.
         //
-        // Action.Step is pinned to Steps[0] solely to give ContainsGoal a Step→Goal anchor
+        // Action.Step is pinned to Step[0] solely to give ContainsGoal a Step→Goal anchor
         // for the cycle check (it reads action.Step?.Goal?.PrPath). This is the goal-entry
         // frame, not "step 0 running" — observers reading goalCall.Action.Step should treat
         // it as the goal anchor, not the currently-executing step (which is whatever the

@@ -214,7 +214,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     /// <summary>
     /// The item navigates itself to a child by key. The default reflects a public CLR
-    /// property off THIS value — a domain item (<c>step.Index</c>, <c>goal.Steps</c>) or a
+    /// property off THIS value — a domain item (<c>step.Index</c>, <c>goal.Step</c>) or a
     /// scalar leaf's backing (<c>now.Ticks</c> → <c>DateTimeOffset.Ticks</c>). Containers
     /// (<c>dict</c>/<c>list</c>) override with key/index lookup; references
     /// (<c>file</c>/<c>url</c>/<c>source</c>/<c>variable</c>) override to materialise

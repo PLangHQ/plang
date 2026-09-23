@@ -6,8 +6,8 @@ public sealed partial class @this
     /// Captures this Call's positional triple plus identity for snapshot. Wire shape:
     ///  - GoalPrPath  : stable identity for live-registry lookup on Restore
     ///  - GoalHash    : SHA-256 of name + step prose; mismatch on resume = hard error
-    ///  - StepIndex   : Step.Index inside Goal.Steps
-    ///  - ActionIndex : index of this Action inside its Step.Actions
+    ///  - StepIndex   : Step.Index inside Goal.Step
+    ///  - ActionIndex : index of this Action inside its Step.Action
     ///  - ActionModule, ActionName : human-readable position help; Action lookup is by index
     ///  - Id          : the Call's short hex Id; preserved for log correlation
     ///

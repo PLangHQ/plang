@@ -2,7 +2,7 @@ namespace app.variable.path;
 
 /// <summary>
 /// A navigation path — the parsed form of a reference string like
-/// <c>goal.Steps[planStep.index]</c>, <c>user.name</c>, <c>x!file!path</c>, or
+/// <c>goal.Step[step.Index]</c>, <c>user.name</c>, <c>x!file!path</c>, or
 /// <c>tags."key.with.dots"</c>. The path OWNS its own tokenization: the string
 /// parses ONCE, here, into an ordered list of typed <see cref="Segment"/>s — there
 /// is no free-function <c>ParseNextSegment</c> tokenizer to be re-run mid-walk.
@@ -34,13 +34,13 @@ public sealed class @this
     /// (<c>!app.goal</c> → <c>!app</c>, the key it lives under). Empty for an empty path.</summary>
     public string Root => IsEmpty ? "" : Segments[0].Raw;
 
-    /// <summary>The path after the root — <c>goal.Steps[0]</c> → <c>Steps[0]</c>.
+    /// <summary>The path after the root — <c>goal.Step[0]</c> → <c>Step[0]</c>.
     /// Empty for a bare root (<c>goal</c>).</summary>
     public @this Tail
         => IsEmpty ? this : new @this(new System.ArraySegment<Segment>(ToArray(), 1, Segments.Count - 1));
 
     /// <summary>All but the last segment — the walk to the leaf's parent
-    /// (<c>Steps[0]</c> → <c>Steps</c>). Empty when the path IS the leaf.</summary>
+    /// (<c>Step[0]</c> → <c>Step</c>). Empty when the path IS the leaf.</summary>
     public @this Parent
         => Segments.Count <= 1 ? new @this(System.Array.Empty<Segment>())
            : new @this(new System.ArraySegment<Segment>(ToArray(), 0, Segments.Count - 1));
@@ -106,7 +106,7 @@ public sealed class @this
             if (c == '(') { depth++; continue; }
             if (c == ')') { depth--; continue; }
 
-            // Split at an open bracket at depth 0: "Steps[0]" → ("Steps", "[0]").
+            // Split at an open bracket at depth 0: "Step[0]" → ("Step", "[0]").
             if (c == '[' && depth == 0 && i > 0) return (path[..i], path[i..]);
 
             if (c == '[') { depth++; continue; }
