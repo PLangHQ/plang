@@ -283,11 +283,9 @@ public sealed partial class @this
                 var set = Choice[clrType];
                 return new app.type.@this("choice", set.Name) { Values = set.Values };
             }
-            // An item type IS vocabulary (path.file → path). The IsAssignableFrom guard is item ⟺
-            // ICreate made machine-checkable: _typeToName is the NAMING index and legitimately holds
-            // non-item hosts (goal, the serializers registry) for their teaching names — answering
-            // Type[typeof(goal)] with a named "goal" entity would resurrect "goal is a plang type"
-            // and hand construction a non-Creatable entity whose decline is the recursion we killed.
+            // An item type IS vocabulary (path.file → path). Only an item answers by name:
+            // _typeToName also holds the concept names of non-item @this classes (callstack, the
+            // serializers registry) for reporting, and those are not plang types.
             if (typeof(app.type.item.@this).IsAssignableFrom(clrType)
                 && _typeToName.TryGetValue(clrType, out var name)) return this[name];
             // A container generic answers {family, kind: element} — the choice precedent

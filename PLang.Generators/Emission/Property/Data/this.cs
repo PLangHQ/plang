@@ -172,12 +172,12 @@ public sealed record @this(
     }
 
     /// <summary>
-    /// A literal this slot can judge: a typed value slot (not plain Data, not a name slot) whose
-    /// type is a value type under <c>app.type.item</c> — the open <c>item</c> slot takes anything,
-    /// and a domain object (action, actor, goal, …) is built by its own walk, not parsed here.
+    /// A slot whose literal can be judged: every typed slot but plain Data, a name slot and the
+    /// open <c>item</c> slot (which takes anything). A slot typed by the program's own structure
+    /// needs no exemption — it holds an action its reader already built (opening it passes
+    /// through) or a variable (skipped at run of Parse).
     /// </summary>
     private bool IsLiteralSlot => !IsPlainData && !IsName && InnerType != null
-        && InnerType.StartsWith("global::app.type.item.", System.StringComparison.Ordinal)
         && InnerType != "global::app.type.item.@this";
 
     public override void EmitParse(StringBuilder sb)
