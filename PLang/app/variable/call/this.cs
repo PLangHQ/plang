@@ -26,16 +26,16 @@ public sealed class @this : IAsyncDisposable
     /// <summary>Outer Call (the one that was Current when this was pushed). Null at root.</summary>
     public @this? Caller { get; }
 
-    /// <summary>The held action this frame was pushed to run (a tool, a callback) — the one call its
-    /// supplied names are FOR. A call nested deeper in the same flow is not it.</summary>
-    public global::app.goal.step.action.@this? Held { get; }
+    // The held action this frame was pushed to run (a tool invocation) — the one call its supplied
+    // names are FOR. A call nested deeper in the same flow is not it.
+    private readonly global::app.goal.step.action.@this? _for;
 
     internal @this(IEnumerable<data.@this>? parameters, @this? caller, call.list.@this owner,
         global::app.goal.step.action.@this? held = null)
     {
         Caller = caller;
         _owner = owner;
-        Held = held;
+        _for = held;
         if (parameters == null) return;
         foreach (var p in parameters)
         {
@@ -45,9 +45,11 @@ public sealed class @this : IAsyncDisposable
         }
     }
 
-    /// <summary>True when this frame was BORN with <paramref name="name"/> — its runner supplied it
-    /// (a tool's argument, a callback's value). A name set later in the flow is not supplied.</summary>
-    public bool Supplies(string name) => _born.Contains(name);
+    /// <summary>True when this frame was pushed FOR <paramref name="call"/> and born with
+    /// <paramref name="name"/> — its runner supplied it (a tool's argument). A name set later in the
+    /// flow is not supplied, and neither is anything to a call the frame was not pushed for.</summary>
+    public bool Supplies(global::app.goal.step.action.@this call, string name)
+        => ReferenceEquals(_for, call) && _born.Contains(name);
 
     /// <summary>
     /// Looks up <paramref name="name"/> in this overlay, walking up <see cref="Caller"/>
