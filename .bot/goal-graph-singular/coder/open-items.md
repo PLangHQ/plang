@@ -119,3 +119,33 @@ the type entity; the catalog renders its face.
 `Build` / `Test` presence and is what the snapshot captures. The runtime still branches on the presence
 itself (`app/this.cs:516` `if (Build != null) return await Build.RunAsync();`, `:547` `if (Test != null)`).
 Reading `Mode` there instead is its own later item — not part of the restore pass.
+
+## Snapshot — parked by Ingi
+
+**18. Snapshot restore — parked mid-pass.** Landed and kept (six suites green by name): `be8a30fc5`
+(ISnapshot is {Section; Capture; Task Restore}, all instance; App walks one owner list
+[Code, Variable, Statics, App, CallStack]; App's derived `Mode` replaces the build/test presence bits),
+`64cca5d21` (guarded frame reads; actionModule/actionName verified — CallbackActionMismatch),
+`8a8bd8c01` (each captured variable its own entry; snapshot.Get/Set delegate to its Entries),
+`6aeba1e70` (docs). Plan: `restore-remainder-plan.md`.
+
+Six SnapshotWire reds stay red as parked: `SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess`,
+`MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal`, `PlangPath_AsSnapshotConvert_EditSurvivesResume`,
+`ThrowTimeSnapshot_EditSurvivesResume`, `TypedSnapshotString_NavigateEditResume_PersistsEdit`,
+`NavigateAndEditCapturedVariable_ThenResumeToSuccess`.
+
+Trace (start here): **the wire read works** — `App.SnapshotFromWire(json)` returns all five sections, and
+Variables holds each captured variable as its own entry. Every red instead converts a plain JSON *string*
+into a snapshot through a door the design does not have:
+- `snapshot.Create(text(json))` — Create is a pass-through courier → declines;
+- untyped `new Data("", json).Value<snapshot>()` → "holds a text — 'snapshot' cannot be created from it";
+- `Type["snapshot"].Create(json)` then Value → the content door reads raw text through value.Reader,
+  "scalar-only — a structured value needs a format parser".
+
+Open question: does a text holding the plang wire convert into a snapshot?
+(a) No — a snapshot comes back only through the wire door (SnapshotFromWire / a wire-typed Data); the six
+tests switch to it and keep their navigate/edit/resume bodies; plang-side `%json% as snapshot` is not a feature.
+(b) Yes — and the one-door way is general, not a snapshot special case: a content source of a STRUCTURED type
+reads its raw text through the transport format's parser. The `resume` verb's doc
+(`module/action/snapshot/resume.cs:6-12`, "Create reads the wire through the plang serializer") is stale
+either way and waits on this.
