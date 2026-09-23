@@ -93,6 +93,50 @@ public class ErrorHandleTests
         await result.IsSuccess();
     }
 
+    private global::app.channel.type.stream.@this CaptureDebug()
+    {
+        _app.System.Channel.Register(global::app.channel.type.stream.@this.Memory(global::app.channel.list.@this.Debug));
+        return (global::app.channel.type.stream.@this)_app.System.Channel.Get(global::app.channel.list.@this.Debug)!;
+    }
+
+    private static string Read(global::app.channel.type.stream.@this capture)
+    {
+        capture.Stream.Position = 0;
+        using var reader = new StreamReader(capture.Stream, leaveOpen: true);
+        return reader.ReadToEnd();
+    }
+
+    [Test]
+    public async Task Handle_IgnoreError_StaysInAudit_PrintedUnderDebug()
+    {
+        var capture = CaptureDebug();
+        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
+        var action = Throw("boom", key: "Oops",
+            modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
+
+        var result = await action.Run(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(Ctx.CallStack.Audit.Any(e => e.Message == "boom")).IsTrue();
+        var written = Read(capture);
+        await Assert.That(written).Contains("Oops");
+        await Assert.That(written).Contains("boom");
+    }
+
+    [Test]
+    public async Task Handle_IgnoreError_WithoutDebug_PrintsNothing()
+    {
+        var capture = CaptureDebug();
+        var action = Throw("boom", key: "Oops",
+            modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
+
+        var result = await action.Run(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(Ctx.CallStack.Audit.Any(e => e.Message == "boom")).IsTrue();
+        await Assert.That(Read(capture)).IsEmpty();
+    }
+
     [Test]
     public async Task Handle_FilterByStatusCode_MatchHandles()
     {

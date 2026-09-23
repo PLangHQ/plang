@@ -77,8 +77,15 @@ public partial class Handle : IContext, IModifier, IAction
                 }
             }
 
-            // IgnoreError is the final fallback — after retry and recovery are exhausted
-            if (await IgnoreError.ToBooleanAsync()) return context.Ok();
+            // IgnoreError is the final fallback — after retry and recovery are exhausted. The error
+            // stays in the audit; the frame is marked handled, and the ignore is visible under --debug.
+            if (await IgnoreError.ToBooleanAsync())
+            {
+                if (erroredCall != null) erroredCall.Handled = true;
+                await (context.App.Debug?.Write(
+                    $"error.handle: ignored error {result.Error?.Key}: {result.Error?.Message}") ?? Task.CompletedTask);
+                return context.Ok();
+            }
 
             return result;
         };
