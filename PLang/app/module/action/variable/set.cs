@@ -199,12 +199,13 @@ public partial class Set : IContext
             var type = typeValue as global::app.type.@this
                 ?? Context.Type.Create(typeValue.ToString()!);
             // Canonicalise kind through the format registry — `markdown` → `md`,
-            // `jpeg` → `jpg`. The factory does this when a context is passed;
-            // the .pr round-trip loses the context, so we run it again here.
+            // `jpeg` → `jpg`. The declared type object is the program's (shared by every run), so a
+            // changed kind is this run's own type object — the declared one is never written.
             if (type.Kind != null)
             {
                 var canon = Context.App.Format.CanonicaliseKind(type.Kind?.Name);
-                if (canon != null) type.Kind = Context.App.Type.Kind[canon];
+                if (canon != null && canon != type.Kind!.Name)
+                    type = new global::app.type.@this(type.Name, canon, type.Strict, type.Template) { Kind = Context.App.Type.Kind[canon] };
             }
             // Stamp the entity's Context so ClrType resolves through the
             // registry when the entity wasn't minted with a CLR mate.
@@ -225,7 +226,7 @@ public partial class Set : IContext
             {
                 var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
                 if (Context.App.Type[typeName].Create(sourceValue, carrier)?.Type.Kind is { } derivedKind)
-                    type.Kind = derivedKind;
+                    type = new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template) { Kind = derivedKind };
             }
             if (targetType == null)
             {

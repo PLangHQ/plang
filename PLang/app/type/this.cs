@@ -52,12 +52,12 @@ public sealed class @this : item.@this
 
     /// <summary>
     /// Build-time subtype refinement ("md", "gif", "int"). Null when the type
-    /// has no sub-kind. Mutable: <c>Data.Kind</c> delegates set-through to this
-    /// slot so the entity is the single owner. Serialized as part of the
-    /// entity's <c>{name, kind?, strict?}</c> JSON form (see
-    /// <see cref="json"/>).
+    /// has no sub-kind. Read-only once born: a type object is shared (a program
+    /// row's declared type, the registry's entries), so a different kind is a
+    /// different type object. Serialized as part of the entity's
+    /// <c>{name, kind?, strict?}</c> JSON form (see <see cref="json"/>).
     /// </summary>
-    public global::app.type.kind.@this? Kind { get; set; }
+    public global::app.type.kind.@this? Kind { get; init; }
 
     /// <summary>
     /// When true, <see cref="Kind"/> is a requirement (enforced at build for
