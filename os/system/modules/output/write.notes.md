@@ -4,14 +4,14 @@
 
 Correct (`write out %message%`, no channel named):
 ```json
-{"module":"output","action":"write","parameters":[{"name":"Data","value":"%message%","type":"object"}]}
+{"module":"output","name":"write","parameter":[{"name":"Data","value":"%message%","type":{"name":"object"}}]}
 ```
 
 Correct (`write out "hi" to logger channel`):
 ```json
-{"module":"output","action":"write","parameters":[
-  {"name":"Data","value":"hi","type":"object"},
-  {"name":"channel","value":"logger","type":"string"}
+{"module":"output","name":"write","parameter":[
+  {"name":"Data","value":"hi","type":{"name":"text"}},
+  {"name":"channel","value":"logger","type":{"name":"text"}}
 ]}
 ```
 

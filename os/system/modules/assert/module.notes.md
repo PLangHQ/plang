@@ -2,7 +2,7 @@
 
 Correct (`assert %message% equals 'hello plang'`) — no `Message`:
 ```json
-{"module":"assert","action":"equals","parameters":[
+{"module":"assert","name":"equals","parameter":[
   {"name":"Expected","value":"hello plang","type":{"name":"text"}},
   {"name":"Actual","value":"%message%","type":{"name":"object"}}
 ]}
