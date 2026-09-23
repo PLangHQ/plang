@@ -1,5 +1,0 @@
-{% if step.Comment %}/ {{ step.Comment }}
-{% endif %}- {{ step.Text }}
-{% if step.Action.size > 0 %}  <= actions: {{ step.Action | store }}{% endif %}
-{% if stepResult.validationError %}  <= ⚠️ VALIDATION FAILED: {{ stepResult.validationError }}{% endif %}
-{% if step.Warning.size > 0 %}  <= warnings: [{% for w in step.Warning %}{"key":"{{ w.Key }}","message":"{{ w.Message }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}

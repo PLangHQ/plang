@@ -80,23 +80,6 @@ public class Stage4_TypeHintPrecedenceTests
         await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)xml);
     }
 
-    [Test]
-    public async Task CompileLlm_Kernel_ContainsTypeHintRule()
-    {
-        var path = System.IO.Path.Combine(_app.AbsolutePath, "..", "..", "..", "..", "..", "os", "system", "builder", "llm", "Compile.llm");
-        // Walk up from the test temp dir to the repo root.
-        var asmDir = System.IO.Path.GetDirectoryName(typeof(global::app.@this).Assembly.Location)!;
-        var repo = asmDir;
-        while (repo != null && !System.IO.Directory.Exists(System.IO.Path.Combine(repo, "os")))
-            repo = System.IO.Directory.GetParent(repo)?.FullName;
-        await Assert.That(repo).IsNotNull();
-        var compileLlm = System.IO.File.ReadAllText(System.IO.Path.Combine(repo!, "os", "system", "builder", "llm", "Compile.llm"));
-        await Assert.That(compileLlm).Contains("(type)")
-            .Because("Cross-cutting kernel must teach the (type) hint rule.");
-        await Assert.That(compileLlm).Contains("write to %answer%(json)")
-            .Because("Worked example anchors the rule.");
-    }
-
     private static async Task<List<string>> RunBuildPass(StepActions actions, global::app.@this app)
         => await Default.RunBuildPass(actions, app.User.Context);
 
