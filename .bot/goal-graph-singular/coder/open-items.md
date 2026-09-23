@@ -1,151 +1,101 @@
 # Open items — branch `goal-graph-singular`
 
-Kept here so the list survives a session. Ordered by what I'd do, not by when it was found.
-Everything below is on top of a clean, pushed tree (`16bbc24c4`).
+THE live list (the architect references this one; no parallel list). Open first, with current evidence;
+Done at the bottom, one line each with its landing commit. Verified 2026-09-23 at `17e4737b0`.
 
-## The work itself
-
-**0. Error model redesign — DESIGN SETTLED, ONE BLOCKER, no green light.** Full record in
-`error-model-decisions.md` (same folder). Summary: `ErrorChain`→`list` (caused-by), `Error.Action`
-added, `Validate` returns `IError?` with causes underneath, no error state on the node, `app.Error`
-and the run-wide audit deleted, `trail`/`scope` both gone. **Blocked on:** `context.Error` cannot be
-a property — `context.Error(IError)` (the failed-Data factory every handler uses) already owns that
-name. Also unresolved: where the recovery scope (`Push`) lives once `app.Error` is gone.
+## Open
 
 **0b. Ignored errors are silently swallowed.** `error/handle.cs`:
-`if (await IgnoreError.ToBooleanAsync()) return context.Ok();` — no push, no log. The empty
-try/catch, present today. Emitting them on a redirectable channel was discussed and explicitly
-deferred by Ingi ("thinking out loud… swallowed for now").
+`if (await IgnoreError.ToBooleanAsync()) return context.Ok();` — no push, no log. Emitting them on a
+redirectable channel was discussed and explicitly deferred by Ingi ("thinking out loud… swallowed for now").
 
-**1. Finish Stage D — the Validate trilogy.** `action.Validate` is landed but has **no callers**
-(an incomplete rung is its own small liability). Remaining: `action.list.Validate`, then point
-`build.validate` at it so the builder only *reacts* (re-prompt / abort). `build.validate` receives
-an action LIST, not a goal — so `goal.Validate` / `Step.Validate` have no caller yet and were
-deliberately not written. Item 3 below changes what `Validate` yields, so do it first.
+**5b. The live builder `.pr` hashes are stale — still true.** `goal.Hash` = SHA256(Name + concat(step.Text)),
+stored in the `.pr`. Recomputed 2026-09-23 over `os/system/builder/**/.build/*.pr`: **3 of 6 goals stale** —
+`Build` (`.build/build.pr`), `Start` and `HandleBuildFailure` (`BuildGoal/.build/start.pr`). The decider-harness
+rebuilds write to `tools/decider/out/`, never over the live files, so they did not refresh these. Anything using
+the hash for staleness sees a lie. Not recomputed unilaterally on a bootstrap artifact (ties to #12).
 
-**2. `action.Requires` — plural bothers Ingi.** It returns the set of things an action reaches
-(`network`, `llm`). Every other collection on the graph is a singular concept node (`action.Warning`,
-`step.Action`), so the plural is the odd one out. Needs a name that reads singular over a collection.
+**8. `DiscoverActionTests` is 7/10 red — cause found.** The fixture writes its `.pr` through STJ reflection
+(`JsonSerializer.Serialize(goal, Json.CamelCaseIndented)`, `PLang.Tests/Runtime/App/Testing/DiscoverActionTests.cs:105,114`),
+not through the goal's own writer (`goal.Output`, the `.pr` wire). The reader reads that shape as "pr corrupt", so
+every test comes out Stale ("expected Skipped but found Stale", "expected 'rebuild needed' but found 'pr corrupt'")
+and tags are never extracted (both auto-tag tests). Fix is a test fix: write the fixture through the goal's own
+serializer. `action.Requirement` still has no green coverage until then.
 
-**3. `action.BuildError` → `action.error` (probably `error.list`).** Ingi: it should be the action's
-error node, not a one-off compound. There is already `app.error.list.@this`, and `action.Warning` is
-`warning.list` — so `action.Error` as an `error.list` matches the existing shape exactly. It also
-makes `Validate` natural: verdicts land on the node instead of being yielded to a caller. **Do this
-before Stage D** — it decides `Validate`'s signature.
-
-**4. `Property.Rows` is a middleman.** `Rows => Items.Select(d => d.Clr<Property>()).ToList()` —
-proxies what the collection already is, lowers to CLR, and reallocates per read. The fix is NOT
-a rename to `.list`: the list holds `Data` wrappers and `Rows` exists to unwrap them, so renaming
-just spreads `.Clr<Property>()` into all four callers. Make `property.list` enumerate its own typed
-rows (`IEnumerable<Property>`) so it reads `foreach (var row in element.Property)`.
-
-## Risk carried into main
-
-**5 + 6 — CLOSED (`4deaa8921`).** Both were prompt-level and both were real. Read the rendered
-prompt from a `cache:false` build: `## Available types` rendered EMPTY always (`%!app.type.list%`
-navigates to nothing — `module.list` has a native `list` member, `type.list` has none), dead since
-`92f846d09`; and `→ returns item` reached the LLM with `item` defined nowhere in the prompt. Section
-and its feeding step deleted (primitives + catalog types already render elsewhere); `item` now
-explained once. **Lesson worth keeping: neither was visible from code or tests — only from the bytes
-the model receives.**
-
-**5b. The builder's `.pr` hashes are stale.** `goal.Hash` is `SHA256(Name + concat(step.Text))`,
-computed AND stored in the `.pr`. In `BuildStep/.build/start.pr` the stored hash disagrees with the
-steps for ROOT, `Compile`, `QueryAndVerify`, `RefineActions`, `FixValidation` — **verified stale at
-`HEAD~1`, i.e. before my edit**, from earlier hand-edits. `HandleStepFailure` and `EmitSummary` match.
-Impact looks nil for building (builds pass), but anything using hash for staleness sees a lie.
-Recomputing is a few lines; deliberately NOT done unilaterally on a bootstrap artifact.
-
-## Test-infrastructure problems (these are why the above stayed hidden)
-
-**7. Suite discovery is flaky — the meta-problem.** Totals swing 425–756 across runs of identical
-code; whole classes silently don't run. Consequences: every change this stretch had to be verified
-by stash+rebuild and a failure-NAME diff, because counts prove nothing; and item 8 sat red all
-session without appearing in a single full-suite sample. Until this is fixed, no green result on
-this branch means much.
-
-**8. `DiscoverActionTests` is 7/10 red.** Verified identical on the stashed tree — pre-existing, not
-from this work. But it includes **both auto-tag tests**, so `action.Requires` (item 2) has no green
-coverage.
-
-**9. `PathSerializerMigrationTests` alternates 0-then-2 failures** across consecutive isolated runs
-of identical code. Real shared-state race in scheme registration, not caused by this work.
-
-## Process gap
+**9. `PathSerializerMigrationTests` / `KindViaCreateTests` path-kind flake.** Not reproduced in 6 isolated runs +
+3 full sweeps; the helpers now print the decline's key + message (`a5cf9e221`), so the next occurrence names its
+cause. Suspected shared-state race; not quarantined (no named cause yet).
 
 **12. The builder has never built itself on this branch.** Every commit touching
-`os/system/builder/*/.build/*.pr` is a hand-edit ("bootstrap builder .pr", "fix param wire shape",
-"fix stale visibility"). There is no forcing function that the builder's own goals still compile —
-which is exactly how items 5 and 6 survived across many commits, and how five stored hashes drifted.
-Ingi (2026-09): worth recording, but we are deep in refactoring and this branch merges up into
-another that may be where this belongs — decide when we get there, do not chase it now.
+`os/system/builder/*/.build/*.pr` is a hand-edit; nothing forces the builder's own goals to still compile — how
+#5b drifted. Ingi: decide on the parent branch, do not chase now.
 
-## Small cleanups
+**14. Named survivors of the type registry pass** — executioner: the *type entities born with context* pass
+(shape with Ingi). Until then these statics stay, by name: `type.list.@this.GetPrimitiveOrMime` (the
+context-less `ClrType` fallback, `type/this.cs:163`), `type.list.@this.ClrFromMime`, and the static
+`app.type.primitive.@this` table (read by the entity's context-less constructor: `Canonicalise`,
+`StampPrimitive`). `Get(name)` / `Clr(name)` die with them (`variable/set.cs:217`'s `type.ClrType ?? Type.Get(name)`
+fallback included).
 
-**10. `goal.list` late stamp** — `_goals = new goal.list.@this { App = this }`, the same smell removed
-from the module registry (which now takes its App at construction). Left alone only because the
-injection seam differs.
-
-**11. Stale test** — `ModulesDescribe_BuilderRecordHandlers` NREs looking up module `"builder"`; the
-module is `"build"`.
-
-## Unfinished demolition (not live design)
-
-**13. `app/Info.cs`** — DONE (demolished with Data.Warnings; see the commit "Info is gone"). Was: on the branch plan's demolition list ("app/Info.cs, the four List<Info>
-properties", replaced by Warning). Its last builder holder (BuildResponse) is gone and it is no longer
-registered as a type (only items are indexed). Remaining holders: `Data.Warnings`
-(`PLang/app/data/this.Result.cs:62`, copied at `PLang/app/data/this.cs` ×4) and
-`PLang/app/module/action/build/code/Default.cs` ×4 (the build's error list and `MergePrData`).
-
-**14. Named survivors of the type registry pass** — executioner: the *type entities born with
-context* pass (shape with Ingi: item.Type(context) / items carry context / static data table / the
-entity never reaches the registry from inside itself). Until then these statics stay, by name:
-`type.list.@this.GetPrimitiveOrMime` (the context-less `ClrType` fallback, `type/this.cs:163`),
-`type.list.@this.ClrFromMime`, and the static `app.type.primitive.@this` table (read by the entity's
-context-less constructor: `Canonicalise`, `StampPrimitive`). `Get(name)` / `Clr(name)` die with them
-(`variable/set.cs:217`'s `type.ClrType ?? Type.Get(name)` fallback included).
+**15. Action return type is a flat copy** — `action.Return` / `ReturnTypeName` is a string read off the entity's
+face (`goal/step/action/this.Schema.cs:83`), stored beside the type it names. It becomes the type entity; the
+catalog renders its face.
 
 **16. Two descriptors for "a named, typed slot"** (for the type-entity pass) — `goal.step.action.property.@this`
-(an action's parameters: Name, Type entity, Nullable, Default, IsVariable) and `app.type.Field` (a record
-type's fields in the catalog fold: Name, `TypeName` — a string, the flat copy again). An action's
-parameters and a record's fields are the same concept; when the entity describes itself, a record's
-fields are read from its declaration by the same reflection `property.list` already does. Likely one type.
+(Name, Type entity, Nullable, Default, IsVariable) and `app.type.Field` (Name, `TypeName` — a string). Same
+concept; when the entity describes itself, a record's fields are read by the same reflection `property.list`
+does. Likely one type.
 
-**15. Action return type is a flat copy** — `action.Return` / `ReturnTypeName` is a string read off
-the entity's face (`goal/step/action/this.Schema.cs:83`), stored beside the type it names. It becomes
-the type entity; the catalog renders its face.
+**17. Runtime presence checks → `App.Mode`** — the runtime still branches on presence (`app/this.cs:516`
+`if (Build != null)`, `:547` `if (Test != null)`); reading `Mode` there is its own later item.
 
-**17. Runtime presence checks → `App.Mode`** — the App's `Mode` (run | build | test) is derived from
-`Build` / `Test` presence and is what the snapshot captures. The runtime still branches on the presence
-itself (`app/this.cs:516` `if (Build != null) return await Build.RunAsync();`, `:547` `if (Test != null)`).
-Reading `Mode` there instead is its own later item — not part of the restore pass.
-
-## Snapshot — parked by Ingi
-
-**18. Snapshot restore — parked mid-pass.** Landed and kept (six suites green by name): `be8a30fc5`
-(ISnapshot is {Section; Capture; Task Restore}, all instance; App walks one owner list
-[Code, Variable, Statics, App, CallStack]; App's derived `Mode` replaces the build/test presence bits),
-`64cca5d21` (guarded frame reads; actionModule/actionName verified — CallbackActionMismatch),
-`8a8bd8c01` (each captured variable its own entry; snapshot.Get/Set delegate to its Entries),
-`6aeba1e70` (docs). Plan: `restore-remainder-plan.md`.
-
-Six SnapshotWire reds stay red as parked: `SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess`,
+**18. Snapshot restore — PARKED by Ingi.** Landed and kept: `be8a30fc5` (owner-named sections, one owner list,
+`App.Mode` replaces presence bits), `64cca5d21` (guarded frame reads; action verified), `8a8bd8c01` (each captured
+variable its own entry; snapshot navigates its entries), `6aeba1e70` (docs). Plan: `restore-remainder-plan.md`.
+Six SnapshotWire reds stay red: `SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess`,
 `MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal`, `PlangPath_AsSnapshotConvert_EditSurvivesResume`,
 `ThrowTimeSnapshot_EditSurvivesResume`, `TypedSnapshotString_NavigateEditResume_PersistsEdit`,
-`NavigateAndEditCapturedVariable_ThenResumeToSuccess`.
+`NavigateAndEditCapturedVariable_ThenResumeToSuccess`. Trace: **the wire read works** (`App.SnapshotFromWire`
+returns all five sections, each variable its own entry); every red converts a plain JSON *string* into a snapshot
+through a door the design lacks (`snapshot.Create(text)` declines; untyped `Data(json).Value<snapshot>()` "holds a
+text"; `Type["snapshot"].Create(json)` reads raw text through the scalar-only value reader). Open question: does a
+text holding the plang wire convert into a snapshot — (a) no, wire door only; (b) yes, generally: a content source
+of a STRUCTURED type reads its raw text through the transport format's parser. `resume.cs:6-12` doc waits on it.
 
-Trace (start here): **the wire read works** — `App.SnapshotFromWire(json)` returns all five sections, and
-Variables holds each captured variable as its own entry. Every red instead converts a plain JSON *string*
-into a snapshot through a door the design does not have:
-- `snapshot.Create(text(json))` — Create is a pass-through courier → declines;
-- untyped `new Data("", json).Value<snapshot>()` → "holds a text — 'snapshot' cannot be created from it";
-- `Type["snapshot"].Create(json)` then Value → the content door reads raw text through value.Reader,
-  "scalar-only — a structured value needs a format parser".
+**19. Three item types name `clr`** (they declare no name — not @this, no [PlangType]): with Ingi.
+- `app.module.action.list.type.list` — returned by 10 list actions; names itself "list" beside the native list, a
+  {count, value} wrapper around what the native list already carries.
+- `app.module.action.setting.type+setting` — returned by setting.set / remove; a static class used as a namespace
+  around a {key, value} record.
+- `app.module.action.signing.sign` — the SignOptions slot on http.request / download / upload; an action handler
+  doubling as a value type.
 
-Open question: does a text holding the plang wire convert into a snapshot?
-(a) No — a snapshot comes back only through the wire door (SnapshotFromWire / a wire-typed Data); the six
-tests switch to it and keep their navigate/edit/resume bodies; plang-side `%json% as snapshot` is not a feature.
-(b) Yes — and the one-door way is general, not a snapshot special case: a content source of a STRUCTURED type
-reads its raw text through the transport format's parser. The `resume` verb's doc
-(`module/action/snapshot/resume.cs:6-12`, "Create reads the wire through the plang serializer") is stale
-either way and waits on this.
+**20. Actor literal becomes a choice** — the actor set as a named-set choice (resolves to the live actor at use);
+`actor.Convert` dies; slots goal.call / event.on / channel.set / channel.remove / environment.run. After the births
+pass (needs the one naming door + births).
+
+**21. `plang --test` loud readers + zero-discovered guard** — a test run that discovers nothing, or whose graph
+readers fail quietly, must fail loud. Needs a running builder.
+
+**22. Builder-flow change** — action descriptions into stage 2, the menu holding actions (not "module.action"
+strings), notes/examples in stage 3. With Ingi; needs a running builder.
+
+**23. Security regressions — PARKED by Ingi.** Tamper pair (production regression in `da067599c..3e87c6d3b`, real
+signing) and masking (`da067599c^..3e87c6d3b`); the test signing mock verifies everything (flip at `6071d0f13`).
+Everything to resume is in `security-bisect.md` (candidate lists, driver, oracle `REAL_SIGNING=1`, probes done,
+open rulings: blast-radius list, honest mock).
+
+## Done
+
+- **0 Error model** — frame owns recording, `CallStack.Error`, `app.Error` deleted: `f74f484cc`, `a4108b2c2`, `54ab44cd5`.
+- **1 Stage D** — `action.Validate` / `action.list` / `step` / `goal.Validate`, `build.validate step=`: `804062686`, `61fc439ea`.
+- **2 `action.Requires` → `Requirement`** (Stage C): `a4108b2c2`.
+- **3 BuildError** — superseded by the error model; dissolved into `Validate` / `Parse`: `5538fff00`.
+- **4 `Property.Rows` middleman** — rows stay hosts; `property.list` a read-only list, Rows dies: `6dd927f44`.
+- **5 + 6 builder prompt holes** (empty `## Available types`, undefined `item`): `4deaa8921`.
+- **7 Suite discovery flaky** — two identical full sweeps at `17e4737b0` gave identical totals in all six suites
+  (963 / 718 / 466 / 884 / 191 / 675); the six-suite split + the whole-suite timeout ended the swing.
+- **10 `goal.list` late stamp** — born with its App: `b716f4de6` (+ `Load` rename `8b7379614`).
+- **11 `ModulesDescribe_BuilderRecordHandlers`** — repointed to `Module["build"]["goals"]` when `Describe` died
+  (`09f3bdc74` test repair); green.
+- **13 `app/Info.cs`** — demolished with `Data.Warnings`: `35cb1d1e2`.
