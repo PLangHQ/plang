@@ -13,7 +13,7 @@ namespace app.module.action.llm;
 [RequiresCapability("llm")]
 public partial class query : IContext, IBuildValidatable
 {
-    public static global::app.error.IError? ValidateBuild(List<data.@this> parameters)
+    public global::app.error.IError? ValidateBuild(List<data.@this> parameters)
     {
         var messages = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Message", StringComparison.OrdinalIgnoreCase));

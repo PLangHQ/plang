@@ -51,9 +51,11 @@ public partial class @this
             }
         }
 
-        // The action's own build-validate answer.
-        if (BuildError is { } buildError)
-            causes.Add(new global::app.error.Error($"{Module}.{Name}: {buildError}", "BuildError", 400));
+        // The handler's own verdict on the parameter combination — asked through the interface it
+        // opts into, on its unresolved shell: the rows are read as authored, never resolved.
+        if (element != null && Instance(context).Code is global::app.module.IBuildValidatable handler
+            && handler.ValidateBuild(Parameter.ToList()) is { } complaint)
+            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint}", "BuildError", 400));
 
         await GoalCallNames(causes, context);
 

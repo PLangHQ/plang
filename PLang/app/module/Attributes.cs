@@ -62,18 +62,19 @@ public sealed class IsInitiatedAttribute : Attribute { }
 public sealed class IsNotNullAttribute : Attribute { }
 
 /// <summary>
-/// Action classes that implement this interface can validate LLM-generated parameters
-/// during the build. The builder calls ValidateBuild after the LLM produces parameters,
-/// returning errors that the LLM can use to self-correct.
+/// Action classes that implement this interface judge their own parameter COMBINATIONS at build
+/// time — only the handler knows which are legal (the catalog rows describe slots one at a time).
+/// The action asks its handler shell through this interface from <c>action.Validate</c>.
 /// </summary>
 public interface IBuildValidatable
 {
     /// <summary>
-    /// Validates LLM-generated parameters. Returns null if valid, or the error describing what is
-    /// wrong so the LLM can fix it — a real <see cref="global::app.error.IError"/> (key, status,
-    /// message), not a bare string: the build reacts to it like any other error.
+    /// Judges the action's parameter rows as authored — read, never resolved. Returns null if valid,
+    /// or the error describing what is wrong so the LLM can fix it — a real
+    /// <see cref="global::app.error.IError"/> (key, status, message): the build reacts to it like any
+    /// other error.
     /// </summary>
-    static abstract global::app.error.IError? ValidateBuild(List<data.@this> parameters);
+    global::app.error.IError? ValidateBuild(List<data.@this> parameters);
 }
 
 /// <summary>

@@ -16,7 +16,7 @@ namespace app.module.action.variable;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext, IBuildValidatable
 {
-    public static global::app.error.IError? ValidateBuild(List<data.@this> parameters)
+    public global::app.error.IError? ValidateBuild(List<data.@this> parameters)
     {
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
