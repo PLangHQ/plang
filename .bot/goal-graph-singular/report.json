@@ -543,6 +543,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Coder measurement (89fcc15b6): plang --test runs nothing and exits 0 — the runner's own os/system/.build/test.pr is stale (plural keys), system/test.goal loads with zero steps, discovery never starts. 790/804 goal .pr plural, 467/468 test.pr. Ruled: do not resurrect the runner alone (empty test goals could read as false green); order = loud graph readers (Ingi's go) → test.pr regenerated → loud failures → corpus rebuild when the builder runs. Tester must report zero-discovered and not exit 0."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/plural-gate-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Q3 reported blocked (Action member on every handler) — misread: the generator emits Action/Step only under ImplementsIAction/ImplementsIStep (Emission/Action/this.cs:76-85); validate : IContext; environment/run.cs:14-15 already declares both slots. Ruled the step shape on merit: build.validate step=%goal.step[i]%, slot Step, verdict via step.Validate (pass the whole; one door with goal.Validate; verdict names the step for FixProperties). Chain rejected."
         }
       ],
       "after": {
