@@ -26,13 +26,6 @@
         "name": "item"
        },
        "value": 0.5
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "number"
       }
      ],
      "modifier": []
@@ -62,13 +55,6 @@
         "name": "item"
        },
        "value": "%!app.module.list%"
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "list"
       }
      ],
      "modifier": []
@@ -129,34 +115,36 @@
        "value": [
         {
          "name": "item",
+         "type": {
+          "name": "item"
+         },
          "value": "%step%"
         }
        ]
       }
      ],
-     "modifier": [
+     "modifier": []
+    },
+    {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
       {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "type": {
-          "name": "item"
-         },
-         "value": "%goal.Step%"
-        },
-        {
-         "name": "Item",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%step%"
-        }
-       ],
-       "modifier": []
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%goal.Step%"
+      },
+      {
+       "name": "Item",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%step%"
       }
-     ]
+     ],
+     "modifier": []
     }
    ]
   },
@@ -185,34 +173,36 @@
        "value": [
         {
          "name": "item",
+         "type": {
+          "name": "item"
+         },
          "value": "%module%"
         }
        ]
       }
      ],
-     "modifier": [
+     "modifier": []
+    },
+    {
+     "module": "loop",
+     "name": "foreach",
+     "parameter": [
       {
-       "module": "loop",
-       "name": "foreach",
-       "parameter": [
-        {
-         "name": "Collection",
-         "type": {
-          "name": "item"
-         },
-         "value": "%modules%"
-        },
-        {
-         "name": "Item",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%module%"
-        }
-       ],
-       "modifier": []
+       "name": "Collection",
+       "type": {
+        "name": "item"
+       },
+       "value": "%modules%"
+      },
+      {
+       "name": "Item",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%module%"
       }
-     ]
+     ],
+     "modifier": []
     }
    ]
   },
@@ -259,7 +249,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%>"
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -309,7 +299,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%>"
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -359,7 +349,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%>"
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -409,7 +399,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%>"
+       "value": "%!data%"
       }
      ],
      "modifier": []
@@ -441,10 +431,16 @@
        "value": [
         {
          "name": "kind",
+         "type": {
+          "name": "text"
+         },
          "value": "goal-decided"
         },
         {
          "name": "goal",
+         "type": {
+          "name": "item"
+         },
          "value": "%goal%"
         }
        ]
@@ -493,7 +489,7 @@
          "type": {
           "name": "number"
          },
-         "value": "%step.Index%"
+         "value": 0
         }
        ],
        "modifier": []
@@ -522,7 +518,7 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.modules%[%module.Name%]"
+         "value": "%state.modules%"
         },
         {
          "name": "Value",

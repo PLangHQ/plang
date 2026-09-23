@@ -28,6 +28,9 @@
        "value": [
         {
          "name": "goal",
+         "type": {
+          "name": "item"
+         },
          "value": "%goal%"
         }
        ]

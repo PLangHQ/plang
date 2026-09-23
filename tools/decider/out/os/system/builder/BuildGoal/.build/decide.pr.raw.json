@@ -49,15 +49,17 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%threshold%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": 0.5
-        },
-        {
-         "name": "Type",
-         "value": "number"
         }
        ]
       }
@@ -72,15 +74,17 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%modules%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%!app.module.list%"
-        },
-        {
-         "name": "Type",
-         "value": "list"
         }
        ]
       }
@@ -95,10 +99,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%state.goal%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%goal.Name%"
         }
        ]
@@ -114,32 +124,46 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "AddStepToState"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "item",
+           "type": {
+            "name": "item"
+           },
            "value": "%step%"
           }
          ]
         }
        ],
-       "modifier": [
+       "modifier": []
+      },
+      {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
         {
-         "module": "loop",
-         "name": "foreach",
-         "parameter": [
-          {
-           "name": "Collection",
-           "value": "%goal.Step%"
-          },
-          {
-           "name": "Item",
-           "value": "%step%"
-          }
-         ]
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "Item",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%step%"
         }
        ]
       }
@@ -154,32 +178,46 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "AddModuleToState"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "item",
+           "type": {
+            "name": "item"
+           },
            "value": "%module%"
           }
          ]
         }
        ],
-       "modifier": [
+       "modifier": []
+      },
+      {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
         {
-         "module": "loop",
-         "name": "foreach",
-         "parameter": [
-          {
-           "name": "Collection",
-           "value": "%modules%"
-          },
-          {
-           "name": "Item",
-           "value": "%module%"
-          }
-         ]
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%modules%"
+        },
+        {
+         "name": "Item",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%module%"
         }
        ]
       }
@@ -194,10 +232,16 @@
        "parameter": [
         {
          "name": "Template",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
         },
         {
          "name": "IsFile",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -208,11 +252,17 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%moduleQuestions%"
         },
         {
          "name": "Value",
-         "value": "%!data%>"
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
         }
        ]
       }
@@ -227,10 +277,16 @@
        "parameter": [
         {
          "name": "State",
+         "type": {
+          "name": "dict"
+         },
          "value": "%state%"
         },
         {
          "name": "Question",
+         "type": {
+          "name": "dict"
+         },
          "value": "%moduleQuestions%"
         }
        ]
@@ -241,11 +297,17 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%moduleAnswer%"
         },
         {
          "name": "Value",
-         "value": "%!data%>"
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
         }
        ]
       }
@@ -260,10 +322,16 @@
        "parameter": [
         {
          "name": "Template",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/llm/templates/deciderActionQuestions.template"
         },
         {
          "name": "IsFile",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -274,11 +342,17 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%actionQuestions%"
         },
         {
          "name": "Value",
-         "value": "%!data%>"
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
         }
        ]
       }
@@ -293,10 +367,16 @@
        "parameter": [
         {
          "name": "State",
+         "type": {
+          "name": "dict"
+         },
          "value": "%state%"
         },
         {
          "name": "Question",
+         "type": {
+          "name": "dict"
+         },
          "value": "%actionQuestions%"
         }
        ]
@@ -307,11 +387,17 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%actionAnswer%"
         },
         {
          "name": "Value",
-         "value": "%!data%>"
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
         }
        ]
       }
@@ -326,17 +412,29 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/EmitBuildEvent"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "kind",
+           "type": {
+            "name": "text"
+           },
            "value": "goal-decided"
           },
           {
            "name": "goal",
+           "type": {
+            "name": "item"
+           },
            "value": "%goal%"
           }
          ]
@@ -365,10 +463,16 @@
        "parameter": [
         {
          "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
          "value": "%state.step%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": {
           "index": "%step.Index%",
           "text": "%step.Text%"
@@ -376,7 +480,10 @@
         },
         {
          "name": "AtIndex",
-         "value": "%step.Index%"
+         "type": {
+          "name": "number"
+         },
+         "value": 0
         }
        ]
       }
@@ -402,10 +509,16 @@
        "parameter": [
         {
          "name": "Name",
-         "value": "%state.modules%[%module.Name%]"
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.modules%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%module.Description%"
         }
        ]

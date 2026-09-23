@@ -179,9 +179,18 @@ def rows(raw, where):
             DEVIATIONS.append(f'{where}: unreadable row {p!r}')
     return out
 
+def typed(row, fallback, where):
+    """The row's type as the model gave it. A missing one is RECORDED (the .pr reader refuses an
+    untyped row) and filled from the declaration so the rest of the goal still builds."""
+    t = row.get('type')
+    if not t:
+        DEVIATIONS.append(f'{where}: row "{row.get("name")}" has no type')
+        t = fallback
+    return {'name': t} if isinstance(t, str) else t
+
 def pr_action(a, where=''):
-    """One answered action in the .pr's own shape. Every top-level property gets its DECLARED type
-    — the .pr reader rejects a value slot that has none — and modifiers / recovery nest as given."""
+    """One answered action in the .pr's own shape. Every row carries the type the model gave it —
+    the .pr reader rejects a value slot that has none — and modifiers / recovery nest as given."""
     module, name = a.get('module'), a.get('name')
     if name is None and 'action' in a:
         DEVIATIONS.append(f'{where} {module}: element key "action", not "name"')
@@ -190,9 +199,11 @@ def pr_action(a, where=''):
     props, _ = declared(module, name)
     params = []
     for p in rows(a.get('parameter'), where):
-        t = p.get('type') or {'name': (props.get(p['name']) or {}).get('type', 'item')}
-        if isinstance(t, str): t = {'name': t}
+        t = typed(p, (props.get(p['name']) or {}).get('type', 'item'), where)
         value = p.get('value')
+        # An argument row (goal.call's Parameter) carries its own type, like any row.
+        if isinstance(value, list) and all(isinstance(r, dict) and 'name' in r for r in value):
+            value = [{**r, 'type': typed(r, 'item', f'{where} {p["name"]}')} for r in value]
         # A held action (a callback slot) is program: it is written in the action's own shape.
         if t.get('name') == 'action' and isinstance(value, dict): value = pr_action(value, where)
         params.append({'name': p['name'], 'type': t, 'value': value})

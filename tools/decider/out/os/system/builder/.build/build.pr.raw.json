@@ -49,14 +49,23 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%path%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "/"
         },
         {
          "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -72,14 +81,23 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%!build.cache%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": true
         },
         {
          "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -95,14 +113,23 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%!build.summary%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": true
         },
         {
          "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -118,10 +145,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "builder"
         },
         {
          "name": "Goal",
+         "type": {
+          "name": "action"
+         },
          "value": {
           "module": "goal",
           "name": "call",
@@ -129,6 +162,10 @@
            {
             "name": "Name",
             "value": "BuilderChannel"
+           },
+           {
+            "name": "Parameter",
+            "value": []
            }
           ]
          }
@@ -146,17 +183,29 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "EmitBuildEvent"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "kind",
+           "type": {
+            "name": "text"
+           },
            "value": "build-path"
           },
           {
            "name": "path",
+           "type": {
+            "name": "item"
+           },
            "value": "%path%"
           }
          ]
@@ -174,6 +223,9 @@
        "parameter": [
         {
          "name": "Path",
+         "type": {
+          "name": "path"
+         },
          "value": "%path%"
         }
        ]
@@ -184,10 +236,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%app%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%!data%"
         }
        ]
@@ -203,6 +261,9 @@
        "parameter": [
         {
          "name": "Path",
+         "type": {
+          "name": "path"
+         },
          "value": "%path%"
         }
        ]
@@ -213,10 +274,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%goals%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%!data%"
         }
        ]
@@ -232,17 +299,29 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "EmitBuildEvent"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "kind",
+           "type": {
+            "name": "text"
+           },
            "value": "goals-found"
           },
           {
            "name": "goals",
+           "type": {
+            "name": "item"
+           },
            "value": "%goals%"
           }
          ]
@@ -260,10 +339,16 @@
        "parameter": [
         {
          "name": "Collection",
+         "type": {
+          "name": "item"
+         },
          "value": "%goals%"
         },
         {
          "name": "Item",
+         "type": {
+          "name": "variable"
+         },
          "value": "%item%"
         }
        ]
@@ -274,20 +359,25 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "BuildGoal"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "goal",
+           "type": {
+            "name": "item"
+           },
            "value": "%item%"
           }
          ]
-        },
-        {
-         "name": "Actor",
-         "value": "builder"
         }
        ]
       }
@@ -302,10 +392,16 @@
        "parameter": [
         {
          "name": "Path",
+         "type": {
+          "name": "item"
+         },
          "value": "/.build/traces/%!trace.id%/manifest.json"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%traceGoals%"
         }
        ]

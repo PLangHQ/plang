@@ -16,13 +16,22 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "BuildGoal/Start"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "goal",
+           "type": {
+            "name": "item"
+           },
            "value": "%goal%"
           }
          ]

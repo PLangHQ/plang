@@ -157,7 +157,7 @@
   },
   {
    "index": 3,
-   "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", Schema={step: list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>}>}, cache=%!build.cache%, write to %properties%",
+   "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", Schema={step: list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>}, cache=%!build.cache%, write to %properties%",
    "lineNumber": 16,
    "waitForExecution": true,
    "action": [
@@ -170,7 +170,7 @@
        "type": {
         "name": "number"
        },
-       "value": 300000
+       "value": 60000
       },
       {
        "name": "Sliding",
@@ -184,68 +184,70 @@
        "type": {
         "name": "text"
        },
-       "value": "goal-properties:%goal%"
+       "value": "goal-properties-llm-query"
       }
      ],
-     "modifier": []
-    },
-    {
-     "module": "llm",
-     "name": "query",
-     "parameter": [
+     "modifier": [
       {
-       "name": "Message",
-       "type": {
-        "name": "list"
-       },
-       "value": "%messages%"
-      },
-      {
-       "name": "Model",
-       "type": {
-        "name": "text"
-       },
-       "value": "gpt-5.4-nano"
-      },
-      {
-       "name": "Schema",
-       "type": {
-        "name": "item"
-       },
-       "value": {
-        "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>}"
-       }
-      },
-      {
-       "name": "Cache",
-       "type": {
-        "name": "bool"
-       },
-       "value": true
+       "module": "llm",
+       "name": "query",
+       "parameter": [
+        {
+         "name": "Message",
+         "type": {
+          "name": "list"
+         },
+         "value": "%messages%"
+        },
+        {
+         "name": "Model",
+         "type": {
+          "name": "text"
+         },
+         "value": "gpt-5.4-nano"
+        },
+        {
+         "name": "Schema",
+         "type": {
+          "name": "item"
+         },
+         "value": {
+          "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>"
+         }
+        },
+        {
+         "name": "Cache",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": [
+        {
+         "module": "variable",
+         "name": "set",
+         "parameter": [
+          {
+           "name": "Name",
+           "type": {
+            "name": "variable"
+           },
+           "value": "%properties%"
+          },
+          {
+           "name": "Value",
+           "type": {
+            "name": "item"
+           },
+           "value": "%!data%"
+          }
+         ],
+         "modifier": []
+        }
+       ]
       }
-     ],
-     "modifier": []
-    },
-    {
-     "module": "variable",
-     "name": "set",
-     "parameter": [
-      {
-       "name": "Name",
-       "type": {
-        "name": "variable"
-       },
-       "value": "%properties%"
-      },
-      {
-       "name": "Value",
-       "type": {
-        "name": "item"
-       },
-       "value": "%!data%"
-      }
-     ],
-     "modifier": []
+     ]
     }
    ]
   },
@@ -274,10 +276,16 @@
        "value": [
         {
          "name": "kind",
+         "type": {
+          "name": "text"
+         },
          "value": "goal-properties"
         },
         {
          "name": "goal",
+         "type": {
+          "name": "item"
+         },
          "value": "%goal%"
         }
        ]

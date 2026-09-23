@@ -32,14 +32,23 @@
        "parameter": [
         {
          "name": "Template",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/llm/templates/propertiesUser.template"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": []
         },
         {
          "name": "IsFile",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -50,10 +59,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%propertiesUserMsg%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%!data%"
         }
        ]
@@ -69,14 +84,23 @@
        "parameter": [
         {
          "name": "Template",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/llm/Properties.llm"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": []
         },
         {
          "name": "IsFile",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         }
        ]
@@ -87,10 +111,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%propertiesSystemMsg%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%!data%"
         }
        ]
@@ -106,10 +136,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%messages%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": [
           {
            "Role": "system",
@@ -134,54 +170,84 @@
        "parameter": [
         {
          "name": "DurationMs",
-         "value": 300000
+         "type": {
+          "name": "number"
+         },
+         "value": 60000
         },
         {
          "name": "Sliding",
+         "type": {
+          "name": "bool"
+         },
          "value": true
         },
         {
          "name": "Key",
-         "value": "goal-properties:%goal%"
+         "type": {
+          "name": "text"
+         },
+         "value": "goal-properties-llm-query"
         }
        ],
-       "recovery": []
-      },
-      {
-       "module": "llm",
-       "name": "query",
-       "parameter": [
+       "modifier": [
         {
-         "name": "Message",
-         "value": "%messages%"
-        },
-        {
-         "name": "Model",
-         "value": "gpt-5.4-nano"
-        },
-        {
-         "name": "Schema",
-         "value": {
-          "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type?: {name: string, kind?: string}, value?: object}>}>}>}>}"
-         }
-        },
-        {
-         "name": "Cache",
-         "value": true
-        }
-       ]
-      },
-      {
-       "module": "variable",
-       "name": "set",
-       "parameter": [
-        {
-         "name": "Name",
-         "value": "%properties%"
-        },
-        {
-         "name": "Value",
-         "value": "%!data%"
+         "module": "llm",
+         "name": "query",
+         "parameter": [
+          {
+           "name": "Message",
+           "type": {
+            "name": "list"
+           },
+           "value": "%messages%"
+          },
+          {
+           "name": "Model",
+           "type": {
+            "name": "text"
+           },
+           "value": "gpt-5.4-nano"
+          },
+          {
+           "name": "Schema",
+           "type": {
+            "name": "item"
+           },
+           "value": {
+            "step": "list<{index: int, action: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, parameter?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>"
+           }
+          },
+          {
+           "name": "Cache",
+           "type": {
+            "name": "bool"
+           },
+           "value": true
+          }
+         ],
+         "modifier": [
+          {
+           "module": "variable",
+           "name": "set",
+           "parameter": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%properties%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%!data%"
+            }
+           ]
+          }
+         ]
         }
        ]
       }
@@ -196,17 +262,29 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/EmitBuildEvent"
         },
         {
          "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
          "value": [
           {
            "name": "kind",
+           "type": {
+            "name": "text"
+           },
            "value": "goal-properties"
           },
           {
            "name": "goal",
+           "type": {
+            "name": "item"
+           },
            "value": "%goal%"
           }
          ]

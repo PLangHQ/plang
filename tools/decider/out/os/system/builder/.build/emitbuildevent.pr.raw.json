@@ -21,15 +21,10 @@
        "parameter": [
         {
          "name": "Template",
+         "type": {
+          "name": "text"
+         },
          "value": "/system/builder/templates/output/build-output.template"
-        },
-        {
-         "name": "Parameter",
-         "value": []
-        },
-        {
-         "name": "IsFile",
-         "value": true
         }
        ]
       },
@@ -39,10 +34,16 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "variable"
+         },
          "value": "%msg%"
         },
         {
          "name": "Value",
+         "type": {
+          "name": "item"
+         },
          "value": "%!data%"
         }
        ]
@@ -58,39 +59,44 @@
        "parameter": [
         {
          "name": "Name",
+         "type": {
+          "name": "text"
+         },
          "value": "builder"
         },
         {
          "name": "Goal",
+         "type": {
+          "name": "action"
+         },
          "value": {
           "module": "goal",
           "name": "call",
           "parameter": [
            {
             "name": "Name",
-            "value": "EmitBuildEvent"
+            "type": {
+             "name": "text"
+            },
+            "value": "output.write"
            },
            {
             "name": "Parameter",
+            "type": {
+             "name": "list"
+            },
             "value": [
              {
-              "name": "msg",
+              "name": "Data",
+              "type": {
+               "name": "item"
+              },
               "value": "%msg%"
              }
             ]
            }
           ]
          }
-        }
-       ]
-      },
-      {
-       "module": "output",
-       "name": "write",
-       "parameter": [
-        {
-         "name": "Data",
-         "value": "%msg%"
         }
        ]
       }
