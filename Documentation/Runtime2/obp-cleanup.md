@@ -244,3 +244,10 @@ raw `int` too — collapsing `CountRaw` likely means that field becomes `number`
 `Count`). Focused refactor; do NOT fold into unrelated work.
 
 Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in new code.
+
+## `module.list.GetActions(string)` — verb+noun proxy [logged 2026-09-23, goal-graph-singular]
+
+`module/list/this.cs:130` `IEnumerable<string> GetActions(string module)` returns the action names of
+a module by name — what `app.module["x"].Action` already is. Verb+noun + middleman: the registry
+proxies what the element owns. Callers: `test/report.cs:171`, `type/list/this.cs:653`,
+`module/list/this.cs:228`. Fix: callers select the element and walk its `Action` node.
