@@ -1,0 +1,162 @@
+diff --git a/PLang/app/actor/context/this.cs b/PLang/app/actor/context/this.cs
+index 6f2c10afe..92fd82aee 100644
+--- a/PLang/app/actor/context/this.cs
++++ b/PLang/app/actor/context/this.cs
+@@ -566,6 +566,39 @@ public interface IContextAccessor
+     @this? Current { get; set; }
+ }
+ 
++/// <summary>PROTOTYPE: the running context — set by the run door, read by context-aware values.</summary>
++public static class Running
++{
++    private static readonly AsyncLocal<@this?> _current = new();
++    public static @this? Current { get => _current.Value; set => _current.Value = value; }
++    // PROTOTYPE: outside any run, fall back to the value's birth context and record the site.
++    public static @this Required(string who, @this? born)
++    {
++        if (_current.Value is { } running)
++        {
++            if (born != null && !ReferenceEquals(born.App, running.App)) Record("CROSS-APP " + who);
++            return running;
++        }
++        Record(who);
++        return born ?? throw new System.InvalidOperationException($"PROTO-NO-RUNNING-CONTEXT: {who}");
++    }
++
++    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _sites = new();
++    private static void Record(string who)
++    {
++        var frames = new System.Diagnostics.StackTrace(2, false).GetFrames()
++            .Select(f => f.GetMethod())
++            .Where(m => m?.DeclaringType?.Namespace is { } ns && (ns.StartsWith("app") || ns.StartsWith("PLang")))
++            .Take(6)
++            .Select(m => $"{m!.DeclaringType!.FullName}.{m.Name}");
++        var key = who + " <- " + string.Join(" <- ", frames);
++        if (_sites.TryAdd(key, 1))
++            lock (_sites) System.Type.GetType("System.IO.File")!
++                .GetMethod("AppendAllText", new[] { typeof(string), typeof(string) })!
++                .Invoke(null, new object[] { "/home/claude/.claude/jobs/8ac43574/tmp/proto_sites.txt", key + "\n" });
++    }
++}
++
+ /// <summary>
+ /// Default implementation using AsyncLocal.
+ /// </summary>
+diff --git a/PLang/app/goal/step/action/this.cs b/PLang/app/goal/step/action/this.cs
+index 751c7b15e..d1a5b6317 100644
+--- a/PLang/app/goal/step/action/this.cs
++++ b/PLang/app/goal/step/action/this.cs
+@@ -133,21 +133,13 @@ public partial class @this
+ 
+ 
+     /// <summary>
+-    /// Looks up a parameter by name. Walks Parameters first, falls back to Defaults,
+-    /// returns Data.NotFound when missing. Pure lookup — no resolution side effects.
+-    /// Resolution happens later via Data.As&lt;T&gt;(context). Context is part of the
+-    /// contract for symmetry with As&lt;T&gt;(context); kept as a hook even though
+-    /// today's lookup is context-free.
++    /// The parameter row by name — Parameter first, then Default; null when neither holds it.
++    /// The row is program structure, shared by every run: a run never binds or reads it in place,
++    /// it takes its own copy (<c>Copy(context)</c> / <c>As&lt;T&gt;(context)</c>).
+     /// </summary>
+-    public global::app.data.@this GetParameter(string name, actor.context.@this context)
+-    {
+-        var data = Parameter?.FirstOrDefault(p =>
+-            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+-        if (data != null) return data;
+-        data = Default?.FirstOrDefault(p =>
+-            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+-        return data ?? context.NotFound(name);
+-    }
++    public global::app.data.@this? this[string name]
++        => Parameter?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
++           ?? Default?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+ 
+     /// <summary>
+     /// Runs this action: lifecycle events → dispatch → return mapping.
+@@ -158,6 +150,7 @@ public partial class @this
+     /// </summary>
+     public async Task<global::app.data.@this> Run(actor.context.@this context)
+     {
++        actor.context.Running.Current = context;   // PROTOTYPE: the run door sets the running context
+         // ONE FRAME PER ACTION. The frame spans the action's whole run — its lifecycle events,
+         // its modifiers, and its dispatch — not just the dispatch. A modifier recovering from a
+         // failure (error.handle) therefore runs INSIDE the frame that failed, which is where the
+diff --git a/PLang/app/goal/this.cs b/PLang/app/goal/this.cs
+index 9521af5a4..4478daabe 100644
+--- a/PLang/app/goal/this.cs
++++ b/PLang/app/goal/this.cs
+@@ -284,6 +284,7 @@ public sealed partial class @this
+     /// </summary>
+     public async Task<data.@this> Run(actor.context.@this context)
+     {
++        actor.context.Running.Current = context;   // PROTOTYPE: the run door sets the running context
+         var previousGoal = context.Goal;
+         context.Goal = this;
+ 
+diff --git a/PLang/app/this.cs b/PLang/app/this.cs
+index d49d535fd..dc915938d 100644
+--- a/PLang/app/this.cs
++++ b/PLang/app/this.cs
+@@ -264,6 +264,7 @@ public sealed partial class @this : IAsyncDisposable
+         // The actor/context ctor touches App only lazily (Settings/Code via deferred
+         // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
+         Actor = new actor.list.@this(this, _shutdownCts.Token);
++        actor.context.Running.Current = System.Context;   // PROTOTYPE: boot runs as System
+ 
+         Event = new global::app.@event.list.@this();
+         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
+diff --git a/PLang/app/type/item/dict/this.cs b/PLang/app/type/item/dict/this.cs
+index fb6d73e37..e57d7c40f 100644
+--- a/PLang/app/type/item/dict/this.cs
++++ b/PLang/app/type/item/dict/this.cs
+@@ -95,7 +95,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
+     [System.Text.Json.Serialization.JsonIgnore]
+     public actor.context.@this Context
+     {
+-        get => _context;
++        get => actor.context.Running.Required("dict", _context);   // PROTOTYPE
+         set
+         {
+             _context = value;
+diff --git a/PLang/app/type/item/list/this.cs b/PLang/app/type/item/list/this.cs
+index 83fea6c8a..5422d1c3f 100644
+--- a/PLang/app/type/item/list/this.cs
++++ b/PLang/app/type/item/list/this.cs
+@@ -157,7 +157,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
+     [System.Text.Json.Serialization.JsonIgnore]
+     public actor.context.@this Context
+     {
+-        get => _context;
++        get => actor.context.Running.Required("list", _context);   // PROTOTYPE
+         set
+         {
+             _context = value;
+diff --git a/PLang/app/type/item/path/this.cs b/PLang/app/type/item/path/this.cs
+index 63a417404..584f1e28d 100644
+--- a/PLang/app/type/item/path/this.cs
++++ b/PLang/app/type/item/path/this.cs
+@@ -151,7 +151,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
+     /// which contains cycles; serializing it blows up trace files.
+     /// </summary>
+     [System.Text.Json.Serialization.JsonIgnore]
+-    public actor.context.@this Context { get; set; } = null!;
++    public actor.context.@this Context { get => actor.context.Running.Required("path", _born); set => _born = value; }
++    private actor.context.@this _born = null!;   // PROTOTYPE: kept, unread
+ 
+     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
+     /// <summary>
+diff --git a/PLang/app/type/item/source.cs b/PLang/app/type/item/source.cs
+index 12cf40e0d..b75c0da32 100644
+--- a/PLang/app/type/item/source.cs
++++ b/PLang/app/type/item/source.cs
+@@ -34,7 +34,8 @@ public class source : @this, module.IContext
+     // Born WITH context — a source is minted only by the type entity's Create door (the sole birth
+     // site), which always has a wired scope; the context-less births (the "Judge" phase) are gone.
+     [System.Text.Json.Serialization.JsonIgnore]
+-    public actor.context.@this Context { get; set; } = null!;
++    public actor.context.@this Context { get => actor.context.Running.Required("source", _born); set => _born = value; }
++    private actor.context.@this _born = null!;   // PROTOTYPE: kept, unread
+ 
+     /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
+     /// <c>Create</c> door shares. The source holds the declaration WHOLE (Name/Kind/Strict/Template

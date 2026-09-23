@@ -1,0 +1,73 @@
+Types|AsBooleanAsync_TrueWhenPresent_FalseWhenAbsent|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true   but found False 
+Types|Delete_204_ReturnsOk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on http://127.0.
+Types|DerivedPath_InheritsContext_FromSource|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to app.actor.context.this   but found app.actor.context.this 
+Types|Exists_2xx_True_4xx_False|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on http://127.0.
+Types|Get_200_ReadText_ReturnsBody|
+Types|Get_404_ReturnsFail_WithNotFoundStatus|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "NotFound"   but found "PermissionDenied" 
+Types|HttpClient_IsProcessShared_NotRecreatedPerInstance|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true   but found False 
+Types|IdentityRejected_401_CapturedAsFail|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 401   but found 403 
+Types|IdnHost_AsciiHost_RendersUnchanged|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "apple.com"   but found "" 
+Types|IdnHost_HomographHost_RendersAsPunycodeInPromptAndAbsolute|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "xn--pple-43d.com"   but found "" 
+Types|NetworkFailure_ConnectionRefused_ReturnsFail_NetworkError|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "NetworkError"   but found "PermissionDenied" 
+Types|NoPerInstanceState_TwoReads_TwoIndependentRequests|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 2   but found 0 
+Types|Post_200_WriteText_ReturnsOk_AndBodyIsStored|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on http://127.0.
+Types|Post_405_ReturnsFail_405_MethodNotAllowed|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "MethodNotAllowed"   but found "PermissionDenied" 
+Types|Prompt_WithQueryString_IncludesPersistenceWarning|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "query string"   but found "" 
+Types|ReadAsBase64_GatesUnderReadVerb_NotWriteOrExecute|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be greater than or equal to 1   but found 0 
+Types|Redirect_307_PreservesPostBody_AcrossHops|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on http://127.0.
+Types|Redirect_Loop_ExhaustsHopCap_ReturnsTooManyRedirects|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "TooManyRedirects"   but found "PermissionDenied" 
+Types|Redirect_ToAuthorizedHost_FollowsAndReturnsTargetBody|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on http://127.0.
+Types|Redirect_ToUnsupportedScheme_RejectedTypedError|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "UnsupportedRedirectScheme"   but found "PermissionDenied" 
+Types|Request_CarriesPlangSigningIdentityHeaders|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null   but value is null 
+Types|Stat_Head_PopulatesContentLengthAndLastModified|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on http://127.0.
+Types|UserInfo_PromptShowsCleanUrl_AndGrantKeyIsClean|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "https://victim.example/admin"   but found "" 
+Wire|Providers_Restore_ReplaysRegistrationsBeforeApplyingDefaults|  TUnit.Engine.Exceptions.TestFailedException: ProviderRestoreException: Provider 'custom' source '/home/claude/.claude/jobs/8ac43574/tmp/proto/PLang.Tests/Wire/bin/Debug
+Wire|to|
+Data|SubGoalCall_EachGoalSeesOwnResolvedView|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "sub"   but found "" 
+Generator|ConcurrentHandlers_ParallelAsT_ResolveConsistently|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true   but found False 
+Generator|ConcurrentHandlers_ParallelExecuteAsync_NoSharedState|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true   but found False 
+Generator|DataPlain_VarReference_ResolvesAsObject|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "world"   but found "null" 
+Generator|DataWrappedString_FullVarMatch_ResolvesToVariableValue|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "hello"   but found "" 
+Generator|DispatchResolution_HandlerSeesResolvedValue_SharedPrParamUntouched|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "/tmp/x.txt"   but found "" 
+Generator|FullVarMatch_StringRef_GetsVariableValue|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "/tmp/x.txt"   but found "" 
+Generator|FullVarMatch_VariableHoldsTypedData_UnwrapsCleanly|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "42"   but found "" 
+Generator|ReResolveAcrossCalls_LoopIteration_EachReadFresh|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "value-0"   but found "" 
+Generator|ReResolveAcrossCalls_VarChangesBetween_PropertyPicksUpFreshValue|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "first"   but found "" 
+Runtime|Authorize_ConstructedPermission_HasExpectedActorPathVerbMatch|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null   but value is null 
+Runtime|Authorize_GrantExists_ReturnsOk_NoChannelAsk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /p   but foun
+Runtime|Authorize_OtherAskFailure_SurfacesAsItself|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "ChannelBroken"   but found "PermissionDenied" 
+Runtime|Authorize_StatefulAnswerA_Signs_Adds_ReturnsOk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /p   but foun
+Runtime|Authorize_StatefulAnswerGarbage_RecursesWithInvalidPrefix|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /p   but foun
+Runtime|Authorize_StatefulAnswerY_SignsWithoutExpiry_Adds_ReturnsOk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /p   but foun
+Runtime|Authorize_StatelessChannel_BubblesDataAskUnchanged|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "ask"   but found "null" 
+Runtime|BundledAsk_AnswerA_StoresBothGrants_SourceReadAndDestWrite|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null   but value is null 
+Runtime|Copy_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type PermissionDenied   but Value is of type ServiceError, not PermissionDenied 
+Runtime|Copy_MirrorsMove_BundledBehavior|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [ChannelEof] Channel 'input' has no interactive answerer (str
+Runtime|ExecuteVerb_PromptCopy_DistinguishesFromRead|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be greater than or equal to 1   but found 0 
+Runtime|Goal_JsonRoundTrip_BackReferencePass_WiresPathContext|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to app.actor.context.this   but found app.actor.context.this 
+Runtime|Goal_JsonRoundTrip_ReconstitutesPath_UnderDifferentAppRoot|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to app.actor.context.this   but found app.actor.context.this 
+Runtime|Move_BothPathsMissing_ProducesBundledAsk_OneQuestionTwoPaths|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [ChannelEof] Channel 'input' has no interactive answerer (str
+Runtime|Move_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type PermissionDenied   but Value is of type ServiceError, not PermissionDenied 
+Runtime|Move_OneMissingGrant_ProducesSinglePathAsk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [ChannelEof] Channel 'input' has no interactive answerer (str
+Runtime|Move_StatelessChannel_BubblesDataAskUnchanged_NoFsMutation|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "ask"   but found "null" 
+Runtime|OutOfRoot_MessageChannel_ReturnsDataAsk_WithSnapshot|
+Runtime|OutOfRoot_StreamChannel_BlocksAndCompletes_GrantStored|
+Runtime|PermissionDenied_Error_CarriesConstructedPermission|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "User"   but found "System" 
+Runtime|ReadUrl_Fetches_OverHttp|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "remote body"   but found "null" 
+Runtime|Run_AfterActionSubscription_CapturesCoverageOnChildApp|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true   but found False 
+Runtime|Run_FixtureThrowsUnexpectedException_CapturedAsFail_LoopContinues|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass   but found Fail 
+Runtime|Run_FreshAppPerTest_IsolationBoundaryIsFileLevel|  TUnit.Engine.Exceptions.TestFailedException: Exception: expected all runs to Pass; these did not:     TestA = Fail [NotFound: File not found: /tmp/shared-504287/.build/
+Runtime|Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 1   but found 0 
+Runtime|Run_OutputCapture_OutputChannelOnly_ErrorChannelExcluded|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass   but found Fail 
+Runtime|Run_TestChildCoverage_MergedIntoParentCoverage|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true   but found False 
+Runtime|Run_TestingIsEnabled_SetToTrueInChildApp|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass   but found Fail 
+Runtime|Run_TimeoutExceeded_TestMarkedTimeout|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Timeout   but found Fail 
+Runtime|Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass   but found Fail 
+Runtime|Scenario1_NoGrantSuspends_StatelessChannelReturnsDataAsk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "ask"   but found "null" 
+Runtime|Scenario2_GrantAStoresPersisted_AnswerPathSignsAndAdds|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /tmp/plang-em
+Runtime|Scenario3_ImmediateRereadSkipsPrompt_FindCoversNoAsk|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /tmp/plang-em
+Runtime|Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /tmp/plang-em
+Runtime|Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /tmp/plang-em
+Runtime|Scenario4_RestartStillNoPrompt_PersistedGrantSurvivesNewApp|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /tmp/plang-em
+Runtime|Scenario5_RevokeReprompts_AfterRevokeFreshPromptFires|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be greater than 0   but found 0 
+Runtime|Scenario6_NarrowedGrantRejectsWiderRequest|  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PermissionDenied] Permission denied: System on /tmp/plang-em
