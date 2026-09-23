@@ -57,3 +57,11 @@ A body written as an expression (recovery actions stored in a parameter) and a r
 **Proposed change:**
 - **named twice** — one thing answering to two names: a type with two plang names across doors, a method with an alias, two copies of the same rules (a static and an instance naming function). Every door that answers "what is this called" must give the same answer, and a caller must never have to know which door it asked. Fix: one door per question, the owner's; the alias dies.
 - **static** — no `static` members in OBP code, public or private: a static is behavior with no owner. Move it onto the object whose knowledge it is, or delete it. (Exempt: constants, and C#-mandated statics such as `static abstract` interface members and generator entry points.)
+
+## architect — 2026-09-23
+**Target:** /CLAUDE.md — Runtime2 Conventions, the bullet "**Action prose lives in markdown, not attributes.**"
+**Why:** The bullet describes machinery this branch deleted. The old compiler prompt (`Compile.llm`) that rendered per-action Notes is gone with the old builder; `MarkdownTeaching` (loader, `MergeLayers`, `ScanOrphans`, `ModuleStem`) and the orphan warning are deleted (Ingi, 2026-09-23 — no production caller); module-level notes/examples are dropped (one file existed). Decided with Ingi: the object owns its docs as plain members, and the module knows its folder.
+**Proposed change:** replace the bullet's text after the first two sentences with:
+```
+**Prose** (Description, Notes, Examples) lives in `os/system/modules/<module>/<action>.{description,notes,examples}.md`, plus one `module.description.md` per module. The owners read it as their own members — `module.Description`, `action.Description` / `Notes` / `Examples` — lazy file handles built from the module's `Folder` (the one place the folder rule lives); an action reaches it through the module it was born with. An absent file is falsy (`{% if a.Notes %}` checks presence without reading). No loader class, no orphan scan. `[Description]`/`[ModuleDescription]`/`[Example]` do not exist on action handlers — don't add them back.
+```

@@ -686,6 +686,18 @@
           "category": "code",
           "confidence": "high",
           "context": "Investigated why goal/step/action are items (Ingi). Decided: no value/reference marker (graph slots never hold literals); actor literal becomes a choice from the closed actor set, actor.Convert dies; goal/step dict Create arms die (dead second parser — .pr reads go through the readers); Data<T> keeps its constraint; graph Create answers pass-through or loud decline, action stops inheriting the reflection deserialize fallback."
+        },
+        {
+          "paths": [
+            "PLang/app/module/this.cs",
+            "PLang/app/goal/step/action/this.Schema.cs",
+            "PLang/app/module/MarkdownTeaching.cs",
+            ".bot/goal-graph-singular/claude-md-proposals.md"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Docs design settled with Ingi: descriptions teach the builder's LLM; only module descriptions are read today. C# fix approved and sent: module.Folder (one folder rule), one-line Description/Notes/Examples members on owners, action reaches the folder via its Module; Prose, facet, Module* proxies, module Notes/Examples, MarkdownTeaching and WarnOrphansAsync die. Plang flow (action descriptions in stage 2, menu of actions, notes/examples in stage 3) still with Ingi. CLAUDE.md proposal filed."
         }
       ],
       "after": {
