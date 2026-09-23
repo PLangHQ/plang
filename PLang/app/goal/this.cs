@@ -201,6 +201,20 @@ public sealed partial class @this
         }
     }
 
+    /// <summary>The goal's app-absolute address — the name a call anywhere in the app reaches it by:
+    /// its .goal path without the extension (<c>/system/builder/EmitBuildEvent</c>). The goal
+    /// collection resolves it straight to the goal's .pr. Null for a goal with no Path.</summary>
+    [JsonIgnore]
+    public string? Address
+    {
+        get
+        {
+            var path = Path?.ToString();
+            if (string.IsNullOrEmpty(path)) return null;
+            return path.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? path[..^5] : path;
+        }
+    }
+
     public string ToText()
     {
         var lines = new List<string>();

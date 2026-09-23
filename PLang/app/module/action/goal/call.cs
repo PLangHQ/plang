@@ -34,6 +34,20 @@ public partial class Call : IContext
     /// </summary>
     public async Task<data.@this> Build()
     {
+        // The name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
+        // name is only known at run and stays authored; a goal in the caller's own file (a child, or
+        // the file's root) stays bare — it wins by rule and cannot be shadowed. A goal not found yet
+        // may be built later in the same run, so the name is left as written.
+        var caller = __action?.Step?.Goal;
+        var authored = Name.Peek()?.ToString();
+        if (!string.IsNullOrEmpty(authored) && !Name.HasVariableReference
+            && await Context.App.Goal.GetAsync(authored, caller) is { } target
+            && !Equals(target.Path, caller?.Path) && target.Address is { } address
+            && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
+            foreach (var row in __action!.Parameter)
+                if (string.Equals(row.Name, "Name", System.StringComparison.OrdinalIgnoreCase))
+                    row.SetValue(new global::app.type.item.text.@this(address));
+
         if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
 
         var kept = new List<data.@this>();

@@ -75,44 +75,66 @@ public class ValidateActionsTests
         await Assert.That(result.Error!.Message).Contains("variable.fake");
     }
 
-    [Test]
-    public async Task ValidateActions_GoalCallPath_Resolved()
+    // --- goal.call's Name becomes the target's address at build ---
+
+    // A step in /Caller.goal whose one action is `call <name>`, validated through build.validate.
+    private async Task<Data> BuildCallFromCaller(string name, params Goal[] children)
     {
-        // Create a .pr file that the resolver can find
-        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
-        System.IO.Directory.CreateDirectory(buildDir);
-        var prJson = System.Text.Json.JsonSerializer.Serialize(new List<Goal>
+        var caller = new Goal
         {
-            new Goal { Name = "DoSomething", Path = global::app.type.item.path.@this.Resolve("/DoSomething.goal", _app.User.Context) }
-        }, new System.Text.Json.JsonSerializerOptions
+            Name = "Caller",
+            Path = global::app.type.item.path.@this.Resolve("/Caller.goal", _app.User.Context),
+        };
+        foreach (var child in children) { child.Parent = caller; caller.Child.Add(child); }
+        _app.Goal.Add(caller);
+
+        var step = new Step { Goal = caller, Text = $"call {name}", Index = 0 };
+        step.Action.Add(new Action
         {
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) }
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
+            Name = "call",
+            Parameter = new List<Data> { new("Name", name, context: _app.User.Context) }
         });
-        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
+        caller.Step.Add(step);
 
-        var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "DoSomething" }, context: _app.User.Context);
+        await _app.Run(new validate(_app.User.Context) { Step = new("", step) }, _app.User.Context);
+        return step.Action[0].Parameter.First(p => p.Name == "Name");
+    }
 
-        var actions = new StepActions
+    [Test]
+    public async Task ValidateActions_GoalCall_NameInAnotherFile_BecomesItsAddress()
+    {
+        _app.Goal.Add(new Goal
         {
-            // goal.call.call carries the GoalCall directly — no condition wrapper noise.
-            new Action
-            {
-                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
-                Name = "call",
-                Parameter = new List<Data> { goalCallData }
-            }
+            Name = "DoSomething",
+            Path = global::app.type.item.path.@this.Resolve("/lib/DoSomething.goal", _app.User.Context)
+        });
+
+        var name = await BuildCallFromCaller("DoSomething");
+
+        await Assert.That(name.Peek()?.ToString()).IsEqualTo("/lib/DoSomething");
+    }
+
+    [Test]
+    public async Task ValidateActions_GoalCall_ChildInSameFile_StaysBare()
+    {
+        var child = new Goal
+        {
+            Name = "Helper",
+            Path = global::app.type.item.path.@this.Resolve("/Caller.goal", _app.User.Context)
         };
 
-        var action = For(actions);
-        var result = await _app.Run(action, _app.User.Context);
+        var name = await BuildCallFromCaller("Helper", child);
 
-        await result.IsSuccess();
-        // Verify PrPath was actually resolved
-        var resolvedCall = (await actions[0].Parameter[0].Value()) as global::app.goal.GoalCall;
-        await Assert.That(resolvedCall).IsNotNull();
-        await Assert.That(resolvedCall!.PrPath?.ToString().Replace('\\', '/').TrimStart('/'))
-            .IsEqualTo(".build/dosomething.pr");
+        await Assert.That(name.Peek()?.ToString()).IsEqualTo("Helper");
+    }
+
+    [Test]
+    public async Task ValidateActions_GoalCall_VariableName_StaysAuthored()
+    {
+        var name = await BuildCallFromCaller("%target%");
+
+        await Assert.That(name.Peek()?.ToString()).IsEqualTo("%target%");
     }
 
     [Test]

@@ -263,7 +263,6 @@ public class Default : IBuilder
         var actions = new List<global::app.goal.step.action.@this>();
         for (int i = 0; i < step.Action.Count; i++) actions.Add(step.Action[i]);
 
-        await ResolveGoalCallPaths(actions, app, context);
         var normalizationErrors = NormalizeParameterTypes(actions, modules, context);
 
         foreach (var a in actions)
@@ -622,72 +621,4 @@ public class Default : IBuilder
         return errors;
     }
 
-    private static async Task ResolveGoalCallPaths(Actions actions, app.@this app,
-        actor.context.@this context)
-    {
-        foreach (var action in actions)
-        {
-            await ResolveGoalCallsInAction(action, app, context);
-
-            // Modifiers (e.g. error.handle's `then call LogRetryError`) hold their own
-            // goal.call parameters — same resolution rule applies.
-            if (action.Modifier != null)
-            {
-                foreach (var mod in action.Modifier)
-                    await ResolveGoalCallsInAction(mod, app, context);
-            }
-        }
-    }
-
-    private static async Task ResolveGoalCallsInAction(
-        global::app.goal.step.action.@this action,
-        app.@this app, actor.context.@this context)
-    {
-        if (action.Parameter == null) return;
-
-        foreach (var param in action.Parameter)
-        {
-            if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var goalCall = ToGoalCall((await param.Value()), context);
-            if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
-                continue;
-
-            if (goalCall.Name.Contains('%'))
-            {
-                param.SetValue(goalCall);
-                continue;
-            }
-
-            // Ask the runtime to resolve the goal — same path/name lookup logic
-            // GoalCall uses at dispatch. If it returns a Goal, copy that goal's
-            // PrPath onto our GoalCall so the saved .pr carries an explicit path
-            // (per "every goal.call should carry prPath" rule). Null result means
-            // the goal couldn't be found — leave PrPath null, the validator's
-            // downstream checks (or runtime) will surface a NotFound for it.
-            goalCall.Action ??= action;
-            var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && (await resolved.Value()) as Goal is { } g && g.PrPath != null)
-            {
-                // Pre-resolve the .pr path. A slash-qualified Name keeps its
-                // folder prefix in the saved .pr — LoadFromFile leaf-matches it
-                // against the loaded goal's own (unqualified) Name at dispatch.
-                goalCall.PrPath = g.PrPath;
-            }
-
-            param.SetValue(goalCall);
-        }
-    }
-
-    private static GoalCall? ToGoalCall(object? value, actor.context.@this context)
-    {
-        if (value is GoalCall gc) return gc;
-        // GoalCall builds itself (string / JsonElement / dict → goal.call) through its own entity
-        // courier — the same Create door every type uses; a carrier declared goal.call so the
-        // family build fires eagerly (the context door would defer a string to a source).
-        var carrier = new global::app.data.@this("",
-            new global::app.type.item.@null.@this("goal.call"), context: context);
-        return context.App.Type["goal.call"]?.Create(value, carrier) as GoalCall;
-    }
 }
