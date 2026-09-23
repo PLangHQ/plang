@@ -74,15 +74,11 @@ public partial class Call : IContext
         return Context.Ok();
     }
 
-    /// <summary>The goal this call reaches — selected through the goal collection as seen from the goal
-    /// this call sits in. A %variable% name resolves here, in the caller's context. Null when no goal
-    /// answers to the name.</summary>
-    public async Task<global::app.goal.@this?> Goal()
-        => await Context.App.Goal.GetAsync((await Name.Value())?.RawText ?? "", __action?.Step?.Goal);
-
     public async Task<data.@this> Run()
     {
-        var goal = await Goal();
+        // The goal is selected through the goal collection as seen from the goal this call sits in.
+        // A %variable% name resolves here, in the caller's context.
+        var goal = await Context.App.Goal.GetAsync((await Name.Value())?.RawText ?? "", __action?.Step?.Goal);
         if (goal == null)
             return Context.Error(new global::app.error.ActionError($"Goal '{Name.Peek()}' not found.", "GoalNotFound", 404));
 

@@ -17,8 +17,8 @@ namespace app.module.action.channel;
 public partial class Set : IContext
 {
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
-    /// <summary>The call whose goal backs the channel — a <c>goal.call</c> action; the goal is
-    /// selected once, at registration.</summary>
+    /// <summary>The call that backs the channel — a <c>goal.call</c> action, run as itself (its own
+    /// arguments and modifiers) for each message.</summary>
     public partial data.@this<global::app.goal.step.action.@this> Goal { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
     public partial data.@this<global::app.type.item.number.@this>? Buffer { get; init; }
@@ -39,19 +39,15 @@ public partial class Set : IContext
 
         var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
 
-        if ((await Goal.Value()) is not { } held
-            || (await held.Bind(Context)).Handler is not global::app.module.action.goal.Call call)
+        if ((await Goal.Value()) is not { } call)
             return Context.Error(new ServiceError("Goal is required", "ValueRequired", 400));
-
-        if (await call.Goal() is not { } goalEntry)
-            return Context.Error(new ServiceError($"Goal '{call.Name.Peek()}' not found.", "GoalNotFound", 404));
 
         var direction = ResolveDirection(name, Direction == null ? null : (await Direction.Value())?.Clr<string>());
 
         // Upsert: dispose any existing channel under this name before re-registering.
         await actor.Channel.RemoveAsync(name);
 
-        var ch = new app.channel.type.goal.@this(name, goalEntry, actor, direction)
+        var ch = new app.channel.type.goal.@this(name, call, actor, direction)
         {
             Buffer = (await Buffer.Value())?.ToInt64() ?? 4096L,
             Timeout = (await Timeout.Value()) is { } __to ? (TimeSpan)__to : TimeSpan.FromSeconds(30),

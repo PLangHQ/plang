@@ -1,8 +1,7 @@
 namespace PLang.Tests.App.Modules.channel;
 
 /// <summary>
-/// channel.set holds a goal.call action; the goal it reaches is selected once, at registration, and
-/// backs the channel.
+/// channel.set holds a goal.call action; the channel runs that call as itself for each message.
 /// </summary>
 public class ChannelSetTests
 {
@@ -23,25 +22,28 @@ public class ChannelSetTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     [Test]
-    public async Task Set_HeldCall_RegistersAChannelBackedByItsGoal()
+    public async Task Set_HeldCall_RegistersAChannelThatRunsIt()
     {
         var ctx = _app.User.Context;
+        var call = Make.Call("LogIt", ("level", "debug"));
         var action = new global::app.module.action.channel.Set(ctx)
         {
             Name = new global::app.type.item.text.@this("logger"),
-            Goal = Make.Call("LogIt"),
+            Goal = call,
         };
 
-        var result = await action.Run();
-
-        await result.IsSuccess();
+        await (await action.Run()).IsSuccess();
         var channel = ctx.Actor!.Channel.Get("logger") as global::app.channel.type.goal.@this;
         await Assert.That(channel).IsNotNull();
-        await Assert.That(channel!.Goal.Name).IsEqualTo("LogIt");
+        await Assert.That(channel!.Call).IsSameReferenceAs(call);
+
+        // A message runs the call as itself — its own argument binds.
+        await (await channel.Write(ctx.Ok("hello"))).IsSuccess();
+        await Assert.That((await (await ctx.Variable.Get("level"))!.Value())?.RawText).IsEqualTo("debug");
     }
 
     [Test]
-    public async Task Set_HeldCallToMissingGoal_FailsAtRegistration()
+    public async Task Set_HeldCallToMissingGoal_FailsOnTheMessage()
     {
         var ctx = _app.User.Context;
         var action = new global::app.module.action.channel.Set(ctx)
@@ -49,8 +51,10 @@ public class ChannelSetTests
             Name = new global::app.type.item.text.@this("logger"),
             Goal = Make.Call("NoSuchGoal"),
         };
+        await (await action.Run()).IsSuccess();
 
-        var result = await action.Run();
+        var channel = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("logger")!;
+        var result = await channel.Write(ctx.Ok("hello"));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");

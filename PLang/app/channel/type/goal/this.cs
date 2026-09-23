@@ -3,9 +3,9 @@ using app.error;
 namespace app.channel.type.goal;
 
 /// <summary>
-/// Concrete goal-backed channel. WriteAsync invokes the wrapped goal with the Data
-/// Data as input (available as <c>%!data%</c> inside the goal). Returns the
-/// goal's result Data.
+/// Concrete goal-backed channel. It holds a <c>goal.call</c> action; WriteAsync runs that call with
+/// the written Data as input (available as <c>%!data%</c> inside the goal) — the call runs as itself,
+/// so its own arguments and modifiers apply. Returns the call's result Data.
 ///
 /// Recursion rule: while the goal body is running on the current async context,
 /// <see cref="IsExecuting"/> is true and the registry's <c>Get</c> treats this
@@ -15,8 +15,8 @@ namespace app.channel.type.goal;
 /// </summary>
 public class @this : global::app.channel.type.session.@this
 {
-    /// <summary>The goal this channel dispatches writes to.</summary>
-    public global::app.goal.@this Goal { get; }
+    /// <summary>The call this channel runs for each write — a <c>goal.call</c> action.</summary>
+    public global::app.goal.step.action.@this Call { get; }
 
     private readonly AsyncLocal<bool> _executing = new();
 
@@ -28,11 +28,11 @@ public class @this : global::app.channel.type.session.@this
     /// </summary>
     public bool IsExecuting => _executing.Value;
 
-    public @this(string name, global::app.goal.@this goal, global::app.actor.@this actor,
+    public @this(string name, global::app.goal.step.action.@this call, global::app.actor.@this actor,
         ChannelDirection direction = ChannelDirection.Bidirectional)
     {
         Name = name;
-        Goal = goal;
+        Call = call;
         Actor = actor;
         Direction = direction;
     }
@@ -73,7 +73,7 @@ public class @this : global::app.channel.type.session.@this
         _executing.Value = true;
         try
         {
-            return await Actor.App.RunGoalAsync(Goal, context, ct);
+            return await Call.Run(context);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
@@ -88,7 +88,7 @@ public class @this : global::app.channel.type.session.@this
 
     public override void Close()
     {
-        // Goals are app-owned; we don't dispose the wrapped Goal.
+        // Goals are app-owned; closing the channel disposes nothing it runs.
         IsOpen = false;
     }
 

@@ -18,7 +18,8 @@ public class Stage3_GoalChannelTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g1");
         var goal = new EngineGoal { Name = "Probe", Path = global::app.type.item.path.@this.Resolve("Probe.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Probe.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var ch = new GoalChannel("logger", goal, app.User);
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("logger", Make.Call(goal.Name), app.User);
         var dataIn = app.Ok("payload-A");
         var result = await ch.Write(dataIn);
         await result.IsSuccess();
@@ -32,7 +33,8 @@ public class Stage3_GoalChannelTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = global::app.type.item.path.@this.Resolve("Returns.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/R.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var ch = new GoalChannel("c", goal, app.User);
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("c", Make.Call(goal.Name), app.User);
         var result = await ch.Write(app.Ok("x"));
         await result.IsSuccess();
     }
@@ -42,7 +44,8 @@ public class Stage3_GoalChannelTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_exec");
         var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var ch = new GoalChannel("x", goal, app.User);
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("x", Make.Call(goal.Name), app.User);
         await Assert.That(ch.IsExecuting).IsFalse();
         await ch.Write(app.Ok("x"));
         await Assert.That(ch.IsExecuting).IsFalse();
@@ -56,7 +59,8 @@ public class Stage3_GoalChannelTests
         // writes to its own name can't loop back into itself.
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_recurse");
         var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var ch = new GoalChannel("logger", goal, app.User);
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("logger", Make.Call(goal.Name), app.User);
         app.User.Channel.Register(ch);
 
         // Not executing → resolves normally.
@@ -87,7 +91,8 @@ public class Stage3_GoalChannelTests
         // were invisible there. With per-channel IsExecuting, they aren't.
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_late");
         var sinkGoal = new EngineGoal { Name = "Sink", Path = global::app.type.item.path.@this.Resolve("S.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/S.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var sink = new GoalChannel("sink", sinkGoal, app.User);
+        app.Goal.Add(sinkGoal);
+        var sink = new GoalChannel("sink", Make.Call(sinkGoal.Name), app.User);
         app.User.Channel.Register(sink);
 
         // Register "builder" AFTER "sink" exists. Old code froze foundational
@@ -114,7 +119,8 @@ public class Stage3_GoalChannelTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = global::app.type.item.path.@this.Resolve("Asker.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/A.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var ch = new GoalChannel("input", goal, app.User);
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("input", Make.Call(goal.Name), app.User);
         var result = await ch.Ask(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
         await result.IsSuccess();
     }
@@ -124,10 +130,11 @@ public class Stage3_GoalChannelTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g9");
         var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var ch = new GoalChannel("c", goal, app.User);
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("c", Make.Call(goal.Name), app.User);
         await ch.DisposeAsync();
         // Goal still usable — re-register as a different channel.
-        var ch2 = new GoalChannel("c2", goal, app.User);
+        var ch2 = new GoalChannel("c2", Make.Call(goal.Name), app.User);
         var result = await ch2.Write(app.Ok("x"));
         await result.IsSuccess();
     }
