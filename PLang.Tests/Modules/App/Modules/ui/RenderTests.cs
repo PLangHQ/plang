@@ -35,6 +35,37 @@ public class RenderTests : IDisposable
         System.IO.File.WriteAllText(fullPath, content);
     }
 
+    // --- The builder menu (propertiesUser.template) ---
+
+    // The per-property loop, cut verbatim from the builder's real template.
+    private static string PropertyLoopFromBuilderTemplate()
+    {
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "os/system/builder/llm/templates/propertiesUser.template")))
+            dir = dir.Parent;
+        var text = System.IO.File.ReadAllText(System.IO.Path.Combine(dir!.FullName, "os/system/builder/llm/templates/propertiesUser.template"));
+        var start = text.IndexOf("{%- for p in a.Property %}", StringComparison.Ordinal);
+        var end = text.IndexOf("{%- endfor -%}", start, StringComparison.Ordinal) + "{%- endfor -%}".Length;
+        return text[start..end];
+    }
+
+    [Test]
+    public async Task BuilderMenu_ChoiceSlot_ShowsItsOptions()
+    {
+        var context = _app.User.Context;
+        // goal.call's catalog entry: its Actor slot is choice<actor> over {system, user}.
+        var call = _app.Module["goal"].Action.Items
+            .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "call");
+        await context.Variable.Set("a", call);
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)PropertyLoopFromBuilderTemplate(), IsFile = (global::app.type.item.@bool.@this)false };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        var menu = (await result.Value())!.ToString()!;
+        await Assert.That(menu).Contains("Actor (choice<actor>: one of system, user");
+    }
+
     // --- Batch 1: Core Render Behavior ---
 
     [Test]
