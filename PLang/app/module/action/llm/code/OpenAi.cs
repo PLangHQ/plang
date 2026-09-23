@@ -1055,10 +1055,7 @@ public sealed class OpenAi : ILlm
         foreach (var row in list.Items)
         {
             if (row.Peek() is not global::app.goal.step.action.@this held) continue;
-            var (code, _) = held.Instance(action.Context);
-            if (code == null) continue;
-            var (handler, _) = await code.Resolve(held, action.Context);
-            if (handler is not global::app.module.action.goal.Call call) continue;
+            if ((await held.Bind(action.Context)).Handler is not global::app.module.action.goal.Call call) continue;
             var goal = (await call.Name.Value())?.RawText ?? "";
             tools.Add(new Tool(held, call, goal[(goal.LastIndexOf('/') + 1)..]));
         }

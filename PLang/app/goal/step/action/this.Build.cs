@@ -18,12 +18,9 @@ public partial class @this
     {
         var causes = new System.Collections.Generic.List<global::app.error.IError>();
 
-        var (code, error) = Instance(context);
-        if (error != null) return error;
-
-        var (handler, resolveError) = await code!.Resolve(this, context);
-        if (resolveError != null)
-            causes.Add(resolveError);
+        var (handler, bindError) = await Bind(context);
+        if (bindError != null)
+            causes.Add(bindError);
         else if (handler is global::app.module.IClass own)
         {
             if (await own.Validate() is { } complaint)

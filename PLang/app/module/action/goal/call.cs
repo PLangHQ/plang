@@ -74,13 +74,17 @@ public partial class Call : IContext
         return Context.Ok();
     }
 
+    /// <summary>The goal this call reaches — selected through the goal collection as seen from the goal
+    /// this call sits in. A %variable% name resolves here, in the caller's context. Null when no goal
+    /// answers to the name.</summary>
+    public async Task<global::app.goal.@this?> Goal()
+        => await Context.App.Goal.GetAsync((await Name.Value())?.RawText ?? "", __action?.Step?.Goal);
+
     public async Task<data.@this> Run()
     {
-        // A %variable% name resolves here, at dispatch, in the caller's context.
-        var name = (await Name.Value())?.ToString() ?? "";
-        var goal = await Context.App.Goal.GetAsync(name, __action?.Step?.Goal);
+        var goal = await Goal();
         if (goal == null)
-            return Context.Error(new global::app.error.ActionError($"Goal '{name}' not found.", "GoalNotFound", 404));
+            return Context.Error(new global::app.error.ActionError($"Goal '{Name.Peek()}' not found.", "GoalNotFound", 404));
 
         // No actor given (param absent OR its value is null) → run in the current
         // actor's context. Only resolve Actor when it actually holds one, so a null

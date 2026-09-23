@@ -263,6 +263,17 @@ public partial class @this
             : (code, null);
     }
 
+    /// <summary>This action bound: its handler minted and its parameters bound as typed views —
+    /// nothing resolved. What the build pass needs to ask the handler, and what a runner needs to read
+    /// a held action's own properties.</summary>
+    public async Task<(module.ICodeGenerated? Handler, global::app.error.IError? Error)> Bind(
+        actor.context.@this context)
+    {
+        var (code, error) = Instance(context);
+        if (error != null) return (null, error);
+        return await code!.Resolve(this, context);
+    }
+
     /// <summary>
     /// Return type properties for the builder summary. Null when Run() returns plain Data.
     /// Derived from the concrete return type of Run() via reflection in Describe().

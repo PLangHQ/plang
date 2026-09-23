@@ -4,13 +4,14 @@ using app.variable;
 namespace app.module.action.environment;
 
 /// <summary>
-/// Unified run action — runs a GoalCall, Step, or Action.
+/// Unified run action — runs a goal call, Step, or Action.
 /// Actor switching is handled by the source generator.
 /// </summary>
 [Action("run")]
 public partial class run : IContext
 {
-    public partial data.@this<GoalCall>? GoalName { get; init; }
+    /// <summary>The goal to run — a <c>goal.call</c> action, run as itself.</summary>
+    public partial data.@this<global::app.goal.step.action.@this>? Goal { get; init; }
     public partial data.@this<Step>? Step { get; init; }
     public partial data.@this<global::app.goal.step.action.@this>? Action { get; init; }
     public partial data.@this<actor.@this>? Actor { get; init; }
@@ -18,9 +19,9 @@ public partial class run : IContext
     public async Task<data.@this> Run()
     {
         // Polymorphic: forwarded result type depends on the dispatched target.
-        var goalName = GoalName == null ? null : await GoalName.Value();
-        if (goalName != null)
-            return await Context.App.RunGoalAsync(goalName, Context);
+        var call = Goal == null ? null : await Goal.Value();
+        if (call != null)
+            return await call.Run(Context);
 
         var step = Step == null ? null : await Step.Value();
         if (step != null)
@@ -31,6 +32,6 @@ public partial class run : IContext
             return await action.Run(Context);
 
         return Context.Error(new ActionError(
-            "run requires a GoalCall, Step, or Action", "MissingInput", 400));
+            "run requires a Goal, Step, or Action", "MissingInput", 400));
     }
 }

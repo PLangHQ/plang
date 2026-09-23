@@ -11,7 +11,8 @@ public partial class intercept : IContext
 {
     public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
     public partial data.@this? Return { get; init; }
-    public partial data.@this<GoalCall>? Call { get; init; }
+    /// <summary>The call run in place of the intercepted action — a <c>goal.call</c> action.</summary>
+    public partial data.@this<global::app.goal.step.action.@this>? Call { get; init; }
     public partial data.@this<global::app.type.item.dict.@this>? Parameter { get; init; }
 
     public async Task<data.@this<global::app.mock.@this>> Run()
@@ -28,7 +29,7 @@ public partial class intercept : IContext
         };
 
         var returnValue = (Return == null ? null : await Return.Value());
-        var goalToCall = (Call == null ? null : await Call.Value()) as global::app.goal.GoalCall;
+        var call = Call == null ? null : await Call.Value();
         var paramMatchers = Parameter == null || await Parameter.IsEmpty() ? null
             : (await Parameter.Value()).Clr<Dictionary<string, object?>>();
 
@@ -48,9 +49,9 @@ public partial class intercept : IContext
             var capturedParams = CaptureParameters(currentAction, context.Variable);
             handle.RecordCall(capturedParams);
 
-            // Goal-based mock — call the goal
-            if (goalToCall != null)
-                return await context.App!.RunGoalAsync(goalToCall, context, context.CancellationToken);
+            // Goal-based mock — run the held call in place of the action
+            if (call != null)
+                return await call.Run(context);
 
             // Return value mock — skip action and return the value
             if (returnValue != null)

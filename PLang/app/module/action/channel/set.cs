@@ -17,7 +17,9 @@ namespace app.module.action.channel;
 public partial class Set : IContext
 {
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
-    public partial data.@this<GoalCall> Goal { get; init; }
+    /// <summary>The call whose goal backs the channel — a <c>goal.call</c> action; the goal is
+    /// selected once, at registration.</summary>
+    public partial data.@this<global::app.goal.step.action.@this> Goal { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
     public partial data.@this<global::app.type.item.number.@this>? Buffer { get; init; }
     public partial data.@this<global::app.type.item.duration.@this>? Timeout { get; init; }
@@ -37,13 +39,12 @@ public partial class Set : IContext
 
         var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
 
-        var goalCall = await Goal.Value();
-        if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && goalCall.PrPath == null)
+        if ((await Goal.Value()) is not { } held
+            || (await held.Bind(Context)).Handler is not global::app.module.action.goal.Call call)
             return Context.Error(new ServiceError("Goal is required", "ValueRequired", 400));
 
-        var goalResult = await goalCall.GetGoalAsync(Context.App, Context);
-        if (!goalResult.Success) return goalResult;
-        var goalEntry = ((await goalResult.Value()) as global::app.goal.@this)!;
+        if (await call.Goal() is not { } goalEntry)
+            return Context.Error(new ServiceError($"Goal '{call.Name.Peek()}' not found.", "GoalNotFound", 404));
 
         var direction = ResolveDirection(name, Direction == null ? null : (await Direction.Value())?.Clr<string>());
 

@@ -24,8 +24,7 @@ public class AppRunTests
     [Test]
     public async Task Run_GoalCall_ResolvesAndRuns()
     {
-        var action = new run(_app.User.Context) { GoalName = new GoalCall { Name = "RunTarget" }
-        };
+        var action = new run(_app.User.Context) { Goal = Make.Call("RunTarget") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -34,8 +33,7 @@ public class AppRunTests
     [Test]
     public async Task Run_MissingGoal_ReturnsError()
     {
-        var action = new run(_app.User.Context) { GoalName = new GoalCall { Name = "DoesNotExist" }
-        };
+        var action = new run(_app.User.Context) { Goal = Make.Call("DoesNotExist") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -60,7 +58,7 @@ public class AppRunTests
     [Test]
     public async Task Run_NoInput_ReturnsError()
     {
-        var action = new run(_app.User.Context) { GoalName = null,
+        var action = new run(_app.User.Context) { Goal = null,
             Step = null,
             Action = null
         };
