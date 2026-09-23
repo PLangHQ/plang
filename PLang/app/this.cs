@@ -522,7 +522,7 @@ public sealed partial class @this : IAsyncDisposable
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         // The goal file is loaded through the goal collection, which registers what it loads.
-        var loaded = await this.Goal.LoadFromFileAsync(global::app.type.item.path.@this.Resolve(goalFile, context));
+        var loaded = await this.Goal.Load(global::app.type.item.path.@this.Resolve(goalFile, context));
         if (!loaded.Success) return loaded;
 
         var goal = ((await loaded.Value()) as Goal)!;

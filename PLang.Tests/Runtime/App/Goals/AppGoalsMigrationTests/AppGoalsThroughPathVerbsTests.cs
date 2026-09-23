@@ -46,14 +46,14 @@ public class AppGoalsThroughPathVerbsTests
         await Assert.That(app.Goal.Get("DeepGoal")).IsNotNull();
     }
 
-    [Test] public async Task LoadFromFileAsync_UsesPathReadTextNotFileReadAllText()
+    [Test] public async Task Load_UsesPathReadTextNotFileReadAllText()
     {
         var (app, root) = await NewApp();
         var buildDir = System.IO.Path.Combine(root, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.Goal.LoadFromFileAsync(global::app.type.item.path.@this.Resolve("/.build/start.pr", app.System.Context!));
+        var result = await app.Goal.Load(global::app.type.item.path.@this.Resolve("/.build/start.pr", app.System.Context!));
         await result.IsSuccess();
         var goal = (await result.Value()) as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");

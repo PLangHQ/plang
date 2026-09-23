@@ -187,12 +187,12 @@ public sealed class @this
         var rootExists = await rootCandidate.ExistsAsync();
         if (rootExists.Success && await rootExists.ToBooleanAsync())
         {
-            var result = await LoadFromFileAsync(rootCandidate, cancellationToken: ct);
+            var result = await Load(rootCandidate, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = (await result.Value()) as global::app.goal.@this;
                 if (goal is { IsSetup: true }) return null;
-                // LoadFromFileAsync → Add() already indexed _byName[goal.Name].
+                // Load → Add() already indexed _byName[goal.Name].
                 // Writing _byName[name] again under a user-provided alias (e.g.
                 // "Foo" while goal.Name == "foo/bar") would create a stale-cache
                 // hit on future Get("Foo") after Remove(goal.Name). Skip it —
@@ -213,7 +213,7 @@ public sealed class @this
             var sysExists = await sysCandidate.ExistsAsync();
             if (sysExists.Success && await sysExists.ToBooleanAsync())
             {
-                var result = await LoadFromFileAsync(sysCandidate, cancellationToken: ct);
+                var result = await Load(sysCandidate, cancellationToken: ct);
                 if (result.Success)
                 {
                     var goal = (await result.Value()) as global::app.goal.@this;
@@ -345,7 +345,7 @@ public sealed class @this
         if (!exists.Success || (await exists.Value())?.Value != true)
             return null;
 
-        var loadResult = await LoadFromFileAsync(resolved, cancellationToken: ct);
+        var loadResult = await Load(resolved, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 
@@ -359,7 +359,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<data.@this> LoadFromFileAsync(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
+    public async Task<data.@this> Load(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -412,7 +412,7 @@ public sealed class @this
             {
                 var file = await row.Value<global::app.type.item.path.@this>();
                 if (file == null) continue;
-                var result = await LoadFromFileAsync(file, cancellationToken);
+                var result = await Load(file, cancellationToken);
                 if (result) loadedCount++;
             }
             return context.Ok(loadedCount);
