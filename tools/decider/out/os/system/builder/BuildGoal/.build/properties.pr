@@ -26,6 +26,13 @@
         "name": "list"
        },
        "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -76,6 +83,13 @@
         "name": "list"
        },
        "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -148,6 +162,34 @@
    "waitForExecution": true,
    "action": [
     {
+     "module": "cache",
+     "name": "wrap",
+     "parameter": [
+      {
+       "name": "DurationMs",
+       "type": {
+        "name": "number"
+       },
+       "value": 300000
+      },
+      {
+       "name": "Sliding",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      },
+      {
+       "name": "Key",
+       "type": {
+        "name": "text"
+       },
+       "value": "goal-properties:%goal%"
+      }
+     ],
+     "modifier": []
+    },
+    {
      "module": "llm",
      "name": "query",
      "parameter": [
@@ -179,14 +221,7 @@
        "type": {
         "name": "bool"
        },
-       "value": "%!build.cache%"
-      },
-      {
-       "name": "write to",
-       "type": {
-        "name": "item"
-       },
-       "value": "%properties%"
+       "value": true
       }
      ],
      "modifier": []

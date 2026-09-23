@@ -29,7 +29,6 @@ internal static class LlmSnapshotHelper
     {
         typeof(LlmMessage),
         typeof(ToolCall),
-        typeof(GoalCall),
         typeof(query),
         typeof(ILlm),
         typeof(OpenAi)

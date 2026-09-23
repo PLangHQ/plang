@@ -29,7 +29,6 @@ def plang_type(cs):
     and never X; a bare Data slot is item."""
     if not cs: return 'item'
     outer = cs.split('<', 1)[0].strip()
-    if 'GoalCall' in outer: return 'goal.call'
     if 'goal.step.action.@this' in outer: return 'action'
     if 'variable' in outer.lower(): return 'variable'
     m = re.search(r'app\.type\.item\.@?(\w+)', outer)
@@ -125,7 +124,8 @@ def menu_for(goal, cat, folder=None):
     return menu, probs
 
 # A type whose value is not a scalar shows its shape on the menu line, where the model reads it.
-SHAPES = {'goal.call': '{"name": <goal>, "parameter": [{"name": <argument>, "value": <value>}, ...]}'}
+SHAPES = {'action': '{"module": "goal", "name": "call", "parameter": [{"name": "Name", "value": <goal>}, '
+                     '{"name": "Parameter", "value": [{"name": <argument>, "value": <value>}, ...]}]}'}
 
 def user_message(goal, menu):
     out = [goal['name'], '']

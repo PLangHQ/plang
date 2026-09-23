@@ -28,7 +28,7 @@ public class PrPipelineTests
 
         // Execute
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "FullPipeline" }, context);
+        var result = await Make.Call("FullPipeline").Run(context);
         await result.IsSuccess();
 
         // Variables set correctly
@@ -60,7 +60,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "ReadFile" }, context);
+        var result = await Make.Call("ReadFile").Run(context);
         await result.IsSuccess();
 
         // Return mapping: file/read returns Data.Ok(file), return: [{ name: "content" }] maps it to %content%
@@ -86,7 +86,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "FilePathsFromRoot" }, context);
+        var result = await Make.Call("FilePathsFromRoot").Run(context);
         await result.IsSuccess();
 
         // #1: testdata.txt — relative, same folder
@@ -112,7 +112,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "FilePathsFromSub" }, context);
+        var result = await Make.Call("FilePathsFromSub").Run(context);
 
         // Step 0 (/testdata.txt) succeeds — absolute paths work from any goal location
         // Step 1 (subdata.txt) fails — relative paths resolve against engine root, not goal folder

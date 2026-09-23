@@ -186,8 +186,7 @@ public class EventHandlerTests
         context.Variable.Set("eventFired", false);
 
         // Run the target goal — should trigger BeforeGoal event
-        var goalCall = new GoalCall { Name = "TargetGoal" };
-        await _app.RunGoalAsync(goalCall, context);
+        await Make.Call("TargetGoal").Run(context);
 
         // The event handler runs the held call on targetActor.Context
         // OnBeforeCallback runs — since it has no steps, it returns Ok
@@ -216,7 +215,7 @@ public class EventHandlerTests
         await onAction.Run();
 
         // Run the main goal
-        await _app.RunGoalAsync(new GoalCall { Name = "MainGoal" }, context);
+        await Make.Call("MainGoal").Run(context);
 
         // Verify the callback ran — parameter was injected on targetActor.Context.Variable
         var callbackRan = await _app.User.Context.Variable.Get("callbackRan");

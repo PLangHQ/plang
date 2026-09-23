@@ -37,6 +37,10 @@
         {
          "name": "Parameter",
          "value": []
+        },
+        {
+         "name": "IsFile",
+         "value": true
         }
        ]
       },
@@ -70,6 +74,10 @@
         {
          "name": "Parameter",
          "value": []
+        },
+        {
+         "name": "IsFile",
+         "value": true
         }
        ]
       },
@@ -121,6 +129,25 @@
      "index": 3,
      "action": [
       {
+       "module": "cache",
+       "name": "wrap",
+       "parameter": [
+        {
+         "name": "DurationMs",
+         "value": 300000
+        },
+        {
+         "name": "Sliding",
+         "value": true
+        },
+        {
+         "name": "Key",
+         "value": "goal-properties:%goal%"
+        }
+       ],
+       "recovery": []
+      },
+      {
        "module": "llm",
        "name": "query",
        "parameter": [
@@ -140,11 +167,7 @@
         },
         {
          "name": "Cache",
-         "value": "%!build.cache%"
-        },
-        {
-         "name": "write to",
-         "value": "%properties%"
+         "value": true
         }
        ]
       },

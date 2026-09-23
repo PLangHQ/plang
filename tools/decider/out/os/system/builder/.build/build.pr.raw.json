@@ -123,8 +123,14 @@
         {
          "name": "Goal",
          "value": {
-          "name": "BuilderChannel",
-          "parameter": []
+          "module": "goal",
+          "name": "call",
+          "parameter": [
+           {
+            "name": "Name",
+            "value": "BuilderChannel"
+           }
+          ]
          }
         }
        ]
@@ -278,9 +284,12 @@
            "value": "%item%"
           }
          ]
+        },
+        {
+         "name": "Actor",
+         "value": "builder"
         }
-       ],
-       "modifier": []
+       ]
       }
      ]
     },

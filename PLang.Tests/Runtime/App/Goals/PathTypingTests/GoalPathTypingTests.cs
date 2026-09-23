@@ -137,26 +137,4 @@ public class GoalPathTypingTests
         await Assert.That(loaded!.Path!.Context).IsEqualTo(context);
     }
 
-    [Test] public async Task GoalCallPrPath_RoundTrips_AsRelativeString()
-    {
-        var (app, _) = MakeApp();
-        var context = app.User.Context;
-        var gc = new GoalCall
-        {
-            Name = "Foo",
-            PrPath = global::app.type.item.path.@this.Resolve("/Cache/.build/foo.pr", context)
-        };
-        var opts = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.channel.serializer.json.Converter(context) }
-        };
-        var json = JsonSerializer.Serialize(gc, opts);
-        await Assert.That(json).Contains("Cache/.build/foo.pr");
-        var loaded = JsonSerializer.Deserialize<GoalCall>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true,
-                Converters = { new global::app.channel.serializer.json.Converter(context) } });
-        await Assert.That(loaded!.PrPath).IsNotNull();
-    }
-
 }

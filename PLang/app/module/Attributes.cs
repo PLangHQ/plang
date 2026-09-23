@@ -29,7 +29,7 @@ public sealed class DefaultAttribute : Attribute
 }
 
 /// <summary>
-/// Marks a GoalCall property as a callback that injects variables into the called goal.
+/// Marks a slot holding a goal.call action as a callback that sets a variable before the held call runs.
 /// The Injects property names the variable the callback receives (e.g., "chunk" for streaming data).
 /// The user can rename it in PLang syntax (e.g., "on stream call HandleChunk myData=%chunk%").
 /// </summary>

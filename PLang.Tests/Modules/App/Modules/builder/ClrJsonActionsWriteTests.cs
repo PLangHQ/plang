@@ -76,42 +76,4 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         await Assert.That(goal.Step[0].Action[0].Step).IsEqualTo(goal.Step[0]);
         await Assert.That(goal.Step[0].Action[1].Step).IsEqualTo(goal.Step[0]);
     }
-
-    // The goal.call proof: a clr(json) action whose param is a goal.call. It must read as a
-    // typed GoalCall (via the action reader → @schema:data → goal.call's reader), NOT a bag.
-    [Test]
-    public async Task ClrJsonActionsArray_GoalCallParam_ReadsAsTypedGoalCall()
-    {
-        var context = _app.User.Context;
-        var goal = new Goal
-        {
-            Name = "G",
-            Path = global::app.type.item.path.@this.Resolve("/G.goal", context),
-            PrPath = global::app.type.item.path.@this.Resolve("/G.pr", context),
-        };
-        goal.Step.Add(new Step { Goal = goal, Index = 0, Text = "call a goal" });
-        _app.Goal.Add(goal);
-        await context.Variable.Set("goal", goal);
-
-        const string actionsJson = """
-        [
-          { "module": "goal", "name": "call",
-            "parameter": [
-              { "name": "GoalName", "type": { "name": "goal.call" },
-                "value": { "name": "DoThing", "parallel": false, "parameter": [] } } ] }
-        ]
-        """;
-        var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();
-        var clrJsonActions = new global::app.data.@this("actions",
-            Type.Create("object", "json", context: context).Create(element, context), context: context);
-
-        await context.Variable.Set("goal.Step[0].Action", clrJsonActions);
-
-        await Assert.That(goal.Step[0].Action.Count).IsEqualTo(1);
-        var param = goal.Step[0].Action[0].Parameter[0];
-        var value = param.Peek();
-        // THE ASSERTION: the goal.call param is a typed GoalCall, not a dict bag.
-        await Assert.That(value).IsTypeOf<global::app.goal.GoalCall>();
-        await Assert.That(((global::app.goal.GoalCall)value!).Name).IsEqualTo("DoThing");
-    }
 }

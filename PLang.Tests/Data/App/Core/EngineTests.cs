@@ -242,10 +242,10 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" }, engine.User.Context);
+        var result = await Make.Call("NonexistentGoal").Run(engine.User.Context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
     }
 
     [Test]
@@ -255,7 +255,7 @@ public class EngineTests
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" }, engine.User.Context);
+        var result = await Make.Call("EmptyGoal").Run(engine.User.Context);
 
         await result.IsSuccess();
     }
@@ -280,7 +280,7 @@ public class EngineTests
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
+        var result = await Make.Call("TestGoal").Run(engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -349,7 +349,7 @@ public class EngineTests
         };
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
+        var result = await Make.Call("TestGoal").Run(engine.User.Context);
 
         await result.IsFailure();
     }
@@ -517,7 +517,7 @@ public class EngineTests
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);
+        var result = await Make.Call("TestGoal").Run(engine.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("system-value");

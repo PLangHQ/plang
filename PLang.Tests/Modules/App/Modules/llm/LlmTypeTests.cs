@@ -61,46 +61,15 @@ public class LlmTypeTests
 
     #endregion
 
-    #region GoalCall Changes
+    #region goal.call as a tool
 
     [Test]
-    public async Task GoalCall_Parallel_DefaultsFalse()
-    {
-        var gc = new GoalCall();
-        await Assert.That(gc.Parallel).IsFalse();
-    }
-
-    [Test]
-    public async Task GoalCall_Parallel_SerializesViaJson()
-    {
-        var gc = new GoalCall { Name = "Test", Parallel = true };
-        var json = JsonSerializer.Serialize(gc);
-        var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
-        await Assert.That(deserialized.Parallel).IsTrue();
-    }
-
-    [Test]
-    public async Task GoalCall_ExistingProperties_UnchangedAfterNewFields()
+    public async Task Call_Parallel_DefaultsFalse()
     {
         await using var app = global::PLang.Tests.TestApp.Plain("/test");
-        var context = app.User.Context;
-        var gc = new GoalCall
-        {
-            Name = "MyGoal",
-            Parallel = true,
-            Parameter = new List<Data> { new Data("param1", "value1", context: context) },
-            PrPath = global::app.type.item.path.@this.Resolve("/test/.build/mygoal.pr", context)
-        };
-
-        var opts = new JsonSerializerOptions { Converters = { new global::app.channel.serializer.json.Converter(context) } };
-        var json = JsonSerializer.Serialize(gc, opts);
-        var deserialized = JsonSerializer.Deserialize<GoalCall>(json, opts)!;
-
-        await Assert.That(deserialized.Name).IsEqualTo("MyGoal");
-        await Assert.That(deserialized.Parallel).IsTrue();
-        await Assert.That(deserialized.PrPath?.ToString().Replace('\\', '/')).Contains(".build/mygoal.pr");
-        await Assert.That(deserialized.Parameter).IsNotNull();
-        await Assert.That(deserialized.Parameter!.Count).IsEqualTo(1);
+        var (handler, _) = await Make.Tool("Any").Bind(app.User.Context);
+        var call = (global::app.module.action.goal.Call)handler!;
+        await Assert.That(await call.Parallel.ToBooleanAsync()).IsFalse();
     }
 
     #endregion

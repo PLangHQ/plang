@@ -594,15 +594,6 @@ public class EngineTypesTests
         await Assert.That(schemas).IsNotNull();
     }
 
-    [Test]
-    public async Task ComplexSchemas_GoalCallHasSchema()
-    {
-        var schemas = _types.ComplexSchemas();
-
-        // goal.call maps to GoalCall which has [LlmBuilder] properties
-        await Assert.That(schemas.ContainsKey("goal.call")).IsTrue();
-    }
-
     // --- Finding #7: Lazy derivation distinguishes context path from fallback ---
 
     [Test]

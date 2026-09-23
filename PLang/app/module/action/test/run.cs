@@ -201,11 +201,14 @@ public partial class run : IContext
 
         try
         {
-            // Goal.PrPath is derived from Goal.Path — already a path.@this
-            // anchored at the child App's root (same root as the parent, post
-            // path-canonicalization on this branch).
-            var goalCall = new GoalCall { PrPath = test.Goal.PrPath };
-            var result = await childApp.RunGoalAsync(goalCall, childApp.User.Context, cts.Token);
+            // Goal.PrPath is derived from Goal.Path, anchored at the App root the child shares. The
+            // child App loads it through its own goal collection, resolved in the child's context.
+            var child = childApp.User.Context;
+            var loaded = await childApp.Goal.LoadFromFileAsync(childApp,
+                global::app.type.item.path.@this.Resolve(test.Goal.PrPath!.ToString(), child));
+            var result = loaded.Success
+                ? await ((await loaded.Value()) as global::app.goal.@this)!.Run(child)
+                : loaded;
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
                 test.Complete(global::app.test.Status.Timeout);
             else

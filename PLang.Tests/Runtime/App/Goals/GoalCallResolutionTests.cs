@@ -1,26 +1,18 @@
-using System.Text.Json;
-using app.goal;
-using app.goal.step;
-using app.goal.step.action;
-using PLangAction = app.goal.step.action.@this;
 using PLangGoal = app.goal.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Goals;
 
 /// <summary>
-/// Guards the four-tier slash-qualified resolution in
-/// <see cref="app.goal.GoalCall.GetGoalAsync"/>.
+/// Guards how the goal collection selects the goal a call names, as seen from the calling goal
+/// (<see cref="app.goal.list.@this.GetAsync"/>).
 ///
-/// Slash-qualified Names (Folder/Leaf) resolve as
-/// <c>{folder}/.build/{leaf}.pr</c> — NOT <c>.build/{folder/leaf}.pr</c>.
-/// The resolver walks the caller's ancestor folders, then root, then
-/// context-relative. <see cref="GoalCall.LoadFromFile"/> leaf-matches a
-/// slash-qualified Name against the loaded goal's unqualified Name so the
-/// match doesn't false-fail just because of the folder prefix.
+/// Slash-qualified names (Folder/Leaf) resolve as <c>{folder}/.build/{leaf}.pr</c> — NOT
+/// <c>.build/{folder/leaf}.pr</c>. The lookup walks the caller's ancestor folders, then the root.
+/// A bare name looks in the caller's own folder, then the root.
 ///
-/// Each tier here is a real .pr on disk + an Action wired through a Step
-/// to a caller Goal whose Path determines the ancestor anchor.
+/// Each case is a real .pr on disk — written by the goal itself — and a caller goal whose Path
+/// anchors the walk.
 /// </summary>
 public class GoalCallResolutionTests
 {
@@ -48,108 +40,72 @@ public class GoalCallResolutionTests
         catch { /* best effort */ }
     }
 
-    /// <summary>Write a `.pr` for a goal with the given Name at the given on-disk path.</summary>
-    private void WritePr(string relativePrPath, string goalName)
+    /// <summary>Writes a `.pr` for a goal named <paramref name="goalName"/> at the given path, through
+    /// the goal's own writer (the shape the reader reads back).</summary>
+    private async Task WritePr(string relativePrPath, string goalName)
     {
+        var ctx = _app.User.Context;
+        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName + ".goal", ctx) };
+        var serializer = (global::app.channel.serializer.plang.@this)ctx.Actor!.Channel.Serializers.GetOrDefault("application/plang");
+        using var ms = new System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
+
         var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(abs)!);
-        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName, global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() };
-        _ = goal.Hash; // ensures serializable shape is snapshotted
-        System.IO.File.WriteAllText(abs, JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
+        await System.IO.File.WriteAllBytesAsync(abs, ms.ToArray());
     }
 
-    /// <summary>
-    /// Builds an Action whose Step.Goal.Path = <paramref name="callerGoalPath"/> so
-    /// GoalCall's caller-ancestor walk starts from that folder.
-    /// </summary>
-    private PLangAction CallerAt(string callerGoalPath)
-    {
-        var goal = new PLangGoal { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() };
-        var step = new Step { Index = 0, Text = "call something", Goal = goal };
-        goal.Step.Add(step);
-        var action = new PLangAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call", Step = step };
-        step.Action.Add(action);
-        return action;
-    }
-
-    // --- slash name resolved via the caller-ancestor walk -------------
+    /// <summary>A caller goal whose Path anchors the folder walk.</summary>
+    private static PLangGoal CallerAt(string callerGoalPath)
+        => new() { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext) };
 
     [Test]
     public async Task SlashName_Resolved_ByCallerAncestorWalk()
     {
-        // Target lives at /system/builder/BuildStep/.build/start.pr
-        // Caller lives in /system/builder/BuildGoal/ — the walk shrinks
-        // /system/builder/BuildGoal → /system/builder, where the join hits.
-        WritePr("system/builder/BuildStep/.build/start.pr", "Start");
-        var caller = CallerAt("/system/builder/BuildGoal/Start");
+        // Target lives at /system/builder/BuildStep/.build/start.pr. Caller lives in
+        // /system/builder/BuildGoal/ — the walk shrinks to /system/builder, where the join hits.
+        await WritePr("system/builder/BuildStep/.build/start.pr", "Start");
 
-        var call = new GoalCall { Name = "BuildStep/Start", Action = caller };
-        var result = await call.GetGoalAsync(_app, _app.User.Context);
+        var goal = await _app.Goal.GetAsync("BuildStep/Start", CallerAt("/system/builder/BuildGoal/Start.goal"));
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
-        await Assert.That((((await result.Value()) as global::app.type.clr.@this<PLangGoal>)!.Value).Name).IsEqualTo("Start");
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal!.Name).IsEqualTo("Start");
     }
-
-    // --- slash name resolved via root-relative (no matching ancestor) -
 
     [Test]
     public async Task SlashName_Resolved_ByRootRelative_WhenNoAncestorMatches()
     {
-        // .pr at /BuildStep/.build/start.pr (project-root level).
-        // Caller in /elsewhere/Caller — no ancestor of /elsewhere contains
-        // BuildStep/. The walk misses; root-relative is the next tier.
-        WritePr("BuildStep/.build/start.pr", "Start");
-        var caller = CallerAt("/elsewhere/Caller");
+        // .pr at /BuildStep/.build/start.pr; no ancestor of /elsewhere contains BuildStep/, so the
+        // root is the tier that answers.
+        await WritePr("BuildStep/.build/start.pr", "Start");
 
-        var call = new GoalCall { Name = "BuildStep/Start", Action = caller };
-        var result = await call.GetGoalAsync(_app, _app.User.Context);
+        var goal = await _app.Goal.GetAsync("BuildStep/Start", CallerAt("/elsewhere/Caller.goal"));
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
-        await Assert.That((((await result.Value()) as global::app.type.clr.@this<PLangGoal>)!.Value).Name).IsEqualTo("Start");
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal!.Name).IsEqualTo("Start");
     }
-
-    // --- bare name unchanged from prior behaviour (regression guard) --
 
     [Test]
     public async Task BareName_Resolved_AgainstCallersOwnBuildFolder()
     {
         // .pr at /foo/.build/other.pr — sibling of the caller in /foo/Caller.
-        WritePr("foo/.build/other.pr", "Other");
-        var caller = CallerAt("/foo/Caller");
+        await WritePr("foo/.build/other.pr", "Other");
 
-        var call = new GoalCall { Name = "Other", Action = caller };
-        var result = await call.GetGoalAsync(_app, _app.User.Context);
+        var goal = await _app.Goal.GetAsync("Other", CallerAt("/foo/Caller.goal"));
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
-        await Assert.That((((await result.Value()) as global::app.type.clr.@this<PLangGoal>)!.Value).Name).IsEqualTo("Other");
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal!.Name).IsEqualTo("Other");
     }
 
-    // --- LoadFromFile leaf-matches a slash-qualified Name -------------
-
     [Test]
-    public async Task LoadFromFile_SlashName_LeafMatchesAgainstUnqualifiedGoalName()
+    public async Task ChildOfTheCaller_WinsBeforeAnyFile()
     {
-        // Pre-resolved PrPath is authoritative: GetGoalAsync hits LoadFromFile
-        // directly. The saved goal's own Name is just "Start"; the GoalCall's
-        // Name is "BuildGoal/Start" (folder-qualified). Leaf-match resolves
-        // "BuildGoal/Start" → "Start" so the goal returns instead of failing
-        // with GoalNotFound — the LoadFromFile side of leaf-matching.
-        WritePr("system/builder/BuildGoal/.build/start.pr", "Start");
-        var caller = CallerAt("/anywhere/Other");
+        var caller = CallerAt("/foo/Caller.goal");
+        var child = new PLangGoal { Name = "Helper", Path = caller.Path, Parent = caller };
+        caller.Child.Add(child);
 
-        var call = new GoalCall
-        {
-            Name = "BuildGoal/Start",
-            PrPath = global::app.type.item.path.@this.Resolve("/system/builder/BuildGoal/.build/start.pr", global::PLang.Tests.TestApp.SharedContext),
-            Action = caller
-        };
-        var result = await call.GetGoalAsync(_app, _app.User.Context);
+        var goal = await _app.Goal.GetAsync("Helper", caller);
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
-        await Assert.That((((await result.Value()) as global::app.type.clr.@this<PLangGoal>)!.Value).Name).IsEqualTo("Start");
+        await Assert.That(goal).IsSameReferenceAs(child);
     }
 }

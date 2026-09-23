@@ -6,9 +6,9 @@ namespace app.goal;
 // itself — path, choice, the step/goal children), its serializer/Reader.cs reads itself back.
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The goal's own type entity — an item names its own type. Distinct from GoalCall
-    /// ("goal.call") and the goal channel; the reverse-name index already carried "goal" for this
-    /// class, the item flip only adds the forward name→type slot.</summary>
+    /// <summary>The goal's own type entity — an item names its own type. Distinct from the goal
+    /// channel; the reverse-name index already carried "goal" for this class, the item flip only adds
+    /// the forward name→type slot.</summary>
     protected internal override global::app.type.@this Type => new("goal", typeof(@this));
 
     /// <summary>The goal builds ITSELF from a dict — the read-side twin of <see cref="Output"/>, the

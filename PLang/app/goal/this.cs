@@ -81,7 +81,7 @@ public sealed partial class @this
     public global::app.type.item.path.@this? Path { get; set; }
 
     /// <summary>
-    /// On-disk .pr path the goal was loaded from. Set by GoalCall.LoadFromFile.
+    /// On-disk .pr path the goal was loaded from. Set by the goal collection's LoadFromFileAsync.
     /// Used by GetRuntimeDirectory to derive the goal's actual directory in the
     /// current App's filesystem — distinct from Path (which is the build-time
     /// identity, parent-perspective for goals run inside a child App).

@@ -270,28 +270,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public global::app.type.@this Kind =>
         Context.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
 
-    /// <summary>
-    /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
-    /// Excluded from default JSON serialization — it builds a new GoalCall (which
-    /// holds a Path which has a GoalCall ...) and would cycle infinitely when a
-    /// caller serializes a Goal without the PathJsonConverter registered.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public GoalCall GoalCall
-    {
-        get
-        {
-            // Derive the .pr sibling path via the generic derivation verbs.
-            // .goal-file → parent/.build/<lowercase-stem>.pr.
-            var stem = FileNameWithoutExtension.ToLowerInvariant();
-            var parent = Parent;
-            var prPath = parent != null
-                ? parent.Combine(".build").Combine(stem + ".pr")
-                : this.Combine(".build").Combine(stem + ".pr");
-            return new GoalCall { Name = "", PrPath = prPath };
-        }
-    }
-
     // --- Live filesystem state ---
     //
     // The base deliberately exposes NO sync live-state property. `Exists` and

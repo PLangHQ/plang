@@ -21,6 +21,13 @@
        "value": "/system/builder/templates/output/build-output.template"
       },
       {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
+      },
+      {
        "name": "IsFile",
        "type": {
         "name": "bool"
@@ -73,16 +80,33 @@
       {
        "name": "Goal",
        "type": {
-        "name": "goal.call"
+        "name": "action"
        },
        "value": {
-        "name": "EmitBuildEvent",
+        "module": "goal",
+        "name": "call",
         "parameter": [
          {
-          "name": "msg",
-          "value": "%msg%"
+          "name": "Name",
+          "type": {
+           "name": "text"
+          },
+          "value": "EmitBuildEvent"
+         },
+         {
+          "name": "Parameter",
+          "type": {
+           "name": "list"
+          },
+          "value": [
+           {
+            "name": "msg",
+            "value": "%msg%"
+           }
+          ]
          }
-        ]
+        ],
+        "modifier": []
        }
       }
      ],

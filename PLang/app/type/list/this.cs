@@ -339,7 +339,7 @@ public sealed partial class @this
         }
         // A plang list<T> NODE (action.list : list<action>, step.list : list<step>) is a non-generic
         // subclass of list.@this<T> — walk to that base and take its element as the kind, so the
-        // reader dispatches the element's own reader (a goal.call param stays a typed GoalCall).
+        // reader dispatches the element's own reader.
         for (var t = type.BaseType; t != null; t = t.BaseType)
             if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
                 return ("list", t.GetGenericArguments()[0]);

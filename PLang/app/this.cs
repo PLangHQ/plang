@@ -522,47 +522,14 @@ public sealed partial class @this : IAsyncDisposable
             return context.Error(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
-        var goalCall = new GoalCall { PrPath = global::app.type.item.path.@this.Resolve(goalFile, context) };
-        var goalResult = await goalCall.GetGoalAsync(this, context);
-        if (!goalResult.Success) return goalResult;
+        // The goal file is loaded through the goal collection, which registers what it loads.
+        var loaded = await this.Goal.LoadFromFileAsync(this, global::app.type.item.path.@this.Resolve(goalFile, context));
+        if (!loaded.Success) return loaded;
 
-        var goal = ((await goalResult.Value()) as Goal)!;
+        var goal = ((await loaded.Value()) as Goal)!;
 
         // User code executes under the User actor's context.
         return await goal.Run(User.Context);
-    }
-
-    /// <summary>
-    /// Runs a goal via GoalCall. Resolves the goal then delegates to Goal.RunAsync.
-    /// </summary>
-    // Returns bare Data — the catalog renders this as `→ returns data`
-    // (polymorphic; called goal can return any value).
-    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, actor.context.@this context, CancellationToken ct = default)
-    {
-        var goalResult = await goalCall.GetGoalAsync(this, context);
-        if (!goalResult.Success) return goalResult;
-
-        // Inject parameters — GetGoalAsync only injects when loading from file,
-        // but goals found in memory (app.goal.Get) need parameters too.
-        // Goal-call is *not* a fork: it stays in the caller's flow. Variables.Set
-        // is overlay-aware — if a fork operator above us (channel fire, parallel
-        // foreach iteration) pushed a Calls scope, these writes land in that
-        // scope; otherwise they go to the actor-shared dict. Either way,
-        // sequential goal.call shares state with its caller (LoadUser leak still
-        // works in plain top-of-flow code), and concurrent invocations are
-        // isolated by whatever forked them.
-        if (goalCall.Parameter != null)
-            foreach (var param in goalCall.Parameter)
-            {
-                // Data just flows — bind each arg's Data under its name as-is, no inspection,
-                // no resolve. It resolves/renders on its own door when the callee reads it.
-                // A self-reference arg (`call Foo x=%x%`) is dropped at build (goal.call.Build),
-                // never handled here.
-                param.Context = context;
-                await context.Variable.Set(param.Name, param);
-            }
-
-        return await ((await goalResult.Value()) as Goal)!.Run(context);
     }
 
     /// <summary>

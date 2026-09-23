@@ -2066,3 +2066,14 @@ so an authored row NAMED like the injected value silently replaces it. That is a
 home is build time: the holder knows its `[GoalCallback]` name, so its `Validate()` can add a Warning
 "row 'chunk' shadows the value the callback injects". Six holders — logged beside the graft-typing item
 rather than folded into the A2 llm.query commit (architect ruling, goal-graph-singular).
+
+## 2026-09-23 — IEvent / EventContext / %!event% are inert since GoalCall died
+`GoalCall` was the only type implementing `app.module.IEvent`; its `Event` was stamped only by
+`module.Events.Stamp`, whose output nothing in production read. With `GoalCall` deleted (A3,
+goal-graph-singular), no parameter type implements `IEvent`, so the source generator's IEvent
+detection (`PLang.Generators/Discovery/this.cs` BuildProperty, `Emission/Action/this.cs` "IEvent
+surface") emits nothing, and `context.Event` (`%!event%`) is never set. Remove `IEvent`,
+`EventContext`, `context.Event` + its scope restore, the generator detection, and the `typeof(IEvent)`
+entries in the host-param filters (`action/property/list`, `module/list`, `build/code/Default`) — or,
+if `%!event%` should exist, give the event binding (which IS the event context) the job of setting it
+when it runs its held call. Ingi's call which.

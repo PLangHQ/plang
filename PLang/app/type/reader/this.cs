@@ -169,10 +169,6 @@ public sealed class @this
             if (_initialized) return;
             foreach (var asm in Assemblies)
                 IndexAssembly(asm);
-            // goal.call's dotted type name can't be derived from a serializer namespace
-            // (discovery keys by the last segment). Register it here — a localized hardcode
-            // that dies when goal.call folds into the streaming read. No discovery fork.
-            _generatedTyped[("goal.call", AnyKind)] = new global::app.goal.call.Reader();
             _initialized = true;
         }
     }

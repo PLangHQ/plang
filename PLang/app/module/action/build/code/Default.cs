@@ -272,52 +272,6 @@ public class Default : IBuilder
                 foreach (var p in a.Parameter) paramNames.Add(p.Name);
             a.Default = modules.GetDefaults(a.Module.Name, a.Name, paramNames) is { } defs
                 ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
-
-            // goal.call REPAIR — construction, not judgement. A name that survives this and still
-            // carries a dot is the action's own verdict to give (action.Validate).
-            if (a.Parameter != null)
-            {
-                foreach (var p in a.Parameter)
-                {
-                    // Only a goal.call SLOT is opened. Asking every parameter for its value would
-                    // resolve things the build must not read — an authored `%count%` is unset at
-                    // build time, and reading it turns a repair pass into a resolution failure.
-                    if (!string.Equals(p.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
-                    // A catalog row's "goal.call" description is TEXT, not a goal.call, so it does
-                    // not match and needs no guard — the structure is the guard.
-                    if (await p.Value() is not GoalCall goalCall) continue;
-                    if (string.IsNullOrEmpty(goalCall.Name)) continue;
-                    if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
-                    if (goalCall.Name.Contains('.'))
-                    {
-                        // Repair the recurring LLM leak of stuffing call notation into the
-                        // goal NAME itself — e.g. event.on's GoalToCall coming back as
-                        // "goal.call(LogBefore)" / "goal.call LogBefore". The real name is
-                        // the inner identifier. Repair + warn rather than reject: rejecting
-                        // triggers a FixValidation retry that tends to DEGRADE (a bare
-                        // `goal` param, dropping the required Trigger → "trigger must have
-                        // a value" at runtime). Mirrors the module-name-separator repair above.
-                        var m = System.Text.RegularExpressions.Regex.Match(
-                            goalCall.Name, @"^goal\.call\s*\(?\s*([A-Za-z_][\w/]*)\s*\)?$",
-                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                        if (m.Success)
-                        {
-                            a.Warning.Add(new global::app.warning.@this {
-                                Key = "GoalCallNameRepaired",
-                                Message = $"goal.call.Name '{goalCall.Name}' carried the formal goal.call notation; repaired to '{m.Groups[1].Value}'."
-                            });
-                            // Name is init-only; rebuild with the repaired name, carry the rest.
-                            p.SetValue(new GoalCall {
-                                Name = m.Groups[1].Value,
-                                Parallel = goalCall.Parallel,
-                                Parameter = goalCall.Parameter,
-                                PrPath = goalCall.PrPath,
-                            });
-                        }
-                    }
-                }
-            }
-
         }
 
         // Construction is done; the step judges itself and the builder only reacts. The verdict stays

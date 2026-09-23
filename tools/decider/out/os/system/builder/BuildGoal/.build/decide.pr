@@ -62,6 +62,13 @@
         "name": "item"
        },
        "value": "%!app.module.list%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "item"
+       },
+       "value": "list"
       }
      ],
      "modifier": []
@@ -79,7 +86,14 @@
      "name": "set",
      "parameter": [
       {
-       "name": "%state.goal%",
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%state.goal%"
+      },
+      {
+       "name": "Value",
        "type": {
         "name": "item"
        },
@@ -96,27 +110,6 @@
    "lineNumber": 22,
    "waitForExecution": true,
    "action": [
-    {
-     "module": "loop",
-     "name": "foreach",
-     "parameter": [
-      {
-       "name": "Collection",
-       "type": {
-        "name": "item"
-       },
-       "value": "%goal.Step%"
-      },
-      {
-       "name": "Item",
-       "type": {
-        "name": "variable"
-       },
-       "value": "%step%"
-      }
-     ],
-     "modifier": []
-    },
     {
      "module": "goal",
      "name": "call",
@@ -141,7 +134,29 @@
        ]
       }
      ],
-     "modifier": []
+     "modifier": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Step%"
+        },
+        {
+         "name": "Item",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%step%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
     }
    ]
   },
@@ -151,27 +166,6 @@
    "lineNumber": 23,
    "waitForExecution": true,
    "action": [
-    {
-     "module": "loop",
-     "name": "foreach",
-     "parameter": [
-      {
-       "name": "Collection",
-       "type": {
-        "name": "item"
-       },
-       "value": "%modules%"
-      },
-      {
-       "name": "Item",
-       "type": {
-        "name": "variable"
-       },
-       "value": "%module%"
-      }
-     ],
-     "modifier": []
-    },
     {
      "module": "goal",
      "name": "call",
@@ -196,7 +190,29 @@
        ]
       }
      ],
-     "modifier": []
+     "modifier": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "parameter": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%modules%"
+        },
+        {
+         "name": "Item",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%module%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
     }
    ]
   },
@@ -216,6 +232,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -236,7 +259,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
+       "value": "%!data%>"
       }
      ],
      "modifier": []
@@ -286,14 +309,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "dict"
+       "value": "%!data%>"
       }
      ],
      "modifier": []
@@ -316,6 +332,13 @@
         "name": "text"
        },
        "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
       }
      ],
      "modifier": []
@@ -336,7 +359,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
+       "value": "%!data%>"
       }
      ],
      "modifier": []
@@ -386,14 +409,7 @@
        "type": {
         "name": "item"
        },
-       "value": "%!data%"
-      },
-      {
-       "name": "Type",
-       "type": {
-        "name": "item"
-       },
-       "value": "dict"
+       "value": "%!data%>"
       }
      ],
      "modifier": []
@@ -471,6 +487,13 @@
           "index": "%step.Index%",
           "text": "%step.Text%"
          }
+        },
+        {
+         "name": "AtIndex",
+         "type": {
+          "name": "number"
+         },
+         "value": "%step.Index%"
         }
        ],
        "modifier": []
@@ -499,35 +522,7 @@
          "type": {
           "name": "variable"
          },
-         "value": "%state.modules%"
-        },
-        {
-         "name": "Value",
-         "type": {
-          "name": "item"
-         },
-         "value": "%module.Name%"
-        },
-        {
-         "name": "Type",
-         "type": {
-          "name": "item"
-         },
-         "value": "text"
-        }
-       ],
-       "modifier": []
-      },
-      {
-       "module": "variable",
-       "name": "set",
-       "parameter": [
-        {
-         "name": "Name",
-         "type": {
-          "name": "variable"
-         },
-         "value": "%state.modules%[%module.Name%]%"
+         "value": "%state.modules%[%module.Name%]"
         },
         {
          "name": "Value",
@@ -535,13 +530,6 @@
           "name": "item"
          },
          "value": "%module.Description%"
-        },
-        {
-         "name": "Type",
-         "type": {
-          "name": "item"
-         },
-         "value": "text"
         }
        ],
        "modifier": []

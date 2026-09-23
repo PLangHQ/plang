@@ -129,22 +129,6 @@ public class OutAttributeInventoryTests
         await Assert.That(HasOut(t, "Modified")).IsTrue();
     }
 
-    // 7. GoalCall ------------------------------------------------------------
-    [Test] public async Task GoalCall_Name_Parallel_Parameters_PrPath_HaveOut()
-    {
-        var t = typeof(global::app.goal.GoalCall);
-        await Assert.That(HasOut(t, "Name")).IsTrue();
-        await Assert.That(HasOut(t, "Parallel")).IsTrue();
-        await Assert.That(HasOut(t, "Parameters")).IsTrue();
-        await Assert.That(HasOut(t, "PrPath")).IsTrue();
-    }
-    [Test] public async Task GoalCall_Event_Action_StayJsonIgnore_NoOut()
-    {
-        var t = typeof(global::app.goal.GoalCall);
-        await Assert.That(HasOut(t, "Event")).IsFalse();
-        await Assert.That(HasOut(t, "Action")).IsFalse();
-    }
-
     // 8. permission ----------------------------------------------------------
     [Test] public async Task Permission_Actor_Path_Verb_Match_HaveOut()
     {
