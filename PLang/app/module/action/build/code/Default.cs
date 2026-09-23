@@ -95,7 +95,9 @@ public class Default : IBuilder
         }
 
         var allGoals = new List<Goal>();
-        var allErrors = new List<Info>();
+        // A source the build cannot read is a verdict it cannot proceed with — every unreadable file
+        // is collected (one run shows them all), then the build fails once, each read error whole.
+        var unreadable = new List<(path File, global::app.error.IError Error)>();
 
         foreach (var file in files)
         {
@@ -103,11 +105,7 @@ public class Default : IBuilder
             var readResult = await app.Run(readAction, context);
             if (!readResult.Success)
             {
-                allErrors.Add(new Info
-                {
-                    Key = "FileReadError",
-                    Message = $"Failed to read {file.Raw}: {readResult.Error?.Message}"
-                });
+                unreadable.Add((file, readResult.Error ?? new global::app.error.Error($"Failed to read {file.Raw}", "FileReadError", 400)));
                 continue;
             }
 
@@ -117,18 +115,21 @@ public class Default : IBuilder
             var goal = Goal.Parse(text, file);
             if (goal == null) continue;
 
-            var mergeErrors = await MergePrData(goal, app, context);
-            allErrors.AddRange(mergeErrors);
-
+            await MergePrData(goal, app, context);
             allGoals.Add(goal);
         }
 
+        if (unreadable.Count > 0)
+            return context.Error(new global::app.error.Error(
+                $"Could not read {unreadable.Count} goal file(s): {string.Join(", ", unreadable.Select(u => u.File.Raw))}",
+                "FileReadError", 400)
+            {
+                list = unreadable.Select(u => u.Error).ToList(),
+            });
+
         _buildTimer.Restart();
 
-        var result = context.Ok(new global::app.type.item.list.@this<Goal>(allGoals, context));
-        if (allErrors.Count > 0)
-            result.Warnings = allErrors;
-        return result;
+        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals, context));
     }
 
     // --- Fold: indent-authored sub-steps → gate-action Child ---
@@ -318,21 +319,21 @@ public class Default : IBuilder
     // --- Private helpers ---
 
     /// <summary>
-    /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
+    /// Merges existing .pr data into a goal. A corrupt .pr is a build diagnostic about the goal —
+    /// it rebuilds from its source, and the warning hangs on the goal.
     /// </summary>
-    private static async Task<List<Info>> MergePrData(Goal goal, app.@this app,
+    private static async Task MergePrData(Goal goal, app.@this app,
         actor.context.@this context)
     {
-        var errors = new List<Info>();
         var prPath = goal.PrPath;
-        if (prPath == null) return errors;
+        if (prPath == null) return;
 
         var readAction = new file.Read(context)
         {
             Path = context.Ok<path>(prPath)
         };
         var readResult = await app.Run(readAction, context);
-        if (!readResult.Success) return errors;
+        if (!readResult.Success) return;
 
         // File provider auto-deserializes .pr files into a single Goal. A .pr left
         // by an older build can reference a type that has since been renamed or
@@ -347,28 +348,26 @@ public class Default : IBuilder
         catch (System.Exception ex) when (ex is not (System.OperationCanceledException
             or System.OutOfMemoryException or System.StackOverflowException))
         {
-            errors.Add(new Info
+            goal.Warning.Add(new global::app.warning.@this
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to deserialize .pr file at {prPath}: {ex.Message}"
             });
-            return errors;
+            return;
         }
 
         if (prGoal is null)
         {
-            errors.Add(new Info
+            goal.Warning.Add(new global::app.warning.@this
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to parse .pr file at {prPath}"
             });
-            return errors;
+            return;
         }
 
         if (prGoal.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase))
             goal.Merge(prGoal);
-
-        return errors;
     }
 
 }

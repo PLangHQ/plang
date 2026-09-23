@@ -7,7 +7,7 @@ using type = global::app.type.@this;
 
 /// <summary>
 /// Data — result/error concern.
-/// Handled, Error, Warnings, Success, Ok/FromError factories, Merge.
+/// Handled, Error, Success, Ok/FromError factories, Merge.
 /// </summary>
 public partial class @this
 {
@@ -57,9 +57,6 @@ public partial class @this
     /// <summary>The error without marking it observed — for relays (wire,
     /// debug views) that carry the failure without handling it.</summary>
     internal IError? ErrorUnobserved => _error;
-
-    [JsonIgnore]
-    public List<Info>? Warnings { get; set; }
 
     [JsonIgnore]
     [Out, Store]

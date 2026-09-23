@@ -535,7 +535,6 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Properties = Properties,
         };
         clone._item = answer ?? global::app.type.item.@this.Absent;
@@ -570,7 +569,6 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Warnings = Warnings,
             Properties = Properties,
             IsInitialized = IsInitialized,
         };
@@ -712,7 +710,6 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Properties = Properties.Clone()
         };
         // The instance is shared by reference — values are immutable, so
@@ -735,7 +732,6 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Properties = Properties.Clone()
         };
         clone._item = _item.Clone();
@@ -835,7 +831,7 @@ public class @this<T> : @this
     /// Intended for error/sentinel propagation across typed boundaries — the
     /// idiomatic call site is <c>if (!source.Success) return Data&lt;T&gt;.From(source);</c>.
     ///
-    /// What is forwarded: Type, Error, Handled, Returned, ReturnDepth, Warnings,
+    /// What is forwarded: Type, Error, Handled, Returned, ReturnDepth,
     /// Signature, Snapshot, and Properties (shared reference — forwarded
     /// metadata, not deep-cloned; mutating the new Data's Properties mutates
     /// the source's).
@@ -869,7 +865,6 @@ public class @this<T> : @this
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
-        copy.Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null;
         copy.Properties = source.Properties;
         copy.Snapshot = source.Snapshot;
         return copy;

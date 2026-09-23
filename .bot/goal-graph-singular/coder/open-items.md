@@ -91,7 +91,7 @@ module is `"build"`.
 
 ## Unfinished demolition (not live design)
 
-**13. `app/Info.cs`** — on the branch plan's demolition list ("app/Info.cs, the four List<Info>
+**13. `app/Info.cs`** — DONE (demolished with Data.Warnings; see the commit "Info is gone"). Was: on the branch plan's demolition list ("app/Info.cs, the four List<Info>
 properties", replaced by Warning). Its last builder holder (BuildResponse) is gone and it is no longer
 registered as a type (only items are indexed). Remaining holders: `Data.Warnings`
 (`PLang/app/data/this.Result.cs:62`, copied at `PLang/app/data/this.cs` ×4) and
