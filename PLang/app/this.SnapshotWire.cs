@@ -1,15 +1,13 @@
 namespace app;
 
 /// <summary>
-/// App — snapshot↔disk wire concern. <see cref="Snapshot()"/> builds the
+/// App — snapshot↔disk wire concern. <see cref="Snapshot(actor.context.@this)"/> builds the
 /// in-memory tree; this pair persists it round-trippably so a captured failure
 /// can be replayed deterministically with no live LLM (durable execution).
 ///
 /// <para>
-/// The per-section dispatch mirrors <see cref="Restore"/> exactly — same names,
-/// same order. Each section's owning subsystem serializes its own subtree
-/// ("sections self-serialize"): the snapshot tree stores entries as
-/// <c>object?</c>, so only the subsystem knows the concrete type to round-trip.
+/// The snapshot writes itself: its entries are plang values (a section is an entry whose value is
+/// a snapshot), each writing its own wire shape; the snapshot's registered reader reads them back.
 /// </para>
 /// </summary>
 public sealed partial class @this
@@ -27,7 +25,7 @@ public sealed partial class @this
     /// Data, so asking for its value materializes it through the snapshot's own registered reader —
     /// the mirror of <see cref="global::app.snapshot.@this.Serialize"/>. Declaring the type is what
     /// routes the read to the reader instead of asking a converter to turn text into a snapshot.
-    /// The result is the same in-memory shape <see cref="Snapshot()"/> produces, so
+    /// The result is the same in-memory shape <see cref="Snapshot(actor.context.@this)"/> produces, so
     /// <see cref="Restore"/> consumes it unchanged.
     /// </summary>
     public async Task<global::app.snapshot.@this> SnapshotFromWire(string json, global::app.actor.context.@this context)

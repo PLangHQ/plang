@@ -114,3 +114,8 @@ fields are read from its declaration by the same reflection `property.list` alre
 **15. Action return type is a flat copy** — `action.Return` / `ReturnTypeName` is a string read off
 the entity's face (`goal/step/action/this.Schema.cs:83`), stored beside the type it names. It becomes
 the type entity; the catalog renders its face.
+
+**17. Runtime presence checks → `App.Mode`** — the App's `Mode` (run | build | test) is derived from
+`Build` / `Test` presence and is what the snapshot captures. The runtime still branches on the presence
+itself (`app/this.cs:516` `if (Build != null) return await Build.RunAsync();`, `:547` `if (Test != null)`).
+Reading `Mode` there instead is its own later item — not part of the restore pass.

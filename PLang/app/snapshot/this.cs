@@ -1,14 +1,10 @@
 namespace app.snapshot;
 
 /// <summary>
-/// Typed read/write surface for a subsystem snapshot. A snapshot is a tree of
-/// named sections; each section is itself a `@this` so a subsystem with nested
-/// `ISnapshot` properties (e.g. App owning Variables, Errors, …) can give
-/// each child its own subtree without leaking storage to the children.
-///
-/// The wire shape is the App tree — that's the OBP win the design hangs on.
-/// Subsystems write entries via <see cref="Write{T}"/> and read via
-/// <see cref="Read{T}"/>; the underlying storage is an implementation detail.
+/// A plain container of plang values: its <see cref="Entries"/> are a dict of Data, and a section is
+/// an entry whose value is itself a snapshot. Each <see cref="ISnapshot"/> owner writes its own
+/// section (<see cref="Write{T}"/>, or an entry set directly) and reads it back through the entries'
+/// typed asks on restore. The wire shape is the App tree.
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
