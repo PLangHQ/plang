@@ -184,10 +184,6 @@ public sealed partial class @this
     [JsonIgnore]
     public @this? Parent { get; set; }
 
-    [LlmIgnore]
-    [JsonIgnore]
-    public app.@this App { get; set; } = null!;
-
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
 

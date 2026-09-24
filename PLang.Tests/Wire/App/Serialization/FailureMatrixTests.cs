@@ -37,7 +37,6 @@ public class FailureMatrixTests : System.IAsyncDisposable
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
         var back = plang.Deserialize(tampered);
-        back.Context = app.User.Context;
         var verify = await app.Run<global::app.module.action.signing.verify>(
             new global::app.module.action.signing.verify(app.User.Context)
             {

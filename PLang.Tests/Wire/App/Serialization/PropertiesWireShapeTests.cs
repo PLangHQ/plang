@@ -223,7 +223,6 @@ public class PropertiesWireShapeTests
             await Assert.That(tampered).IsNotEqualTo(wire);
 
             var back = plang.Deserialize(tampered);
-            back.Context = d.Context;
             var app = d.Context!.App;
             var verify = await app.Run<global::app.module.action.signing.verify>(
                 new global::app.module.action.signing.verify(app.User.Context)

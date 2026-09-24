@@ -41,7 +41,6 @@ public sealed class @this
     /// </summary>
     public void Add(goal.@this goal)
     {
-        goal.App = App;
         // Templates are honored on READ from the type's explicit `template` flag (the build
         // stamps it on an authored %ref% value) — not stamped eagerly here, never inferred
         // from content. See app.type.@this.Template + data.reader.
@@ -377,7 +376,7 @@ public sealed class @this
             // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
             // relative file.read resolves against the goal's actual on-disk folder.
             primary.LoadedFromPrPath = prPath;
-            foreach (var child in primary.Child) { child.LoadedFromPrPath = prPath; child.App = App; }
+            foreach (var child in primary.Child) child.LoadedFromPrPath = prPath;
 
             Add(primary);
 

@@ -78,7 +78,6 @@ public class Cut2_SignThenCompressTests
         var back = plang.Deserialize(tampered);
         await back.IsSuccess();
         var restored = back;
-        restored.Context = app.User.Context;
 
         var verify = await app.Run<global::app.module.action.signing.verify>(
             new global::app.module.action.signing.verify(app.User.Context)

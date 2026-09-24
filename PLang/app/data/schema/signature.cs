@@ -32,7 +32,9 @@ public sealed class signature : ISchemaReader
         byte[] hashValue = System.Array.Empty<byte>();
         global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>());
         global::app.type.item.list.@this? contracts = null;
-        Data inner = Data.Ok((object?)null);
+        // The inner data is born with the read's context (the data reader does the same) — the
+        // verify re-hashes it through the wire, which needs the actor context.
+        Data inner = context.Ok((object?)null);
 
         reader.BeginObject();
         while (reader.NextName(out var key))
@@ -79,12 +81,7 @@ public sealed class signature : ISchemaReader
             new global::app.module.action.crypto.type.hash.@this(hashValue, hashAlgo), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts);
 
-        // The inner data is re-hashed during verify (canonicalized through the wire), so it
-        // needs the actor context the same way the outer does.
-        layer.Value.Context = context;
-
         var peeled = layer.Value;
-        peeled.Context = context;
 
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner
@@ -100,8 +97,7 @@ public sealed class signature : ISchemaReader
                 return peeled;
             }
 
-            var carrier = Data.Ok(layer);
-            carrier.Context = context;
+            var carrier = context.Ok(layer);
             var verifyAction = new global::app.module.action.signing.verify(context)
             {
                 Data = carrier,

@@ -71,9 +71,7 @@ public partial class @this
         // (a clr reflects as a transparent property bag at the wire, dragging
         // its Context back-reference into the signed graph; an item renders
         // itself) but is not the final layered design.
-        var outer = new @this("", new global::app.type.item.archive.@this(compressed, "gzip"));
-        outer.Context = _context;
-        return outer;
+        return new @this("", new global::app.type.item.archive.@this(compressed, "gzip"), context: _context);
     }
 
     /// <summary>
@@ -138,8 +136,8 @@ public partial class @this
         {
             var decompressed = GZipDecompress(compressed);
 
-            var serializer = _context?.Actor?.Channel.Serializers.GetByType("application/plang")
-                             ?? new global::app.channel.serializer.plang.@this(_context!);
+            // Born with this Data's context: the recovered Data is created under it, not rebound after.
+            var serializer = new global::app.channel.serializer.plang.@this(_context);
 
             using var ms = new MemoryStream(decompressed);
             var deser = await serializer.DeserializeAsync(ms, cancellationToken: ct);
@@ -150,7 +148,6 @@ public partial class @this
 
             // The container deserializer returns the reconstructed Data itself
             // (no envelope around it — the store seam rejects bare nesting).
-            deser.Context = _context;
             return deser;
         }
         catch (InvalidDataException ex)

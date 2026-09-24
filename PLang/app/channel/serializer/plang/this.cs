@@ -171,7 +171,6 @@ public sealed class @this : ITransport
             {
                 v.PendingVerification = null;
                 var carrier = _context.Ok(layer);
-                carrier.Context = _context;
                 var verifyAction = new global::app.module.action.signing.verify(_context)
                 {
                     Data = carrier,

@@ -17,7 +17,7 @@ public class TimeWrapperTests
     public async Task Time_IsDistinctFromDatetime_TypeNameIsTime()
     {
         await using var app = NewApp();
-        var d = new Data("", new TimeT(new System.TimeOnly(10, 30))) { Context = app.User.Context };
+        var d = new Data("", new TimeT(new System.TimeOnly(10, 30)), context: app.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("time");
         await Assert.That(typeof(DateTimeT).IsAssignableFrom(typeof(TimeT))).IsFalse();
         await Assert.That(TimeT.OwnedClrTypes.Any(o => o.Clr == typeof(System.TimeOnly))).IsTrue();

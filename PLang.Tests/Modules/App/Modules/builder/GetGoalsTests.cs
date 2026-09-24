@@ -55,7 +55,7 @@ public class GetGoalsTests
             var folder = global::app.type.item.path.@this.Resolve("/" + outside, ctx);   // OS-absolute: out of root
             var grant = global::app.type.item.permission.@this.Request(ctx.Actor!.Name, folder.Absolute,
                 global::app.type.item.permission.Verb.Read, global::app.type.item.permission.Match.Exact);
-            await ctx.Actor.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant) { Context = ctx }, false);
+            await ctx.Actor.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), false);
 
             var action = new goals(ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(folder) };
             var result = await _app.Run(action, ctx);

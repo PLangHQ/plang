@@ -678,8 +678,7 @@ public class DataTests : System.IAsyncDisposable
 
         var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"), context: context);
 
-        var compressed = content.Compress();
-        compressed.Context = context;
+        var compressed = content.Compress();   // born with content's context
         var decompressed = compressed.Decompress();
 
         await decompressed.IsSuccess();
@@ -813,8 +812,7 @@ public class DataTests : System.IAsyncDisposable
         var content = new Data("", "Hello", Type.FromMime("text/plain"), context: context);
         content.Properties["metadata"] = "some value";
 
-        var compressed = content.Compress();
-        compressed.Context = context;
+        var compressed = content.Compress();   // born with content's context
         var decompressed = compressed.Decompress();
 
         await decompressed.IsSuccess();

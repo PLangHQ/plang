@@ -121,8 +121,7 @@ public class Error : global::app.type.item.@this, IError
                 throw new InvalidOperationException(
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
             var snap = App.Snapshot(this, Context ?? App.User.Context);
-            _callback = global::app.data.@this<global::app.snapshot.@this>.Ok(snap);
-            _callback.Context = App.User.Context;
+            _callback = App.User.Context.Ok<global::app.snapshot.@this>(snap);
             _callback.Snapshot = snap;
             return _callback;
         }
@@ -382,10 +381,11 @@ public class Error : global::app.type.item.@this, IError
         }
 
         // Verbose variable dump — shows all variables in scope at point of failure
-        var app = error.Goal?.App ?? error.Step?.Goal?.App;
+        // The error keeps where it happened — its context reaches the App.
+        var errorContext = (error as Error)?.Context;
+        var app = errorContext?.App;
         if (app?.Debug?.Verbose == true)
         {
-            var errorContext = (error as Error)?.Context;
             var fallbackContext = app.System.Context;
             var context = errorContext ?? fallbackContext;
             var allVars = context?.Variable?.GetAll();

@@ -56,7 +56,6 @@ public class WireReadLazyTests
         var d = app.Ok(5);                 // number / int derived
         d.Name = "n";
         var back = serializer.Deserialize(serializer.Serialize(d).Peek()!.ToString()!);
-        back.Context = ctx;
         await Assert.That(back.Type.Name).IsEqualTo("number");
         await Assert.That(back.Kind).IsEqualTo("int");
     }

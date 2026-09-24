@@ -26,7 +26,7 @@ public class HttpPathTests
             "User", new HttpPath(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
             global::app.type.item.permission.Match.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm) { Context = context }, persist: true);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
     }
 
     [Test] public async Task Get_200_ReadText_ReturnsBody()

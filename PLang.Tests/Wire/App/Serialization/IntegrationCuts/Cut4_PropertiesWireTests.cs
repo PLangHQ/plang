@@ -90,7 +90,6 @@ public class Cut4_PropertiesWireTests
             var plang = (global::app.channel.serializer.plang.@this)
                 app.User.Channel.Serializers.GetByMimeType("application/plang");
             var back = plang.Deserialize(tampered);
-            back.Context = app.User.Context;
             var verify = await app.Run<global::app.module.action.signing.verify>(
                 new global::app.module.action.signing.verify(app.User.Context)
                 {

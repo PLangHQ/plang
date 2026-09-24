@@ -62,7 +62,6 @@ public class GoalPathTypingTests
         var context = app.User.Context;
         var goal = new Goal { Name = "Test" };
         goal.LoadedFromPrPath = global::app.type.item.path.@this.Resolve("/Cache/.build/test.pr", context);
-        goal.App = app;
         var dir = goal.GetRuntimeDirectory();
         await Assert.That(dir).IsNotNull();
         await Assert.That(dir!.Relative(context).Replace('\\', '/').TrimStart('/').TrimStart('.').TrimStart('/'))

@@ -235,12 +235,7 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>A not-found Data (present reference, <c>IsInitialized == false</c>), born with this context.</summary>
-    public data.@this NotFound(string name = "")
-    {
-        var d = data.@this.NotFound(name);
-        d.Context = this;
-        return d;
-    }
+    public data.@this NotFound(string name = "") => data.@this.NotFound(name, this);
 
     /// <summary>
     /// Gets or sets a value in the execution context.

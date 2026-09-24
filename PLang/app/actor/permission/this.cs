@@ -62,13 +62,9 @@ public sealed class @this
             var stored = await (await _actor.App.SettingsStore).GetAll<Grant>(PermissionTable);
             if (stored.Success && await stored.Value() is { } list)
             {
+                // Each grant is handed out under the actor's context.
                 foreach (var grantData in list.Items(_actor.Context))
                 {
-                    // Stamp Context on grants freshly rehydrated from SQLite — the store
-                    // returns Data without a Context wired, and downstream signature/
-                    // type-resolution paths require it.  Per the architecture: every
-                    // producer stamps Context; SettingsStore is a producer.
-                    grantData.Context = _actor.Context;
                     if (await grantData.Value<Grant>() is not { } rec) continue;
                     if (!string.Equals(rec.Actor, _actor.Name, StringComparison.Ordinal)) continue;
                     if (await TryCover(grantData, request)) return grantData;

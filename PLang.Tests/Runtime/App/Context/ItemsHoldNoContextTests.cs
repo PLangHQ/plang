@@ -14,14 +14,11 @@ public class ItemsHoldNoContextTests
         typeof(global::app.actor.@this),
         typeof(global::app.error.Error),
         typeof(global::app.snapshot.@this),
+        // The signing handler doubles as a value type; it is parked with signing.
+        typeof(global::app.module.action.signing.sign),
     };
 
     private static bool IsContext(System.Type t) => t == typeof(global::app.actor.context.@this);
-
-    // An action that is also an item (signing.sign) is wired by the source generator with its
-    // running context; the program's actions are their own step.
-    private static bool IsAction(System.Type t) =>
-        t.GetCustomAttribute<global::app.module.ActionAttribute>() != null;
 
     [Test] public async Task NoItem_DeclaresAContextFieldOrProperty()
     {
@@ -30,7 +27,7 @@ public class ItemsHoldNoContextTests
         foreach (var t in typeof(global::app.type.item.@this).Assembly.GetTypes())
         {
             if (!typeof(global::app.type.item.@this).IsAssignableFrom(t)) continue;
-            if (Exceptions.Any(e => e.IsAssignableFrom(t)) || IsAction(t)) continue;
+            if (Exceptions.Any(e => e.IsAssignableFrom(t))) continue;
             for (var c = t; c != null && c != typeof(object); c = c.BaseType)
             {
                 foreach (var f in c.GetFields(declared).Where(f => IsContext(f.FieldType)))

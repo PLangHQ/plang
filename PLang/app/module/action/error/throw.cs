@@ -61,7 +61,6 @@ public partial class Throw : IContext
         {
             List list = thrown as List ?? new List(new[] { Data });
             attached = Context.Ok<List>(list);
-            attached.Context = Context;
         }
 
         return Error(new ServiceError(message, key, status) { Data = attached });

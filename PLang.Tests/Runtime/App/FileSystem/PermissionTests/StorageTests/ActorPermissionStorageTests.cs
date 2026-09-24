@@ -72,9 +72,8 @@ public class ActorPermissionStorageTests
         var stored = await (await app.SettingsStore).GetAll<global::app.type.item.permission.@this>("permission");
         await stored.IsSuccess();
         var paths = new List<string>();
-        foreach (var d in (await stored.Value())!.Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var d in (await stored.Value())!.Items(app.User.Context))
         {
-            ((global::app.data.@this)d).Context = app.User.Context;
             if (await ((global::app.data.@this)d).Value<PermissionRecord>() is { } p) paths.Add(p.Path);
         }
         await Assert.That(paths).Contains("/disk");
@@ -151,8 +150,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.User.Name, "/p");
         // Tamper the path post-signing — signature no longer covers payload.
         var tampered = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.User.Name, "/different", global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact))
-        { Context = app.User.Context };
+            new PermissionRecord(app.User.Name, "/different", global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact), context: app.User.Context);
         await app.User.Permission.Add(tampered, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/different"), global::app.type.item.permission.Verb.Read);

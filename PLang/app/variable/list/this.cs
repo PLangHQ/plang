@@ -372,9 +372,7 @@ public partial class @this
         if (existing is data.@this<T> already) return already;          // identity hop
         var item = await existing.Value<T>();                          // T.Create(await Value(), existing)
         if (item == null) return data.@this<T>.From(existing);         // decline carries the error
-        var typed = _context.Ok<T>(item);
-        typed.Context = _context;
-        return typed;
+        return _context.Ok<T>(item);
     }
 
     /// <summary>

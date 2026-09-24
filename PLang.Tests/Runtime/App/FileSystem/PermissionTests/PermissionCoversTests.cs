@@ -89,7 +89,6 @@ public class PermissionCoversTests
         var stored = serializer.Store(data);
         await stored.IsSuccess();
         var loaded = serializer.Load((await stored.Value())!.ToString()!);
-        loaded.Context = ctx;
         var roundtripped = await loaded.Value<Permission>();
         await Assert.That(roundtripped).IsEqualTo(original);
     }

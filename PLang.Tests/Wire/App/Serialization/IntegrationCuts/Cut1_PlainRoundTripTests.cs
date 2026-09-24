@@ -77,7 +77,6 @@ public class Cut1_PlainRoundTripTests
         var (_, back, app) = await WriteAndRead("greeting", "hello");
         await using (app)
         {
-            back.Context = app.User.Context;
             var verify = await app.Run<global::app.module.action.signing.verify>(
                 new global::app.module.action.signing.verify(app.User.Context)
                 {

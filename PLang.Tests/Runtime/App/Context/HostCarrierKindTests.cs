@@ -72,9 +72,8 @@ public class HostCarrierKindTests
         // reference — deep-cloning it would walk the whole App graph and overflow.
         var vars = _app.User.Context.Variable;
         var appData = await (await vars.Get("!app")).Value();   // materialised clr carrier
-        var holder = new global::app.data.@this("x");
+        var holder = new global::app.data.@this("x", context: _app.User.Context);
         holder.SetValueDirect(appData);
-        holder.Context = _app.User.Context;
 
         var clone = holder.Clone();   // must not overflow
 

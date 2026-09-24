@@ -20,7 +20,7 @@ public class DateWrapperTests
         // A Data carrying date.@this reports type "date", not "datetime"; and
         // date.@this is not a datetime.@this. OwnedClrTypes pins DateOnly.
         await using var app = NewApp();
-        var d = new Data("", new DateT(new System.DateOnly(2024, 3, 15))) { Context = app.User.Context };
+        var d = new Data("", new DateT(new System.DateOnly(2024, 3, 15)), context: app.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("date");
         await Assert.That(typeof(DateTimeT).IsAssignableFrom(typeof(DateT))).IsFalse();
         var owned = DateT.OwnedClrTypes;

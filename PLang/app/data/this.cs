@@ -111,7 +111,6 @@ public partial class @this
         // No fallback to the item's context — a null here is a bug to fix at the caller,
         // not a state to paper over. Items hold no context, so nothing is pushed down.
         get => _context;
-        set => _context = value;
     }
 
     /// <summary>
@@ -445,9 +444,9 @@ public partial class @this
     // null `data` reference with IsInitialized false). The singleton hosts null's
     // behavior (always falsy, null==null) so `is null` value-switches dissolve.
     public static @this Null(string name = "") => new(name, app.type.item.@null.@this.Instance);
-    public static @this NotFound(string name = "")
+    public static @this NotFound(string name = "", actor.context.@this? context = null)
     {
-        var d = new @this(name);
+        var d = new @this(name, context: context);
         d._item = global::app.type.item.@null.@this.Instance;
         d.IsInitialized = false;
         return d;
@@ -595,9 +594,10 @@ public partial class @this
         // TYPE fills its own holes; never cached); a transient Data carries the answer.
         if (_item is { Template: not null } && (context ?? _context) != null)
         {
-            if (_context == null!) Context = context!;
-            var rendered = await Value();
-            var transient = new @this(Name, rendered, null, Parent, context: _context);
+            // A context-less row (a .pr parameter) renders through a copy born with the asker's context.
+            var source = _context == null! ? Copy(context!) : this;
+            var rendered = await source.Value();
+            var transient = new @this(Name, rendered, null, Parent, context: source._context);
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -691,7 +691,7 @@ public partial class @this
     /// </summary>
     public virtual @this Clone()
     {
-        var clone = new @this(Name)
+        return new @this(Name, _item.Clone(), context: _context)
         {
             Error = Error,
             Handled = Handled,
@@ -699,9 +699,6 @@ public partial class @this
             ReturnDepth = ReturnDepth,
             Properties = Properties.Clone()
         };
-        clone._item = _item.Clone();
-        clone.Context = _context;
-        return clone;
     }
 
     public override string ToString() =>

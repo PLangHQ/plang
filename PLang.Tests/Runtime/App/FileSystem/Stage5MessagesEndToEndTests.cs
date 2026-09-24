@@ -200,8 +200,7 @@ public class Stage5MessagesEndToEndTests
         // request (verb-set containment: {Write} is not a subset of {Read}).
         var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read };
         var narrowGrant = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.User.Name, foreignFile, narrowedVerbs, MatchMode.Exact))
-        { Context = app.User.Context };
+            new PermissionRecord(app.User.Name, foreignFile, narrowedVerbs, MatchMode.Exact), context: app.User.Context);
         await app.User.Permission.Add(narrowGrant, persist: true);
 
         // WriteText needs Write; the narrowed Read grant doesn't cover it.
