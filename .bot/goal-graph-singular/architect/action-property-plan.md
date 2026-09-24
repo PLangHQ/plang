@@ -1,6 +1,6 @@
 # An action's properties hold their values — the program holds no Data
 
-Designed with Ingi, 2026-09-24. **Written, not yet released: waiting for Ingi's go and one open question (the `.pr` key, below).** Follows remove-context (steps 1-6, landed at `c626beea9`).
+Designed with Ingi, 2026-09-24. **Released to coder 2026-09-24.** Follows remove-context (steps 1-6, landed at `c626beea9`).
 
 > **You (coder) own this.** The rules are settled with Ingi. Shapes, names not fixed here, and the commit split are yours; each commit green. Code in this doc is direction; NEW marks what does not exist.
 
@@ -74,11 +74,19 @@ Your split; one suggestion:
 - `module/list/this.cs:173` `GetDefaults`.
 - The generator's `Copy(context)` / `As<T>(context)` over a program `Data`.
 
-**Stays:** `goal/step/action/property/this.cs` (the one class); a catalog action's reflected properties; frozen defaults in the `.pr`; the `.pr` file format (see the open question); `app.type.Field` (open-items #16, separate).
+**Stays:** `goal/step/action/property/this.cs` (the one class); a catalog action's reflected properties; frozen defaults in the `.pr`; `app.type.Field` (open-items #16, separate).
 
-## Open — for Ingi before release
+## The `.pr` key: renamed now (Ingi)
 
-**The `.pr` key `"parameter"`.** Renaming it to `"property"` changes the file format of all 1,620 `.pr` files, including the builder's own under `os/system/builder`, which can't be rebuilt on this branch (#12). The shell hook also blocks editing `.pr` files. Options: (a) keep the `.pr` key `"parameter"` for now (only the code's vocabulary changes) and rename the key with the next full rebuild, on the parent branch once the builder builds itself; (b) rename now, rebuilding every `.pr` (the builder's own included). I lean (a).
+**The `.pr` key `"parameter"` becomes `"property"` now.** `"default"` stays. No `.pr` is rebuilt for this: the builder regenerates them when it builds, and the existing ones can't run on this branch anyway (Ingi).
+
+- **An old key fails loudly.** The action reader skips keys it doesn't know (`default: reader.Skip()`, `goal/step/action/serializer/Reader.cs:102`), so an old file's `"parameter"` would be silently ignored and the action would load with no properties. Instead, `"parameter"` raises a named error: an old `.pr` format, rebuild it.
+- **The writer writes `"property"`** (`goal/step/action/this.Item.cs:53-57`).
+- **The builder:** it is built by a python script plus plang parts (Ingi). The plang parts take their instructions from the runtime and need no change. Change these:
+  - the python in `tools/decider/` (`params.py`, `stage3b.py`, `build_pr.py`, `pr_bootstrap.py`, `harness.py`; 36 lines mention `parameter`) to write `"property"`
+  - the LLM instructions, which teach the answer in the `.pr`'s own keys (`Reader.cs:55-56`: "the LLM answers in them too"): `os/system/builder/llm/Properties.llm:15-84` (the examples and "an action is `{module, name, parameter}`") and the schema in `os/system/builder/BuildGoal/Properties.goal:16` (`parameter?: list<…>` for actions and modifiers)
+- **C# tests that read `.pr` files are changed so they work** (Ingi). The round-trip test (test 4) uses files the writer produces, not files on disk.
+- **Not renamed:** goal.call's own property named `Parameter`, the arguments passed to the called goal (`Properties.llm:69`, "each argument the step passes is one row in `Parameter`"). It names the goal's parameters, not an action's properties. It stays unless Ingi says otherwise.
 
 ## OBP validation
 
