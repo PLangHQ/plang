@@ -111,3 +111,13 @@ Also coming into the type system (ruled 2026-09-24, queued for coder): `app.Type
 2. ~~`.list` on every system~~: in the sketch.
 3. **The type-system cleanup, same class, done together** (in the sketch): the five parallel maps in `type/list/Registry.cs` (`_nameToType`, `_typeToName`, `_runtimeNameToType`, `_clr`, `_clrTypeFullNames`, `:27-39`) plus `CatalogByName` collapse into one set of type elements, each owning its name, aliases, C# mates and facts. The collection keeps private lookups by name and by C# type. `Registry.cs` (a partial of the list, `:23`) dissolves into `this.cs` or a `this.<aspect>.cs`. `Loader.cs` (`public static class Loader`, `:30`, the plugin loader, #26) is a static and a second way to add a type at runtime; adding a type is the collection's `Add`.
 4. Which facts each system's face shows.
+
+## Later piece (Ingi, 2026-09-24): registering systems on `%!app%`
+
+Not needed now. Ingi wants others to be able to extend `%!app%`: register a mapping `%!app.XXX%` → a system.
+
+- **Today** `%!app%` is reflection over the C# `App` object (`actor/this.cs:90`, `new data.DynamicData("!app", () => app, Context)`), so plang reaches any public `App` property.
+- **Then** `%!app%` is the app system holding its registered systems. `%!app.list%` gives the registered names. Built-ins register themselves at startup (type, goal, module, actor, test, event, format, service, setting, code, build, debug, …), and a plugin loaded with `code.load` registers its own (`%!app.stripe%`). `write out %!app%` describes what the app has.
+- This also answers the systems that live under `module/action/` (code `:141`, build `:191`, debug `:179`, cache `:155`): the registered name gives `%!app.code%`, and the folder needn't match.
+- **Rules proposed:** one name, one system (a plugin can't take a built-in name; it fails loudly). Register the object (a system that answers navigation and writes itself), not a lambda. An unknown `%!app.foo%` is a plang error (developer-caused), not an exception. C# keeps its typed properties (`App.Type`), and the registered name is plang's face of the same object.
+- **Precedent to resolve:** `variable.list.RegisterNavigable(name, resolver)` (`variable/list/this.cs:30`) is used once, for `%setting.X%` (`actor/this.cs:87`). With app mounts, settings are also `%!app.setting.X%`, so one of the two goes. Open with Ingi: keep `%setting.X%` as a short form, or everything through `%!app%`.
