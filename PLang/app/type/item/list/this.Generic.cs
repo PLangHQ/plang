@@ -35,7 +35,7 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     internal T this[int index] => (T)(Slot(index)
         ?? throw new System.IndexOutOfRangeException($"index {index} is out of range for a list of {CountRaw}"));
 
-    /// <summary>Program-node birth — a graph node (action.list / step.list / parameter.list) is
+    /// <summary>Program-node birth — a graph node (action.list / step.list) is
     /// shared across runs, so it stores no context. The elements ride as typed items in the backing.</summary>
     protected @this(System.Collections.Generic.List<object?> backing) : base(backing) { }
 

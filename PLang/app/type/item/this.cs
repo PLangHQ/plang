@@ -341,7 +341,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         });
 
     /// <summary>A human-readable name for a type in an error — a plang <c>@this</c> type reads as its
-    /// last one/two namespace segments (<c>parameter.list</c>, <c>action</c>, <c>item</c>), a CLR type
+    /// last one/two namespace segments (<c>step.list</c>, <c>action</c>, <c>item</c>), a CLR type
     /// drops the generic-arity backtick and spells its element (<c>List&lt;Data&gt;</c>). Diagnostics
     /// only; never a stable identity.</summary>
     private protected static string Readable(System.Type t)

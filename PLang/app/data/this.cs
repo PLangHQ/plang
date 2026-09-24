@@ -537,13 +537,6 @@ public partial class @this
     internal @this<T> As<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
         => this is @this<T> already ? already : Face<T>(_context);
 
-    /// <summary>The typed view born under the run's <paramref name="context"/>, so the handler's
-    /// later <c>.Value()</c> resolves in that run's scope. The dispatch form over a shared
-    /// parameter row: <c>action[name].As&lt;T&gt;(context)</c> — the view is the run's own; the
-    /// row is never written.</summary>
-    internal @this<T> As<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-        => Face<T>(context ?? _context);
-
     // The typed face over this binding's value, born under the given context.
     private @this<T> Face<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
@@ -573,10 +566,8 @@ public partial class @this
     ///    and `this`'s Name (slot name preserved; Properties and event lists aliased).
     ///  - For unset `%var%`: a not-initialized Data with the variable's name.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> AsCanonical(actor.context.@this? context = null)
+    public async System.Threading.Tasks.ValueTask<@this> AsCanonical()
     {
-        context = context ?? _context;
-
         // A variable reference → the canonical IS the variable's own current Data (mutations stay
         // visible through Variables.Get). _context is never null (born-with-context) — a null here
         // is a violated invariant, so let it crash rather than nurse it with `?.`.
@@ -594,12 +585,10 @@ public partial class @this
 
         // Any other stamped template (text/dict/list with %ref% holes) — the door renders (the
         // TYPE fills its own holes; never cached); a transient Data carries the answer.
-        if (_item is { Template: not null } && (context ?? _context) != null)
+        if (_item is { Template: not null })
         {
-            // A context-less row (a .pr parameter) renders through a copy born with the asker's context.
-            var source = _context == null! ? Copy(context!) : this;
-            var rendered = await source.Value();
-            var transient = new @this(Name, rendered, null, Parent, context: source._context);
+            var rendered = await Value();
+            var transient = new @this(Name, rendered, null, Parent, context: _context);
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -671,8 +660,8 @@ public partial class @this
     /// `set %y% = %x%`).</summary>
     public @this Copy(string name) => Copy(name, _context);
 
-    /// <summary>The copy born under <paramref name="context"/> — a run's own Data over a shared
-    /// parameter row, so the run resolves in its own scope and never writes the row.</summary>
+    /// <summary>The copy born under <paramref name="context"/> — a goal call hands the callee its own
+    /// Data over the caller's argument, so the callee binds it in its own scope and never writes the original.</summary>
     public @this Copy(actor.context.@this context) => Copy(Name, context);
 
     private protected virtual @this Copy(string name, actor.context.@this? context)

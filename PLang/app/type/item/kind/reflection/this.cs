@@ -187,7 +187,7 @@ public sealed class @this : global::app.type.kind.@this
         var dataReader = new global::app.data.reader.@this();
         // Build the declared List-of-Data type ONCE, adding each param's own verbatim bytes (→ the
         // @schema:data reader, which owns its format) straight into it — no intermediate list copied
-        // through a ctor. A plang list node (parameter.list) adds via AddRaw; a mutable IList directly.
+        // through a ctor. A plang list node adds via AddRaw; a mutable IList directly.
         if (typeof(global::app.type.item.list.@this).IsAssignableFrom(listType))
         {
             var node = (global::app.type.item.list.@this)global::System.Activator.CreateInstance(listType)!;

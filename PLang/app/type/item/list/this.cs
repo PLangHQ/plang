@@ -90,7 +90,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// are assumed raw CLR values (the all-raw invariant <see cref="_hasWrapped"/> tracks
     /// from here). A pure read keeps the backing pristine, so the CLR exit door hands
     /// the same instance back; the first write elevates a slot and the backing diverges.
-    /// The program nodes (action.list / step.list / parameter.list) are born here too.</summary>
+    /// The program nodes (action.list / step.list) are born here too.</summary>
     protected internal @this(List<object?> backing) => _items = backing;
 
     /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
@@ -541,7 +541,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // A CLR collection target: each row lowers ITSELF to the element type (terminal —
         // a scalar row hits ChangeType, a nested container its own Clr), assembled into
         // the target's shape. A mutable list/array/IList fills directly; a read-only domain
-        // collection (IReadOnlyList<T>: parameter.list, action.list, step.list — no Add) takes
+        // collection (IReadOnlyList<T>: action.list, step.list — no Add) takes
         // the built sequence through its ctor.
         var elem = target.IsArray ? target.GetElementType()
                  : target.IsGenericType && typeof(System.Collections.IEnumerable).IsAssignableFrom(target)
@@ -585,8 +585,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _ => ClrConvert(slot, elem),
     };
 
-    // Element type of a read-only domain collection (IReadOnlyList<T>/ICollection<T> — parameter.list,
-    // action.list, step.list) that isn't itself a plang item (those own their own conversion). Null
+    // Element type of a read-only domain collection (IReadOnlyList<T>/ICollection<T> — action.list,
+    // step.list) that isn't itself a plang item (those own their own conversion). Null
     // when the target isn't such a collection.
     private static System.Type? ReadOnlyElement(System.Type target)
     {

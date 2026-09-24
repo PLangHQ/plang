@@ -296,7 +296,7 @@ public class ValidateActionsTests
         var result = await _app.Run(For(actions), _app.User.Context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("parameter 'Ms' cannot be a number");
+        await Assert.That(result.Error!.Message).Contains("property 'Ms' cannot be a number");
         await Assert.That(result.Error!.Message).Contains("never emit \"\" as a placeholder");
     }
 

@@ -102,13 +102,13 @@ public class source : @this
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
         // The value loads with the context of the Data that asks — never the source's own: a
-        // source on a shared program row is read by every run, and each run's Data carries its
+        // source in a program property is read by every run, and each run's Data carries its
         // own actor (its variables, its permissions).
         var asking = data.Context;
         if (asking is null)
         {
             data.Fail(new global::app.error.Error(
-                $"'{data.Name}' has no context to load with — it is a shared program row; a run reads its own copy (action[name]).",
+                $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.",
                 "NoContextToLoad", 500));
             return Absent;
         }

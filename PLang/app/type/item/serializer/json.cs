@@ -71,7 +71,7 @@ public partial class json
             : s;
 
     // A typed value WITHOUT the @schema layer marker — a dict/list entry's {type:{name,…}, value:…}
-    // shape (an action's parameter row, a config entry). The container knows its entries are typed
+    // shape (a goal-call argument row, a config entry). The container knows its entries are typed
     // values, so this rides as a Data (the data reader reads type+value), no @schema needed.
     // Distinguished from a plain object by a structured `type` + a `value` sibling — a user object
     // literally shaped {type:{name:…}, value:…} is the accepted rare collision (entries carry type,
