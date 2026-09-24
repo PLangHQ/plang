@@ -22,34 +22,28 @@ public class RegistryFoldTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     [Test]
-    public async Task Get_NumberByName_ResolvesViaRegistry_NotFlatPrimitivesDict()
+    public async Task Get_AnAlias_ResolvesToTheItemThatOwnsIt()
     {
-        // After the fold, Get(name) and ResolveType(name) share the registry's
-        // _nameToType map. Pre-fold "string" resolved via the flat dict but was
-        // invisible to ResolveType. Number proper lands Stage 3 — until then,
-        // the assertion is the routing rule, exercised on the primitive that
-        // historically lived in the flat dict only.
-        await Assert.That(_types.Get("string")).IsEqualTo(typeof(string));
-        await Assert.That(_types.ResolveType("string")).IsEqualTo(typeof(string));
-        await Assert.That(_types.Get("decimal")).IsEqualTo(typeof(decimal));
-        await Assert.That(_types.ResolveType("decimal")).IsEqualTo(typeof(decimal));
+        // A primitive's spelled names are owned by its item: string → text, decimal → number.
+        await Assert.That(_types.Get("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(_types.ResolveType("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(_types.Get("decimal")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(_types.ResolveType("decimal")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
     public async Task ResolveName_And_ResolveType_RoundTrip_PerBuiltIn()
     {
-        // Round-trip for primitives whose CLR↔name mapping is 1:1.
-        // Numerics (int/long/decimal/double) collapse to name "number" so they
-        // don't per-CLR-type round-trip — covered separately below.
-        foreach (var (name, clr) in new (string, System.Type)[]
+        // A primitive name resolves to its item, and the item's C# mate names that item back.
+        foreach (var (name, item, mate) in new (string, System.Type, System.Type)[]
         {
-            ("text", typeof(string)),
-            ("bool", typeof(bool)),
-            ("datetime", typeof(System.DateTimeOffset)),
+            ("text", typeof(global::app.type.item.text.@this), typeof(string)),
+            ("bool", typeof(global::app.type.item.@bool.@this), typeof(bool)),
+            ("datetime", typeof(global::app.type.item.datetime.@this), typeof(System.DateTimeOffset)),
         })
         {
-            await Assert.That(_types.ResolveType(name)).IsEqualTo(clr);
-            await Assert.That(_types[clr]?.Name).IsEqualTo(name);
+            await Assert.That(_types.ResolveType(name)).IsEqualTo(item);
+            await Assert.That(_types[mate]?.Name).IsEqualTo(name);
         }
         // Numerics: many-to-one — every numeric CLR primitive names "number"
         // (the kind carries the precision on the entity).
@@ -57,18 +51,6 @@ public class RegistryFoldTests
         await Assert.That(_types[typeof(long)]?.Name).IsEqualTo("number");
         await Assert.That(_types[typeof(decimal)]?.Name).IsEqualTo("number");
         await Assert.That(_types[typeof(double)]?.Name).IsEqualTo("number");
-    }
-
-    [Test]
-    public async Task ClrPrimitivesWithoutFolder_StillRegistered_ViaBootstrap()
-    {
-        // string / int / decimal have no folder under app/type/ and carry no
-        // [PlangType] attribute. Registry.SeedClrPrimitives is what makes
-        // ResolveType see them. KnownTypes() must include them.
-        var known = new System.Collections.Generic.HashSet<System.Type>(_types.KnownTypes());
-        await Assert.That(known.Contains(typeof(string))).IsTrue();
-        await Assert.That(known.Contains(typeof(int))).IsTrue();
-        await Assert.That(known.Contains(typeof(decimal))).IsTrue();
     }
 
     [Test]

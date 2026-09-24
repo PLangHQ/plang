@@ -4,278 +4,83 @@ namespace PLang.Tests.App.Utils;
 
 public class TypeMappingTests
 {
+    // A primitive name or alias resolves to the item that owns it — string → text, int → number.
+    // The C# types are the items' mates, never a name's owner.
     [Test]
-    public async Task GetType_String_ReturnsStringType()
+    [Arguments("string", "text")]
+    [Arguments("text", "text")]
+    [Arguments("csv", "text")]
+    [Arguments("int", "number")]
+    [Arguments("integer", "number")]
+    [Arguments("long", "number")]
+    [Arguments("float", "number")]
+    [Arguments("double", "number")]
+    [Arguments("decimal", "number")]
+    [Arguments("byte", "number")]
+    [Arguments("int?", "number")]
+    [Arguments("bool", "bool")]
+    [Arguments("boolean", "bool")]
+    [Arguments("bool?", "bool")]
+    [Arguments("datetime", "datetime")]
+    [Arguments("datetime?", "datetime")]
+    [Arguments("date", "date")]
+    [Arguments("time", "time")]
+    [Arguments("duration", "duration")]
+    [Arguments("guid", "guid")]
+    [Arguments("guid?", "guid")]
+    [Arguments("bytes", "binary")]
+    [Arguments("list", "list")]
+    [Arguments("array", "list")]
+    [Arguments("dict", "dict")]
+    [Arguments("dictionary", "dict")]
+    [Arguments("map", "dict")]
+    public async Task GetType_AName_ResolvesToItsOwningItem(string name, string owner)
+        => await Assert.That(TypeMapping.GetType(name)).IsEqualTo(Owners[owner]);
+
+    // Each canonical name's owning item class (kept out of the attributes above).
+    private static readonly Dictionary<string, System.Type> Owners = new()
     {
-        var type = TypeMapping.GetType("string");
-
-        await Assert.That(type).IsEqualTo(typeof(string));
-    }
-
-    [Test]
-    public async Task GetType_Text_ReturnsStringType()
-    {
-        var type = TypeMapping.GetType("text");
-
-        await Assert.That(type).IsEqualTo(typeof(string));
-    }
-
-    [Test]
-    public async Task GetType_Int_ReturnsIntType()
-    {
-        var type = TypeMapping.GetType("int");
-
-        await Assert.That(type).IsEqualTo(typeof(int));
-    }
-
-    [Test]
-    public async Task GetType_Integer_ReturnsIntType()
-    {
-        var type = TypeMapping.GetType("integer");
-
-        await Assert.That(type).IsEqualTo(typeof(int));
-    }
-
-    [Test]
-    public async Task GetType_Long_ReturnsLongType()
-    {
-        var type = TypeMapping.GetType("long");
-
-        await Assert.That(type).IsEqualTo(typeof(long));
-    }
-
-    [Test]
-    public async Task GetType_Float_ReturnsFloatType()
-    {
-        var type = TypeMapping.GetType("float");
-
-        await Assert.That(type).IsEqualTo(typeof(float));
-    }
-
-    [Test]
-    public async Task GetType_Double_ReturnsDoubleType()
-    {
-        var type = TypeMapping.GetType("double");
-
-        await Assert.That(type).IsEqualTo(typeof(double));
-    }
+        ["text"] = typeof(global::app.type.item.text.@this),
+        ["number"] = typeof(global::app.type.item.number.@this),
+        ["bool"] = typeof(global::app.type.item.@bool.@this),
+        ["datetime"] = typeof(global::app.type.item.datetime.@this),
+        ["date"] = typeof(global::app.type.item.date.@this),
+        ["time"] = typeof(global::app.type.item.time.@this),
+        ["duration"] = typeof(global::app.type.item.duration.@this),
+        ["guid"] = typeof(global::app.type.item.guid.@this),
+        ["binary"] = typeof(global::app.type.item.binary.@this),
+        ["list"] = typeof(global::app.type.item.list.@this),
+        ["dict"] = typeof(global::app.type.item.dict.@this),
+    };
 
     [Test]
-    public async Task GetType_Decimal_ReturnsDecimalType()
+    public async Task GetType_TimeSpan_IsNotAName()
     {
-        var type = TypeMapping.GetType("decimal");
-
-        await Assert.That(type).IsEqualTo(typeof(decimal));
-    }
-
-    [Test]
-    public async Task GetType_Bool_ReturnsBoolType()
-    {
-        var type = TypeMapping.GetType("bool");
-
-        await Assert.That(type).IsEqualTo(typeof(bool));
-    }
-
-    [Test]
-    public async Task GetType_Boolean_ReturnsBoolType()
-    {
-        var type = TypeMapping.GetType("boolean");
-
-        await Assert.That(type).IsEqualTo(typeof(bool));
-    }
-
-    [Test]
-    public async Task GetType_DateTime_ReturnsDateTimeType()
-    {
-        // plang-types Stage 6: datetime rebinds to DateTimeOffset.
-        var type = TypeMapping.GetType("datetime");
-
-        await Assert.That(type).IsEqualTo(typeof(DateTimeOffset));
-    }
-
-    [Test]
-    public async Task GetType_Date_ReturnsDateTimeType()
-    {
-        // plang-types Stage 6: date rebinds to DateOnly.
-        var type = TypeMapping.GetType("date");
-
-        await Assert.That(type).IsEqualTo(typeof(DateOnly));
-    }
-
-    [Test]
-    public async Task GetType_Time_ReturnsTimeSpanType()
-    {
-        // plang-types Stage 6: time rebinds to TimeOnly.
-        var type = TypeMapping.GetType("time");
-
-        await Assert.That(type).IsEqualTo(typeof(TimeOnly));
-    }
-
-    [Test]
-    public async Task GetType_TimeSpan_ReturnsTimeSpanType()
-    {
-        // plang-types Stage 6 / Ingi's call: `timespan` is dropped — the
-        // single canonical name for TimeSpan is `duration`.
-        await Assert.That(TypeMapping.GetType("duration")).IsEqualTo(typeof(TimeSpan));
+        // `timespan` is dropped — the one name for a duration is `duration`.
         await Assert.That(TypeMapping.GetType("timespan")).IsNull();
     }
 
     [Test]
-    public async Task GetType_Guid_ReturnsGuidType()
+    public async Task GetType_GenericList_IsAListOfTheOwningItem()
     {
-        var type = TypeMapping.GetType("guid");
-
-        await Assert.That(type).IsEqualTo(typeof(Guid));
+        await Assert.That(TypeMapping.GetType("list<string>")).IsEqualTo(typeof(List<global::app.type.item.text.@this>));
+        await Assert.That(TypeMapping.GetType("list<int>")).IsEqualTo(typeof(List<global::app.type.item.number.@this>));
     }
 
     [Test]
-    public async Task GetType_Byte_ReturnsByteType()
+    public async Task GetType_GenericDict_IsADictOfTheOwningItems()
     {
-        var type = TypeMapping.GetType("byte");
-
-        await Assert.That(type).IsEqualTo(typeof(byte));
-    }
-
-    [Test]
-    public async Task GetType_Bytes_ReturnsByteArrayType()
-    {
-        var type = TypeMapping.GetType("bytes");
-
-        await Assert.That(type).IsEqualTo(typeof(byte[]));
-    }
-
-    [Test]
-    public async Task GetType_List_ReturnsListOfObjectType()
-    {
-        var type = TypeMapping.GetType("list");
-
-        await Assert.That(type).IsEqualTo(typeof(app.type.item.list.@this));
-    }
-
-    [Test]
-    public async Task GetType_Array_ReturnsObjectArrayType()
-    {
-        var type = TypeMapping.GetType("array");
-
-        await Assert.That(type).IsEqualTo(typeof(app.type.item.list.@this));
-    }
-
-    [Test]
-    public async Task GetType_Dictionary_ReturnsDictionaryType()
-    {
-        var type = TypeMapping.GetType("dictionary");
-
-        await Assert.That(type).IsEqualTo(typeof(app.type.item.dict.@this));
-    }
-
-    [Test]
-    public async Task GetType_Dict_ReturnsDictionaryType()
-    {
-        var type = TypeMapping.GetType("dict");
-
-        await Assert.That(type).IsEqualTo(typeof(app.type.item.dict.@this));
-    }
-
-    [Test]
-    public async Task GetType_Map_ReturnsDictionaryType()
-    {
-        var type = TypeMapping.GetType("map");
-
-        await Assert.That(type).IsEqualTo(typeof(app.type.item.dict.@this));
-    }
-
-    [Test]
-    public async Task GetType_NullableInt_ReturnsNullableIntType()
-    {
-        var type = TypeMapping.GetType("int?");
-
-        await Assert.That(type).IsEqualTo(typeof(int?));
-    }
-
-    [Test]
-    public async Task GetType_NullableLong_ReturnsNullableLongType()
-    {
-        var type = TypeMapping.GetType("long?");
-
-        await Assert.That(type).IsEqualTo(typeof(long?));
-    }
-
-    [Test]
-    public async Task GetType_NullableDouble_ReturnsNullableDoubleType()
-    {
-        var type = TypeMapping.GetType("double?");
-
-        await Assert.That(type).IsEqualTo(typeof(double?));
-    }
-
-    [Test]
-    public async Task GetType_NullableBool_ReturnsNullableBoolType()
-    {
-        var type = TypeMapping.GetType("bool?");
-
-        await Assert.That(type).IsEqualTo(typeof(bool?));
-    }
-
-    [Test]
-    public async Task GetType_NullableDateTime_ReturnsNullableDateTimeType()
-    {
-        // plang-types Stage 6: datetime? rebinds to DateTimeOffset?.
-        var type = TypeMapping.GetType("datetime?");
-
-        await Assert.That(type).IsEqualTo(typeof(DateTimeOffset?));
-    }
-
-    [Test]
-    public async Task GetType_NullableGuid_ReturnsNullableGuidType()
-    {
-        var type = TypeMapping.GetType("guid?");
-
-        await Assert.That(type).IsEqualTo(typeof(Guid?));
-    }
-
-    [Test]
-    public async Task GetType_GenericListString_ReturnsListOfString()
-    {
-        var type = TypeMapping.GetType("list<string>");
-
-        await Assert.That(type).IsEqualTo(typeof(List<string>));
-    }
-
-    [Test]
-    public async Task GetType_GenericListInt_ReturnsListOfInt()
-    {
-        var type = TypeMapping.GetType("list<int>");
-
-        await Assert.That(type).IsEqualTo(typeof(List<int>));
-    }
-
-    [Test]
-    public async Task GetType_GenericDictStringInt_ReturnsDictionary()
-    {
-        // Legacy short form still resolves via the alias table.
-        var type = TypeMapping.GetType("dict<string,int>");
-
-        await Assert.That(type).IsEqualTo(typeof(Dictionary<string, int>));
-    }
-
-    [Test]
-    public async Task GetType_GenericDictionaryStringInt_ReturnsDictionary()
-    {
-        var type = TypeMapping.GetType("dictionary<string,int>");
-
-        await Assert.That(type).IsEqualTo(typeof(Dictionary<string, int>));
+        await Assert.That(TypeMapping.GetType("dict<string,int>"))
+            .IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
+        await Assert.That(TypeMapping.GetType("dictionary<string,int>"))
+            .IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
     }
 
     [Test]
     public async Task GetType_CaseInsensitive_Works()
     {
-        var lower = TypeMapping.GetType("string");
-        var upper = TypeMapping.GetType("STRING");
-        var mixed = TypeMapping.GetType("StRiNg");
-
-        await Assert.That(lower).IsEqualTo(typeof(string));
-        await Assert.That(upper).IsEqualTo(typeof(string));
-        await Assert.That(mixed).IsEqualTo(typeof(string));
+        await Assert.That(TypeMapping.GetType("STRING")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(TypeMapping.GetType("StRiNg")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]

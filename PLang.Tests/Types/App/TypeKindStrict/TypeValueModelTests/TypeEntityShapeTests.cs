@@ -36,7 +36,7 @@ public class TypeEntityShapeTests
         await Assert.That(t.GetProperty("ClrType", BindingFlags.Public | BindingFlags.Instance)).IsNull();
         // Interior access still works through the registry — App.Type.Clr(name).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(int));
+        await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test] public async Task Entity_FamilyKindAccessor_Removed()

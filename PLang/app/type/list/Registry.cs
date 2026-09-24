@@ -13,12 +13,9 @@ namespace app.type.list;
 ///      [PlangType] attributes act as aliases; the first non-null Name is canonical.
 ///   2. [PlangType] with no Name — inferred name (@this convention: last
 ///      namespace segment; otherwise class name lowercased).
-///   3. @this classes WITHOUT [PlangType] — last-namespace-segment is the concept
-///      name (type→name). Only those that inherit app.type.item.@this (PLang
-///      values) also claim the forward name→type slot; engine mechanics (e.g.
-///      app.variable.path) report a concept name but are not resolvable as types,
-///      so they cannot shadow real value types.
-///   4. Otherwise: type has no PLang name and is opaque.
+///   3. @this classes WITHOUT [PlangType] — last-namespace-segment is the name.
+///   4. Only items (app.type.item.@this) are plang types; an engine class has no type name.
+///   One name, one class, in both directions — checked when the registry is built.
 /// </summary>
 public sealed partial class @this
 {
@@ -103,6 +100,12 @@ public sealed partial class @this
     public void RegisterRuntime(string name, Type type)
     {
         if (string.IsNullOrWhiteSpace(name) || type == null) return;
+        // One name, one class — a runtime registration (code.load, a plugin) cannot take a name
+        // another class already owns.
+        EnsureInitialized();
+        if (ResolveType(name) is { } owner && owner != type)
+            throw new InvalidOperationException(
+                $"type name '{name}' is claimed by both {owner.FullName} and {type.FullName} — one name, one class.");
         _runtimeNameToType[name] = type;
         _typeToName.TryAdd(type, name);
         // A code.load type owns its CLR shapes at runtime too — add them to the clr index.
@@ -118,37 +121,57 @@ public sealed partial class @this
         lock (_initLock)
         {
             if (_initialized) return;
-            SeedClrPrimitives();
-            // An explicitly-aliased [PlangType] name (one that diverges from the
-            // type's own inferred name — a kind label that redirects to a name the
-            // type's namespace/class does not itself carry) must not steal the
-            // name→type resolve slot from a type that naturally owns that name. So the
-            // type→name (kind) mapping records immediately, but the alias's name→type
-            // claim is deferred to a second pass that runs after every natural owner
-            // has registered. The kind direction is collision-free (keyed by type);
-            // only the reverse needs the ordering guarantee.
+            // An explicitly-aliased [PlangType] name (one that diverges from the type's own
+            // inferred name) claims its name after every natural owner has registered.
             var deferredAliases = new List<(string Name, Type Type)>();
             foreach (var assembly in Assemblies)
                 IndexAssembly(assembly, deferredAliases);
             foreach (var (name, type) in deferredAliases)
-                _nameToType.TryAdd(name, type);
+                Claim(name, type);
+            SeedAliases();
+            Guard();
             _initialized = true;
         }
     }
 
     /// <summary>
-    /// Seeds CLR-primitive PLang names (<c>string</c>, <c>int</c>, …) into the
-    /// registry from <c>app.type.app.type.primitive.@this</c> — the single source for
-    /// the seeded data. These types have no folder, no <c>Resolve</c>, no
-    /// <c>Build</c>; the registration only wires name↔CLR type so
-    /// <see cref="ResolveType"/> stays the one lookup path.
+    /// The spelled names of the primitives (<c>string</c>, <c>int</c>, <c>boolean</c>, <c>csv</c>, …)
+    /// resolve to the ITEM that owns the alias's C# type — <c>string</c> → text, <c>int</c> → number.
+    /// The C# types are the items' mates (their <c>OwnedClrTypes</c>), never a name's owner.
     /// </summary>
-    private void SeedClrPrimitives()
+    private void SeedAliases()
     {
-        foreach (var (name, type) in app.type.primitive.@this.Aliases)
-            _nameToType.TryAdd(name, type);
-        foreach (var (type, name) in app.type.primitive.@this.Canonical)
-            _typeToName.TryAdd(type, name);
+        foreach (var (alias, clr) in app.type.primitive.@this.Aliases)
+        {
+            var shape = Nullable.GetUnderlyingType(clr) ?? clr;
+            var owner = typeof(app.type.item.@this).IsAssignableFrom(shape) ? shape
+                : _clr.TryGetValue(shape, out var ownerName) && _nameToType.TryGetValue(ownerName, out var ot) ? ot
+                : null;
+            if (owner != null && !_nameToType.ContainsKey(alias)) _nameToType[alias] = owner;
+        }
+    }
+
+    // One name, one class: a second class claiming a taken name fails at registry build.
+    private void Claim(string name, Type type)
+    {
+        if (_nameToType.TryGetValue(name, out var existing) && existing != type)
+            throw new InvalidOperationException(
+                $"type name '{name}' is claimed by both {existing.FullName} and {type.FullName} — one name, one class.");
+        _nameToType[name] = type;
+    }
+
+    // A class may report a name only if it is the item that owns the name, or a kind of it (a scheme
+    // or program list deriving from the owner). The C# mates ride the ownership index, not this one.
+    private void Guard()
+    {
+        foreach (var (type, name) in _typeToName)
+        {
+            if (!_runtimeNameToType.TryGetValue(name, out var owner) && !_nameToType.TryGetValue(name, out owner))
+                throw new InvalidOperationException($"{type.FullName} reports the type name '{name}', which no item owns.");
+            if (owner != type && !owner.IsAssignableFrom(type))
+                throw new InvalidOperationException(
+                    $"{type.FullName} reports the type name '{name}', which {owner.FullName} owns — one name, one class.");
+        }
     }
 
 
@@ -156,6 +179,10 @@ public sealed partial class @this
     {
         foreach (var type in SafeGetTypes(assembly))
         {
+            // The registry holds plang types — items — only. An engine class (a host list, a
+            // channel, a reader) claims no type name; a non-item's [PlangType] declares a name its
+            // OWNER reads (a closed set's name is the KIND of choice), never a type.
+            if (!typeof(app.type.item.@this).IsAssignableFrom(type)) continue;
             var attrs = type.GetCustomAttributes<PlangTypeAttribute>(inherit: false).ToList();
 
             // Skip abstract (non-static) types UNLESS they declare [PlangType] OR
@@ -165,11 +192,6 @@ public sealed partial class @this
             // registry (Scheme.From).
             if (type.IsAbstract && !type.IsSealed && attrs.Count == 0 && !IsThisClass(type)) continue;
             string? canonical = null;
-
-            // Only a PLang value is a type (same rule as the @this arm below). A non-item's
-            // [PlangType] declares a name its OWNER reads — a closed set's name is the KIND of
-            // choice ({choice, kind: operator}), never a type, a catalog entry, or an index key.
-            if (attrs.Count > 0 && !typeof(app.type.item.@this).IsAssignableFrom(type)) continue;
 
             if (attrs.Count > 0)
             {
@@ -181,10 +203,10 @@ public sealed partial class @this
                     canonical ??= name;
                     // A name that matches the type's own inference is its natural
                     // claim — register now. A name the attribute redirects to
-                    // (kind label that diverges from the type's namespace/class)
-                    // is deferred so a natural owner of that name wins the reverse.
+                    // (one that diverges from the type's namespace/class) is claimed
+                    // after every natural owner has registered.
                     if (string.Equals(name, inferred, System.StringComparison.Ordinal))
-                        _nameToType.TryAdd(name, type);
+                        Claim(name, type);
                     else
                         deferredAliases.Add((name, type));
                 }
@@ -193,21 +215,11 @@ public sealed partial class @this
             {
                 var family = FamilyName(type);
                 canonical = family ?? InferName(type);
-                // The forward name→type slot (value-type resolution) is claimed
-                // ONLY by an @this that IS a PLang value — one that inherits
-                // app.type.item.@this. Engine mechanics that merely follow the @this
-                // naming pattern but are not values (app.variable.path — a
-                // value-graph navigation path, not a filesystem path — and
-                // app.variable.list) would otherwise shadow the real value types
-                // (path, list) in this slot by reflection order. The reverse
-                // type→name (concept name, reported as .Kind for non-value concepts
-                // like app/callstack/trace) still records below for every @this.
                 // A variant resolves TO its family name but never claims the name
-                // slot — the family base owns name→type (FilePath answers "path"
-                // for ResolveName; ResolveType("path") stays path.@this).
-                if (canonical != null && family == null
-                    && typeof(app.type.item.@this).IsAssignableFrom(type))
-                    _nameToType.TryAdd(canonical, type);
+                // slot — the family base owns name→type (FilePath answers "path";
+                // ResolveType("path") stays path.@this).
+                if (canonical != null && family == null)
+                    Claim(canonical, type);
             }
 
             if (canonical != null)

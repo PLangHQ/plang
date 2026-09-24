@@ -20,8 +20,8 @@ public class ClrTypeRerouteTests
         // would have asked the entity's ClrType for. The reroute uses
         // App.Type.Clr(name) ?? GetPrimitiveOrMime(name) — identical fallback chain.
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("string")).IsEqualTo(typeof(string));
-        await Assert.That(app.Type.Clr("bytes")).IsEqualTo(typeof(byte[]));
+        await Assert.That(app.Type.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(app.Type.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
         // MIME path that file.read uses on image/* extension reads:
         await Assert.That(global::app.type.list.@this.GetPrimitiveOrMime("image/jpeg")).IsEqualTo(typeof(byte[]));
     }
@@ -31,9 +31,9 @@ public class ClrTypeRerouteTests
         // variable.set reroutes value.Type.ClrType to
         // value.Context.App.Type.Clr(value.Type.Name) ?? GetPrimitiveOrMime(...).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(int));
-        await Assert.That(app.Type.Clr("long")).IsEqualTo(typeof(long));
-        await Assert.That(app.Type.Clr("bool")).IsEqualTo(typeof(bool));
+        await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(app.Type.Clr("long")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(app.Type.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
     }
 
     [Test] public async Task SettingsSqlite_StillResolves_ClrTypeViaRegistry()
@@ -41,7 +41,7 @@ public class ClrTypeRerouteTests
         // Sqlite reroutes data.Type.ClrType to
         // data.Context.App.Type.Clr(data.Type.Name) ?? GetPrimitiveOrMime(...).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("guid")).IsEqualTo(typeof(System.Guid));
-        await Assert.That(app.Type.Clr("datetime")).IsEqualTo(typeof(System.DateTimeOffset));
+        await Assert.That(app.Type.Clr("guid")).IsEqualTo(typeof(global::app.type.item.guid.@this));
+        await Assert.That(app.Type.Clr("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));
     }
 }

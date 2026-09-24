@@ -17,87 +17,87 @@ public class EngineTypesTests
     [Test]
     public async Task Clr_String_ReturnsStringType()
     {
-        await Assert.That(_types.Clr("string")).IsEqualTo(typeof(string));
+        await Assert.That(_types.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]
     public async Task Clr_Text_ReturnsStringType()
     {
-        await Assert.That(_types.Clr("text")).IsEqualTo(typeof(string));
+        await Assert.That(_types.Clr("text")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]
     public async Task Clr_Int_ReturnsIntType()
     {
-        await Assert.That(_types.Clr("int")).IsEqualTo(typeof(int));
+        await Assert.That(_types.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
     public async Task Clr_Long_ReturnsLongType()
     {
-        await Assert.That(_types.Clr("long")).IsEqualTo(typeof(long));
+        await Assert.That(_types.Clr("long")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
     public async Task Clr_Bool_ReturnsBoolType()
     {
-        await Assert.That(_types.Clr("bool")).IsEqualTo(typeof(bool));
+        await Assert.That(_types.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
     }
 
     [Test]
     public async Task Clr_DateTime_ReturnsDateTimeType()
     {
         // plang-types Stage 6: datetime rebinds to DateTimeOffset.
-        await Assert.That(_types.Clr("datetime")).IsEqualTo(typeof(DateTimeOffset));
+        await Assert.That(_types.Clr("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));
     }
 
     [Test]
     public async Task Clr_Bytes_ReturnsByteArrayType()
     {
-        await Assert.That(_types.Clr("bytes")).IsEqualTo(typeof(byte[]));
+        await Assert.That(_types.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
     }
 
     [Test]
     public async Task Clr_NullableInt_ReturnsNullableIntType()
     {
-        await Assert.That(_types.Clr("int?")).IsEqualTo(typeof(int?));
+        await Assert.That(_types.Clr("int?")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
     public async Task Clr_NullableGuid_ReturnsNullableGuidType()
     {
-        await Assert.That(_types.Clr("guid?")).IsEqualTo(typeof(Guid?));
+        await Assert.That(_types.Clr("guid?")).IsEqualTo(typeof(global::app.type.item.guid.@this));
     }
 
     [Test]
     public async Task Clr_GenericListString_ReturnsListOfString()
     {
-        await Assert.That(_types.Clr("list<string>")).IsEqualTo(typeof(List<string>));
+        await Assert.That(_types.Clr("list<string>")).IsEqualTo(typeof(List<global::app.type.item.text.@this>));
     }
 
     [Test]
     public async Task Clr_GenericListInt_ReturnsListOfInt()
     {
-        await Assert.That(_types.Clr("list<int>")).IsEqualTo(typeof(List<int>));
+        await Assert.That(_types.Clr("list<int>")).IsEqualTo(typeof(List<global::app.type.item.number.@this>));
     }
 
     [Test]
     public async Task Clr_GenericDictStringInt_ReturnsDictionary()
     {
-        await Assert.That(_types.Clr("dict<string,int>")).IsEqualTo(typeof(Dictionary<string, int>));
+        await Assert.That(_types.Clr("dict<string,int>")).IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
     }
 
     [Test]
     public async Task Clr_GenericDictionaryStringInt_ReturnsDictionary()
     {
-        await Assert.That(_types.Clr("dictionary<string,int>")).IsEqualTo(typeof(Dictionary<string, int>));
+        await Assert.That(_types.Clr("dictionary<string,int>")).IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
     }
 
     [Test]
     public async Task Clr_CaseInsensitive_Works()
     {
-        await Assert.That(_types.Clr("STRING")).IsEqualTo(typeof(string));
-        await Assert.That(_types.Clr("StRiNg")).IsEqualTo(typeof(string));
+        await Assert.That(_types.Clr("STRING")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(_types.Clr("StRiNg")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]
@@ -605,7 +605,7 @@ public class EngineTypesTests
         await using var engine = TestApp.Create("/test");
 
         await Assert.That(engine.Type).IsNotNull();
-        await Assert.That(engine.Type.Clr("string")).IsEqualTo(typeof(string));
+        await Assert.That(engine.Type.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     // --- v5: Depth limit ---

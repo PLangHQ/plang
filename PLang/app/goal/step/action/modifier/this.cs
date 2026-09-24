@@ -6,6 +6,7 @@ namespace app.goal.step.action.modifier;
 /// dispatch, .pr reading); the type IS the role. It exists only inside a target's
 /// Modifiers slot — never standalone — enforced by where it is born, not by a check.
 /// </summary>
+[global::app.Attributes.PlangType("modifier")]
 public class @this : global::app.goal.step.action.@this
 {
     /// <summary>Linear wrap precedence (lower = outermost wrapper) — from [Modifier(Order = N)] at

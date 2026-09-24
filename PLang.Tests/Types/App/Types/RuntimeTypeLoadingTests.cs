@@ -63,13 +63,13 @@ public class RuntimeTypeLoadingTests
         await Assert.That(types.Renderer.Of("runtime-fixture-only", "json")).IsNotNull();
     }
 
-    [Test] public async Task LoadDll_ExistingName_RuntimeWinsAtResolveType()
+    [Test] public async Task Register_AnOwnedName_FailsWithTheOneNameError()
     {
-        // Register a runtime entry under "int" — runtime should shadow the
-        // bootstrap-seeded primitive.
+        // One name, one class: "int" is owned (by number), so a runtime registration of it fails loudly.
         var types = new global::app.type.list.@this();
-        types.Register("int", typeof(System.Uri));
-        await Assert.That(types.ResolveType("int")).IsEqualTo(typeof(System.Uri));
+        await Assert.That(() => types.Register("int", typeof(System.Uri)))
+            .Throws<System.InvalidOperationException>().WithMessageMatching("*one name, one class*");
+        await Assert.That(types.ResolveType("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test] public async Task LoadDll_ExistingName_RuntimeRendererWinsAtTypeSerializersLookup()
@@ -105,27 +105,13 @@ public class RuntimeTypeLoadingTests
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCoverage");
     }
 
-    [Test] public async Task LoadDll_AlreadyCompiledHandlerSlot_StillSeesBuiltInType_NoRewrite()
+    [Test] public async Task Register_ABuiltInTypesOwnName_FailsWithTheOneNameError()
     {
-        // Honest limit: runtime registration changes resolution + rendering,
-        // not the compiled handler IL. math.Add.Run returns Task<Data<number>>
-        // baked in by the source generator at compile time; assert the generic
-        // argument stays the built-in number type before AND after overriding
-        // "number" in the runtime registry.
-        var runReturn = typeof(global::app.module.action.math.Add).GetMethod("Run")!.ReturnType;
-        var dataGeneric = runReturn.GetGenericArguments()[0];
-        await Assert.That(dataGeneric.IsGenericType).IsTrue();
-        await Assert.That(dataGeneric.GetGenericTypeDefinition()).IsEqualTo(typeof(global::app.data.@this<>));
-        var slotBefore = dataGeneric.GetGenericArguments()[0];
-        await Assert.That(slotBefore).IsEqualTo(typeof(global::app.type.item.number.@this));
-
+        // A built-in type cannot be replaced by a runtime registration — "number" stays number's.
         var types = new global::app.type.list.@this();
-        types.Register("number", typeof(System.Uri));
-        await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(System.Uri));
-
-        var slotAfter = typeof(global::app.module.action.math.Add).GetMethod("Run")!
-            .ReturnType.GetGenericArguments()[0].GetGenericArguments()[0];
-        await Assert.That(slotAfter).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(() => types.Register("number", typeof(System.Uri)))
+            .Throws<System.InvalidOperationException>().WithMessageMatching("*one name, one class*");
+        await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     private static string FixtureDll(string name) => System.IO.Path.GetFullPath(

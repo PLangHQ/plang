@@ -20,7 +20,7 @@ public class CleanupBindingsTests
 
     [Test] public async Task DateTime_PlangName_ResolvesToDateTimeOffset_NotSystemDateTime()
     {
-        await Assert.That(_types.Get("datetime")).IsEqualTo(typeof(System.DateTimeOffset));
+        await Assert.That(_types.Get("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));
         await Assert.That(_types.Get("datetime")).IsNotEqualTo(typeof(System.DateTime));
     }
 
@@ -33,20 +33,20 @@ public class CleanupBindingsTests
     }
 
     [Test] public async Task Date_PlangName_ResolvesToDateOnly()
-        => await Assert.That(_types.Get("date")).IsEqualTo(typeof(System.DateOnly));
+        => await Assert.That(_types.Get("date")).IsEqualTo(typeof(global::app.type.item.date.@this));
 
     [Test] public async Task Time_PlangName_ResolvesToTimeOnly()
-        => await Assert.That(_types.Get("time")).IsEqualTo(typeof(System.TimeOnly));
+        => await Assert.That(_types.Get("time")).IsEqualTo(typeof(global::app.type.item.time.@this));
 
     [Test] public async Task Duration_PlangName_ResolvesToTimeSpan()
-        => await Assert.That(_types.Get("duration")).IsEqualTo(typeof(System.TimeSpan));
+        => await Assert.That(_types.Get("duration")).IsEqualTo(typeof(global::app.type.item.duration.@this));
 
     [Test] public async Task Timespan_DeprecatedAlias_StillResolvesToTimeSpan()
     {
         // Ingi's call: `timespan` is dropped entirely — `duration` is the
         // single canonical name. Both directions return only duration.
         await Assert.That(_types.Get("timespan")).IsNull();
-        await Assert.That(_types.Get("duration")).IsEqualTo(typeof(System.TimeSpan));
+        await Assert.That(_types.Get("duration")).IsEqualTo(typeof(global::app.type.item.duration.@this));
     }
 
     [Test] public async Task DateTime_Parse_Iso8601_WithTimezone_RoundTrips()
