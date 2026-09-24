@@ -94,7 +94,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Equality-only: <c>Equal</c>/<c>NotEqual</c>, never an order — the
     /// boundary errors on <c>&lt;</c>/<c>&gt;</c>. The other side coerces into bool through
     /// the pure <c>Create</c> core ("true" → true). Non-coercible → Incomparable.</summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         var b = other as @this ?? Create(other);
         return new(b is null ? global::app.data.Comparison.Incomparable

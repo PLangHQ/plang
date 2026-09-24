@@ -88,7 +88,7 @@ public class ThrowTests
         var list = err.Data!.Peek() as ListType;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count.ToInt32()).IsEqualTo(1);
-        await Assert.That(list.First!.Peek()!.ToString()).IsEqualTo("order-123");
+        await Assert.That(list.First(global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("order-123");
     }
 
     [Test]
@@ -97,7 +97,7 @@ public class ThrowTests
         // `- throw %order%, %item%` — multiple values ride as a plang list, each
         // element keeping its own value/type.
         var (context, _) = CreateContext();
-        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") }, global::PLang.Tests.TestApp.SharedContext);
+        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") });
 
         var action = new Throw(context) { Data = Data.Ok(inner) };
         var result = await action.Run();
@@ -107,8 +107,8 @@ public class ThrowTests
         var list = err.Data!.Peek() as ListType;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count.ToInt32()).IsEqualTo(2);
-        await Assert.That(list.At(0)!.Peek()!.ToString()).IsEqualTo("order-123");
-        await Assert.That(list.At(1)!.Peek()!.ToString()).IsEqualTo("item-9");
+        await Assert.That(list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("order-123");
+        await Assert.That(list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("item-9");
     }
 
     [Test]

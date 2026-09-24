@@ -14,11 +14,13 @@ public static class Default
         if (value == null) { writer.Null(); return; }
         var listed = value.Listed;
         if (listed == null) { writer.String(value.ToString()); return; }
-        var items = listed.Items;
-        writer.BeginArray(items.Count);
-        foreach (var entry in items)
-            if (entry.Peek() is global::app.type.item.path.@this p) p.Write(writer);
-            else writer.String(entry.Peek()?.ToString() ?? "");
+        writer.BeginArray(listed.CountRaw);
+        foreach (var slot in listed.Slots())
+        {
+            var entry = slot is global::app.data.@this d ? d.Peek() : slot;
+            if (entry is global::app.type.item.path.@this p) p.Write(writer);
+            else writer.String(entry?.ToString() ?? "");
+        }
         writer.EndArray();
     }
 }

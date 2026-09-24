@@ -19,7 +19,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this("dict", kind);
         reader.BeginObject();
         var parser = new global::app.type.item.serializer.json(ctx.Context);
-        var dict = new global::app.type.item.dict.@this(ctx.Context);
+        var dict = new global::app.type.item.dict.@this();
         // An authored dict (ctx carries "plang") re-resolves its `%ref%` string leaves on read —
         // dict.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
         if (ctx.Template != null) dict.Template = ctx.Template;

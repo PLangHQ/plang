@@ -20,7 +20,7 @@ namespace app.type.item.dict;
 /// (that path would reflect Count/Keys/Entries and bury the real keys); reading a
 /// dict is the reader's / <c>kind[json].Parse</c>'s job, never STJ reconstruction.</para>
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";
@@ -39,17 +39,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private readonly Dictionary<string, object?> _value;
 
     // The backing has diverged from a pure-raw form — a slot holds a Data/wrapper.
-    // Drives the .Clr same-ref fast path (clean → hand _value straight back) and
-    // gates the context walk (clean → only raw slots, nothing context-bearing).
+    // Drives the .Clr same-ref fast path (clean → hand _value straight back).
     private bool _hasWrapped;
 
-    // A slot that carries context / must be peeled at the CLR exit door — a Data or
-    // a plang wrapper. A raw scalar or a raw nested container rides verbatim.
+    // A slot that must be peeled at the CLR exit door — a Data or a plang wrapper. A raw
+    // scalar or a raw nested container rides verbatim.
     private static bool IsWrapped(object? slot)
         => slot is Data or global::app.type.item.@this;
 
-    public @this(actor.context.@this context)
-        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), context) { }
+    // A dict stores no context: an entry is handed out with the context of whoever asks for it
+    // (Slot, Entries, Get). A stored Data keeps its own.
+    public @this()
+        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)) { }
 
     /// <summary>A dict's own type entity — the type owns its name (no namespace reflection). Carries
     /// the template flag so a template=plang dict resolves its %var% leaves at .Value().</summary>
@@ -66,7 +67,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? value, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this();
         // The dict converts a json source (a clr(json) object) into ITSELF — the same DOM narrower
         // the dict kind's Convert uses. Never route a dict.@this through reflection (no parameterless
         // ctor); the item owns its own conversion. Other sources re-tag via Clr.
@@ -80,47 +81,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// raw values, type-on-read). A pure read keeps it pristine, so <see cref="Clr"/>
     /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
     /// The comparer is the source's own — PLang's own dicts are built case-insensitive
-    /// via the default ctor. Born WITH context — every entry reads/serializes through it.</summary>
-    internal @this(Dictionary<string, object?> backing, actor.context.@this context)
-    {
-        _value = backing;
-        _context = context ?? throw new System.ArgumentNullException(nameof(context));
-    }
+    /// via the default ctor.</summary>
+    internal @this(Dictionary<string, object?> backing) => _value = backing;
 
-    /// <summary>
-    /// Context for runtime access. When set, propagates onto every entry Data so
-    /// nested navigation / serialization of the values has a wired scope —
-    /// mirrors <c>Data</c>'s own IContext propagation to its inner value.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context
-    {
-        get => _context;
-        set
-        {
-            _context = value;
-            // A clean dict's slots are raw — nothing context-bearing to walk, so
-            // assigning context stays O(1). Reads born their entries with _context
-            // (Slot); a wrapped slot is reached here only after a write diverged it.
-            if (!_hasWrapped) return;
-            foreach (var slot in _value.Values)
-            {
-                if (slot is Data d) d.Context = value;
-                else if (slot is module.IContext c) c.Context = value;
-            }
-        }
-    }
-
-    // Type-on-read: hand back the entry under `key` as a FRESH Data, wrapping the
-    // raw slot into its natural type on each read — never cached back, so the
-    // backing stays pristine (an aliased source keeps the same instance for the
-    // CLR exit door). An already-Data slot returns as-is.
-    private Data Slot(string key)
+    // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
+    // context, wrapping the raw slot into its natural type on each read — never cached back, so
+    // the backing stays pristine (an aliased source keeps the same instance for the CLR exit
+    // door). A stored Data goes by reference, with its own context.
+    private Data Slot(string key, actor.context.@this context)
     {
         var raw = _value[key];
         if (raw is Data d)
         {
-            d.Context = _context;
             // The dict key is authoritative — a nested entry value carries no name of
             // its own on the wire (only the key rides, as the JSON property name), so a
             // reconstructed entry borns Name="". Re-stamp the key, matching the raw-slot
@@ -131,9 +103,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
-        return new Data(key, global::app.type.item.@this.Create(raw, _context), context: _context);
+        return new Data(key, global::app.type.item.@this.Create(raw, context), context: context);
     }
-    private actor.context.@this _context = null!;
 
     /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
@@ -149,7 +120,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         get
         {
-            var keys = new global::app.type.item.list.@this<global::app.type.item.text.@this>(_context);
+            var keys = new global::app.type.item.list.@this<global::app.type.item.text.@this>();
             foreach (var k in _value.Keys)
                 keys.Add(new Data(k, new global::app.type.item.text.@this(k)));
             return keys;
@@ -159,15 +130,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Keys in insertion order — the interior raw view.</summary>
     internal IEnumerable<string> KeyNames => _value.Keys;
 
-    /// <summary>Entry Data values in insertion order — materializes every raw slot.</summary>
-    public IReadOnlyList<Data> Entries
+    /// <summary>The slot under <paramref name="key"/> as stored — a Data, or the raw value — for the
+    /// context-free faces (a writer's tokens) that read the slot itself.</summary>
+    internal object? Stored(string key) => _value[key];
+
+    /// <summary>The entries in insertion order, one pass, each handed out as the caller reaches it —
+    /// a raw slot as a new Data born with <paramref name="context"/>, a stored Data by reference.</summary>
+    public IEnumerable<Data> Entries(actor.context.@this context)
     {
-        get
-        {
-            var list = new List<Data>(_value.Count);
-            foreach (var k in _value.Keys) list.Add(Slot(k));
-            return list;
-        }
+        foreach (var k in _value.Keys) yield return Slot(k, context);
     }
 
     /// <summary>Writes itself to the wire as a JSON object — each entry's value bare
@@ -190,10 +161,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // default (json/plang): an object whose entries each self-describe (@schema/type),
         // so types round-trip. No reaching for the inner item; the entry owns its output.
         writer.BeginObject();
-        foreach (var entry in Entries)
+        foreach (var entry in Entries(context!))
         {
             writer.Name(entry.Name);
-            await entry.Output(writer, mode, context ?? entry.Context);
+            await entry.Output(writer, mode, context);
         }
         writer.EndObject();
     }
@@ -202,7 +173,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
         EnumerateItems(global::app.actor.context.@this? context)
     {
-        foreach (var entry in Entries)
+        foreach (var entry in Entries(context!))
             yield return (new Data("", entry.Name, context: context), entry);
     }
 
@@ -212,10 +183,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>
     /// The entry Data for <paramref name="key"/>, or C# <c>null</c> when the key
     /// is absent. A present key whose value is null still returns a (null-wrapping)
-    /// Data — the caller decides what missing means.
+    /// Data — the caller decides what missing means. Handed out with the asker's context.
     /// </summary>
-    public Data? Get(string key)
-        => _value.ContainsKey(key) ? Slot(key) : null;
+    public Data? Get(string key, actor.context.@this context)
+        => _value.ContainsKey(key) ? Slot(key, context) : null;
 
     /// <summary>
     /// Typed path navigation over the materialized structure: dotted keys +
@@ -224,15 +195,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// dict/list; returns the value as <typeparamref name="T"/> (converting through
     /// the type system when a segment is still raw), or null when the path misses.
     /// </summary>
-    public T? Get<T>(string path) where T : global::app.type.item.@this
+    public T? Get<T>(string path, actor.context.@this context) where T : global::app.type.item.@this
     {
         object? cur = this;
         foreach (var seg in PathSegments(path))
         {
             cur = cur switch
             {
-                @this d => d.Get(seg)?.Peek(),
-                global::app.type.item.list.@this l when int.TryParse(seg, out var idx) => l.At(idx)?.Peek(),
+                @this d => d.Get(seg, context)?.Peek(),
+                global::app.type.item.list.@this l when int.TryParse(seg, out var idx) => l.At(idx, context)?.Peek(),
                 _ => null
             };
             if (cur == null) return null;
@@ -240,7 +211,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (cur is T typed) return typed;
         // The navigated value lifts to its plang type (the source already has the shape) —
         // the type system creates it; no conversion hub.
-        return global::app.type.item.@this.Create(cur, _context) as T;
+        return global::app.type.item.@this.Create(cur, context) as T;
     }
 
     // Split a navigation path into segments: "choices[0].message.content" →
@@ -276,7 +247,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Set(Data value)
     {
-        value.Context = _context;
         Put(value.Name, value);
         return this;
     }
@@ -288,7 +258,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Set(string key, object? value)
     {
-        if (value is Data d) d.Context = _context;
         Put(key, value);
         return this;
     }
@@ -305,11 +274,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// A dict owns its child read — case-insensitive key lookup. A real key wins;
     /// <c>count</c> is an intrinsic that only answers when no such key exists
     /// (a literal <c>{count: "x"}</c> reads "x", not the length). Absent → NotFound,
-    /// so the caller falls through.
+    /// so the caller falls through. An entry is handed out with the asker's context.
     /// </summary>
     public override System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
     {
-        var entry = Get(key);
+        var entry = Get(key, parent.Context);
         if (entry != null) return new(entry);
         if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase))
             return new(new Data(key, Count, parent: parent));
@@ -327,9 +296,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (string.Equals(key, "@schema", System.StringComparison.OrdinalIgnoreCase))
             throw new System.ArgumentException(
                 "'@schema' is the wire marker and cannot be a dict key.", nameof(key));
-        // A wrapped slot diverges the dict — the CLR exit door must peel, and the
-        // context walk has something to reach. A raw scalar leaves it clean (the
-        // .Clr fast path still hands the backing back).
+        // A wrapped slot diverges the dict — the CLR exit door must peel. A raw scalar
+        // leaves it clean (the .Clr fast path still hands the backing back).
         if (IsWrapped(slot)) _hasWrapped = true;
         _value[key] = slot;
     }
@@ -356,7 +324,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var elementType = target.IsGenericType ? target.GetGenericArguments()[^1] : typeof(object);
             foreach (var key in _value.Keys)
             {
-                var v = Slot(key).Peek();
+                var v = _value[key] is Data d ? d.Peek() : _value[key];
                 map[key] = v is global::app.type.item.@this iv ? iv.Clr(elementType) : v;
             }
             return map;
@@ -365,8 +333,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // A settable-prop CLR record target — the reflection kind builds it from THIS dict's slots
         // (each value lowers itself via its own Clr). No STJ, no self-serialize round-trip — the
         // firing site for dict.Json dies here.
-        return new global::app.type.item.kind.reflection.@this().Read(this, target, Context);
+        return new global::app.type.item.kind.reflection.@this().Read(this, target);
     }
+
+    /// <summary>The entry under <paramref name="key"/> lowered to <paramref name="target"/> at the
+    /// CLR exit door. A raw slot is already a CLR value, so no context is needed; a stored Data or
+    /// an item lowers itself.</summary>
+    internal object? Clr(string key, System.Type target) => _value[key] switch
+    {
+        Data d => d.Peek().Clr(target),
+        global::app.type.item.@this item => item.Clr(target),
+        var raw => ClrConvert(raw, target),
+    };
 
     // A template=plang dict is a USE boundary when materialized (`.Value()`): each entry answers
     // through its OWN value door ONE level — a `%ref%` text leaf resolves itself (full-match →
@@ -378,9 +356,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (Template == null) return this;
-        var result = new @this(data.Context);
+        var result = new @this();
         foreach (var key in _value.Keys)
-            result.Set(key, await Slot(key).Value());
+            result.Set(key, await Slot(key, data.Context).Value());
         return result;
     }
 
@@ -426,10 +404,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Equality-only: structural <c>Equal</c>/<c>NotEqual</c> between two
     /// dicts, never an order (the boundary errors on <c>&lt;</c>/<c>&gt;</c>); a
     /// non-dict other side → <c>Incomparable</c> (how <c>dict == number</c> errors).</summary>
-    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         if (other is not @this od) return global::app.data.Comparison.Incomparable;
-        return await AreEqual(od)
+        return await AreEqual(od, context)
             ? global::app.data.Comparison.Equal
             : global::app.data.Comparison.NotEqual;
     }
@@ -440,13 +418,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// its own comparison (the recursion contract, lazy), so a nested number widens and
     /// nested text compares case-insensitive. Dict is equality-only — no order.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<bool> AreEqual(object? other)
+    public async System.Threading.Tasks.ValueTask<bool> AreEqual(object? other, actor.context.@this context)
     {
         if (other is not @this od || _value.Count != od.CountRaw) return false;
         foreach (var key in _value.Keys)
         {
-            var entry = Slot(key);
-            var match = od.Get(key);
+            var entry = Slot(key, context);
+            var match = od.Get(key, context);
             if (match == null || await entry.Compare(match) is not global::app.data.Comparison.Equal)
                 return false;
         }

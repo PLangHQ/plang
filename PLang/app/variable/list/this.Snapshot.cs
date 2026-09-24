@@ -41,7 +41,7 @@ public partial class @this : ISnapshot
     {
         // Every entry of the section IS a captured variable (edited in place or not) — cloned so the
         // snapshot can be re-restored independently.
-        foreach (var entry in s.Entries.Entries)
+        foreach (var entry in s.Entries.Entries(context))
             Set(entry.Name, entry.Clone());
         return System.Threading.Tasks.Task.CompletedTask;
     }

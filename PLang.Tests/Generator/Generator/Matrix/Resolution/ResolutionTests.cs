@@ -112,7 +112,7 @@ public class DeepResolutionListTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
         // Read the way a real handler does: enumerate, resolve + convert each row through its door.
         var items = new List<global::app.module.action.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
+        foreach (var row in (await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext)) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
     }
 
@@ -140,7 +140,7 @@ public class DeepResolutionListTests
 
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
         var items = new List<global::app.module.action.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
+        foreach (var row in (await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext)) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("alpha");
         await Assert.That(items[1].Content).IsEqualTo("beta");
     }
@@ -166,8 +166,8 @@ public class DeepResolutionDictTests
         // Lazy + stamped (Template="plang" → non-cacheable): resolve the dict through its
         // door, then read each value through ITS door — the real per-item read path.
         var d = (await typed!.Value())!;
-        await Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted");
-        await Assert.That((await d.Get("other")!.Value()).ToString()).IsEqualTo("literal");
+        await Assert.That((await d.Get("inner", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("substituted");
+        await Assert.That((await d.Get("other", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("literal");
     }
 
     // Dictionary value is itself a list → walks both layers.
@@ -186,7 +186,7 @@ public class DeepResolutionDictTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.dict.@this>;
         var d = (await typed!.Value())!;
         var inner = new List<string?>();
-        foreach (var row in (global::app.type.item.list.@this)(await d.Get("items")!.Value()))
+        foreach (var row in ((global::app.type.item.list.@this)(await d.Get("items", global::PLang.Tests.TestApp.SharedContext)!.Value())).Items(global::PLang.Tests.TestApp.SharedContext))
             inner.Add((await row.Value()).ToString());
         await Assert.That(inner[0]).IsEqualTo("alpha");
         await Assert.That(inner[1]).IsEqualTo("beta");

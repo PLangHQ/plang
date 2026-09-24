@@ -642,7 +642,7 @@ public partial class @this
     /// behavior (it outranks every value, so its <c>Order</c> answers <c>%x% == null</c>).
     /// </summary>
     public async ValueTask<Comparison> Compare(@this other)
-        => await (await Value()).Compare(await other.Value());
+        => await (await Value()).Compare(await other.Value(), _context);
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.

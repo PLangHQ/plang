@@ -13,9 +13,9 @@ public class NestedTypedRoundTripTests
     {
         var app = global::PLang.Tests.TestApp.Create("/nest");
         var ctx = app.User.Context;
-        var steps = new global::app.type.item.list.@this(ctx)
-            .Add(new global::app.data.@this("", new global::app.type.item.dict.@this(ctx).Set("index", 1L), context: ctx));
-        var plan = new global::app.type.item.dict.@this(ctx)
+        var steps = new global::app.type.item.list.@this()
+            .Add(new global::app.data.@this("", new global::app.type.item.dict.@this().Set("index", 1L), context: ctx));
+        var plan = new global::app.type.item.dict.@this()
             .Set("description", "a plan")
             .Set("steps", steps);
 
@@ -29,10 +29,10 @@ public class NestedTypedRoundTripTests
         // Materialize through the async door — Peek returns the deferred source.
         var dict = (await back.Value()) as global::app.type.item.dict.@this;
         await Assert.That(dict).IsNotNull();
-        await Assert.That(dict!.Get("steps")!.Type?.Name).IsEqualTo("list");
-        await Assert.That(dict.Get("description")!.Type?.Name).IsEqualTo("text");
+        await Assert.That(dict!.Get("steps", global::PLang.Tests.TestApp.SharedContext)!.Type?.Name).IsEqualTo("list");
+        await Assert.That(dict.Get("description", global::PLang.Tests.TestApp.SharedContext)!.Type?.Name).IsEqualTo("text");
         // The nested list materializes as a real list.
-        var stepsVal = await dict.Get("steps")!.Value();
+        var stepsVal = await dict.Get("steps", global::PLang.Tests.TestApp.SharedContext)!.Value();
         await Assert.That(stepsVal is global::app.type.item.list.@this).IsTrue();
     }
 }

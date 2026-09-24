@@ -31,7 +31,7 @@ public class TextWriterItemArmTests
     [Test]
     public async Task TopLevelDictItem_RendersJson()
     {
-        var d = new global::app.type.item.dict.@this(C);
+        var d = new global::app.type.item.dict.@this();
         d.Set("a", 1);
         await Assert.That(Render(d)).IsEqualTo("{\"a\":1}");
     }

@@ -11,9 +11,13 @@ namespace app.goal.step.action.parameter.list;
 /// type-tag). PROGRAM STRUCTURE: born context-free (the graph is shared across runs), it stores no
 /// context. Materialized by the action serializer reader row by row, so a stored parameter list never
 /// round-trips through generic reflection. Twin of <see cref="app.goal.step.action.list.@this"/>.
+/// Every row is a stored Data, so the node enumerates its rows with no context.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this
+public sealed class @this : global::app.type.item.list.@this, IEnumerable<Data>
 {
+    public IEnumerator<Data> GetEnumerator() => Slots().Cast<Data>().GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
     public @this() : base(new List<object?>()) { }
     public @this(IReadOnlyList<Data> rows) : base(new List<object?>(rows.Cast<object?>())) { }
     // Value→slot materialization: adopt the rows a generic list reader produced.
@@ -31,7 +35,7 @@ public sealed class @this : global::app.type.item.list.@this
         var rows = new List<object?>();
         IEnumerable<object?> elements = slot switch
         {
-            global::app.type.item.list.@this nativeList => nativeList.Items,
+            global::app.type.item.list.@this nativeList => nativeList.Items(context),
             string => System.Array.Empty<object?>(),
             System.Collections.IEnumerable seq => seq.Cast<object?>(),
             _ => System.Array.Empty<object?>(),
@@ -42,8 +46,8 @@ public sealed class @this : global::app.type.item.list.@this
             switch (entry)
             {
                 case global::app.type.item.dict.@this nd:
-                    rows.Add(new Data(nd.Get("name")?.Peek()?.ToString() ?? "",
-                                      nd.Get("value")?.Peek(), context: context));
+                    rows.Add(new Data(nd.Get("name", context)?.Peek()?.ToString() ?? "",
+                                      nd.Get("value", context)?.Peek(), context: context));
                     break;
                 case IDictionary<string, object?> id:
                     rows.Add(new Data(
@@ -64,6 +68,6 @@ public sealed class @this : global::app.type.item.list.@this
     /// <summary>The parameter row (a <see cref="Data"/> envelope) at <paramref name="i"/> — the value
     /// face is Data, so this is public (unlike action.list/step.list, whose typed element face is
     /// internal). Build/validation read a row's Name/Value off it.</summary>
-    public Data this[int i] => At(i) ?? throw new System.IndexOutOfRangeException(
+    public Data this[int i] => Stored(i) as Data ?? throw new System.IndexOutOfRangeException(
         $"index {i} is out of range for a parameter list of {CountRaw}");
 }

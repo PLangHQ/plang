@@ -41,7 +41,7 @@ public partial class discover : IContext
 
     public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Run()
     {
-        var empty = data.@this<global::app.type.item.list.@this<global::app.test.@this>>.Ok(new global::app.type.item.list.@this<global::app.test.@this>(Context));
+        var empty = data.@this<global::app.type.item.list.@this<global::app.test.@this>>.Ok(new global::app.type.item.list.@this<global::app.test.@this>());
 
         var root = await Path.Value();
         if (root == null) return empty;
@@ -53,7 +53,7 @@ public partial class discover : IContext
 
         var files = new List<data.@this>();
         var list = await listed.Value();
-        foreach (var row in list!)
+        foreach (var row in list!.Items(Context))
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
@@ -61,7 +61,7 @@ public partial class discover : IContext
             files.Add(new data.@this("", await DiscoverOne(fileMatch), context: Context));
         }
         return Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-            new global::app.type.item.list.@this<global::app.test.@this>(files, Context));
+            new global::app.type.item.list.@this<global::app.test.@this>(files));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>

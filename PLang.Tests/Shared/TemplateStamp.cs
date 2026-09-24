@@ -56,19 +56,19 @@ public static class TemplateStamp
 
             case global::app.type.item.list.@this l when l.Template == null:
             {
-                var items = l.Items;   // materialize once — entries rebind in place
+                var items = l.Items(context).ToList();   // materialize once — entries rebind in place
                 bool any = false;
                 foreach (var entry in items) any |= StampEntry(entry, context);
-                return any ? new global::app.type.item.list.@this(items, context) { Template = "plang" } : null;
+                return any ? new global::app.type.item.list.@this(items) { Template = "plang" } : null;
             }
 
             case global::app.type.item.dict.@this d when d.Template == null:
             {
-                var entries = d.Entries;
+                var entries = d.Entries(context).ToList();
                 bool any = false;
                 foreach (var entry in entries) any |= StampEntry(entry, context);
                 if (!any) return null;
-                var stampedDict = new global::app.type.item.dict.@this(context) { Template = "plang" };
+                var stampedDict = new global::app.type.item.dict.@this() { Template = "plang" };
                 foreach (var entry in entries) stampedDict.Set(entry);
                 return stampedDict;
             }
@@ -110,7 +110,7 @@ public static class TemplateStamp
 
             case IDictionary<string, object?> d:
             {
-                var dict = new global::app.type.item.dict.@this(context) { Template = "plang" };
+                var dict = new global::app.type.item.dict.@this() { Template = "plang" };
                 foreach (var kv in d)
                     dict.Set(new global::app.data.@this(kv.Key, Build(kv.Value, context), context: context));
                 return dict;
@@ -121,7 +121,7 @@ public static class TemplateStamp
                 var items = new List<global::app.data.@this>();
                 foreach (var el in e)
                     items.Add(new global::app.data.@this("", Build(el, context), context: context));
-                return new global::app.type.item.list.@this(items, context) { Template = "plang" };
+                return new global::app.type.item.list.@this(items) { Template = "plang" };
             }
 
             // A literal leaf (holeless string, number, bool) — built as its plain type.

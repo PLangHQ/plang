@@ -81,8 +81,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         if (string.IsNullOrEmpty(needle)) return false;
         var listing = await List();
-        foreach (var entry in listing.Items)
-            if (entry.Peek()?.ToString()?.Contains(needle, System.StringComparison.OrdinalIgnoreCase) == true)
+        foreach (var slot in listing.Slots())
+            if ((slot is global::app.data.@this d ? d.Peek() : slot)?.ToString()?.Contains(needle, System.StringComparison.OrdinalIgnoreCase) == true)
                 return true;
         return false;
     }
@@ -103,11 +103,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var listed = Listed;
         if (listed == null) { writer.String(ToString()); return; }
-        var items = listed.Items;
-        writer.BeginArray(items.Count);
-        foreach (var entry in items)
-            if (entry.Peek() is global::app.type.item.path.@this p) p.Write(writer);
-            else writer.String(entry.Peek()?.ToString() ?? "");
+        writer.BeginArray(listed.CountRaw);
+        foreach (var slot in listed.Slots())
+        {
+            var entry = slot is global::app.data.@this d ? d.Peek() : slot;
+            if (entry is global::app.type.item.path.@this p) p.Write(writer);
+            else writer.String(entry?.ToString() ?? "");
+        }
         writer.EndArray();
     }
 }

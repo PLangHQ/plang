@@ -990,7 +990,7 @@ public sealed class OpenAi : ILlm
         // couldn't survive the cache; a clr(json) round-trips as raw json now.
         System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
         {
-            global::app.type.item.dict.@this d => (System.Collections.Generic.IEnumerable<data.@this>)d.Entries,
+            global::app.type.item.dict.@this d => d.Entries(cached.Context),
             global::app.type.clr.@this c => c.Enumerate(),
             _ => null
         };
@@ -1043,7 +1043,8 @@ public sealed class OpenAi : ILlm
     private sealed record Tool(global::app.goal.step.action.@this Held, global::app.module.action.goal.Call Call, string Name)
     {
         public IReadOnlyList<data.@this> Declared
-            => (Call.Parameter?.Peek() as global::app.type.item.list.@this)?.Items ?? System.Array.Empty<data.@this>();
+            => (Call.Parameter?.Peek() as global::app.type.item.list.@this)?.Items(Call.Context).ToList()
+               ?? (IReadOnlyList<data.@this>)System.Array.Empty<data.@this>();
     }
 
     // The tools ride as a plang list of held goal.call actions. Null when no tools were passed.
@@ -1052,7 +1053,7 @@ public sealed class OpenAi : ILlm
         if (action.Tool == null || await action.Tool.IsEmpty()) return null;
         if (await action.Tool.Value() is not global::app.type.item.list.@this list) return null;
         var tools = new List<Tool>();
-        foreach (var row in list.Items)
+        foreach (var row in list.Items(action.Context))
         {
             if (row.Peek() is not global::app.goal.step.action.@this held) continue;
             if ((await held.Bind(action.Context)).Handler is not global::app.module.action.goal.Call call) continue;

@@ -167,9 +167,9 @@ public sealed partial class @this : ISnapshot
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var rows = new List<T>();
-        var entry = s.Entries.Get(key);
+        var entry = s.Entries.Get(key, s.Context);
         if (entry == null) return rows;
-        foreach (var row in await entry.Value<global::app.type.item.list.@this>())
+        foreach (var row in (await entry.Value<global::app.type.item.list.@this>())!.Items(s.Context))
             if (await row.Value<T>() is { } value) rows.Add(value);
         return rows;
     }

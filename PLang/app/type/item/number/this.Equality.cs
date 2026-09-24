@@ -22,7 +22,7 @@ public sealed partial class @this
     /// a number through the pure <c>Create</c> core (text "10" → 10); a value that can't
     /// become a number → <see cref="global::app.data.Comparison.Incomparable"/>.
     /// </summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         var b = other as @this ?? Create(other);
         if (b is null) return new(global::app.data.Comparison.Incomparable);

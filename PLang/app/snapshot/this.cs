@@ -31,7 +31,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(global::app.actor.context.@this context)
     {
         Context = context;
-        Entries = new global::app.type.item.dict.@this(context);
+        Entries = new global::app.type.item.dict.@this();
     }
 
     /// <summary>
@@ -44,22 +44,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Section(string name)
     {
-        if (Entries.Get(name)?.Peek() is @this existing) return existing;
+        if (Entries.Get(name, Context)?.Peek() is @this existing) return existing;
         var created = new @this(Context);
         Entries.Set(new global::app.data.@this(name, created, context: Context));
         return created;
     }
 
     /// <summary>True if a section with this name was captured.</summary>
-    public bool HasSection(string name) => Entries.Get(name)?.Peek() is @this;
+    public bool HasSection(string name) => Entries.Get(name, Context)?.Peek() is @this;
 
     /// <summary>Names of all captured subsections, for App.Restore dispatch.</summary>
     public IReadOnlyCollection<string> SectionNames
-        => Entries.Entries.Where(e => e.Peek() is @this).Select(e => e.Name).ToList();
+        => Entries.Entries(Context).Where(e => e.Peek() is @this).Select(e => e.Name).ToList();
 
     /// <summary>The nested sub-sections on this node, by name — the entries that hold one.</summary>
     public IReadOnlyDictionary<string, @this> Sections
-        => Entries.Entries.Where(e => e.Peek() is @this)
+        => Entries.Entries(Context).Where(e => e.Peek() is @this)
                   .ToDictionary(e => e.Name, e => (@this)e.Peek(), StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Writes an entry, born as a plang value in this snapshot's context — the same entity
@@ -80,7 +80,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.actor.context.@this? context)
     {
         writer.BeginObject();
-        foreach (var entry in Entries.Entries)
+        foreach (var entry in Entries.Entries(Context))
         {
             writer.Name(entry.Name);
             await entry.Output(writer, mode, context);

@@ -269,7 +269,7 @@ public partial class @this
         // reflection fallback and no dict-conversion — an unsettable target throws, loud.
         if (!_variables.TryGetValue(path.Root, out var root))
         {
-            root = new data.@this(path.Root, new global::app.type.item.dict.@this(_context), context: _context);
+            root = new data.@this(path.Root, new global::app.type.item.dict.@this(), context: _context);
             _variables[path.Root] = root;
         }
 

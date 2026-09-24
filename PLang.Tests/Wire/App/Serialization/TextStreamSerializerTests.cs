@@ -289,7 +289,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         // (see above); a container writes json content. Underpins file-save + http/llm egress.
         var context = global::PLang.Tests.TestApp.SharedContext;
         var serializer = new global::app.channel.serializer.Text(context);
-        var dict = new global::app.type.item.dict.@this(context).Set("name", "test");
+        var dict = new global::app.type.item.dict.@this().Set("name", "test");
         using var stream = new MemoryStream();
 
         await serializer.SerializeAsync(stream, app.Ok(dict));

@@ -138,12 +138,12 @@ public class SetTypeInferenceTests
     {
         var context = _app.User.Context;
         var src = new List<object?> { "a", "b", "c" };
-        var lst = new global::app.type.item.list.@this(src, context);
+        var lst = new global::app.type.item.list.@this(src);
 
         lst.SetAt(2, new Data("", 9L, context: context));
 
         await Assert.That(ReferenceEquals(lst.Clr<List<object?>>(), src)).IsFalse();
-        await Assert.That((await lst.At(2)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
+        await Assert.That((await lst.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
     }
 
     // A Dictionary<string,object?> is aliased the same way — the CLR exit door
@@ -160,7 +160,7 @@ public class SetTypeInferenceTests
         var d = (await stored.Value()) as global::app.type.item.dict.@this;
         await Assert.That(d).IsNotNull();
         // A read of a key must not knock the dict off the same-ref fast path.
-        await Assert.That((await d!.Get("k")!.Value())?.ToString()).IsEqualTo("v");
+        await Assert.That((await d!.Get("k", global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("v");
         await Assert.That(ReferenceEquals(d.Clr<Dictionary<string, object?>>(), src)).IsTrue();
     }
 
@@ -216,7 +216,7 @@ public class SetTypeInferenceTests
     public async Task Set_ListAlias_InPlaceAddVisibleThroughBothNames()
     {
         var context = _app.User.Context;
-        var x = new global::app.type.item.list.@this(context);
+        var x = new global::app.type.item.list.@this();
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 
@@ -230,7 +230,7 @@ public class SetTypeInferenceTests
         var yList = (await y.Value()) as global::app.type.item.list.@this;
         await Assert.That(yList).IsNotNull();
         await Assert.That(yList!.CountRaw).IsEqualTo(3);
-        await Assert.That((await yList.At(2)!.Value())?.ToString()).IsEqualTo("3");
+        await Assert.That((await yList.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("3");
     }
 
     // The binding owns its property bag: a property write on the alias lands

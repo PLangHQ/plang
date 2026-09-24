@@ -90,7 +90,7 @@ public class ListNestingTests
         var list = Parsed("[[1,2],[3,4]]");
 
         await Assert.That(list.CountRaw).IsEqualTo(2);
-        var first = await list.Items[0].Value();
+        var first = await list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Value();
         await Assert.That(first).IsTypeOf<global::app.type.item.list.@this>();
         await Assert.That(((global::app.type.item.list.@this)first!).CountRaw).IsEqualTo(2);
     }

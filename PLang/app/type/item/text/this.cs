@@ -307,7 +307,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// a raw string, an enum's NAME, or a domain value's canonical text form; a container
     /// has no honest text form so <c>%dict% == "text"</c> is Incomparable.
     /// </summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         var b = other as @this ?? Create(other);
         if (b is null) return new(global::app.data.Comparison.Incomparable);

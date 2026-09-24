@@ -149,7 +149,7 @@ public class Stage3_PathDemolitionTests
         var listing = await directory.List();
         await Assert.That(listing).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.path.@this>>();
         await Assert.That(listing.Count).IsEqualTo(2);
-        foreach (var entry in listing.Items)
+        foreach (var entry in listing.Items(global::PLang.Tests.TestApp.SharedContext))
             await Assert.That(entry.Peek()).IsAssignableTo<global::app.type.item.path.@this>();
     }
 

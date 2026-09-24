@@ -61,7 +61,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ---- Comparison — case-insensitive label order (so `sort` and equality agree) ----
     public override int Rank => 110;   // just above text (a tag-shaped text coerces into the tag)
 
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         var b = other as @this ?? Create(other);
         if (b is null) return new(global::app.data.Comparison.Incomparable);

@@ -68,7 +68,7 @@ public class ConstructionBornNativeTests
         // wrapping is the real one consumers see.
         object? leaf = Unwrap("{\"z\": null}");
         var dict = (global::app.type.item.dict.@this)leaf!;
-        var z = dict.Get("z");
+        var z = dict.Get("z", global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(z).IsNotNull();
         await Assert.That(ReferenceEquals((z!.Peek()), NullV.Instance)).IsTrue();
     }
@@ -83,11 +83,11 @@ public class ConstructionBornNativeTests
         var dict = (global::app.type.item.dict.@this)root!;
         foreach (var key in new[] { "s", "n", "f", "b", "z" })
         {
-            object? leaf = (await (dict.Get(key))!.Value());
+            object? leaf = (await (dict.Get(key, global::PLang.Tests.TestApp.SharedContext))!.Value());
             await Assert.That(IsRawScalar(leaf)).IsFalse();
         }
-        var arr = (global::app.type.item.list.@this)(await (dict.Get("arr"))!.Value())!;
-        foreach (var el in arr.Items)
+        var arr = (global::app.type.item.list.@this)(await (dict.Get("arr", global::PLang.Tests.TestApp.SharedContext))!.Value())!;
+        foreach (var el in arr.Items(global::PLang.Tests.TestApp.SharedContext))
             await Assert.That(IsRawScalar((await el.Value()))).IsFalse();
     }
 

@@ -16,9 +16,9 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task Get_ExistingKey_ReturnsDataValue()
     {
         // dict.Get("name") on a dict holding {name:Data("a")} returns that element Data.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         d.Set(app.Data("name", "a"));
-        var entry = d.Get("name");
+        var entry = d.Get("name", global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(entry).IsNotNull();
         await Assert.That((await entry!.Value())?.ToString()).IsEqualTo("a");
     }
@@ -27,9 +27,9 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task Get_MissingKey_ReturnsNull()
     {
         // dict.Get on an unknown key returns null (not throws) — caller decides what missing means.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         d.Set(app.Data("name", "a"));
-        await Assert.That(d.Get("nope")).IsNull();
+        await Assert.That(d.Get("nope", global::PLang.Tests.TestApp.SharedContext)).IsNull();
         await Task.CompletedTask;
     }
 
@@ -37,12 +37,12 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task Keys_PreservesInsertionOrder()
     {
         // Keys enumerates in insertion order — round-trip stability for round-tripped json objects.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         d.Set(app.Data("name", "a"));
         d.Set(app.Data("age", 30L));
         d.Set(app.Data("city", "Reyk"));
         // Keys is the typed list<text> surface; assert over the text values.
-        await Assert.That(d.Keys.Items.Select(k => k.Peek()?.ToString()).ToList())
+        await Assert.That(d.Keys.Items(global::PLang.Tests.TestApp.SharedContext).Select(k => k.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new[] { "name", "age", "city" });
     }
 
@@ -50,7 +50,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task Has_KnownKey_ReturnsTrue()
     {
         // Has(name) is true for a present key.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         d.Set(app.Data("name", "a"));
         await Assert.That(d.Has("name")).IsTrue();
         await Task.CompletedTask;
@@ -60,7 +60,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task Has_MissingKey_ReturnsFalse()
     {
         // Has(name) is false for an absent key — distinct from Get returning null.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         await Assert.That(d.Has("name")).IsFalse();
         await Task.CompletedTask;
     }
@@ -69,7 +69,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task AsBooleanAsync_EmptyDict_IsFalse()
     {
         // IBooleanResolvable: empty dict is falsy — matches falsiness of empty list/string/null.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         await Assert.That(await d.AsBooleanAsync()).IsFalse();
     }
 
@@ -77,7 +77,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task AsBooleanAsync_NonEmptyDict_IsTrue()
     {
         // IBooleanResolvable: a dict with any entry is truthy.
-        var d = new Dict(app.User.Context);
+        var d = new Dict();
         d.Set(app.Data("name", "a"));
         await Assert.That(await d.AsBooleanAsync()).IsTrue();
     }

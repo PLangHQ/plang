@@ -55,7 +55,7 @@ public partial class Call : IContext
         if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
 
         var kept = new List<data.@this>();
-        foreach (var arg in args.Items)
+        foreach (var arg in args.Items(Context))
         {
             if (string.Equals(arg.Peek()?.ToString(), $"%{arg.Name}%", System.StringComparison.OrdinalIgnoreCase))
             {
@@ -66,10 +66,10 @@ public partial class Call : IContext
             kept.Add(arg);
         }
         // The argument list is the action's own row — rebind it with the survivors.
-        if (kept.Count != args.Items.Count)
+        if (kept.Count != args.CountRaw)
             foreach (var row in __action.Parameter)
                 if (string.Equals(row.Name, "Parameter", System.StringComparison.OrdinalIgnoreCase))
-                    row.SetValue(new global::app.type.item.list.@this(kept, Context));
+                    row.SetValue(new global::app.type.item.list.@this(kept));
         return Context.Ok();
     }
 
@@ -108,7 +108,7 @@ public partial class Call : IContext
         // from the caller's memory whoever reads it, stays unresolved until read, and the shared row
         // never enters the callee's variables. The list loads on this run's own copy, never the row.
         if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this args)
-            foreach (var arg in args.Items)
+            foreach (var arg in args.Items(Context))
             {
                 if (arg.Peek() is not { IsNull: false }) continue;
                 if (execContext.Variable.Supplies(__action, arg.Name)) continue;

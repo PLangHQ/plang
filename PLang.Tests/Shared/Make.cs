@@ -73,7 +73,7 @@ public static class Make
             ? new global::app.data.@this(a.name, s, new global::app.type.@this("text", template: "plang"), context: ctx)
             : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
         return Action("goal", "call", ("Name", goal),
-            ("Parameter", new global::app.type.item.list.@this(rows, ctx)));
+            ("Parameter", new global::app.type.item.list.@this(rows)));
     }
 
     /// <summary>An llm.query tool: a <c>goal.call</c> action whose <c>Parameter</c> rows declare what
@@ -84,7 +84,7 @@ public static class Make
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         var tool = Action("goal", "call", ("Name", goal));
         if (parameter is { Count: > 0 })
-            tool.Parameter.Add(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter, ctx), context: ctx));
+            tool.Parameter.Add(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter), context: ctx));
         if (parallel)
             tool.Parameter.Add(new global::app.data.@this("Parallel", true, context: ctx));
         return tool;
@@ -214,7 +214,7 @@ public static class Make
     public static global::app.type.item.list.@this List(
         System.Collections.IEnumerable seq, global::app.actor.context.@this context)
     {
-        var list = new global::app.type.item.list.@this(context);
+        var list = new global::app.type.item.list.@this();
         foreach (var item in seq)
         {
             if (item is global::app.data.@this existing) { list.Add(existing); continue; }
@@ -231,7 +231,7 @@ public static class Make
     public static global::app.type.item.dict.@this Dict(
         System.Collections.IDictionary raw, global::app.actor.context.@this context)
     {
-        var d = new global::app.type.item.dict.@this(context);
+        var d = new global::app.type.item.dict.@this();
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);
         return d;

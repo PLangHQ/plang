@@ -111,7 +111,7 @@ public class Ed25519 : ISigning
         var contractsList = action.Contracts == null ? null : await action.Contracts.Value();
         var expectedContracts = contractsList == null ? null
             : System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(
-                contractsList.Items, d => d.Peek().ToString() ?? ""));
+                contractsList.Items(action.Context), d => d.Peek().ToString() ?? ""));
         if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 

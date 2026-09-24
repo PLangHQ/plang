@@ -180,7 +180,7 @@ public sealed class Default : IIdentity
         var active = items!.Where(i => !i.IsArchived)
             .Select(i => new data.@this("", i, context: action.Context)).ToList();
         return action.Context.Ok<global::app.type.item.list.@this<Identity>>(
-            new global::app.type.item.list.@this<Identity>(active, action.Context));
+            new global::app.type.item.list.@this<Identity>(active));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)
@@ -229,7 +229,7 @@ public sealed class Default : IIdentity
         var identities = new List<Identity>();
         var list = await result.Value<global::app.type.item.list.@this>();
         if (list != null)
-            foreach (var row in list)
+            foreach (var row in list.Items(action.Context))
                 if (await row.Value<Identity>() is { } identity) identities.Add(identity);
         return (identities, null);
     }

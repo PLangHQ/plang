@@ -36,8 +36,8 @@ public partial class Where : IContext
         if (subjectVal is app.type.item.list.@this list)
         {
             // list.where delegates to dict.where per element — subject is each element.
-            var kept = new app.type.item.list.@this(Context);
-            foreach (var item in list.Items)
+            var kept = new app.type.item.list.@this();
+            foreach (var item in list.Items(Context))
                 if (await Keep(item, field, op)) kept.Add(item);
             return Context.Ok(kept, Context.App.Type["list"]);
         }

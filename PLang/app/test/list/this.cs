@@ -19,9 +19,9 @@ public sealed partial class @this
     public @this(actor.context.@this context)
     {
         _context = context;
-        _tests = new global::app.type.item.list.@this<global::app.test.@this>(context);
-        Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(context);
-        Exclude = new global::app.type.item.list.@this<global::app.type.item.text.@this>(context);
+        _tests = new global::app.type.item.list.@this<global::app.test.@this>();
+        Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>();
+        Exclude = new global::app.type.item.list.@this<global::app.type.item.text.@this>();
     }
 
     /// <summary>When the session started.</summary>
@@ -59,9 +59,9 @@ public sealed partial class @this
     /// by the tag's own equality.</summary>
     public global::app.type.item.text.@this? Exclusion(global::app.test.@this test)
     {
-        var tags = test.Tags.Items.Select(r => (global::app.type.item.tag.@this)r.Peek()!).ToHashSet();
+        var tags = test.Tags.Elements.ToHashSet();
         bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
-            => filter.Items.Any(r => global::app.type.item.tag.@this.Create(r.Peek()) is { } tag && tags.Contains(tag));
+            => filter.Elements.Any(t => global::app.type.item.tag.@this.Create(t) is { } tag && tags.Contains(tag));
 
         if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
         if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";
@@ -90,7 +90,7 @@ public sealed partial class @this
     /// <summary>The recorded tests, materialized (each row's value is a live test reference).</summary>
     public IReadOnlyList<global::app.test.@this> Tests
     {
-        get { lock (_lock) return _tests.Select(r => (global::app.test.@this)r.Peek()).ToList(); }
+        get { lock (_lock) return _tests.Elements.ToList(); }
     }
 
     /// <summary>The tests as a plang <c>list&lt;test&gt;</c> (the wire/return shape).</summary>

@@ -49,13 +49,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
         // A sequence of Data / native items narrows to a native list, preserving the instances.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq, context!);
+            return new global::app.type.item.list.@this(dataSeq);
         if (raw is System.Collections.Generic.IEnumerable<@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq, context!);
+            return new global::app.type.item.list.@this(itemSeq);
         if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList, context!);
+            return new global::app.type.item.list.@this(objList);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.item.dict.@this(objDict, context!);
+            return new global::app.type.item.dict.@this(objDict);
         // A non-generic container narrows the same way its generic sibling above does — build the
         // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
         if (raw is System.Collections.IDictionary idict)
@@ -63,7 +63,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             var d = new System.Collections.Generic.Dictionary<string, object?>();
             foreach (System.Collections.DictionaryEntry e in idict)
                 d[e.Key?.ToString() ?? ""] = e.Value;
-            return new global::app.type.item.dict.@this(d, context!);
+            return new global::app.type.item.dict.@this(d);
         }
         // Any remaining enumerable — an IList, an IReadOnlyList<T> (a domain X.list like warning.list),
         // an array, a HashSet<T> — narrows to a native plang list (store raw, type on read). string is
@@ -74,7 +74,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             var l = new System.Collections.Generic.List<object?>();
             foreach (var e in seq) l.Add(e);
-            return new global::app.type.item.list.@this(l, context!);
+            return new global::app.type.item.list.@this(l);
         }
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
@@ -128,21 +128,23 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <see cref="global::app.data.ComparisonExtensions.Invert">inverted</see> back to caller
     /// order. Non-virtual — the per-type behavior lives in <see cref="Order"/>; this two-line
     /// reconcile is uniform. Calls <c>other.Order(this)</c>, NEVER <c>other.Compare(this)</c>,
-    /// which would re-run the rank pick and recurse.
+    /// which would re-run the rank pick and recurse. The asker's <paramref name="context"/> rides
+    /// along for a container, whose raw items are handed out with it.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Compare(@this other)
+    public async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Compare(@this other, global::app.actor.context.@this context)
         => Rank >= other.Rank
-            ? await Order(other)
-            : global::app.data.ComparisonExtensions.Invert(await other.Order(this));
+            ? await Order(other, context)
+            : global::app.data.ComparisonExtensions.Invert(await other.Order(this, context));
 
     /// <summary>
     /// The driver's per-type comparison: coerce <paramref name="other"/> into THIS kind (via the
     /// pure <c>Create</c> core) and order/equate in caller order. The base answers identity —
     /// equal to itself, else not-equal (a value with no order). A non-coercible other is
     /// <see cref="global::app.data.Comparison.Incomparable"/>, not an error. Async so a container
-    /// can walk its elements lazily (each element pair awaited as reached, first mismatch exits).
+    /// can walk its items lazily (each pair awaited as reached, first mismatch exits). A scalar
+    /// ignores <paramref name="context"/>; a container hands out its raw items with it.
     /// </summary>
-    protected virtual System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(@this other)
+    protected virtual System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(@this other, global::app.actor.context.@this context)
         => new(ReferenceEquals(this, other) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
 
     /// <summary>The value-less citizen — what a failed door answers (the error

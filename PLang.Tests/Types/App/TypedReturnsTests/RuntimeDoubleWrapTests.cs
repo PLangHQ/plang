@@ -141,9 +141,9 @@ public class RuntimeDoubleWrapTests
         // so Data<object>.Ok does not double-wrap.
         var app = TestApp.Create("/app");
         var context = app.User.Context;
-        var users = new global::app.type.item.list.@this(context);
-        var u1 = new global::app.type.item.dict.@this(context); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
-        var u2 = new global::app.type.item.dict.@this(context); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
+        var users = new global::app.type.item.list.@this();
+        var u1 = new global::app.type.item.dict.@this(); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
+        var u2 = new global::app.type.item.dict.@this(); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
         context.Variable.Set("users", users);
 
         var action = new global::app.module.action.list.Where(context) { ListName = new @this("users"),

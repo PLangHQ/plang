@@ -109,13 +109,13 @@ public class Stage4_PerTypeCompareTests
         var ctx = app.User.Context;
         static global::app.type.item.list.@this L(global::app.actor.context.@this c, params object[] items)
         {
-            var l = new global::app.type.item.list.@this(c);
+            var l = new global::app.type.item.list.@this();
             foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
-        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,3))).IsEqualTo(Comparison.Less);
-        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,2,3))).IsEqualTo(Comparison.Less); // prefix first
-        await Assert.That(await L(ctx,2).Compare(L(ctx,1,9))).IsEqualTo(Comparison.Greater);
+        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,3), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Less);
+        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,2,3), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Less); // prefix first
+        await Assert.That(await L(ctx,2).Compare(L(ctx,1,9), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Greater);
     }
 
     [Test]
@@ -139,9 +139,9 @@ public class Stage4_PerTypeCompareTests
     public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.RetryFirst);
         var b = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.RetryFirst);
         var c = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.GoalFirst);
-        await Assert.That(await a.Compare(b)).IsEqualTo(Comparison.Equal);
-        await Assert.That(await a.Compare(c)).IsEqualTo(Comparison.NotEqual);
-        await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"))).IsEqualTo(Comparison.Equal); // by name
+        await Assert.That(await a.Compare(b, global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Equal);
+        await Assert.That(await a.Compare(c, global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.NotEqual);
+        await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Equal); // by name
     }
 
     [Test]
@@ -175,14 +175,14 @@ public class Stage4_PerTypeCompareTests
         // sort places null entries last
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var list = new global::app.type.item.list.@this(ctx);
+        var list = new global::app.type.item.list.@this();
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
         list.Add(new Data("", 1, context: ctx));
-        await list.SortByValue(descending: false);
-        await Assert.That((await list.At(0)!.Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await list.At(1)!.Value())?.ToString()).IsEqualTo("3");
-        await Assert.That(await (await list.At(2)!.Value())!.IsEmpty()).IsTrue();   // nulls last
+        await list.SortByValue(descending: false, global::PLang.Tests.TestApp.SharedContext);
+        await Assert.That((await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("3");
+        await Assert.That(await (await list.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())!.IsEmpty()).IsTrue();   // nulls last
     }
 
     [Test]
@@ -205,7 +205,7 @@ public class Stage4_PerTypeCompareTests
             new[] { typeof(object), typeof(object) });
         await Assert.That(staticHook).IsNull();
         var instance = typeof(global::app.type.item.@this).GetMethod("Compare",
-            new[] { typeof(global::app.type.item.@this) });
+            new[] { typeof(global::app.type.item.@this), typeof(global::app.actor.context.@this) });
         await Assert.That(instance).IsNotNull();
         await Assert.That(instance!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<Comparison>));
     }

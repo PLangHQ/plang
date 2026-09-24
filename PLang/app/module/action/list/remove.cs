@@ -22,7 +22,7 @@ public partial class Remove : IContext
         // Typed read — number end to end; the list lowers inside its own boundary.
         var atIndex = (await AtIndex.Value())!;
         if (atIndex >= 0) nl.RemoveAt(atIndex);
-        else await nl.Remove((await Value.Value()));
+        else await nl.Remove((await Value.Value()), Context);
         return Context.Ok(nl);
     }
 }

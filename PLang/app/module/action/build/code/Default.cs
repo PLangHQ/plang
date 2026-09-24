@@ -59,7 +59,7 @@ public class Default : IBuilder
 
         var files = (await listResult.Value()).Clr<List<path>>();
         if (files == null || files.Count == 0)
-            return context.Ok(new global::app.type.item.list.@this<Goal>(context));
+            return context.Ok(new global::app.type.item.list.@this<Goal>());
 
         // Filter by app.Build.Files if set (--build={"files":[...]})
         // Honor the user's specified order — building has bootstrapping concerns
@@ -69,7 +69,7 @@ public class Default : IBuilder
         // %var% row resolves the variable. This is the materialize-on-read the plang-typed Build.Files
         // buys: the walk stored the list lazily, the consumer opens each row here.
         var filters = new List<path>();
-        foreach (var row in app.Build.Files)
+        foreach (var row in app.Build.Files.Items(context))
             if (await row.Value<global::app.type.item.path.@this>() is { } bf)
             { bf.Context ??= context; filters.Add(bf); }
 
@@ -91,7 +91,7 @@ public class Default : IBuilder
             }
             files = ordered;
             if (files.Count == 0)
-                return context.Ok(new global::app.type.item.list.@this<Goal>(context));
+                return context.Ok(new global::app.type.item.list.@this<Goal>());
         }
 
         var allGoals = new List<Goal>();
@@ -129,7 +129,7 @@ public class Default : IBuilder
 
         _buildTimer.Restart();
 
-        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals, context));
+        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals));
     }
 
     // --- Fold: indent-authored sub-steps → gate-action Child ---

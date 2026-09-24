@@ -30,9 +30,9 @@ public partial class Sort : IContext
         try
         {
             if (!string.IsNullOrEmpty(by))
-                await nl.SortByField(by, descending);
+                await nl.SortByField(by, descending, Context);
             else
-                await nl.SortByValue(descending);
+                await nl.SortByValue(descending, Context);
         }
         catch (global::app.data.IncomparableException ex)
         {

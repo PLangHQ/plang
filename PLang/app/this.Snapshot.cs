@@ -60,7 +60,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
     async System.Threading.Tasks.Task global::app.snapshot.ISnapshot.Restore(snapshot.@this s, actor.context.@this context)
     {
-        var entry = s.Entries.Get("mode");
+        var entry = s.Entries.Get("mode", context);
         if (entry == null) return;
         var mode = (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>())!.Value;
         Build = mode == global::app.Mode.Build ? new global::app.module.action.build.@this(context) : null;

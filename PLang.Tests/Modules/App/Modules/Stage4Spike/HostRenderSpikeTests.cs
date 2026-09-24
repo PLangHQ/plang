@@ -52,7 +52,7 @@ public class HostRenderSpikeTests
     }
 
     private static ItemList NativeList(global::app.actor.context.@this ctx, params object?[] elems)
-        => new(new List<object?>(elems), ctx);
+        => new(new List<object?>(elems));
 
     private static ItemList SampleModules(global::app.actor.context.@this ctx)
     {
@@ -159,12 +159,12 @@ public class HostRenderSpikeTests
         var subset = new[] { "file", "variable" }
             .SelectMany(m => app.Module.GetActions(m).Select(a => (global::app.goal.step.action.@this)app.Module[m][a]!))
             .ToList();
-        var actions = new ItemList(new List<object?>(subset.Cast<object?>()), ctx);
+        var actions = new ItemList(new List<object?>(subset.Cast<object?>()));
         ctx.Variable.Set(new Data("actions", actions, context: ctx));
 
         // where %actions% Name in ["read","set"]  — proves Get(field) over clr(action)
         // + the "in" operator, the exact mechanic behind `where %actions% Name in %planStep.actions%`.
-        var wanted = new ItemList(new List<object?> { "read", "set" }, ctx);
+        var wanted = new ItemList(new List<object?> { "read", "set" });
         var where = new Where(ctx)
         {
             ListName = new global::app.variable.@this("actions"),
@@ -181,7 +181,7 @@ public class HostRenderSpikeTests
         // Read each kept element's Name through the SAME value door `where` used
         // (`d.Get(field)`) — dogfoods the navigation under test, no reflecting helper.
         var names = new List<string>();
-        foreach (var d in kept!.Items)
+        foreach (var d in kept!.Items(global::PLang.Tests.TestApp.SharedContext))
             names.Add((await d.Get("Name"))?.Peek()?.ToString() ?? "");
 
         foreach (var n in names)

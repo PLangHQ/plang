@@ -50,7 +50,7 @@ public class GoalCallTests
         {
             Name = Text("TestGoal"),
             Parameter = new global::app.type.item.list.@this(
-                new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) }, _app.User.Context)
+                new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) })
         };
         var result = await action.Run();
 

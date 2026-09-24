@@ -46,10 +46,8 @@ public partial class @this
         var (head, tail) = path.Split();
 
         // Infrastructure plane (`!file`, `!data`) reads the binding, not the value;
-        // method calls (`grep(...)`) invoke on the value. Both skip the value-plane
-        // context injection below (mirrors the pre-redesign returns).
+        // method calls (`grep(...)`) invoke on the value.
         @this child;
-        bool valuePlane = false;
         switch (head)
         {
             case global::app.variable.path.Segment.Infra infra:
@@ -60,7 +58,6 @@ public partial class @this
                 break;
             case global::app.variable.path.Segment.Index index:
                 child = await _item.Get(this, await index.Key(_context?.Variable));
-                valuePlane = true;
                 // A non-literal index (`[planStep.index]`) that the container couldn't use:
                 // distinguish the common, confusing cause — the index variable itself is unset
                 // (resolved to null, so ResolveKey fell back to the literal key) — from "the
@@ -88,23 +85,10 @@ public partial class @this
                 break;
             default: // Member (plain or quoted) — the VALUE owns navigation by key
                 child = await _item.Get(this, ((global::app.variable.path.Segment.Member)head!).Name);
-                valuePlane = true;
                 break;
         }
 
         if (!child.IsInitialized) return child;
-
-        if (valuePlane)
-        {
-            // Inject context on IContext values during traversal. A reference
-            // (file/url) injects via Peek — opening the door here would read its
-            // content on a property-plane hop (`%x!file!path%` must stay read-free).
-            var injectTarget = child.Peek() is (global::app.type.item.file.@this or global::app.type.item.url.@this) and { } reference
-                ? reference
-                : await child.Value();
-            if (injectTarget is app.module.IContext contextual)
-                contextual.Context = _context;
-        }
 
         return tail.IsEmpty ? child : await child.Get(tail);
     }

@@ -19,8 +19,8 @@ public sealed class @this : global::app.type.item.@this
 
     public @this(actor.context.@this context)
     {
-        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>(context);
-        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>(context);
+        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>();
+        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>();
     }
 
     /// <summary>The test a test goal is. Its tags are the goal's own (<c>goal.Tag</c>, stamped at

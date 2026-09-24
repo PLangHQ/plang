@@ -30,7 +30,7 @@ public sealed partial class @this : ISnapshot
     /// </summary>
     public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var entry = s.Entries.Get("bags");
+        var entry = s.Entries.Get("bags", context);
         if (entry == null) return;
 
         // The entry is a dict of dicts of values. What Statics puts BACK in its own storage is
@@ -38,10 +38,10 @@ public sealed partial class @this : ISnapshot
         // down — so the values land there as the items they are until Statics is typed.
         var bags = await entry.Value<global::app.type.item.dict.@this>();
         _bags.Clear();
-        foreach (var outer in bags.Entries)
+        foreach (var outer in bags.Entries(context))
         {
             var bag = GetBag(outer.Name);
-            foreach (var inner in (await outer.Value<global::app.type.item.dict.@this>()).Entries)
+            foreach (var inner in (await outer.Value<global::app.type.item.dict.@this>()).Entries(context))
                 bag[inner.Name] = inner.Peek();
         }
     }

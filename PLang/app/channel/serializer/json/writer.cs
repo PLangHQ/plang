@@ -157,12 +157,13 @@ public sealed class Writer : IWriter
                 // JSON object keyed by entry name, including the empty case so a
                 // record-with-no-properties round-trips as `{}` not `[]`. The
                 // writer disambiguates object-vs-array by value type: `dict`→`{}`,
-                // any other IEnumerable→`[]`.
+                // any other IEnumerable→`[]`. The writer knows no context, so it writes the stored
+                // slots as they are: a stored Data's value, or the raw CLR value itself.
                 _writer.WriteStartObject();
-                foreach (var entry in dict.Entries)
+                foreach (var key in dict.KeyNames)
                 {
-                    _writer.WritePropertyName(entry.Name);
-                    Value(entry.Peek());
+                    _writer.WritePropertyName(key);
+                    Value(dict.Stored(key) is app.data.@this d ? d.Peek() : dict.Stored(key));
                 }
                 _writer.WriteEndObject();
                 return;
@@ -170,9 +171,10 @@ public sealed class Writer : IWriter
                 // The native list shape. On the wire each element self-describes —
                 // Value(item) routes an element Data through the record arm, so a
                 // signed element carries its envelope. Disambiguated by wrapper
-                // type from dict (`{}`); a bare IEnumerable still falls to `[]` below.
+                // type from dict (`{}`); a bare IEnumerable still falls to `[]` below. A stored Data
+                // rides as its record; a raw slot as the CLR value it is (the writer knows no context).
                 BeginArray(nativeList.CountRaw);
-                foreach (var item in nativeList.Items) Value(item);
+                foreach (var slot in nativeList.Slots()) Value(slot);
                 EndArray();
                 return;
             // A value renders itself — leaves (text/number/bool/date-family/…) and

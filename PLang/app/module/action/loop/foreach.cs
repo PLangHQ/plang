@@ -25,7 +25,7 @@ public partial class Foreach : IContext, IStep
         // naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
         var collectionValue = await Collection.Value();
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
-            return Context.Ok(Result(Context, itemCount: 0, completed: true));
+            return Context.Ok(Result(itemCount: 0, completed: true));
 
         var variableName = (Item == null ? null : (await Item.Value())?.Name) ?? "item";
         var keyVariableName = Key is { IsInitialized: true } ? (await Key.Value())?.Name : null;
@@ -50,7 +50,7 @@ public partial class Foreach : IContext, IStep
         foreach (var (key, item) in await Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return Context.Ok(Result(Context, count, completed: false));
+                return Context.Ok(Result(count, completed: false));
 
             await Context.Variable.Set(variableName, item);
             // Optional param: absent slots are non-null Uninitialized (null model), so
@@ -72,7 +72,7 @@ public partial class Foreach : IContext, IStep
         if (savedItem.IsInitialized) await Context.Variable.Set(variableName, savedItem);
         if (keyVariableName != null && savedKey is { IsInitialized: true }) await Context.Variable.Set(keyVariableName, savedKey);
 
-        var loopResult = Context.Ok(Result(Context, count, completed: true));
+        var loopResult = Context.Ok(Result(count, completed: true));
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;
@@ -83,8 +83,8 @@ public partial class Foreach : IContext, IStep
     /// items ran) and <c>completed</c> (false when cancelled or returned early).
     /// A plain-data result, so it rides as a dict, not a dedicated type.
     /// </summary>
-    private static global::app.type.item.dict.@this Result(actor.context.@this context, int itemCount, bool completed)
-        => new global::app.type.item.dict.@this(context)
+    private static global::app.type.item.dict.@this Result(int itemCount, bool completed)
+        => new global::app.type.item.dict.@this()
             .Set("itemCount", (long)itemCount)
             .Set("completed", completed);
 

@@ -9,7 +9,7 @@ public class GraphCreateTests
 {
     private static global::app.data.@this DictSlot(global::app.actor.context.@this ctx)
     {
-        var dict = new global::app.type.item.dict.@this(ctx);
+        var dict = new global::app.type.item.dict.@this();
         dict.Set(new global::app.data.@this("name", "Start", context: ctx));
         return new global::app.data.@this("node", dict, context: ctx);
     }

@@ -65,7 +65,7 @@ public partial class report : IContext
 
         // Return the tests so a parent runner can propagate them via `write to %results%`.
         var result = Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-            new global::app.type.item.list.@this<global::app.test.@this>(results, Context));
+            new global::app.type.item.list.@this<global::app.test.@this>(results));
         result.Properties.Set("format", format.ToString());
         result.Properties.Set("reportPath", writeTarget.Absolute);
         result.Properties.Set("content", content);
@@ -83,7 +83,7 @@ public partial class report : IContext
         var passed = Result == null ? null : await Result.Value();
         if (passed == null) return Context.App.Test.Tests;
         var tests = new List<global::app.test.@this>();
-        foreach (var row in passed)
+        foreach (var row in passed.Items(Context))
             if (await row.Value() is global::app.test.@this t) tests.Add(t);
         return tests;
     }
@@ -102,7 +102,7 @@ public partial class report : IContext
     // [Out] fields become the artefact. No hand-built shape.
     private async Task<string> Wire(IReadOnlyList<global::app.test.@this> results)
     {
-        var list = new global::app.type.item.list.@this<global::app.test.@this>(results, Context);
+        var list = new global::app.type.item.list.@this<global::app.test.@this>(results);
         var serializer = new global::app.channel.serializer.plang.@this(Context);
         using var ms = new System.IO.MemoryStream();
         await serializer.SerializeItemAsync(ms, list, global::app.View.Out);

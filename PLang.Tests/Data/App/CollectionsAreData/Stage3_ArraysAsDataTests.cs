@@ -29,11 +29,10 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement);
         await Assert.That(result).IsTypeOf<ListV>();
         var list = (ListV)result!;
-        list.Context = app.User.Context;
         await Assert.That(list.Count).IsEqualTo(2);
         // Born-native: elements are scalar wrappers; ToRaw yields the backing.
-        await Assert.That(((app.type.item.@this)(await list.At(0)!.Value())!).Clr<object>()).IsEqualTo((object)1L);
-        await Assert.That((string?)((app.type.item.@this)(await list.At(1)!.Value())!).Clr<object>()).IsEqualTo("two");
+        await Assert.That(((app.type.item.@this)(await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo((object)1L);
+        await Assert.That((string?)((app.type.item.@this)(await list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo("two");
     }
 
     [Test]
@@ -60,12 +59,12 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     public async Task ListValueType_HoldsListOfData()
     {
         // app/type/list/'s value type holds List<data.@this> — symmetric to dict.
-        var list = new ListV(app.User.Context);
+        var list = new ListV();
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
-        await Assert.That(list.At(0)).IsTypeOf<Data>();
-        await Assert.That((await list.At(0)!.Value())?.ToString()).IsEqualTo("1");
+        await Assert.That(list.At(0, global::PLang.Tests.TestApp.SharedContext)).IsTypeOf<Data>();
+        await Assert.That((await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("1");
     }
 
     [Test]
@@ -75,7 +74,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // returns the SAME element Data it holds (identity/signature intact), and the
         // implicit-first (`%list.name%` → list[0].name) stays.
         var element = app.Data("", "first");
-        var list = new ListV(app.User.Context);
+        var list = new ListV();
         list.Add(element);
         list.Add(app.Data("", "second"));
         var data = app.Data("items", list);
@@ -86,8 +85,8 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         await Assert.That(((global::app.type.item.number.@this)(await (await data.Get("count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
-        var people = new ListV(app.User.Context);
-        var p0 = new DictV(app.User.Context);
+        var people = new ListV();
+        var p0 = new DictV();
         p0.Set(app.Data("name", "alice"));
         people.Add(app.Data("", p0));
         var peopleData = app.Data("people", people);
@@ -109,7 +108,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // Coercing the list value type to a typed List<T> reads each element Data's value (I).
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var list = new ListV(app.User.Context);
+        var list = new ListV();
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", 2L));
         list.Add(app.Data("", 3L));
@@ -139,7 +138,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var list = new ListV(app.User.Context);
+        var list = new ListV();
         list.Add(app.Data("signed", "hello world"));
         var listData = app.Data("list", list);
 

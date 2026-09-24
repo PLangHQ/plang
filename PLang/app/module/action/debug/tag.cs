@@ -41,7 +41,7 @@ public partial class Tag : IContext
         // walk, the label name + its truthiness gate).
         if (Pairs != null && await Pairs.Value() is global::app.type.item.dict.@this pairs)
         {
-            foreach (var entry in pairs.Entries)
+            foreach (var entry in pairs.Entries(Context))
                 target.Tag(entry.Name, entry);
         }
         else if (Label != null && (await Label.Value()) is { } label && label.IsTruthy())

@@ -72,8 +72,7 @@ public sealed class @this
     private global::app.type.item.list.@this View(bool modifiers)
         => new(_action.Values.Select(r => r.Element)
                  .Where(e => e is global::app.goal.step.action.modifier.@this == modifiers)
-                 .Select(e => (object?)e).ToList(),
-               App.System.Context);
+                 .Select(e => (object?)e).ToList());
 
     /// <summary>Select one catalog element by action name — action OR modifier; the type answers
     /// the role. Null when the name isn't in this module.</summary>

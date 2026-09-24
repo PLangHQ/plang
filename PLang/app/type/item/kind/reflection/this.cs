@@ -114,21 +114,20 @@ public sealed class @this : global::app.type.kind.@this
     /// nested record property recurses (its dict's <c>Clr</c> lands back here); a list of records
     /// is the list kind's job, element by element.
     /// </summary>
-    public object? Read(global::app.type.item.dict.@this slots, global::System.Type target,
-        global::app.actor.context.@this ctx)
+    public object? Read(global::app.type.item.dict.@this slots, global::System.Type target)
     {
         var host = global::System.Activator.CreateInstance(target)!;
-        // Index the dict's entries by name, case-insensitive — matching the IReader Read's key
+        // Index the dict's keys by name, case-insensitive — matching the IReader Read's key
         // policy (a hand-built plang dict's keys aren't guaranteed to match the wire-name casing).
-        var byName = new global::System.Collections.Generic.Dictionary<string, global::app.data.@this>(
+        var byName = new global::System.Collections.Generic.Dictionary<string, string>(
             global::System.StringComparer.OrdinalIgnoreCase);
-        foreach (var e in slots.Entries) byName[e.Name] = e;
+        foreach (var key in slots.KeyNames) byName[key] = key;
 
         foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(target, global::app.View.Store))
         {
-            if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var slot)) continue;
-            // The value is already an item (Peek) — it lowers ITSELF to the property's CLR type.
-            entry.Property.SetValue(host, slot.Peek().Clr(entry.Property.PropertyType));
+            if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
+            // Each entry lowers ITSELF to the property's CLR type — at the exit door, no context.
+            entry.Property.SetValue(host, slots.Clr(key, entry.Property.PropertyType));
         }
         return host;
     }

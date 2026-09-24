@@ -124,12 +124,12 @@ public class Fluid : ITemplate
                     case NativeListView lv: Emit(lv.Native); return;
                     case global::app.type.item.dict.@this pd:
                         w.BeginObject();
-                        foreach (var e in pd.Entries) { w.Name(e.Name); Emit(e.Peek()); }
+                        foreach (var e in pd.Entries(action.Context)) { w.Name(e.Name); Emit(e.Peek()); }
                         w.EndObject();
                         return;
                     case global::app.type.item.list.@this pl:
                         w.BeginArray(pl.CountRaw);
-                        foreach (var it in pl.Items) Emit(it.Peek());
+                        foreach (var it in pl.Items(action.Context)) Emit(it.Peek());
                         w.EndArray();
                         return;
                     case IFluidIndexable idx:
@@ -196,7 +196,7 @@ public class Fluid : ITemplate
         // Override with explicit parameters
         if ((action.Parameter == null ? null : await action.Parameter.Value()) != null)
         {
-            foreach (var param in (await action.Parameter.Value())!.Items)
+            foreach (var param in (await action.Parameter.Value())!.Items(action.Context))
             {
                 fluidContext.SetValue(param.Name, FluidValue.Create(await param.Value(), options));
             }
@@ -286,14 +286,14 @@ public class Fluid : ITemplate
     /// </summary>
     private static object? NativeCollectionConverter(object value, global::app.actor.context.@this context) => value switch
     {
-        app.type.item.dict.@this d => new NativeDictView(d),
-        app.type.item.list.@this l => new NativeListView(l),
+        app.type.item.dict.@this d => new NativeDictView(d, context),
+        app.type.item.list.@this l => new NativeListView(l, context),
         // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
         // structural, JSON-DOM sized) and the natives then ride the views above.
         System.Text.Json.Nodes.JsonNode jn => new app.type.item.serializer.json(context).Parse(jn) switch
         {
-            app.type.item.dict.@this d => new NativeDictView(d),
-            app.type.item.list.@this l => new NativeListView(l),
+            app.type.item.dict.@this d => new NativeDictView(d, context),
+            app.type.item.list.@this l => new NativeListView(l, context),
             var scalar => scalar, // a bare JSON scalar — Fluid maps it directly
         },
         _ => null,
@@ -304,32 +304,32 @@ public class Fluid : ITemplate
     /// <c>dict</c> — Fluid maps <c>IDictionary&lt;string,object&gt;</c> to a
     /// dictionary value with O(1) keyed access, so a member read touches one entry
     /// (never copies the dict). Read-only: writes throw. Entry values stay raw so
-    /// nested natives re-convert lazily on access.
+    /// nested natives re-convert lazily on access. The render's context hands the entries out.
     /// </summary>
-    private sealed class NativeDictView(app.type.item.dict.@this d) : IDictionary<string, object?>
+    private sealed class NativeDictView(app.type.item.dict.@this d, global::app.actor.context.@this context) : IDictionary<string, object?>
     {
         // The backing native — the `formal` filter reaches the value itself and drives its writer.
         internal app.type.item.dict.@this Native => d;
 
         public object? this[string key]
         {
-            get => d.Get(key)?.Peek();
+            get => d.Get(key, context)?.Peek();
             set => throw new NotSupportedException("template view is read-only");
         }
         public ICollection<string> Keys => d.KeyNames.ToList();
-        public ICollection<object?> Values => d.Entries.Select(e => (object?)e.Peek()).ToList();
+        public ICollection<object?> Values => d.Entries(context).Select(e => (object?)e.Peek()).ToList();
         public int Count => d.CountRaw;
         public bool IsReadOnly => true;
         public bool ContainsKey(string key) => d.Has(key);
         public bool TryGetValue(string key, out object? value)
         {
-            var entry = d.Get(key);
+            var entry = d.Get(key, context);
             value = entry?.Peek();
             return entry != null;
         }
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
         {
-            foreach (var e in d.Entries)
+            foreach (var e in d.Entries(context))
                 yield return new KeyValuePair<string, object?>(e.Name, e.Peek());
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
@@ -350,27 +350,32 @@ public class Fluid : ITemplate
     /// arrays any <see cref="System.Collections.IEnumerable"/> eagerly (the same
     /// cost it pays for a real CLR list), so this streams the element values
     /// once with no extra copy. Read-only: writes throw. Element values stay raw
-    /// so nested natives re-convert lazily.
+    /// so nested natives re-convert lazily. The render's context hands the items out.
     /// </summary>
-    private sealed class NativeListView(app.type.item.list.@this l) : IList<object?>
+    private sealed class NativeListView(app.type.item.list.@this l, global::app.actor.context.@this context) : IList<object?>
     {
         // The backing native — the `formal` filter reaches the value itself (see NativeDictView.Native).
         internal app.type.item.list.@this Native => l;
 
         public object? this[int index]
         {
-            get => l.At(index)?.Peek();
+            get => l.At(index, context)?.Peek();
             set => throw new NotSupportedException("template view is read-only");
         }
         public int Count => l.CountRaw;
         public bool IsReadOnly => true;
         public IEnumerator<object?> GetEnumerator()
         {
-            foreach (var item in l.Items)
+            foreach (var item in l.Items(context))
                 yield return item.Peek();
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-        public int IndexOf(object? item) { for (int i = 0; i < l.CountRaw; i++) if (Equals(l.At(i)?.Peek(), item)) return i; return -1; }
+        public int IndexOf(object? item)
+        {
+            int i = 0;
+            foreach (var v in this) { if (Equals(v, item)) return i; i++; }
+            return -1;
+        }
         public bool Contains(object? item) => IndexOf(item) >= 0;
         public void CopyTo(object?[] array, int arrayIndex) { foreach (var v in this) array[arrayIndex++] = v; }
         public void Add(object? item) => throw new NotSupportedException("template view is read-only");

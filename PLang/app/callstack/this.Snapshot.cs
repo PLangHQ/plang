@@ -179,21 +179,21 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// </summary>
     public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var framesEntry = s.Entries.Get("frames");
+        var framesEntry = s.Entries.Get("frames", context);
         var restored = new List<call.Position>();
         if (framesEntry == null) { _restoredChain = restored; return; }
 
         // Values all the way down: the rows of the frames list ARE snapshots, and each frame's
         // entries answer the typed ask. The conversion to a CLR int/string happens at the USE,
         // through the value's own member — nothing lowers on the way out of the snapshot.
-        foreach (var row in await framesEntry.Value<global::app.type.item.list.@this>())
+        foreach (var row in (await framesEntry.Value<global::app.type.item.list.@this>())!.Items(context))
         {
             var frame = await row.Value<global::app.snapshot.@this>();
 
             // Each captured key through its typed ask; a missing or unreadable one names itself.
             async System.Threading.Tasks.Task<T> Entry<T>(string key)
                 where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                => await (frame.Entries.Get(key) ?? throw new CallbackFrameIncomplete(key)).Value<T>()
+                => await (frame!.Entries.Get(key, context) ?? throw new CallbackFrameIncomplete(key)).Value<T>()
                    ?? throw new CallbackFrameIncomplete(key);
 
             var goalName     = (await Entry<global::app.type.item.text.@this>("goalName")).ToString();

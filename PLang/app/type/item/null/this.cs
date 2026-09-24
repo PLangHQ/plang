@@ -70,7 +70,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Null policy: <c>null == null → Equal</c>; <c>null vs any value → NotEqual</c>
     /// (never Incomparable — anything is equality-comparable to null). Ordering against null
     /// has no order, so <c>%x% &lt; null</c> errors at the boundary, as it should.</summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
         => new(other is @this ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
 
     /// <summary>Null is always falsy.</summary>

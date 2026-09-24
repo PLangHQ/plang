@@ -104,8 +104,8 @@ public class TestingClassTests
         await result.IsSuccess();
         await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(60);
         await Assert.That(_app.Test.Parallel.ToInt32()).IsEqualTo(4);
-        await _app.Test.Include.Contains("fast").IsTrue();
-        await _app.Test.Exclude.Contains("slow").IsTrue();
+        await _app.Test.Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.Test.Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
         await _app.Test.Verbose.IsTrue();
     }
 
@@ -125,11 +125,11 @@ public class TestingClassTests
 
         await result.IsSuccess();
         await Assert.That(_app.Test.Include.Count.ToInt32()).IsEqualTo(1);
-        await _app.Test.Include.Contains("newInclude").IsTrue();
-        await _app.Test.Include.Contains("oldInclude").IsFalse();
+        await _app.Test.Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.Test.Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
         await Assert.That(_app.Test.Exclude.Count.ToInt32()).IsEqualTo(1);
-        await _app.Test.Exclude.Contains("newExclude").IsTrue();
-        await _app.Test.Exclude.Contains("oldExclude").IsFalse();
+        await _app.Test.Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.Test.Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
     }
 
     // Unknown config keys are rejected — the setting walk is strict (same as --app/--build/

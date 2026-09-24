@@ -193,9 +193,9 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("http")).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("fast")).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("slow")).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("http"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("fast"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("slow"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
     }
 
     // For each action in the .pr, resolves the handler class (via App.Modules.
@@ -214,7 +214,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network")).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
     }
 
     // Sub-goal reached via static goal.call: its actions' capabilities propagate up
@@ -259,7 +259,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network")).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
     }
 
     // Config.Include=["fast"]: tests without the "fast" tag are returned as

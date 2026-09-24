@@ -39,7 +39,7 @@ public partial class run : IContext
         var tests = new List<global::app.test.@this>();
         var list = await Tests.Value();
         if (list != null)
-            foreach (var row in list)
+            foreach (var row in list.Items(Context))
                 if (await row.Value() is global::app.test.@this test) tests.Add(test);
         var parentApp = Context.App;
         // The number lowers itself — absent slot falls to the stated default.
@@ -52,7 +52,7 @@ public partial class run : IContext
 
         // The executed tests ARE the result — each carries its own outcome after run.
         // The list holds the test objects the run loop mutates in place.
-        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, Context);
+        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests);
         if (tests.Count == 0)
             return Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(executed);
 

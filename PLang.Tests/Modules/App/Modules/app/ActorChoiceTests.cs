@@ -61,7 +61,7 @@ public class ActorChoiceTests
             Name = new global::app.type.item.text.@this("TestGoal"),
             Actor = new global::app.type.item.choice.@this<global::app.actor.Name>(global::app.actor.Name.system),
             Parameter = new global::app.type.item.list.@this(
-                new List<Data> { new Data("onSystem", "yes", context: Ctx) }, Ctx),
+                new List<Data> { new Data("onSystem", "yes", context: Ctx) }),
         };
 
         await (await action.Run()).IsSuccess();

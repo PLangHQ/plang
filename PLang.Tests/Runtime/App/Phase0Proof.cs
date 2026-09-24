@@ -144,7 +144,7 @@ public class Phase0Proof
     {
         // INPUT: Data.Ok with a native list — the list names its own type
         var ctx = global::PLang.Tests.TestApp.SharedContext;
-        var listValue = new global::app.type.item.list.@this(ctx);
+        var listValue = new global::app.type.item.list.@this();
         foreach (var n in new[] { 1, 2, 3 }) listValue.Add(new Data("", n, context: ctx));
         var result = ctx.Ok(listValue);
 

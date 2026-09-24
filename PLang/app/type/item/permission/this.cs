@@ -173,14 +173,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             return null;
         }
 
-        string actor = dict.Get<Text>("actor")?.ToString() ?? "";
-        string path  = dict.Get<Text>("path")?.ToString() ?? "";
-        Match match  = System.Enum.TryParse<Match>(dict.Get<Text>("match")?.ToString(), ignoreCase: true, out var m)
+        var context = data.Context;
+        string actor = dict.Get<Text>("actor", context)?.ToString() ?? "";
+        string path  = dict.Get<Text>("path", context)?.ToString() ?? "";
+        Match match  = System.Enum.TryParse<Match>(dict.Get<Text>("match", context)?.ToString(), ignoreCase: true, out var m)
             ? m : Match.Exact;
 
         var verbs = new HashSet<Verb>();
-        if (dict.Get("verbs")?.Peek() is global::app.type.item.list.@this list)
-            foreach (var entry in list.Items)
+        if (dict.Get("verbs", context)?.Peek() is global::app.type.item.list.@this list)
+            foreach (var entry in list.Items(context))
                 if (entry.Peek() is Text t && System.Enum.TryParse<Verb>(t.ToString(), ignoreCase: true, out var v))
                     verbs.Add(v);
 

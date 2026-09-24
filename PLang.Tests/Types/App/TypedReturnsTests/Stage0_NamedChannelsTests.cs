@@ -98,7 +98,7 @@ public class Stage0_NamedChannelsTests
         var raw = Lower<Dictionary<string, object?>>(w1)!;
         await Assert.That((string)raw["action"]!).IsEqualTo("file.read");
         await Assert.That((string)raw["message"]!).IsEqualTo("duplicate");
-        await Assert.That(await w1.AreEqual(w2)).IsTrue()
+        await Assert.That(await w1.AreEqual(w2, global::PLang.Tests.TestApp.SharedContext)).IsTrue()
             .Because("Structural dict equality lets consumers de-dup identical warnings.");
     }
 
@@ -137,7 +137,7 @@ public class Stage0_NamedChannelsTests
     // The build-warning payload shape: a native dict {action, message}, mirroring
     // what file.read writes to the "builder" channel.
     private global::app.type.item.dict.@this Warning(string action, string message)
-        => new global::app.type.item.dict.@this(_app.User.Context).Set("action", action).Set("message", message);
+        => new global::app.type.item.dict.@this().Set("action", action).Set("message", message);
 
     // Two distinct channel names resolve to two distinct channel instances —
     // they are independent registry entries, not aliases. End-to-end isolation

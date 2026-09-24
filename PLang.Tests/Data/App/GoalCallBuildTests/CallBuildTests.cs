@@ -21,7 +21,7 @@ public class CallBuildTests
             new Data("path", "%path%", context: ctx),    // self-ref → dropped
             new Data("kind", "build", context: ctx),      // literal → kept
             new Data("target", "%path%", context: ctx),   // refs path but name != ref → kept
-        }, ctx);
+        });
         var action = new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
@@ -38,7 +38,7 @@ public class CallBuildTests
         await ((global::app.module.IClass)handler!).Build();
 
         var row = action.Parameter.First(p => p.Name == "Parameter");
-        var names = ((global::app.type.item.list.@this)row.Peek()!).Items.Select(p => p.Name).ToList();
+        var names = ((global::app.type.item.list.@this)row.Peek()!).Items(global::PLang.Tests.TestApp.SharedContext).Select(p => p.Name).ToList();
         await Assert.That(names).DoesNotContain("path");   // self-ref dropped
         await Assert.That(names).Contains("kind");
         await Assert.That(names).Contains("target");        // %path% but name != ref → kept

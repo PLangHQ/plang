@@ -852,10 +852,9 @@ public class DataTests : System.IAsyncDisposable
         var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.item.dict.@this;
 
         await Assert.That(result).IsNotNull();
-        result!.Context = _app.User.Context;
         // Born-native: a JSON number is a number.@this wrapper; its backing
         // (via ToRaw) is double for a bare decimal-point literal.
-        var price = await result!.Get("price")!.Value();
+        var price = await result!.Get("price", global::PLang.Tests.TestApp.SharedContext)!.Value();
         await Assert.That(price).IsTypeOf<app.type.item.number.@this>();
         await Assert.That(((app.type.item.number.@this)price!).Clr<object>()).IsEqualTo(19.99d);
     }
@@ -868,9 +867,8 @@ public class DataTests : System.IAsyncDisposable
         var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.item.dict.@this;
 
         await Assert.That(result).IsNotNull();
-        result!.Context = _app.User.Context;
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
-        var count = await result!.Get("count")!.Value();
+        var count = await result!.Get("count", global::PLang.Tests.TestApp.SharedContext)!.Value();
         await Assert.That(count).IsTypeOf<app.type.item.number.@this>();
         await Assert.That(((app.type.item.number.@this)count!).Clr<object>()).IsEqualTo(42L);
     }

@@ -74,7 +74,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
     {
-        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.User.Context);
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) });
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
@@ -87,13 +87,13 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
     {
-        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) });
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
-        source.FireOnChange(new global::app.data.@this("nums", new global::app.type.item.list.@this(_app.User.Context)));
+        source.FireOnChange(new global::app.data.@this("nums", new global::app.type.item.list.@this()));
         await Assert.That(seen).IsEqualTo(1);
     }
 
@@ -104,7 +104,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
     {
-        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) });
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         Action<Data, Data> handler = (_, _) => { };
@@ -231,10 +231,10 @@ public class AsTIdentityTests
         // Read the way a real consumer does: enumerate the list, resolve each row, read
         // its field through the door — not a whole-list Lower into raw CLR dictionaries.
         var rows = new List<global::app.type.item.dict.@this>();
-        foreach (var r in (global::app.type.item.list.@this)(await canonical.Value()))
+        foreach (var r in ((global::app.type.item.list.@this)(await canonical.Value())).Items(global::PLang.Tests.TestApp.SharedContext))
             rows.Add((global::app.type.item.dict.@this)(await r.Value()));
-        await Assert.That((await rows[0].Get("Content")!.Value()).ToString()).IsEqualTo("You are a compiler");
-        await Assert.That((await rows[1].Get("Content")!.Value()).ToString()).IsEqualTo("build this goal");
+        await Assert.That((await rows[0].Get("Content", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("You are a compiler");
+        await Assert.That((await rows[1].Get("Content", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("build this goal");
     }
 
     // Rule 4f — literal list (no %vars% anywhere) still walks. Symmetric with the typed

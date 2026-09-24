@@ -123,7 +123,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>The modules as the NATIVE plang list — filterable by the list module,
     /// renderable by templates. A fresh, cheap wrapper per ask over the same cached elements.</summary>
     public global::app.type.item.list.@this list
-        => new(Names.Select(n => (object?)this[n]).ToList(), App.System.Context);
+        => new(Names.Select(n => (object?)this[n]).ToList());
 
     /// <summary>The names a module answers to — asked OF the module, tolerating an unknown one so
     /// callers probing an arbitrary name need no pre-check.</summary>

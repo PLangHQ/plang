@@ -107,7 +107,7 @@ public class TypedReaderRoundTripTests
     {
         var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[1,2,\"name\"]", null);
         var list = (global::app.type.item.list.@this)item;
-        await Assert.That(list.Items.Count).IsEqualTo(3);
+        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(3);
     }
 
     [Test] public async Task List_Nested_Isolated()
@@ -116,16 +116,16 @@ public class TypedReaderRoundTripTests
         // their elements were read off the pass.
         var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[[1,2],[3,4]]", null);
         var list = (global::app.type.item.list.@this)item;
-        await Assert.That(list.Items.Count).IsEqualTo(2);
-        foreach (var element in list.Items)
-            await Assert.That(((global::app.type.item.list.@this)(await element.Value())!).Items.Count).IsEqualTo(2);
+        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
+        foreach (var element in list.Items(global::PLang.Tests.TestApp.SharedContext))
+            await Assert.That(((global::app.type.item.list.@this)(await element.Value())!).Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
     }
 
     [Test] public async Task Dict_StreamsRawSlots_Isolated()
     {
         var item = ReadScalar(new global::app.type.item.dict.serializer.Reader(), "{\"a\":1,\"b\":2}", null);
         var dict = (global::app.type.item.dict.@this)item;
-        await Assert.That(dict.Entries.Count).IsEqualTo(2);
+        await Assert.That(dict.Entries(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
     }
 
     // End-to-end through the Wire bridge: serialize a Data, sign, deserialize.

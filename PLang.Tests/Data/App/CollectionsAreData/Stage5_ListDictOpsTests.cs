@@ -20,7 +20,7 @@ public class Stage5_ListDictOpsTests
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
     private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variable);
     private Data D(object? v) => _app.Data("", v);
-    private DictV Person(string field, object? val) { var d = new DictV(_app.User.Context); d.Set(_app.Data(field, val)); return d; }
+    private DictV Person(string field, object? val) { var d = new DictV(); d.Set(_app.Data(field, val)); return d; }
 
     private Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
         => new(ctx) {  ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.item.text.@this>("", field, context: ctx),
@@ -30,7 +30,7 @@ public class Stage5_ListDictOpsTests
     public async Task WhereOnList_FiltersByPredicate()
     {
         var (ctx, vars) = Ctx();
-        var users = new ListV(ctx);
+        var users = new ListV();
         users.Add(_app.Data("", Person("age", 25L)));
         users.Add(_app.Data("", Person("age", 15L)));
         users.Add(_app.Data("", Person("age", 40L)));
@@ -40,7 +40,7 @@ public class Stage5_ListDictOpsTests
         await result.IsSuccess();
         var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
-        await Assert.That(((global::app.type.item.number.@this)(await (await filtered.At(0)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await filtered.At(0, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class Stage5_ListDictOpsTests
     public async Task SortByField_OrdersNumerically()
     {
         var (ctx, vars) = Ctx();
-        var people = new ListV(ctx);
+        var people = new ListV();
         people.Add(_app.Data("", Person("age", 30L)));
         people.Add(_app.Data("", Person("age", 10L)));
         people.Add(_app.Data("", Person("age", 20L)));
@@ -81,8 +81,8 @@ public class Stage5_ListDictOpsTests
         var action = new Sort(ctx) { ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
         await (await action.Run()).IsSuccess();
         var sorted = (ListV)(await (await vars.Get("people")).Value())!;
-        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
-        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class Stage5_ListDictOpsTests
         // that's an EXPECTED data condition, so sort RETURNS a Data error (it does not throw —
         // a thrown exception would escape the `on error` handler pipeline).
         var (ctx, vars) = Ctx();
-        var dicts = new ListV(ctx);
+        var dicts = new ListV();
         dicts.Add(_app.Data("", Person("city", "Reyk")));
         dicts.Add(_app.Data("", Person("city", "Oslo")));
         vars.Set("dicts", dicts);
@@ -106,7 +106,7 @@ public class Stage5_ListDictOpsTests
     public async Task UniqueUsesCompareEquality()
     {
         var (ctx, vars) = Ctx();
-        var values = new ListV(ctx);
+        var values = new ListV();
         values.Add(_app.Data("", Person("city", "Reyk")));
         values.Add(_app.Data("", Person("city", "Reyk")));   // structurally equal
         values.Add(_app.Data("", Person("city", "Oslo")));
@@ -122,7 +122,7 @@ public class Stage5_ListDictOpsTests
     public async Task GroupByField_BucketsAreNavigableLists()
     {
         var (ctx, vars) = Ctx();
-        var people = new ListV(ctx);
+        var people = new ListV();
         people.Add(_app.Data("", Person("city", "Reyk")));
         people.Add(_app.Data("", Person("city", "Oslo")));
         people.Add(_app.Data("", Person("city", "Reyk")));
@@ -132,8 +132,8 @@ public class Stage5_ListDictOpsTests
         await result.IsSuccess();
         var groups = (ListV)(await result.Value())!;
         await Assert.That(groups.Count).IsEqualTo(2);
-        var reyk = (DictV)(await groups.At(0)!.Value())!;
-        await Assert.That((await (reyk.Get("key"))!.Value())?.ToString()).IsEqualTo("Reyk");
-        await Assert.That(((ListV)(await (reyk.Get("items"))!.Value())!).Count).IsEqualTo(2); // navigable bucket
+        var reyk = (DictV)(await groups.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())!;
+        await Assert.That((await (reyk.Get("key", global::PLang.Tests.TestApp.SharedContext))!.Value())?.ToString()).IsEqualTo("Reyk");
+        await Assert.That(((ListV)(await (reyk.Get("items", global::PLang.Tests.TestApp.SharedContext))!.Value())!).Count).IsEqualTo(2); // navigable bucket
     }
 }

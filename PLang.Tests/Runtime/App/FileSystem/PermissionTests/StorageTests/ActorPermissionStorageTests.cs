@@ -72,7 +72,7 @@ public class ActorPermissionStorageTests
         var stored = await (await app.SettingsStore).GetAll<global::app.type.item.permission.@this>("permission");
         await stored.IsSuccess();
         var paths = new List<string>();
-        foreach (var d in (await stored.Value())!.Items)
+        foreach (var d in (await stored.Value())!.Items(global::PLang.Tests.TestApp.SharedContext))
         {
             ((global::app.data.@this)d).Context = app.User.Context;
             if (await ((global::app.data.@this)d).Value<PermissionRecord>() is { } p) paths.Add(p.Path);
@@ -192,7 +192,7 @@ public class ActorPermissionStorageTests
         // for `/p`, not two.
         var stored = await (await app.SettingsStore).GetAll<global::app.type.item.permission.@this>("permission");
         await stored.IsSuccess();
-        var rowsForP = (await stored.Value())!.Items.Count(d => d.GetValue<global::app.type.item.permission.@this>()?.Path == "/p");
+        var rowsForP = (await stored.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).Count(d => d.GetValue<global::app.type.item.permission.@this>()?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);
     }
 

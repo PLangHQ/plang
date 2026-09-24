@@ -57,9 +57,9 @@ public sealed class TypeSafe : IDecider
         // mixing accounting into the value.
         var answers = await result.Get("answers");
         var shaped = answers == null
-            ? new global::app.type.item.dict.@this(context)
+            ? new global::app.type.item.dict.@this()
             : await answers.Value<global::app.type.item.dict.@this>()
-              ?? new global::app.type.item.dict.@this(context);
+              ?? new global::app.type.item.dict.@this();
 
         var answer = context.Ok(shaped).As<global::app.type.item.dict.@this>();
         if (await result.Get("usage") is { } usage) answer.Properties.Set("usage", await usage.Value());

@@ -65,7 +65,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     action.Default = new();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Default.Add(dataReader.Read(reader.RawValue(), ctx));
+                        action.Default.Add(dataReader.Row(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 case "modifier":
@@ -129,12 +129,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         .Read(ref row, null, ctx) as global::app.type.@this;
                     break;
                 case "value" when type?.Name == "action":
-                    return new global::app.data.@this(name, Read(ref row, null, ctx), context: ctx.Context);
+                    // A program row holds no context; it goes when the action-property change lands.
+                    return new global::app.data.@this(name, Read(ref row, null, ctx));
                 case "value":
-                    return dataReader.Read(raw, ctx);
+                    return dataReader.Row(raw, ctx);
                 default: row.Skip(); break;
             }
         }
-        return dataReader.Read(raw, ctx);
+        return dataReader.Row(raw, ctx);
     }
 }

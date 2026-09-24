@@ -24,7 +24,7 @@ public class ResidualTryConvertTests
 
     [Test] public async Task List_LowersEachElement_ToTypedList()
     {
-        var lst = new global::app.type.item.list.@this(Ctx);
+        var lst = new global::app.type.item.list.@this();
         lst.Add(new global::app.type.item.text.@this("1"));
         lst.Add(new global::app.type.item.text.@this("2"));
         lst.Add(new global::app.type.item.text.@this("3"));

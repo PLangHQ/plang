@@ -54,7 +54,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         // goal.call's catalog entry: its Actor slot is choice<actor> over {system, user}.
-        var call = _app.Module["goal"].Action.Items
+        var call = _app.Module["goal"].Action.Items(global::PLang.Tests.TestApp.SharedContext)
             .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "call");
         await context.Variable.Set("a", call);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)PropertyLoopFromBuilderTemplate(), IsFile = (global::app.type.item.@bool.@this)false };

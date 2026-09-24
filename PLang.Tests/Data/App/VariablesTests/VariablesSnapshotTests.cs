@@ -24,7 +24,7 @@ public class VariablesSnapshotTests
         await Assert.That(obj).IsNotNull();
         var dict = (await obj!.Value()) as global::app.type.item.dict.@this;
         await Assert.That(dict).IsNotNull();
-        await Assert.That(dict!.Get("a")?.Peek()?.ToString()).IsEqualTo("1");
+        await Assert.That(dict!.Get("a", global::PLang.Tests.TestApp.SharedContext)?.Peek()?.ToString()).IsEqualTo("1");
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class VariablesSnapshotTests
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
         var snap = src.Snapshot(src.User.Context);
-        var captured = snap.Section("Variables").Entries.Entries;   // each captured variable is its own entry
+        var captured = snap.Section("Variables").Entries.Entries(snap.Context).ToList();   // each captured variable is its own entry
 
         var names = captured.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         await Assert.That(names.Contains("user")).IsTrue();

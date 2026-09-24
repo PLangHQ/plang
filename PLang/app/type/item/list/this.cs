@@ -17,20 +17,12 @@ namespace app.type.item.list;
 /// Without the converter, raw STJ would reflect each element's <c>Data</c> C#
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
-public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext,
-    IEnumerable<Data>
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The lazy read seam — yields each element as a <see cref="Data"/> (rich
-    /// carrier: name, type, context, the <c>.Value()</c> door), unresolved — the same element
-    /// view as <see cref="Items"/>. The consumer resolves what it needs per element
-    /// (<c>await row.Value()</c>) — the list never materialises a resolved copy.</summary>
-    public IEnumerator<Data> GetEnumerator() => Items.GetEnumerator();
-
     // A CHUNK row: another list's elements appended in O(1) by an extend (`Add(list)`), read in
     // place as this list's elements. The meaning is recorded at ADD time — a row whose value is a
     // list but that is NOT a chunk is ONE element (a nested array, a list-valued parameter).
-    private sealed record Chunk(@this Items);
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    private sealed record Chunk(@this List);
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
@@ -51,14 +43,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // read — that is the million-row O(1) case.
     private bool _hasWrapped;
 
-    // A slot that carries context / must be peeled at the CLR exit door — a Data or
-    // a plang wrapper. A raw CLR scalar or a raw nested container (List/Dictionary)
-    // is NOT one: it rides verbatim and is handed back as-is.
+    // A slot that must be peeled at the CLR exit door — a Data or a plang wrapper. A raw CLR
+    // scalar or a raw nested container (List/Dictionary) is NOT one: it rides verbatim and is
+    // handed back as-is.
     private static bool IsWrapped(object? slot)
         => slot is Data or global::app.type.item.@this or Chunk;
 
-    public @this(actor.context.@this context) : this(new List<object?>(), context) { }
-    public @this(IEnumerable<Data> items, actor.context.@this context) : this(new List<object?>(items), context) { _hasWrapped = true; }
+    // A list stores no context: an element is handed out with the context of whoever asks for it
+    // (Row, Elements, At). A stored Data keeps its own.
+    public @this() : this(new List<object?>()) { }
+    public @this(IEnumerable<Data> items) : this(new List<object?>(items)) { _hasWrapped = true; }
 
     /// <summary>A list's own type entity — the type owns its name (no namespace reflection). Carries
     /// the template flag so a template=plang list resolves its %var% leaves at .Value().</summary>
@@ -75,7 +69,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public static @this? Create(object? value, Data data)
     {
         if (value is @this self) return self;
-        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this();
         // The list converts a json source (a clr(json) array) into ITSELF — the same DOM narrower
         // the list kind's Convert uses. Never route a list.@this through reflection (it has no
         // parameterless ctor); the item owns its own conversion. Other sources re-tag via Clr.
@@ -84,34 +78,20 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return (value as global::app.type.item.@this)?.Clr(typeof(@this)) as @this;
     }
 
-    /// <summary>Builds from a sequence of native plang VALUES — each wrapped in its
-    /// own row Data, preserving the strong value (a list&lt;type&gt; keeps real type
-    /// instances, never degraded to dicts on a JSON round-trip). The value-sequence
-    /// sibling of the <see cref="Data"/>-sequence ctor above — the list owns how a
-    /// sequence of values becomes its rows; callers just hand over the values.</summary>
-    public @this(IEnumerable<global::app.type.item.@this> values, actor.context.@this context)
-        : this(new List<object?>(values.Select(v => (object?)new Data("", v, context: context))), context) { _hasWrapped = true; }
+    /// <summary>Builds from a sequence of native plang VALUES — each stored as itself, preserving
+    /// the strong value (a list&lt;type&gt; keeps real type instances, never degraded to dicts on a
+    /// JSON round-trip). The list owns how a sequence of values becomes its rows; callers just
+    /// hand over the values.</summary>
+    public @this(IEnumerable<global::app.type.item.@this> values)
+        : this(new List<object?>(values)) { _hasWrapped = true; }
 
     /// <summary>Aliases a foreign CLR list as this list's backing — O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing, so its slots
     /// are assumed raw CLR values (the all-raw invariant <see cref="_hasWrapped"/> tracks
     /// from here). A pure read keeps the backing pristine, so the CLR exit door hands
     /// the same instance back; the first write elevates a slot and the backing diverges.
-    /// Born WITH context — every row reads/serializes through it.</summary>
-    internal @this(List<object?> backing, actor.context.@this context)
-    {
-        _items = backing;
-        _context = context ?? throw new System.ArgumentNullException(nameof(context));
-    }
-
-    /// <summary>Program-structure birth — a graph node (action.list / step.list / parameter.list) is
-    /// SHARED across concurrent runs, so it stores NO context: <see cref="_context"/> stays null, and
-    /// every context-needing door takes the ASK's context instead (the run, navigation's binding,
-    /// Output's param). Only the node subclasses reach this; a run-born value uses the public context
-    /// ctors above and keeps the null-context throw. Elements ride as typed items (filled via
-    /// <see cref="AddRaw"/> at read); the shared instance is never stamped, so no context leaks
-    /// between the actors sharing the graph.</summary>
-    protected @this(List<object?> backing) => _items = backing;
+    /// The program nodes (action.list / step.list / parameter.list) are born here too.</summary>
+    protected internal @this(List<object?> backing) => _items = backing;
 
     /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
     /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
@@ -120,60 +100,47 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Context-free (a program node adopts nothing run-scoped).</summary>
     protected @this(@this source) : this(new List<object?>(source._items)) { }
 
-    // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot — never
-    // cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
-    // and it stays the same instance the source handed over). An already-Data slot
-    // returns as-is.
-    private Data Row(int i)
-    {
-        var raw = _items[i];
-        if (raw is Data d)
-        {
-            // A program node's _context is null — never stamp it onto an element (the element keeps
-            // the context it was read/born with; the shared node stays context-free).
-            if (_context != null) d.Context = _context;
-            return d;
-        }
-        return new Data("", global::app.type.item.@this.Create(raw, _context), context: _context);
-    }
+    // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot, born with the asker's
+    // context — never cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
+    // and it stays the same instance the source handed over). A stored Data goes by reference,
+    // with its own context.
+    private Data Row(int i, actor.context.@this context)
+        => _items[i] is Data d ? d
+           : new Data("", global::app.type.item.@this.Create(_items[i], context), context: context);
 
     /// <summary>Appends a raw value (store raw, type on read) — the wire reader /
     /// literal-parse seam. A scalar rides verbatim; a native container holds its
     /// own raw slots; a Data carries its own type.</summary>
     internal @this AddRaw(object? raw)
     {
-        // A program node's _context is null — never stamp it onto an element (the element keeps the
-        // context it was read/born with; the shared node stays context-free).
-        if (raw is Data d && _context != null) d.Context = _context;
         if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
         _items.Add(raw);
         return this;
     }
 
-    /// <summary>
-    /// Context for runtime access. Propagates onto every element Data so nested
-    /// navigation / serialization has a wired scope — mirrors dict.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context
+    // The raw slots in element order — a chunk contributes its list's slots. No Data is made: the
+    // reorders (reverse, the chunk split) and the context-free faces (ToString, the CLR exit) read
+    // the slots themselves.
+    protected internal IEnumerable<object?> Slots()
     {
-        get => _context;
-        set
+        foreach (var row in _items)
         {
-            _context = value;
-            // A clean (all-raw) backing has nothing context-bearing — skip the
-            // walk so assigning a million-row aliased list stays O(1). Reads born
-            // their rows with _context lazily (Row); a wrapped slot is reached
-            // here only when the backing already diverged.
-            if (!_hasWrapped) return;
-            foreach (var slot in _items)
-            {
-                if (slot is Data d) d.Context = value;
-                else if (slot is module.IContext c) c.Context = value;
-            }
+            if (row is Chunk chunk)
+                foreach (var s in chunk.List.Slots()) yield return s;
+            else yield return row;
         }
     }
-    private actor.context.@this _context = null!;
+
+    // The slot as stored at a flattened index — a Data, or the raw value — or null when out of
+    // range. The program nodes store their elements directly, so their typed / Data-row positional
+    // faces read them without a context.
+    private protected object? Stored(int index)
+        => Locate(index, out int row, out int offset, out @this? inner)
+            ? (inner != null ? inner.Stored(offset) : _items[row])
+            : null;
+
+    // The stored value at a flattened index — a stored Data's value, or the raw slot itself.
+    private protected object? Slot(int index) => Stored(index) is Data d ? d.Peek() : Stored(index);
 
     // A list is a list of ROWS (`_items`). Each row holds its raw value (or the
     // Data it was added with) and types itself on read.
@@ -199,21 +166,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     // A row's element count — a chunk contributes its list's elements; any other row is one.
-    private static int LeafCount(object? row) => row is Chunk chunk ? chunk.Items.CountRaw : 1;
+    private static int LeafCount(object? row) => row is Chunk chunk ? chunk.List.CountRaw : 1;
 
-    /// <summary>The element Data in order — a chunk yields its list's elements; any other row is
-    /// one element, whatever its value.</summary>
-    public IReadOnlyList<Data> Items
+    /// <summary>The items in order, one pass, each handed out as the caller reaches it — a raw
+    /// slot as a new Data born with <paramref name="context"/>, a stored Data by reference. Nothing
+    /// is built up front. A chunk yields its list's items; any other row is one item, whatever its
+    /// value.</summary>
+    public IEnumerable<Data> Items(actor.context.@this context)
     {
-        get
+        for (int r = 0; r < _items.Count; r++)
         {
-            var flat = new List<Data>();
-            for (int r = 0; r < _items.Count; r++)
-            {
-                if (_items[r] is Chunk chunk) flat.AddRange(chunk.Items.Items);
-                else flat.Add(Row(r));
-            }
-            return flat;
+            if (_items[r] is Chunk chunk)
+                foreach (var e in chunk.List.Items(context)) yield return e;
+            else yield return Row(r, context);
         }
     }
 
@@ -236,7 +201,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         // default (json/plang): an array whose elements each self-describe (@schema).
         writer.BeginArray(CountRaw);
-        foreach (var element in Items)
+        foreach (var element in Items(context!))
             await element.Output(writer, mode, context);
         writer.EndArray();
     }
@@ -246,21 +211,22 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         EnumerateItems(global::app.actor.context.@this? context)
     {
         int i = 0;
-        foreach (var item in Items)
+        foreach (var item in Items(context!))
             yield return (new Data("", i++, context: context), item);
     }
 
-    /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
-    internal Data? At(int index)
+    /// <summary>The flattened element Data at <paramref name="index"/>, handed out with the
+    /// asker's context, or C# null when out of range.</summary>
+    internal Data? At(int index, actor.context.@this context)
         => Locate(index, out int row, out int offset, out @this? inner)
-            ? (inner != null ? inner.At(offset) : Row(row))
+            ? (inner != null ? inner.At(offset, context) : Row(row, context))
             : null;
 
     /// <summary>First flattened element, or null when empty.</summary>
-    public Data? First => At(0);
+    public Data? First(actor.context.@this context) => At(0, context);
 
     /// <summary>Last flattened element, or null when empty.</summary>
-    public Data? Last => At(CountRaw - 1);
+    public Data? Last(actor.context.@this context) => At(CountRaw - 1, context);
 
     // Resolve an element index to the owning row + the offset within it. `inner` is the
     // chunk's list when the row is a chunk (offset indexes into it); null for a one-element
@@ -271,7 +237,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (flatIndex < 0) return false;
         for (int r = 0; r < _items.Count; r++)
         {
-            if (_items[r] is Chunk { Items: var list })
+            if (_items[r] is Chunk { List: var list })
             {
                 int w = list.CountRaw;
                 if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
@@ -318,8 +284,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         else if (inner != null)
         {
             // inside a chunk: split it at the offset so the extend lands between its halves
-            var head = new @this(inner.Items.Take(offset), inner._context);
-            var tail = new @this(inner.Items.Skip(offset), inner._context);
+            var head = new @this(inner.Slots().Take(offset).ToList()) { _hasWrapped = true };
+            var tail = new @this(inner.Slots().Skip(offset).ToList()) { _hasWrapped = true };
             _items[row] = new Chunk(tail);
             _items.Insert(row, new Chunk(other));
             _items.Insert(row, new Chunk(head));
@@ -332,7 +298,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     public @this Add(Data item)
     {
-        item.Context = _context;
         _hasWrapped = true;
         _items.Add(item);
         return this;
@@ -342,7 +307,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (clamped to [0, Count]).</summary>
     internal @this Insert(int index, Data item)
     {
-        item.Context = _context;
         _hasWrapped = true;
         if (index < 0) index = 0;
         if (Locate(index, out int row, out int offset, out @this? inner))
@@ -363,7 +327,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Insert(global::app.type.item.number.@this index, Data item) => Insert(index.ToInt32(), item);
     public void RemoveAt(global::app.type.item.number.@this index) => RemoveAt(index.ToInt32());
     public void SetAt(global::app.type.item.number.@this index, Data value) => SetAt(index.ToInt32(), value);
-    public Data? At(global::app.type.item.number.@this index) => At(index.ToInt32());
+    public Data? At(global::app.type.item.number.@this index, actor.context.@this context) => At(index.ToInt32(), context);
 
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)
@@ -380,23 +344,26 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
     /// the one compare path (structural for dict/list, case-insensitive text).</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Remove(object? value)
+    public async System.Threading.Tasks.ValueTask<bool> Remove(object? value, actor.context.@this context)
     {
-        // Scan the flattened view once to find the leaf, then a single RemoveAt — avoid
-        // the O(n²) of At(i) per iteration. Membership matches only on Equal; each element
-        // compares through its own door (lazy).
-        var flat = Items;
-        var target = value as Data ?? new Data("", value);
-        for (int i = 0; i < flat.Count; i++)
-            if (await flat[i].Compare(target) is global::app.data.Comparison.Equal) { RemoveAt(i); return true; }
+        // Scan the elements once to find the leaf, then a single RemoveAt — avoid the O(n²) of
+        // At(i) per iteration. Membership matches only on Equal; each element compares through its
+        // own door (lazy).
+        var target = value as Data ?? new Data("", value, context: context);
+        int i = 0;
+        foreach (var element in Items(context))
+        {
+            if (await element.Compare(target) is global::app.data.Comparison.Equal) { RemoveAt(i); return true; }
+            i++;
+        }
         return false;
     }
 
-    /// <summary>Reverses the flattened items — collapses the rows into one flat list
+    /// <summary>Reverses the flattened slots — collapses the rows into one flat list
     /// (a new order is a new flat list, per the row model).</summary>
     public void Reverse()
     {
-        var flat = new List<Data>(Items);
+        var flat = Slots().ToList();
         flat.Reverse();
         ResetTo(flat);
     }
@@ -408,9 +375,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// all I/O lands here); phase 2 orders sync on the in-memory values.
     /// Collapses the rows into one flat list.
     /// </summary>
-    public async System.Threading.Tasks.Task SortByValue(bool descending)
+    public async System.Threading.Tasks.Task SortByValue(bool descending, actor.context.@this context)
     {
-        var flat = new List<Data>(Items);
+        var flat = new List<Data>(Items(context));
         var values = new Dictionary<Data, object?>(ReferenceEqualityComparer.Instance);
         foreach (var d in flat) values[d] = await d.Value();
         var sorted = await SortAsync(flat, async (a, b) =>
@@ -426,9 +393,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// element's <paramref name="field"/> child and its value through the door
     /// (async); phase 2 orders sync on the pre-resolved keys.
     /// </summary>
-    public async System.Threading.Tasks.Task SortByField(string field, bool descending)
+    public async System.Threading.Tasks.Task SortByField(string field, bool descending, actor.context.@this context)
     {
-        var flat = new List<Data>(Items);
+        var flat = new List<Data>(Items(context));
         var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
         foreach (var d in flat)
         {
@@ -486,28 +453,31 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return merged;
     }
 
-    // Replace the rows with a flat sequence (post sort/reverse). The result is all
+    // Replace the rows with a flat sequence of slots (post sort/reverse). The result is all
     // weight-1 rows — a new order is a new flat list.
-    private void ResetTo(List<Data> flat)
+    private void ResetTo(IEnumerable<object?> flat)
     {
+        var slots = flat.ToList();
         _hasWrapped = true;
         _items.Clear();
-        foreach (var d in flat) d.Context = _context;
-        _items.AddRange(flat);
+        _items.AddRange(slots);
     }
 
 
     /// <summary>Replaces (or appends at Count) the leaf at the flattened <paramref name="index"/>.</summary>
-    internal void SetAt(int index, Data value)
+    internal void SetAt(int index, Data value) => Put(index, value);
+
+    // The one positional write seam — a Data, or a raw value that types itself on read with the
+    // context of whoever reads it.
+    private void Put(int index, object? slot)
     {
-        value.Context = _context;
-        _hasWrapped = true;
+        if (IsWrapped(slot)) _hasWrapped = true;
         if (Locate(index, out int row, out int offset, out @this? inner))
         {
-            if (inner != null) inner.SetAt(offset, value);
-            else _items[row] = value;
+            if (inner != null) inner.Put(offset, slot);
+            else _items[row] = slot;
         }
-        else if (index == Count) _items.Add(value);
+        else if (index == Count) _items.Add(slot);
     }
 
     /// <summary>A list owns its child write — replace the element at the index. The key is already
@@ -517,7 +487,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (int.TryParse(key, out var idx) && idx >= 0 && idx < CountRaw)
         {
-            SetAt(idx, value as Data ?? new Data(key, value));
+            Put(idx, value);
             return new(this);
         }
         throw new System.NotSupportedException(
@@ -527,8 +497,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>
     /// A list owns its child read — intrinsics (count/length, first, last, random,
     /// numeric index) win; any other key delegates to the first element
-    /// (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). Elements are
-    /// already Data, so they return directly. Out-of-range / empty → NotFound.
+    /// (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). An element is handed out
+    /// with the asker's (<paramref name="parent"/>'s) context. Out-of-range / empty → NotFound.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
     {
@@ -538,18 +508,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
         if (CountRaw == 0) return Data.NotFound(key);
 
+        var context = parent.Context;
         if (string.Equals(key, "first", System.StringComparison.OrdinalIgnoreCase))
-            return First!;
+            return First(context)!;
         if (string.Equals(key, "last", System.StringComparison.OrdinalIgnoreCase))
-            return Last!;
+            return Last(context)!;
         if (string.Equals(key, "random", System.StringComparison.OrdinalIgnoreCase))
-            return At(System.Random.Shared.Next(CountRaw))!;
+            return At(System.Random.Shared.Next(CountRaw), context)!;
 
         if (int.TryParse(key, out var index))
-            return At(index) ?? Data.NotFound(key);
+            return At(index, context) ?? Data.NotFound(key);
 
         // Implicit first: %list.street% → %list[0].street%.
-        return await First!.Get(key);
+        return await First(context)!.Get(key);
     }
 
     /// <summary>
@@ -583,7 +554,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             var built = (System.Collections.IList)System.Activator.CreateInstance(
                 target.IsArray || target.IsInterface || !typeof(System.Collections.IList).IsAssignableFrom(target)
                     ? listType : target)!;
-            foreach (var row in Items) built.Add(row.Peek().Clr(elem));
+            foreach (var slot in Slots()) built.Add(Lower(slot, elem));
             if (target.IsArray)
             {
                 var arr = System.Array.CreateInstance(elem, built.Count); built.CopyTo(arr, 0); return arr;
@@ -600,10 +571,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // Non-collection target (a string, a record built off the wire, …) — fall back to
         // the shared converter over the raw form.
         var raw = new List<object?>(CountRaw);
-        foreach (var item in Items)
-            raw.Add(string.IsNullOrEmpty(item.Name) ? Unwrap(item.Peek()) : item);
+        foreach (var slot in Slots())
+            raw.Add(slot is Data { Name.Length: > 0 } named ? named : Unwrap(slot is Data d ? d.Peek() : slot));
         return ClrConvert(raw, target);
     }
+
+    // A slot lowered to the CLR element type at the exit door. A raw CLR slot is already the
+    // CLR form, so it converts without a context; a stored Data or an item lowers itself.
+    private static object? Lower(object? slot, System.Type elem) => slot switch
+    {
+        Data d => d.Peek().Clr(elem),
+        global::app.type.item.@this item => item.Clr(elem),
+        _ => ClrConvert(slot, elem),
+    };
 
     // Element type of a read-only domain collection (IReadOnlyList<T>/ICollection<T> — parameter.list,
     // action.list, step.list) that isn't itself a plang item (those own their own conversion). Null
@@ -628,8 +608,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (Template == null) return this;
-        var result = new @this(data.Context);
-        foreach (var row in Items)
+        var result = new @this();
+        foreach (var row in Items(data.Context))
             result.AddRaw(await row.Value());
         return result;
     }
@@ -662,7 +642,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// seam the base render uses so it never hard-codes the non-generic type. The
     /// generic <c>list&lt;T&gt;</c> overrides it so render/clone preserve the
     /// element-type tag (a <c>list&lt;path&gt;</c> stays a <c>list&lt;path&gt;</c>).</summary>
-    protected virtual @this Empty() => new(_context);
+    protected virtual @this Empty() => new();
 
     /// <summary>A container is never final — an element may be non-final (a template,
     /// a nested container), so a read must go through the element's OWN door. The list
@@ -676,7 +656,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// mixed list never errors a membership ask.</summary>
     public override async System.Threading.Tasks.ValueTask<bool> Contains(Data needle)
     {
-        foreach (var element in Items)
+        foreach (var element in Items(needle.Context))
             if (await element.Compare(needle) == global::app.data.Comparison.Equal) return true;
         return false;
     }
@@ -686,8 +666,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// case-insensitively via its own equality). The <c>Add(item)</c> sibling for asks;
     /// returns the plang <c>@bool</c>. (TODO: the other list predicates — IsEmpty, etc. —
     /// still return CLR bool; migrate them in the "plang predicates return @bool" pass.)</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(global::app.type.item.@this value)
-        => await Contains(new Data("", value, context: _context));
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(global::app.type.item.@this value, actor.context.@this context)
+        => await Contains(new Data("", value, context: context));
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
@@ -704,33 +684,26 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// a prefix sorts first (<c>[1,2] &lt; [1,2,3]</c>). An element pair with no order
     /// makes the pair <c>NotEqual</c> (equality still answers; ordering errors at the
     /// boundary). A non-list other side → <c>Incomparable</c>.</summary>
-    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         if (other is not @this lb) return global::app.data.Comparison.Incomparable;
-        // Flatten the row views once — At(i)/Count are O(rows) walks.
-        var mine = Items;
-        var theirs = lb.Items;
-        int shared = System.Math.Min(mine.Count, theirs.Count);
-        for (int i = 0; i < shared; i++)
+        // Walk both lists in step, one pass each — items handed out with the asker's context.
+        using var mine = Items(context).GetEnumerator();
+        using var theirs = lb.Items(context).GetEnumerator();
+        while (true)
         {
-            var c = await mine[i].Compare(theirs[i]);   // element Data compare — lazy, first mismatch exits
+            bool hasMine = mine.MoveNext(), hasTheirs = theirs.MoveNext();
+            // A prefix sorts first ([1,2] < [1,2,3]).
+            if (!hasMine || !hasTheirs)
+                return hasMine ? global::app.data.Comparison.Greater
+                     : hasTheirs ? global::app.data.Comparison.Less
+                     : global::app.data.Comparison.Equal;
+            var c = await mine.Current.Compare(theirs.Current);   // item Data compare — lazy, first mismatch exits
             if (c is global::app.data.Comparison.Less or global::app.data.Comparison.Greater) return c;
             if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
                 return global::app.data.Comparison.NotEqual;
         }
-        var len = mine.Count.CompareTo(theirs.Count);
-        return len < 0 ? global::app.data.Comparison.Less
-             : len > 0 ? global::app.data.Comparison.Greater
-             : global::app.data.Comparison.Equal;
     }
 
-    /// <summary>
-    /// Structural, positional equality — same length and equal items in order. Each
-    /// item routes through its own comparison (the recursion contract), so nested
-    /// numbers widen and nested text compares case-insensitive.
-    /// </summary>
-    public async System.Threading.Tasks.ValueTask<bool> AreEqual(object? other)
-        => other is @this ol && await Order(ol) is global::app.data.Comparison.Equal;
-
-    public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.Peek()))}]";
+    public override string ToString() => $"[{string.Join(", ", Slots().Select(s => s is Data d ? d.Peek() : s))}]";
 }

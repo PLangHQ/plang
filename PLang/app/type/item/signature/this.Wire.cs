@@ -52,7 +52,7 @@ public sealed partial class @this
     public System.Collections.Generic.IEnumerable<string> ContractStrings()
         => Contracts == null
             ? System.Array.Empty<string>()
-            : System.Linq.Enumerable.Select(Contracts.Items, d => d.Peek().ToString() ?? "");
+            : System.Linq.Enumerable.Select(Contracts.Slots(), s => (s is global::app.data.@this d ? d.Peek() : s)?.ToString() ?? "");
 
     // The signature layer is READ by the @schema:signature reader (app/data/schema/signature.cs),
     // which streams the fields off the IReader and verifies — there is no DOM rebuild here. The

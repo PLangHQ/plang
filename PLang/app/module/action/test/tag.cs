@@ -21,7 +21,7 @@ public partial class Tag : IContext
         if (await (await Context.Variable.Get("goal")).Value() is not global::app.goal.@this goal) return Context.Ok();
         if (await Tags.Value() is not { } tags) return Context.Ok();
 
-        foreach (var row in tags.Items)
+        foreach (var row in tags.Items(Context))
             if (global::app.type.item.tag.@this.Create(await row.Value()) is { } tag && !goal.Tag.Has(tag))
                 goal.Tag.Add(tag);
         return Context.Ok();

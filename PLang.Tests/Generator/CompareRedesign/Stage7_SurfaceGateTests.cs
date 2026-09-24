@@ -123,26 +123,26 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
-        var d = new global::app.type.item.dict.@this(global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.type.item.dict.@this();
         d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
         d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
         await Assert.That(keys).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.text.@this>>();
         var names = ((global::app.type.item.list.@this<global::app.type.item.text.@this>)keys)
-            .Items.Select(k => k.Peek()).ToList();
+            .Items(global::PLang.Tests.TestApp.SharedContext).Select(k => k.Peek()).ToList();
         await Assert.That(names.All(v => v is global::app.type.item.text.@this)).IsTrue();
     }
 
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
-        var l = new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext);
+        var l = new global::app.type.item.list.@this();
         l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
         l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
-        object dictCount = new global::app.type.item.dict.@this(global::PLang.Tests.TestApp.SharedContext).Count;
+        object dictCount = new global::app.type.item.dict.@this().Count;
         await Assert.That(dictCount).IsTypeOf<global::app.type.item.number.@this>();
     }
 

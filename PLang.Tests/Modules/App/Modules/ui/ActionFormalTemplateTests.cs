@@ -37,7 +37,7 @@ public class ActionFormalTemplateTests : IDisposable
 
     private global::app.type.item.dict.@this Param(string name, string? type, object? value)
     {
-        var d = new global::app.type.item.dict.@this(_app.User.Context);
+        var d = new global::app.type.item.dict.@this();
         d.Set("Name", name);
         if (type != null) d.Set("Type", type);
         d.Set("Value", value);
@@ -46,13 +46,13 @@ public class ActionFormalTemplateTests : IDisposable
 
     private global::app.type.item.dict.@this Action(string module, string actionName, params global::app.type.item.dict.@this[] parameters)
     {
-        var a = new global::app.type.item.dict.@this(_app.User.Context);
+        var a = new global::app.type.item.dict.@this();
         a.Set("Module", module);
         a.Set("Name", actionName);
-        var ps = new global::app.type.item.list.@this(_app.User.Context);
+        var ps = new global::app.type.item.list.@this();
         foreach (var p in parameters) ps.Add(p);
         a.Set("Parameter", ps);
-        a.Set("Modifier", new global::app.type.item.list.@this(_app.User.Context));
+        a.Set("Modifier", new global::app.type.item.list.@this());
         return a;
     }
 
@@ -73,7 +73,7 @@ public class ActionFormalTemplateTests : IDisposable
     [Test]
     public async Task ScalarParam_RendersFormal()
     {
-        var actions = new global::app.type.item.list.@this(_app.User.Context);
+        var actions = new global::app.type.item.list.@this();
         actions.Add(Action("output", "write", Param("Data", null, "hello")));
         // Quote rule is gone: a bare value renders bare (hello, not "hello").
         await Assert.That(await Render(actions)).IsEqualTo("output.write Data(hello)");
@@ -82,7 +82,7 @@ public class ActionFormalTemplateTests : IDisposable
     [Test]
     public async Task TypedParam_RendersTypeTag()
     {
-        var actions = new global::app.type.item.list.@this(_app.User.Context);
+        var actions = new global::app.type.item.list.@this();
         actions.Add(Action("file", "read", Param("Path", "path", "file.txt")));
         await Assert.That(await Render(actions)).IsEqualTo("file.read Path([path] file.txt)");
     }
@@ -90,12 +90,12 @@ public class ActionFormalTemplateTests : IDisposable
     [Test]
     public async Task StructuredParam_RendersJsonViaFormal()
     {
-        var msg = new global::app.type.item.dict.@this(_app.User.Context);
+        var msg = new global::app.type.item.dict.@this();
         msg.Set("role", "user");
-        var list = new global::app.type.item.list.@this(_app.User.Context);
+        var list = new global::app.type.item.list.@this();
         list.Add(msg);
 
-        var actions = new global::app.type.item.list.@this(_app.User.Context);
+        var actions = new global::app.type.item.list.@this();
         actions.Add(Action("llm", "query", Param("Messages", "list", list)));
         await Assert.That(await Render(actions)).IsEqualTo("llm.query Messages([list] [{\"role\":\"user\"}])");
     }

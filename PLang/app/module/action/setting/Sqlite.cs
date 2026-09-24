@@ -160,7 +160,7 @@ public sealed class Sqlite : IStore
             using (var reader = cmd.ExecuteReader())
                 while (reader.Read())
                     if (!reader.IsDBNull(1)) raws.Add(reader.GetString(1));
-            var list = new global::app.type.item.list.@this(Context);
+            var list = new global::app.type.item.list.@this();
             foreach (var raw in raws)
             {
                 var loaded = await Hydrate<T>(raw);
@@ -256,7 +256,7 @@ public sealed class Sqlite : IStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
 
-            var tables = new global::app.type.item.list.@this(Context);
+            var tables = new global::app.type.item.list.@this();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
                 tables.Add(new data.@this("", reader.GetString(0), context: Context));

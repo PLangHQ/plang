@@ -14,8 +14,8 @@ public partial class Flatten : IContext
             return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{name}' is not a list"));
 
-        var flat = new app.type.item.list.@this(Context);
-        await FlattenNative(nl, flat);
+        var flat = new app.type.item.list.@this();
+        await FlattenNative(nl, flat, Context);
         return Context.Ok(flat);
     }
 
@@ -23,12 +23,12 @@ public partial class Flatten : IContext
     // element Data is kept as-is (its own type-tag preserved). Each element materializes
     // through its own door — a nested list surfaces as a native list, so this single arm
     // covers every case.
-    private static async Task FlattenNative(app.type.item.list.@this source, app.type.item.list.@this target)
+    private static async Task FlattenNative(app.type.item.list.@this source, app.type.item.list.@this target, global::app.actor.context.@this context)
     {
-        foreach (var item in source.Items)
+        foreach (var item in source.Items(context))
         {
             if ((await item.Value()) is app.type.item.list.@this nested)
-                await FlattenNative(nested, target);
+                await FlattenNative(nested, target, context);
             else
                 target.Add(item);
         }

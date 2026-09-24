@@ -85,7 +85,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Instant ordering in caller order; the other side coerces into datetime through
     /// the pure <c>Create</c> core (ISO text → datetime). Non-coercible → Incomparable.</summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         var b = other as @this ?? Create(other);
         if (b is null) return new(global::app.data.Comparison.Incomparable);

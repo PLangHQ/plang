@@ -45,7 +45,7 @@ public class SettingsTests
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
         var paths = new List<global::app.type.item.path.@this>();
-        foreach (var row in node.Files)
+        foreach (var row in (node.Files).Items(global::PLang.Tests.TestApp.SharedContext))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);
 
         await Assert.That(paths.Count).IsEqualTo(2);

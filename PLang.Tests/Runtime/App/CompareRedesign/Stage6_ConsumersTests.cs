@@ -94,13 +94,13 @@ public class Stage6_ConsumersTests
             File.WriteAllText(System.IO.Path.Combine(dir, "tiny.txt"), "a");
             File.WriteAllText(System.IO.Path.Combine(dir, "mid.txt"), new string('b', 10));
 
-            var files = new global::app.type.item.list.@this(ctx);
+            var files = new global::app.type.item.list.@this();
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
                 files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name), context: ctx), context: ctx));
 
-            await files.SortByField("size", descending: false);
+            await files.SortByField("size", descending: false, global::PLang.Tests.TestApp.SharedContext);
 
-            var ordered = files.Items.Select(d => d.Peek()?.ToString() ?? "").ToList();
+            var ordered = files.Items(global::PLang.Tests.TestApp.SharedContext).Select(d => d.Peek()?.ToString() ?? "").ToList();
             await Assert.That(ordered[0]).Contains("tiny.txt");
             await Assert.That(ordered[1]).Contains("mid.txt");
             await Assert.That(ordered[2]).Contains("big.txt");
@@ -127,7 +127,7 @@ public class Stage6_ConsumersTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var list = new global::app.type.item.list.@this(ctx);
+        var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
         var holder = new Data("l", list, context: ctx);
         // membership never errors: the Incomparable element pair is just "not this one"
@@ -141,7 +141,7 @@ public class Stage6_ConsumersTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var list = new global::app.type.item.list.@this(ctx);
+        var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
         var result = await app.Run(new global::app.module.action.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
@@ -158,7 +158,7 @@ public class Stage6_ConsumersTests
         var ctx = app.User.Context;
         // a mixed list (dict + number) dedups without error — Incomparable pairs never match
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var list = new global::app.type.item.list.@this(ctx);
+        var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));

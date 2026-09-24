@@ -61,7 +61,7 @@ public class FormalFilterTests : IDisposable
     [Test]
     public async Task Dict_RendersCompactJson()
     {
-        var d = new global::app.type.item.dict.@this(_app.User.Context);
+        var d = new global::app.type.item.dict.@this();
         d.Set("name", "alice");
         d.Set("age", 30);
         await Assert.That(await Formal("d", d)).IsEqualTo("{\"name\":\"alice\",\"age\":30}");
@@ -70,7 +70,7 @@ public class FormalFilterTests : IDisposable
     [Test]
     public async Task List_RendersCompactJsonArray()
     {
-        var l = new global::app.type.item.list.@this(_app.User.Context);
+        var l = new global::app.type.item.list.@this();
         l.Add(new global::app.type.item.text.@this("a"));
         l.Add(new global::app.type.item.text.@this("b"));
         await Assert.That(await Formal("l", l)).IsEqualTo("[\"a\",\"b\"]");

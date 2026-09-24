@@ -17,7 +17,7 @@ public static class CollectionTestExtensions
         where T : global::app.type.item.@this
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
-        var l = new global::app.type.item.list.@this<T>(context);
+        var l = new global::app.type.item.list.@this<T>();
         foreach (var i in raw)
             l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i, context: context));
         return new("", l, context: context);
@@ -26,9 +26,7 @@ public static class CollectionTestExtensions
     public static global::app.data.@this<global::app.type.item.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this? context = null)
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
-        // Born WITH context — dict.Context propagates to every entry, so lazy Slot
-        // materialization borns its entry values with a wired scope.
-        var d = new global::app.type.item.dict.@this(context);
+        var d = new global::app.type.item.dict.@this();
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);
         return new("", d, context: context);

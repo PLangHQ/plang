@@ -129,7 +129,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     /// <summary>Equality-only: <c>Equal</c>/<c>NotEqual</c> by value or by name
     /// (choice/text), never an order. This choice drives; the other coerces via
     /// <see cref="AreEqual"/> (a name string / choice matches its member).</summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
         => new(AreEqual(other) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
 
     // Equality by value, and by name against a choice/text/string (so

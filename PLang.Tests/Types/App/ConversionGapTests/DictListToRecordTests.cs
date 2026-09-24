@@ -17,14 +17,14 @@ public class DictListToRecordTests
 
     private static Dict D(params (string Key, object? Value)[] entries)
     {
-        var d = new Dict(Ctx);
+        var d = new Dict();
         foreach (var (k, v) in entries) d.Set(k, v);
         return d;
     }
 
     private static PlangList L(params global::app.type.item.@this[] items)
     {
-        var l = new PlangList(Ctx);
+        var l = new PlangList();
         foreach (var i in items) l.Add(i);
         return l;
     }
@@ -112,7 +112,7 @@ public class DictListToRecordTests
             .Value<global::app.type.item.list.@this<LlmMessage>>();
 
         await Assert.That(typed).IsNotNull();
-        await Assert.That(typed!.Items.Count).IsEqualTo(2);
+        await Assert.That(typed!.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
     }
 }
 

@@ -13,8 +13,8 @@ internal static class NormalizeTestExtensions
 {
     public static List<Data> Children(this object? normalized) => normalized switch
     {
-        app.type.item.dict.@this d => d.Entries.ToList(),
-        app.type.item.list.@this l => l.Items.ToList(),
+        app.type.item.dict.@this d => d.Entries(global::PLang.Tests.TestApp.SharedContext).ToList(),
+        app.type.item.list.@this l => l.Items(global::PLang.Tests.TestApp.SharedContext).ToList(),
         List<Data> list => list,
         null => new List<Data>(),
         _ => throw new System.InvalidOperationException(

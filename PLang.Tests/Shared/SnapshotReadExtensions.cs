@@ -12,18 +12,18 @@ public static class SnapshotReadExtensions
 
     /// <summary>A text entry as a string. Null when the entry is absent.</summary>
     public static async Task<string?> Text(this Snapshot s, string key)
-        => s.Entries.Get(key) is { } d
+        => s.Entries.Get(key, s.Context) is { } d
             ? (await d.Value<global::app.type.item.text.@this>()).ToString()
             : null;
 
     /// <summary>A number entry as an int.</summary>
     public static async Task<int> Int(this Snapshot s, string key)
-        => (await s.Entries.Get(key)!.Value<global::app.type.item.number.@this>()).ToInt32();
+        => (await s.Entries.Get(key, s.Context)!.Value<global::app.type.item.number.@this>()).ToInt32();
 
     /// <summary>A list entry as its rows. Empty when the entry is absent.</summary>
     public static async Task<IReadOnlyList<global::app.data.@this>> Rows(this Snapshot s, string key)
-        => s.Entries.Get(key) is { } d
-            ? (await d.Value<global::app.type.item.list.@this>()).Items
+        => s.Entries.Get(key, s.Context) is { } d
+            ? (await d.Value<global::app.type.item.list.@this>())!.Items(s.Context).ToList()
             : Array.Empty<global::app.data.@this>();
 
     /// <summary>The rows of a list entry lowered to a CLR record — the same boundary Providers'

@@ -24,7 +24,7 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         var ctx = app.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.Type[new type("item", "json")], ctx, "cfg");
         await Assert.That((await d.Value())).IsTypeOf<Dict>();
-        await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port")!.Value())!).Clr<object>()).IsEqualTo(8080L);
+        await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port", global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo(8080L);
     }
 
     [Test]
@@ -33,7 +33,7 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         // variable/navigator/Dictionary collapses: when data.Value is dict, navigation
         // is `d.Get(key)`. The three-arm shape dispatch (IDictionary / generic IDictionary<,>
         // / JsonObject) and the reflection fallback are gone for the dict case (C).
-        var u = new Dict(app.User.Context);
+        var u = new Dict();
         u.Set(app.Data("name", "a"));
         u.Set(app.Data("age", 30L));
         var data = app.Data("u", u);

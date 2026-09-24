@@ -33,7 +33,7 @@ public class WireConverterDepthBombTests
         // next level rides as that dict's `value` entry (a container entry may be a Data).
         var outer = await result.Value();
         await Assert.That(outer).IsTypeOf<global::app.type.item.dict.@this>();
-        var next = ((global::app.type.item.dict.@this)outer).Get("value");
+        var next = ((global::app.type.item.dict.@this)outer).Get("value", global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(next).IsNotNull();
         await Assert.That(await next!.Value()).IsTypeOf<global::app.type.item.dict.@this>();   // level 2 opens the same way
     }

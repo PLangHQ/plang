@@ -102,7 +102,7 @@ public class RunActionTests
         var result = await action.Run();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
         var list = (global::app.type.item.list.@this)(await result.Value())!;
-        return list.Select(r => (global::app.test.@this)r.Peek()).ToList();
+        return list.Items(global::PLang.Tests.TestApp.SharedContext).Select(r => (global::app.test.@this)r.Peek()).ToList();
     }
 
     // Each global::app.test.@this gets its own App.@this instance. Two tests cannot observe each
@@ -580,14 +580,14 @@ public class RunActionTests
         await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass);
         // Exactly 3 timings — entry-goal-only, sub-goal's 2 steps rolled up.
         await Assert.That(run.Timings.Count).IsEqualTo(3);
-        var indices = run.Timings.Select(t => ((global::app.test.timing.@this)t.Peek()).Step.Index).OrderBy(i => i).ToList();
+        var indices = run.Timings.Items(global::PLang.Tests.TestApp.SharedContext).Select(t => ((global::app.test.timing.@this)t.Peek()).Step.Index).OrderBy(i => i).ToList();
         await Assert.That(indices[0]).IsEqualTo(0);
         await Assert.That(indices[1]).IsEqualTo(1);
         await Assert.That(indices[2]).IsEqualTo(2);
         // Each step recorded a real wall-clock duration; Ms is non-negative
         // (the goal.call step at index 1 bundles the sub-goal time so it's
         // typically the largest, but we don't pin the magnitude).
-        foreach (var t in run.Timings)
+        foreach (var t in (run.Timings).Items(global::PLang.Tests.TestApp.SharedContext))
             await Assert.That(((global::app.test.timing.@this)t.Peek()).Elapsed.TotalMilliseconds >= 0.0).IsTrue();
     }
 

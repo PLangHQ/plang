@@ -76,8 +76,8 @@ public class SharedProgramTests
         var systemList = (global::app.type.item.list.@this)(await onSystem.Value.Value())!;
         var userList = (global::app.type.item.list.@this)(await onUser.Value.Value())!;
 
-        await Assert.That((await systemList.Items[0].Value()).ToString()).IsEqualTo("system");
-        await Assert.That((await userList.Items[0].Value()).ToString()).IsEqualTo("user");
+        await Assert.That((await systemList.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Value()).ToString()).IsEqualTo("system");
+        await Assert.That((await userList.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Value()).ToString()).IsEqualTo("user");
     }
 
     [Test]
@@ -128,7 +128,7 @@ public class SharedProgramTests
         {
             var list = (global::app.type.item.list.@this)(await (await ctx.Variable.Get("l")).Value())!;
             var seen = new List<string>();
-            foreach (var row in list.Items) seen.Add((await row.Value()).ToString()!);
+            foreach (var row in list.Items(global::PLang.Tests.TestApp.SharedContext)) seen.Add((await row.Value()).ToString()!);
             return seen;
         }
         var system = await Seen(_app.System.Context);

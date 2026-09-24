@@ -211,7 +211,7 @@ public class SnapshotWireTests
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
         // operator/builder makes — the C# stand-in for `set %snap.variable.i% = 2`).
         var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
-        var iVar = snap.Section("Variables").Entries.Get("i")!;   // each captured variable is its own entry
+        var iVar = snap.Section("Variables").Entries.Get("i", global::PLang.Tests.TestApp.SharedContext)!;   // each captured variable is its own entry
         iVar.SetValue(2L);
 
         var result = await snap.Resume(context);

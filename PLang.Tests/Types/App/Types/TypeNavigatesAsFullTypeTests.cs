@@ -53,9 +53,9 @@ public class TypeNavigatesAsFullTypeTests
     {
         var x = new Data("x", new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(
             global::app.goal.step.ErrorOrder.RetryFirst), context: Ctx);
-        var values = await (await x.Get("!type.Values")).Value();
+        var values = await (await x.Get("!type.Values")).Value() as global::app.type.item.list.@this;
         await Assert.That(values).IsNotNull();
-        var options = ((System.Collections.IEnumerable)values!).Cast<object>().Select(o => o.ToString()).ToList();
+        var options = values!.Items(Ctx).Select(o => o.Peek()?.ToString()).ToList();
         await Assert.That(options.Count).IsGreaterThan(1);
     }
 }

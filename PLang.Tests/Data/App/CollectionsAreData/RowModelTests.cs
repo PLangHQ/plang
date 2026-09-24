@@ -15,7 +15,7 @@ public class RowModelTests : System.IAsyncDisposable
 
     private ListV Of(params long[] xs)
     {
-        var l = new ListV(app.User.Context);
+        var l = new ListV();
         foreach (var x in xs) l.Add(D(x));
         return l;
     }
@@ -30,11 +30,11 @@ public class RowModelTests : System.IAsyncDisposable
         a.Add(Of(50, 60));                      // extend: a chunk, weight 2 — merges on read
 
         await Assert.That(a.Count).IsEqualTo(6);            // flattened, not row count
-        await Assert.That((await a.At(0)!.Value())?.ToString()).IsEqualTo("10");
-        await Assert.That((await a.At(3)!.Value())?.ToString()).IsEqualTo("40");
-        await Assert.That((await a.At(4)!.Value())?.ToString()).IsEqualTo("50");   // into the nested row
-        await Assert.That((await a.At(5)!.Value())?.ToString()).IsEqualTo("60");
-        await Assert.That((await a.Last!.Value())?.ToString()).IsEqualTo("60");
+        await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("10");
+        await Assert.That((await a.At(3, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("40");
+        await Assert.That((await a.At(4, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("50");   // into the nested row
+        await Assert.That((await a.At(5, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("60");
+        await Assert.That((await a.Last(global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("60");
     }
 
     [Test]
@@ -52,8 +52,8 @@ public class RowModelTests : System.IAsyncDisposable
 
         // write-through: set the leaf inside the shared row → visible via b too.
         a.SetAt(2, D(99L));
-        await Assert.That((await a.At(2)!.Value())?.ToString()).IsEqualTo("99");
-        await Assert.That((await b.At(0)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await a.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await b.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("99");
 
         // read-view: mutate b → a flattens through the shared row and tracks it.
         b.Add(D(70L));
@@ -69,19 +69,19 @@ public class RowModelTests : System.IAsyncDisposable
 
         a.RemoveAt(2);                          // removes 50 (inside the nested row)
         await Assert.That(a.Count).IsEqualTo(3);
-        await Assert.That((await a.At(2)!.Value())?.ToString()).IsEqualTo("60");
+        await Assert.That((await a.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("60");
     }
 
     [Test]
     public async Task DictRow_IsWeightOne_NotFlattened()
     {
-        var a = new ListV(app.User.Context);
-        var d1 = new DictV(app.User.Context); d1.Set(app.Data("x", 1L));
-        var d2 = new DictV(app.User.Context); d2.Set(app.Data("x", 2L));
+        var a = new ListV();
+        var d1 = new DictV(); d1.Set(app.Data("x", 1L));
+        var d2 = new DictV(); d2.Set(app.Data("x", 2L));
         a.Add(D(d1)); a.Add(D(d2));             // [{x:1}, {x:2}]
 
         await Assert.That(a.Count).IsEqualTo(2);            // dicts are whole items
-        await Assert.That((await a.At(0)!.Value()) is DictV).IsTrue();
+        await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value()) is DictV).IsTrue();
     }
 
     [Test]
@@ -89,10 +89,10 @@ public class RowModelTests : System.IAsyncDisposable
     {
         var a = Of(30, 10);
         a.Add(Of(20, 5));                       // extend → [30, 10, 20, 5]
-        a.SortByValue(descending: false);       // → [5, 10, 20, 30]
+        a.SortByValue(descending: false, global::PLang.Tests.TestApp.SharedContext);       // → [5, 10, 20, 30]
 
         await Assert.That(a.Count).IsEqualTo(4);
-        await Assert.That((await a.At(0)!.Value())?.ToString()).IsEqualTo("5");
-        await Assert.That((await a.At(3)!.Value())?.ToString()).IsEqualTo("30");
+        await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("5");
+        await Assert.That((await a.At(3, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("30");
     }
 }

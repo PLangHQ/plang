@@ -48,5 +48,5 @@ public sealed class TestIdentity : global::app.module.action.identity.code.IIden
 
     public Task<global::app.data.@this<global::app.type.item.list.@this<Identity>>> ListAsync(global::app.module.action.identity.list action)
         => Task.FromResult(action.Context.Ok<global::app.type.item.list.@this<Identity>>(
-            new global::app.type.item.list.@this<Identity>(new[] { action.Context.Ok<Identity>(_shared) }, action.Context)));
+            new global::app.type.item.list.@this<Identity>(new[] { action.Context.Ok<Identity>(_shared) })));
 }

@@ -66,7 +66,7 @@ public sealed class @this : global::app.type.kind.@this
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
         var e = (JsonElement)host;
-        var dict = new global::app.type.item.dict.@this(ctx);
+        var dict = new global::app.type.item.dict.@this();
         if (e.ValueKind == JsonValueKind.Object)
             foreach (var p in e.EnumerateObject())
                 dict.Set(Data(p.Name, p.Value, null, ctx));

@@ -151,7 +151,7 @@ public sealed partial class @this
                 .Select(f => new data.@this("", (global::app.type.item.path.@this)new @this(f, Context), context: Context))
                 .ToList();
             return Context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
-                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files, Context));
+                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

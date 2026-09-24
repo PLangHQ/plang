@@ -54,7 +54,7 @@ public class DataWrappedListTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
         // Read the way a real handler does: enumerate, resolve + convert each row through its door.
         var items = new List<global::app.module.action.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
+        foreach (var row in (await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext)) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
 
@@ -82,8 +82,8 @@ public class DataWrappedDictTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.dict.@this>;
         // Resolve the dict through its door, then read each value through ITS door.
         var d = (await typed!.Value())!;
-        await Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted");
-        await Assert.That((await d.Get("other")!.Value()).ToString()).IsEqualTo("literal");
+        await Assert.That((await d.Get("inner", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("substituted");
+        await Assert.That((await d.Get("other", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("literal");
     }
 }
 
@@ -110,7 +110,7 @@ public class DataWrappedActionListTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
         await Assert.That((await typed!.Value())).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
-        var subParam = ((((await typed.Value())!.Items[0].Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Parameter?.FirstOrDefault(p => p.Name == "v");
+        var subParam = ((((await typed.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Parameter?.FirstOrDefault(p => p.Name == "v");
         await Assert.That((await subParam!.Value())?.ToString()).IsEqualTo("%comment%");
     }
 
@@ -134,7 +134,7 @@ public class DataWrappedActionListTests
             variables: new Dictionary<string, object?> { ["x"] = "premature-resolution-would-be-bad" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
-        var subParam = ((((await typed!.Value())!.Items[0].Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Parameter?.FirstOrDefault(p => p.Name == "a");
+        var subParam = ((((await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Parameter?.FirstOrDefault(p => p.Name == "a");
         await Assert.That((await subParam!.Value())?.ToString()).IsEqualTo("%x%");
     }
 }

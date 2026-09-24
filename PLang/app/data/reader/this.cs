@@ -32,8 +32,26 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         return Read(ref reader, ctx);
     }
 
+    /// <summary>A program row — an action's parameter or default read off a <c>.pr</c>. The
+    /// program is shared by every run, so the row holds no context; a run reads its own copy
+    /// (<c>action[name]</c>). A program row holds no context; it goes when the action-property
+    /// change lands (the program then holds no Data at all).</summary>
+    public Data Row(byte[] raw, global::app.type.reader.ReadContext ctx)
+    {
+        var utf8 = new System.Text.Json.Utf8JsonReader(raw);
+        utf8.Read();
+        var reader = new global::app.channel.serializer.json.Reader(utf8, raw);
+        return Read(ref reader, ctx, born: null);
+    }
+
     public Data Read(ref global::app.channel.serializer.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
+        => Read(ref reader, ctx, born: ctx.Context);
+
+    // The one read. `born` is the context the Data is born with — the read context for a value,
+    // none for a program row.
+    private Data Read(ref global::app.channel.serializer.json.Reader reader,
+        global::app.type.reader.ReadContext ctx, global::app.actor.context.@this? born)
     {
         string name = "";
         global::app.type.@this? typeRef = null;
@@ -130,18 +148,19 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         reader.EndObject();
         if (value != null)
         {
-            // One arm: goal.call (eager), a content source, or a wire — all items. The Data is
+            // One arm: goal.call (eager), a content source, or a wire — all items. A value Data is
             // born WITH the read context: source/wire materialization renders templates and
-            // resolves %refs% against data.Context, so it must carry it (a null context leaves a
-            // template unrendered). CleanName handles the name.
-            var d = new Data(name, value, context: ctx.Context);
+            // resolves %refs% against data.Context. A program row is born with none — a run
+            // loads its own copy. CleanName handles the name.
+            var d = new Data(name, value, context: born);
             if (properties != null) d.Properties = properties;
             return d;
         }
-        // No value slot — a typed absence under its declared type. Born WITH the read
-        // context: a typed null is still a value construction (type.Build), so it must
-        // carry context like every other Data built on this read path.
-        var typedNull = new Data(name, (object?)null, typeRef, context: ctx.Context);
+        // No value slot — a typed absence under its declared type (the absence the type's own
+        // door makes for a null raw), born with the same context as a value.
+        var typedNull = typeRef is { IsNull: false }
+            ? new Data(name, new global::app.type.item.@null.@this(typeRef.Name, typeRef.Kind?.Name), context: born)
+            : new Data(name, (object?)null, context: born);
         if (properties != null) typedNull.Properties = properties;
         return typedNull;
     }

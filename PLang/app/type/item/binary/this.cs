@@ -82,7 +82,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Equality-only: same byte sequence → <c>Equal</c>, else <c>NotEqual</c>;
     /// a side that can't become bytes → <c>Incomparable</c>. No order.</summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         var b = other as @this ?? Create(other);
         return new(b is null ? global::app.data.Comparison.Incomparable

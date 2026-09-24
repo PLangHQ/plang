@@ -62,7 +62,7 @@ public sealed class @this
             var stored = await (await _actor.App.SettingsStore).GetAll<Grant>(PermissionTable);
             if (stored.Success && await stored.Value() is { } list)
             {
-                foreach (var grantData in list.Items.Cast<global::app.data.@this>())
+                foreach (var grantData in list.Items(_actor.Context))
                 {
                     // Stamp Context on grants freshly rehydrated from SQLite — the store
                     // returns Data without a Context wired, and downstream signature/
