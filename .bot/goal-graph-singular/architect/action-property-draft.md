@@ -1,6 +1,8 @@
 # An action's properties hold their values — the program holds no Data
 
-With Ingi, 2026-09-24. **Draft, being designed with Ingi. NOT for coder.** Coder is waiting on this for the step-1 question below.
+With Ingi, 2026-09-24. **Draft. NOT for coder yet: its own plan, right after remove-context lands (Ingi).** Until then, remove-context step 1 has the `.pr` reader create an action's property `Data` without a context, on purpose (`data/reader/this.cs:137`). That's today's behaviour made explicit, since the old list stamp wiped it by accident. This change removes it.
+
+Cost (coder's inventory, `coder/to-architect-parameter-rows-inventory.md`, `d10cb4b04`): about 20 production places plus two test helpers (`Make.Action` ×107, `TestAction.Create` ×69), 34 direct test lines. No `.pr` of 1,620 carries a `"properties"` bag on a value. It also covers: two Build hooks that change the program's list (goal.call's `SetValue`, variable.set's `Add`); grafting a modifier shares the action's list by reference (`goal/step/this.cs:88`, `Parameter = a.Parameter`); and the binding-order change in 8.
 
 **Vocabulary (Ingi):** an action is a class, and a class has **properties**. The `.pr` holds an action's properties, and each maps to an action property (`goal/step/action/property/this.cs`). The word "parameter" is not used. The code and the `.pr` still say it in three places, and all three become "property": the `.pr` key `"parameter": [...]` (read at `goal/step/action/serializer/Reader.cs:58`), `action.Parameter`, and `goal/step/action/parameter/list`.
 
