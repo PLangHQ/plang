@@ -59,21 +59,6 @@ public class CollectionEventsTests : System.IAsyncDisposable
         await Assert.That(setFired).IsFalse();
     }
 
-    [Test]
-    public async Task PerVariableEvents_StillFire_BackCompat()
-    {
-        // Per-variable Data.OnChange must still fire — used by --debug={"variable":[...]}.
-        var vars = new Variables(app.User.Context);
-        vars.Set("name", "first");
-
-        var data = await vars.Get("name");
-        bool perVarFired = false;
-        data.OnChange.Add((oldData, newData) => perVarFired = true);
-
-        vars.Set("name", "second");
-
-        await Assert.That(perVarFired).IsTrue();
-    }
 
     [Test]
     public async Task Events_NotFired_AfterUnsubscribe()

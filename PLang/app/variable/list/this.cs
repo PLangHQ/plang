@@ -54,7 +54,7 @@ public partial class @this
 
     /// <summary>
     /// Fires after a variable is rebound (existing name → new value). Carries (name, before, after).
-    /// Collection-level event — fires for any name. Per-variable Data.OnChange still fires too.
+    /// Collection-level event — fires for any name.
     /// Used by Call.@this diff capture: subscribe in ctor, unsubscribe in DisposeAsync.
     /// </summary>
     public event Action<string, object?, object?>? OnSet;
@@ -136,13 +136,13 @@ public partial class @this
             // dict, so subsequent gets here see the new value.
             var frame = Calls.Current;
 
-            // Data value: replace under `name`. The binding's state (Properties + event
-            // subscribers) follows the name onto the new Data — that's how
-            // `--debug={"variables":[...]}` watches see every assignment, and how Properties
-            // attached to a name survive a re-mint. In-place mutation of prev is wrong: a
-            // Data may be aliased under multiple keys (e.g. Action stores the step result
-            // both under its own name AND under "!data"), so mutating prev would bleed
-            // across keys. A stored Data keeps the context it was born with.
+            // Data value: replace under `name`; the store announces the create or change (OnCreate /
+            // OnSet — the diff capture and the --debug watch listen there). In-place mutation of prev
+            // is wrong: a Data may be aliased under multiple keys (e.g. Action stores the step result
+            // both under its own name AND under "!data"), so mutating prev would bleed across keys.
+            // Properties stay attached to the Data instance — they're result metadata (e.g.
+            // condition.if's branchIndex), not binding metadata. A stored Data keeps the context it
+            // was born with.
             if (value is data.@this dv)
             {
                 if (frame != null)
@@ -150,18 +150,13 @@ public partial class @this
                     var hadPrev = frame.TryGet(name, out var prevFrame);
                     if (hadPrev && !ReferenceEquals(prevFrame, dv))
                     {
-                        dv.OnCreate = prevFrame.OnCreate;
-                        dv.OnChange = prevFrame.OnChange;
-                        dv.OnDelete = prevFrame.OnDelete;
                         var prevValue = prevFrame.Peek();
-                        prevFrame.FireOnChange(dv);
                         frame.Set(name, dv);
                         OnSet?.Invoke(name, prevValue, dv.Peek());
                         return dv;
                     }
                     else if (!hadPrev)
                     {
-                        dv.FireOnCreate();
                         frame.Set(name, dv);
                         OnCreate?.Invoke(name, dv.Peek());
                         return dv;
@@ -172,22 +167,13 @@ public partial class @this
 
                 if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
                 {
-                    // Event subscribers follow the *name* across re-binding (so
-                    // `--debug={"variables":[...]}` watches see every assignment, not just
-                    // the first). Properties stay attached to the Data instance — they're
-                    // result metadata (e.g. condition.if's branchIndex), not binding metadata.
-                    dv.OnCreate = prev.OnCreate;
-                    dv.OnChange = prev.OnChange;
-                    dv.OnDelete = prev.OnDelete;
                     var prevValue = prev.Peek();
-                    prev.FireOnChange(dv);
                     _variables[name] = dv;
                     OnSet?.Invoke(name, prevValue, dv.Peek());
                     return dv;
                 }
                 else if (prev == null)
                 {
-                    dv.FireOnCreate();
                     _variables[name] = dv;
                     OnCreate?.Invoke(name, dv.Peek());
                     return dv;
@@ -200,19 +186,14 @@ public partial class @this
             if (frame != null)
             {
                 // If the binding already exists in *this* overlay, rebind it — mint a
-                // new Data and carry subscribers across, never mutate in place. This is
-                // the branch that bites inside channel-fire / parallel-foreach: a `set`
-                // in a forked flow mutating its overlay Data in place would rewrite a
-                // value the parent already stored. Rebinding keeps the captured value
-                // independent.
+                // new Data, never mutate in place. This is the branch that bites inside
+                // channel-fire / parallel-foreach: a `set` in a forked flow mutating its
+                // overlay Data in place would rewrite a value the parent already stored.
+                // Rebinding keeps the captured value independent.
                 if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
                 {
                     var rebound = new data.@this(name, value, context: _context);
-                    rebound.OnCreate = existingFrame.OnCreate;
-                    rebound.OnChange = existingFrame.OnChange;
-                    rebound.OnDelete = existingFrame.OnDelete;
                     var prevValue = existingFrame.Peek();
-                    existingFrame.FireOnChange(rebound);
                     frame.Set(name, rebound);
                     OnSet?.Invoke(name, prevValue, rebound.Peek());
                     return rebound;
@@ -228,7 +209,6 @@ public partial class @this
                 }
                 else
                 {
-                    data.FireOnCreate();
                     OnCreate?.Invoke(name, value);
                 }
                 frame.Set(name, data);
@@ -237,18 +217,13 @@ public partial class @this
 
             if (_variables.TryGetValue(name, out var existing))
             {
-                // Rebind, don't mutate: mint a new Data and carry the name's event
-                // subscribers across (mirrors the Data-value branch above). In-place
-                // mutation of `existing` is the alias bug — a Data the variable shared
-                // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot
-                // when the variable is re-set. Reassignment rebinds the binding; it
-                // does not reach back into a value already captured elsewhere.
+                // Rebind, don't mutate: mint a new Data (mirrors the Data-value branch above).
+                // In-place mutation of `existing` is the alias bug — a Data the variable shared
+                // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot when the
+                // variable is re-set. Reassignment rebinds the binding; it does not reach back
+                // into a value already captured elsewhere.
                 var rebound = new data.@this(name, value, context: _context);
-                rebound.OnCreate = existing.OnCreate;
-                rebound.OnChange = existing.OnChange;
-                rebound.OnDelete = existing.OnDelete;
                 var prevValue = existing.Peek();
-                existing.FireOnChange(rebound);
                 _variables[name] = rebound;
                 OnSet?.Invoke(name, prevValue, rebound.Peek());
                 return rebound;
@@ -256,7 +231,6 @@ public partial class @this
             else
             {
                 var data = new data.@this(name, value, context: _context);
-                data.FireOnCreate();
                 _variables[name] = data;
                 OnCreate?.Invoke(name, value);
                 return data;
@@ -289,11 +263,7 @@ public partial class @this
 
         data.@this? born = null;
         var held = _variables.GetOrAdd(name, _ => born = new data.@this(name, value(), context: _context));
-        if (ReferenceEquals(held, born))
-        {
-            born.FireOnCreate();
-            OnCreate?.Invoke(name, born.Peek());
-        }
+        if (ReferenceEquals(held, born)) OnCreate?.Invoke(name, born.Peek());
         return held;
     }
 
@@ -317,16 +287,10 @@ public partial class @this
                           : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
             return false;
 
-        // Rebind, carrying the name's subscribers across — the same rebind Set does.
-        var rebound = new data.@this(name, value, context: _context)
-        {
-            OnCreate = expected.OnCreate,
-            OnChange = expected.OnChange,
-            OnDelete = expected.OnDelete,
-        };
+        // Rebind — the same rebind Set does.
+        var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
         else if (!_variables.TryUpdate(name, rebound, expected)) return false;
-        expected.FireOnChange(rebound);
         OnSet?.Invoke(name, expected.Peek(), value);
         return true;
     }
@@ -443,15 +407,13 @@ public partial class @this
     }
 
     /// <summary>
-    /// Removes a variable. Fires OnDelete on the removed Data so subscribers
-    /// (e.g. --debug={"variables":[{"name":"x","event":"OnDelete"}]}) see it.
+    /// Removes a variable; the store announces it (OnRemove).
     /// </summary>
     public bool Remove(string name)
     {
         name = CleanName(name);
-        if (_variables.TryRemove(name, out var removed))
+        if (_variables.TryRemove(name, out _))
         {
-            removed.FireOnDelete();
             OnRemove?.Invoke(name);
             return true;
         }

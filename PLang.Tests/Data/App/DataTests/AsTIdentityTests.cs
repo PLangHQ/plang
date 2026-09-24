@@ -2,7 +2,7 @@ namespace PLang.Tests.App.DataTests;
 
 // Phase 2b contract — As<T> preserves identity. The architect's anchor: every
 // plang variable IS Data; cross-type views are LIVE windows into the same
-// variable, sharing Properties + the three event lists by reference. Only Type
+// variable, sharing Properties by reference. Only Type
 // and the converted .Value differ between a source and its typed view.
 //
 // Identity rules (architect/v1/plan.md §Phase 2):
@@ -27,7 +27,7 @@ public class AsTIdentityTests
 
     // Rule 1 — same-type fast path. As<int>() on Data<global::app.type.item.number.@this> returns the source
     // instance. ReferenceEquals is the only check that proves zero allocation
-    // and full identity (Properties, event lists, Name, Type, everything is
+    // and full identity (Properties, Name, Type, everything is
     // trivially shared because it's the same object).
     // Same-type ask is pure pass-through: the typed ask answers the source's own
     // value instance, no conversion and no allocation.
@@ -82,39 +82,11 @@ public class AsTIdentityTests
         await Assert.That(((await wrapped.Properties.Value("annot")))?.ToString()).IsEqualTo("via-source");
     }
 
-    // Variance fast path aliases all three event lists. Subscribing on either
-    // side and firing on the other proves the lists are ref-shared, not copied.
-    [Test]
-    public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
-    {
-        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) });
-        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
-        await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
-        var seen = 0;
-        wrapped.OnChange.Add((_, _) => seen++);
-        source.FireOnChange(new global::app.data.@this("nums", new global::app.type.item.list.@this()));
-        await Assert.That(seen).IsEqualTo(1);
-    }
 
-    // Stronger variant of the above: AFTER wrap, add a subscriber via
-    // wrapped.OnChange. Verify it's reachable via source.OnChange (same list).
-    // Distinguishes "copied snapshot at wrap time" from "ref-shared list" —
-    // a snapshot would not see the post-wrap subscriber; a ref-share would.
-    [Test]
-    public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
-    {
-        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) });
-        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
-        Action<Data, Data> handler = (_, _) => { };
-        wrapped.OnChange.Add(handler);
-        await Assert.That(source.OnChange).Contains(handler);
-    }
 
     // Rule 3 — cross-type with conversion. Data<global::app.type.item.number.@this>(42).Value<global::app.type.item.text.@this>() produces
-    // a NEW Data<global::app.type.item.text.@this> with converted .Value ("42"), but Properties + event
-    // lists alias from source. The .Value is a fresh converted object —
+    // a NEW Data<global::app.type.item.text.@this> with converted .Value ("42"), but Properties
+    // alias from source. The .Value is a fresh converted object —
     // ref-DISTINCT from source.Value (42 boxed) — but the metadata bag is shared.
     [Test]
     public async Task AsT_CrossType_ConversionWraps_PropertiesAliased()

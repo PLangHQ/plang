@@ -2,9 +2,8 @@
 namespace PLang.Tests.App.CollectionsAreData;
 
 // Stage 2 — `set` rebinds, not mutates. The two raw branches of Variables.Set
-// (frame-overlay :199, underlying-dict :227) must mint a new Data on a same-type
-// set and carry OnCreate/OnChange/OnDelete subscribers across — matching the
-// Data-value branch (:137-191) that already rebinds. Pin both in isolation so the
+// (frame-overlay, underlying-dict) must mint a new Data on a same-type set —
+// matching the Data-value branch that already rebinds. Pin both in isolation so the
 // alias bug doesn't reappear inside channel-fire or parallel-foreach flows.
 public class Stage2_SetRebindTests
 {
@@ -51,49 +50,5 @@ public class Stage2_SetRebindTests
         await Assert.That(dataB.Peek()?.ToString()).IsEqualTo("b");
     }
 
-    [Test]
-    public async Task Set_Rebind_CarriesSubscribersAcrossByName()
-    {
-        // OnCreate / OnChange / OnDelete subscribers registered against the variable name
-        // remain attached after a Set that mints a new Data. The Data-value branch already
-        // does this; the raw branches must match.
-        await using var app = NewApp();
-        var vars = app.User.Context.Variable;
 
-        vars.Set("x", "a");
-        var dataA = await vars.Get("x");
-        dataA.OnChange.Add((_, _) => { });
-        dataA.OnDelete.Add(_ => { });
-
-        vars.Set("x", "b");
-        var dataB = await vars.Get("x");
-
-        // The subscriber lists follow the name onto the new binding (carried by reference).
-        await Assert.That(ReferenceEquals(dataA.OnChange, dataB.OnChange)).IsTrue();
-        await Assert.That(ReferenceEquals(dataA.OnDelete, dataB.OnDelete)).IsTrue();
-        await Assert.That(dataB.OnChange.Count).IsEqualTo(1);
-    }
-
-    [Test]
-    public async Task Set_Rebind_FiresOnChange_NotInPlaceMutation()
-    {
-        // OnChange fires on the rebind (mint-and-replace) — not on a mutation that never
-        // happened. Distinguishes the new rebind path from the old `existing.Value = value`
-        // mutation that did fire OnChange but for the wrong reason.
-        await using var app = NewApp();
-        var vars = app.User.Context.Variable;
-
-        vars.Set("x", "a");
-        var dataA = await vars.Get("x");
-        Data? firedWith = null;
-        dataA.OnChange.Add((_, replacement) => firedWith = replacement);
-
-        vars.Set("x", "b");
-        var dataB = await vars.Get("x");
-
-        // OnChange fired with the new (rebound) Data, which is the current binding.
-        await Assert.That(firedWith).IsNotNull();
-        await Assert.That(ReferenceEquals(firedWith, dataB)).IsTrue();
-        await Assert.That(firedWith!.Peek()?.ToString()).IsEqualTo("b");
-    }
 }

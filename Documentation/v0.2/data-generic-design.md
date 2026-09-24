@@ -615,7 +615,7 @@ Section 7's sketch shows `.Value` triggering substitution. The shipped contract 
 
 ## Identity preservation — `As<T>` wrap rules + `AsCanonical`
 
-Section 7's `As<T>` sketch always allocates a fresh `Data<T>` and copies `.Value`. The shipped contract preserves identity instead: a typed view of a variable shares state with the underlying binding so `Properties` mutations and event subscribers are visible through every alias. This is what makes `--debug={"variables":[...]}` survive re-bindings and what lets handlers attach metadata to a variable that downstream readers can see.
+Section 7's `As<T>` sketch always allocates a fresh `Data<T>` and copies `.Value`. The shipped contract preserves identity instead: a typed view of a variable shares state with the underlying binding so `Properties` mutations are visible through every alias. This is what lets handlers attach metadata to a variable that downstream readers can see.
 
 The principle: **every plang variable IS `Data`.** A `Data<T>` is a typed *view* of a variable, not a copy of it. The "canonical" Data — the live variable when the slot resolves a `%var%`, the parameter Data when the slot is literal — owns the state; views alias it.
 
@@ -626,11 +626,11 @@ The principle: **every plang variable IS `Data`.** A `Data<T>` is a typed *view*
 | Case | Source | Target | Outcome |
 |---|---|---|---|
 | **1. Same-type fast path** | `this is Data<T>` and `.Value is T` | `Data<T>` | returns `this`. No allocation. |
-| **2. Variance fast path** | `value is T` and `IsPlangAssignable(T, value.GetType())` | `Data<T>` | new `Data<T>`; `.Value` is the same reference (cast-only); `Properties`, `OnCreate`, `OnChange`, `OnDelete` aliased from `this`. |
-| **3. Cross-type with conversion** | `value` can't satisfy `T` as-is | `Data<T>` | new `Data<T>` with converted `.Value`; the four state slots aliased from `this`. `T == IEnumerable` delegates to `Data.AsEnumerable()` so the string-not-iterable rule has one source. |
+| **2. Variance fast path** | `value is T` and `IsPlangAssignable(T, value.GetType())` | `Data<T>` | new `Data<T>`; `.Value` is the same reference (cast-only); `Properties` aliased from `this`. |
+| **3. Cross-type with conversion** | `value` can't satisfy `T` as-is | `Data<T>` | new `Data<T>` with converted `.Value`; `Properties` aliased from `this`. `T == IEnumerable` delegates to `Data.AsEnumerable()` so the string-not-iterable rule has one source. |
 | **4. Conversion failure** | conversion errored | `Data<T>.FromError(error)` | sentinel; nothing aliased. The post-Run resolution check (above) surfaces it. |
 
-Aliasing means `Properties` / `OnCreate` / `OnChange` / `OnDelete` are list references shared between source and view. `wrapped.Properties.Set("note", x)` is visible through `source.Properties`. A handler subscribing to `wrapped.OnChange` fires when `Variables.Set` replaces the underlying binding. Subscribers added at any point — to source, to any view, before or after replacement — are visible from every alias because they share the same list ref.
+Aliasing means `Properties` is shared between source and view: `wrapped.Properties.Set("note", x)` is visible through `source.Properties`.
 
 ### `AsCanonical` — plain `Data` slots bypass `As<T>` entirely
 
@@ -644,22 +644,9 @@ When a handler property is plain `Data` (untyped), the source generator emits `_
 
 The walker is shared between `AsCanonical` (plain Data) and `AsT_Impl` (typed Data) so nested variables resolve by one rule on both paths. A drift here was the bug coder/v2 fixed: `AsCanonical` returned containers unchanged while typed Data walked them, so `set ... type=json` over a list-of-dicts saw literal `"%var%"` strings inside the parameter.
 
-### `Variables.Set` — events follow the name, Properties stay with the Data
+### `Variables.Set` — the store announces changes, Properties stay with the Data
 
-Identity preservation continues at the storage layer. When `Variables.Set(dv)` replaces an existing binding under the same name:
-
-```csharp
-// PLang/app/variables/this.cs
-if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
-{
-    dv.OnCreate = prev.OnCreate;   // alias — same list refs
-    dv.OnChange = prev.OnChange;
-    dv.OnDelete = prev.OnDelete;
-    prev.FireOnChange(dv);
-}
-```
-
-Each `Data` under a name shares the *same* event-list refs as every prior binding. New subscribers added at any point are visible to all subsequent re-bindings, so debug watches survive any number of replacements. **Properties don't carry across replacement** — they're metadata about the *value* (e.g. `condition.if`'s `branchIndex` lives in `Properties` of that step's `!data` Data; replacing `!data` on the next step shouldn't bleed through stale metadata). Events follow the *name*, Properties stay with the *Data instance*.
+When `Variables.Set(dv)` replaces an existing binding under the same name, the store rebinds the name and announces it through its own events — `OnCreate` (name, value), `OnSet` (name, before, after), `OnRemove` (name) — for any name; the diff capture and the `--debug={"variables":[...]}` watch listen there. A `Data` carries no subscribers. **Properties don't carry across replacement** — they're metadata about the *value* (e.g. `condition.if`'s `branchIndex` lives in `Properties` of that step's `!data` Data; replacing `!data` on the next step shouldn't bleed through stale metadata).
 
 `variable.set` is the **sole binding-mint site** for user-visible variables. Its `MintTyped` if-chain switches on the runtime type of the bound value (`string`/`int`/`long`/`bool`/`Guid`/`byte[]`/`List`/`Dict`/...) and constructs the right `Data<T>`; mutable refs (List, Dict) are snapshot-cloned via JSON roundtrip so later `set %x.field% = ...` against the source doesn't bleed through. Cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
 

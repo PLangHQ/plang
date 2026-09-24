@@ -60,45 +60,6 @@ public partial class @this
            && s.ValueKind == System.Text.Json.JsonValueKind.String
            && s.GetString() == WireSchemaData;
 
-    // Subscribers as Lists (not C# events) so cross-type wraps (As<T>) and clones can
-    // share the same list ref between source and view. C# events are immutable
-    // multicast delegates and can't be reference-shared. Direct .Add(...) from the
-    // outside is fine — these are internal infrastructure, not a public-API
-    // contract that needs encapsulation.
-
-    /// <summary>Subscribers fired by Variables.Set() when this Data is replaced — (oldData, newData).</summary>
-    [JsonIgnore]
-    [LlmIgnore]
-    public List<Action<@this, @this>> OnChange { get; set; } = new();
-
-    /// <summary>Subscribers fired when variable is first created in the store — (data).</summary>
-    [JsonIgnore]
-    [LlmIgnore]
-    public List<Action<@this>> OnCreate { get; set; } = new();
-
-    /// <summary>Subscribers fired by Variables.Remove() before deletion — (data).</summary>
-    [JsonIgnore]
-    [LlmIgnore]
-    public List<Action<@this>> OnDelete { get; set; } = new();
-
-    /// <summary>Fires every OnChange subscriber in order.</summary>
-    public void FireOnChange(@this newData)
-    {
-        foreach (var h in OnChange) h.Invoke(this, newData);
-    }
-
-    /// <summary>Fires every OnCreate subscriber in order.</summary>
-    public void FireOnCreate()
-    {
-        foreach (var h in OnCreate) h.Invoke(this);
-    }
-
-    /// <summary>Fires every OnDelete subscriber in order.</summary>
-    public void FireOnDelete()
-    {
-        foreach (var h in OnDelete) h.Invoke(this);
-    }
-
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
@@ -330,16 +291,13 @@ public partial class @this
 
     /// <summary>
     /// Replaces the value — the write side of the door. The new value lifts to
-    /// its typed instance at this seam; mutation fires <see cref="OnChange"/>.
+    /// its typed instance at this seam.
     /// </summary>
     public virtual void SetValue(object? value)
     {
         _item = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
-        // Data owns OnChange — fires whenever the wrapped value mutates.
-        // Constructors set _item directly and bypass this. SetValueDirect also bypasses.
-        FireOnChange(this);
     }
 
     /// <summary>
@@ -366,7 +324,7 @@ public partial class @this
 
     /// <summary>
     /// Updates the instance without triggering Value setter side effects (no unwrap,
-    /// no OnChange). Used by RehydrateNestedData and the wire/compress couriers —
+    /// no rebinding). Used by RehydrateNestedData and the wire/compress couriers —
     /// transitional debt the schema-layer branch deletes; do not add callers.
     /// A non-item value (a reconstructed Data riding as a courier payload) is
     /// carried by the rung-2 wrapper so the slot stays item-typed.
@@ -499,7 +457,7 @@ public partial class @this
     /// <summary>
     /// Forms the typed slot binding from this resolved Data and an already-built
     /// answer instance — a <c>Data&lt;T&gt;</c> view under THIS binding's identity
-    /// (Name, Context; Properties and event lists aliased by reference). The
+    /// (Name, Context; Properties aliased by reference). The
     /// answer is the instance the typed ask produced; a null answer carries this
     /// binding's failure across (the typed ask's decline landed it here via
     /// <c>Fail</c>), so the formed slot's <c>Success</c> mirrors the source.
@@ -513,9 +471,6 @@ public partial class @this
             Properties = Properties,
         };
         clone._item = answer ?? global::app.type.item.@this.Absent;
-        clone.OnCreate = OnCreate;
-        clone.OnChange = OnChange;
-        clone.OnDelete = OnDelete;
         // A declined ask lands its reason on this binding (asking.Fail) and
         // answers null — carry that failure onto the typed view the caller holds.
         if (answer == null && _error != null)
@@ -528,8 +483,8 @@ public partial class @this
 
     /// <summary>
     /// The typed FACE of this binding — a <see cref="@this{T}"/> over the SAME value, with
-    /// NO resolution and NO clone of the value. Shares <c>_item</c>, Context, Properties and
-    /// event lists by reference: this binding and the view are two handles on one variable.
+    /// NO resolution and NO clone of the value. Shares <c>_item</c>, Context and Properties by
+    /// reference: this binding and the view are two handles on one variable.
     /// It is <see cref="Value{T}"/> MINUS the resolve — the dispatch hands a typed view onto
     /// the action's property; the handler's own <c>.Value()</c> opens the door later. An
     /// already-<c>Data&lt;T&gt;</c> binding is returned as itself.
@@ -548,9 +503,6 @@ public partial class @this
             IsInitialized = IsInitialized,
         };
         view._item = _item;
-        view.OnCreate = OnCreate;
-        view.OnChange = OnChange;
-        view.OnDelete = OnDelete;
         if (_error != null) view.Fail(_error);
         return view;
     }
@@ -590,9 +542,6 @@ public partial class @this
             var rendered = await Value();
             var transient = new @this(Name, rendered, null, Parent, context: _context);
             transient.Properties = Properties;
-            transient.OnCreate   = OnCreate;
-            transient.OnChange   = OnChange;
-            transient.OnDelete   = OnDelete;
             return transient;
         }
 

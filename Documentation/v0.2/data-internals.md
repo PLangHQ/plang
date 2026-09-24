@@ -170,7 +170,7 @@ Why the `context` parameter even though the lookup is context-free today: contra
 `Data.As<T>(context)` does not always allocate. It applies four rules (architect/v1/plan.md §Phase 2; `app/data/this.cs` `WrapAs<T>`):
 
 1. **Same-type fast path** — `this is Data<T>` and `.Value is T` → return `this`. No allocation.
-2. **Variance fast path** — `value is T` and `IsPlangAssignable(T, value.GetType())` → new `Data<T>` whose `.Value` is the same reference (cast-only). `Properties`, `OnCreate`, `OnChange`, `OnDelete` aliased from `this`.
+2. **Variance fast path** — `value is T` and `IsPlangAssignable(T, value.GetType())` → new `Data<T>` whose `.Value` is the same reference (cast-only). `Properties` aliased from `this`.
 3. **Cross-type with conversion** — converted `.Value`, state aliased. `T == IEnumerable` delegates to `Data.AsEnumerable()` so the string-not-iterable rule has one source of truth.
 4. **Conversion failure** — `Data<T>.FromError(error)` sentinel; nothing aliased. The post-Run resolution check (see *Resolution semantics* in `data-generic-design.md`) surfaces it.
 
@@ -192,31 +192,23 @@ Handler properties typed as plain `Data` (not `Data<T>`) operate on the *live va
 
 The walker is shared with `AsT_Impl` so plain `Data` and `Data<T>` resolve nested vars by the same rule. Drift between the two paths bit `set ... type=json` over a list-of-dicts (coder/v2 fix) — the typed path walked containers, the plain path didn't, so handlers reading `Value.Value` saw literal `"%var%"` strings inside.
 
-`Properties` and event lists are aliased on the partial/container paths so subscribers attached to the slot survive the wrap. The four alias lines on the container-walk branch (`transient.Properties = ...; transient.OnCreate = ...; ...`) are unpinned by tests as of this branch (auditor F2 carryover) — preserve them when refactoring.
+`Properties` is aliased on the partial/container paths so metadata attached to the slot survives the wrap.
 
 ---
 
-## `Variables.Set` — events follow the name, Properties stay with the Data
+## `Variables.Set` — the store announces changes, Properties stay with the Data
 
-When `Variables.Set(dv)` replaces an existing binding under the same name (`app/variable/this.cs:78-87`):
-
-```csharp
-if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
-{
-    dv.OnCreate = prev.OnCreate;   // alias — same list refs
-    dv.OnChange = prev.OnChange;
-    dv.OnDelete = prev.OnDelete;
-    prev.FireOnChange(dv);
-}
-```
-
-**Events follow the name.** Each `Data` under a name shares the *same* event-list refs as the prev binding. Subscribers added at any point — to source, to any view, before or after replacement — are visible from every alias because they share the same list. This is what makes `--debug={"variables":[{"name":"x","event":"onchange"}]}` see every assignment to `%x%`, not just the first; pinned by `Set_Replace_AliasesPrevOnChangeOntoDv` and the regression test `DebugWatch_OnChange_FiresOnEveryReplacement` in `SubscriberSurvivalTests`.
+When `Variables.Set(dv)` replaces an existing binding under the same name, the store rebinds the
+name to the new `Data` and announces it: `OnCreate` (name, value) for a new name, `OnSet` (name,
+before, after) for a replacement, `OnRemove` (name) on remove. These are the store's own events,
+for any name — the call frame's diff capture and the `--debug={"variables":[...]}` watch listen
+there. A `Data` itself carries no subscribers.
 
 **Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `!data` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.
 
-**Idempotent Set.** The `!ReferenceEquals(prev, dv)` guard means setting the same instance twice is a no-op (no double-fire of `OnChange`).
+**Idempotent Set.** The `!ReferenceEquals(prev, dv)` guard means setting the same instance twice is a no-op (no second `OnSet`).
 
-**Inconsistency on the non-Data path.** `Variables.Set(string, object?, Type?)` for a non-Data value mutates the existing Data in place via `existing.Value = value`; the `Value` setter fires `OnChange(this, this)` — same instance for both args. The replacement path fires `(prev, dv)` as two distinct Data; the in-place path fires `(this, this)`. `OnTypeChange` watches via the non-Data path therefore never fire (auditor v2 N1) — but user-visible `set %x% = ...` always goes through `variable.set` → `MintTyped` → Data path, so user variable watches work correctly. Engine paths (`!data` rebinding, `list.add` write-back, settings vars) hit the non-Data path; OnTypeChange on those is best-effort.
+**Raw values rebind too.** `Variables.Set(string, object?)` with a non-Data value mints a new `Data` for the name rather than mutating the bound one, and the store announces it the same way (`OnCreate` / `OnSet`).
 
 ---
 
