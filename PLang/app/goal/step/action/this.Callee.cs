@@ -20,10 +20,10 @@ public partial class @this
             if (parameter.Peek() is @this held) callee.AddRange(await held.Callee(context));
         foreach (var modifier in Modifier)
             callee.AddRange(await modifier.Callee(context));
-        foreach (var recovery in Recovery.Elements)
+        foreach (var recovery in Recovery.Items())
             callee.AddRange(await recovery.Callee(context));
         for (int i = 0; i < Child.Count; i++)
-            foreach (var branch in Child[i].Action.Elements)
+            foreach (var branch in Child[i].Action.Items())
                 callee.AddRange(await branch.Callee(context));
 
         return callee;

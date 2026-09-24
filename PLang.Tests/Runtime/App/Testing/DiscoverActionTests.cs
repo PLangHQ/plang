@@ -98,7 +98,7 @@ public class DiscoverActionTests
         // being built from %goal%, as the builder's build.validate does.
         var buildContext = _app.User.Context;
         await buildContext.Variable.Set("goal", goal);
-        foreach (var step in goal.Step.Elements)
+        foreach (var step in goal.Step.Items())
             await step.Action.Build(buildContext);
 
         var prDir = System.IO.Path.Combine(absDir, ".build");

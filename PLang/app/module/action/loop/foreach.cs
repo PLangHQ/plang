@@ -43,7 +43,7 @@ public partial class Foreach : IContext, IStep
         var chain = Step?.Action;
         int myIndex = chain?.IndexOf(__action) ?? -1;
         var bodyActions = myIndex >= 0
-            ? chain!.Elements.Skip(myIndex + 1).ToList()
+            ? chain!.Items().Skip(myIndex + 1).ToList()
             : new List<Action>();
 
         // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
@@ -100,7 +100,7 @@ public partial class Foreach : IContext, IStep
         if (myIndex < 0 || myIndex + 1 >= actions.Count) return new();
 
         var body = new global::app.goal.step.action.list.@this();
-        foreach (var a in actions.Elements.Skip(myIndex + 1)) body.Add(a);
+        foreach (var a in actions.Items().Skip(myIndex + 1)) body.Add(a);
         return body;
     }
 }

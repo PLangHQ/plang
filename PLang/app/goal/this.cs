@@ -68,7 +68,7 @@ public sealed partial class @this
     public override string ToString()
     {
         var sb = new StringBuilder(Name);
-        foreach (var step in Step.Elements)
+        foreach (var step in Step.Items())
         {
             sb.AppendLine();
             sb.Append(new string(' ', step.Indent * 4));
@@ -136,7 +136,7 @@ public sealed partial class @this
 
             var sb = new StringBuilder();
             sb.Append(Name);
-            foreach (var step in Step.Elements)
+            foreach (var step in Step.Items())
                 sb.Append(step.Text);
 
             _hash = Convert.ToHexString(
@@ -225,7 +225,7 @@ public sealed partial class @this
 
         lines.Add(Name);
 
-        foreach (var step in Step.Elements)
+        foreach (var step in Step.Items())
         {
             if (!string.IsNullOrEmpty(step.Comment))
                 lines.Add($"/ {step.Comment}");
@@ -250,11 +250,11 @@ public sealed partial class @this
 
         // Exact-text match only — robust to reorder/insert/delete; a text change drops the prior
         // mapping and the LLM rebuilds that step fresh. Sets PriorText so the builder can emit @known.
-        var prior = existing.Step.Elements;
+        var prior = existing.Step.Items();
         if (prior.Count > 0)
         {
             var consumed = new HashSet<int>();
-            foreach (var step in Step.Elements)
+            foreach (var step in Step.Items())
                 for (int i = 0; i < prior.Count; i++)
                 {
                     if (consumed.Contains(i)) continue;
@@ -365,7 +365,7 @@ public sealed partial class @this
     /// </summary>
     public void NestRecursive(app.module.list.@this modules)
     {
-        foreach (var step in Step.Elements) step.Nest(modules);
+        foreach (var step in Step.Items()) step.Nest(modules);
         foreach (var subGoal in Child)
             subGoal.NestRecursive(modules);
     }
@@ -383,8 +383,8 @@ public sealed partial class @this
     /// </summary>
     public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
     {
-        foreach (var step in Step.Elements)
-            foreach (var action in step.Action.Elements)
+        foreach (var step in Step.Items())
+            foreach (var action in step.Action.Items())
                 visitor(step, action);
     }
 

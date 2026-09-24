@@ -59,9 +59,9 @@ public sealed partial class @this
     /// by the tag's own equality.</summary>
     public global::app.type.item.text.@this? Exclusion(global::app.test.@this test)
     {
-        var tags = test.Tags.Elements.ToHashSet();
+        var tags = test.Tags.Items().ToHashSet();
         bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
-            => filter.Elements.Any(t => global::app.type.item.tag.@this.Create(t) is { } tag && tags.Contains(tag));
+            => filter.Items().Any(t => global::app.type.item.tag.@this.Create(t) is { } tag && tags.Contains(tag));
 
         if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
         if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";
@@ -90,7 +90,7 @@ public sealed partial class @this
     /// <summary>The recorded tests, materialized (each row's value is a live test reference).</summary>
     public IReadOnlyList<global::app.test.@this> Tests
     {
-        get { lock (_lock) return _tests.Elements.ToList(); }
+        get { lock (_lock) return _tests.Items().ToList(); }
     }
 
     /// <summary>The tests as a plang <c>list&lt;test&gt;</c> (the wire/return shape).</summary>

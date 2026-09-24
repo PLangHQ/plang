@@ -50,7 +50,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => slot is Data or global::app.type.item.@this or Chunk;
 
     // A list stores no context: an element is handed out with the context of whoever asks for it
-    // (Row, Elements, At). A stored Data keeps its own.
+    // (Row, Items, At). A stored Data keeps its own.
     public @this() : this(new List<object?>()) { }
     public @this(IEnumerable<Data> items) : this(new List<object?>(items)) { _hasWrapped = true; }
 
@@ -580,7 +580,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // CLR form, so it converts without a context; a stored Data or an item lowers itself.
     private static object? Lower(object? slot, System.Type elem) => slot switch
     {
-        Data d => d.Peek().Clr(elem),
+        Data d => d.Clr(elem),
         global::app.type.item.@this item => item.Clr(elem),
         _ => ClrConvert(slot, elem),
     };

@@ -65,7 +65,7 @@ public sealed partial class @this
     /// </summary>
     public void Nest(global::app.module.list.@this modules)
     {
-        var flat = _action.Elements.ToList();
+        var flat = _action.Items().ToList();
         if (flat.Count == 0) return;
 
         var node = new global::app.goal.step.action.list.@this();   // Add non-modifier actions into the node
@@ -94,7 +94,7 @@ public sealed partial class @this
             }
         }
 
-        foreach (var a in node.Elements)
+        foreach (var a in node.Items())
             a.Modifier.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
 
         _action = node;

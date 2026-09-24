@@ -90,9 +90,9 @@ public sealed class Coverage
     public void Add(global::app.goal.@this goal)
     {
         var goalId = goal.Path?.ToString() ?? goal.Name ?? "?";
-        foreach (var step in goal.Step.Elements)
+        foreach (var step in goal.Step.Items())
         {
-            var conditions = step.Action.Elements.Where(a => a.IsCondition).ToList();
+            var conditions = step.Action.Items().Where(a => a.IsCondition).ToList();
             if (conditions.Count == 0) continue;
             RecordBranchChain($"{goalId}:{step.Index}", conditions.Count == 1
                 ? new[] { "true", "false" }

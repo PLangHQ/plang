@@ -230,7 +230,7 @@ public sealed class @this : item.@this
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
         // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw.
         if (raw is string or byte[])
-            return new item.source(raw, this, context);
+            return new item.source(raw, this);
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it. A
         // template=plang declaration stamps the container so its .Value() resolves nested %var% leaves
@@ -295,9 +295,8 @@ public sealed class @this : item.@this
     /// itself. Mints the lazy <see cref="item.wire.@this"/>; the parse stays at first touch. The
     /// capture door beside the content <see cref="Create(object?, actor.context.@this?)"/> door —
     /// same verb, the capture's knowledge as an argument, never a format name.</summary>
-    public item.@this Create(string slice, global::app.actor.context.@this context,
-        global::app.channel.serializer.ITransport reader)
-        => new item.wire.@this(slice, this, context, reader);
+    public item.@this Create(string slice, global::app.channel.serializer.ITransport reader)
+        => new item.wire.@this(slice, this, reader);
 
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared
     // kind off the carrier's Type and landing a decline on data.Fail (the retype path Convert owned).

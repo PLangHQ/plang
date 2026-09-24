@@ -35,7 +35,7 @@ public sealed partial class @this
         // as a bare source: a source decodes a scalar off its own token and has no document to walk.
         var snapshotType = new global::app.type.@this("snapshot");
         var slice = new global::app.type.item.wire.@this(
-            json, snapshotType, context, new global::app.channel.serializer.plang.@this(context));
+            json, snapshotType, new global::app.channel.serializer.plang.@this(context));
         var wire = new global::app.data.@this("", slice, snapshotType, context: context);
         var snapshot = await wire.Value<global::app.snapshot.@this>();
         // Carry the real reason. A decline here is a materialization failure with its own message;

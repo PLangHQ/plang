@@ -36,8 +36,8 @@ public sealed class @this : global::app.type.item.@this
         reached.AddRange(await goal.Callee(context));
         foreach (var g in reached)
         {
-            foreach (var step in g.Step.Elements)
-                foreach (var action in step.Action.Elements)
+            foreach (var step in g.Step.Items())
+                foreach (var action in step.Action.Items())
                     foreach (var required in action.Requirement)
                         if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
             context.App.Test.Coverage.Add(g);

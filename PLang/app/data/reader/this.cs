@@ -116,7 +116,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                         value = typeRef.Template != null
                                 || ctx.Context.App.Type[typeRef.Name]?.ClrType == typeof(global::app.variable.@this)
                             ? typeRef.Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
-                            : typeRef.Create(slice, ctx.Context,
+                            : typeRef.Create(slice,
                                 ctx.Context.Actor?.Channel.Serializers?.Transport
                                     ?? throw new JsonException(
                                         "wire capture reached before the actor channel wired its "
@@ -131,7 +131,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                         // under {number} fails at the number pull; a string under {dict} at
                         // BeginObject). The BUILD must never emit a mismatched token.
                         value = typeRef.Create(
-                            System.Text.Encoding.UTF8.GetString(reader.Slice()), ctx.Context,
+                            System.Text.Encoding.UTF8.GetString(reader.Slice()),
                             ctx.Context.Actor?.Channel.Serializers?.Transport
                                 ?? throw new JsonException(
                                     "wire capture reached before the actor channel wired its "

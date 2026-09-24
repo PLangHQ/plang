@@ -323,10 +323,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             var elementType = target.IsGenericType ? target.GetGenericArguments()[^1] : typeof(object);
             foreach (var key in _value.Keys)
-            {
-                var v = _value[key] is Data d ? d.Peek() : _value[key];
-                map[key] = v is global::app.type.item.@this iv ? iv.Clr(elementType) : v;
-            }
+                map[key] = _value[key] switch
+                {
+                    Data d => d.Clr(elementType),
+                    global::app.type.item.@this iv => iv.Clr(elementType),
+                    var raw => raw,
+                };
             return map;
         }
 
@@ -341,7 +343,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// an item lowers itself.</summary>
     internal object? Clr(string key, System.Type target) => _value[key] switch
     {
-        Data d => d.Peek().Clr(target),
+        Data d => d.Clr(target),
         global::app.type.item.@this item => item.Clr(target),
         var raw => ClrConvert(raw, target),
     };

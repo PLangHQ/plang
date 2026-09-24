@@ -14,8 +14,8 @@ public sealed partial class @this
         pending.Enqueue(this);
 
         while (pending.Count > 0)
-            foreach (var step in pending.Dequeue().Step.Elements)
-                foreach (var action in step.Action.Elements)
+            foreach (var step in pending.Dequeue().Step.Items())
+                foreach (var action in step.Action.Items())
                     foreach (var goal in await action.Callee(context))
                         if (seen.Add(goal))
                         {

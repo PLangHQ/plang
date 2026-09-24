@@ -11,7 +11,7 @@ namespace app.type.item;
 /// prior chain. Verbatim passthrough (serialize-without-parse) reads
 /// <see cref="Raw"/> as long as no parse happened.
 /// </summary>
-public class source : @this, module.IContext
+public class source : @this
 {
     // Held for the wire subclass's verbatim write + re-birth; a plain source reads it
     // through value.Reader, never a format lookup.
@@ -31,18 +31,13 @@ public class source : @this, module.IContext
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => await ctx.Variable.Get((string)_value);   // _value is the raw "%!data%"; the store strips the %
 
-    // Born WITH context — a source is minted only by the type entity's Create door (the sole birth
-    // site), which always has a wired scope; the context-less births (the "Judge" phase) are gone.
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context { get; set; } = null!;
-
     /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
     /// <c>Create</c> door shares. The source holds the declaration WHOLE (Name/Kind/Strict/Template
-    /// all live on it) and reads its own raw through the (type, kind) reader — no format name.</summary>
-    public source(object value, global::app.type.@this type, actor.context.@this context)
+    /// all live on it) and reads its own raw through the (type, kind) reader — no format name. It
+    /// stores no context: the load uses the asking Data's.</summary>
+    public source(object value, global::app.type.@this type)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
-        Context = context ?? throw new System.ArgumentNullException(nameof(context));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
         // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
         // .Value(), never parsed through the type reader. Trust the builder's template flag (on the
@@ -89,9 +84,7 @@ public class source : @this, module.IContext
 
     /// <summary>Shared by reference — a source is immutable (its raw + declared
     /// judgement are readonly; Ready parses into a NEW instance rather than
-    /// mutating), and it carries a Context that points back into the App graph,
-    /// so a deep clone would walk the whole runtime and could overflow. Sharing
-    /// the instance is safe precisely because nothing mutates it.</summary>
+    /// mutating). Sharing the instance is safe precisely because nothing mutates it.</summary>
     protected internal override @this Clone() => this;
 
     /// <summary>
@@ -206,7 +199,7 @@ public class source : @this, module.IContext
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, Context);
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),

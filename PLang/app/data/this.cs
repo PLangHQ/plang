@@ -767,7 +767,11 @@ public partial class @this
     /// deferred to the perimeter. The sync, structural sibling of
     /// <see cref="Clr{TClr}(TClr)"/> — used by a consumer enumerating a list:
     /// <c>row.Clr&lt;LlmMessage&gt;()</c>.</summary>
-    internal T? Clr<T>() => Peek().Clr<T>();
+    internal T? Clr<T>() => (T?)Clr(typeof(T));
+
+    /// <summary>This row's value lowered to <paramref name="target"/>, asked with this Data's
+    /// context — an undecoded wire decodes with it.</summary>
+    internal object? Clr(System.Type target) => Peek().Clr(target, _context);
 }
 
 /// <summary>

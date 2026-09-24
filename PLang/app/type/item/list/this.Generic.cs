@@ -18,22 +18,19 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
     public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values) : base(values) { }
 
-    /// <summary>The typed elements — INTERNAL, the engine face a node subclass runs/walks (a
+    /// <summary>The typed items — INTERNAL, the engine face a node subclass runs/walks (a
     /// <c>list&lt;action&gt;</c>'s <c>Run</c>, a <c>list&lt;step&gt;</c>'s sequence). NOT public:
-    /// outside code tells the graph (run/wire/walk) or navigates it as values (the Data-row face,
-    /// <c>Items(context)</c>), it never harvests raw elements. The read/parse seam stores the
-    /// typed <typeparamref name="T"/> directly, so no context is needed to read them.</summary>
-    internal System.Collections.Generic.IReadOnlyList<T> Elements
+    /// outside code tells the graph (run/wire/walk) or navigates it as values (the Data face,
+    /// <c>Items(context)</c>), it never harvests the stored values. The read/parse seam stores
+    /// the typed <typeparamref name="T"/> directly, so no context is needed to read them.</summary>
+    internal System.Collections.Generic.IReadOnlyList<T> Items()
     {
-        get
-        {
-            var built = new System.Collections.Generic.List<T>(CountRaw);
-            foreach (var slot in Slots()) built.Add((T)(slot is global::app.data.@this d ? d.Peek() : slot)!);
-            return built;
-        }
+        var built = new System.Collections.Generic.List<T>(CountRaw);
+        foreach (var slot in Slots()) built.Add((T)(slot is global::app.data.@this d ? d.Peek() : slot)!);
+        return built;
     }
 
-    /// <summary>The typed element at a flattened index — INTERNAL, the engine positional face
+    /// <summary>The typed item at a flattened index — INTERNAL, the engine positional face
     /// (snapshot restore's <c>liveStep.Action[i]</c>, build validation's <c>goal.Step[i]</c>). Public
     /// index navigation still rides the Data-row face (<c>At</c>); this is the same-assembly typed
     /// door.</summary>

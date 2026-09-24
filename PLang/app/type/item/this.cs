@@ -407,6 +407,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     internal virtual object? Clr(System.Type target) => ClrConvert(Peek(), target);
 
+    /// <summary>The CLR exit door asked by a Data, with its context — a still-encoded value (a
+    /// wire) decodes with it first; every other value lowers without one.</summary>
+    internal virtual object? Clr(System.Type target, global::app.actor.context.@this? context) => Clr(target);
+
     /// <summary>Generic sugar over <see cref="Clr(System.Type)"/> — the
     /// compile-time-known-target form.</summary>
     internal T? Clr<T>() => (T?)Clr(typeof(T));

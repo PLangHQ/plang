@@ -8,7 +8,8 @@ namespace app.type.item.wire;
 /// back verbatim, byte-identical, so an untouched relay's signature still verifies. A string
 /// TOKEN is decoded to bare content at capture (a plain <see cref="global::app.type.item.source"/>);
 /// only a structured/number/bool/quoted slice rides here as its raw document bytes.
-/// (Unrelated to the input/output channels.)
+/// (Unrelated to the input/output channels.) Stores no context: decoding is a use, and the one
+/// using it passes theirs.
 /// </summary>
 public sealed class @this : global::app.type.item.source
 {
@@ -16,52 +17,52 @@ public sealed class @this : global::app.type.item.source
     // since birth; the read reaches it directly (the registry lookup is what died, not the door).
     private readonly global::app.channel.serializer.ITransport _reader;
 
-    public @this(string slice, global::app.type.@this type, actor.context.@this context,
-        global::app.channel.serializer.ITransport reader)
-        : base(slice, type, context)
+    public @this(string slice, global::app.type.@this type, global::app.channel.serializer.ITransport reader)
+        : base(slice, type)
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
 
     private protected override global::app.type.item.@this Read(actor.context.@this context)
         => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template));
 
+    // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
+    // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
+    private global::app.type.item.@this Decoded(actor.context.@this context)
+        => (Type.Kind is { } k ? context.App.Type.Kind[k.Name].Parse(Raw, context) : null) ?? Read(context);
+
     // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
-    // slice); any other writer is a USE — the wire graduates to its decoded value and that writes
-    // itself (a text writer gets bare content, not the quoted document slice). Strictness holds: a
-    // mismatched slice throws at the materialize, output included — the birth site is the bug.
+    // slice). Any other writer is a USE — decoding needs a context, which this context-free door
+    // does not have: a foreign writer reaches a wire through Output.
     public override void Write(global::app.channel.serializer.IWriter w)
     {
         if (_reader.Owns(w)) { w.Raw((string)Raw); return; }
-        // Graduate to the decoded value: the kind owns the json decode (one Parse, the same value
-        // Value() materializes to); a kind that declines (csv, png) falls to the type reader.
-        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read(Context);
-        decoded.Write(w);
+        throw new System.InvalidOperationException(
+            "an undecoded wire writes into a foreign format through Output(writer, mode, context) — decoding needs the caller's context.");
     }
 
-    // Output is the SHAPE-AWARE door. Write (above) assumes a leaf — fine when the decoded value IS
-    // a leaf, but a wire wrapping a STRUCTURE (dict/list/object) reports IsLeaf=true yet decodes to a
-    // non-leaf, so `decoded.Write` throws. Output materializes and lets the decoded value render
-    // itself through its OWN shape (a leaf via Write, a structure structurally). Own format still
-    // rides raw — byte-identical relay, signatures hold. This is the foreign-format half of the
-    // "materialize-on-foreign-output for sources" rule.
+    // Output is the SHAPE-AWARE door. A wire wrapping a STRUCTURE (dict/list/object) reports
+    // IsLeaf=true yet decodes to a non-leaf; Output lets the decoded value render itself through its
+    // OWN shape (a leaf via Write, a structure structurally). Own format still rides raw —
+    // byte-identical relay, signatures hold.
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
-        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read(Context);
-        await decoded.Output(writer, mode, context ?? Context);
+        if (context is null) throw new System.InvalidOperationException(
+            "an undecoded wire writes into a foreign format only with the caller's context.");
+        await Decoded(context).Output(writer, mode, context);
     }
 
     // Lowering an undecoded wire to CLR is a USE: graduate to the decoded value first (never hand
     // the ENCODED slice to a converter — the bug the inherited source.Clr would commit), then that
-    // value lowers itself (a clr(json) → its kind's reflection read).
-    internal override object? Clr(System.Type target)
-    {
-        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read(Context);
-        return decoded.Clr(target);
-    }
+    // value lowers itself (a clr(json) → its kind's reflection read). The decode needs the asking
+    // Data's context — the Data door passes it.
+    internal override object? Clr(System.Type target, actor.context.@this? context)
+        => context is null ? Clr(target) : Decoded(context).Clr(target);
+
+    internal override object? Clr(System.Type target) => throw new System.InvalidOperationException(
+        "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.");
 
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        // The value keeps the context it was born with; the declaration only re-types it.
-        => new @this((string)Raw, type, Context, _reader);
+        => new @this((string)Raw, type, _reader);
 }
