@@ -81,8 +81,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("First\n- step\n\nSecond\n- step", global::app.type.item.path.@this.Resolve("/folder/MyGoal.goal", global::PLang.Tests.TestApp.SharedContext), global::PLang.Tests.TestApp.SharedContext);
 
-        await Assert.That(goal!.Path).IsEqualTo("/folder/MyGoal.goal");
-        await Assert.That(goal.Child[0].Path).IsEqualTo("/folder/MyGoal.goal");
+        await Assert.That(goal!.Path?.ToString()).IsEqualTo("/folder/MyGoal.goal");
+        await Assert.That(goal.Child[0].Path?.ToString()).IsEqualTo("/folder/MyGoal.goal");
     }
 
     [Test]
@@ -136,7 +136,7 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- step", global::app.type.item.path.@this.Resolve("/folder/MyGoal.goal", global::PLang.Tests.TestApp.SharedContext), global::PLang.Tests.TestApp.SharedContext);
 
-        await Assert.That(goal!.PrPath).IsEqualTo("/folder/.build/mygoal.pr");
+        await Assert.That(goal!.PrPath?.ToString()).IsEqualTo("/folder/.build/mygoal.pr");
     }
 
     [Test]

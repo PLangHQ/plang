@@ -34,8 +34,8 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.Description).IsEqualTo("A test goal");
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
         await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Public);
-        await Assert.That(goal.Path).IsEqualTo("/path/to/goal.goal");
-        await Assert.That(goal.PrPath).IsEqualTo("/path/to/.build/goal.pr");
+        await Assert.That(goal.Path?.ToString()).IsEqualTo("/path/to/goal.goal");
+        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/path/to/.build/goal.pr");
         await Assert.That(goal.Hash).IsEqualTo("abc123");
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();

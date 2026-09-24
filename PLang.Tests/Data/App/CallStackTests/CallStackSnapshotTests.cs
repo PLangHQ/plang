@@ -88,11 +88,11 @@ public class CallStackSnapshotTests
 
             var chain = dst.User.CallStack.RestoredChain!;
             await Assert.That(chain.Count).IsEqualTo(2);
-            await Assert.That(chain[0].Goal.PrPath).IsEqualTo(g1.PrPath?.ToString());
-            await Assert.That(chain[^1].Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
+            await Assert.That(chain[0].Goal.PrPath?.ToString()).IsEqualTo(g1.PrPath?.ToString());
+            await Assert.That(chain[^1].Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
 
             await Assert.That(dst.User.CallStack.BottomFrame).IsNotNull();
-            await Assert.That(dst.User.CallStack.BottomFrame!.Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
+            await Assert.That(dst.User.CallStack.BottomFrame!.Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
         }
     }
 
