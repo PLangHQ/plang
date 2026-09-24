@@ -158,8 +158,6 @@ public sealed class @this : item.@this
     public static @this Bool => new("bool", typeof(bool));
     public static @this DateTime => new("datetime", typeof(System.DateTimeOffset));
 
-    public static @this FromMime(string mimeType) => new(mimeType);
-
     /// <summary>
     /// The type-system value factory: a raw CLR value → its plang value (the one
     /// owner of "what plang type is this"). The CLR→plang family map lives HERE in

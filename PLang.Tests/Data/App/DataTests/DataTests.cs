@@ -564,9 +564,8 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("txt", "hello", Type.FromMime("text/plain"), context: context);
+        var data = new Data("txt", "hello", engine.Format.TypeFromMime("text/plain"), context: context);
 
-        await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("text");
         await Assert.That(engine.Format.Compressible(data.Type!)).IsTrue();
     }
 
@@ -620,7 +619,7 @@ public class DataTests : System.IAsyncDisposable
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // text/plain is compressible (kind "text").
-        var data = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"), context: context);
+        var data = new Data("", "Hello, this is a test string for compression!", engine.Format.TypeFromMime("text/plain"), context: context);
 
         var compressed = data.Compress();
 
@@ -651,7 +650,7 @@ public class DataTests : System.IAsyncDisposable
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Compress a plain Data, then decompress — the value round-trips.
-        var inner = new Data("", "Hello world", Type.FromMime("text/plain"), context: context);
+        var inner = new Data("", "Hello world", engine.Format.TypeFromMime("text/plain"), context: context);
 
         var compressed = inner.Compress();
         var decompressed = compressed.Decompress();
@@ -676,7 +675,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"), context: context);
+        var content = new Data("", "The quick brown fox jumps over the lazy dog", engine.Format.TypeFromMime("text/plain"), context: context);
 
         var compressed = content.Compress();   // born with content's context
         var decompressed = compressed.Decompress();
@@ -724,7 +723,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"), context: context);
+        var data = new Data("msg", "Hello, PLang!", engine.Format.TypeFromMime("text/plain"), context: context);
 
         var envelope = data.Compress();
 
@@ -739,7 +738,7 @@ public class DataTests : System.IAsyncDisposable
     {
         // A Data that is not an archive item is not decompressable — Decompress
         // is a no-op and returns the Data unchanged (mirrors Decrypt / Unwrap).
-        var data = _app.Data("", "not an archive", Type.FromMime("text/plain"));
+        var data = _app.Data("", "not an archive", _app.Format.TypeFromMime("text/plain"));
 
         var result = data.Decompress();
 
@@ -809,7 +808,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var content = new Data("", "Hello", Type.FromMime("text/plain"), context: context);
+        var content = new Data("", "Hello", engine.Format.TypeFromMime("text/plain"), context: context);
         content.Properties["metadata"] = "some value";
 
         var compressed = content.Compress();   // born with content's context

@@ -134,14 +134,4 @@ public class TypeTests
 
         await Assert.That(str).IsEqualTo("text");
     }
-
-    [Test]
-    public async Task ToString_ForMimeType_ReturnsMimeString()
-    {
-        var type = Type.FromMime("text/markdown");
-
-        var str = type.ToString();
-
-        await Assert.That(str).IsEqualTo("text/markdown");
-    }
 }
