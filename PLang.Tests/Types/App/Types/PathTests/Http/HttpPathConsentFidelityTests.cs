@@ -59,13 +59,13 @@ public class HttpPathConsentFidelityTests
         var url = "https://аpple.com/login";
 
         // Read so Authorize fires and renders the prompt.
-        _ = await new HttpPath(url, context).ReadText();
+        _ = await new HttpPath(url).ReadText(context);
 
         await Assert.That(ch.LastQuestion).Contains("xn--pple-43d.com");
         await Assert.That(ch.LastQuestion).DoesNotContain("аpple.com");
 
         // Absolute is what gets persisted as the grant key. Same canonical form.
-        var path = new HttpPath(url, context);
+        var path = new HttpPath(url);
         await Assert.That(path.Absolute).Contains("xn--pple-43d.com");
     }
 
@@ -75,7 +75,7 @@ public class HttpPathConsentFidelityTests
         var (_, context, ch) = MakeApp();
         var url = "https://apple.com/login";
 
-        _ = await new HttpPath(url, context).ReadText();
+        _ = await new HttpPath(url).ReadText(context);
 
         await Assert.That(ch.LastQuestion).Contains("apple.com");
         await Assert.That(ch.LastQuestion).DoesNotContain("xn--");
@@ -88,7 +88,7 @@ public class HttpPathConsentFidelityTests
     {
         var (_, context, _) = MakeApp();
         var url = "https://attacker:pwd@victim.example/admin";
-        var path = new HttpPath(url, context);
+        var path = new HttpPath(url);
 
         await Assert.That(path.Absolute).DoesNotContain("attacker");
         await Assert.That(path.Absolute).DoesNotContain("pwd");
@@ -102,7 +102,7 @@ public class HttpPathConsentFidelityTests
         var (_, context, _) = MakeApp();
         // Uri.ToString should also have no userinfo since we rebuilt _uri.
         var url = "https://u:p@victim.example/path";
-        var path = new HttpPath(url, context);
+        var path = new HttpPath(url);
 
         await Assert.That(path.Uri.UserInfo).IsEqualTo("");
         await Assert.That(path.Uri.ToString()).DoesNotContain("@victim.example");
@@ -114,7 +114,7 @@ public class HttpPathConsentFidelityTests
         var (_, context, ch) = MakeApp();
         var url = "https://attacker:pwd@victim.example/admin";
 
-        _ = await new HttpPath(url, context).ReadText();
+        _ = await new HttpPath(url).ReadText(context);
 
         await Assert.That(ch.LastQuestion).DoesNotContain("attacker");
         await Assert.That(ch.LastQuestion).DoesNotContain("pwd");

@@ -31,10 +31,10 @@ public class Cut2_TouchMaterializes
     [Test] public async Task Cut2_ConfigJson_UntouchedIsRawBytes_NavigatedReturnsField()
     {
         await using var app = NewApp(out var root);
-        var p = new filepath(System.IO.Path.Combine(root, "config.json"), app.User.Context);
-        await (await p.WriteText("{\"port\":8080}")).IsSuccess();
+        var p = new filepath(System.IO.Path.Combine(root, "config.json"));
+        await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
 
-        var d = await new filechannel(p).Read();
+        var d = await new filechannel(p, app.User.Context).Read();
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // navigate materializes
@@ -44,10 +44,10 @@ public class Cut2_TouchMaterializes
     [Test] public async Task Cut2_ReportCsv_UntouchedIsRawBytes_NavigatedReturnsRowColumn()
     {
         await using var app = NewApp(out var root);
-        var p = new filepath(System.IO.Path.Combine(root, "report.csv"), app.User.Context);
-        await (await p.WriteText("name,age\nAda,36\n")).IsSuccess();
+        var p = new filepath(System.IO.Path.Combine(root, "report.csv"));
+        await (await p.WriteText("name,age\nAda,36\n", app.User.Context)).IsSuccess();
 
-        var d = await new filechannel(p).Read();
+        var d = await new filechannel(p, app.User.Context).Read();
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await (await (await d.Get("rows")).Get("0")).Get("name")).Value())?.ToString()).IsEqualTo("Ada");

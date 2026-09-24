@@ -39,8 +39,8 @@ public class InRootSilentFastPathTests
         app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "f.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var p = new FilePath(file, app.User.Context);
-        var r = await p.ReadText();
+        var p = new FilePath(file);
+        var r = await p.ReadText(app.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
@@ -51,8 +51,8 @@ public class InRootSilentFastPathTests
         var ch = new AskCountingChannel();
         app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "w.txt");
-        var p = new FilePath(file, app.User.Context);
-        var r = await p.WriteText("hello");
+        var p = new FilePath(file);
+        var r = await p.WriteText("hello", app.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
@@ -64,11 +64,11 @@ public class InRootSilentFastPathTests
         app.User.Channel.Register(ch);
         for (int i = 0; i < 10; i++)
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, $"f{i}.txt"), $"f{i}");
-        var dir = new FilePath(root, app.User.Context);
-        var listed = await dir.List("*.txt", recursive: false);
+        var dir = new FilePath(root);
+        var listed = await dir.List("*.txt", recursive: false, app.User.Context);
         await listed.IsSuccess();
         foreach (var f in listed.GetValue<List<global::app.type.item.path.@this>>()!)
-            await f.ReadText();
+            await f.ReadText(app.User.Context);
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 
@@ -80,8 +80,8 @@ public class InRootSilentFastPathTests
         var srcAssembly = typeof(InRootSilentFastPathTests).Assembly.Location;
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
-        var p = new FilePath(copyAt, app.User.Context);
-        var r = await p.LoadAssemblyAsync();
+        var p = new FilePath(copyAt);
+        var r = await p.LoadAssemblyAsync(app.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }

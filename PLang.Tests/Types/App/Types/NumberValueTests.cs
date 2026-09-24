@@ -86,22 +86,22 @@ public class NumberValueTests
     [Test]
     public async Task IBooleanResolvable_Zero_IsFalsy()
     {
-        await Assert.That(await ((number)(0)).AsBooleanAsync()).IsFalse();
-        await Assert.That(await ((number)(0m)).AsBooleanAsync()).IsFalse();
-        await Assert.That(await ((number)(0d)).AsBooleanAsync()).IsFalse();
+        await Assert.That(await ((number)(0)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await ((number)(0m)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await ((number)(0d)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
     }
 
     [Test]
     public async Task IBooleanResolvable_NonZero_IsTruthy()
     {
-        await Assert.That(await ((number)(1)).AsBooleanAsync()).IsTrue();
-        await Assert.That(await ((number)(-1)).AsBooleanAsync()).IsTrue();
-        await Assert.That(await ((number)(0.1m)).AsBooleanAsync()).IsTrue();
+        await Assert.That(await ((number)(1)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        await Assert.That(await ((number)(-1)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        await Assert.That(await ((number)(0.1m)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
     }
 
     [Test]
     public async Task IBooleanResolvable_NaN_IsFalsy()
-        => await Assert.That(await ((number)(double.NaN)).AsBooleanAsync()).IsFalse();
+        => await Assert.That(await ((number)(double.NaN)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
 
     [Test]
     public async Task NumberDoesNotImplementOrStore_IContextOrContextReference()

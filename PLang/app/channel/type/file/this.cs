@@ -16,24 +16,23 @@ namespace app.channel.type.file;
 public sealed class @this : global::app.channel.@this
 {
     private readonly global::app.type.item.path.@this _path;
+    private readonly global::app.actor.context.@this _context;
 
-    public @this(global::app.type.item.path.@this path)
+    /// <summary>A file channel opened by the reader whose <paramref name="context"/> it is — its
+    /// actor reads through the gate, its format registry stamps the mime.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         _path = path;
+        _context = context;
         Name = path.Raw;
         Direction = ChannelDirection.Input;
-        // Mime from the file extension — the file path already derives it through
-        // the format registry, the same map the boundary stamps from.
-        Mime = path.MimeType;
+        // Mime from the file extension — the file path derives it through the
+        // format registry, the same map the boundary stamps from.
+        Mime = path.MimeType(context);
 
-        // Reach Format + actor context through the path's own context so the
-        // base boundary can stamp without the channel being registered.
-        var ctx = path.Context;
-        if (ctx != null)
-        {
-            Actor = ctx.Actor;
-            Channels = ctx.Actor.Channel;
-        }
+        // The reader's actor, so the base boundary can stamp without the channel being registered.
+        Actor = context.Actor;
+        Channels = context.Actor.Channel;
     }
 
     public override bool CanWrite => false;
@@ -42,7 +41,7 @@ public sealed class @this : global::app.channel.@this
     {
         // ReadBytes carries the AuthGate AND surfaces missing-file / IO failures
         // as an error Data (it owns the System.IO), so the channel stays clean.
-        var bytes = await _path.ReadBytes();
+        var bytes = await _path.ReadBytes(_context);
         if (!bytes.Success) return bytes;
         return await Read((await bytes.Value())!.Value, ct);
     }

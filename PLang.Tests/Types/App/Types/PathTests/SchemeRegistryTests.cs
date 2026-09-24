@@ -24,7 +24,7 @@ public class SchemeRegistryTests
     [Test] public async Task Register_ThenFrom_ReturnsRegisteredSubclass()
     {
         var (app, context) = MakeApp();
-        app.Type.Scheme.Register("test", (raw, c) => new FilePath(raw, c) { Raw = raw });
+        app.Type.Scheme.Register("test", (raw, c) => new FilePath(raw) { Raw = raw });
         var p = app.Type.Scheme.From("test://hello", context);
         await Assert.That(p).IsNotNull();
         await Assert.That(p is FilePath).IsTrue();
@@ -33,8 +33,8 @@ public class SchemeRegistryTests
     [Test] public async Task Register_SameSchemeTwice_SecondRegistrationReplacesFirst()
     {
         var (app, context) = MakeApp();
-        var first = new FilePath("/first", context);
-        var second = new FilePath("/second", context);
+        var first = new FilePath("/first");
+        var second = new FilePath("/second");
         app.Type.Scheme.Register("dup", (raw, c) => first);
         app.Type.Scheme.Register("dup", (raw, c) => second);
         var p = app.Type.Scheme.From("dup://x", context);
@@ -91,7 +91,7 @@ public class SchemeRegistryTests
     {
         var (a, _) = MakeApp();
         var (b, ctxB) = MakeApp();
-        a.Type.Scheme.Register("zzz", (raw, c) => new FilePath(raw, c));
+        a.Type.Scheme.Register("zzz", (raw, c) => new FilePath(raw));
         await Assert.That(a.Type.Scheme.IsRegistered("zzz")).IsTrue();
         await Assert.That(b.Type.Scheme.IsRegistered("zzz")).IsFalse();
         await Assert.That(() => b.Type.Scheme.From("zzz://x", ctxB)).Throws<SchemeNotRegistered>();

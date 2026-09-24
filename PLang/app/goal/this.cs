@@ -398,8 +398,10 @@ public sealed partial class @this
     /// Goal-specific method on a general-purpose value type — too specific for
     /// that general object. A source-text → Goal factory is the sanctioned
     /// exception to the no-static rule.
+    /// <para><paramref name="context"/> is the caller's: setup/system/test placement is read from
+    /// the path's root-relative form under the caller's root, never from its display text.</para>
     /// </summary>
-    public static @this? Parse(string text, global::app.type.item.path.@this? path)
+    public static @this? Parse(string text, global::app.type.item.path.@this? path, global::app.actor.context.@this context)
     {
         if (string.IsNullOrWhiteSpace(text))
             return null;
@@ -557,7 +559,7 @@ public sealed partial class @this
             // Finalize the previous goal's last step before starting the new goal.
             if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
 
-            var normalizedPath = path?.ToString().Replace('\\', '/').TrimStart('/') ?? "";
+            var normalizedPath = path?.Relative(context).Replace('\\', '/').TrimStart('/') ?? "";
             var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
                 || normalizedPath.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
             var isSystem = normalizedPath.StartsWith("system/", StringComparison.OrdinalIgnoreCase);

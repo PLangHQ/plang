@@ -47,7 +47,7 @@ public partial class discover : IContext
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
-        var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value);
+        var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value, Context);
         if (!listed.Success) return Context.Error<global::app.type.item.list.@this<global::app.test.@this>>(listed.Error!);
         if (await listed.Value() == null) return empty;
 
@@ -71,7 +71,7 @@ public partial class discover : IContext
         // corrupt, the source goal is enough to identify the file.
         // ReadText returns a typed Goal when the file MIME is application/
         // plang-goal, or a string fallback that we explicitly parse.
-        var goalRead = await goalFile.ReadText();
+        var goalRead = await goalFile.ReadText(Context);
         if (!goalRead.Success)
         {
             // Build a minimal goal from just the file's path so Test.Goal
@@ -86,7 +86,7 @@ public partial class discover : IContext
         // Born-typed: text content rides as the text wrapper; its string form
         // is ToString (a Goal already matched the first arm).
         var sourceGoal = (await goalRead.Value()) as Goal
-            ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile)
+            ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile, Context)
             ?? new Goal { Path = goalFile };
 
         // PrPath is derived on the goal from its Path. The corresponding
@@ -103,7 +103,7 @@ public partial class discover : IContext
             };
         }
 
-        var prExists = await prFile.ExistsAsync();
+        var prExists = await prFile.ExistsAsync(Context);
         if (!prExists.Success || (await prExists.Value())?.Value != true)
         {
             return new global::app.test.@this(Context)
@@ -116,7 +116,7 @@ public partial class discover : IContext
 
         // Read the .pr through the gated verb. MIME maps .pr → Goal via
         // ReadText's TryConvert branch.
-        var prRead = await prFile.ReadText();
+        var prRead = await prFile.ReadText(Context);
         if (!prRead.Success)
         {
             return new global::app.test.@this(Context)

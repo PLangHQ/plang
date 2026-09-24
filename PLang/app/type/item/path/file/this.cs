@@ -19,8 +19,8 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// scheme registry, implicit <c>string→path</c>) gets the canonical
     /// invariant for free.
     /// </summary>
-    public @this(string absolutePath, actor.context.@this context)
-        : base(Canonicalize(absolutePath), context)
+    public @this(string absolutePath)
+        : base(Canonicalize(absolutePath))
     {
     }
 
@@ -106,7 +106,6 @@ public sealed partial class @this : global::app.type.item.path.@this
             }
         }
 
-        var p = new @this(ValidatePath(resolved, context.App), context) { Raw = rawPath };
-        return p;
+        return new @this(ValidatePath(resolved, context.App)) { Raw = rawPath };
     }
 }

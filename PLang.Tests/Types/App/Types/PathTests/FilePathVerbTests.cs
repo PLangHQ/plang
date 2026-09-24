@@ -19,15 +19,15 @@ public class FilePathVerbTests
     }
 
     private static FilePath At(global::app.@this app, string root, string name) =>
-        new(System.IO.Path.Combine(root, name), app.User.Context);
+        new(System.IO.Path.Combine(root, name));
 
     [Test] public async Task WriteText_ThenReadText_RoundTrips()
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "rt.txt");
-        var w = await p.WriteText("round-trip");
+        var w = await p.WriteText("round-trip", app.User.Context);
         await w.IsSuccess();
-        var r = await p.ReadText();
+        var r = await p.ReadText(app.User.Context);
         await r.IsSuccess();
         await Assert.That((await r.Value())?.ToString()).IsEqualTo("round-trip");
     }
@@ -37,8 +37,8 @@ public class FilePathVerbTests
         var (app, root) = MakeApp();
         var p = At(app, root, "rt.bin");
         var bytes = new byte[] { 1, 2, 3, 9, 8, 7 };
-        await p.WriteBytes(bytes);
-        var r = await p.ReadBytes();
+        await p.WriteBytes(bytes, app.User.Context);
+        var r = await p.ReadBytes(app.User.Context);
         await r.IsSuccess();
         await Assert.That(((global::app.type.item.binary.@this)(await r.Value())!).Value).IsEquivalentTo(bytes);
     }
@@ -47,11 +47,11 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "ex.txt");
-        var before = await p.ExistsAsync();
+        var before = await p.ExistsAsync(app.User.Context);
         await before.IsSuccess();
         await Assert.That((await before.Value())).IsEqualTo(false);
-        await p.WriteText("now exists");
-        var after = await p.ExistsAsync();
+        await p.WriteText("now exists", app.User.Context);
+        var after = await p.ExistsAsync(app.User.Context);
         await Assert.That((await after.Value())).IsEqualTo(true);
     }
 
@@ -61,19 +61,19 @@ public class FilePathVerbTests
         // `if %path% exists`.
         var (app, root) = MakeApp();
         var p = At(app, root, "asbool.txt");
-        await Assert.That(await p.AsBooleanAsync()).IsFalse();
-        await p.WriteText("now exists");
-        await Assert.That(await p.AsBooleanAsync()).IsTrue();
+        await Assert.That(await p.AsBooleanAsync(app.User.Context)).IsFalse();
+        await p.WriteText("now exists", app.User.Context);
+        await Assert.That(await p.AsBooleanAsync(app.User.Context)).IsTrue();
     }
 
     [Test] public async Task Delete_RemovesFile_ExistsBecomesFalse()
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "del.txt");
-        await p.WriteText("to delete");
-        var d = await p.Delete();
+        await p.WriteText("to delete", app.User.Context);
+        var d = await p.Delete(app.User.Context);
         await d.IsSuccess();
-        var ex = await p.ExistsAsync();
+        var ex = await p.ExistsAsync(app.User.Context);
         await Assert.That((await ex.Value())).IsEqualTo(false);
     }
 
@@ -81,9 +81,9 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "ap.txt");
-        await p.WriteText("abc");
-        await p.Append("def");
-        var r = await p.ReadText();
+        await p.WriteText("abc", app.User.Context);
+        await p.Append("def", app.User.Context);
+        var r = await p.ReadText(app.User.Context);
         await Assert.That((await r.Value())?.ToString()).IsEqualTo("abcdef");
     }
 
@@ -91,8 +91,8 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "st.txt");
-        await p.WriteText("12345");
-        var s = await p.Stat();
+        await p.WriteText("12345", app.User.Context);
+        var s = await p.Stat(app.User.Context);
         await s.IsSuccess();
         var info = (StatInfo)(await s.Value())!;
         await Assert.That(info.Exists).IsTrue();
@@ -104,7 +104,7 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "nope.txt");
-        var s = await p.Stat();
+        var s = await p.Stat(app.User.Context);
         await s.IsSuccess();
         var info = (StatInfo)(await s.Value())!;
         await Assert.That(info.Exists).IsFalse();
@@ -113,10 +113,10 @@ public class FilePathVerbTests
     [Test] public async Task List_ReturnsDirectoryEntries()
     {
         var (app, root) = MakeApp();
-        await At(app, root, "a.txt").WriteText("a");
-        await At(app, root, "b.txt").WriteText("b");
-        var dir = new FilePath(root, app.User.Context);
-        var list = await dir.List();
+        await At(app, root, "a.txt").WriteText("a", app.User.Context);
+        await At(app, root, "b.txt").WriteText("b", app.User.Context);
+        var dir = new FilePath(root);
+        var list = await dir.List(app.User.Context);
         await list.IsSuccess();
         var entries = (await list.Value())!;
         await Assert.That(entries.Count).IsGreaterThanOrEqualTo(2);
@@ -125,10 +125,10 @@ public class FilePathVerbTests
     [Test] public async Task WriteText_CreatesMissingParentDirectory()
     {
         var (app, root) = MakeApp();
-        var p = new FilePath(System.IO.Path.Combine(root, "newsub", "deep", "f.txt"), app.User.Context);
-        var w = await p.WriteText("nested");
+        var p = new FilePath(System.IO.Path.Combine(root, "newsub", "deep", "f.txt"));
+        var w = await p.WriteText("nested", app.User.Context);
         await w.IsSuccess();
-        var r = await p.ReadText();
+        var r = await p.ReadText(app.User.Context);
         await Assert.That((await r.Value())?.ToString()).IsEqualTo("nested");
     }
 
@@ -136,7 +136,7 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "ghost.txt");
-        var r = await p.ReadText();
+        var r = await p.ReadText(app.User.Context);
         await r.IsFailure();
     }
 }

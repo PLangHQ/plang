@@ -88,7 +88,7 @@ public class ConverterDeletionsTests
         var json = System.Text.Json.JsonSerializer.Serialize<global::app.type.item.path.@this>(p, opts);
         var back = System.Text.Json.JsonSerializer.Deserialize<global::app.type.item.path.@this>(json, opts);
         await Assert.That(back).IsNotNull();
-        await Assert.That(back!.Relative).IsEqualTo(p.Relative);
+        await Assert.That(back!.Relative(ctx)).IsEqualTo(p.Relative(ctx));
     }
 
     // The mid-graph resolution (architect 829... follow-up). STJ hits
@@ -112,8 +112,8 @@ public class ConverterDeletionsTests
     {
         // A mid-graph path field deserialises through the Converter, which
         // routes to path's Read via App.Type.Reader — the resulting path is
-        // Context-wired (only the registry-with-context path produces that),
-        // proving the route, not a bare stub.
+        // resolved under the reader's root (only the registry-with-context
+        // path produces that), proving the route, not a bare stub.
         await using var app = NewApp();
         var ctx = app.User.Context;
         var opts = new System.Text.Json.JsonSerializerOptions
@@ -124,7 +124,7 @@ public class ConverterDeletionsTests
         var inner = System.Text.Json.JsonSerializer.Deserialize<InnerFixture>(
             "{\"file\":\"/srv/app/x.json\"}", opts);
         await Assert.That(inner!.File).IsNotNull();
-        await Assert.That(inner.File!.Context).IsNotNull(); // Context-wired ⇒ went through the registry read
+        await Assert.That(inner.File!.Relative(ctx)).IsEqualTo("/srv/app/x.json"); // resolved under the reader's root ⇒ went through the registry read
     }
 
     // The load-bearing regression test (credit: coder caught it).
@@ -148,6 +148,6 @@ public class ConverterDeletionsTests
         var outer = System.Text.Json.JsonSerializer.Deserialize<OuterFixture>(
             "{\"mid\":{\"inner\":{\"file\":\"/srv/app/deep.json\"}}}", opts);
         await Assert.That(outer!.Mid!.Inner!.File).IsNotNull();
-        await Assert.That(outer.Mid.Inner.File!.Context).IsNotNull();
+        await Assert.That(outer.Mid.Inner.File!.Relative(ctx)).IsEqualTo("/srv/app/deep.json");
     }
 }

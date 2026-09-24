@@ -27,7 +27,7 @@ public sealed partial class @this : global::app.type.item.@this
         Language = string.IsNullOrEmpty(language) ? "text" : language;
     }
 
-    public override System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    public override System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult(!string.IsNullOrEmpty(Source));
 
     public override string ToString() => Source;

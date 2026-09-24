@@ -81,8 +81,8 @@ public class ItemApexTests
         await Assert.That(five.IsTruthy()).IsTrue();
         await Assert.That(nonEmptyDict.IsTruthy()).IsTrue();
         // The async contract delegates to the sync path by default.
-        await Assert.That(await emptyDict.AsBooleanAsync()).IsFalse();
-        await Assert.That(await five.AsBooleanAsync()).IsTrue();
+        await Assert.That(await emptyDict.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await five.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
     }
 
     [Test]

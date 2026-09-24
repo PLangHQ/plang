@@ -27,10 +27,10 @@ public class CodeValueTests
     }
 
     [Test] public async Task Code_IBooleanResolvable_NonEmptySource_Truthy()
-        => await Assert.That(await new code("x", "text").AsBooleanAsync()).IsTrue();
+        => await Assert.That(await new code("x", "text").AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
 
     [Test] public async Task Code_IBooleanResolvable_EmptySource_Falsy()
-        => await Assert.That(await new code("", "text").AsBooleanAsync()).IsFalse();
+        => await Assert.That(await new code("", "text").AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
 
     [Test] public async Task Code_PlangTypeAttribute_Registered()
     {

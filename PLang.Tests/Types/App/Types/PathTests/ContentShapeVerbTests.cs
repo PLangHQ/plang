@@ -40,8 +40,8 @@ public class ContentShapeVerbTests
         var file = System.IO.Path.Combine(root, "data.bin");
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
         System.IO.File.WriteAllBytes(file, bytes);
-        var p = new FilePath(file, app.User.Context);
-        var result = await p.ReadAsBase64();
+        var p = new FilePath(file);
+        var result = await p.ReadAsBase64(app.User.Context);
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Clr<string>()!).IsEqualTo(System.Convert.ToBase64String(bytes));
     }
@@ -54,8 +54,8 @@ public class ContentShapeVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 42, 43 });
-        var p = new FilePath(outOfRoot, app.User.Context);
-        var result = await p.ReadAsBase64();
+        var p = new FilePath(outOfRoot);
+        var result = await p.ReadAsBase64(app.User.Context);
         await result.IsFailure();
         // Differentiate denial from file-not-found / other IO errors.
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
@@ -70,8 +70,8 @@ public class ContentShapeVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "data.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 1 });
-        var p = new FilePath(outOfRoot, app.User.Context);
-        await p.ReadAsBase64();
+        var p = new FilePath(outOfRoot);
+        await p.ReadAsBase64(app.User.Context);
         await Assert.That(canned.Prompts.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(canned.Prompts[0]).Contains("read");
     }
@@ -82,8 +82,8 @@ public class ContentShapeVerbTests
         var file = System.IO.Path.Combine(root, "img.png");
         var bytes = new byte[] { 137, 80, 78, 71 };
         System.IO.File.WriteAllBytes(file, bytes);
-        var p = new FilePath(file, app.User.Context);
-        var result = await p.ReadAsDataUri();
+        var p = new FilePath(file);
+        var result = await p.ReadAsDataUri(app.User.Context);
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Clr<string>()!).StartsWith("data:image/png;base64,");
     }
@@ -93,8 +93,8 @@ public class ContentShapeVerbTests
         var app = NewApp(out var root);
         var file = System.IO.Path.Combine(root, "blob.weirdext");
         System.IO.File.WriteAllBytes(file, new byte[] { 1, 2, 3 });
-        var p = new FilePath(file, app.User.Context);
-        var result = await p.ReadAsDataUri();
+        var p = new FilePath(file);
+        var result = await p.ReadAsDataUri(app.User.Context);
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Clr<string>()!).StartsWith("data:application/octet-stream;base64,");
     }
@@ -107,8 +107,8 @@ public class ContentShapeVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 1 });
-        var p = new FilePath(outOfRoot, app.User.Context);
-        var result = await p.ReadAsDataUri();
+        var p = new FilePath(outOfRoot);
+        var result = await p.ReadAsDataUri(app.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }

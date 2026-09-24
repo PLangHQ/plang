@@ -19,7 +19,7 @@ public sealed partial class @this
         _ => System.TypeCode.Object,
     };
 
-    public bool ToBoolean(System.IFormatProvider? p) => AsBooleanAsync().GetAwaiter().GetResult();
+    public bool ToBoolean(System.IFormatProvider? p) => IsTruthy();
     public byte ToByte(System.IFormatProvider? p) => checked((byte)ToInt32());
     public sbyte ToSByte(System.IFormatProvider? p) => checked((sbyte)ToInt32());
     public short ToInt16(System.IFormatProvider? p) => checked((short)ToInt32());
@@ -43,7 +43,7 @@ public sealed partial class @this
         if (conversionType == typeof(double)) return ToDouble();
         if (conversionType == typeof(float)) return ToSingle();
         if (conversionType == typeof(string)) return ToString();
-        if (conversionType == typeof(bool)) return AsBooleanAsync().GetAwaiter().GetResult();
+        if (conversionType == typeof(bool)) return IsTruthy();
         if (conversionType == typeof(object)) return this;
         throw new System.InvalidCastException($"number cannot be converted to {conversionType}");
     }

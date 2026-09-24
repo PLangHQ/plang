@@ -60,10 +60,10 @@ public class MoveCopyBundledConsentTests
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
         System.IO.File.WriteAllText(srcFile, "data");
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(System.IO.Path.Combine(root, "y"), app.User.Context);
+        var src = new Path(srcFile);
+        var dst = new Path(System.IO.Path.Combine(root, "y"));
 
-        var result = await src.MoveTo(dst, overwrite: true);
+        var result = await src.MoveTo(dst, overwrite: true, app.User.Context);
         await result.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(1);
         await Assert.That(ch.LastQuestion).Contains(srcFile);
@@ -86,10 +86,10 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(dstFile, app.User.Context);
+        var src = new Path(srcFile);
+        var dst = new Path(dstFile);
 
-        var result = await src.MoveTo(dst, overwrite: true);
+        var result = await src.MoveTo(dst, overwrite: true, app.User.Context);
         await result.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(1); // single bundled question
         await Assert.That(ch.LastQuestion).Contains(srcFile);
@@ -112,10 +112,10 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(dstFile, app.User.Context);
+        var src = new Path(srcFile);
+        var dst = new Path(dstFile);
 
-        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
+        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, app.User.Context);
         await result.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(1);
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue(); // copy keeps source
@@ -134,9 +134,9 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(dstFile, app.User.Context);
-        await src.MoveTo(dst, overwrite: true);
+        var src = new Path(srcFile);
+        var dst = new Path(dstFile);
+        await src.MoveTo(dst, overwrite: true, app.User.Context);
 
         // Both grants landed.
         await Assert.That(await app.User.Permission.Find(src, global::app.type.item.permission.Verb.Read)).IsNotNull();
@@ -164,10 +164,10 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(dstFile, app.User.Context);
+        var src = new Path(srcFile);
+        var dst = new Path(dstFile);
 
-        var result = await src.MoveTo(dst, overwrite: true);
+        var result = await src.MoveTo(dst, overwrite: true, app.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         // No grants stored, no filesystem mutation.
@@ -189,10 +189,10 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(dstFile, app.User.Context);
+        var src = new Path(srcFile);
+        var dst = new Path(dstFile);
 
-        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
+        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, app.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
@@ -210,10 +210,10 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile, app.User.Context);
-        var dst = new Path(dstFile, app.User.Context);
+        var src = new Path(srcFile);
+        var dst = new Path(dstFile);
 
-        var result = await src.MoveTo(dst, overwrite: true);
+        var result = await src.MoveTo(dst, overwrite: true, app.User.Context);
         // Stateless: ask result is Exit-typed — Move bubbles it unchanged.
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
@@ -235,8 +235,8 @@ public class MoveCopyBundledConsentTests
         var roundTripped = await System.IO.File.ReadAllTextAsync(abs);
         await Assert.That(roundTripped).IsEqualTo("v1-still-here");
         // And the v2 surface sees the same bytes.
-        var v2 = new Path(abs, app.User.Context);
-        var v2Read = await v2.ReadText();
+        var v2 = new Path(abs);
+        var v2Read = await v2.ReadText(app.User.Context);
         await v2Read.IsSuccess();
         await Assert.That((await v2Read.Value())?.ToString()).IsEqualTo("v1-still-here");
     }

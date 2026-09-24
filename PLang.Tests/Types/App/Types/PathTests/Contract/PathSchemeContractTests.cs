@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Types.PathTests.Contract;
 /// applied to every scheme via a one-line closed subclass.
 ///
 /// Authorization is driven by registering a <see cref="CannedAnswerChannel"/>
-/// on the path's actor — "a" for the authorized tests, "n" for the gate tests.
+/// on the caller's actor — "a" for the authorized tests, "n" for the gate tests.
 /// Fixtures mint OUT-OF-ROOT paths so the gate fires uniformly for every scheme.
 /// </summary>
 public abstract class PathSchemeContractTests<TFixture> : IDisposable
@@ -21,17 +21,19 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
 {
     protected TFixture Fixture { get; } = new();
 
-    /// <summary>Registers the "allow" channel on the path's actor and returns the path.</summary>
-    private static Path Authorized(Path p)
+    private global::app.actor.context.@this context => Fixture.Context;
+
+    /// <summary>Registers the "allow" channel on the caller's actor and returns the path.</summary>
+    private Path Authorized(Path p)
     {
-        p.Context!.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
         return p;
     }
 
-    /// <summary>Registers the "deny" channel on the path's actor and returns the path.</summary>
-    private static Path Denied(Path p)
+    /// <summary>Registers the "deny" channel on the caller's actor and returns the path.</summary>
+    private Path Denied(Path p)
     {
-        p.Context!.Actor!.Channel.Register(new CannedAnswerChannel("n"));
+        context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
         return p;
     }
 
@@ -41,9 +43,9 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         try
         {
             var content = $"contract {Guid.NewGuid()}";
-            var written = await p.WriteText(content);
+            var written = await p.WriteText(content, context);
             await written.IsSuccess();
-            var read = await p.ReadText();
+            var read = await p.ReadText(context);
             await read.IsSuccess();
             await Assert.That((await read.Value())?.ToString()).IsEqualTo(content);
         }
@@ -55,13 +57,13 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Authorized(await Fixture.CreateFresh());
         try
         {
-            var before = await p.ExistsAsync();
+            var before = await p.ExistsAsync(context);
             await Assert.That((await before.Value())?.ToString()).IsEqualTo("false");
-            await p.WriteText("now here");
-            var after = await p.ExistsAsync();
+            await p.WriteText("now here", context);
+            var after = await p.ExistsAsync(context);
             await Assert.That((await after.Value())?.ToString()).IsEqualTo("true");
-            await p.Delete();
-            var gone = await p.ExistsAsync();
+            await p.Delete(context);
+            var gone = await p.ExistsAsync(context);
             await Assert.That((await gone.Value())?.ToString()).IsEqualTo("false");
         }
         finally { await Fixture.Cleanup(p); }
@@ -73,8 +75,8 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Authorized(await Fixture.CreateFresh());
         try
         {
-            await p.WriteText("1234567");
-            var stat = await p.Stat();
+            await p.WriteText("1234567", context);
+            var stat = await p.Stat(context);
             await stat.IsSuccess();
             var info = (Path.StatInfo)(await stat.Value())!;
             await Assert.That(info.Length).IsEqualTo(7L);
@@ -89,12 +91,12 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var dst = Authorized(await Fixture.CreateFresh());
         try
         {
-            await src.WriteText("copy me");
-            var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
+            await src.WriteText("copy me", context);
+            var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
             await copied.IsSuccess();
-            var read = await dst.ReadText();
+            var read = await dst.ReadText(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("copy me");
-            var srcStill = await src.ExistsAsync();
+            var srcStill = await src.ExistsAsync(context);
             await Assert.That((await srcStill.Value())?.ToString()).IsEqualTo("true");
         }
         finally { await Fixture.Cleanup(src); await Fixture.Cleanup(dst); }
@@ -107,12 +109,12 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var dst = Authorized(await Fixture.CreateFresh());
         try
         {
-            await src.WriteText("move me");
-            var moved = await src.MoveTo(dst, overwrite: true);
+            await src.WriteText("move me", context);
+            var moved = await src.MoveTo(dst, overwrite: true, context);
             await moved.IsSuccess();
-            var read = await dst.ReadText();
+            var read = await dst.ReadText(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("move me");
-            var srcGone = await src.ExistsAsync();
+            var srcGone = await src.ExistsAsync(context);
             await Assert.That((await srcGone.Value())?.ToString()).IsEqualTo("false");
         }
         finally { await Fixture.Cleanup(src); await Fixture.Cleanup(dst); }
@@ -123,7 +125,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Denied(await Fixture.CreateFresh());
         try
         {
-            var read = await p.ReadText();
+            var read = await p.ReadText(context);
             await read.IsFailure();
             await Assert.That(read.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
@@ -135,7 +137,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Denied(await Fixture.CreateFresh());
         try
         {
-            var write = await p.WriteText("should not land");
+            var write = await p.WriteText("should not land", context);
             await write.IsFailure();
             await Assert.That(write.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
@@ -147,7 +149,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Denied(await Fixture.CreateFresh());
         try
         {
-            var read = await p.ReadText();
+            var read = await p.ReadText(context);
             await read.IsFailure();
             // Every scheme routes refusal through the same base Authorize gate —
             // the Error is a PermissionDenied with the same key/status.

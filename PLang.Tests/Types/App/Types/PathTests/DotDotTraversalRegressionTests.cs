@@ -44,7 +44,7 @@ public class DotDotTraversalRegressionTests
         // Pre-canonicalization, this would be stored verbatim. Post-fix the
         // ctor resolves the .. so _absolutePath is the truthful target.
         var raw = System.IO.Path.Combine(root, "subdir", "..", "leaf.txt");
-        var p = new FilePath(raw, context);
+        var p = new FilePath(raw);
         await Assert.That(p.Absolute).DoesNotContain("..");
         await Assert.That(p.Absolute).EndsWith("leaf.txt");
     }
@@ -107,7 +107,7 @@ public class DotDotTraversalRegressionTests
 
             // The Read MUST surface a permission decision (Fail), not the
             // secret file's bytes.
-            var result = await p.ReadText();
+            var result = await p.ReadText(context);
             await result.IsFailure();
             await Assert.That((await result.Value())?.ToString() ?? "").IsNotEqualTo(secretContent);
         }

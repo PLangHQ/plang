@@ -22,7 +22,7 @@ public class PathDerivationVerbTests
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
         var abs = System.IO.Path.Combine(root, relUnderRoot.TrimStart('/'));
-        return (app, new FilePath(abs, app.User.Context));
+        return (app, new FilePath(abs));
     }
 
     private static HttpPath Http(string url)
@@ -32,7 +32,7 @@ public class PathDerivationVerbTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
-        return new HttpPath(url, app.User.Context);
+        return new HttpPath(url);
     }
 
     [Test] public async Task Parent_OfFileInDirectory_ReturnsContainingDirectory()
@@ -46,7 +46,7 @@ public class PathDerivationVerbTests
     {
         var sep = System.IO.Path.DirectorySeparatorChar;
         var root = sep.ToString();
-        var p = new FilePath(root, global::PLang.Tests.TestApp.SharedContext);
+        var p = new FilePath(root);
         var parent = p.Parent;
         // Root returns itself — no further parent, never throws.
         await Assert.That(parent.Absolute).IsEqualTo(root);
@@ -88,11 +88,28 @@ public class PathDerivationVerbTests
         await Assert.That(build.Absolute).EndsWith("Cache" + sep + ".build" + sep + "Start.goal");
     }
 
-    [Test] public async Task DerivedPath_InheritsContext_FromSource()
+    private static global::app.type.item.path.@this Typed(string raw)
     {
-        var (app, p) = FileAt("Cache/Start.goal");
-        var child = p.Combine("nested");
-        await Assert.That(child.Context).IsEqualTo(app.User.Context);
+        var (app, _) = FileAt("unused");
+        return global::app.type.item.path.@this.Resolve(raw, app.User.Context);
+    }
+
+    [Test] public async Task DerivedPath_ShowsTypedForm_FromSource_NeverAbsolute()
+    {
+        var p = Typed("Cache/Start.goal");
+        await Assert.That(p.ToString()).IsEqualTo("Cache/Start.goal");
+        await Assert.That(p.Parent.ToString()).IsEqualTo("Cache");
+        await Assert.That(p.Combine("nested").ToString()).IsEqualTo("Cache/Start.goal/nested");
+        await Assert.That(p.Parent.Combine("x.txt").ToString()).IsEqualTo("Cache/x.txt");
+        await Assert.That(p.WithExtension(".pr").ToString()).IsEqualTo("Cache/Start.pr");
+        await Assert.That(p.InFolder(".build").ToString()).IsEqualTo("Cache/.build/Start.goal");
+    }
+
+    [Test] public async Task DerivedPath_ParentOfBareName_IsDot()
+    {
+        var p = Typed("Start.goal");
+        await Assert.That(p.Parent.ToString()).IsEqualTo(".");
+        await Assert.That(p.WithName("Other.goal").ToString()).IsEqualTo("Other.goal");
     }
 
     [Test] public async Task DerivedPath_OnFilePath_StaysFilePath_ViaSchemeRegistry()

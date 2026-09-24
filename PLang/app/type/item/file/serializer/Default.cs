@@ -13,12 +13,6 @@ public static class Default
     public static void Write(global::app.type.item.file.@this value, global::app.channel.serializer.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
-        var mime = value.Path.MimeType;
-        if (mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase))
-            writer.String(value.ContentText());
-        else
-            writer.Bytes(value.Bytes);
+        value.Write(writer);
     }
 }

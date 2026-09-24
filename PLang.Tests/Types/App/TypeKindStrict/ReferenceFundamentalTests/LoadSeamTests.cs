@@ -43,7 +43,7 @@ public class LoadSeamTests
     {
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, name), Png1x1);
         return new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, name), _app.User.Context));
+            System.IO.Path.Combine(_app.AbsolutePath, name), _app.User.Context), _app.User.Context);
     }
 
     [Test] public async Task Value_MaterializesPathBackedImage_SyncBytesThenReal()
@@ -51,7 +51,7 @@ public class LoadSeamTests
         var img = PathBackedPng("a.png");
         await Assert.That(img.Bytes.Length).IsEqualTo(0); // lazy — nothing read yet
 
-        var data = Data.Ok(img);
+        var data = _app.User.Context.Ok(img);
         await data.Value();                 // the async pull
 
         await data.IsSuccess();
@@ -78,7 +78,7 @@ public class LoadSeamTests
         var img = PathBackedPng("shot.png");
         img.RequireStrictKind("gif"); // png content behind strict gif
 
-        var data = Data.Ok(img);
+        var data = _app.User.Context.Ok(img);
         await data.Value();             // fails onto the binding, does not throw
 
         await data.IsFailure();
@@ -104,7 +104,7 @@ public class LoadSeamTests
         var img = PathBackedPng("out.png");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, Data.Ok(img));
+        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, _app.User.Context.Ok(img));
         await result.IsSuccess();
 
         var json = Encoding.UTF8.GetString(ms.ToArray());
@@ -118,7 +118,7 @@ public class LoadSeamTests
         img.RequireStrictKind("gif");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, Data.Ok(img));
+        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, _app.User.Context.Ok(img));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StrictKindMismatch");

@@ -11,8 +11,8 @@ public class BoolWrapperTests
     [Test]
     public async Task Bool_WrapsRawBool_AsBooleanAsyncBottomsOutAtValue()
     {
-        await Assert.That(await new Bool(true).AsBooleanAsync()).IsTrue();
-        await Assert.That(await new Bool(false).AsBooleanAsync()).IsFalse();
+        await Assert.That(await new Bool(true).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        await Assert.That(await new Bool(false).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
         await Assert.That(new Bool(true).IsTruthy()).IsTrue();
         await Assert.That(new Bool(false).IsTruthy()).IsFalse();
     }

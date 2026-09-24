@@ -28,7 +28,7 @@ public partial class load : IContext
         // granted Read on the folder still gets a separate Execute prompt
         // before the DLL is loaded. Preserve the original "LoadError" key
         // so existing tests that branch on that don't churn.
-        var loadResult = await dllPath.LoadAssemblyAsync();
+        var loadResult = await dllPath.LoadAssemblyAsync(Context);
         if (!loadResult.Success)
             return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
         var assembly = (await loadResult.Value()).Clr<System.Reflection.Assembly>()!;

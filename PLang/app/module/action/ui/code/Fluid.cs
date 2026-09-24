@@ -41,12 +41,12 @@ public class Fluid : ITemplate
         if (isFile?.Value == true || (isFile == null && LooksLikeFilePath(templateContent)))
         {
             var pathData = path.Resolve(templateContent, action.Context);
-            if (!await pathData.AsBooleanAsync())
+            if (!await pathData.AsBooleanAsync(action.Context))
                 return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
-            sourceFile = pathData.Relative;
-            var readResult = await pathData.ReadText();
+            sourceFile = pathData.Relative(action.Context);
+            var readResult = await pathData.ReadText(action.Context);
             if (!readResult.Success)
                 return action.Context.Error<global::app.type.item.text.@this>(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
@@ -440,9 +440,9 @@ public class Fluid : ITemplate
                 // ExistsAsync routes through AuthGate(Read). Out-of-root template
                 // includes (`{% include '../../etc/passwd' %}`) surface as
                 // permission prompts or denials — not silent file reads.
-                var exists = resolved.ExistsAsync().GetAwaiter().GetResult();
+                var exists = resolved.ExistsAsync(_context).GetAwaiter().GetResult();
                 if (exists.Success && (exists.Peek() as global::app.type.item.@bool.@this)?.Value == true)
-                    return new PlangFileInfo(resolved, candidate);
+                    return new PlangFileInfo(resolved, candidate, _context);
             }
             return new NotFoundFileInfo(subpath);
         }
@@ -477,11 +477,13 @@ public class Fluid : ITemplate
     private sealed class PlangFileInfo : IFileInfo
     {
         private readonly global::app.type.item.path.@this _path;
+        private readonly global::app.actor.context.@this _context;
 
-        public PlangFileInfo(global::app.type.item.path.@this path, string name)
+        public PlangFileInfo(global::app.type.item.path.@this path, string name, global::app.actor.context.@this context)
         {
             _path = path;
             Name = name;
+            _context = context;
         }
 
         public bool Exists => true;
@@ -489,7 +491,7 @@ public class Fluid : ITemplate
         {
             get
             {
-                var stat = _path.Stat().GetAwaiter().GetResult();
+                var stat = _path.Stat(_context).GetAwaiter().GetResult();
                 return stat.Success && (stat.Peek() as global::app.type.item.path.@this.StatInfo)?.Length is long n ? n : 0;
             }
         }
@@ -504,7 +506,7 @@ public class Fluid : ITemplate
             // surface as denials before any disk access. Template MIMEs that
             // map to byte[] (octet-stream, unmapped extensions) come back as
             // raw bytes; UTF-8 decode them. String-valued reads pass through.
-            var read = _path.ReadText().GetAwaiter().GetResult();
+            var read = _path.ReadText(_context).GetAwaiter().GetResult();
             string content;
             if (read.Peek() is global::app.type.item.binary.@this bin)
                 content = System.Text.Encoding.UTF8.GetString(bin.Value);

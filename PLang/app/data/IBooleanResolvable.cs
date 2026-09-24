@@ -17,6 +17,7 @@ namespace app.data;
 /// </summary>
 public interface IBooleanResolvable
 {
-    /// <summary>Resolves this value to a boolean — may perform I/O.</summary>
-    System.Threading.Tasks.Task<bool> AsBooleanAsync();
+    /// <summary>Resolves this value to a boolean — may perform I/O, as the asker whose
+    /// <paramref name="context"/> it is (a path's "does it exist" checks the asker's permission).</summary>
+    System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context);
 }

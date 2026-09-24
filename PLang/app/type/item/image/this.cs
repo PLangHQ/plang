@@ -25,6 +25,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private byte[]? _bytes;
     private string? _mime;
 
+    // The canonical kind ("png", "jpg", …) — a fact named at birth: from the creator's
+    // format registry for a path-born image, from the magic bytes or the wire otherwise.
+    private readonly global::app.type.kind.@this? _kind;
+
     // Imprinted strict-kind requirement (from `as image/<kind> strict`). When
     // set, the content must sniff to this kind the moment bytes are present —
     // checked at the set for an already-loaded image, or at BytesAsync for a
@@ -44,8 +48,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// materializes at its Value door (the encode door loads first, which is right).</summary>
     public override byte[]? RawBytes => _bytes;
 
+    /// <summary>The image's mime — a fact set at birth (bytes with a known mime, or a path's
+    /// extension read through the creator's format registry) or at first load.</summary>
     [global::app.Out, global::app.Store]
-    public string Mime => _mime ??= (Path?.MimeType ?? "application/octet-stream");
+    public string Mime => _mime ?? "application/octet-stream";
 
     /// <summary>
     /// The image renders itself, per wire format. The portable form is base64
@@ -58,13 +64,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         switch (writer.Format)
         {
             case "text":
-                if (Path != null)
-                {
-                    try { writer.String(Path.Relative); return; }
-                    catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-                    { /* fall through to bare label */ }
-                }
-                writer.String($"[image: {Mime} {Bytes.Length}B]");
+                // The source location as typed; a pure in-memory image shows a scannable label.
+                writer.String(Path != null ? Path.ToString() : $"[image: {Mime} {Bytes.Length}B]");
                 return;
             case "protobuf":
                 writer.Bytes(Bytes);
@@ -75,18 +76,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
-    /// <summary>An image's entity: kind is the format token from its own mime
-    /// ("image/gif" → "gif"), canonicalised through the registry when reachable.</summary>
-    protected internal override global::app.type.@this Type
-    {
-        get
-        {
-            var t = Path?.Context?.App.Format.TypeFromMime(Mime);
-            var kind = t is { IsNull: false } ? t.Kind?.Name
-                : Mime.IndexOf('/') is var slash and >= 0 ? Mime[(slash + 1)..] : null;
-            return new global::app.type.@this("image") { Kind = (kind == "octet-stream" ? null : kind) is { } k ? new global::app.type.kind.@this(k) : null };
-        }
-    }
+    /// <summary>An image's entity: name "image", kind = the canonical kind named at birth.</summary>
+    protected internal override global::app.type.@this Type =>
+        new global::app.type.@this("image") { Kind = _kind };
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)
@@ -130,7 +122,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Create(value) is { } built) return built;
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw) return null;
-        try { return new @this(data.Context.App.Type.Scheme.From(raw, data.Context)); }
+        try
+        {
+            var path = data.Context.App.Type.Scheme.From(raw, data.Context);
+            return new @this(path, data.Context);
+        }
         catch (global::app.type.item.path.scheme.SchemeNotRegistered snr)
         {
             data.Fail(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
@@ -144,38 +140,35 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
-    public @this(byte[] bytes, string mime, global::app.type.item.path.@this? path = null)
+    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire).
+    /// <paramref name="kind"/> is a fact the creator already has — sniffed off the magic
+    /// bytes or read off the wire; null when unknown.</summary>
+    public @this(byte[] bytes, string mime, string? kind = null)
     {
         _bytes = bytes ?? System.Array.Empty<byte>();
         _mime = mime ?? "application/octet-stream";
-        Path = path;
-        if (path != null) this.list.Add(path);   // born from a path → `is path` from the type history
-    }
-
-    /// <summary>
-    /// Bytes-backed but path-aware: content already read, the SAME source path
-    /// object retained (Mime derives from it). file.read's image lift uses this
-    /// so the value carries its path without decomposing it into loose
-    /// primitives (bytes + mime + a re-resolved path).
-    /// </summary>
-    public @this(byte[] bytes, global::app.type.item.path.@this path)
-    {
-        _bytes = bytes ?? System.Array.Empty<byte>();
-        Path = path;
-        if (path != null) this.list.Add(path);   // born from a path → `is path` from the type history
+        _kind = kind is { Length: > 0 } ? new global::app.type.kind.@this(kind) : null;
     }
 
     /// <summary>
     /// Path-backed: a lazy handle. <c>.Path</c> is set and <b>nothing is read</b>
-    /// — the content materializes from the path on the first
-    /// <see cref="BytesAsync"/>. The proving instance for reference-fundamental
-    /// laziness (audio/video follow the same shape).
+    /// — the content materializes from the path on the first <see cref="Value"/>.
+    /// The proving instance for reference-fundamental laziness (audio/video follow
+    /// the same shape). <paramref name="context"/> is the creator's, used once to name
+    /// the mime and the kind from the path's extension, and not kept.
     /// </summary>
-    public @this(global::app.type.item.path.@this path)
+    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        _mime = path.MimeType(context);
+        _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
         this.list.Add(path);   // born from a path → `is path` from the type history
     }
+
+    /// <summary>Path-backed with the content already read (the file read keeps images eager).</summary>
+    public @this(byte[] bytes, global::app.type.item.path.@this path, global::app.actor.context.@this context)
+        : this(path, context)
+        => _bytes = bytes ?? System.Array.Empty<byte>();
 
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>
     public void RequireStrictKind(string kind) => _requiredKind = kind;
@@ -193,7 +186,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (_bytes == null && Path != null)
         {
-            var read = await Path.ReadBytes();
+            var read = await Path.ReadBytes(data.Context);
             // The path's read error rides through WHOLE — its key, message and inner
             // exception — instead of being flattened into a bare-string IOException.
             if (!read.Success)
@@ -231,7 +224,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return ValidateKind(_bytes, _requiredKind);
     }
 
-    public override async System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    public override async System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
     {
         // Truthiness without forcing a full load: in-memory bytes are truthy
         // when non-empty; a path-backed image is truthy when its resource exists
@@ -239,7 +232,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (_bytes != null) return _bytes.Length > 0;
         if (Path != null)
         {
-            var exists = await Path.ExistsAsync();
+            var exists = await Path.ExistsAsync(context);
             return exists.Success && await exists.ToBooleanAsync();
         }
         return false;

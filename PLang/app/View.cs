@@ -17,7 +17,9 @@ public enum View
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class StoreAttribute : Attribute { }
 
-[AttributeUsage(AttributeTargets.Property)]
+/// <summary>Catalog visibility for the builder LLM. On a method it marks a member that needs the
+/// asker's context (one <c>actor.context.@this</c> parameter) — listed as a field like a property.</summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Method)]
 public sealed class LlmBuilderAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.Property)]

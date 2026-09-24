@@ -91,7 +91,7 @@ public class TextWrapperTests
         Item nonEmpty = new Text("x");
         await Assert.That(empty.IsTruthy()).IsFalse();
         await Assert.That(nonEmpty.IsTruthy()).IsTrue();
-        await Assert.That(await empty.AsBooleanAsync()).IsFalse();
+        await Assert.That(await empty.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
     }
 
     [Test]

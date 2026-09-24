@@ -103,12 +103,12 @@ public class HandlerShapeTests
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
         var fp = global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context);
-        await fp.WriteText("delegated body");
+        await fp.WriteText("delegated body", app.User.Context);
 
         var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var viaHandler = await handler.Run();
-        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
+        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText(app.User.Context);
 
         await Assert.That(viaHandler.Success).IsEqualTo(viaPath.Success);
         await Assert.That((await viaHandler.Value())?.ToString()).IsEqualTo((await viaPath.Value())?.ToString());
@@ -126,7 +126,7 @@ public class HandlerShapeTests
         var target = System.IO.Path.Combine(outOfRoot, "secret.txt");
         System.IO.File.WriteAllText(target, "secret");
 
-        var fp = new global::app.type.item.path.file.@this(target, app.User.Context);
+        var fp = new global::app.type.item.path.file.@this(target);
         var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var result = await handler.Run();
@@ -148,10 +148,10 @@ public class HandlerShapeTests
         var target = System.IO.Path.Combine(outOfRoot, "exists.txt");
         System.IO.File.WriteAllText(target, "i exist");
 
-        var fp = new global::app.type.item.path.file.@this(target, app.User.Context);
+        var fp = new global::app.type.item.path.file.@this(target);
         // The file is really on disk — but permission is denied, so truthiness
         // is false. If the gate were skipped this would be true.
-        await Assert.That(await fp.AsBooleanAsync()).IsFalse();
+        await Assert.That(await fp.AsBooleanAsync(app.User.Context)).IsFalse();
     }
 
     private sealed class CannedNoChannel : global::app.channel.@this

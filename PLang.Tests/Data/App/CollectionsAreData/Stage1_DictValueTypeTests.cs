@@ -70,7 +70,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     {
         // IBooleanResolvable: empty dict is falsy — matches falsiness of empty list/string/null.
         var d = new Dict();
-        await Assert.That(await d.AsBooleanAsync()).IsFalse();
+        await Assert.That(await d.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
     }
 
     [Test]
@@ -79,7 +79,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         // IBooleanResolvable: a dict with any entry is truthy.
         var d = new Dict();
         d.Set(app.Data("name", "a"));
-        await Assert.That(await d.AsBooleanAsync()).IsTrue();
+        await Assert.That(await d.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
     }
 
     [Test]

@@ -85,13 +85,13 @@ public partial class @this
 
     /// <summary>The action's description — {Name}.description.md.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Description => _description ??= new(Module.Folder.Combine($"{Name}.description.md"));
+    public global::app.type.item.file.@this Description => _description ??= new(Module.Folder.Combine($"{Name}.description.md"), App!.System.Context!);
 
     /// <summary>The action's notes — {Name}.notes.md.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Notes => _notes ??= new(Module.Folder.Combine($"{Name}.notes.md"));
+    public global::app.type.item.file.@this Notes => _notes ??= new(Module.Folder.Combine($"{Name}.notes.md"), App!.System.Context!);
 
     /// <summary>The action's examples — {Name}.examples.md.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Examples => _examples ??= new(Module.Folder.Combine($"{Name}.examples.md"));
+    public global::app.type.item.file.@this Examples => _examples ??= new(Module.Folder.Combine($"{Name}.examples.md"), App!.System.Context!);
 }

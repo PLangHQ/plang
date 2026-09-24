@@ -63,6 +63,20 @@ public class TypedPropertyCatalogTests
     }
 
     [Test]
+    public async Task Catalog_PathEntry_ListsContextMethodAsField_InDeclarationOrder()
+    {
+        // MimeType needs the asker's context, so it is a one-context method — the catalog
+        // still lists it as the same field, where it is declared among the properties.
+        var path = FindEntry("path");
+        await Assert.That(path).IsNotNull();
+        var names = path!.Properties!.Select(p => p.Name + ":" + p.TypeName).ToList();
+        var at = names.IndexOf("fileName:text");
+        await Assert.That(at).IsGreaterThanOrEqualTo(0).Because(string.Join(", ", names));
+        await Assert.That(string.Join(", ", names.Skip(at).Take(6))).IsEqualTo(
+            "fileName:text, fileNameWithoutExtension:text, directory:text, mimeType:text, isFile:bool, isDirectory:bool");
+    }
+
+    [Test]
     public async Task Catalog_TypeProperties_RenderTypeAnnotation_PerProperty()
     {
         // BuildTypeEntries surfaces each [LlmBuilder]-marked property with its

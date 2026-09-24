@@ -24,8 +24,9 @@ public class FileSystemSurfaceShapeTests
         // Delete/MoveTo/CopyTo. Handlers are thin shells over it.
         var pathType = typeof(global::app.type.item.path.@this);
         await Assert.That(pathType.GetMethod("ReadText")).IsNotNull();
-        await Assert.That(pathType.GetMethod("WriteText", new[] { typeof(string) })).IsNotNull();
-        await Assert.That(pathType.GetMethod("Delete", System.Type.EmptyTypes)).IsNotNull();
+        var ctx = typeof(global::app.actor.context.@this);
+        await Assert.That(pathType.GetMethod("WriteText", new[] { typeof(string), ctx })).IsNotNull();
+        await Assert.That(pathType.GetMethod("Delete", new[] { ctx })).IsNotNull();
         await Assert.That(pathType.GetMethod("MoveTo")).IsNotNull();
         await Assert.That(pathType.GetMethod("CopyTo")).IsNotNull();
     }

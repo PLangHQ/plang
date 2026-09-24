@@ -11,6 +11,8 @@ namespace app.type.item.path;
 /// from each impl. Cross-scheme <see cref="CopyTo"/>/<see cref="MoveTo"/> stay
 /// virtual on the base with naive read/write defaults; same-scheme subclasses
 /// override for fast paths (FilePath uses <c>System.IO.File.Move</c>, etc.).
+/// Every verb takes the caller's context: it checks the caller's permission and
+/// its result Data is born with it. The path itself stores none.
 /// </summary>
 public abstract partial class @this
 {
@@ -37,9 +39,9 @@ public abstract partial class @this
     /// must bubble to the step loop). Returns null on grant — caller proceeds
     /// with the IO. Stays on base; reused by every scheme's verb impl.
     /// </summary>
-    protected async Task<data.@this?> AuthGate(Verb verb)
+    protected async Task<data.@this?> AuthGate(Verb verb, actor.context.@this context)
     {
-        var auth = await Authorize(verb);
+        var auth = await Authorize(verb, context);
         if (auth.Exits) return auth;
         if (!auth.Success) return auth;
         return null;
@@ -57,16 +59,16 @@ public abstract partial class @this
     // ReadText stays polymorphic (bare Data): the MIME-stamped Type carries the
     // shape (string for text, byte[] for binary, structured for json/yaml). The
     // other verbs have a single fixed shape — typed.
-    public abstract Task<data.@this> ReadText();
-    public abstract Task<data.@this<global::app.type.item.binary.@this>> ReadBytes();
-    public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync();
-    public abstract Task<data.@this<StatInfo>> Stat();
+    public abstract Task<data.@this> ReadText(actor.context.@this context);
+    public abstract Task<data.@this<global::app.type.item.binary.@this>> ReadBytes(actor.context.@this context);
+    public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context);
+    public abstract Task<data.@this<StatInfo>> Stat(actor.context.@this context);
 
     // Writes return the path itself wrapped — caller can chain or read .Exists.
-    public abstract Task<data.@this<@this>> WriteText(string content);
-    public abstract Task<data.@this<@this>> WriteBytes(byte[] content);
-    public abstract Task<data.@this<@this>> Append(string content);
-    public abstract Task<data.@this<@this>> Mkdir();
+    public abstract Task<data.@this<@this>> WriteText(string content, actor.context.@this context);
+    public abstract Task<data.@this<@this>> WriteBytes(byte[] content, actor.context.@this context);
+    public abstract Task<data.@this<@this>> Append(string content, actor.context.@this context);
+    public abstract Task<data.@this<@this>> Mkdir(actor.context.@this context);
 
     /// <summary>
     /// Loads a .NET assembly from this path. Gated by <c>Verb { Execute }</c>
@@ -76,8 +78,8 @@ public abstract partial class @this
     // Assembly is a CLR runtime artifact, not a PLang value — but it rides in a BARE
     // Data (no generic T → satisfies `where T : item`) so the AuthGate ask/exit bubble
     // (a Data Type signal) still propagates. .Value holds the Assembly.
-    public virtual Task<data.@this> LoadAssemblyAsync() =>
-        Task.FromResult(Context!.Error(
+    public virtual Task<data.@this> LoadAssemblyAsync(actor.context.@this context) =>
+        Task.FromResult(context.Error(
             new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
     // Content-shape verbs: when a third-party API needs the file's content
@@ -91,12 +93,12 @@ public abstract partial class @this
     /// OpenAI image attachments, sealing binary payloads into JSON-only
     /// transports. Auth is bundled (single Read prompt).
     /// </summary>
-    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsBase64()
+    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsBase64(actor.context.@this context)
     {
-        var bytes = await ReadBytes();
+        var bytes = await ReadBytes(context);
         if (!bytes.Success || bytes.Peek().IsNull)
             return data.@this<global::app.type.item.text.@this>.From(bytes);
-        return Context!.Ok<global::app.type.item.text.@this>(System.Convert.ToBase64String((await bytes.Value())!.Value));
+        return context.Ok<global::app.type.item.text.@this>(System.Convert.ToBase64String((await bytes.Value())!.Value));
     }
 
     /// <summary>
@@ -104,29 +106,30 @@ public abstract partial class @this
     /// <c>data:&lt;mime&gt;;base64,</c>. Use sites: embedded image tags, mail
     /// attachments, any wire payload that wants self-contained binary.
     /// </summary>
-    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsDataUri()
+    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsDataUri(actor.context.@this context)
     {
-        var bytes = await ReadBytes();
+        var bytes = await ReadBytes(context);
         if (!bytes.Success || bytes.Peek().IsNull)
             return data.@this<global::app.type.item.text.@this>.From(bytes);
-        var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
-        return Context!.Ok<global::app.type.item.text.@this>($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
+        var mime = MimeType(context);
+        if (string.IsNullOrEmpty(mime)) mime = "application/octet-stream";
+        return context.Ok<global::app.type.item.text.@this>($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
     }
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
-    public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound);
+    public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound, actor.context.@this context);
 
     /// <summary>List entries with a glob pattern. Non-FS schemes ignore both options.</summary>
-    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(string pattern, bool recursive);
+    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(string pattern, bool recursive, actor.context.@this context);
 
     /// <summary>Write <paramref name="value"/> to this path; returns the Path wrapped in Data.</summary>
-    public abstract Task<data.@this<@this>> Save(data.@this? value);
+    public abstract Task<data.@this<@this>> Save(data.@this? value, actor.context.@this context);
 
-    /// <summary>Parameterless convenience — same defaults the file actions carried.</summary>
-    public Task<data.@this<@this>> Delete() => Delete(recursive: false, ignoreIfNotFound: false);
+    /// <summary>Convenience — same defaults the file actions carried.</summary>
+    public Task<data.@this<@this>> Delete(actor.context.@this context) => Delete(recursive: false, ignoreIfNotFound: false, context);
 
-    /// <summary>Parameterless convenience — all entries, shallow.</summary>
-    public Task<data.@this<global::app.type.item.list.@this<@this>>> List() => List(pattern: "*", recursive: false);
+    /// <summary>Convenience — all entries, shallow.</summary>
+    public Task<data.@this<global::app.type.item.list.@this<@this>>> List(actor.context.@this context) => List(pattern: "*", recursive: false, context);
 
     // --- Cross-scheme defaults — virtual; subclasses override for fast paths ---
 
@@ -138,34 +141,34 @@ public abstract partial class @this
     /// underlying verb impls. Subclasses (e.g. FilePath) override for
     /// same-scheme fast paths that honour the options.
     /// </summary>
-    public virtual async Task<data.@this<@this>> CopyTo(@this destination, bool overwrite, bool includeSubfolders)
+    public virtual async Task<data.@this<@this>> CopyTo(@this destination, bool overwrite, bool includeSubfolders, actor.context.@this context)
     {
-        var read = await ReadBytes();
+        var read = await ReadBytes(context);
         if (!read.Success || read.Exits) return data.@this<@this>.From(read);
         byte[]? copyBytes = (await read.Value())?.Value;
         if (copyBytes == null)
-            return Context!.Error<@this>(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
-        return await destination.WriteBytes(copyBytes);
+            return context.Error<@this>(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
+        return await destination.WriteBytes(copyBytes, context);
     }
 
     /// <summary>
     /// Cross-scheme move default: CopyTo destination, then Delete source.
     /// Subclasses (e.g. FilePath same-scheme) override for atomic move semantics.
     /// </summary>
-    public virtual async Task<data.@this<@this>> MoveTo(@this destination, bool overwrite)
+    public virtual async Task<data.@this<@this>> MoveTo(@this destination, bool overwrite, actor.context.@this context)
     {
-        var copy = await CopyTo(destination, overwrite, includeSubfolders: true);
+        var copy = await CopyTo(destination, overwrite, includeSubfolders: true, context);
         if (!copy.Success || copy.Exits) return copy;
-        return await Delete();
+        return await Delete(context);
     }
 
     // --- Boolean resolution (IBooleanResolvable) ---
 
     /// <summary>
     /// Answers "is this path truthy" — for a path that means "does it exist".
-    /// Routed through here by <c>Data.ToBooleanAsync()</c> so a comparison like
-    /// <c>if %path% exists</c> asks the path itself. FilePath probes the
-    /// filesystem; HttpPath issues an HTTP HEAD.
+    /// Routed through here by <c>Data.ToBooleanAsync()</c> (which passes its own context)
+    /// so a comparison like <c>if %path% exists</c> asks the path itself, as the asker.
+    /// FilePath probes the filesystem; HttpPath issues an HTTP HEAD.
     /// </summary>
-    public abstract override Task<bool> AsBooleanAsync();
+    public abstract override Task<bool> AsBooleanAsync(actor.context.@this context);
 }

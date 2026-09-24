@@ -186,7 +186,7 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Start.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Start.goal"));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -206,7 +206,7 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("mygoal.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("mygoal.goal"));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -226,7 +226,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("NonExistent.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("NonExistent.goal"));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -250,8 +250,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("First.goal", global::PLang.Tests.TestApp.SharedContext));
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Third.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("First.goal"));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Third.goal"));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);

@@ -48,7 +48,7 @@ public sealed class @this
             // ExistsAsync routes through AuthGate(Read) — in-root setup probes
             // fast-pass via IsInRoot. Out-of-root would prompt, but setup paths
             // are derived from App.AbsolutePath so this is always in-root.
-            var exists = await file.ExistsAsync();
+            var exists = await file.ExistsAsync(context);
             if (!exists.Success || (await exists.Value())?.Value != true) continue;
 
             try
@@ -56,7 +56,7 @@ public sealed class @this
                 // ReadText already MIME-deserializes .pr → Goal via the
                 // FilePath.ReadText path. The per-Actor serializer carries a
                 // Context-bound PathJsonConverter so Path fields land wired.
-                var read = await file.ReadText();
+                var read = await file.ReadText(context);
                 if (!read.Success || (await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
 
                 _goals.Add(goal);

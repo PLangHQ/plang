@@ -47,7 +47,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.User.Context);
-        var img = new image(PngBytes, "image/png", p);
+        var img = new image(PngBytes, p!, app.User.Context);
 
         var write = app.Type.Renderer.Of("image", "text");
         await Assert.That(write).IsNotNull();
@@ -79,7 +79,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.User.Context);
-        var img = new image(PngBytes, "image/png", p);
+        var img = new image(PngBytes, p!, app.User.Context);
         var beforeBytes = img.Bytes;
 
         app.Type.Renderer.Of("image", "text")!(img, new CaptureWriter("text"));

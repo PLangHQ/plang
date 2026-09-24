@@ -73,7 +73,7 @@ public class PathTypeMapperTests
     {
         var (app, context) = MakeApp();
         var filePath = FilePath.Resolve("greeting.txt", context);
-        await filePath.WriteText("hello from a string param");
+        await filePath.WriteText("hello from a string param", context);
 
         // Resolve a Path the way a handler parameter does, then run file.read.
         var (value, _) = Build("greeting.txt", context);

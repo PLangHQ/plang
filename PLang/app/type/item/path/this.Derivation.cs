@@ -2,7 +2,7 @@ namespace app.type.item.path;
 
 /// <summary>
 /// Pure path-string derivation verbs — no IO, no async, no AuthGate. Each
-/// returns a new Path of the same scheme and the same Context. Scheme-aware
+/// returns a new Path of the same scheme, with typed text derived from this one's. Scheme-aware
 /// implementations live on the subclass (FilePath uses OS path semantics;
 /// HttpPath uses URL semantics). Held abstract on the base so a future scheme
 /// can't silently inherit a wrong implementation.

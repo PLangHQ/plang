@@ -948,7 +948,7 @@ public sealed class Default : IHttp
             // (including denial) falls through to "treat as a string body" —
             // matches the prior "if not a file, send as string" shape.
             var p = global::app.type.item.path.@this.Resolve(str, context);
-            var exists = await p.ExistsAsync();
+            var exists = await p.ExistsAsync(context);
             if (exists.Success && await exists.ToBooleanAsync())
                 return await CreateFileContentAsync(app, context, str);
 
@@ -970,7 +970,7 @@ public sealed class Default : IHttp
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.
         var resolved = global::app.type.item.path.@this.Resolve(path, context);
-        var read = await resolved.ReadBytes();
+        var read = await resolved.ReadBytes(context);
         if (!read.Success || await read.Value() == null)
             return (null, read.Error
                 ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
@@ -1015,7 +1015,7 @@ public sealed class Default : IHttp
                 // form fields the actor hasn't authorized get denied at the
                 // gate, not silently exfiltrated.
                 var fp = global::app.type.item.path.@this.Resolve(value[1..], context);
-                var read = await fp.ReadBytes();
+                var read = await fp.ReadBytes(context);
                 if (!read.Success || await read.Value() == null)
                     return (null, read.Error
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));

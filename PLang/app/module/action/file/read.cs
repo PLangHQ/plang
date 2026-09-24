@@ -38,13 +38,13 @@ public partial class Read : IContext
         // Remote scheme → a url reference. No fetch — consent and I/O land at
         // first examination through the door.
         if (path is global::app.type.item.path.http.@this)
-            return new data.@this("url", new global::app.type.item.url.@this(path!),
+            return new data.@this("url", new global::app.type.item.url.@this(path!, Context),
                 Context.App.Type[new global::app.type.@this("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null)],
                 context: Context);
 
         // Stat once: NotFound surfaces at the read step (not at first touch),
         // and the stat tells file from directory.
-        var stat = await path!.Stat();
+        var stat = await path!.Stat(Context);
         if (!stat.Success) return stat;
         var info = await stat.Value();
         if (info is not { Exists: true })
@@ -57,24 +57,25 @@ public partial class Read : IContext
 
         // The plang container (.pr) IS structured Data — a Goal, not content to
         // narrow. Deserialize eagerly through the channel as before.
-        if (path.MimeType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
+        var mime = path.MimeType(Context);
+        if (mime.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
         {
-            var prChannel = new global::app.channel.type.file.@this(path);
+            var prChannel = new global::app.channel.type.file.@this(path, Context);
             return await prChannel.Read();
         }
 
         // A file-backed image carries a source-path facet (image.Path → the
         // file, so %img.Path.Exists% works) that only the read site knows. Build
         // it eagerly — image is terminal, its content type is already known.
-        var mimeType = Context.App.Format?.TypeFromMime(path.MimeType);
+        var mimeType = Context.App.Format?.TypeFromMime(mime);
         if (mimeType?.Name == "image")
         {
-            var channel = new global::app.channel.type.file.@this(path);
+            var channel = new global::app.channel.type.file.@this(path, Context);
             var read = await channel.Read();
             if (!read.Success || read.Exits) return read;
             if (read.Raw is byte[] imageBytes)
                 return new data.@this(read.Name,
-                    new global::app.type.item.image.@this(imageBytes, path), read.Type, context: Context);
+                    new global::app.type.item.image.@this(imageBytes, path, Context), read.Type, context: Context);
             return read;
         }
 
@@ -82,7 +83,7 @@ public partial class Read : IContext
         // it forces materialization and resolves %var% — the only non-lazy path.
         if (await ResolveVariables.ToBooleanAsync())
         {
-            var channel = new global::app.channel.type.file.@this(path);
+            var channel = new global::app.channel.type.file.@this(path, Context);
             var read = await channel.Read();
             if (!read.Success) return read;
             var content = await read.Value();
@@ -97,7 +98,7 @@ public partial class Read : IContext
         // The reference: the extension rides as the kind (the content-kind
         // inference input — `.json` narrows to dict, `.csv` to table/list).
         var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
-        return new data.@this(path.FileName, new global::app.type.item.file.@this(path),
+        return new data.@this(path.FileName, new global::app.type.item.file.@this(path, Context),
             Context.App.Type[new global::app.type.@this("file", kind)], context: Context);
     }
 
@@ -123,14 +124,14 @@ public partial class Read : IContext
 
         var p = await Path.Value();
         if (p == null || string.IsNullOrEmpty(p.Extension)) return Context.Ok();
-        if (p.MimeType == "application/octet-stream") return Context.Ok();
+        if (p.MimeType(Context) == "application/octet-stream") return Context.Ok();
 
         // The SAME shared derivation the runtime uses, so build-time and
         // runtime stamps can't drift: an image keeps its structured {image,
         // png} stamp (eager specialisation); everything else is the reference
         // — {file, <ext>} — and the content type appears only when runtime
         // examination narrows.
-        var inferred = p.Kind;
+        var inferred = p.Kind(Context);
         if (inferred.IsNull || !Context.App.Type.Contains(inferred.Name)) return Context.Ok();
         if (inferred.Name != "image")
             inferred = Context.App.Type[new global::app.type.@this("file", p.Extension.TrimStart('.'))];
@@ -139,7 +140,7 @@ public partial class Read : IContext
         // no-op sink when no build is active, so this is safe outside builds.
         try
         {
-            var exists = await p.ExistsAsync();
+            var exists = await p.ExistsAsync(Context);
             if (exists.Success && !await exists.ToBooleanAsync())
             {
                 // Advisory build warning as a native dict {action, message} —

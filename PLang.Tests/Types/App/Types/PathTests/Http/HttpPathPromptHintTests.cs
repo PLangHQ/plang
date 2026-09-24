@@ -55,7 +55,7 @@ public class HttpPathPromptHintTests
         // Use a host the gate won't auto-grant (out of root, not loopback-magic).
         var url = "https://api.example.com/files?token=secret123abc";
 
-        _ = await new HttpPath(url, context).ReadText();
+        _ = await new HttpPath(url).ReadText(context);
 
         await Assert.That(ch.LastQuestion).Contains("query string");
         await Assert.That(ch.LastQuestion).Contains("'a'");
@@ -67,7 +67,7 @@ public class HttpPathPromptHintTests
         var (_, context, ch) = MakeApp();
         var url = "https://api.example.com/files";
 
-        _ = await new HttpPath(url, context).ReadText();
+        _ = await new HttpPath(url).ReadText(context);
 
         await Assert.That(ch.LastQuestion).DoesNotContain("query string");
     }
@@ -82,7 +82,7 @@ public class HttpPathPromptHintTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8],
             "x.txt");
 
-        _ = new global::app.type.item.path.file.@this(outOfRoot, context).ReadText();
+        _ = new global::app.type.item.path.file.@this(outOfRoot).ReadText(context);
 
         await Assert.That(ch.LastQuestion).DoesNotContain("query string");
     }

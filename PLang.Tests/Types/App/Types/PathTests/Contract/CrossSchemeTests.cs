@@ -11,8 +11,8 @@ namespace PLang.Tests.App.Types.PathTests.Contract;
 /// </summary>
 public class CrossSchemeTests
 {
-    private static void Authorize(global::app.type.item.path.@this p)
-        => p.Context!.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+    private static void Authorize(global::app.actor.context.@this context)
+        => context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
 
     [Test] public async Task CopyTo_FilePath_To_HttpPath_UsesBaseDefault_RoundTrips()
     {
@@ -20,13 +20,13 @@ public class CrossSchemeTests
         using var httpFx = new HttpPathFixture();
         var src = await fileFx.CreateFresh();
         var dst = await httpFx.CreateFresh();
-        Authorize(src);
-        Authorize(dst);
+        var context = fileFx.Context;
+        Authorize(context);
 
-        await src.WriteText("cross hello");
-        var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
+        await src.WriteText("cross hello", context);
+        var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
         await copied.IsSuccess();
-        var read = await dst.ReadText();
+        var read = await dst.ReadText(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("cross hello");
     }
 
@@ -36,13 +36,13 @@ public class CrossSchemeTests
         using var httpFx = new HttpPathFixture();
         var src = await httpFx.CreateFresh();
         var dst = await fileFx.CreateFresh();
-        Authorize(src);
-        Authorize(dst);
+        var context = fileFx.Context;
+        Authorize(context);
 
-        await src.WriteText("reverse hello");
-        var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
+        await src.WriteText("reverse hello", context);
+        var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
         await copied.IsSuccess();
-        var read = await dst.ReadText();
+        var read = await dst.ReadText(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("reverse hello");
     }
 
@@ -52,15 +52,15 @@ public class CrossSchemeTests
         using var httpFx = new HttpPathFixture();
         var src = await fileFx.CreateFresh();
         var dst = await httpFx.CreateFresh();
-        Authorize(src);
-        Authorize(dst);
+        var context = fileFx.Context;
+        Authorize(context);
 
-        await src.WriteText("move cross");
-        var moved = await src.MoveTo(dst, overwrite: true);
+        await src.WriteText("move cross", context);
+        var moved = await src.MoveTo(dst, overwrite: true, context);
         await moved.IsSuccess();
-        var read = await dst.ReadText();
+        var read = await dst.ReadText(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("move cross");
-        var srcGone = await src.ExistsAsync();
+        var srcGone = await src.ExistsAsync(context);
         await Assert.That((await srcGone.Value())).IsEqualTo(false);
     }
 }

@@ -272,6 +272,15 @@ public partial class @this
                 | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (vp != null)
                 return new @this(key, vp.GetValue(peeked), parent: this);
+
+            // A member that needs the asker's context is a method taking one context —
+            // `!relative`/`!mimetype`/`!kind` answer with this Data's own context.
+            var vm = peeked.GetType().GetMethod(key,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase,
+                binder: null, types: new[] { typeof(actor.context.@this) }, modifiers: null);
+            if (vm != null)
+                return new @this(key, vm.Invoke(peeked, new object?[] { Context }), parent: this);
         }
 
         return NotFound(key);

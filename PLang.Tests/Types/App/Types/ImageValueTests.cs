@@ -39,9 +39,25 @@ public class ImageValueTests
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
         var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
         var p = global::app.type.item.path.@this.Resolve(raw, app.User.Context);
-        var img = new image(PngHeader, "image/png", p);
+        var img = new image(PngHeader, p, app.User.Context);
         await Assert.That(img.Path).IsNotNull();
         await Assert.That(img.Path!.Raw).IsEqualTo(p.Raw);
+    }
+
+    [Test] public async Task Image_PathBorn_JpegExtension_KindIsCanonicalJpg()
+    {
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.User.Context);
+        var img = new image(p, app.User.Context);
+        await Assert.That(img.Mime).IsEqualTo("image/jpeg");
+        await Assert.That(global::app.data.@this.Ok(img).Type.Kind?.Name).IsEqualTo("jpg");
+    }
+
+    [Test] public async Task Image_FromSniffedJpegBytes_KindIsCanonicalJpg()
+    {
+        var img = image.FromBytes(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 })!;
+        await Assert.That(global::app.data.@this.Ok(img).Type.Kind?.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Image_WidthHeight_LazyEvaluation()
@@ -54,10 +70,10 @@ public class ImageValueTests
     }
 
     [Test] public async Task Image_IBooleanResolvable_NonEmptyBytes_Truthy()
-        => await Assert.That(await new image(PngHeader, "image/png").AsBooleanAsync()).IsTrue();
+        => await Assert.That(await new image(PngHeader, "image/png").AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
 
     [Test] public async Task Image_IBooleanResolvable_EmptyBytes_Falsy()
-        => await Assert.That(await new image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync()).IsFalse();
+        => await Assert.That(await new image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
     {

@@ -724,7 +724,7 @@ public sealed class OpenAi : ILlm
         try
         {
             var imgPath = global::app.type.item.path.@this.Resolve(image, context);
-            var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
+            var dataUri = imgPath.ReadAsDataUri(context).GetAwaiter().GetResult();
             if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Peek()?.ToString()))
             {
                 return new Dictionary<string, object>

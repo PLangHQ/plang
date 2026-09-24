@@ -22,7 +22,7 @@ public class PathEqualityTests
     }
 
     private static global::app.type.item.path.file.@this Make(global::app.@this app, string abs)
-        => new(abs, app.User.Context);
+        => new(abs);
 
     [Test] public async Task FilePath_SameAbsolute_EqualsTrue_HashEqual()
     {

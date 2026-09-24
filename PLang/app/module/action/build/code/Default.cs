@@ -71,13 +71,13 @@ public class Default : IBuilder
         var filters = new List<path>();
         foreach (var row in app.Build.Files.Items(context))
             if (await row.Value<global::app.type.item.path.@this>() is { } bf)
-            { bf.Context ??= context; filters.Add(bf); }
+                filters.Add(bf);
 
         if (filters.Count > 0)
         {
             // The affix/filename filter semantics live on path (path.Matches) —
-            // the type owns its containment math.
-            bool MatchesPattern(path f, path bf) => f.Matches(bf).Value;
+            // the type owns its containment math, relative to the builder's root.
+            bool MatchesPattern(path f, path bf) => f.Matches(bf, context).Value;
 
             var ordered = new List<path>();
             var seen = new HashSet<string>();
@@ -112,7 +112,7 @@ public class Default : IBuilder
             var text = (await readResult.Value())?.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;
 
-            var goal = Goal.Parse(text, file);
+            var goal = Goal.Parse(text, file, context);
             if (goal == null) continue;
 
             await MergePrData(goal, app, context);

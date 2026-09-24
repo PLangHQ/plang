@@ -12,7 +12,7 @@ namespace app.type.item.file;
 /// The scheme know-how stays on the composed <see cref="Path"/>
 /// (<c>FilePath</c>/<c>HttpPath</c>); this type owns content laziness.</para>
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "/some/config.json";
     public static string Shape => "string";
@@ -26,16 +26,21 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // first content access (the reference is born unread).
     private byte[]? _bytes;
 
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context
-    {
-        get => Path.Context;
-        set => Path.Context = value;
-    }
+    // Whether the loaded content is text (its mime is text/json/xml) — a fact about the content,
+    // decided once at load with the reader's format registry.
+    private bool _isText;
 
-    public @this(global::app.type.item.path.@this path)
+    // The canonical content kind ("json", "csv", …), worked out at creation through the
+    // creator's format registry and kept as a fact — a format registered later does not
+    // change a file already made.
+    private readonly global::app.type.kind.@this? _kind;
+
+    /// <summary>A file reference at <paramref name="path"/>; <paramref name="context"/> is the
+    /// creator's, used once to name the kind and not kept.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
         // Born from a path — inject its type into this value's history so `is path` answers from
         // the type chain (no CLR-inheritance lattice). The type owns its history of types.
         this.list.Add(path);
@@ -44,17 +49,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>True once the content is in memory (the reference was examined).</summary>
     public bool IsLoaded => _bytes != null;
 
-    /// <summary>A file's entity: name "file", kind = the extension's canonical
-    /// form through the format registry ("json", "csv", …) — location metadata,
-    /// never reads content.</summary>
-    protected internal override global::app.type.@this Type
-    {
-        get
-        {
-            var t = Context.App.Format.TypeFromExtension(Path.Extension);
-            return new global::app.type.@this("file", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
-        }
-    }
+    /// <summary>A file's entity: name "file", kind = the canonical kind named at
+    /// creation — location metadata, never reads content.</summary>
+    protected internal override global::app.type.@this Type =>
+        new global::app.type.@this("file", typeof(@this)) { Kind = _kind };
 
     /// <summary>
     /// The value door — read + parse through the file channel (mime stamps the
@@ -76,14 +74,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (_bytes != null) bytes = _bytes;
         else
         {
-            var readBytes = await Path.ReadBytes();
+            var readBytes = await Path.ReadBytes(data.Context);
             // The path's read error rides through WHOLE — its key, message and inner
             // exception — instead of being flattened into a bare-string IOException.
             if (!readBytes.Success) { data.Fail(readBytes.Error!); return Absent; }
             var bin = await readBytes.Value();
             bytes = _bytes = bin?.Value ?? System.Array.Empty<byte>();
+            var mime = Path.MimeType(data.Context);
+            _isText = mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
+                || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
+                || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase);
         }
-        var channel = new global::app.channel.type.file.@this(Path);
+        var channel = new global::app.channel.type.file.@this(Path, data.Context);
         var read = await channel.Read(bytes);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
@@ -115,25 +117,23 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Raw content as text (renderers; UTF-8 — text files own this form).</summary>
     public string ContentText() => System.Text.Encoding.UTF8.GetString(_bytes ?? System.Array.Empty<byte>());
 
-    /// <summary>In-memory raw bytes; empty until <see cref="BytesAsync"/> ran.</summary>
+    /// <summary>In-memory raw bytes; empty until the content was loaded.</summary>
     public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();
+
+    /// <summary>True when the loaded content is text (text/json/xml mime).</summary>
+    internal bool IsText => _isText;
 
     /// <summary>
     /// The file renders itself as its CONTENT (the bare-scalar contract:
     /// <c>write out %file%</c> emits what was read, never the location). The
     /// content was pre-materialised by the serialize chokepoint's <c>Load()</c>
-    /// pass (file is <c>ILoadable</c>). Text-ish mime emits the UTF-8 text form;
+    /// pass (file is <c>ILoadable</c>). Text content emits the UTF-8 text form;
     /// anything else emits the bytes.
     /// </summary>
     public override void Write(global::app.channel.serializer.IWriter writer)
     {
-        var mime = Path.MimeType;
-        if (mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase))
-            writer.String(ContentText());
-        else
-            writer.Bytes(Bytes);
+        if (_isText) writer.String(ContentText());
+        else writer.Bytes(Bytes);
     }
 
     /// <summary>Stat byte-size — the file's `!size` (<c>number</c>); never reads content.</summary>

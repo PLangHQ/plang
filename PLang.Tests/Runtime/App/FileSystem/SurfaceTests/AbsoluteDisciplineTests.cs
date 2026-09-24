@@ -35,16 +35,16 @@ public class AbsoluteDisciplineTests
         app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
-        var p = new FilePath(outOfRoot, app.User.Context);
-        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write);
+        var p = new FilePath(outOfRoot);
+        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.User.Context);
         await auth.IsFailure();
     }
 
     [Test] public async Task TakeOverApi_AuthorizeFirst_InRootGrant_AllowsAbsoluteUse()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"), app.User.Context);
-        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write);
+        var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"));
+        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.User.Context);
         await auth.IsSuccess();
         // .Absolute is now safe to read.
         await Assert.That(p.Absolute).IsNotNull();
@@ -59,7 +59,7 @@ public class AbsoluteDisciplineTests
         app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
-        var dbPath = new FilePath(outOfRoot, app.User.Context);
+        var dbPath = new FilePath(outOfRoot);
         bool threw = false;
         try { using var _ = await global::app.module.action.setting.Sqlite.CreateAsync(dbPath, app.User.Context); }
         catch (System.InvalidOperationException) { threw = true; }
@@ -69,18 +69,18 @@ public class AbsoluteDisciplineTests
     [Test] public async Task PathInternals_ReachForAbsolute_IsAllowed_NoDiagnostic()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(root, "x.txt"), app.User.Context);
+        var p = new FilePath(System.IO.Path.Combine(root, "x.txt"));
         // Path verbs internally use .Absolute — confirm a verb call succeeds
         // on an in-root Path (the .Absolute reach inside the verb is allowed).
-        await p.WriteText("hi");
-        var r = await p.ReadText();
+        await p.WriteText("hi", app.User.Context);
+        var r = await p.ReadText(app.User.Context);
         await r.IsSuccess();
     }
 
     [Test] public async Task DiagnosticString_UsesAbsolute_InErrorMessage_IsAllowed()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(root, "diag.txt"), app.User.Context);
+        var p = new FilePath(System.IO.Path.Combine(root, "diag.txt"));
         // ToString and string interpolation embed .Absolute — confirm no
         // gate fires (these are pure string ops, not IO).
         var msg = $"path: {p}";

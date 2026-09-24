@@ -358,9 +358,9 @@ public sealed partial class @this : IAsyncDisposable
     public async Task Load()
     {
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
-        var exists = await prPath.ExistsAsync();
+        var exists = await prPath.ExistsAsync(System.Context!);
         if (!exists.Success || (await exists.Value())?.Value != true) return;
-        var readResult = await prPath.ReadText();
+        var readResult = await prPath.ReadText(System.Context!);
         if (!readResult.Success) return;
         var json = (await readResult.Value() as global::app.type.item.text.@this)?.Clr<string>();
         // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
@@ -369,7 +369,7 @@ public sealed partial class @this : IAsyncDisposable
         // identity fields.
         if (string.IsNullOrWhiteSpace(json))
         {
-            var bytes = await prPath.ReadBytes();
+            var bytes = await prPath.ReadBytes(System.Context!);
             if (!bytes.Success || bytes.Peek().IsNull) return;
             json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!);
         }
@@ -404,7 +404,7 @@ public sealed partial class @this : IAsyncDisposable
         await serializer.SerializeItemAsync(ms,
             new global::app.type.clr.@this<global::app.@this>(this, System.Context!), global::app.View.Store);
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
-        var written = await prPath.WriteText(global::System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+        var written = await prPath.WriteText(global::System.Text.Encoding.UTF8.GetString(ms.ToArray()), System.Context!);
         if (!written.Success) return written;
         return System.Context!.Ok(this);
     }

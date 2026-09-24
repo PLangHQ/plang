@@ -7,8 +7,9 @@ using MatchMode = global::app.type.item.permission.Match;
 namespace app.type.item.path;
 
 /// <summary>
-/// Permission gate. FS methods call <c>path.Authorize(verb)</c> before any
-/// I/O — Find existing grant, ask the actor on miss, sign + store the answer.
+/// Permission gate. FS methods call <c>path.Authorize(verb, context)</c> before any
+/// I/O — Find existing grant, ask the actor on miss, sign + store the answer. The
+/// actor is the caller's: the same path value, read by two actors, checks each one.
 ///
 /// The known-awkward <c>BuildRequest</c>/<c>SignAndStore</c> shape is a
 /// consequence of <c>output.ask</c> being text-only: the Permission gets
@@ -24,16 +25,16 @@ public partial class @this
     // parameter, the "a" branch in this file should pass a far-future
     // TimeSpan (architect's "AlwaysExpiry" intent). Tracked in todos.md.
 
-    public async Task<data.@this> Authorize(Verb verb)
+    public async Task<data.@this> Authorize(Verb verb, actor.context.@this context)
     {
-        var actor = Context?.Actor
-            ?? throw new InvalidOperationException("Path.Authorize requires Context.Actor");
+        var actor = context?.Actor
+            ?? throw new InvalidOperationException("Path.Authorize requires the caller's context with an actor");
 
         // In-root paths are auto-granted — the actor owns its own root.
-        if (IsInRoot()) return Context!.Ok();
+        if (IsInRoot(context)) return context.Ok();
 
         var existing = await actor.Permission.Find(this, verb);
-        if (existing != null) return Context!.Ok();
+        if (existing != null) return context.Ok();
 
         // Loop, not recursion: adversarial input (a channel that keeps
         // returning garbage) would grow the async state machine without
@@ -47,11 +48,11 @@ public partial class @this
             var hint = AuthorizationHint(verb);
             var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
             var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
-            var askAction = new module.action.output.ask(Context!)
+            var askAction = new module.action.output.ask(context)
             {
-                Question = new data.@this<global::app.type.item.text.@this>("", question, context: Context),
+                Question = new data.@this<global::app.type.item.text.@this>("", question, context: context),
             };
-            var askResult = await Context!.App.Run(askAction, Context);
+            var askResult = await context.App.Run(askAction, context);
 
             // Stateless suspend bubbles up unchanged. ShouldExit honors the
             // Value-side opt-out so a resolved Data<Ask> (Answer bound) flows
@@ -61,7 +62,7 @@ public partial class @this
             // the permission's verdict: denied, the channel failure carried whole as its cause. Decided
             // before the exit check, which would otherwise bubble the failed ask as itself.
             if (!askResult.Success && askResult.Error!.Key == "ChannelEof")
-                return Context!.Error(new global::app.error.PermissionDenied(BuildRequest(actor, verb)) { list = [askResult.Error] });
+                return context.Error(new global::app.error.PermissionDenied(BuildRequest(actor, verb)) { list = [askResult.Error] });
             if (askResult.ShouldExit()) return askResult;
             // Any other ask failure surfaces as itself.
             if (!askResult.Success) return askResult;
@@ -71,11 +72,11 @@ public partial class @this
             var answer = ask?.Answer?.Trim();
             switch (answer)
             {
-                case "a": return await SignAndStore(actor, verb, persist: true);
-                case "y": return await SignAndStore(actor, verb, persist: false);
+                case "a": return await SignAndStore(actor, verb, persist: true, context);
+                case "y": return await SignAndStore(actor, verb, persist: false, context);
                 // No answer (closed/EOF input channel) = no consent — deny rather than
                 // reprompt, or a channel that can never answer loops this forever.
-                case "n" or null or "": return Context!.Error(
+                case "n" or null or "": return context.Error(
                     new global::app.error.PermissionDenied(BuildRequest(actor, verb)));
                 default:
                     prefix = $"Invalid answer '{answer}'. ";
@@ -84,18 +85,15 @@ public partial class @this
         }
     }
 
-    protected async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist)
+    protected async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
     {
         var grant = BuildRequest(actor, verb);
-        var d = new data.@this<permission.@this>("", grant)
-        {
-            Context = Context,
-        };
+        var d = new data.@this<permission.@this>("", grant, context: context);
         // Signing is no longer in-memory: a persisted grant is signed when it
         // crosses the application/plang boundary into the settings store. The
         // caller's `persist` intent decides persisted vs in-memory.
         await actor.Permission.Add(d, persist);
-        return Context!.Ok();
+        return context.Ok();
     }
 
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
@@ -107,9 +105,9 @@ public partial class @this
     // depth. The MaxDepth cap turns an accidental Parent cycle into a quiet
     // false (out-of-root) instead of an infinite loop on the Authorize hot
     // path; 16 is well above any legitimate child-app nesting.
-    protected bool IsInRoot()
+    protected bool IsInRoot(actor.context.@this context)
     {
-        var app = Context?.App;
+        var app = context.App;
         if (app == null) return false;
         const int MaxDepth = 16;
         for (int depth = 0; app != null && depth < MaxDepth; depth++)

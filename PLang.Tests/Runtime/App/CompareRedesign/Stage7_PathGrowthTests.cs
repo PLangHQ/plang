@@ -30,7 +30,7 @@ public class Stage7_PathGrowthTests
         // the builder filter site routes through the type
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "builder", "code", "Default.cs"));
         await Assert.That(src).DoesNotContain("Relative.StartsWith");
-        await Assert.That(src).Contains("f.Matches(bf)");
+        await Assert.That(src).Contains("f.Matches(bf, ");
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class Stage7_PathGrowthTests
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.item.path.@this.Resolve("/data/config.json", context);
-        var kind = p.Kind;
+        var kind = p.Kind(context);
         await Assert.That(kind.IsNull).IsFalse();
         // the file.read Build hint routes through the type
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "file", "read.cs"));
@@ -50,11 +50,13 @@ public class Stage7_PathGrowthTests
     [Test]
     public async Task PathRelative_NowInternal_NotOnPublicSurface()
     {
-        var prop = typeof(global::app.type.item.path.@this).GetProperty("Relative",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-        await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.GetMethod!.IsPublic).IsFalse();
-        await Assert.That(prop.GetMethod.IsAssembly).IsTrue();
+        // Relative needs the asker's root, so it is a one-context method.
+        var m = typeof(global::app.type.item.path.@this).GetMethod("Relative",
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+            binder: null, new[] { typeof(global::app.actor.context.@this) }, modifiers: null);
+        await Assert.That(m).IsNotNull();
+        await Assert.That(m!.IsPublic).IsFalse();
+        await Assert.That(m.IsAssembly).IsTrue();
     }
 
     [Test]

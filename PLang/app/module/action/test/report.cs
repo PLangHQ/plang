@@ -55,7 +55,7 @@ public partial class report : IContext
             writeTarget = global::app.type.item.path.@this.Resolve("/.test/results.json", context);
         }
         // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write) gates it.
-        var written = await writeTarget.WriteText(content);
+        var written = await writeTarget.WriteText(content, context);
         if (!written.Success) return Context.Error(written.Error!);
 
         // Surface the artefact for observability: PLang tests inspect these on %report%

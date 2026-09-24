@@ -25,7 +25,7 @@ public class Stage3_PathDemolitionTests
     private static async Task Grant(global::app.actor.context.@this context, string url)
     {
         var perm = new global::app.type.item.permission.@this(
-            "User", new HttpPath(url, context).Absolute,
+            "User", new HttpPath(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
             global::app.type.item.permission.Match.Exact);
         await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
@@ -66,7 +66,7 @@ public class Stage3_PathDemolitionTests
         // path.Write(IWriter) emits the as-typed location string verbatim
         foreach (var loc in new[] { "//file.txt", "/file.txt", "test/try.txt", "c:/my/path.txt" })
         {
-            var p = new global::app.type.item.path.file.@this(loc, global::PLang.Tests.TestApp.SharedContext) { Raw = loc };
+            var p = new global::app.type.item.path.file.@this(loc) { Raw = loc };
             using var ms = new MemoryStream();
             using var jw = new Utf8JsonWriter(ms);
             p.Write(new global::app.channel.serializer.json.Writer(jw));
@@ -79,7 +79,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathToString_LocationOnly_NeverContentFirst()
     {
         // ToString returns the location string only; Content is gone entirely
-        var p = new global::app.type.item.path.file.@this("/some/file.json", global::PLang.Tests.TestApp.SharedContext) { Raw = "/some/file.json" };
+        var p = new global::app.type.item.path.file.@this("/some/file.json") { Raw = "/some/file.json" };
         await Assert.That(p.ToString()).IsEqualTo("/some/file.json");
     }
 
@@ -144,9 +144,9 @@ public class Stage3_PathDemolitionTests
         File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "alpha");
         File.WriteAllText(Path.Combine(dir, "docs", "b.txt"), "beta");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs"), context) {});
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) {});
         var directory = (global::app.type.item.directory.@this)result.Peek()!;
-        var listing = await directory.List();
+        var listing = await directory.List(context);
         await Assert.That(listing).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.path.@this>>();
         await Assert.That(listing.Count).IsEqualTo(2);
         foreach (var entry in listing.Items(global::PLang.Tests.TestApp.SharedContext))
@@ -161,7 +161,7 @@ public class Stage3_PathDemolitionTests
         Directory.CreateDirectory(Path.Combine(dir, "docs"));
         File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "TOP-SECRET-CONTENT");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs"), context) {});
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) {});
         var json = await SerializePlang(app, result);
         await Assert.That(json).Contains("a.txt");
         await Assert.That(json).DoesNotContain("TOP-SECRET-CONTENT");
@@ -175,9 +175,9 @@ public class Stage3_PathDemolitionTests
         await using var __ = app;
         var url = server.NewResourceUrl();
         await Grant(context, url);
-        await new HttpPath(url, context).WriteText("remote body");
+        await new HttpPath(url).WriteText("remote body", context);
 
-        var result = await Read(context, new HttpPath(url, context));
+        var result = await Read(context, new HttpPath(url));
         await Assert.That(result.Type!.Name).IsEqualTo("url");
         // scalar use fetches through the HttpPath (the scheme owns the I/O);
         // no extension on the resource → raw bytes
@@ -191,7 +191,7 @@ public class Stage3_PathDemolitionTests
     {
         var (app, context, _) = MakeApp();
         await using var __ = app;
-        var result = await Read(context, new HttpPath("http://example.com/data.json", context));
+        var result = await Read(context, new HttpPath("http://example.com/data.json"));
         var reference = (global::app.type.item.url.@this)result.Peek()!;
 
         var host = await result.Get("!host");
@@ -209,7 +209,7 @@ public class Stage3_PathDemolitionTests
         await using var _ = app;
         File.WriteAllText(Path.Combine(dir, "note.txt"), "the raw note");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "note.txt"), context) {});
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "note.txt")) {});
         var json = await SerializePlang(app, result);
         await Assert.That(json).Contains("the raw note");
         // serialization loads but never narrows — still the file headline
@@ -220,7 +220,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
         // a `path` value has one face — the renderer entry emits the location string
-        var p = new global::app.type.item.path.file.@this("docs/readme.md", global::PLang.Tests.TestApp.SharedContext) { Raw = "docs/readme.md" };
+        var p = new global::app.type.item.path.file.@this("docs/readme.md") { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
         global::app.type.item.path.serializer.Default.Write(p, new global::app.channel.serializer.json.Writer(jw));
@@ -236,7 +236,7 @@ public class Stage3_PathDemolitionTests
         var (app, context, dir) = MakeApp();
         await using var _ = app;
         File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json"), context) {});
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json")) {});
         await context.Variable.Set("config", result);
 
         await context.Variable.Set("config.y", 1);

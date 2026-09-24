@@ -7,7 +7,7 @@ namespace app.type.item.directory;
 /// files — <c>read</c> a child to get content, and a write-out of a directory
 /// is a flat listing, never a content dump.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "/docs";
     public static string Shape => "string";
@@ -22,13 +22,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private global::app.type.item.list.@this<global::app.type.item.path.@this>? _list;
 
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context
-    {
-        get => Path.Context;
-        set => Path.Context = value;
-    }
-
     public @this(global::app.type.item.path.@this path)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
@@ -36,12 +29,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>
     /// The children's locations as a native <c>list</c> of <c>path</c> values,
-    /// listed through the path's auth gate on first access and cached.
+    /// listed through the path's auth gate (as the caller) on first access and cached.
     /// </summary>
-    public async System.Threading.Tasks.Task<global::app.type.item.list.@this<global::app.type.item.path.@this>> List()
+    public async System.Threading.Tasks.Task<global::app.type.item.list.@this<global::app.type.item.path.@this>> List(actor.context.@this context)
     {
         if (_list != null) return _list;
-        var listed = await Path.List();
+        var listed = await Path.List(context);
         if (!listed.Success)
             throw new System.IO.IOException(listed.Error!.Message);
         return _list = (await listed.Value())!;
@@ -61,7 +54,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        try { await List(); }
+        try { await List(data.Context); }
         catch (System.IO.IOException ex)
         {
             data.Fail(new global::app.error.Error(
@@ -73,14 +66,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The item membership hook — routes to the listing rule below.</summary>
     public override async System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
-        => await Contains(needle.ToString() ?? "");
+        => await Contains(needle.ToString() ?? "", needle.Context);
 
     /// <summary>Membership is over the LISTING's locations (a directory "contains"
     /// a name when some child's location carries it) — never over content.</summary>
-    public async System.Threading.Tasks.Task<bool> Contains(string needle)
+    public async System.Threading.Tasks.Task<bool> Contains(string needle, actor.context.@this context)
     {
         if (string.IsNullOrEmpty(needle)) return false;
-        var listing = await List();
+        var listing = await List(context);
         foreach (var slot in listing.Slots())
             if ((slot is global::app.data.@this d ? d.Peek() : slot)?.ToString()?.Contains(needle, System.StringComparison.OrdinalIgnoreCase) == true)
                 return true;

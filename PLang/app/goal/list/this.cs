@@ -184,7 +184,7 @@ public sealed class @this
         var rootCandidate = global::app.type.item.path.@this.Resolve("/", context);
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
-        var rootExists = await rootCandidate.ExistsAsync();
+        var rootExists = await rootCandidate.ExistsAsync(context);
         if (rootExists.Success && await rootExists.ToBooleanAsync())
         {
             var result = await Load(rootCandidate, cancellationToken: ct);
@@ -210,7 +210,7 @@ public sealed class @this
         {
             var sysCandidate = global::app.type.item.path.@this.Resolve(
                 "/" + normalized + "/.build/" + prFile, context);
-            var sysExists = await sysCandidate.ExistsAsync();
+            var sysExists = await sysCandidate.ExistsAsync(context);
             if (sysExists.Success && await sysExists.ToBooleanAsync())
             {
                 var result = await Load(sysCandidate, cancellationToken: ct);
@@ -341,7 +341,7 @@ public sealed class @this
             return cached.IsSetup ? null : cached;
 
         var resolved = global::app.type.item.path.@this.Resolve(prPath, App.System.Context!);
-        var exists = await resolved.ExistsAsync();
+        var exists = await resolved.ExistsAsync(App.System.Context);
         if (!exists.Success || (await exists.Value())?.Value != true)
             return null;
 
@@ -366,7 +366,7 @@ public sealed class @this
             // The path reads itself AND parses by MIME — a .pr reads back as a goal
             // (ReadText: Format maps .pr → the goal type, Context-bound so Path fields
             // land wired). This collection only wires the parsed goal into the registry.
-            var readResult = await prPath.ReadText();
+            var readResult = await prPath.ReadText(App.System.Context);
             if (!readResult.Success || readResult.Peek().IsNull)
                 return App.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
             var materialized = await readResult.Value();

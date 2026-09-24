@@ -31,7 +31,7 @@ public sealed class FilePathFixture : IPathSchemeFixture, IDisposable
     public Task<Path> CreateFresh()
     {
         var file = System.IO.Path.Combine(_resourceDir, Guid.NewGuid().ToString("N") + ".txt");
-        return Task.FromResult<Path>(new FilePath(file, _app.User.Context));
+        return Task.FromResult<Path>(new FilePath(file));
     }
 
     public Task Cleanup(Path p)
@@ -40,6 +40,8 @@ public sealed class FilePathFixture : IPathSchemeFixture, IDisposable
         catch { /* idempotent */ }
         return Task.CompletedTask;
     }
+
+    public global::app.actor.context.@this Context => _app.User.Context;
 
     public bool CanPerform(VerbName verb) => true;
 

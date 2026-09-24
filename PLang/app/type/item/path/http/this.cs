@@ -11,7 +11,9 @@ namespace app.type.item.path.http;
 /// <c>http://</c> / <c>https://</c> Path — the second scheme, proving
 /// polymorphism with a non-filesystem backend. Verb impls map onto HTTP
 /// methods (GET/POST/DELETE/HEAD). Every request is signed with PLang's
-/// built-in identity unless the resource is hit unsigned.
+/// built-in identity unless the resource is hit unsigned. Every verb acts as the
+/// caller: its context carries the actor asked for consent and the identity that
+/// signs, and is the context the result Data is born with.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -39,7 +41,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// the client follow 3xx silently lets a consented host trade us into
     /// reading something else — IMDS at <c>169.254.169.254</c>, loopback
     /// services, private-IP ranges — with the user only ever consenting to
-    /// the original URL. Redirects are now handled in <see cref="SendWithRedirects"/>:
+    /// the original URL. Redirects are now handled in <see cref="SendWithHops"/>:
     /// each hop builds a fresh <see cref="@this"/>, calls <see cref="@this.AuthGate"/>
     /// on it (separate consent prompt for the new host), and signs the new
     /// destination's URL fresh — the prior hop's <c>X-Signature</c> never
@@ -61,8 +63,8 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     private readonly Uri _uri;
 
-    public @this(string raw, actor.context.@this context)
-        : base(raw, context)
+    public @this(string raw)
+        : base(raw)
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Not a valid http(s) URL: '{raw}'", nameof(raw));
@@ -88,7 +90,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
-        return new @this(rawPath, context) { Raw = rawPath };
+        return new @this(rawPath) { Raw = rawPath };
     }
 
     [Out, Store] public override string Scheme => _uri.Scheme.ToLowerInvariant();
@@ -169,38 +171,38 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     // --- Reads ---------------------------------------------------------------
 
-    public override async Task<data.@this> ReadText()
+    public override async Task<data.@this> ReadText(actor.context.@this context)
     {
         var verb = Verb.Read;
-        if (await AuthGate(verb) is { } early) return early;
-        return await Send(HttpMethod.Get, content: null, readBody: true, verb);
+        if (await AuthGate(verb, context) is { } early) return early;
+        return await Send(HttpMethod.Get, content: null, readBody: true, verb, context);
     }
 
-    public override async Task<data.@this<global::app.type.item.binary.@this>> ReadBytes()
+    public override async Task<data.@this<global::app.type.item.binary.@this>> ReadBytes(actor.context.@this context)
     {
         var verb = Verb.Read;
-        if (await AuthGate(verb) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
-        return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
+        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
+        return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context, asBytes: true));
     }
 
-    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync()
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
+        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
-            await SignRequest(req, null, "HEAD");
+            await SignRequest(req, null, "HEAD", context);
             using var resp = await _client.SendAsync(req);
             // Exists answers a question — 2xx → true, 4xx → false, both Success.
             if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
-                return Context!.Ok<global::app.type.item.@bool.@this>(true);
+                return context.Ok<global::app.type.item.@bool.@this>(true);
             if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
-                return Context!.Ok<global::app.type.item.@bool.@this>(false);
-            return Context!.Error<global::app.type.item.@bool.@this>(MapStatus(resp.StatusCode));
+                return context.Ok<global::app.type.item.@bool.@this>(false);
+            return context.Error<global::app.type.item.@bool.@this>(MapStatus(resp.StatusCode));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return Context!.Error<global::app.type.item.@bool.@this>(NetworkError(ex));
+            return context.Error<global::app.type.item.@bool.@this>(NetworkError(ex));
         }
     }
 
@@ -210,39 +212,38 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// Fail, but routes through <see cref="@this.AuthGate"/> first so the verb
     /// surface is consistent with every other HttpPath verb.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(string pattern, bool recursive)
+    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(string pattern, bool recursive, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
-        return Context!.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new Error(
+        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
+        return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new Error(
             "HTTP scheme does not support directory listing.", "NotSupported", 400));
     }
 
     /// <summary>
     /// Truthiness of an http path is "does the resource exist" — an HTTP HEAD.
     /// Reuses <see cref="ExistsAsync"/>; a denied or errored probe answers false.
-    /// 
     /// </summary>
-    public override async Task<bool> AsBooleanAsync()
+    public override async Task<bool> AsBooleanAsync(actor.context.@this context)
     {
-        var existsResult = await ExistsAsync();
+        var existsResult = await ExistsAsync(context);
         return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 
-    public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat()
+    public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
+        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
-            await SignRequest(req, null, "HEAD");
+            await SignRequest(req, null, "HEAD", context);
             using var resp = await _client.SendAsync(req);
             if (!resp.IsSuccessStatusCode)
             {
                 if ((int)resp.StatusCode == 404)
-                    return Context!.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: false));
-                return Context!.Error<global::app.type.item.path.@this.StatInfo>(MapStatus(resp.StatusCode));
+                    return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: false));
+                return context.Error<global::app.type.item.path.@this.StatInfo>(MapStatus(resp.StatusCode));
             }
-            return Context!.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(
+            return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(
                 Exists: true,
                 IsFile: true,
                 Length: resp.Content.Headers.ContentLength,
@@ -250,46 +251,46 @@ public sealed partial class @this : global::app.type.item.path.@this
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return Context!.Error<global::app.type.item.path.@this.StatInfo>(NetworkError(ex));
+            return context.Error<global::app.type.item.path.@this.StatInfo>(NetworkError(ex));
         }
     }
 
     // --- Writes --------------------------------------------------------------
 
-    public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content)
+    public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
     {
         var verb = Verb.Write;
-        if (await AuthGate(verb) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
-        return sent.Success ? Context!.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
+        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
+        return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
-    public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content)
+    public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
     {
         var verb = Verb.Write;
-        if (await AuthGate(verb) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb);
-        return sent.Success ? Context!.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
+        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb, context);
+        return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
     /// <summary>HTTP append maps onto a second POST — servers that support
     /// appending interpret it; others overwrite or 405. "Let the server respond."</summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
         var verb = Verb.Write;
-        if (await AuthGate(verb) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
-        return sent.Success ? Context!.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
+        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
+        return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
     /// <summary>
     /// HTTP has no mkdir — Fail, routed through <see cref="@this.AuthGate"/>
     /// first for verb-surface consistency.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir()
+    public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        return Context!.Error<global::app.type.item.path.@this>(new Error(
+        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        return context.Error<global::app.type.item.path.@this>(new Error(
             "HTTP scheme does not support directory creation.", "NotSupported", 400));
     }
 
@@ -298,11 +299,11 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// everything else POSTs as text. Authorization happens inside
     /// WriteBytes/WriteText.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Save(data.@this? value)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Save(data.@this? value, actor.context.@this context)
     {
         var raw = value == null ? null : await value.Value();
-        if (raw is global::app.type.item.binary.@this bin) return await WriteBytes(bin.Value);
-        return await WriteText(raw?.ToString() ?? "");
+        if (raw is global::app.type.item.binary.@this bin) return await WriteBytes(bin.Value, context);
+        return await WriteText(raw?.ToString() ?? "", context);
     }
 
     // --- Destructive ---------------------------------------------------------
@@ -311,12 +312,12 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// HTTP DELETE. <paramref name="recursive"/> / <paramref name="ignoreIfNotFound"/>
     /// are filesystem-only — no-ops here; the server decides.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(bool recursive, bool ignoreIfNotFound, actor.context.@this context)
     {
         var verb = Verb.Delete;
-        if (await AuthGate(verb) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb);
-        return sent.Success ? Context!.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
+        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb, context);
+        return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
     // --- HTTP plumbing -------------------------------------------------------
@@ -333,27 +334,27 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// <paramref name="verb"/> rides along so the redirect hop's AuthGate
     /// uses the same verb the calling FS-action started with.
     /// </summary>
-    private Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, Verb verb, bool asBytes = false)
-        => SendWithHops(method, content, readBody, verb, asBytes, MaxRedirectHops);
+    private Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, Verb verb, actor.context.@this context, bool asBytes = false)
+        => SendWithHops(method, content, readBody, verb, asBytes, MaxRedirectHops, context);
 
-    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, bool readBody, Verb verb, bool asBytes, int hopsLeft)
+    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, bool readBody, Verb verb, bool asBytes, int hopsLeft, actor.context.@this context)
     {
         try
         {
             using var req = new HttpRequestMessage(method, _uri) { Content = content };
             string? bodyForSign = content is StringContent sc ? await sc.ReadAsStringAsync() : null;
-            await SignRequest(req, bodyForSign, method.Method);
+            await SignRequest(req, bodyForSign, method.Method, context);
 
             using var resp = await _client.SendAsync(req);
 
             // 3xx → manual redirect with consent + fresh signing on each hop.
             if ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 && resp.Headers.Location != null)
-                return await FollowRedirect(resp, method, content, readBody, verb, asBytes, hopsLeft);
+                return await FollowRedirect(resp, method, content, readBody, verb, asBytes, hopsLeft, context);
 
             if (!resp.IsSuccessStatusCode)
-                return Context!.Error(MapStatus(resp.StatusCode));
+                return context.Error(MapStatus(resp.StatusCode));
 
-            if (!readBody) return Context!.Ok();
+            if (!readBody) return context.Ok();
 
             // Wrap bytes born-native so ReadBytes→From<binary> extracts the value
             // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
@@ -362,15 +363,15 @@ public sealed partial class @this : global::app.type.item.path.@this
             // sent none.
             if (asBytes)
             {
-                var bytesData = Context!.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+                var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
                 bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
                 return bytesData;
             }
-            return Context!.Ok(await resp.Content.ReadAsStringAsync());
+            return context.Ok(await resp.Content.ReadAsStringAsync());
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return Context!.Error(NetworkError(ex));
+            return context.Error(NetworkError(ex));
         }
     }
 
@@ -383,10 +384,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// keep method and body.
     /// </summary>
     private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, HttpMethod method, HttpContent? content,
-        bool readBody, Verb verb, bool asBytes, int hopsLeft)
+        bool readBody, Verb verb, bool asBytes, int hopsLeft, actor.context.@this context)
     {
         if (hopsLeft <= 0)
-            return Context!.Error(new Error(
+            return context.Error(new Error(
                 $"Too many redirects (>{MaxRedirectHops}) — refusing to follow further.",
                 "TooManyRedirects", 508));
 
@@ -395,7 +396,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             : new Uri(_uri, resp.Headers.Location);
 
         if (target.Scheme != "http" && target.Scheme != "https")
-            return Context!.Error(new Error(
+            return context.Error(new Error(
                 $"Redirect target uses unsupported scheme '{target.Scheme}'.",
                 "UnsupportedRedirectScheme", 400));
 
@@ -418,24 +419,23 @@ public sealed partial class @this : global::app.type.item.path.@this
             nextContent = rebuilt;
         }
 
-        var nextPath = new @this(target.ToString(), Context);
+        var nextPath = new @this(target.ToString());
 
         // The consent prompt for the new host. AuthGate returns null on grant.
-        if (await nextPath.AuthGate(verb) is { } denial) return denial;
+        if (await nextPath.AuthGate(verb, context) is { } denial) return denial;
 
-        return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1);
+        return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1, context);
     }
 
     /// <summary>
     /// Signs the request with PLang's built-in identity via the
-    /// <c>signing.sign</c> action — same mechanism the http module uses.
-    /// Adds the <c>X-Signature</c> header. Best-effort: if signing fails the
+    /// <c>signing.sign</c> action — same mechanism the http module uses — as the
+    /// caller. Adds the <c>X-Signature</c> header. Best-effort: if signing fails the
     /// request still goes out unsigned (the server decides — "let the server
     /// respond").
     /// </summary>
-    private async Task SignRequest(HttpRequestMessage request, string? body, string method)
+    private async Task SignRequest(HttpRequestMessage request, string? body, string method, actor.context.@this context)
     {
-        if (Context == null) return;
         try
         {
             // Sign over a canonical request line — method, path, then the body. This
@@ -444,11 +444,11 @@ public sealed partial class @this : global::app.type.item.path.@this
             // path produces a fresh, destination-specific signature. Path only by
             // design — the recipient validates the host against itself.
             var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
-            var sign = new module.action.signing.sign(Context!)
+            var sign = new module.action.signing.sign(context)
             {
-                Data = new data.@this("", canonical, context: Context),
+                Data = new data.@this("", canonical, context: context),
             };
-            var signResult = await Context.App.Run<module.action.signing.sign>(sign, Context);
+            var signResult = await context.App.Run<module.action.signing.sign>(sign, context);
             if (signResult.Success)
             {
                 var json = JsonSerializer.Serialize(signResult);

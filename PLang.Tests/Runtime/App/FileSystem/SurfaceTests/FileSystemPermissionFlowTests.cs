@@ -47,18 +47,18 @@ public class FileSystemPermissionFlowTests
 
     // Typed verbs (Data<global::app.type.item.@bool.@this>, Data<global::app.type.item.binary.@this>, Data<path>, …) widen to base Data
     // through an explicit await/cast so the test can stay shape-agnostic.
-    private static async Task<global::app.data.@this> Dispatch(string method, Path path) => method switch
+    private static async Task<global::app.data.@this> Dispatch(string method, Path path, global::app.actor.context.@this context) => method switch
     {
-        "ReadText"   => await path.ReadText(),
-        "ReadBytes"  => await path.ReadBytes(),
-        "Exists"     => await path.ExistsAsync(),
-        "List"       => await path.List(),
-        "Stat"       => await path.Stat(),
-        "WriteText"  => await path.WriteText("hello"),
-        "WriteBytes" => await path.WriteBytes(new byte[] { 1, 2, 3 }),
-        "Append"     => await path.Append("more"),
-        "Mkdir"      => await path.Mkdir(),
-        "Delete"     => await path.Delete(),
+        "ReadText"   => await path.ReadText(context),
+        "ReadBytes"  => await path.ReadBytes(context),
+        "Exists"     => await path.ExistsAsync(context),
+        "List"       => await path.List(context),
+        "Stat"       => await path.Stat(context),
+        "WriteText"  => await path.WriteText("hello", context),
+        "WriteBytes" => await path.WriteBytes(new byte[] { 1, 2, 3 }, context),
+        "Append"     => await path.Append("more", context),
+        "Mkdir"      => await path.Mkdir(context),
+        "Delete"     => await path.Delete(context),
         _            => throw new System.ArgumentException($"unknown method {method}"),
     };
 
@@ -96,9 +96,9 @@ public class FileSystemPermissionFlowTests
             "List"  => System.IO.Path.Combine(root, "fixture"),
             _       => System.IO.Path.Combine(root, "fixture"),
         };
-        var path = new Path(targetPath, app.User.Context);
+        var path = new Path(targetPath);
 
-        var result = await Dispatch(method, path);
+        var result = await Dispatch(method, path, app.User.Context);
         await result.IsSuccess();
         await Assert.That(result.Type?.Name).IsNotEqualTo("ask");
     }
@@ -120,9 +120,9 @@ public class FileSystemPermissionFlowTests
             "List"  => outOfRoot,
             _       => System.IO.Path.Combine(outOfRoot, "fixture"),
         };
-        var path = new Path(targetPath, app.User.Context);
+        var path = new Path(targetPath);
 
-        var result = await Dispatch(method, path);
+        var result = await Dispatch(method, path, app.User.Context);
         await result.IsSuccess();
 
         var verb = method switch
@@ -151,9 +151,9 @@ public class FileSystemPermissionFlowTests
             "List"  => outOfRoot,
             _       => System.IO.Path.Combine(outOfRoot, "fixture"),
         };
-        var path = new Path(targetPath, app.User.Context);
+        var path = new Path(targetPath);
 
-        var result = await Dispatch(method, path);
+        var result = await Dispatch(method, path, app.User.Context);
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }

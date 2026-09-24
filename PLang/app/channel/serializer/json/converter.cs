@@ -23,6 +23,8 @@ public sealed class Converter : JsonConverterFactory
 {
     private readonly global::app.actor.context.@this? _context;
 
+    /// <summary>Write-only — a path writes its typed location with no context; reading a path
+    /// needs the reader's context to resolve it, so a read through this form fails by name.</summary>
     public Converter() { _context = null; }
     public Converter(global::app.actor.context.@this context) { _context = context; }
 
@@ -73,24 +75,16 @@ public sealed class Converter : JsonConverterFactory
 
             // The path type owns its construction — resolve the raw string directly (what
             // path/serializer/Default.Read did via the Readers.Of delegate; no reflection hop).
-            // Born-with-context: the converter carries the actor scope (the Json serializer
-            // always wires it), so the path resolves through the scheme registry with it.
-            return global::app.type.item.path.@this.Resolve(raw!, _context!);
+            // The converter carries the reader's actor scope (the Json serializer wires it), so
+            // the path resolves through the scheme registry with it.
+            if (_context is null)
+                throw new JsonException($"cannot read path '{raw}' — this converter is write-only (no reader context to resolve it with).");
+            return global::app.type.item.path.@this.Resolve(raw!, _context);
         }
 
+        /// <summary>A path writes its typed location — as written, or derived from it — the same
+        /// face it shows everywhere; the install root never reaches the wire.</summary>
         public override void Write(Utf8JsonWriter writer, global::app.type.item.path.@this value, JsonSerializerOptions options)
-        {
-            string? wire = null;
-            if (value.Context != null)
-            {
-                try { wire = value.Relative; }
-                catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-                {
-                    wire = null;
-                }
-            }
-            wire ??= !string.IsNullOrEmpty(value.Raw) ? value.Raw : value.Absolute;
-            writer.WriteStringValue(wire);
-        }
+            => writer.WriteStringValue(value.ToString());
     }
 }

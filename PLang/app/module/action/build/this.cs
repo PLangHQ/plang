@@ -76,7 +76,7 @@ public sealed partial class @this
     public async Task<data.@this> RunAsync()
     {
         var appPrPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", _context.App.System.Context!);
-        var appPrExists = await appPrPath.ExistsAsync();
+        var appPrExists = await appPrPath.ExistsAsync(_context.App.System.Context!);
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app={"create":true}.

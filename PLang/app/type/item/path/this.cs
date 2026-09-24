@@ -5,9 +5,11 @@ namespace app.type.item.path;
 /// <summary>
 /// Plain domain class representing a filesystem path.
 /// NOT a Data subclass — wrapped in Data&lt;Path&gt; by handlers.
-/// Implements IContext for runtime graph access (FileSystem, etc.).
+/// Stores facts about itself only — the location as typed and its absolute form.
+/// Everything that needs a running scope (the root, the formats, the actor's permission)
+/// takes the caller's context.
 /// </summary>
-public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
+public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "/some/file.json";
@@ -60,23 +62,13 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     private string? _fileName;
     private string? _fileNameWithoutExtension;
     private string? _directory;
-    private string? _relative;
 
     /// <summary>
-    /// App root directory — resolved from Context. A path is always born with
-    /// Context (the ctors require it); the string-derived properties (Relative,
-    /// Extension, …) still throw if App itself isn't wired yet.
+    /// Creates a Path from its location. The scheme factories resolve it with the creating
+    /// context (the running goal's folder, the root) and hand the resolved form here; nothing
+    /// of that context is kept.
     /// </summary>
-    private string RootAbsolutePath => Context.App?.AbsolutePath
-        ?? throw new InvalidOperationException(
-            "Path requires Context with App — wire it before accessing path-derived properties");
-
-    /// <summary>
-    /// Creates a Path born with its actor Context — every scheme subclass
-    /// requires it, so a path resolves scheme-correct and fully wired the
-    /// moment it lands. The public setter stays for IContext scope propagation.
-    /// </summary>
-    protected @this(string path, actor.context.@this context)
+    protected @this(string path)
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
@@ -88,7 +80,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         // A template location has no resolved host form yet — leave _absolute
         // unprimed until Value renders it. A literal location is resolved as-is.
         _absolute = _location.Template == null ? path : null;
-        Context = context;
     }
 
     /// <summary>THE PURE CORE — a <c>path</c> passes through; construction from a string needs the
@@ -141,17 +132,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         if (_location.Cacheable) return this;   // literal location — already resolved
         var rendered = (await _location.Value(data)).Clr<string>() ?? "";
-        return Resolve(rendered, data.Context ?? Context!);
+        return Resolve(rendered, data.Context);
     }
-
-    /// <summary>
-    /// Context for runtime access. Settable through IContext (Data propagates
-    /// it automatically when Path is inside Data&lt;Path&gt;).
-    /// JsonIgnore — Context references the runtime graph (App, Culture, parents)
-    /// which contains cycles; serializing it blows up trace files.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context { get; set; } = null!;
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     /// <summary>
@@ -183,36 +165,29 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     // INTERNAL: the raw relative string feeds IsUnder/Matches + the `!relative`
     // derived projection; consumers do containment through those, not string math.
-    internal string Relative
+    // Relative to the root of the caller's app — the root is the caller's, so it is
+    // derived per ask, never kept.
+    internal string Relative(actor.context.@this context)
     {
-        get
-        {
-            if (_relative != null) return _relative;
+        // App not wired yet (bootstrap, before runtime is up) — no root
+        // anchor, so the portable form is the as-typed location.
+        var rootAbsolutePath = context.App?.AbsolutePath;
+        if (rootAbsolutePath == null) return _location.Clr<string>() ?? "";
 
-            // App not wired yet (bootstrap, before runtime is up) — no root
-            // anchor, so the portable form is the as-typed location.
-            if (Context.App == null)
-                return _relative = _location.Clr<string>() ?? "";
+        var rootWithSeparator = rootAbsolutePath;
+        if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
+            rootWithSeparator += PathHelper.DirectorySeparatorChar;
 
-            var rootAbsolutePath = RootAbsolutePath;
-            var rootWithSeparator = rootAbsolutePath;
-            if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
-                rootWithSeparator += PathHelper.DirectorySeparatorChar;
-
-            // Canonical PLang root-relative form: leading "/" anchors at the
-            // app root, "/" as separator regardless of OS (matches Goal.Path
-            // / GoalCall.PrPath stored in .pr files). Out-of-root paths
-            // return their Absolute form unchanged — those aren't "relative
-            // to root" in any meaningful sense.
-            if (Absolute.StartsWith(rootWithSeparator, RootComparison))
-                _relative = "/" + Absolute[rootWithSeparator.Length..].Replace('\\', '/');
-            else if (string.Equals(Absolute, rootAbsolutePath, RootComparison))
-                _relative = "/";
-            else
-                _relative = Absolute;
-
-            return _relative;
-        }
+        // Canonical PLang root-relative form: leading "/" anchors at the
+        // app root, "/" as separator regardless of OS (matches Goal.Path
+        // / GoalCall.PrPath stored in .pr files). Out-of-root paths
+        // return their Absolute form unchanged — those aren't "relative
+        // to root" in any meaningful sense.
+        if (Absolute.StartsWith(rootWithSeparator, RootComparison))
+            return "/" + Absolute[rootWithSeparator.Length..].Replace('\\', '/');
+        if (string.Equals(Absolute, rootAbsolutePath, RootComparison))
+            return "/";
+        return Absolute;
     }
 
     // INTERNAL: the raw extension feeds Kind + the `!extension` projection.
@@ -221,7 +196,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location.Clr<string>() ?? "");
     [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
-    [LlmBuilder] public string MimeType => Context.App?.Format?.Mime(Extension) ?? "application/octet-stream";
+    /// <summary>The mime type of this location's extension, from the caller's format registry.</summary>
+    [LlmBuilder] public string MimeType(actor.context.@this context) => context.App?.Format?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
     [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);
@@ -251,24 +227,27 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// with it; a bare name matches by filename. Case-insensitive — filters
     /// are user-typed.
     /// </summary>
-    public global::app.type.item.@bool.@this Matches(@this other)
+    public global::app.type.item.@bool.@this Matches(@this other, actor.context.@this context)
     {
-        var rel = other.Relative;
+        var rel = other.Relative(context);
         var pathQualified = rel.Contains('/') || rel.Contains('\\');
         if (pathQualified)
-            return Relative.EndsWith(rel, StringComparison.OrdinalIgnoreCase)
-                || Relative.StartsWith(rel, StringComparison.OrdinalIgnoreCase);
+        {
+            var mine = Relative(context);
+            return mine.EndsWith(rel, StringComparison.OrdinalIgnoreCase)
+                || mine.StartsWith(rel, StringComparison.OrdinalIgnoreCase);
+        }
         return FileName.Equals(other.FileName, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
     /// Extension → content-kind: the type entity this location's extension
-    /// names (<c>.json</c> → the json-kinded entity). Owned by the path + the
-    /// format registry — replaces consumer-side
+    /// names (<c>.json</c> → the json-kinded entity), from the caller's format registry.
+    /// Owned by the path + the format registry — replaces consumer-side
     /// <c>Format.TypeFromExtension(p.Extension)</c>.
     /// </summary>
-    public global::app.type.@this Kind =>
-        Context.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
+    public global::app.type.@this Kind(actor.context.@this context) =>
+        context.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
 
     // --- Live filesystem state ---
     //
@@ -283,28 +262,19 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // A path is a LOCATION value — it never carries content (content belongs
     // to the file/url reference types), so its string form is location-only.
     //
-    // Portable form: the as-typed location, verbatim. An internally derived
-    // path (Combine/Parent/move results) has no as-typed form — its location
-    // IS the resolved string — so it collapses to the root-relative form,
-    // keeping the install root out of display and off the wire.
-    private string Portable
-    {
-        get
-        {
-            var loc = _location.Clr<string>() ?? "";
-            if (!string.Equals(loc, _absolute, StringComparison.Ordinal)) return loc;
-            try { return Relative; } catch { return loc; }
-        }
-    }
-
-    public override string ToString() => Portable;
+    // The location is typed text: as the developer wrote it, or — for a derived path
+    // (Parent/Combine/move results) — derived from its source's typed text by the same
+    // string math that derives its absolute. So a path shows one way everywhere and the
+    // install root never shows. The root-relative form (Relative) is for `!relative` and
+    // comparisons, not display.
+    public override string ToString() => _location.Clr<string>() ?? "";
 
     /// <summary>
-    /// The type owns its wire shape and reads its own private fields — the
-    /// portable location. The resolved <see cref="Absolute"/> stays off the
-    /// wire (it leaks the install root and is gated behind Authorize).
+    /// The type owns its wire shape and reads its own private fields — the typed location.
+    /// The resolved <see cref="Absolute"/> stays off the wire (it leaks the install root and
+    /// is gated behind Authorize).
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(Portable);
+    public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
 
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding

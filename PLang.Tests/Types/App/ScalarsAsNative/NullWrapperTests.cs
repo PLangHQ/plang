@@ -25,7 +25,7 @@ public class NullWrapperTests
     public async Task Null_Truthiness_AlwaysFalsy()
     {
         await Assert.That(NullV.Instance.IsTruthy()).IsFalse();
-        await Assert.That(await NullV.Instance.AsBooleanAsync()).IsFalse();
+        await Assert.That(await NullV.Instance.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
     }
 
     [Test]

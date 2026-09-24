@@ -676,7 +676,7 @@ public partial class @this
         // unrendered text reads truthy. A value that resolves its own boolean
         // meaning with I/O (path → "does it exist") answers via the marker.
         var resolved = await Value();
-        if (resolved is IBooleanResolvable resolvable) return await resolvable.AsBooleanAsync();
+        if (resolved is IBooleanResolvable resolvable) return await resolvable.AsBooleanAsync(_context);
         return resolved?.IsTruthy() ?? false;
     }
 

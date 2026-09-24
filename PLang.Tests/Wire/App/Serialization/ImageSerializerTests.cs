@@ -48,7 +48,7 @@ public class ImageSerializerTests
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.User.Context);
-        var img = new image(PngBytes, "image/png", p);
+        var img = new image(PngBytes, p!, app.User.Context);
         var w = new CaptureWriter("text");
         global::app.type.item.image.serializer.text.Write(img, w);
         await Assert.That(w.LastMethod).IsEqualTo("String");

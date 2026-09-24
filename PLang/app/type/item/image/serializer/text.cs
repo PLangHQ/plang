@@ -11,12 +11,6 @@ public static class text
     public static void Write(global::app.type.item.image.@this value, global::app.channel.serializer.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
-        if (value.Path != null)
-        {
-            try { writer.String(value.Path.Relative); return; }
-            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-            { /* fall through to bare label */ }
-        }
-        writer.String($"[image: {value.Mime} {value.Bytes.Length}B]");
+        writer.String(value.Path != null ? value.Path.ToString() : $"[image: {value.Mime} {value.Bytes.Length}B]");
     }
 }

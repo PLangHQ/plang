@@ -372,7 +372,7 @@ public sealed class @this
             {
                 // Append routes through AuthGate(Write). Sync-wait — trace
                 // emission is inside sync event handlers.
-                var written = _currentLlmFilePath.Append(sb.ToString()).GetAwaiter().GetResult();
+                var written = _currentLlmFilePath.Append(sb.ToString(), context).GetAwaiter().GetResult();
                 if (!written.Success)
                     _ = Write($"[debug] LLM file write failed: {written.Error?.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
             }
@@ -429,16 +429,16 @@ public sealed class @this
         // .build/ is in-root so it fast-passes.
         var traceDir = global::app.type.item.path.@this.Resolve("/.build/traces", context)
             .Combine(traceId).Combine("llm");
-        traceDir.Mkdir().GetAwaiter().GetResult();
+        traceDir.Mkdir(context).GetAwaiter().GetResult();
 
         // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
         var basePath = traceDir.Combine($"{safeGoal}_{stepKey}.txt");
-        { var __e = basePath.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return basePath; }
+        { var __e = basePath.ExistsAsync(context).GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return basePath; }
 
         for (int n = 2; n < 100; n++)
         {
             var candidate = traceDir.Combine($"{safeGoal}_{stepKey}_{n}.txt");
-            { var __e = candidate.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return candidate; }
+            { var __e = candidate.ExistsAsync(context).GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return candidate; }
         }
         // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
         return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");

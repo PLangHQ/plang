@@ -50,7 +50,7 @@ public sealed class Sqlite : IStore
     public static async Task<Sqlite> CreateAsync(global::app.type.item.path.@this dbPath, actor.context.@this context)
     {
         // Take-over API: authorize before passing .Absolute.
-        var auth = await dbPath.Authorize(global::app.type.item.permission.Verb.Write);
+        var auth = await dbPath.Authorize(global::app.type.item.permission.Verb.Write, context);
         if (!auth.Success)
             throw new InvalidOperationException(
                 $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");
@@ -60,7 +60,7 @@ public sealed class Sqlite : IStore
         // above already covered the dbPath's write).
         var parent = dbPath.Parent;
         if (parent != null)
-            await parent.Mkdir();
+            await parent.Mkdir(context);
 
         var connectionString = new SqliteConnectionStringBuilder
         {

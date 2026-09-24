@@ -25,7 +25,7 @@ public static class Default
         if (raw is byte[] bytes)
         {
             var mime = ctx.Context?.App.Format.Mime("." + (kind ?? "")) ?? $"image/{kind}";
-            return new global::app.type.item.image.@this(bytes, mime);
+            return new global::app.type.item.image.@this(bytes, mime, kind);
         }
         return global::app.type.item.image.@this.Create(raw,
             new global::app.data.@this("", new global::app.type.item.@null.@this("image", kind), context: ctx.Context));

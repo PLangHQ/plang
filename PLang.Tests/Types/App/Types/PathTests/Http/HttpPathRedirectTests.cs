@@ -36,7 +36,7 @@ public class HttpPathRedirectTests
     private static async Task Grant(Ctx context, string url)
     {
         var perm = new PathPermission(
-            "User", new HttpPath(url, context).Absolute,
+            "User", new HttpPath(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
             PermMatch.Exact);
         await context.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm) { Context = context }, persist: true);
@@ -58,7 +58,7 @@ public class HttpPathRedirectTests
         await Grant(context, origin);
         context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
 
-        var result = await new HttpPath(origin, context).ReadText();
+        var result = await new HttpPath(origin).ReadText(context);
 
         await result.IsFailure();
         // The deny comes from PermissionDenied on the redirect target —
@@ -80,7 +80,7 @@ public class HttpPathRedirectTests
         await Grant(context, origin);
         await Grant(context, target);
 
-        var result = await new HttpPath(origin, context).ReadText();
+        var result = await new HttpPath(origin).ReadText(context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("target-body");
@@ -95,7 +95,7 @@ public class HttpPathRedirectTests
         var origin = server.MapRedirect(302, "ftp://example.invalid/etc/passwd");
         await Grant(context, origin);
 
-        var result = await new HttpPath(origin, context).ReadText();
+        var result = await new HttpPath(origin).ReadText(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedRedirectScheme");
@@ -120,7 +120,7 @@ public class HttpPathRedirectTests
         for (int i = 0; i < 7; i++)
             await Grant(context, chain[i]);
 
-        var result = await new HttpPath(chain[0], context).ReadText();
+        var result = await new HttpPath(chain[0]).ReadText(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TooManyRedirects");
@@ -145,11 +145,11 @@ public class HttpPathRedirectTests
         await Grant(context, origin);
         await Grant(context, target);
 
-        var writeResult = await new HttpPath(origin, context).WriteText("preserved-body");
+        var writeResult = await new HttpPath(origin).WriteText("preserved-body", context);
         await writeResult.IsSuccess();
 
         // Round-trip: the target should now hold the body that 307 carried.
-        var readResult = await new HttpPath(target, context).ReadText();
+        var readResult = await new HttpPath(target).ReadText(context);
         await readResult.IsSuccess();
         await Assert.That((await readResult.Value())?.ToString()).IsEqualTo("preserved-body");
     }
@@ -166,7 +166,7 @@ public class HttpPathRedirectTests
         await Grant(context, origin);
         await Grant(context, target);
 
-        var result = await new HttpPath(origin, context).ReadText();
+        var result = await new HttpPath(origin).ReadText(context);
         await result.IsSuccess();
 
         // The second non-write request is the GET that followed the redirect.

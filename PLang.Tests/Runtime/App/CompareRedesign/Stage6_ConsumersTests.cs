@@ -96,7 +96,7 @@ public class Stage6_ConsumersTests
 
             var files = new global::app.type.item.list.@this();
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
-                files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name), context: ctx), context: ctx));
+                files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name)), context: ctx));
 
             await files.SortByField("size", descending: false, global::PLang.Tests.TestApp.SharedContext);
 

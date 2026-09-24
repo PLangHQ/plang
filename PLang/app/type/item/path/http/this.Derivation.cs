@@ -63,6 +63,6 @@ public sealed partial class @this
     private @this Rebuild(string newAbsolutePath)
     {
         var builder = new UriBuilder(_uri) { Path = newAbsolutePath };
-        return new @this(builder.Uri.ToString(), Context);
+        return new @this(builder.Uri.ToString());
     }
 }

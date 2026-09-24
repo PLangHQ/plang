@@ -21,6 +21,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this("image", kind);
         byte[] bytes = reader.Bytes();
         string mime = ctx.Context?.App.Format.Mime("." + (kind ?? "")) ?? $"image/{kind}";
-        return new global::app.type.item.image.@this(bytes, mime);
+        return new global::app.type.item.image.@this(bytes, mime, kind);
     }
 }

@@ -8,7 +8,7 @@ namespace app.type.item.url;
 /// The scheme know-how (consent gate, redirects, signing) stays on the
 /// composed <c>HttpPath</c>.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "https://example.com/data.json";
     public static string Shape => "string";
@@ -21,16 +21,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private byte[]? _bytes;
     private string? _contentType;
 
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context
-    {
-        get => Path.Context;
-        set => Path.Context = value;
-    }
+    // The canonical content kind, worked out at creation through the creator's format
+    // registry and kept as a fact.
+    private readonly global::app.type.kind.@this? _kind;
 
-    public @this(global::app.type.item.path.@this path)
+    /// <summary>A url reference at <paramref name="path"/>; <paramref name="context"/> is the
+    /// creator's, used once to name the kind and not kept.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
         // Born from a path — inject its type into this value's history (`is path` from the chain).
         this.list.Add(path);
     }
@@ -41,16 +41,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public bool IsLoaded => _bytes != null;
 
-    /// <summary>A url's entity: name "url", kind = the extension's canonical
-    /// form through the format registry — location metadata, never fetches.</summary>
-    protected internal override global::app.type.@this Type
-    {
-        get
-        {
-            var t = Context.App.Format.TypeFromExtension(Path.Extension);
-            return new global::app.type.@this("url", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
-        }
-    }
+    /// <summary>A url's entity: name "url", kind = the canonical kind named at
+    /// creation — location metadata, never fetches.</summary>
+    protected internal override global::app.type.@this Type =>
+        new global::app.type.@this("url", typeof(@this)) { Kind = _kind };
 
     /// <summary>
     /// The value door — fetch + parse through the file channel (mime stamps the
@@ -70,7 +64,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (_bytes != null) bytes = _bytes;
         else
         {
-            var readBytes = await Path.ReadBytes();
+            var readBytes = await Path.ReadBytes(data.Context);
             // The fetch error rides through WHOLE — its key, message and inner exception —
             // instead of being flattened into a bare-string HttpRequestException.
             if (!readBytes.Success) { data.Fail(readBytes.Error!); return Absent; }
@@ -81,13 +75,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // Stamp the content's type by precedence: the response Content-Type rules;
         // else the URL extension is the hint (.json → dict); else a typeless web
         // response is text, not raw bytes.
+        var context = data.Context;
         global::app.data.@this read;
         if (!string.IsNullOrEmpty(_contentType))
-            read = await new global::app.channel.type.http.@this(_contentType, bytes, Context).Read();
-        else if (Context.App.Format.TypeFromExtension(Path.Extension) is { IsNull: false })
-            read = await new global::app.channel.type.file.@this(Path).Read(bytes);
+            read = await new global::app.channel.type.http.@this(_contentType, bytes, context).Read();
+        else if (context.App.Format.TypeFromExtension(Path.Extension) is { IsNull: false })
+            read = await new global::app.channel.type.file.@this(Path, context).Read(bytes);
         else
-            read = await new global::app.channel.type.http.@this("text/plain", bytes, Context).Read();
+            read = await new global::app.channel.type.http.@this("text/plain", bytes, context).Read();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }

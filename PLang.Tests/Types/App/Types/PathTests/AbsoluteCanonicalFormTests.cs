@@ -34,43 +34,43 @@ public class AbsoluteCanonicalFormTests
     [Test] public async Task HttpPath_Absolute_LowercasesSchemeAndHost()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("HTTP://Example.COM/Foo", context);
+        var p = new HttpPath("HTTP://Example.COM/Foo");
         await Assert.That(p.Absolute).IsEqualTo("http://example.com/Foo");
     }
 
     [Test] public async Task HttpPath_Absolute_StripsDefaultHttpsPort()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com:443/foo", context);
+        var p = new HttpPath("https://example.com:443/foo");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/foo");
     }
 
     [Test] public async Task HttpPath_Absolute_StripsDefaultHttpPort()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("http://example.com:80/foo", context);
+        var p = new HttpPath("http://example.com:80/foo");
         await Assert.That(p.Absolute).IsEqualTo("http://example.com/foo");
     }
 
     [Test] public async Task HttpPath_Absolute_KeepsNonDefaultPort()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com:8443/foo", context);
+        var p = new HttpPath("https://example.com:8443/foo");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com:8443/foo");
     }
 
     [Test] public async Task HttpPath_Absolute_NormalizesPathSegments()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com/a/../b", context);
+        var p = new HttpPath("https://example.com/a/../b");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/b");
     }
 
     [Test] public async Task HttpPath_Absolute_RootWithAndWithoutTrailingSlash_AreEqual()
     {
         var (_, context) = MakeApp();
-        var withSlash = new HttpPath("https://example.com/", context);
-        var withoutSlash = new HttpPath("https://example.com", context);
+        var withSlash = new HttpPath("https://example.com/");
+        var withoutSlash = new HttpPath("https://example.com");
         await Assert.That(withSlash.Absolute).IsEqualTo(withoutSlash.Absolute);
         await Assert.That(withSlash.Absolute).IsEqualTo("https://example.com/");
     }
@@ -78,14 +78,14 @@ public class AbsoluteCanonicalFormTests
     [Test] public async Task HttpPath_Absolute_SortsQueryParameters_ByKey()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com/?b=2&a=1", context);
+        var p = new HttpPath("https://example.com/?b=2&a=1");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/?a=1&b=2");
     }
 
     [Test] public async Task HttpPath_Absolute_StripsFragment()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com/foo#bar", context);
+        var p = new HttpPath("https://example.com/foo#bar");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/foo");
     }
 
@@ -93,7 +93,7 @@ public class AbsoluteCanonicalFormTests
     {
         var (_, context) = MakeApp();
         var filePath = FilePath.Resolve("/home/data.json", context);
-        var httpPath = new HttpPath("https://api.example.com/data.json", context);
+        var httpPath = new HttpPath("https://api.example.com/data.json");
 
         var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
         var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read }, MatchMode.Exact);
@@ -104,7 +104,7 @@ public class AbsoluteCanonicalFormTests
     [Test] public async Task Permission_HttpPathGlobGrant_MatchesUrlUnderHost()
     {
         var (_, context) = MakeApp();
-        var request = new HttpPath("https://api.example.com/users", context);
+        var request = new HttpPath("https://api.example.com/users");
 
         var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.item.permission.@this.AllVerbs, MatchMode.Glob);
         var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read }, MatchMode.Exact);

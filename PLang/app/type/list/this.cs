@@ -537,23 +537,36 @@ public sealed partial class @this
             }
 
             var llmProps = new List<app.type.Field>();
+            // A member that needs the asker's context is a one-context method; it is the same
+            // field to the catalog, listed where it is declared among the properties.
+            var llmMethods = new Queue<MethodInfo>(type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(m => Attribute.IsDefined(m, typeof(LlmBuilderAttribute)) && m.ReturnType != typeof(void)
+                    && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(actor.context.@this))
+                .OrderBy(m => m.MetadataToken));
+            void AddField(string name, System.Type fieldType)
+            {
+                llmProps.Add(new app.type.Field
+                {
+                    Name = char.ToLower(name[0]) + name[1..],
+                    TypeName = Face(PlangName(fieldType)),
+                });
+                Enqueue(UnwrapType(fieldType));
+            }
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
+                while (llmMethods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
+                    && m.MetadataToken < prop.GetMethod!.MetadataToken)
+                    AddField(llmMethods.Dequeue().Name, m.ReturnType);
                 // [LlmBuilder] is the explicit opt-in for catalog visibility;
                 // [JsonIgnore] only governs STJ wire shape. A property can be
                 // both (e.g. type.Kind: not on the entity's own wire — the
                 // wire emits `kind` from data.Type.Kind via Wire.cs — but
                 // discoverable as a builder field).
-
-                llmProps.Add(new app.type.Field
-                {
-                    Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
-                    TypeName = Face(PlangName(prop.PropertyType)),
-                });
-                Enqueue(UnwrapType(prop.PropertyType));
+                AddField(prop.Name, prop.PropertyType);
             }
+            while (llmMethods.TryDequeue(out var m)) AddField(m.Name, m.ReturnType);
 
             // Scalar discriminant: either has a Resolve(input, context) factory (so the
             // wire shape is derivable), declares a static Shape property, or is

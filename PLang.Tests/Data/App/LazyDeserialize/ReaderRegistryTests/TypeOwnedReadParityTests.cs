@@ -28,7 +28,7 @@ public class TypeOwnedReadParityTests
             var prior = global::app.type.item.path.@this.Resolve(raw, ctx);
             await Assert.That(viaRead).IsNotNull();
             await Assert.That(viaRead!.GetType()).IsEqualTo(prior.GetType());
-            await Assert.That(viaRead.Relative).IsEqualTo(prior.Relative);
+            await Assert.That(viaRead.Relative(ctx)).IsEqualTo(prior.Relative(ctx));
         }
     }
 

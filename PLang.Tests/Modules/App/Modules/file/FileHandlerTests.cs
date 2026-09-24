@@ -30,10 +30,10 @@ public class FileHandlerTests : IDisposable
         System.IO.Path.Combine(_tempDir, relativePath);
 
     private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangFilePath(TempPath(relativePath), _app.User.Context) {}, context: _app.User.Context);
+        new("", new PLangFilePath(TempPath(relativePath)) {}, context: _app.User.Context);
 
     private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangFilePath(absolutePath, _app.User.Context) {}, context: _app.User.Context);
+        new("", new PLangFilePath(absolutePath) {}, context: _app.User.Context);
 
     // --- Save ---
 
@@ -47,7 +47,7 @@ public class FileHandlerTests : IDisposable
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
-        await Assert.That(f.Relative).IsEqualTo("/test.txt");
+        await Assert.That(f.Relative(_app.User.Context)).IsEqualTo("/test.txt");
     }
 
     [Test]
@@ -71,6 +71,35 @@ public class FileHandlerTests : IDisposable
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("content here");
+    }
+
+    [Test]
+    public async Task Read_ExtensionRegisteredAtRuntime_FileKindIsTheRegisteredKind()
+    {
+        // `.abcdata` is unknown until `.abc` registers `application/abcdata`; from then on the
+        // registry canonicalises the `abcdata` kind to the registered extension, `abc`.
+        System.IO.File.WriteAllText(TempPath("before.abcdata"), "x");
+        var before = await new Read(_app.User.Context) { Path = MakePath("before.abcdata") }.Run();
+
+        _app.Format.Add(".abc", "abc", "application/abcdata");
+        System.IO.File.WriteAllText(TempPath("after.abcdata"), "x");
+        var after = await new Read(_app.User.Context) { Path = MakePath("after.abcdata") }.Run();
+
+        await after.IsSuccess();
+        await Assert.That(after.Type.Name).IsEqualTo("file");
+        await Assert.That(after.Type.Kind?.Name).IsEqualTo("abc");
+        // Named at creation: a file made before the registration keeps its earlier answer.
+        await Assert.That(before.Type.Kind?.Name).IsEqualTo("abcdata");
+    }
+
+    [Test]
+    public async Task Read_JpegExtension_FileKindIsCanonicalJpg()
+    {
+        System.IO.File.WriteAllBytes(TempPath("photo.jpeg"), new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
+        var result = await new Read(_app.User.Context) { Path = MakePath("photo.jpeg") }.Run();
+
+        await result.IsSuccess();
+        await Assert.That(result.Type.Kind?.Name).IsEqualTo("jpg");
     }
 
     [Test]
@@ -175,7 +204,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative).IsEqualTo("/dst.txt");
+        await Assert.That(f!.Relative(_app.User.Context)).IsEqualTo("/dst.txt");
     }
 
     [Test]
@@ -214,7 +243,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative).IsEqualTo("/move_dst.txt");
+        await Assert.That(f!.Relative(_app.User.Context)).IsEqualTo("/move_dst.txt");
     }
 
     [Test]
@@ -254,7 +283,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(await f!.AsBooleanAsync()).IsFalse();
+        await Assert.That(await f!.AsBooleanAsync(_app.User.Context)).IsFalse();
     }
 
     [Test]
@@ -302,7 +331,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(await f!.AsBooleanAsync()).IsTrue();
+        await Assert.That(await f!.AsBooleanAsync(_app.User.Context)).IsTrue();
     }
 
     [Test]
@@ -314,7 +343,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(await f!.AsBooleanAsync()).IsFalse();
+        await Assert.That(await f!.AsBooleanAsync(_app.User.Context)).IsFalse();
     }
 
     // --- List ---
@@ -450,7 +479,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(fileData).IsNotNull();
         var fileObj = (await fileData!.Value()) as PLangPath;
         await Assert.That(fileObj).IsNotNull();
-        await Assert.That(await fileObj!.AsBooleanAsync()).IsTrue();
+        await Assert.That(await fileObj!.AsBooleanAsync(_app.User.Context)).IsTrue();
 
         var existsData = await context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();

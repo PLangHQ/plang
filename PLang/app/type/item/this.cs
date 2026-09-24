@@ -471,7 +471,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <see cref="IsTruthy"/>. Only a value whose truthiness needs I/O
     /// (<c>path</c>) overrides this.
     /// </summary>
-    public virtual System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    public virtual System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult(IsTruthy());
 
     /// <summary>

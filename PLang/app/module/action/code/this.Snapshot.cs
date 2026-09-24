@@ -108,7 +108,7 @@ public sealed partial class @this : ISnapshot
                 // the new App's root.
                 var sourceForResolve = reg.Source.StartsWith("/") ? "/" + reg.Source : reg.Source;
                 var dllPath = global::app.type.item.path.@this.Resolve(sourceForResolve, context);
-                var loadResult = dllPath.LoadAssemblyAsync().GetAwaiter().GetResult();
+                var loadResult = dllPath.LoadAssemblyAsync(context).GetAwaiter().GetResult();
                 if (!loadResult.Success)
                     throw new System.IO.FileNotFoundException(
                         loadResult.Error?.Message ?? "Provider source DLL not loadable.");

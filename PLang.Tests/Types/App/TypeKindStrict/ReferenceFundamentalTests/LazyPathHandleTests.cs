@@ -63,10 +63,10 @@ public class LazyPathHandleTests
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, "real.png"), PngHeader);
 
         var img = new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, "real.png"), context));
+            System.IO.Path.Combine(_app.AbsolutePath, "real.png"), context), context);
         await Assert.That(img.Bytes.Length).IsEqualTo(0); // not loaded yet
 
-        await Data.Ok(img).Value();   // the async pull, through the path
+        await _app.User.Context.Ok(img).Value();   // the async pull, through the path
         // Cached — the sync view now reflects the loaded bytes.
         await Assert.That(img.Bytes).IsEquivalentTo(PngHeader);
     }
@@ -76,11 +76,11 @@ public class LazyPathHandleTests
         var context = _app.User.Context;
         // Construction performs no I/O even for a missing file.
         var img = new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, "missing.png"), context));
+            System.IO.Path.Combine(_app.AbsolutePath, "missing.png"), context), context);
         await Assert.That(img.Path).IsNotNull();
 
         // The read failure rides onto the binding at first content access — no throw.
-        var data = Data.Ok(img);
+        var data = _app.User.Context.Ok(img);
         await data.Value();
         await data.IsFailure();
     }
@@ -93,11 +93,11 @@ public class LazyPathHandleTests
         // Path-backed handle declared `as image/gif strict`: nothing read at
         // construction, so no error yet — the strict requirement is imprinted.
         var img = new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, "shot.png"), context));
+            System.IO.Path.Combine(_app.AbsolutePath, "shot.png"), context), context);
         img.RequireStrictKind("gif");
 
         // The mismatch (png content behind a strict gif) surfaces at byte-load, onto the binding.
-        var data = Data.Ok(img);
+        var data = _app.User.Context.Ok(img);
         await data.Value();
         await data.IsFailure();
         await Assert.That(data.Error!.Key).IsEqualTo("StrictKindMismatch");
@@ -108,7 +108,7 @@ public class LazyPathHandleTests
         // The bytes-backed path is untouched: content is already in hand.
         var img = new image(PngHeader, "image/png");
         await Assert.That(img.Path).IsNull();
-        await Data.Ok(img).Value();
+        await _app.User.Context.Ok(img).Value();
         await Assert.That(img.Bytes).IsEquivalentTo(PngHeader);
     }
 }

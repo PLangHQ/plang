@@ -16,7 +16,7 @@ public class PlangTypesCut3_CompositionNavigationTests
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.User.Context);
-        var img = new image(PngBytes, "image/png", p);
+        var img = new image(PngBytes, p!, app.User.Context);
 
         // The Path property is typed as path.@this (composition, not a
         // string passthrough); reflection confirms the declared type.
@@ -36,7 +36,7 @@ public class PlangTypesCut3_CompositionNavigationTests
         {
             var p = global::app.type.item.path.@this.Resolve(abs, app.User.Context) as global::app.type.item.path.file.@this;
             await Assert.That(p).IsNotNull();
-            var img = new image(PngBytes, "image/png", p);
+            var img = new image(PngBytes, p!, app.User.Context);
             // image.Path.Exists navigates through the path facet — the file
             // exists, so Exists is true.
             await Assert.That(((global::app.type.item.path.file.@this)img.Path!).Exists).IsTrue();
@@ -52,7 +52,7 @@ public class PlangTypesCut3_CompositionNavigationTests
         var abs = System.IO.Path.Combine(app.AbsolutePath, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
         // Don't create the file.
         var p = global::app.type.item.path.@this.Resolve(abs, app.User.Context) as global::app.type.item.path.file.@this;
-        var img = new image(PngBytes, "image/png", p);
+        var img = new image(PngBytes, p!, app.User.Context);
         await Assert.That(((global::app.type.item.path.file.@this)img.Path!).Exists).IsFalse();
     }
 

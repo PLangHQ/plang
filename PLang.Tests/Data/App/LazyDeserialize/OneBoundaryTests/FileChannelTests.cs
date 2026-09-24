@@ -23,10 +23,10 @@ public class FileChannelTests
     [Test] public async Task FileChannel_ReadsBytesViaPathReadBytes_AuthGateEnforced()
     {
         await using var app = NewApp(out var root);
-        var p = new filepath(System.IO.Path.Combine(root, "data.json"), app.User.Context);
-        await (await p.WriteText("{\"port\":8080}")).IsSuccess();
+        var p = new filepath(System.IO.Path.Combine(root, "data.json"));
+        await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
 
-        var ch = new filechannel(p);
+        var ch = new filechannel(p, app.User.Context);
         var d = await ch.Read();
         await d.IsSuccess();
         await Assert.That(d.HasRaw).IsTrue();
@@ -37,8 +37,8 @@ public class FileChannelTests
     [Test] public async Task FileChannel_Mime_DerivedFromExtension()
     {
         await using var app = NewApp(out var root);
-        var json = new filechannel(new filepath(System.IO.Path.Combine(root, "x.json"), app.User.Context));
-        var csv = new filechannel(new filepath(System.IO.Path.Combine(root, "x.csv"), app.User.Context));
+        var json = new filechannel(new filepath(System.IO.Path.Combine(root, "x.json")), app.User.Context);
+        var csv = new filechannel(new filepath(System.IO.Path.Combine(root, "x.csv")), app.User.Context);
         await Assert.That(json.Mime).IsEqualTo("application/json");
         await Assert.That(csv.Mime).IsEqualTo("text/csv");
     }
@@ -50,10 +50,10 @@ public class FileChannelTests
     [Test] public async Task FileRead_OpensFileChannel_NoReadTimeConvertInFilePathReadText()
     {
         await using var app = NewApp(out var root);
-        var p = new filepath(System.IO.Path.Combine(root, "cfg.json"), app.User.Context);
-        await (await p.WriteText("{\"port\":8080}")).IsSuccess();
+        var p = new filepath(System.IO.Path.Combine(root, "cfg.json"));
+        await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
 
-        var ch = new filechannel(p);
+        var ch = new filechannel(p, app.User.Context);
         var d = await ch.Read();
         await Assert.That(d.MaterializeCount()).IsEqualTo(0); // nothing parsed at read time
         await Assert.That(d.Type.Name).IsEqualTo("binary"); // the flip: binary + json kind
