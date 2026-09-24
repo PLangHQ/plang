@@ -48,7 +48,13 @@ public partial class @this
     /// <summary>The door-failure seam — the failing TYPE authors its own error
     /// and reports it here (the blessed binding surface for door/Create
     /// implementations, beside As&lt;T&gt;(answer)/CloneError).</summary>
-    public void Fail(IError error) { _error = error; _errorObserved = false; }
+    public void Fail(IError error)
+    {
+        // An error meeting its first run here takes this Data's context as where it happened.
+        error.Context ??= Context;
+        _error = error;
+        _errorObserved = false;
+    }
 
     /// <summary>True when a failure was recorded and no one has looked at it —
     /// the generator's post-Run epilogue reads this (without observing).</summary>

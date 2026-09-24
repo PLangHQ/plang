@@ -54,6 +54,13 @@ public interface IError
     Dictionary<string, string> Variables { get; set; }
 
     /// <summary>
+    /// The context of the run the error first met — stamped at the doors every error passes through
+    /// (<c>context.Error</c>, <c>data.Fail</c>) when the error does not carry one yet, so an error
+    /// passed up through another context keeps where it happened. Its callback reaches the App here.
+    /// </summary>
+    actor.context.@this? Context { get; set; }
+
+    /// <summary>
     /// Formats this error for display. Called only at the final display point, never during propagation.
     /// </summary>
     string Format();

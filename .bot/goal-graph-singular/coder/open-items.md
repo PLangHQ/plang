@@ -23,11 +23,6 @@ hits on 09-24 were work-in-progress states of the ruling-5 registry rewrite, not
 one-shot type binder (a racing bind computes the same delegate), `PathHelper` (no mutable statics), a non-item
 "path" owning name → class (items only, before and after ruling 5). If it recurs, the helper names the decline.
 
-**31. A recorded error does not carry its run's context** — `%!error.callback%` answers only for an error born
-with a context (`new Error(msg, context, …)`); most are built without one (`ServiceError(msg, key, code)`), and
-the frame's `Record` stamps the chain but holds no context. Stamping it at a recording site is the late-stamp smell
-(`Context ??=`) — design question for Ingi. Until then those errors' callbacks are `NoCallback` (was: always threw).
-
 **32. `plang --test` is silent** — from `Tests/` (and `./dev.sh ptest`, and under a pty) it exits 0 and prints
 nothing, writing no report; the plang Callback goals could not be run for #30. Likely #21 (zero-discovered /
 quiet readers), not chased.
@@ -72,6 +67,8 @@ open rulings: blast-radius list, honest mock). Also parked here:
 
 ## Done
 
+- **31 Error context** — an error takes the context where it first met a run (`context.Error` / `Error<T>`,
+  `data.Fail`, `??=` — a late stamp Ingi accepts here); `IError.Context`: see commit after `f00717469`.
 - **30 Error's stored App** — gone; callback through the error's own Context, no context → `NoCallback`:
   `f00717469`.
 - **29 `file://` literals** — a file URL resolves to its local path, shown in plang form: `96d3c8c49`.

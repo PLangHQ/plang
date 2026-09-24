@@ -376,7 +376,7 @@ public class Error : global::app.type.item.@this, IError
 
         // Verbose variable dump — shows all variables in scope at point of failure
         // The error keeps where it happened — its context reaches the App.
-        var errorContext = (error as Error)?.Context;
+        var errorContext = error.Context;
         var app = errorContext?.App;
         if (app?.Debug?.Verbose == true)
         {

@@ -210,13 +210,22 @@ public sealed class @this : IDisposable
     public data.@this Null(string name = "")
         => new(name, global::app.type.item.@null.@this.Instance, context: this);
 
-    /// <summary>An error Data carrying <paramref name="error"/>, born with this context.</summary>
-    public data.@this Error(IError error) => new("", context: this) { Error = error };
+    /// <summary>An error Data carrying <paramref name="error"/>, born with this context. An error
+    /// meeting its first run here takes this context as where it happened.</summary>
+    public data.@this Error(IError error)
+    {
+        error.Context ??= this;
+        return new("", context: this) { Error = error };
+    }
 
-    /// <summary>A typed error Data carrying <paramref name="error"/>, born with this context.</summary>
+    /// <summary>A typed error Data carrying <paramref name="error"/>, born with this context. An error
+    /// meeting its first run here takes this context as where it happened.</summary>
     public data.@this<T> Error<T>(IError error)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-        => new("", context: this) { Error = error };
+    {
+        error.Context ??= this;
+        return new("", context: this) { Error = error };
+    }
 
     /// <summary>
     /// Borns the Data result of a value computation: <c>Ok</c> on success, or — when the compute
