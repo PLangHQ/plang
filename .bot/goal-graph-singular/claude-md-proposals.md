@@ -73,3 +73,11 @@ A body written as an expression (recovery actions stored in a parameter) and a r
 ```
 - **Errors, not exceptions, for what the developer causes.** An unknown name, a typo, a missing file or a bad value comes back as a plang error (`context.Error(new ServiceError(..., key, 400))`). An exception is only for something the runtime did not expect. A caller holding a developer-supplied name asks the registry first (`app.Type.Contains(name)`) instead of letting an indexer throw.
 ```
+
+## architect — goal-graph-singular — 2026-09-24 (2)
+**Target:** /CLAUDE.md (Runtime2 Conventions, the "Truthiness — IBooleanResolvable" bullet)
+**Why:** Ingi ruled that condition operators return a plang `Data<bool>` (true, false or an error) instead of a C# `bool`, so a developer error (`is foo`, ordering incomparable values) is returned as a plang error, not thrown and caught. The bullet currently states `Operator.Evaluate` is `Func<data.@this?, data.@this?, Task<bool>>`.
+**Proposed change:** in that bullet, replace "`Operator.Evaluate` is `Func<data.@this?, data.@this?, Task<bool>>`" with:
+```
+the condition operators return a plang `Data<bool>` — true, false, or an error (`is foo` → UnknownType, ordering incomparable values → an error) — never a thrown exception for a developer error
+```
