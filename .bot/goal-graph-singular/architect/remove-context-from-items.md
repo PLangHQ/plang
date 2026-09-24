@@ -133,18 +133,35 @@ public IEnumerable<Data> Elements(actor.context.@this context)
 
 `source` (`source.cs:37`, set at `:45`) uses its stored context in one place only: it passes it on to its re-declared copy (`Declared`, `:209`). Everything else gets the context passed in: the load uses the asking `Data`'s (`:114`), `Get(ctx)` (`:31`), `Read(context)` (`:198`). So the source stores none.
 
-Its subclass **wire** (a `.pr` / wire slice, `type/item/wire/this.cs`) does use it:
-- `Write` (`:36`) and `Clr` (`:60`): decoding the slice needs the type registry, and neither door receives a context
-- `Output` (`:51`), which already receives one and falls back to the stored one (`context ?? Context`)
-- `Declared` (`:66`), which passes it on
+## The wire: the parent passes it (settled)
 
-## Still open — types that store a context today, beyond the table
+`wire` (a still-encoded `.pr` slice, `type/item/wire/this.cs`, a subclass of source) uses its stored context to decode the slice (`Context.App.Type.Kind[k].Parse(Raw, Context) ?? Read(Context)`) in three doors:
 
-Items holding a context now (`module.IContext`): `path`, `file`, `url`, `directory`, `source`, `list`, `dict`, `computed`, `clr`. The path family is settled above. Next, one at a time:
+- **`Clr(target)`** (`:58-62`). All three callers hold a `Data` and peek into it: `Data.Clr<T>()` (`data/this.cs:770`, `Peek().Clr<T>()`), the list's CLR exit (`list/this.cs:586`, `row.Peek().Clr(elem)`), the reflection record read (`kind/reflection/this.cs:131`, `slot.Peek().Clr(...)`). A wire is only ever the value of a `Data` that hasn't been loaded yet, and that `Data` has the context. So the parent passes it: either `Clr(target, context)` (the other 20 `Clr` overrides take it and ignore it, like `Type`), or the callers use the `Data`'s own door and the `Data` passes its context.
+- **`Write(IWriter)`** (`:31-38`). Only reached through the writers' `Value(item)` branch (`channel/serializer/json/writer.cs:184`, `text/writer.cs:95`), where the writer walks dicts and lists itself (`json/writer.cs:165, :175`) with no context. That branch is already marked as closing (`text/writer.cs:90-94`: "TOMBSTONE… Value(item) is being retired: an item in hand is rendered by asking `item.Output`"). Its replacement is `Output(writer, mode, context)`, where the parent passes the context. When the branch goes, `wire.Write` has no caller.
+- **`Output`** (`:46-53`) already receives the context; its fallback to the stored one (`context ?? Context`) goes.
+- `Declared` (`:64-66`) only passes it on.
 
-1. **list** and **dict**: settled above.
-2. **source**: settled, it stores none. **wire**: `Write` (`:36`) and `Clr` (`:60`) decode with the stored context, and neither door receives one. Open.
-3. **computed** (`computed.cs:26`, used at `:67` `Create(raw, Context)`) and **clr** (`clr/this.cs:47`, its kind's `Get`/`Read`/`Set`/`Enumerate`/`Clr`/`Output` at `:105-182`).
+So the wire stores no context.
+
+## Inventory — every item type that stores a context today
+
+Found by searching item classes for a context field or property.
+
+| Item | Stores it at | Status |
+|---|---|---|
+| `path`, and `file` / `url` / `directory` through their path | `path/this.cs:154` | settled: stores none |
+| `list` | `list/this.cs:176` | settled: stores none |
+| `dict` | `dict/this.cs:136` | settled: stores none |
+| `source` | `source.cs:37` | settled: stores none |
+| `wire` (source's subclass) | inherits source's | settled: stores none |
+| `computed` | `computed.cs:20` (used at `:67`, `Create(raw, Context)`) | **open** |
+| `clr` | `clr/this.cs:24` (its kind's `Get`/`Read`/`Set`/`Enumerate`/`Clr`/`Output`, `:105-182`) | **open** |
+| `error.Error` | `error/Error.cs:140` (`Context { get; set; }`, nullable) | **open** |
+| `snapshot` | `snapshot/this.cs:21` | open, but snapshot is **parked** (Ingi) |
+| `actor` | `actor/this.cs:79` (creates its own) | different case: the actor **owns** its context, one per actor, and doesn't hold a copy of someone else's. Confirm with Ingi. |
+
+Not items, and they keep theirs: `Data` (the box that carries the context), the memory stack (`variable/list`), the channel list, serializers, the settings store.
 
 ## Relation to work in flight
 
