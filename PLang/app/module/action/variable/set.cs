@@ -196,8 +196,13 @@ public partial class Set : IContext
             // The Type value reads through the `type` reader, so it materializes as the type
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
             // still names a type by name. No dict rebuild — that was the pre-reader path.
+            // The developer named the type — an unknown name is their error, answered as plang's.
+            var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
+            if (!Context.App.Type.Contains(declaredName))
+                return Context.Error(
+                    new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
             var type = typeValue as global::app.type.@this
-                ?? Context.App.Type[typeValue.ToString()!];
+                ?? Context.App.Type[declaredName];
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The declared type object is the program's (shared by every run), so a
             // changed kind is this run's own type object — the declared one is never written.

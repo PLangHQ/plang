@@ -94,7 +94,10 @@ public sealed class Operator
     private static async Task<bool> IsType(data.@this? left, data.@this? right)
     {
         var typeName = right?.Peek()?.ToString();
-        if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
+        if (left == null || string.IsNullOrWhiteSpace(typeName) || left.Context == null!) return false;
+        // The developer named the type — an unknown name is their error, answered as plang's.
+        if (!left.Context.App.Type.Contains(typeName.Split('/')[0]))
+            throw new global::app.error.AppException($"Unknown type '{typeName}'", "UnknownType", 400);
         // Ask the VALUE — it walks its own provenance chain (a narrowed dict still answers `is file`).
         if (left.Is(typeName)) return true;
         if (left.Peek() is global::app.type.item.file.@this or global::app.type.item.url.@this

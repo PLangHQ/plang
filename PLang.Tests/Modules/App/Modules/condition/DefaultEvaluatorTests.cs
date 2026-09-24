@@ -147,6 +147,19 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task Truthy_String_IsInitialized() => await Assert.That(IsTrue(await EvalIf("hello", "==", true))).IsTrue();
     [Test] public async Task Truthy_Null_NotInitialized() => await Assert.That(IsFalse(await EvalIf(null, "==", true))).IsTrue();
 
+    // --- `is <type>` — the name resolves through the value's own registry ---
+
+    [Test] public async Task Is_UnknownTypeName_IsThePlangErrorUnknownType()
+    {
+        var result = await EvalIf("hello", "is", "foo");
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+        await Assert.That(result.Error!.Message).Contains("Unknown type 'foo'");
+    }
+
+    [Test] public async Task Is_AliasName_ResolvesToItsType()
+        => await Assert.That(IsTrue(await EvalIf("hello", "is", "string"))).IsTrue();
+
     // --- `if %path% exists` — path answers its own truthiness ---
     //
     // Before the fix, file.exists returned the path object and `if X exists`

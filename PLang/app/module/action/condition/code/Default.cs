@@ -41,6 +41,12 @@ public sealed class Default : IEvaluator
             Operator op = (await operatorData.Value())!; bool result = await op.Evaluate(left, right);
             return operatorData.Context.Ok<global::app.type.item.@bool.@this>(result);
         }
+        catch (global::app.error.AppException ex)
+        {
+            // A keyed plang failure inside an operator (`is foo`: UnknownType) surfaces as itself.
+            return operatorData.Context.Error<global::app.type.item.@bool.@this>(
+                new global::app.error.ServiceError(ex.Message, ex.Key, ex.StatusCode) { Exception = ex });
+        }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
             return EvaluationError(operatorData.Context, left, (await operatorData.Value())!, right, ex);

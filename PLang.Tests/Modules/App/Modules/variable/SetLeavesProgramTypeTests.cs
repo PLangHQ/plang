@@ -39,6 +39,18 @@ public class SetLeavesProgramTypeTests
     }
 
     [Test]
+    public async Task UnknownTypeName_IsThePlangErrorUnknownType()
+    {
+        var (set, _) = SetComposed(5, new global::app.type.@this("foo"));
+
+        var result = await set.Run(_app.User.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+        await Assert.That(result.Error!.Message).Contains("Unknown type 'foo'");
+    }
+
+    [Test]
     public async Task DerivedKind_RunTwice_RowTypeUnchanged()
     {
         var (set, rowType) = SetComposed(5, new global::app.type.@this("number"));
