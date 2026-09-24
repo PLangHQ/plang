@@ -12,7 +12,7 @@ The program (`.pr`, loaded once, shared by every run of every actor) still holds
 
 ## Vocabulary (Ingi)
 
-"Parameter" is not used. The `.pr` holds an action's properties, and each maps to an action property, `goal/step/action/property/this.cs`. In code, `action.Parameter` and `goal/step/action/parameter/list` become the action's properties. (For the `.pr` key `"parameter"`, see the open question.)
+"Parameter" is not used. The `.pr` holds an action's properties, and each maps to an action property, `goal/step/action/property/this.cs`. In code, `action.Parameter` and `goal/step/action/parameter/list` become the action's properties. The `.pr` key `"parameter"` becomes `"property"` too (see "The `.pr` key" below).
 
 ## The design (settled with Ingi)
 
@@ -38,7 +38,7 @@ The program (`.pr`, loaded once, shared by every run of every actor) still holds
 ## What changes, by area (from coder's inventory, `coder/to-architect-parameter-rows-inventory.md`)
 
 - **`.pr` reader**: `goal/step/action/serializer/Reader.cs:61, :65, :68, :131-132` build properties, not `Data`. The `Data` reader's context-less row door (step 1's exception, `data/reader/this.cs:137` path) goes.
-- **`.pr` writer**: `goal/step/action/this.Item.cs:53-57` writes the properties back. The `.pr` file format is unchanged by this plan: round-trip byte-identical.
+- **`.pr` writer**: `goal/step/action/this.Item.cs:53-57` writes the properties back under the key `"property"` (see "The `.pr` key" below). A `.pr` the writer produces reads back and writes again byte-identical.
 - **Selection / generator**: `action[name]` (`goal/step/action/this.cs:141-142`) returns the property; `__Copy` / `__View` (`Emission/Action/this.cs:374-381`), the channel binding (`:317`), the null guards (`:178-185, :201-208`) and `SnapshotParams` (`Emission/Property/Data/this.cs:215-216`) read properties; the binding order (4).
 - **Builder**: the default pass (`build/code/Default.cs:267-269`); goal.call's Build (`module/action/goal/call.cs:51-53, :70-72`, today `SetValue` on the program's `Data`) and variable.set's Build (`module/action/variable/set.cs:81-89`, today `Parameter.Add`) change the action's properties; that's building the program, which is allowed at build. The file.read (`file/read.cs:120`), http (`http/HttpBuildHelpers.cs:16`) and llm.query (`llm/query.cs:117, :124`) Build hooks and the action's Build/Callee (`this.Build.cs:46-47`, `this.Callee.cs:19-20`) read property values.
 - **Validation** (`goal/step/action/this.Validate.cs:40-46`): compares the program action's properties with its catalog twin's (a required one missing; a name the class doesn't declare).
@@ -60,7 +60,7 @@ Your split; one suggestion:
 1. **No Data in the program:** after loading a `.pr`, no action holds a `Data` (reflection over an action's properties); two actors running one goal each get a run `Data` born with their own context.
 2. **A setting beats a frozen default:** `set %!http.request.TimeoutInSec% = 5`, then a built `http.request` whose `.pr` froze `30` uses 5. A step-set value beats the setting.
 3. **A frozen default beats a changed `[Default]`:** a test action whose `.pr` froze one default and whose class declares another uses the frozen one.
-4. **Round trip:** real `.pr` files read then written back are byte-identical.
+4. **Round trip:** a `.pr` the writer produces reads back and writes again byte-identical. An old `.pr` with the key `"parameter"` fails to load with the named error.
 5. **Validation:** a `.pr` property the class doesn't declare fails the build; a missing required one fails.
 6. **Graft:** a grafted modifier's properties are its own; changing one doesn't change the other.
 7. **Build hooks:** goal.call and variable.set produce the right properties.
