@@ -786,6 +786,56 @@
         "health": "good",
         "notes": "Reversal of step B direction, told to Ingi in chat; step A stays until type-object step"
       }
+    },
+    {
+      "id": "3a11a889-2d0c-4734-b70e-ebac366ab886",
+      "bot": "architect",
+      "timestamp_start": "2026-09-24T00:00:00",
+      "timestamp_end": "2026-09-24T17:32:30",
+      "intent": "With Ingi: remove context from item types, program holds no Data (action.Property), one name one class, format -> type, bug batch, loud plang --test; relay each coder step",
+      "before": {
+        "assumptions": "Births pass (born-with-context) was the settled direction; items stored their context",
+        "risk": "Context plumbing spreading into every creation site; .pr format change leaves every .pr unloadable until the builder runs"
+      },
+      "plan": ".bot/goal-graph-singular/architect/remove-context-from-items.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/remove-context-from-items.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "An item never stores a context; the caller passes it; Data is the box and carries it, set at birth. Actor owns its own; Error keeps where it happened; snapshot parked. Landed in 6 steps (c626beea9)."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/action-property-plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Program holds no Data: action.Property + action.Default hold raw values; order step -> setting -> frozen default -> [Default]; .pr key parameter -> property, old key PrFormatOutdated. Landed A/B/C."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rulings with Ingi: operators return Data<bool>; errors not exceptions for developer-caused problems; one name one class (kinds declare themselves); static type tables -> app.Type instance data; app.Type.Mime/Extension; #15 #16 #17 #24 #28 #29 #30 #31. app-systems/type-face pilot parked."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Loud plang --test landed (b37c5200a): silent because the goal reader skipped old key steps; old keys now PrFormatOutdated; app.Test.Verdict fails the run (none discovered / could not load / did not run / failed); exit 1. Noted: Verdict judges a handed list while the session also records every test (held twice)."
+        }
+      ]
     }
   ]
 }
