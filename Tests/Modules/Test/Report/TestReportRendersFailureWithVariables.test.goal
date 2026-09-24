@@ -5,6 +5,6 @@ TestReportRendersFailureWithVariables
 / from AssertionError would fail the variableSnapshotCount check.
 - test.discover tests in '_fixtures_fail' recursive, pattern='*.fixture.goal', write to %tests%
 - test.run tests %tests%, write to %results%
-- test.report results %results%, write to %report%
+- test.report, write to %report%
 - assert %report.summaryFail% equals 1
 - assert %report.variableSnapshotCount% equals 1

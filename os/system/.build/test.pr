@@ -91,7 +91,7 @@
     },
     {
       "index": 2,
-      "text": "test.run tests %tests%, write to %results%",
+      "text": "test.run tests %tests%",
       "lineNumber": 6,
       "action": [
         {
@@ -108,49 +108,19 @@
             }
           ],
           "modifier": []
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "results"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "modifier": []
         }
       ],
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "test.report results %results%",
+      "text": "test.report",
       "lineNumber": 7,
       "action": [
         {
           "module": "test",
           "name": "report",
-          "property": [
-            {
-              "name": "Result",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "%results%"
-            }
-          ],
+          "property": [],
           "modifier": []
         }
       ],
@@ -161,7 +131,7 @@
   "visibility": "Private",
   "path": "/test.goal",
   "prPath": "/.build/test.pr",
-  "hash": "925df3ab6a65e8b48f5efa755fba3f08ee9b9eee225babc23ab1393e862b5aa3",
+  "hash": "590b92f9aaf1f4e8a6277e58b8ae6e7c0aff69e162f54299c34a81e40d87240d",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

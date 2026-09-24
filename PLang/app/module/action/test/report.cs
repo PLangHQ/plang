@@ -18,13 +18,13 @@ namespace app.module.action.test;
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial data.@this<global::app.type.item.list.@this<global::app.test.@this>>? Result { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Format { get; init; }
 
     public async Task<data.@this> Run()
     {
+        // The run's tests live in one place — the session.
         var testing = Context.App.Test;
-        var results = await ResolveTests();
+        var results = testing.Tests;
         var format = await ResolveFormat(testing);
 
         // Suppress the console summary when we're nested inside another test
@@ -60,7 +60,7 @@ public partial class report : IContext
 
         // Surface the artefact for observability: PLang tests inspect these on %report%
         // without a filesystem round-trip. All values are scalars so assert.* validate them.
-        var summary = global::app.test.list.@this.Summary(results);
+        var summary = testing.Summary();
         int variableSnapshotCount = results.Count(t => t.Error is AssertionError { Variables: { Count: > 0 } });
 
         // Return the tests so a parent runner can propagate them via `write to %results%`.
@@ -76,21 +76,9 @@ public partial class report : IContext
 
         // The run's verdict, at the top level only — a nested run's results are its parent test's to
         // judge. The artefact is already written, so a failed run still leaves its report.
-        if (testing.Current == null && testing.Verdict(results) is { } failed)
+        if (testing.Current == null && testing.Verdict() is { } failed)
             return Context.Error(failed);
         return result;
-    }
-
-    // Resolve the tests to report: an explicit %results% list (each row Data-wrapped,
-    // unwrap once at the boundary) or the session's accumulated tests.
-    private async Task<IReadOnlyList<global::app.test.@this>> ResolveTests()
-    {
-        var passed = Result == null ? null : await Result.Value();
-        if (passed == null) return Context.App.Test.Tests;
-        var tests = new List<global::app.test.@this>();
-        foreach (var row in passed.Items(Context))
-            if (await row.Value() is global::app.test.@this t) tests.Add(t);
-        return tests;
     }
 
     // The Format param overrides the session default when present.
@@ -116,7 +104,7 @@ public partial class report : IContext
 
     private static void RenderConsole(StringBuilder sb, IReadOnlyList<global::app.test.@this> results, global::app.test.list.@this testing)
     {
-        var summary = global::app.test.list.@this.Summary(results);
+        var summary = testing.Summary();
         sb.AppendLine($"Test summary: {results.Count} total, "
             + $"{summary[global::app.test.Status.Pass]} pass, {summary[global::app.test.Status.Fail]} fail, "
             + $"{summary[global::app.test.Status.Timeout]} timeout, {summary[global::app.test.Status.Stale]} stale, "

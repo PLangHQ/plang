@@ -1,2 +1,2 @@
-Step text: `write test report %results% format='junit', write to %report%`
-Properties: `{"Results": "%results%", "Format": "junit"}`
+Step text: `write test report format='junit', write to %report%`
+Properties: `{"Format": "junit"}`

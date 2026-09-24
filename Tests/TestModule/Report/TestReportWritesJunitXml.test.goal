@@ -6,7 +6,7 @@ TestReportWritesJunitXml
 / written on disk.
 - test.discover tests in '_fixtures_pass', pattern='*.fixture.goal', recursive, write to %tests%
 - test.run tests %tests%, write to %results%
-- test.report results %results%, format='junit', write to %report%
+- test.report format='junit', write to %report%
 - assert %report.content% contains '<testsuites'
 - assert %report.summaryPass% equals 1
 - file.exists %report.reportPath%, write to %exists%

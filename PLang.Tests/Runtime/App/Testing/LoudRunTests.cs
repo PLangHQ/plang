@@ -46,10 +46,17 @@ public class LoudRunTests
         return test;
     }
 
+    // The run's tests live in the session; the verdict reads them there.
+    private global::app.error.IError? Verdict(params global::app.test.@this[] tests)
+    {
+        foreach (var test in tests) _app.Test.Add(test);
+        return _app.Test.Verdict();
+    }
+
     [Test]
     public async Task Verdict_NothingDiscovered_Fails()
     {
-        var verdict = _app.Test.Verdict(new List<global::app.test.@this>());
+        var verdict = Verdict();
 
         await Assert.That(verdict?.Key).IsEqualTo("NoTestsDiscovered");
     }
@@ -58,11 +65,9 @@ public class LoudRunTests
     public async Task Verdict_TestsThatCouldNotLoad_AreCountedByReason()
     {
         var old = "old .pr format (\"steps\" is now \"step\") — rebuild it.";
-        var verdict = _app.Test.Verdict(new List<global::app.test.@this>
-        {
+        var verdict = Verdict(
             NewTest("A", Status.Stale, old), NewTest("B", Status.Stale, old),
-            NewTest("C", Status.Stale, "no .pr"), NewTest("D", Status.Pass),
-        });
+            NewTest("C", Status.Stale, "no .pr"), NewTest("D", Status.Pass));
 
         await Assert.That(verdict?.Key).IsEqualTo("TestRunFailed");
         await Assert.That(verdict!.Message).Contains("2 tests could not load: old .pr format (\"steps\" is now \"step\") — rebuild it");
@@ -72,10 +77,7 @@ public class LoudRunTests
     [Test]
     public async Task Verdict_AFailedOrTimedOutTest_Fails()
     {
-        var verdict = _app.Test.Verdict(new List<global::app.test.@this>
-        {
-            NewTest("A", Status.Fail), NewTest("B", Status.Timeout), NewTest("C", Status.Pass),
-        });
+        var verdict = Verdict(NewTest("A", Status.Fail), NewTest("B", Status.Timeout), NewTest("C", Status.Pass));
 
         await Assert.That(verdict?.Message).IsEqualTo("2 tests failed.");
     }
@@ -83,7 +85,7 @@ public class LoudRunTests
     [Test]
     public async Task Verdict_ATestThatNeverRan_Fails()
     {
-        var verdict = _app.Test.Verdict(new List<global::app.test.@this> { NewTest("A", Status.Ready) });
+        var verdict = Verdict(NewTest("A", Status.Ready));
 
         await Assert.That(verdict?.Message).IsEqualTo("1 test did not run.");
     }
@@ -91,10 +93,7 @@ public class LoudRunTests
     [Test]
     public async Task Verdict_AllPassedOrDeliberatelySkipped_Passes()
     {
-        var verdict = _app.Test.Verdict(new List<global::app.test.@this>
-        {
-            NewTest("A", Status.Pass), NewTest("B", Status.Skipped, "tagged 'skip'"),
-        });
+        var verdict = Verdict(NewTest("A", Status.Pass), NewTest("B", Status.Skipped, "tagged 'skip'"));
 
         await Assert.That(verdict).IsNull();
     }

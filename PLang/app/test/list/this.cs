@@ -13,7 +13,6 @@ namespace app.test.list;
 public sealed partial class @this
 {
     private readonly global::app.type.item.list.@this<global::app.test.@this> _tests;
-    private readonly object _lock = new();
     private readonly actor.context.@this _context;
 
     public @this(actor.context.@this context)
@@ -114,31 +113,31 @@ public sealed partial class @this
     /// <summary>Number of tests recorded.</summary>
     public int Count => _tests.Count.ToInt32();
 
-    /// <summary>Records a processed test. Thread-safe — parallel child Apps add concurrently
-    /// (the session owns the lock; the plang list is not itself concurrent).</summary>
-    public void Add(global::app.test.@this test)
-    {
-        lock (_lock) _tests.Add(test);
-    }
+    /// <summary>Records a processed test. Parallel child Apps add concurrently — the list guards
+    /// its own rows.</summary>
+    public void Add(global::app.test.@this test) => _tests.Add(test);
 
     /// <summary>The recorded tests, materialized (each row's value is a live test reference).</summary>
-    public IReadOnlyList<global::app.test.@this> Tests
+    public IReadOnlyList<global::app.test.@this> Tests => _tests.Items().ToList();
+
+    /// <summary>Per-status counts across the recorded tests. Every status key is present, even with count 0.</summary>
+    public Dictionary<Status, int> Summary()
     {
-        get { lock (_lock) return _tests.Items().ToList(); }
+        var summary = new Dictionary<Status, int>();
+        foreach (Status status in System.Enum.GetValues<Status>())
+            summary[status] = 0;
+        foreach (var test in Tests)
+            summary[test.Status]++;
+        return summary;
     }
 
-    /// <summary>The tests as a plang <c>list&lt;test&gt;</c> (the wire/return shape).</summary>
-    public global::app.type.item.list.@this<global::app.test.@this> TestList { get { lock (_lock) return _tests; } }
-
-    /// <summary>Per-status counts across all recorded tests. Every status key is present, even with count 0.</summary>
-    public Dictionary<Status, int> Summary() => Summary(Tests);
-
-    /// <summary>Why a run of <paramref name="tests"/> did not pass, or null when it did — tests ran and
-    /// each passed or was deliberately skipped. It fails when nothing was discovered, when a test could
-    /// not load (grouped by reason: "12 tests could not load: old .pr format … — rebuild it."), when a
-    /// test never ran, and when a test failed or timed out.</summary>
-    public IError? Verdict(IReadOnlyList<global::app.test.@this> tests)
+    /// <summary>Why this run did not pass, or null when it did — tests ran and each passed or was
+    /// deliberately skipped. It fails when nothing was discovered, when a test could not load (grouped
+    /// by reason: "12 tests could not load: old .pr format … — rebuild it."), when a test never ran,
+    /// and when a test failed or timed out.</summary>
+    public IError? Verdict()
     {
+        var tests = Tests;
         if (tests.Count == 0)
             return new Error("no tests were discovered — nothing ran.", "NoTestsDiscovered", 400);
 
@@ -154,17 +153,6 @@ public sealed partial class @this
 
         return problems.Count == 0 ? null
             : new Error(string.Join("; ", problems) + ".", "TestRunFailed", 400);
-    }
-
-    /// <summary>Per-status counts across a given set of tests. Every status key present, even at 0.</summary>
-    public static Dictionary<Status, int> Summary(IEnumerable<global::app.test.@this> tests)
-    {
-        var summary = new Dictionary<Status, int>();
-        foreach (Status status in System.Enum.GetValues<Status>())
-            summary[status] = 0;
-        foreach (var test in tests)
-            summary[test.Status]++;
-        return summary;
     }
 
     // No Apply(--test={...}) — the setting walk (app.Setting.Set(app.Test, dict)) sets the
