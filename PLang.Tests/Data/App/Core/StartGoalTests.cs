@@ -246,8 +246,8 @@ public class StartGoalTests
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<global::app.error.IError?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
-        { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.IError?>(null); }
+        public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
+        { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.Error?>(null); }
 
         public async Task<Data> Execute()
         {

@@ -135,7 +135,7 @@ public sealed partial class @this
     /// deliberately skipped. It fails when nothing was discovered, when a test could not load (grouped
     /// by reason: "12 tests could not load: old .pr format … — rebuild it."), when a test never ran,
     /// and when a test failed or timed out.</summary>
-    public IError? Verdict()
+    public Error? Verdict()
     {
         var tests = Tests;
         if (tests.Count == 0)

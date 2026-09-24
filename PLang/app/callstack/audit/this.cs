@@ -16,13 +16,13 @@ namespace app.callstack.audit;
 /// Lifecycle: unbounded for the App's lifetime — long-running processes accumulate
 /// linearly. Bounded retention is a future opt-in.
 /// </summary>
-public sealed class @this : IReadOnlyList<IError>
+public sealed class @this : IReadOnlyList<global::app.error.Error>
 {
-    private readonly List<IError> _entries = new();
+    private readonly List<global::app.error.Error> _entries = new();
     private readonly object _lock = new();
 
     /// <summary>Thread-safe append. Safe under Task.WhenAll on goal.call.</summary>
-    public void Add(IError error)
+    public void Add(global::app.error.Error error)
     {
         lock (_lock) _entries.Add(error);
     }
@@ -32,16 +32,16 @@ public sealed class @this : IReadOnlyList<IError>
         get { lock (_lock) return _entries.Count; }
     }
 
-    public IError this[int index]
+    public global::app.error.Error this[int index]
     {
         get { lock (_lock) return _entries[index]; }
     }
 
-    public IEnumerator<IError> GetEnumerator()
+    public IEnumerator<global::app.error.Error> GetEnumerator()
     {
-        IError[] snapshot;
+        global::app.error.Error[] snapshot;
         lock (_lock) snapshot = _entries.ToArray();
-        return ((IEnumerable<IError>)snapshot).GetEnumerator();
+        return ((IEnumerable<global::app.error.Error>)snapshot).GetEnumerator();
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();

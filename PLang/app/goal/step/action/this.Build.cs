@@ -13,10 +13,10 @@ public partial class @this
     /// <para>A handler's <c>Build()</c> result is published as <c>%!buildData%</c> — the handle the
     /// next action's <c>Build()</c> reads to see what it captures (build-scoped, so it never clobbers
     /// the runtime <c>%!data%</c> of the actor running the builder).</para></summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Build(
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Build(
         global::app.actor.context.@this context)
     {
-        var causes = new System.Collections.Generic.List<global::app.error.IError>();
+        var causes = new System.Collections.Generic.List<global::app.error.Error>();
 
         var (handler, bindError) = await Bind(context);
         if (bindError != null)

@@ -161,7 +161,7 @@ public class Ed25519 : ISigning
 
     // --- Low-level crypto ---
 
-    public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair()
+    public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair()
     {
         try
         {

@@ -147,7 +147,7 @@ public class IdentityKeyProviderTests
             _privKey = privKey;
         }
 
-        public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (new KeyPair(_pubKey, _privKey), null);
+        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (new KeyPair(_pubKey, _privKey), null);
     }
 
     private class ThrowingKeyProvider : IKey
@@ -158,6 +158,6 @@ public class IdentityKeyProviderTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (null, new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (null, new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

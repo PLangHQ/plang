@@ -38,13 +38,13 @@ public partial class Throw : IContext
         // and the only handle is to open it. When `app.type.error.@this` exists this
         // becomes `thrown is error.@this err → Error(err.Inner)`, no Clr. (todos.md
         // "error as a first-class plang type")
-        if (thrown?.Clr<object>() is global::app.error.IError existing)
+        if (thrown?.Clr<object>() is global::app.error.Error existing)
             return Error(existing);
 
         // `- throw %!error%` lands the error in the (text) Message slot, not Data. Re-raise
         // it from there too — resolve Message as the apex value (NOT text, which would choke
         // coercing the error object) and hand the existing error straight through.
-        if (Message != null && (await Message.Value<global::app.type.item.@this>())?.Clr<object>() is global::app.error.IError msgError)
+        if (Message != null && (await Message.Value<global::app.type.item.@this>())?.Clr<object>() is global::app.error.Error msgError)
             return Error(msgError);
 
         // Key carries its own [Default] — the unset case is answered there, once, where the

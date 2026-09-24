@@ -1,4 +1,4 @@
-using IError = app.error.IError;
+using Error = global::app.error.Error;
 
 namespace app.callstack.call.error;
 
@@ -12,19 +12,19 @@ namespace app.callstack.call.error;
 /// <see cref="Add"/> concurrently. Implements <see cref="IReadOnlyList{T}"/> for
 /// natural access; iteration snapshots to avoid throwing on concurrent Add.
 /// </summary>
-public sealed class @this : IReadOnlyList<IError>
+public sealed class @this : IReadOnlyList<Error>
 {
-    private readonly List<IError> _entries = new();
+    private readonly List<Error> _entries = new();
     private readonly object _lock = new();
 
-    public void Add(IError error)
+    public void Add(Error error)
     {
         lock (_lock) _entries.Add(error);
     }
 
     /// <summary>The most recent error observed at this frame — null when none. An observation
     /// log answers with its newest entry; a frame that failed twice is in play on the second.</summary>
-    public IError? Newest
+    public Error? Newest
     {
         get { lock (_lock) return _entries.Count == 0 ? null : _entries[^1]; }
     }
@@ -34,16 +34,16 @@ public sealed class @this : IReadOnlyList<IError>
         get { lock (_lock) return _entries.Count; }
     }
 
-    public IError this[int index]
+    public Error this[int index]
     {
         get { lock (_lock) return _entries[index]; }
     }
 
-    public IEnumerator<IError> GetEnumerator()
+    public IEnumerator<Error> GetEnumerator()
     {
-        IError[] snapshot;
+        Error[] snapshot;
         lock (_lock) snapshot = _entries.ToArray();
-        return ((IEnumerable<IError>)snapshot).GetEnumerator();
+        return ((IEnumerable<Error>)snapshot).GetEnumerator();
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();

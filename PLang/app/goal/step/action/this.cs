@@ -245,7 +245,7 @@ public partial class @this
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
     /// strings. A name the module doesn't carry, or one whose entry isn't code-generated, comes
     /// back as a keyed error.</summary>
-    public (module.ICodeGenerated? Code, global::app.error.IError? Error) Instance(
+    public (module.ICodeGenerated? Code, global::app.error.Error? Error) Instance(
         actor.context.@this context)
     {
         if (!Module.Contains(Name))
@@ -261,7 +261,7 @@ public partial class @this
     /// <summary>This action bound: its handler minted and its parameters bound as typed views —
     /// nothing resolved. What the build pass needs to ask the handler, and what a runner needs to read
     /// a held action's own properties.</summary>
-    public async Task<(module.ICodeGenerated? Handler, global::app.error.IError? Error)> Bind(
+    public async Task<(module.ICodeGenerated? Handler, global::app.error.Error? Error)> Bind(
         actor.context.@this context)
     {
         var (code, error) = Instance(context);

@@ -13,7 +13,7 @@ public partial class @this
     /// Variables owns the projection method; CallStack owns the time-ordered data. Pure —
     /// same (error, current state) → same result. No caching at this stage.
     /// </summary>
-    public @this SnapshotAt(IError error)
+    public @this SnapshotAt(global::app.error.Error error)
     {
         var clone = ShallowCloneStore();
         var stack = _context?.CallStack;

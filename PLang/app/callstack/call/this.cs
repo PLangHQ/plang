@@ -59,7 +59,7 @@ public sealed partial class @this : IAsyncDisposable
     /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
     /// <see cref="app.callstack.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
-    public IError? Error => Handled ? null : Errors.Newest;
+    public global::app.error.Error? Error => Handled ? null : Errors.Newest;
 
     /// <summary>
     /// Mirror of <see cref="Action.@this.Synthetic"/> stamped at Push time. False
@@ -247,7 +247,7 @@ public sealed partial class @this : IAsyncDisposable
             var result = await real!.Execute();
             // Stamp __SnapshotParams onto Error.Params if the handler returned an error
             // without one already populated. (The snapshot lives here, not in the handler.)
-            if (!result.Success && result.Error is Error err)
+            if (!result.Success && result.Error is { } err)
             {
                 if (err.Params == null) err.Params = real.SnapshotParams();
                 Record(err);
@@ -277,9 +277,9 @@ public sealed partial class @this : IAsyncDisposable
     /// <para>Recording each error ONCE is the frame's own contract, kept by instance identity, so no
     /// caller guards: a retry mints a fresh error per attempt and each is kept (real history), while
     /// a layer that passes the same error through records nothing new.</para></summary>
-    public void Record(IError error)
+    public void Record(global::app.error.Error error)
     {
-        if (error is Error e && e.CallFrames.Count == 0) e.CallFrames = SnapshotChain();
+        if (error.CallFrames.Count == 0) error.CallFrames = SnapshotChain();
         if (Errors.Any(x => ReferenceEquals(x, error))) return;
         Errors.Add(error);
         _stack.Audit.Add(error);

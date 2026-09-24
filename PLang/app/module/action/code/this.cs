@@ -67,7 +67,7 @@ public sealed partial class @this : IAsyncDisposable
     // A provider is engine plumbing — rung-3, NEVER a plang value, so it never
     // rides a Data (no clr-carrier round-trip, no Peek to unwrap). The typed
     // provider comes back directly beside a typed error.
-    public (T? Provider, global::app.error.IError? Error) Get<T>(string? name = null) where T : class, ICode
+    public (T? Provider, global::app.error.Error? Error) Get<T>(string? name = null) where T : class, ICode
     {
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
             return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));

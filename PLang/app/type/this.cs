@@ -260,7 +260,7 @@ public sealed class @this : item.@this
                 ? lifted : Create(lifted, context);
         return Create(global::app.type.item.@this.Create(raw, context), context);
 
-        static System.Exception Failed(global::app.error.IError? error)
+        static System.Exception Failed(global::app.error.Error? error)
             => new System.InvalidOperationException(error?.Message ?? "conversion failed");
     }
 

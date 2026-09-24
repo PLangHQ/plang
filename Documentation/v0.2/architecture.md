@@ -461,7 +461,7 @@ Can be disabled for performance (`IsEnabled = false`). When disabled, zero overh
 
 ## Error Handling
 
-Errors implement `IError` and carry rich context:
+An error is an `Error` — the one error type — and carries rich context:
 
 ```
 Error

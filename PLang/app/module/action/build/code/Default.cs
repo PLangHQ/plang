@@ -97,7 +97,7 @@ public class Default : IBuilder
         var allGoals = new List<Goal>();
         // A source the build cannot read is a verdict it cannot proceed with — every unreadable file
         // is collected (one run shows them all), then the build fails once, each read error whole.
-        var unreadable = new List<(path File, global::app.error.IError Error)>();
+        var unreadable = new List<(path File, global::app.error.Error Error)>();
 
         foreach (var file in files)
         {
@@ -138,7 +138,7 @@ public class Default : IBuilder
     {
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
-        var errors = new List<global::app.error.IError>();
+        var errors = new List<global::app.error.Error>();
         Fold(goal, errors);
         if (errors.Count == 0) return context.Ok(true);
 
@@ -151,7 +151,7 @@ public class Default : IBuilder
 
     // Folds a goal's own steps, then recurses its sub-goals. Sets each goal's Step to the
     // nested projection — the goal owns its (now-tree) step collection.
-    private void Fold(Goal goal, List<global::app.error.IError> errors)
+    private void Fold(Goal goal, List<global::app.error.Error> errors)
     {
         goal.Step = Fold(goal.Step, errors);
         foreach (var subGoal in goal.Child) Fold(subGoal, errors);
@@ -164,7 +164,7 @@ public class Default : IBuilder
     // The fold holds the step/action nodes it is assembling (its own typed positional face), never
     // a harvested element list.
     private global::app.goal.step.list.@this Fold(
-        global::app.goal.step.list.@this flat, List<global::app.error.IError> errors)
+        global::app.goal.step.list.@this flat, List<global::app.error.Error> errors)
     {
         var top = new global::app.goal.step.list.@this();   // Add each real step into the node
         int i = 0;

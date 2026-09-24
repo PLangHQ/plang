@@ -762,7 +762,7 @@ public class @this<T> : @this
         : base(name, value, type, parent, context) { }
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
-    public new static @this<T> FromError(IError error) => new() { Error = error };
+    public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
     /// optional-param null model: the reference is never null, only the value is.</summary>

@@ -220,7 +220,7 @@ public sealed class Default : IIdentity
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<(List<Identity>? Identities, global::app.error.IError? Error)> LoadAll(IContext action)
+    internal async Task<(List<Identity>? Identities, global::app.error.Error? Error)> LoadAll(IContext action)
     {
         var store = await action.Context.App.SettingsStore;
         var result = await store.GetAll<Identity>(Table);

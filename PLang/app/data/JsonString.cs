@@ -27,7 +27,7 @@ public static class JsonString
     /// JSON exception detail AND a preview of the content; full content lives in
     /// <c>Details["Content"]</c>.
     /// </summary>
-    public static (JsonNode? result, error.IError? error) ToJson(this string str)
+    public static (JsonNode? result, global::app.error.Error? error) ToJson(this string str)
     {
         try { return (JsonNode.Parse(str), null); }
         catch (JsonException) { }

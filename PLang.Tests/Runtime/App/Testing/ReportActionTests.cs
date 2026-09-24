@@ -43,7 +43,7 @@ public class ReportActionTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::app.test.@this NewTest(string name, global::app.test.Status status, IError? error = null, string? output = null)
+    private static global::app.test.@this NewTest(string name, global::app.test.Status status, global::app.error.Error? error = null, string? output = null)
     {
         var goal = new Goal
         {

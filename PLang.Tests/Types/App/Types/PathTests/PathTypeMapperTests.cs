@@ -23,7 +23,7 @@ public class PathTypeMapperTests
 
     // Build a path the way a handler parameter does: the type constructs itself from
     // the raw string, landing any failure on the carrier Data.
-    private static (PLangPath? value, global::app.error.IError? error) Build(string raw, global::app.actor.context.@this ctx)
+    private static (PLangPath? value, global::app.error.Error? error) Build(string raw, global::app.actor.context.@this ctx)
     {
         var d = new global::app.data.@this("", new global::app.type.item.@null.@this("path", null), context: ctx);
         var v = PLangPath.Create(raw, d);

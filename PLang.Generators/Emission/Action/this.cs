@@ -147,7 +147,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected static global::app.data.@this Error(global::app.error.IError error) => global::app.data.@this.FromError(error);
+                    protected static global::app.data.@this Error(global::app.error.Error error) => global::app.data.@this.FromError(error);
 
                 """);
         }
@@ -157,7 +157,7 @@ public static class @this
     private static void EmitResolve(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<(global::app.module.ICodeGenerated?, global::app.error.IError?)> Resolve(
+                public async System.Threading.Tasks.Task<(global::app.module.ICodeGenerated?, global::app.error.Error?)> Resolve(
                     global::app.goal.step.action.@this action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
@@ -264,18 +264,18 @@ public static class @this
         var body = new StringBuilder();
         foreach (var prop in info.Properties)
             prop.EmitParse(body);
-        const string returns = "System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.IError>>";
+        const string returns = "System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>";
         if (body.Length == 0)
         {
             // No literal slot — nothing to open, so nothing to await.
             sb.AppendLine($"    public {returns} Parse()");
-            sb.AppendLine($"        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.IError>>(System.Array.Empty<global::app.error.IError>());");
+            sb.AppendLine($"        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(System.Array.Empty<global::app.error.Error>());");
             sb.AppendLine();
             return;
         }
         sb.AppendLine($"    public async {returns} Parse()");
         sb.AppendLine("    {");
-        sb.AppendLine("        var __declined = new System.Collections.Generic.List<global::app.error.IError>();");
+        sb.AppendLine("        var __declined = new System.Collections.Generic.List<global::app.error.Error>();");
         sb.Append(body);
         sb.AppendLine("        return __declined;");
         sb.AppendLine("    }");
@@ -285,7 +285,7 @@ public static class @this
     private static void EmitAttach(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<global::app.error.IError?> Attach(
+                public async System.Threading.Tasks.Task<global::app.error.Error?> Attach(
                     global::app.goal.step.action.@this? action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
@@ -389,8 +389,8 @@ public static class @this
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>
                 // only carries source/target type names — useless without the action name.
-                private static global::app.error.IError __PrefixActionContext(
-                    global::app.error.IError err, global::app.goal.step.action.@this? action)
+                private static global::app.error.Error __PrefixActionContext(
+                    global::app.error.Error err, global::app.goal.step.action.@this? action)
                 {
                     if (action == null) return err;
                     var msg = $"{action.Module}.{action.Name}: {err.Message}";

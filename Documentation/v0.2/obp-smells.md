@@ -30,7 +30,7 @@ Everything else compound is the *verb+noun* smell — see the catalog.
 **naked collection** — a bare `List<T>`/`Dictionary<K,V>`/`HashSet<T>` exposed as public state while its discipline (add rules, locking, eviction) is enforced from other files.
 
 ```csharp
-public List<IError> Audit { get; } = new();     // on type A
+public List<Error> Audit { get; } = new();      // on type A
 // ...elsewhere on type B...
 lock (something) { stack.Audit.Add(error); }     // discipline lives outside the owner
 ```

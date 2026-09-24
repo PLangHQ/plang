@@ -17,7 +17,7 @@ public sealed class TestSigning : global::app.module.action.signing.code.ISignin
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public (global::app.module.action.signing.code.KeyPair? keys, global::app.error.IError? error) GenerateKeyPair()
+    public (global::app.module.action.signing.code.KeyPair? keys, global::app.error.Error? error) GenerateKeyPair()
         => (new global::app.module.action.signing.code.KeyPair("test-public-key", "test-private-key"), null);
 
     public Task<global::app.data.@this> SignAsync(global::app.module.action.signing.sign action)

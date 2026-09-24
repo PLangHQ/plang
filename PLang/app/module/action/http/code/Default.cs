@@ -902,7 +902,7 @@ public sealed class Default : IHttp
 
     // HttpContent is a transport artifact, never a PLang value — it rides as a plain
     // (HttpContent?, error) tuple, not Data<HttpContent>.
-    private static async Task<(HttpContent? Content, global::app.error.IError? Error)> ResolveUploadContentAsync(
+    private static async Task<(HttpContent? Content, global::app.error.Error? Error)> ResolveUploadContentAsync(
         upload action, global::app.@this app, string encoding)
     {
         var content = await action.Content.Value();
@@ -965,7 +965,7 @@ public sealed class Default : IHttp
     // internal so HttpStaticFileDenialTests can invoke the handler's read
     // path directly (driving the full upload action requires a real HTTP
     // endpoint).
-    internal static async Task<(HttpContent? Content, global::app.error.IError? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
+    internal static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.
@@ -987,7 +987,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<(HttpContent? Content, global::app.error.IError? Error)> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
+    private static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;

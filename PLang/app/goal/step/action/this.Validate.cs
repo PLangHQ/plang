@@ -12,10 +12,10 @@ public partial class @this
     /// <para>A verdict the build cannot proceed with is RETURNED. <see cref="Warning"/> is for what
     /// the build proceeds WITH — a repair that happened, a default that was filled — never for
     /// something fatal.</para></summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
         global::app.actor.context.@this context)
     {
-        var causes = new System.Collections.Generic.List<global::app.error.IError>();
+        var causes = new System.Collections.Generic.List<global::app.error.Error>();
 
         // The module is resolved at read — an action that exists carries a real module element, so
         // only the action name can be wrong here. A bad module name never reaches this: it throws

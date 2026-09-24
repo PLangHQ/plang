@@ -26,7 +26,7 @@ public class @this : global::app.goal.step.action.@this
     /// <para>Wrap composes delegates and reads no values. A parameter loaded from a .pr is lazy — it
     /// lifts on the typed ask — so a modifier reads its own parameters INSIDE the delegate it returns,
     /// where awaiting is free. Reading at wrap time sees the wire form and has to invent a value.</para></summary>
-    public async System.Threading.Tasks.Task<(System.Func<System.Threading.Tasks.Task<global::app.data.@this>>? Wrapped, global::app.error.IError? Error)> Wrap(
+    public async System.Threading.Tasks.Task<(System.Func<System.Threading.Tasks.Task<global::app.data.@this>>? Wrapped, global::app.error.Error? Error)> Wrap(
         System.Func<System.Threading.Tasks.Task<global::app.data.@this>> inner,
         global::app.actor.context.@this context)
     {
@@ -71,8 +71,8 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>The error, recorded on the frame this modifier is running inside — the action's own,
     /// because the fold runs after the action pushed it. The frame keeps each error once, so a layer
     /// passing one through adds nothing and a retry's fresh error is kept.</summary>
-    private global::app.error.IError Recorded(
-        global::app.error.IError error, global::app.actor.context.@this context)
+    private global::app.error.Error Recorded(
+        global::app.error.Error error, global::app.actor.context.@this context)
     {
         var frame = context.CallStack.Current
             ?? throw new System.InvalidOperationException(

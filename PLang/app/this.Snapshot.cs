@@ -22,7 +22,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// as they stood at the throw (<see cref="global::app.variable.list.@this.SnapshotAt"/>, the chain
     /// the error carried). Everything else is unchanged across handling, so it captures live.
     /// </summary>
-    public snapshot.@this Snapshot(global::app.error.IError error, actor.context.@this context)
+    public snapshot.@this Snapshot(global::app.error.Error error, actor.context.@this context)
         => Capture(context, Snapshotted(context.Variable.SnapshotAt(error), context.CallStack.At(error.CallFrames)));
 
     private snapshot.@this Capture(actor.context.@this context, IEnumerable<global::app.snapshot.ISnapshot> owners)

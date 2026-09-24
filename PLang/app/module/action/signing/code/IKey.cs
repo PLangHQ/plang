@@ -11,5 +11,5 @@ namespace app.module.action.signing.code;
 /// </summary>
 public interface IKey : ICode
 {
-    (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair();
+    (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair();
 }

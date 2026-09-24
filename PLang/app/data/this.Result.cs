@@ -34,12 +34,12 @@ public partial class @this
     // guard. A handler that never looks at a failed param can't swallow it —
     // the generator's post-Run epilogue surfaces any UNOBSERVED param error as
     // the action's result, type-authored message intact.
-    private IError? _error;
+    private global::app.error.Error? _error;
     private bool _errorObserved;
 
     [JsonIgnore]
     [Out, Store]
-    public IError? Error
+    public global::app.error.Error? Error
     {
         get { _errorObserved = true; return _error; }
         set { _error = value; _errorObserved = false; }
@@ -48,7 +48,7 @@ public partial class @this
     /// <summary>The door-failure seam — the failing TYPE authors its own error
     /// and reports it here (the blessed binding surface for door/Create
     /// implementations, beside As&lt;T&gt;(answer)/CloneError).</summary>
-    public void Fail(IError error)
+    public void Fail(global::app.error.Error error)
     {
         // An error meeting its first run here takes this Data's context as where it happened.
         error.Context ??= Context;
@@ -62,7 +62,7 @@ public partial class @this
 
     /// <summary>The error without marking it observed — for relays (wire,
     /// debug views) that carry the failure without handling it.</summary>
-    internal IError? ErrorUnobserved => _error;
+    internal global::app.error.Error? ErrorUnobserved => _error;
 
     [JsonIgnore]
     [Out, Store]
@@ -103,8 +103,8 @@ public partial class @this
 
     public static @this Ok() => new("");
     public static @this Ok(object? value, type? type = null) => new("", value, type);
-    public static @this FromError(IError error) => new("") { Error = error };
-    public static T FromError<T>(IError error) where T : @this, new() => new() { Error = error };
+    public static @this FromError(global::app.error.Error error) => new("") { Error = error };
+    public static T FromError<T>(global::app.error.Error error) where T : @this, new() => new() { Error = error };
 
     /// <summary>
     /// Produces a typed error Data from this instance's error. The error object creates the conversion.

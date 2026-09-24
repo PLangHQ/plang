@@ -267,7 +267,7 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.MergeStep logic for unit testing without DI.
     /// </summary>
-    private static (Step? step, global::app.error.IError? error) MergeStep(Step step, Step stepFromLlm)
+    private static (Step? step, global::app.error.Error? error) MergeStep(Step step, Step stepFromLlm)
     {
         if (step == null)
             return (null, new global::app.error.ProgramError("Step cannot be null", key: "MergeError"));
@@ -288,7 +288,7 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.ValidateActions logic for unit testing without DI.
     /// </summary>
-    private static (bool isValid, global::app.error.IError? error) ValidateActions(StepActions actions)
+    private static (bool isValid, global::app.error.Error? error) ValidateActions(StepActions actions)
     {
         if (actions == null || actions.Count == 0)
             return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));

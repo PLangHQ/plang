@@ -43,11 +43,11 @@ public sealed class @this : global::app.type.item.@this
 
     // --- Execution (stamped by test.run; empty until the test runs) ---
 
-    /// <summary>Wall-clock from <see cref="Start"/> to <see cref="Complete(Status, IError?)"/>. Zero until the test runs.</summary>
+    /// <summary>Wall-clock from <see cref="Start"/> to <see cref="Complete(Status, global::app.error.Error?)"/>. Zero until the test runs.</summary>
     [Out] public global::app.type.item.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
 
     /// <summary>Error captured on fail/error. Carries AssertionError.Variables on assertion failures.</summary>
-    [Out] public IError? Error { get; private set; }
+    [Out] public global::app.error.Error? Error { get; private set; }
 
     /// <summary>Text produced via the output channel during execution. Rendered on failure
     /// when verbose is off. Named Stdout (not Output) — Output is the wire-write method.</summary>
@@ -69,7 +69,7 @@ public sealed class @this : global::app.type.item.@this
     public void Start() => _stopwatch = Stopwatch.StartNew();
 
     /// <summary>Transitions to the given terminal status and records elapsed duration.</summary>
-    public void Complete(Status status, IError? error = null)
+    public void Complete(Status status, global::app.error.Error? error = null)
     {
         if (_stopwatch is { IsRunning: true }) _stopwatch.Stop();
         Duration = _stopwatch?.Elapsed ?? System.TimeSpan.Zero;
@@ -79,7 +79,7 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>
     /// Completes based on a Data result: success → Pass; failure → Fail carrying the error.
-    /// Skipped/Stale/Timeout have dedicated <see cref="Complete(Status, IError?)"/> calls.
+    /// Skipped/Stale/Timeout have dedicated <see cref="Complete(Status, global::app.error.Error?)"/> calls.
     /// </summary>
     public void Complete(data.@this result)
     {

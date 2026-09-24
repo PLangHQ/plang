@@ -435,8 +435,8 @@ public class LibrariesTests
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<global::app.error.IError?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
-        { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.IError?>(null); }
+        public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
+        { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.Error?>(null); }
         public Task<Data> Execute() => Task.FromResult(Data.Ok());
     }
 

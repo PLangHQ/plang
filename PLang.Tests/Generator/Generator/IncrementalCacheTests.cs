@@ -179,7 +179,7 @@ public class IncrementalCacheTests
             public partial class @this {}
             namespace Actor.Context { public partial class @this {} }
             namespace Errors {
-                public interface IError {}
+                public interface global::app.error.Error {}
                 public class ParamSnapshot { public string? Name; public string? DeclaredType; public object? PrValue; public object? PrType; public object? FinalValue; public bool WasAccessed; }
             }
             namespace Goals.Goal {

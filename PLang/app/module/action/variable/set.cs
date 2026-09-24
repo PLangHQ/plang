@@ -18,7 +18,7 @@ public partial class Set : IContext
 {
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate()
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate()
     {
         // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
         // CLR-facing machinery).

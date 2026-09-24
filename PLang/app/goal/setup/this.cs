@@ -127,7 +127,7 @@ public sealed class @this
     /// Records a step execution in the system DataSource.
     /// Returns Data so the caller can detect recording failures.
     /// </summary>
-    public async Task<data.@this> Record(Step step, app.@this app, IError? error = null)
+    public async Task<data.@this> Record(Step step, app.@this app, global::app.error.Error? error = null)
     {
         if (string.IsNullOrEmpty(step.Hash)) return data.@this.Ok();
 

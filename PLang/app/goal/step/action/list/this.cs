@@ -51,14 +51,14 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     /// gather into one error for the chain.
     /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
     /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate(actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(actor.context.@this context)
     {
         if (Count == 0)
             return new global::app.error.Error(
                 "the compiled step has no actions — every step maps to at least one action.",
                 "EmptyActions", 400);
 
-        var causes = new List<global::app.error.IError>();
+        var causes = new List<global::app.error.Error>();
         for (int i = 0; i < Count; i++)
             if (await this[i].Validate(context) is { } invalid) causes.Add(invalid);
 
@@ -70,9 +70,9 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     /// <summary>Finishes every action in this chain at build, in order — each walks what it holds.
     /// Null when nothing is wrong; otherwise one error for the chain with each action's as a cause.
     /// An empty chain has nothing to build — emptiness is <see cref="Validate"/>'s verdict.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Build(actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Build(actor.context.@this context)
     {
-        var causes = new List<global::app.error.IError>();
+        var causes = new List<global::app.error.Error>();
         for (int i = 0; i < Count; i++)
             if (await this[i].Build(context) is { } failed) causes.Add(failed);
 

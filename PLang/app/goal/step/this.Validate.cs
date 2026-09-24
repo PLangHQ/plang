@@ -5,7 +5,7 @@ namespace app.goal.step;
 public sealed partial class @this
 {
     /// <summary>What is wrong with this step, or null when nothing is.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
         global::app.actor.context.@this context)
     {
         if (await Action.Validate(context) is not { } invalid) return null;

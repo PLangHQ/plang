@@ -5,10 +5,10 @@ namespace app.goal;
 public sealed partial class @this
 {
     /// <summary>What is wrong with this goal, or null when nothing is.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.IError?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
         global::app.actor.context.@this context)
     {
-        var causes = new System.Collections.Generic.List<global::app.error.IError>();
+        var causes = new System.Collections.Generic.List<global::app.error.Error>();
         for (int i = 0; i < Step.Count; i++)
             if (await Step[i].Validate(context) is { } invalid) causes.Add(invalid);
         foreach (var child in Child)

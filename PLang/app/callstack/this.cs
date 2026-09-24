@@ -64,7 +64,7 @@ public sealed partial class @this
     /// null when nothing on the live chain has failed. The stack is where the error already
     /// lives, so nothing stores it a second time: the frame is the scope.
     /// </summary>
-    public IError? Error
+    public global::app.error.Error? Error
     {
         get
         {

@@ -48,7 +48,7 @@ public class SnapshotWireTests
     // The errors-trail wire test is gone with the trail itself: the run-wide error log is
     // CallStack.Audit, which rides the CallStack section, and the error in play lives on the
     // frame that failed. It was skipped from the day it was written (the snapshot serialized
-    // each IError as an empty [Out] bag), so nothing is losing coverage here.
+    // each global::app.error.Error as an empty [Out] bag), so nothing is losing coverage here.
 
     [Test]
     public async Task CallStackFrames_Scalars_RoundTripWithIntTyping()

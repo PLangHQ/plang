@@ -109,7 +109,7 @@ public partial class Handle : IContext, IModifier, IAction
     /// Matches the error against StatusCode / Key / Message filters.
     /// No filters = match all errors. Each supplied filter must match.
     /// </summary>
-    private async Task<bool> MatchesError(IError? error)
+    private async Task<bool> MatchesError(global::app.error.Error? error)
     {
         // The filters are read through the typed ask, not a sync Peek. A .pr-loaded parameter is
         // lazy — it lifts on the ask — so a Peek here sees the wire form rather than the value, and
@@ -128,7 +128,7 @@ public partial class Handle : IContext, IModifier, IAction
         if (sc is not global::app.type.item.number.@this && !hasKey && !hasMsg) return true;
         if (error == null) return false;
 
-        // The matcher's int boundary is IError.StatusCode — the number lowers itself there.
+        // The matcher's int boundary is Error.StatusCode — the number lowers itself there.
         if (sc is global::app.type.item.number.@this scNum && error.StatusCode != scNum.ToInt32()) return false;
         if (hasKey && !string.Equals(error.Key, key!.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
         if (hasMsg && !error.Message.Contains(msg!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;

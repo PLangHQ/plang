@@ -29,9 +29,8 @@ THE SNAPSHOT SYSTEM — where everything lives
 │     module/code (Providers),  Statics
 │     variable/list/this.SnapshotAt.cs           throw-time projection of variables
 │
-├─ app/error/serializer/Default.cs   ★ IError's LEAF-SERIALIZER ($type + content)
-│  app/error/IError.Wire.cs          the READ side (polymorphic IError ← JSON)
-│  app/error/Error.cs                Error.Callback (throw-time snapshot) + Restore ctor
+├─ app/error/Error.cs                the error writes itself (Error.Write) + Error.Callback
+│                                    (throw-time snapshot)
 │
 ├─ app/module/snapshot/resume.cs     the PLang verb:  - resume %snap%   (Data<snapshot>)
 │
@@ -60,7 +59,6 @@ rebuild — is the remaining half of the `Io` rework, tracked in `todos.md`.
 - The snapshot owns its own serialization (its leaf-serializer), not a static
   `Write(section, …)` reaching in from outside — that earlier shape was the
   violation that this rework removed.
-- A domain value that can't be rendered structurally (an `IError`, which needs a
-  `$type` discriminator and must drop its live `Step`/`Goal`/`Exception`
-  back-references) owns *its* shape via its own renderer; the snapshot composes
-  it by tagging, never by reaching into the error's fields.
+- A domain value that can't be rendered structurally (an `Error`, which must drop
+  its live `Step`/`Goal`/`Exception` back-references) owns *its* shape by writing
+  itself; the snapshot composes it, never by reaching into the error's fields.

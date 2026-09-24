@@ -7,7 +7,7 @@ using Action = app.goal.step.action.@this;
 namespace app.error;
 
 /// <summary>
-/// Generic base error class implementing IError.
+/// An error — the one error type; its kinds (ServiceError, ActionError, …) derive from it.
 /// Captures execution context (step, goal) when provided.
 ///
 /// <para>An error IS a plang value (<c>item</c>): when it rides as a VALUE — the
@@ -19,7 +19,7 @@ namespace app.error;
 /// failure channel on the envelope.</para>
 /// </summary>
 [global::app.Attributes.PlangType]
-public class Error : global::app.type.item.@this, IError
+public class Error : global::app.type.item.@this
 {
     public string Id { get; }
     public string Message { get; }
@@ -55,9 +55,11 @@ public class Error : global::app.type.item.@this, IError
     /// </summary>
     public global::app.data.@this<global::app.type.item.list.@this>? Data { get; init; }
 
-    /// <summary>The errors that CAUSED this one — see <see cref="IError.list"/>. <c>init</c> so a
-    /// producer can hand the causes in whole: <c>new ActionError(…) { Action = this, list = causes }</c>.</summary>
-    public List<IError> list { get; init; } = new();
+    /// <summary>The errors that CAUSED this one — empty when nothing did. "file.read is not valid"
+    /// holds the missing parameters that made it so; an error raised while handling another holds
+    /// that one. Never null, so a reader never guards before walking it. <c>init</c> so a producer
+    /// can hand the causes in whole: <c>new ActionError(…) { Action = this, list = causes }</c>.</summary>
+    public List<Error> list { get; init; } = new();
 
     /// <summary>The error renders itself — its flattened wire shape, written straight
     /// to the wire (no intermediate value). $type discriminates the subtype; the
@@ -243,7 +245,7 @@ public class Error : global::app.type.item.@this, IError
         return sb.ToString().TrimEnd();
     }
 
-    private static void FormatError(IError error, StringBuilder sb, string indent)
+    private static void FormatError(Error error, StringBuilder sb, string indent)
     {
         var goalPath = (error.Goal?.Path ?? error.Step?.Goal?.Path)?.ToString();
         var file = goalPath != null && error.Step != null ? $"{goalPath}:{error.Step.LineNumber}" : goalPath;
@@ -279,7 +281,7 @@ public class Error : global::app.type.item.@this, IError
         // Attached typed values — the thing thrown (`- throw %order%`). Rendered via
         // the value's own display (a display leaf), so a dict/list shows in full
         // rather than as a type name. Resolution happened at throw-time; Peek reads it.
-        if (error is Error errWithData && errWithData.Data?.Peek() is { } payload)
+        if (error.Data?.Peek() is { } payload)
         {
             sb.AppendLine();
             sb.AppendLine($"{indent}📦 Data:");
@@ -306,7 +308,7 @@ public class Error : global::app.type.item.@this, IError
         // this, JsonParseError and friends leave the actual response invisible in
         // the trace and the reader has to re-run with --debug to recover the data
         // that was already captured.
-        if (error is Error errWithDetails && errWithDetails.Details is { Count: > 0 } details)
+        if (error.Details is { Count: > 0 } details)
         {
             sb.AppendLine();
             sb.AppendLine($"{indent}\ud83d\udcce Details:");
@@ -353,7 +355,7 @@ public class Error : global::app.type.item.@this, IError
         // was wrong and how. Showing PrValue and FinalValue side-by-side reveals
         // resolution failures at a glance (PrValue="%messages%", FinalValue=null
         // → variable lookup returned nothing).
-        if (error is Error errWithParams && errWithParams.Params is { Count: > 0 } parms)
+        if (error.Params is { Count: > 0 } parms)
         {
             sb.AppendLine();
             sb.AppendLine($"{indent}📥 Parameters at dispatch:");
@@ -400,8 +402,7 @@ public class Error : global::app.type.item.@this, IError
         }
 
         // Error source (ActionError overrides FormatExtra)
-        if (error is Error e)
-            e.FormatExtra(sb, indent);
+        error.FormatExtra(sb, indent);
 
         // Exception details
         if (error.Exception != null)

@@ -47,7 +47,7 @@ public class ConverterDeletionsTests
 
     [Test] public async Task ErrorWire_RegisteredOnlyWhereItApplies_Snapshot()
     {
-        // ErrorWire is the polymorphic IError wire shape, registered ONLY in
+        // ErrorWire is the polymorphic global::app.error.Error wire shape, registered ONLY in
         // snapshot options — not on any value type, not universal. It stays.
         await Assert.That(PLangAssembly.GetType("app.error.ErrorWire")).IsNotNull();
     }
