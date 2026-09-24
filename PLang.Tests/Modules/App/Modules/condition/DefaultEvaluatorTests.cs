@@ -157,6 +157,15 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Message).Contains("Unknown type 'foo'");
     }
 
+    [Test] public async Task GreaterThan_DictAndNumber_IsTheReturnedOrderingError()
+    {
+        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, _app.User.Context);
+        var result = await EvalIf(dict, ">", 5);
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+        await Assert.That(result.Error!.Message).Contains("cannot order 'dict'");
+    }
+
     [Test] public async Task Is_AliasName_ResolvesToItsType()
         => await Assert.That(IsTrue(await EvalIf("hello", "is", "string"))).IsTrue();
 

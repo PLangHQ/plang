@@ -10,6 +10,14 @@ public class OperatorTests : System.IAsyncDisposable
 
     private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
 
+    // The operator's plang answer, read as its bool once it is known to be an answer, not an error.
+    private async Task<bool> Is(Operator op, Data? left, Data? right)
+    {
+        var answer = await op.Evaluate(left, right, _app.User.Context);
+        await answer.IsSuccess();
+        return answer.ToBoolean();
+    }
+
     // --- Construction ---
 
     [Test]
@@ -60,22 +68,22 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Evaluate_Equals_SameInts()
     {
         var op = new Operator("==");
-        await Assert.That(op.Evaluate(D(5), D(5))).IsTrue();
+        await Assert.That(Is(op, D(5), D(5))).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_Equals_DifferentInts()
     {
         var op = new Operator("==");
-        await Assert.That(op.Evaluate(D(5), D(10))).IsFalse();
+        await Assert.That(Is(op, D(5), D(10))).IsFalse();
     }
 
     [Test]
     public async Task Evaluate_Equals_True_WithBoolLeft()
     {
         var op = new Operator("==");
-        await Assert.That(op.Evaluate(D(true), D(true))).IsTrue();
-        await Assert.That(op.Evaluate(D(false), D(true))).IsFalse();
+        await Assert.That(Is(op, D(true), D(true))).IsTrue();
+        await Assert.That(Is(op, D(false), D(true))).IsFalse();
     }
 
     [Test]
@@ -83,27 +91,27 @@ public class OperatorTests : System.IAsyncDisposable
     {
         var op = new Operator("==");
         // Non-bool value == true → checks IsInitialized
-        await Assert.That(op.Evaluate(D(42), D(true))).IsTrue();
-        await Assert.That(op.Evaluate(D("hello"), D(true))).IsTrue();
+        await Assert.That(Is(op, D(42), D(true))).IsTrue();
+        await Assert.That(Is(op, D("hello"), D(true))).IsTrue();
         // Null Data == true → not initialized
-        await Assert.That(op.Evaluate(null, D(true))).IsFalse();
+        await Assert.That(Is(op, null, D(true))).IsFalse();
         // Uninitialized Data == true → false
-        await Assert.That(op.Evaluate(new Data(""), D(true))).IsFalse();
+        await Assert.That(Is(op, new Data(""), D(true))).IsFalse();
     }
 
     [Test]
     public async Task Evaluate_Contains_CaseInsensitive()
     {
         var op = new Operator("contains");
-        await Assert.That(op.Evaluate(D("Hello World"), D("WORLD"))).IsTrue();
+        await Assert.That(Is(op, D("Hello World"), D("WORLD"))).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_GreaterThan()
     {
         var op = new Operator(">");
-        await Assert.That(op.Evaluate(D(10), D(5))).IsTrue();
-        await Assert.That(op.Evaluate(D(5), D(10))).IsFalse();
+        await Assert.That(Is(op, D(10), D(5))).IsTrue();
+        await Assert.That(Is(op, D(5), D(10))).IsFalse();
     }
 
     // --- Implicit conversion ---
@@ -138,7 +146,7 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Equal_EnumLeft_StringRight_NormalizesToEnumName()
     {
         var op = new Operator("==");
-        var matches = await op.Evaluate(D(global::app.test.Status.Timeout), D("Timeout"));
+        var matches = await Is(op, D(global::app.test.Status.Timeout), D("Timeout"));
         await Assert.That(matches).IsTrue();
     }
 
@@ -146,7 +154,7 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Equal_StringLeft_EnumRight_NormalizesToEnumName()
     {
         var op = new Operator("==");
-        var matches = await op.Evaluate(D("Fail"), D(global::app.test.Status.Fail));
+        var matches = await Is(op, D("Fail"), D(global::app.test.Status.Fail));
         await Assert.That(matches).IsTrue();
     }
 
@@ -154,7 +162,7 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Equal_EnumVsMismatchedString_DoesNotMatch()
     {
         var op = new Operator("==");
-        var matches = await op.Evaluate(D(global::app.test.Status.Pass), D("Fail"));
+        var matches = await Is(op, D(global::app.test.Status.Pass), D("Fail"));
         await Assert.That(matches).IsFalse();
     }
 }

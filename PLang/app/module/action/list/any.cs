@@ -26,9 +26,9 @@ public partial class Any : IContext
 
         foreach (var (_, item) in await data.EnumerateItems())
         {
-            var left = await item.Get(key);
-            if (await op.Evaluate(left, right))
-                return Context.Ok<global::app.type.item.@bool.@this>(true, Context.App.Type["bool"]);
+            // The first match — or an error — is the answer; a miss moves on to the next item.
+            var matched = await op.Evaluate(await item.Get(key), right, Context);
+            if (!matched.Success || matched.ToBoolean()) return matched;
         }
 
         return Context.Ok<global::app.type.item.@bool.@this>(false, Context.App.Type["bool"]);

@@ -26,31 +26,38 @@ public class Stage6_ConsumersTests
 
     // ---------- operators + assert ----------
 
+    // The operator's plang answer under the app's context.
+    private static Task<global::app.data.@this<global::app.type.item.@bool.@this>> Answer(
+        global::app.@this app, Operator op, Data left, Data right) => op.Evaluate(left, right, app.User.Context);
+
     [Test]
     public async Task IfEquals_BoundaryMap_EqualTrue_NotEqualFalse_IncomparableError()
     {
-        // == : Equal→true, NotEqual→false, Incomparable→error
+        // == : Equal→true, NotEqual→false, Incomparable→an error answer, never a throw
         await using var app = NewApp();
         var eq = new Operator("==");
-        await Assert.That(await eq.Evaluate(D(app, "5", "text"), D(app, 5, "number"))).IsTrue();      // Equal
-        await Assert.That(await eq.Evaluate(D(app, true, "bool"), D(app, false, "bool"))).IsFalse();  // NotEqual
+        await Assert.That((await Answer(app, eq, D(app, "5", "text"), D(app, 5, "number"))).ToBoolean()).IsTrue();      // Equal
+        await Assert.That((await Answer(app, eq, D(app, true, "bool"), D(app, false, "bool"))).ToBoolean()).IsFalse();  // NotEqual
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
-        await Assert.That(async () => await eq.Evaluate(D(app, dict, "dict"), D(app, 5, "number")))
-            .Throws<global::app.data.IncomparableException>();                                        // Incomparable
+        var incomparable = await Answer(app, eq, D(app, dict, "dict"), D(app, 5, "number"));
+        await incomparable.IsFailure();
+        await Assert.That(incomparable.Error!.Key).IsEqualTo("EvaluationError");
     }
 
     [Test]
     public async Task IfLess_BoundaryMap_LessTrue_NotEqualError_IncomparableError()
     {
-        // < : Less→true, NotEqual→error, Incomparable→error
+        // < : Less→true, NotEqual→an error answer, Incomparable→an error answer, never a throw
         await using var app = NewApp();
         var lt = new Operator("<");
-        await Assert.That(await lt.Evaluate(D(app, 4, "number"), D(app, 5, "number"))).IsTrue();      // Less
-        await Assert.That(async () => await lt.Evaluate(D(app, true, "bool"), D(app, false, "bool")))
-            .Throws<global::app.data.IncomparableException>();                                        // NotEqual -> error
+        await Assert.That((await Answer(app, lt, D(app, 4, "number"), D(app, 5, "number"))).ToBoolean()).IsTrue();      // Less
+        var notEqual = await Answer(app, lt, D(app, true, "bool"), D(app, false, "bool"));
+        await notEqual.IsFailure();
+        await Assert.That(notEqual.Error!.Key).IsEqualTo("EvaluationError");
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
-        await Assert.That(async () => await lt.Evaluate(D(app, dict, "dict"), D(app, 5, "number")))
-            .Throws<global::app.data.IncomparableException>();                                        // Incomparable -> error
+        var incomparable = await Answer(app, lt, D(app, dict, "dict"), D(app, 5, "number"));
+        await incomparable.IsFailure();
+        await Assert.That(incomparable.Error!.Message).Contains("cannot order 'dict'");
     }
 
     [Test]
@@ -132,7 +139,7 @@ public class Stage6_ConsumersTests
         var holder = new Data("l", list, context: ctx);
         // membership never errors: the Incomparable element pair is just "not this one"
         var op = new Operator("contains");
-        await Assert.That(await op.Evaluate(holder, D(app, 5, "number"))).IsFalse();
+        await Assert.That((await Answer(app, op, holder, D(app, 5, "number"))).ToBoolean()).IsFalse();
     }
 
     [Test]

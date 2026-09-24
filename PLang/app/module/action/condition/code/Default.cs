@@ -38,14 +38,9 @@ public sealed class Default : IEvaluator
             // lazy reference (file/url) is left untouched so its own door still fires.
             left = await TolerateAbsentVariable(left);
             right = await TolerateAbsentVariable(right);
-            Operator op = (await operatorData.Value())!; bool result = await op.Evaluate(left, right);
-            return operatorData.Context.Ok<global::app.type.item.@bool.@this>(result);
-        }
-        catch (global::app.error.AppException ex)
-        {
-            // A keyed plang failure inside an operator (`is foo`: UnknownType) surfaces as itself.
-            return operatorData.Context.Error<global::app.type.item.@bool.@this>(
-                new global::app.error.ServiceError(ex.Message, ex.Key, ex.StatusCode) { Exception = ex });
+            // The operator answers a plang bool — true, false, or the developer's error.
+            Operator op = (await operatorData.Value())!;
+            return await op.Evaluate(left, right, operatorData.Context);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {

@@ -83,9 +83,9 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await Assert.That(data.Type!.Kind?.Name).IsEqualTo("csv");
         var op = new global::app.module.action.condition.Operator("is");
         var right = new Data("", "table", context: _app.User.Context);
-        var isTable = await op.Evaluate(data, right);
+        var isTable = (await op.Evaluate(data, right, _app.User.Context)).ToBoolean();
         var rightList = new Data("", "list", context: _app.User.Context);
-        var isList = await op.Evaluate(data, rightList);
+        var isList = (await op.Evaluate(data, rightList, _app.User.Context)).ToBoolean();
         await Assert.That(isTable || isList).IsTrue()
             .Because("csv content narrows to table (or list)");
     }

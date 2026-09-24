@@ -38,15 +38,20 @@ public partial class Where : IContext
             // list.where delegates to dict.where per element — subject is each element.
             var kept = new app.type.item.list.@this();
             foreach (var item in list.Items(Context))
-                if (await Keep(item, field, op)) kept.Add(item);
+            {
+                var keepItem = await Keep(item, field, op);
+                if (!keepItem.Success) return Context.Error(keepItem.Error!);
+                if (keepItem.ToBoolean()) kept.Add(item);
+            }
             return Context.Ok(kept, Context.App.Type["list"]);
         }
 
         if (subjectVal is app.type.item.dict.@this)
         {
             // dict.where is the leaf — subject is the dict itself, kept or dropped.
-            bool keep = await Keep(subject, field, op);
-            return Context.Ok(keep ? subjectVal : null,
+            var keep = await Keep(subject, field, op);
+            if (!keep.Success) return Context.Error(keep.Error!);
+            return Context.Ok(keep.ToBoolean() ? subjectVal : null,
                 Context.App.Type["dict"]);
         }
 
@@ -56,6 +61,6 @@ public partial class Where : IContext
             "WhereOnApex"));
     }
 
-    private async Task<bool> Keep(data.@this subject, string field, Operator op)
-        => await op.Evaluate(await subject.Get(field), Value);
+    private async Task<data.@this<global::app.type.item.@bool.@this>> Keep(data.@this subject, string field, Operator op)
+        => await op.Evaluate(await subject.Get(field), Value, Context);
 }
