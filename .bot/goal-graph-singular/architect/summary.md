@@ -1,5 +1,7 @@
 # architect — goal-graph-singular
 
+**2026-09-24 — #16 landed (`29c0ff635`); go on #17 (Ingi).** `type.Field` is deleted; `property` lives at `type/property/` and serves both sides; a type has one `Property` list (type objects, not strings); a record is "properties and no Shape". Coder's open-items list is tidied (Error.App is #30).
+
 **2026-09-24 — #24 landed (`da601665c`); go on #16 (Ingi).** `app.Test.Create(goal, context)` makes the whole test (tags, its own coverage, skip, its own exclusion); the static and the test's unused constructor context are gone; the dead eager-image branches (Run and Build) are deleted. Open with Ingi: the face of `app.type` (proposal: `.list` entries `{name, description, kinds}`, `.choice` `{name, values}`, `.scheme`; every registered type listed; properties/example by navigation only; Store view = identity).
 
 **2026-09-24 — format → type move landed (`f2d582b72`).** `app.Type.Mime(mime)` → `{binary, subtype}`, `app.Type.Extension(ext)` → `{binary, ext}`, a kind's family via the door; the format registry keeps only format facts (plus `Subtype(mime)`). Ingi: delete the dead eager-image branch in `file.read` (`:71`, a MIME is always binary). Content from I/O becomes an image only when used. Coder is on #24, then #16, #17 and the four bugs.
