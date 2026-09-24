@@ -180,7 +180,7 @@ public static class @this
 
                 // Detect whether T is an IName (a variable-name slot). A non-nullable name
                 // slot carries the missing-parameter contract: a missing/null slot must
-                // surface a MissingRequiredParameter ServiceError, not bubble through as an
+                // surface a MissingRequiredProperty ServiceError, not bubble through as an
                 // NRE when the handler reads .Value. The generator matches the marker by
                 // interface name because it cannot typeof the runtime type here.
                 if (namedType!.TypeArguments.Length > 0

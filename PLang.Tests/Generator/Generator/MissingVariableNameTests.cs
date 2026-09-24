@@ -6,7 +6,7 @@ namespace PLang.Tests.Generator;
 /// A missing-or-null variable-name slot must produce a ServiceError with a
 /// specific Key, not let a null Variable flow into the handler body where
 /// the implicit Variable→string operator would NRE and bubble up as a
-/// generic "StepError". The generator emits a MissingRequiredParameter
+/// generic "StepError". The generator emits a MissingRequiredProperty
 /// ServiceError when a Data&lt;variable&gt; slot resolves to
 /// null Value; this test pins the contract one row per handler.
 ///
@@ -45,7 +45,7 @@ public class MissingVariableNameTests
     [Arguments("list", "set", "listname")]
     [Arguments("list", "sort", "listname")]
     [Arguments("list", "unique", "listname")]
-    public async Task MissingVariableName_Returns_MissingRequiredParameter_Error(
+    public async Task MissingVariableName_Returns_MissingRequiredProperty_Error(
         string module, string action, string slotName)
     {
         var context = _app.User.Context;
@@ -64,7 +64,7 @@ public class MissingVariableNameTests
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredParameter");
+        await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredProperty");
         await Assert.That(result.Error!.Message).Contains(slotName);
     }
 }

@@ -207,7 +207,7 @@ public static class @this
                                 if (__seed?.{{prop.Name}} is not { IsInitialized: true } &&
                                     action["{{lower}}"]?.Value == null)
                                     return (null, new global::app.error.ServiceError(
-                                        "Required property '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
+                                        "Required property '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredProperty", 400));
 
                     """);
             }

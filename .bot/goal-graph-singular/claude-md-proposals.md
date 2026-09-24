@@ -81,3 +81,11 @@ A body written as an expression (recovery actions stored in a parameter) and a r
 ```
 the condition operators return a plang `Data<bool>` — true, false, or an error (`is foo` → UnknownType, ordering incomparable values → an error) — never a thrown exception for a developer error
 ```
+
+## coder — v2 — 2026-09-24
+**Target:** /CLAUDE.md
+**Why:** Ingi renamed the generated error keys to the action-property vocabulary (no "parameter"): `MissingRequiredParameter` → `MissingRequiredProperty`, `ParameterValue` → `PropertyValue`, pre-1.0 with no aliases. The "Property kinds (PLNG001 build-time gate)" bullet still names the old key.
+**Proposed change:** in that bullet, replace "surfaces `MissingRequiredParameter`" with:
+```
+surfaces `MissingRequiredProperty`
+```

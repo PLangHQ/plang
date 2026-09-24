@@ -18,7 +18,7 @@ public sealed record @this(
     string? InnerType,    // T inside Data<T>; null for plain Data
     string? DefaultValue, // [Default(...)] literal expression; null when absent
     bool IsSensitive,    // [Sensitive] — masks PrValue/FinalValue in __SnapshotParams
-    bool IsName)  // T : app.variable.IName — emit MissingRequiredParameter guard on null .Value
+    bool IsName)  // T : app.variable.IName — emit MissingRequiredProperty guard on null .Value
     : Base(Name, TypeName)
 {
     public override void EmitProperty(StringBuilder sb)
@@ -195,7 +195,7 @@ public sealed record @this(
         sb.AppendLine($"            if (!{Name}.Success)");
         sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
         sb.AppendLine($"                    $\"property '{Name}' cannot be a {{Context.App.Type[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
-        sb.AppendLine($"                    \"ParameterValue\", 400));");
+        sb.AppendLine($"                    \"PropertyValue\", 400));");
         sb.AppendLine("        }");
     }
 
