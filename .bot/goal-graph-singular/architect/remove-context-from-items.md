@@ -68,11 +68,24 @@ The item's doors already receive the context from whoever asks: `Value(data)`, `
 
 `IBooleanResolvable.AsBooleanAsync()` (`data/IBooleanResolvable.cs:21`) takes no context. Its caller is `Data.ToBooleanAsync()` (`data/this.cs:679`), and a Data has one, so it passes it: `AsBooleanAsync(context)`. Implementers: item base (`type/item/this.cs:470`), `code` (`type/code/this.cs:30`), path (`path/this.Operations.cs:170`), http (`path/http/this.cs:225`), file (`path/file/this.Operations.cs:132`), image (`image/this.cs:234`). One other caller: `ui/code/Fluid.cs:44`.
 
+## The list, settled with Ingi
+
+**The list itself never uses its context. It only passes it on to its elements.** It never loads, renders or checks a permission with it; the elements do that later, through their own `Data`. The places that pass it on (`type/item/list/this.cs`):
+
+- Reading an element, `Row(i)` (`:127-138`): stamps a stored `Data` element (`:134`), or creates the element's `Data` with it (`:137`).
+- Adding an element: `Add` (`:335`), `Insert` (`:345`), `SetAt` (`:503`), `ResetTo` (`:495`), `AddRaw` (`:147`) stamp it onto the element.
+- The `Context` setter (`:158-175`) pushes a new context onto every stored element. The navigation stamp (`data/this.Navigation.cs:105-106`) triggers it.
+- New lists and wrappers are born with it: `Empty()` (`:665`), chunk split (`:321-322`), the temporary `Data` in `Contains(value)` (`:690`).
+
+**The one place list code consumes it:** `Row` turns a raw stored value into an item, `global::app.type.item.@this.Create(raw, _context)` (`:137`), which needs the type registry. That happens when an element is handed out, and someone is always asking at that moment (navigation's `Get(parent, key)`, a handler, `Output`), so it can use their context.
+
+**So the list does not store a context.** An element gets its context from whoever asks for it. Open: how the asker's context reaches the element. Either (a) the list hands out `element.Copy(parent.Context)`, or (b) the walk passes the context along. Dict works the same way (`dict/this.cs:134`, stamps `:123, :279, :291`); confirm when we get to it.
+
 ## Still open — types that store a context today, beyond the table
 
 Items holding a context now (`module.IContext`): `path`, `file`, `url`, `directory`, `source`, `list`, `dict`, `computed`, `clr`. The path family is settled above. Next, one at a time:
 
-1. **list / dict**: element births (`new Data("", Create(raw, _context), context: _context)`, `list/this.cs:137`; `dict/this.cs:134`), stamps on stored elements (`list :134, :147, :335, :345, :495, :503`; `dict :123, :279, :291`), and the element hand-out in navigation. This is coder's uncommitted ruling-1 question: (a) hand out `element.Copy(parent.Context)`, or (b) pass the context through the walk.
+1. **list**: settled above, it stores none. Still open: (a) or (b) for the hand-out. **dict**: confirm it's the same.
 2. **source** (`source.cs:37`): loads already use the asking Data's context (births step 1). What is the stored one still for?
 3. **computed** (`computed.cs:26`) and **clr** (`clr/this.cs:47`).
 
