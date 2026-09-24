@@ -1,5 +1,7 @@
 # architect — goal-graph-singular
 
+**2026-09-24 — #28 fixed (`8094017fb`); remaining bugs run without stops (Ingi).** The list has a private gate on every mutation, with reader snapshots; the store has `Ensure(name, create)` (atomic get-or-create via GetOrAdd); the 500-run test is green. Added: remove/set/reverse/sort write back only if the name still holds what they read (compare-and-set). Ingi: coder finishes the write-back fix, #29, #9 and #30 without waiting between, and sends one report at the end (stopping only for a design question).
+
 **2026-09-24 — #28 cause found; Ingi chose (a).** 500 parallel same-actor runs of `add %x% to %l%` silently lose 5-9 adds (the original NRE is the same race). Two causes: the list's `_items` is unguarded (`list/this.cs:35`), and list.add's get-or-create is a check-then-act across two store calls (`add.cs:16-27`). Ruled (a): the list owns a private lock (mutations plus reader snapshots), and the variable store gets one atomic get-or-create. Rejected: serialising an actor's runs (it changes the execution model). When lists get copy-on-write value semantics (decided, not built), the list's lock goes and the store's atomic step stays.
 
 **2026-09-24 — #17 landed (`4734505f0`); go on the four bugs (Ingi).** `Mode` lives in `app/this.cs` (still derived from Build/Test); the presence checks in startup, the settings store, `Executor.cs:136` and the `.pr` build snapshot read it. Bugs next, test first: #28 (same-actor concurrent list.add NRE), #29 (file://), #9 (path-kind flake), #30 (Error's stored App).
