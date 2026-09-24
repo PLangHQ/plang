@@ -144,6 +144,26 @@ public IEnumerable<Data> Elements(actor.context.@this context)
 
 So the wire stores no context.
 
+## computed: the parent passes it (settled)
+
+`computed` (`type/item/computed.cs`) is a system variable (`%Now%`, `%!app%`, …). It uses its context in one place, `Compute()` (`:64-68`), to turn the factory's raw result into an item: `Create(raw, Context)`. `Value(data)` (`:42`) and `Get(parent, key)` (`:47`) already have the asker. `Peek()`, `IsTruthy()` and `ToString()` (`:53, :61, :62`) don't, but a computed is only ever created inside its own `DynamicData` (`data/this.cs:885`), and that `Data` has a context and passes it. So computed stores none.
+
+## clr: the parent passes it (settled)
+
+`clr` (`type/clr/this.cs`), the carrier for a foreign C# object:
+- **Creation** (`:57`, `Kind = kind ?? Context.App.Type.Kind[value.GetType()]`) uses the creator's context. There are 6 creators and all have one; nothing is kept.
+- **`Get(parent, path)`** (`:103-105`): the parent has it.
+- **`Read`, `EnumerateItems`, `Output`** (`:111-113, :134-137, :182`) already receive a context. They use the stored one or fall back to it (`context ?? Context`), and that fallback goes.
+- **`Set`, `Enumerate`, `Clr`** (`:123, :128, :154`): their callers are a `Data` or a handler, so they pass it.
+
+So clr stores none.
+
+## error.Error: the exception (Ingi)
+
+`Error` (`error/Error.cs:140`) keeps its context. It is different from the other items: its context records **where the error happened**. It is set when the error is created from the failing context (`:207-213`). It is used by `Callback`, the snapshot taken at the moment of the error (`:115-129`, snapshot is parked), and by the verbose "variables at point of failure" dump (`:388-391`). The context lives on `Error` only, never on the item base class.
+
+Separate item (Ingi: "another thingy"): `Error` stores an `App` (`:102`, set by `Errors.Push`, used by `Callback`). It shouldn't; it can reach the App through its context.
+
 ## Inventory — every item type that stores a context today
 
 Found by searching item classes for a context field or property.
@@ -155,9 +175,9 @@ Found by searching item classes for a context field or property.
 | `dict` | `dict/this.cs:136` | settled: stores none |
 | `source` | `source.cs:37` | settled: stores none |
 | `wire` (source's subclass) | inherits source's | settled: stores none |
-| `computed` | `computed.cs:20` (used at `:67`, `Create(raw, Context)`) | **open** |
-| `clr` | `clr/this.cs:24` (its kind's `Get`/`Read`/`Set`/`Enumerate`/`Clr`/`Output`, `:105-182`) | **open** |
-| `error.Error` | `error/Error.cs:140` (`Context { get; set; }`, nullable) | **open** |
+| `computed` | `computed.cs:20` | settled: stores none |
+| `clr` | `clr/this.cs:24` | settled: stores none |
+| `error.Error` | `error/Error.cs:140` | **the exception** (Ingi): keeps where it happened, on `Error` only; its stored `App` (`:102`) is a separate item |
 | `snapshot` | `snapshot/this.cs:21` | open, but snapshot is **parked** (Ingi) |
 | `actor` | `actor/this.cs:79` (creates its own) | different case: the actor **owns** its context, one per actor, and doesn't hold a copy of someone else's. Confirm with Ingi. |
 
