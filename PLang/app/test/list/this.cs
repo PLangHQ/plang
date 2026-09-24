@@ -133,6 +133,29 @@ public sealed partial class @this
     /// <summary>Per-status counts across all recorded tests. Every status key is present, even with count 0.</summary>
     public Dictionary<Status, int> Summary() => Summary(Tests);
 
+    /// <summary>Why a run of <paramref name="tests"/> did not pass, or null when it did — tests ran and
+    /// each passed or was deliberately skipped. It fails when nothing was discovered, when a test could
+    /// not load (grouped by reason: "12 tests could not load: old .pr format … — rebuild it."), when a
+    /// test never ran, and when a test failed or timed out.</summary>
+    public IError? Verdict(IReadOnlyList<global::app.test.@this> tests)
+    {
+        if (tests.Count == 0)
+            return new Error("no tests were discovered — nothing ran.", "NoTestsDiscovered", 400);
+
+        static string Counted(int count) => count == 1 ? "1 test" : $"{count} tests";
+        var problems = new List<string>();
+        foreach (var group in tests.Where(t => t.Status == Status.Stale)
+                     .GroupBy(t => t.StatusReason?.ToString() ?? "unknown reason"))
+            problems.Add($"{Counted(group.Count())} could not load: {group.Key.TrimEnd('.')}");
+        if (tests.Count(t => t.Status == Status.Ready) is > 0 and var idle)
+            problems.Add($"{Counted(idle)} did not run");
+        if (tests.Count(t => t.Status is Status.Fail or Status.Timeout) is > 0 and var failed)
+            problems.Add($"{Counted(failed)} failed");
+
+        return problems.Count == 0 ? null
+            : new Error(string.Join("; ", problems) + ".", "TestRunFailed", 400);
+    }
+
     /// <summary>Per-status counts across a given set of tests. Every status key present, even at 0.</summary>
     public static Dictionary<Status, int> Summary(IEnumerable<global::app.test.@this> tests)
     {

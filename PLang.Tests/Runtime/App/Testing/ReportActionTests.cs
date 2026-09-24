@@ -245,8 +245,9 @@ public class ReportActionTests
     // Stale tests (source hash changed but not rebuilt) also render as <skipped> with
     // the reason — CI surfaces them as not-run, the report explains why.
     [Test]
-    public async Task Report_Junit_StaleStatus_EmitsSkippedWithReason()
+    public async Task Report_Junit_StaleStatus_EmitsErrorWithReason()
     {
+        // A test that could not load is an error in junit — never a quiet skip.
         _app.Test.Format = global::app.test.Format.JUnit;
         var run = NewTest("StaleTest", global::app.test.Status.Stale);
         run.StatusReason = "goal hash changed since build";
@@ -257,9 +258,9 @@ public class ReportActionTests
         var junitPath = System.IO.Path.Combine(_tempDir, ".test", "junit.xml");
         var doc = XDocument.Parse(await System.IO.File.ReadAllTextAsync(junitPath));
         var testcase = doc.Descendants("testcase").Single();
-        var skipped = testcase.Element("skipped");
-        await Assert.That(skipped).IsNotNull();
-        await Assert.That(skipped!.Value).Contains("goal hash changed");
+        var error = testcase.Element("error");
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.Value).Contains("goal hash changed");
     }
 
     // Architect §4.6 format: "FAIL: <step text>" header, then Expected/Actual lines,

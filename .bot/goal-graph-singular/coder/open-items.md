@@ -23,10 +23,6 @@ hits on 09-24 were work-in-progress states of the ruling-5 registry rewrite, not
 one-shot type binder (a racing bind computes the same delegate), `PathHelper` (no mutable statics), a non-item
 "path" owning name → class (items only, before and after ruling 5). If it recurs, the helper names the decline.
 
-**32. `plang --test` is silent** — from `Tests/` (and `./dev.sh ptest`, and under a pty) it exits 0 and prints
-nothing, writing no report; the plang Callback goals could not be run for #30. Likely #21 (zero-discovered /
-quiet readers), not chased.
-
 **12. The builder has never built itself on this branch.** Every commit touching
 `os/system/builder/*/.build/*.pr` is a hand-edit; nothing forces the builder's own goals to still compile — how
 #5b drifted. Ingi: decide on the parent branch, do not chase now.
@@ -48,8 +44,9 @@ of a STRUCTURED type reads its raw text through the transport format's parser. `
 registers every `[PlangType]`, enums included, with no item check; `Registry.cs:172` skips non-items. A plugin's
 closed set would land as a type there.
 
-**21. `plang --test` loud readers + zero-discovered guard** — a test run that discovers nothing, or whose graph
-readers fail quietly, must fail loud. Needs a running builder.
+**21. `plang --test` against rebuilt tests — needs a running builder.** The loud half landed (see Done #21a).
+Left: every test `.pr` under `Tests/` is still the old format, so a run today reports 322+ "could not load" and
+runs nothing — a rebuild (the builder, #12) is what turns them back into running tests.
 
 **22. Builder-flow change** — action descriptions into stage 2, the menu holding actions (not "module.action"
 strings), notes/examples in stage 3. With Ingi; needs a running builder.
@@ -67,6 +64,12 @@ open rulings: blast-radius list, honest mock). Also parked here:
 
 ## Done
 
+- **21a / 32 `plang --test` fails loudly** — it went silent because the goal reader SKIPPED the old `steps` key:
+  the system runner `test.pr` (old format) loaded as a goal with no steps, "completed", exit 0, no report. Now:
+  old keys (`steps` / `actions` / `parameters`) are `PrFormatOutdated`; the runner `.pr` is regenerated in the
+  current format by the goal's own writer; the run's verdict (`app.Test.Verdict`) fails it — nothing discovered,
+  N tests could not load (grouped by reason), did not run, failed — after the report is written (junit lists an
+  unloadable test as `<error>`). See the commit after `12b846edf`.
 - **31 Error context** — an error takes the context where it first met a run (`context.Error` / `Error<T>`,
   `data.Fail`, `??=` — a late stamp Ingi accepts here); `IError.Context`: see commit after `f00717469`.
 - **30 Error's stored App** — gone; callback through the error's own Context, no context → `NoCallback`:

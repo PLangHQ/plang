@@ -240,10 +240,10 @@ public class SetupTests
 
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "setup.pr"),
-            """{"name":"Setup","isSetup":true,"path":"/Setup.goal","steps":[]}""");
+            """{"name":"Setup","isSetup":true,"path":"/Setup.goal","step":[]}""");
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "start.pr"),
-            """{"name":"Start","isSetup":false,"path":"/Start.goal","steps":[]}""");
+            """{"name":"Start","isSetup":false,"path":"/Start.goal","step":[]}""");
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
@@ -265,10 +265,10 @@ public class SetupTests
 
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "setup.pr"),
-            """{"name":"Setup","isSetup":true,"path":"/Setup.goal","steps":[]}""");
+            """{"name":"Setup","isSetup":true,"path":"/Setup.goal","step":[]}""");
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "normalgoal.pr"),
-            """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""");
+            """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
 
         // RunAsync discovers and runs setup goals internally
         await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
@@ -301,7 +301,7 @@ public class SetupTests
 
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(setupBuildDir, "setup.pr"),
-            """{"name":"Setup","isSetup":true,"path":"/Setup/Setup.goal","steps":[]}""");
+            """{"name":"Setup","isSetup":true,"path":"/Setup/Setup.goal","step":[]}""");
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
@@ -320,7 +320,7 @@ public class SetupTests
 
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(customDir, "setup.pr"),
-            """{"name":"CustomSetup","isSetup":true,"path":"/CustomFolder/CustomSetup.goal","steps":[]}""");
+            """{"name":"CustomSetup","isSetup":true,"path":"/CustomFolder/CustomSetup.goal","step":[]}""");
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 

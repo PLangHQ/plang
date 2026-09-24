@@ -131,6 +131,25 @@ public class DiscoverActionTests
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
     }
 
+    // A .pr in an old format never loads as an empty goal: the test is Stale, and its reason says
+    // what is old and to rebuild.
+    [Test]
+    [Arguments("{\"name\":\"Start\",\"steps\":[]}", "\"steps\" is now \"step\"")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"actions\":[]}]}", "\"actions\" is now \"action\"")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"action\":[{\"module\":\"variable\",\"name\":\"set\",\"parameters\":[]}]}]}", "\"parameters\" is now \"property\"")]
+    public async Task Discover_OldFormatPr_IsStaleWithTheReason(string pr, string reason)
+    {
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Old.test.goal"), "Start\n- a\n");
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_tempDir, ".build"));
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, ".build", "old.test.pr"), pr);
+
+        var test = (await Discover()).Single();
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Stale);
+        await Assert.That(test.StatusReason?.ToString()).Contains("old .pr format");
+        await Assert.That(test.StatusReason?.ToString()).Contains(reason);
+    }
+
     // Walks the tree of *.test.goal files under the target path; every match surfaces
     // in the returned List<global::app.test.@this>.
     [Test]

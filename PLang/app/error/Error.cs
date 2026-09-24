@@ -210,6 +210,8 @@ public class Error : global::app.type.item.@this, IError
     /// </summary>
     public static Error FromException(Exception ex, string key = "Exception", int statusCode = 500)
     {
+        // A keyed exception names its own error — "PrFormatOutdated", not a generic "Exception".
+        if (ex is AppException keyed) (key, statusCode) = (keyed.Key, keyed.StatusCode);
         return new Error(ex.Message, key, statusCode)
         {
             Exception = ex

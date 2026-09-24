@@ -68,8 +68,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     break;
                 // The old key: skipping it would load the action with no properties, silently.
                 case "parameter":
+                case "parameters":
                     throw new global::app.error.AppException(
-                        $"'{action.Module}.{action.Name}' is in an old .pr format (\"parameter\" is now \"property\") — rebuild it.",
+                        $"old .pr format (\"{name}\" is now \"property\") — rebuild it.",
                         "PrFormatOutdated", 400);
                 case "modifier":
                     reader.BeginArray();

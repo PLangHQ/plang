@@ -48,11 +48,11 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         const string actionsJson = """
         [
           { "module": "variable", "name": "set",
-            "parameters": [
+            "property": [
               { "name": "Name",  "type": { "name": "text" }, "value": "x" },
               { "name": "Value", "type": { "name": "text" }, "value": "1" } ] },
           { "module": "output", "name": "write",
-            "parameters": [
+            "property": [
               { "name": "content", "type": { "name": "text" }, "value": "%x%" } ] }
         ]
         """;

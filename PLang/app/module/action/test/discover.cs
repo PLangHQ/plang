@@ -125,14 +125,26 @@ public partial class discover : IContext
                 StatusReason = prRead.Error?.Message ?? "pr corrupt"
             };
         }
-        var prGoal = (await prRead.Value()) as Goal;
+        // A .pr the reader refuses (an old format names itself: PrFormatOutdated) is a test that
+        // could not load — Stale with the reader's reason, never an aborted discovery.
+        Goal? prGoal;
+        try { prGoal = (await prRead.Value()) as Goal; }
+        catch (global::app.error.AppException refused)
+        {
+            return new global::app.test.@this()
+            {
+                Goal = sourceGoal,
+                Status = global::app.test.Status.Stale,
+                StatusReason = refused.Message
+            };
+        }
         if (prGoal == null)
         {
             return new global::app.test.@this()
             {
                 Goal = sourceGoal,
                 Status = global::app.test.Status.Stale,
-                StatusReason = "pr corrupt"
+                StatusReason = prRead.Error?.Message ?? "pr corrupt"
             };
         }
 

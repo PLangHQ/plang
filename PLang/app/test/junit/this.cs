@@ -18,15 +18,16 @@ public sealed class @this
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine($"<testsuites tests=\"{_tests.Count}\" failures=\"{_tests.Count(t => t.Status == Status.Fail)}\" errors=\"0\">");
+        sb.AppendLine($"<testsuites tests=\"{_tests.Count}\" failures=\"{_tests.Count(t => t.Status == Status.Fail)}\" errors=\"{_tests.Count(t => t.Status == Status.Stale)}\">");
         // Group by the goal's parent folder (path verb, no string surgery).
         var byPath = _tests.GroupBy(t => t.Goal.Path?.Parent?.ToString() ?? "");
         foreach (var group in byPath)
         {
             var suite = group.ToList();
             var failures = suite.Count(t => t.Status == Status.Fail);
+            var errors = suite.Count(t => t.Status == Status.Stale);
             var timeSec = suite.Sum(t => t.Duration.TotalSeconds);
-            sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suite.Count}\" failures=\"{failures}\" time=\"{timeSec:F3}\">");
+            sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suite.Count}\" failures=\"{failures}\" errors=\"{errors}\" time=\"{timeSec:F3}\">");
             foreach (var test in suite)
             {
                 var name = SecurityElement.Escape(test.Goal.Path?.ToString() ?? "") ?? "";
@@ -43,7 +44,10 @@ public sealed class @this
                         case Status.Timeout:
                             sb.AppendLine($"      <failure type=\"timeout\">timeout</failure>");
                             break;
+                        // A test that could not load is an error, never quietly skipped.
                         case Status.Stale:
+                            sb.AppendLine($"      <error message=\"could not load\">{SecurityElement.Escape(test.StatusReason?.Clr<string>() ?? "stale")}</error>");
+                            break;
                         case Status.Skipped:
                             sb.AppendLine($"      <skipped>{SecurityElement.Escape(test.StatusReason?.Clr<string>() ?? test.Status.ToString())}</skipped>");
                             break;

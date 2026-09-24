@@ -73,6 +73,11 @@ public partial class report : IContext
         result.Properties.Set("summaryPass", summary[global::app.test.Status.Pass]);
         result.Properties.Set("summaryFail", summary[global::app.test.Status.Fail]);
         result.Properties.Set("variableSnapshotCount", variableSnapshotCount);
+
+        // The run's verdict, at the top level only — a nested run's results are its parent test's to
+        // judge. The artefact is already written, so a failed run still leaves its report.
+        if (testing.Current == null && testing.Verdict(results) is { } failed)
+            return Context.Error(failed);
         return result;
     }
 

@@ -86,6 +86,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         goal.Tag.Add(tag.Read(ref reader, null, ctx));
                     reader.EndArray();
                     break;
+                // The old key: skipping it would load the goal with no steps, silently.
+                case "steps":
+                    throw new global::app.error.AppException(
+                        "old .pr format (\"steps\" is now \"step\") — rebuild it.", "PrFormatOutdated", 400);
                 default: reader.Skip(); break;
             }
         }

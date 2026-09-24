@@ -324,7 +324,7 @@ public class GoalsTests
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
             var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
-            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","steps":[]}""";
+            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
             var result = await engine.Goal.GetAsync("SetupDb");
@@ -350,7 +350,7 @@ public class GoalsTests
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
             var prPath = System.IO.Path.Combine(buildDir, "normalgoal.pr");
-            var json = """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""";
+            var json = """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
             var result = await engine.Goal.GetAsync("NormalGoal");
@@ -377,7 +377,7 @@ public class GoalsTests
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
             var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
-            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","steps":[]}""";
+            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
             var result = await engine.Goal.GetByPrPathAsync(prPath);
