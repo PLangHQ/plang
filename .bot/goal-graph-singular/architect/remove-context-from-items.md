@@ -243,7 +243,7 @@ Run the six suites by name after each step. Nothing red committed.
 | `Data` | the box that carries the context; its doors pass it to the item |
 | `Error` | the one item that keeps a context, as the record of where it happened |
 
-### Step 6 (proposed with Ingi 2026-09-24, not released): Data's context is set at birth, never after
+### Step 6 (released 2026-09-24): Data's context is set at birth, never after
 
 Ingi agreed: "set at birth, never after". `Data` keeps its context (it's the box that carries it), but today it can still be set after the `Data` is created, which is a late stamp. The setter's callers at HEAD, leaving out step 5's four dead branches in `data/this.cs` and the memory stack's own `Variable.Context` (`actor/context/this.cs:151`), are about 14:
 - `data/this.cs:726` (`Copy`, `clone.Context = _context`)
@@ -257,3 +257,5 @@ Ingi agreed: "set at birth, never after". `Data` keeps its context (it's the box
 - `error/Error.cs:125` (`_callback`)
 
 Each one becomes a `Data` created with its context. `Data.Context` becomes get-only.
+
+**Step 6 also (Ingi 2026-09-24): the goal's stored App goes.** `goal.@this.App` (`goal/this.cs:189`) is never used by the goal itself. `goal.list` sets it after birth (`goal/list/this.cs:44, :380`, a late stamp). Its only reader is Error's verbose dump (`error/Error.cs:385`), which uses the error's own context instead (`error.Context?.App`; Ingi: "error has context, so it can get the app from there").
