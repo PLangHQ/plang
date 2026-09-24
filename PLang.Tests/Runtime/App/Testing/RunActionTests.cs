@@ -86,7 +86,7 @@ public class RunActionTests
             System.IO.File.WriteAllText(prFile, System.Text.Encoding.UTF8.GetString(ms.ToArray()));
         }
 
-        return new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext)
+        return new global::app.test.@this()
         {
             Goal = goal,
             Status = global::app.test.Status.Ready
@@ -349,10 +349,10 @@ public class RunActionTests
             {
                 ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
             });
-            var stale = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) {
+            var stale = new global::app.test.@this() {
                 Goal = new Goal { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", global::PLang.Tests.TestApp.SharedContext) },
                 Status = global::app.test.Status.Stale, StatusReason = "no .pr" };
-            var skipped = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) {
+            var skipped = new global::app.test.@this() {
                 Goal = new Goal { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", global::PLang.Tests.TestApp.SharedContext) },
                 Status = global::app.test.Status.Skipped, StatusReason = "excluded by tag" };
 

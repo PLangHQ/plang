@@ -4,7 +4,7 @@ namespace PLang.Tests.App.CompareRedesign;
 
 // Stage 7 — `path`'s interior string-math moves onto the type (OBP smell #5).
 // `path.IsUnder(root)` replaces `f.Relative.StartsWith(rootRel)`; `path.Kind`
-// replaces `Format.TypeFromExtension(p.Extension)`. Raw `.Relative` /
+// answers its extension's type (`app.Type.Extension`). Raw `.Relative` /
 // `.Extension` become `internal`, feeding the new methods + the `!relative` /
 // `!extension` derived projections.
 public class Stage7_PathGrowthTests
@@ -34,17 +34,14 @@ public class Stage7_PathGrowthTests
     }
 
     [Test]
-    public async Task PathKind_ReplacesFormatTypeFromExtension()
+    public async Task PathKind_IsItsExtensionType()
     {
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.item.path.@this.Resolve("/data/config.json", context);
         var kind = p.Kind(context);
         await Assert.That(kind.IsNull).IsFalse();
-        // the file.read Build hint routes through the type
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "file", "read.cs"));
-        await Assert.That(src).DoesNotContain("TypeFromExtension(p.Extension)");
-        await Assert.That(src).Contains("p.Kind");
+        await Assert.That(kind).IsEqualTo(app.Type.Extension(".json"));
     }
 
     [Test]

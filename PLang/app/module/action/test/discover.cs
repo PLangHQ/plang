@@ -13,10 +13,9 @@ namespace app.module.action.test;
 /// Walks a directory tree for *.test.goal files (via <c>rootPath.List</c>, which
 /// routes through <see cref="app.type.item.path.file.@this.AuthGate"/>), loads each
 /// file's .pr through path verbs and checks freshness against the current .goal
-/// text (SHA-256 of Name + concat(Step.Text)). A fresh goal becomes its test
-/// (<see cref="app.test.@this.Create"/>); the run's tag filter
-/// (<see cref="app.test.list.@this.Exclusion"/>) decides which tests it takes. Returns a
-/// list&lt;test&gt; that test.run consumes.
+/// text (SHA-256 of Name + concat(Step.Text)). A fresh goal becomes its test, as the
+/// run takes it (<see cref="app.test.list.@this.Create"/>). Returns a list&lt;test&gt;
+/// that test.run consumes.
 ///
 /// <para>The pre-AuthGate scan that this handler used to do —
 /// <c>StartsWith(rootPrefix)</c> hand-rolled containment + raw
@@ -76,7 +75,7 @@ public partial class discover : IContext
         {
             // Build a minimal goal from just the file's path so Test.Goal
             // is never null. Status=Stale with the read error as reason.
-            return new global::app.test.@this(Context)
+            return new global::app.test.@this()
             {
                 Goal = new Goal { Path = goalFile },
                 Status = global::app.test.Status.Stale,
@@ -95,7 +94,7 @@ public partial class discover : IContext
 
         if (prFile == null)
         {
-            return new global::app.test.@this(Context)
+            return new global::app.test.@this()
             {
                 Goal = sourceGoal,
                 Status = global::app.test.Status.Stale,
@@ -106,7 +105,7 @@ public partial class discover : IContext
         var prExists = await prFile.ExistsAsync(Context);
         if (!prExists.Success || (await prExists.Value())?.Value != true)
         {
-            return new global::app.test.@this(Context)
+            return new global::app.test.@this()
             {
                 Goal = sourceGoal,
                 Status = global::app.test.Status.Stale,
@@ -119,7 +118,7 @@ public partial class discover : IContext
         var prRead = await prFile.ReadText(Context);
         if (!prRead.Success)
         {
-            return new global::app.test.@this(Context)
+            return new global::app.test.@this()
             {
                 Goal = sourceGoal,
                 Status = global::app.test.Status.Stale,
@@ -129,7 +128,7 @@ public partial class discover : IContext
         var prGoal = (await prRead.Value()) as Goal;
         if (prGoal == null)
         {
-            return new global::app.test.@this(Context)
+            return new global::app.test.@this()
             {
                 Goal = sourceGoal,
                 Status = global::app.test.Status.Stale,
@@ -139,7 +138,7 @@ public partial class discover : IContext
 
         if (!string.Equals(sourceGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            return new global::app.test.@this(Context)
+            return new global::app.test.@this()
             {
                 Goal = sourceGoal,
                 Status = global::app.test.Status.Stale,
@@ -147,14 +146,8 @@ public partial class discover : IContext
             };
         }
 
-        // The fresh goal becomes its test; the run's filter decides whether it is taken.
-        var test = await global::app.test.@this.Create(prGoal, Context);
-        if (test.Status == global::app.test.Status.Ready && Context.App.Test.Exclusion(test) is { } reason)
-        {
-            test.Status = global::app.test.Status.Skipped;
-            test.StatusReason = reason;
-        }
-        return test;
+        // The fresh goal becomes its test, as this run takes it.
+        return await Context.App.Test!.Create(prGoal, Context);
     }
 
 }

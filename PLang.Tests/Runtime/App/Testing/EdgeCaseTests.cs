@@ -119,7 +119,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
+        var run = new global::app.test.@this() { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Test.Add(run);

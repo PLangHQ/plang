@@ -54,6 +54,40 @@ public sealed partial class @this
     /// <summary>Exclude tag filter (empty = nothing excluded). Applied after include — exclude wins on conflict.</summary>
     public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
 
+    /// <summary>The test a test goal is, as this run takes it. Its tags are the goal's own
+    /// (<c>goal.Tag</c>, stamped at build) and the capabilities every action it reaches requires —
+    /// its own and those of each goal its calls reach, as they are now. Seeds this run's coverage with
+    /// the same goals. A goal tagged <c>skip</c> is Skipped; a test this run's tag filter leaves out
+    /// is Skipped with the filter's reason; otherwise Ready.</summary>
+    public async Task<global::app.test.@this> Create(global::app.goal.@this goal, actor.context.@this context)
+    {
+        var test = new global::app.test.@this { Goal = goal };
+        test.Tags.Add(goal.Tag);
+
+        var reached = new List<global::app.goal.@this> { goal };
+        reached.AddRange(await goal.Callee(context));
+        foreach (var g in reached)
+        {
+            foreach (var step in g.Step.Items())
+                foreach (var action in step.Action.Items())
+                    foreach (var required in action.Requirement)
+                        if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
+            Coverage.Add(g);
+        }
+
+        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip")))
+        {
+            test.Status = Status.Skipped;
+            test.StatusReason = "tagged 'skip'";
+        }
+        else if (Exclusion(test) is { } reason)
+        {
+            test.Status = Status.Skipped;
+            test.StatusReason = reason;
+        }
+        return test;
+    }
+
     /// <summary>Why this run leaves <paramref name="test"/> out — a tag in <see cref="Exclude"/> (exclude
     /// wins), or no tag in a non-empty <see cref="Include"/>. Null when the run takes it. Tags compare
     /// by the tag's own equality.</summary>

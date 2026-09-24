@@ -145,4 +145,38 @@ public class TestingClassTests
 
         await result.IsFailure();
     }
+
+    private static global::app.goal.@this TaggedGoal(string tag)
+    {
+        var goal = new global::app.goal.@this
+        {
+            Name = "T",
+            Path = global::app.type.item.path.@this.Resolve("/Tests/T.test.goal", global::PLang.Tests.TestApp.SharedContext)
+        };
+        goal.Tag.Add(new global::app.type.item.tag.@this(tag));
+        return goal;
+    }
+
+    // The run's tag filter is the session's own: a test it leaves out is born Skipped, with the reason.
+    [Test]
+    public async Task Create_ExcludedTest_ComesBackSkippedWithItsReason()
+    {
+        _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
+
+        var test = await _app.Test.Create(TaggedGoal("slow"), _app.User.Context);
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
+        await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
+    }
+
+    [Test]
+    public async Task Create_TakenTest_IsReady()
+    {
+        _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
+
+        var test = await _app.Test.Create(TaggedGoal("fast"), _app.User.Context);
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Ready);
+        await Assert.That(test.StatusReason).IsNull();
+    }
 }

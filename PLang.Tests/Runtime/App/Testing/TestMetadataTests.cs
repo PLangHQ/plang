@@ -50,7 +50,7 @@ public class TestMetadataTests
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
-        var test = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = goal };
+        var test = new global::app.test.@this() { Goal = goal };
         test.Complete(global::app.test.Status.Pass);
         return test;
     }

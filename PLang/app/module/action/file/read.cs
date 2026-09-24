@@ -25,8 +25,7 @@ public partial class Read : IContext
     // `directory` — with NOTHING read: existence is verified by a stat (so a
     // missing path still errors at the read step), but the content stays on
     // disk until first examination, where the value door reads + parses +
-    // narrows the Data to the content's type. A recognised specialisation
-    // (image) stays eager — its content type is known up-front and terminal.
+    // narrows the Data to the content's type (an image becomes one when used).
     public async Task<data.@this> Run()
     {
         // Resolve the path door first; the guard reads .Success AFTER the await —
@@ -64,21 +63,6 @@ public partial class Read : IContext
             return await prChannel.Read();
         }
 
-        // A file-backed image carries a source-path facet (image.Path → the
-        // file, so %img.Path.Exists% works) that only the read site knows. Build
-        // it eagerly — image is terminal, its content type is already known.
-        var mimeType = Context.App.Type.Mime(mime);
-        if (mimeType.Name == "image")
-        {
-            var channel = new global::app.channel.type.file.@this(path, Context);
-            var read = await channel.Read();
-            if (!read.Success || read.Exits) return read;
-            if (read.Raw is byte[] imageBytes)
-                return new data.@this(read.Name,
-                    new global::app.type.item.image.@this(imageBytes, path, Context), read.Type, context: Context);
-            return read;
-        }
-
         // ResolveVariables is an explicit opt-in that needs the text in hand, so
         // it forces materialization and resolves %var% — the only non-lazy path.
         if (await ResolveVariables.ToBooleanAsync())
@@ -107,8 +91,7 @@ public partial class Read : IContext
     /// reference whose kind is the extension — the terminal variable.set
     /// carries {file, ext} so it stores the reference as-is (the content type
     /// only appears at runtime, when examination narrows). Variable references
-    /// and unknown extensions yield bare Ok(). A recognised eager
-    /// specialisation (image) keeps its structured stamp. A literal path that
+    /// and unknown extensions yield bare Ok(). A literal path that
     /// doesn't exist on disk surfaces a {action, message} warning dict on
     /// Channel("builder") but
     /// still returns the inferred type — missing files are non-fatal at build
@@ -125,15 +108,9 @@ public partial class Read : IContext
         if (p == null || string.IsNullOrEmpty(p.Extension)) return Context.Ok();
         if (p.MimeType(Context) == "application/octet-stream") return Context.Ok();
 
-        // The SAME shared derivation the runtime uses, so build-time and
-        // runtime stamps can't drift: an image keeps its structured {image,
-        // png} stamp (eager specialisation); everything else is the reference
-        // — {file, <ext>} — and the content type appears only when runtime
-        // examination narrows.
-        var inferred = p.Kind(Context);
-        if (inferred.IsNull || !Context.App.Type.Contains(inferred.Name)) return Context.Ok();
-        if (inferred.Name != "image")
-            inferred = Context.App.Type[new global::app.type.@this("file", p.Extension.TrimStart('.'))];
+        // The same reference the runtime lands — {file, <ext>} — so build-time and runtime
+        // stamps can't drift; the content type appears only when runtime examination narrows.
+        var inferred = Context.App.Type[new global::app.type.@this("file", p.Extension.TrimStart('.'))];
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.

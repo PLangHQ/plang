@@ -52,7 +52,7 @@ public class ReportActionTests
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
-        var test = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = goal };
+        var test = new global::app.test.@this() { Goal = goal };
         if (output != null) test.Stdout = output;
         test.Complete(status, error);
         return test;
