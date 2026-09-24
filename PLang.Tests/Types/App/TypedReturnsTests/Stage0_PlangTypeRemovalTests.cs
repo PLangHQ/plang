@@ -56,9 +56,6 @@ public class Stage0_PlangTypeRemovalTests
             // Only an @this class has a derived name (its namespace tail). Any other class has no
             // derivation — its declared name is its only name (a closed set, a non-@this item).
             if (type.Name != "this") continue;
-            // An @this deriving from another @this family would be named after that family (a scheme,
-            // {path, kind: file}); a [PlangType] there declares its own name instead — not a repeat.
-            if (type.BaseType is { Name: "this" } b && b != typeof(global::app.type.item.@this)) continue;
             var derivable = type.Namespace?.Split('.').LastOrDefault() ?? "";
 
             if (string.Equals(attr.Name, derivable, StringComparison.Ordinal))

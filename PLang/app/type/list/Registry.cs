@@ -238,20 +238,18 @@ public sealed partial class @this
         string.Equals(type.Name, "this", StringComparison.Ordinal);
 
     /// <summary>
-    /// A scheme/variant class — an <c>@this</c> deriving from another family's
-    /// <c>@this</c> (FilePath : path.@this) — IS that family on the PLang
-    /// surface; its leaf namespace names the scheme, not a type. <c>item</c> is
-    /// the apex every value type derives from, so it never counts as a family
-    /// here. Returns null for a direct family (text, dict, file, …).
+    /// The family a class is a KIND of — only when it says so. A path scheme declares it
+    /// (<c>[PathScheme("file")]</c> → {path, kind: file}); a typed program list is one through its
+    /// generic base (<c>list&lt;step&gt;</c> → {list, kind: step}). Null for every other class:
+    /// by default a class's name is its own (modifier is "modifier", never a kind of action).
     /// </summary>
     private static string? FamilyName(Type type)
     {
-        for (var b = type.BaseType; b != null && b != typeof(object); b = b.BaseType)
-        {
-            if (!IsThisClass(b)) continue;
-            if (b == typeof(app.type.item.@this)) return null;
-            return FamilyName(b) ?? InferName(b);
-        }
+        if (type.IsDefined(typeof(app.type.item.path.PathSchemeAttribute), inherit: false))
+            return InferName(typeof(app.type.item.path.@this));
+        for (var b = type.BaseType; b != null; b = b.BaseType)
+            if (b.IsGenericType && b.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
+                return InferName(typeof(app.type.item.list.@this));
         return null;
     }
 
