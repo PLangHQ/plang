@@ -15,26 +15,26 @@ the hash for staleness sees a lie. Not recomputed unilaterally on a bootstrap ar
 pure core 4 external, implicit-in 237, direct `new` 526 (errors 270), raw result doors 150; 34 `Type => new(...)`
 getters; `new app.type` outside the registry at 7 sites.
 
-**9. `PathSerializerMigrationTests` / `KindViaCreateTests` path-kind flake.** Not reproduced in 6 isolated runs +
-3 full sweeps; the helpers now print the decline's key + message (`a5cf9e221`), so the next occurrence names its
-cause. Suspected shared-state race; not quarantined (no named cause yet).
+**9. `PathSerializerMigrationTests` / `KindViaCreateTests` path-kind flake — not reproduced, no cause.**
+Four tests (`Path_BareIsFile`, `Path_HttpsScheme_IsHttps`, `PathKind_FileScheme_ViaCreate_IsFile`,
+`PathKind_HttpsScheme_ViaCreate_IsHttps`). Real occurrences: Sep 23 only, before the diagnostics (`a5cf9e221`).
+2026-09-24: 40 isolated runs (20 per class) + every full sweep on committed states since — none. Its two T1/T4
+hits on 09-24 were work-in-progress states of the ruling-5 registry rewrite, not the flake. Ruled out: the
+one-shot type binder (a racing bind computes the same delegate), `PathHelper` (no mutable statics), a non-item
+"path" owning name → class (items only, before and after ruling 5). If it recurs, the helper names the decline.
+
+**31. A recorded error does not carry its run's context** — `%!error.callback%` answers only for an error born
+with a context (`new Error(msg, context, …)`); most are built without one (`ServiceError(msg, key, code)`), and
+the frame's `Record` stamps the chain but holds no context. Stamping it at a recording site is the late-stamp smell
+(`Context ??=`) — design question for Ingi. Until then those errors' callbacks are `NoCallback` (was: always threw).
+
+**32. `plang --test` is silent** — from `Tests/` (and `./dev.sh ptest`, and under a pty) it exits 0 and prints
+nothing, writing no report; the plang Callback goals could not be run for #30. Likely #21 (zero-discovered /
+quiet readers), not chased.
 
 **12. The builder has never built itself on this branch.** Every commit touching
 `os/system/builder/*/.build/*.pr` is a hand-edit; nothing forces the builder's own goals to still compile — how
 #5b drifted. Ingi: decide on the parent branch, do not chase now.
-
-**16. Two descriptors for "a named, typed slot" — IN PROGRESS (Ingi's go).** `app.type.Field` (Name +
-`TypeName` string) goes; `property` moves to `type/property/this.cs` and serves both a type's and an action's
-properties; the type's `Fields` + `Properties` merge into one `Property` list of `property` entries carrying
-type objects. The builder (`type/list/this.cs`) builds `property` entries; the view/templates render the face.
-
-**17. Runtime presence checks → `App.Mode` — queued (Ingi's go).** `Mode` moves out of the snapshot partial
-(`app/this.Snapshot.cs`) into `app/this.cs`; `if (Build != null)` / `if (Test != null)` and any other presence
-checks read `Mode`.
-
-**30. Error stores an App — queued (Ingi's go).** `error/Error.cs:102` (set by `Errors.Push`, used by
-`Callback` at :123). Remove it; the error reaches its App through its own Context. An error with no context has
-no callback — a named error, not an NRE. Snapshot is parked: keep that part minimal.
 
 **18. Snapshot restore — PARKED by Ingi.** Landed and kept: `be8a30fc5` (owner-named sections, one owner list,
 `App.Mode` replaces presence bits), `64cca5d21` (guarded frame reads; action verified), `8a8bd8c01` (each captured
@@ -48,16 +48,6 @@ through a door the design lacks (`snapshot.Create(text)` declines; untyped `Data
 text"; `Type["snapshot"].Create(json)` reads raw text through the scalar-only value reader). Open question: does a
 text holding the plang wire convert into a snapshot — (a) no, wire door only; (b) yes, generally: a content source
 of a STRUCTURED type reads its raw text through the transport format's parser. `resume.cs:6-12` doc waits on it.
-
-**28. Same-actor concurrent `list.add` races** — 25 parallel runs of one goal under the SAME actor, each
-`add %x% to %l%`, throw a NullReferenceException inside list.add (the shared %l% list and its creation are not
-guarded). Cross-actor concurrency is fine (each actor has its own memory); within one actor, concurrent runs of
-the same goal share variables unguarded. Found writing `SharedProgramTests.OneGoal_RunConcurrently…`, which runs
-System+User in parallel and never one actor twice at once.
-
-**29. `file://` not stripped** — a `.pr` path literal `file:///tmp/x` resolves to `<root>/file:/tmp/x`:
-`Scheme.From` / `FilePath` keep the scheme prefix as part of a root-relative path. Tests use a relative
-out-of-root path instead.
 
 **26. Plugin loader registers closed sets as types** — `type/list/Loader.cs:106-125` (runtime-loaded DLLs)
 registers every `[PlangType]`, enums included, with no item check; `Registry.cs:172` skips non-items. A plugin's
@@ -82,6 +72,13 @@ open rulings: blast-radius list, honest mock). Also parked here:
 
 ## Done
 
+- **30 Error's stored App** — gone; callback through the error's own Context, no context → `NoCallback`:
+  `f00717469`.
+- **29 `file://` literals** — a file URL resolves to its local path, shown in plang form: `96d3c8c49`.
+- **28 Same-actor concurrent `list.add`** — the list owns a private gate; the store's atomic `Ensure`
+  (`8094017fb`); write-back only if the name still holds what was read, `Replace` (`7d7ed61c5`).
+- **17 Presence checks → `App.Mode`**: `4734505f0`.
+- **16 One property descriptor** — `type.Field` gone, `type.property` serves types and actions: `29c0ff635`.
 - **24 `test.Create` static** — `app.Test.Create(goal, context)` makes the whole test (tags, coverage, skip,
   exclusion); discover just asks; test ctor has no context: `da601665c`.
 - **15 Action return type** — `action.Return` is the type object; the name door reads `list<path>` as
