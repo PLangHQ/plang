@@ -93,8 +93,9 @@ public sealed partial class @this
     public global::app.type.item.text.@this? Exclusion(global::app.test.@this test)
     {
         var tags = test.Tags.Items().ToHashSet();
+        // Each filter row is taken out as a value (a list set from the CLI holds its raw rows).
         bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
-            => filter.Items().Any(t => global::app.type.item.tag.@this.Create(t) is { } tag && tags.Contains(tag));
+            => filter.Items(Context).Any(row => global::app.type.item.tag.@this.Create(row.Peek()) is { } tag && tags.Contains(tag));
 
         if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
         if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";

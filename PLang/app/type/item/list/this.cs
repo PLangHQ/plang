@@ -581,6 +581,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // All-raw backing IS the raw form the caller wants → hand it back (O(1)).
         if (!_hasWrapped && target.IsInstanceOfType(_items)) return _items;
 
+        // A typed plang list (list<T>) asked of a plain list is this list re-tagged: its rows move
+        // into the typed list as they are (its adopting constructor), each read as T when taken out
+        // — list<T>.Create's own rule.
+        if (target.IsGenericType && target.GetGenericTypeDefinition() == typeof(@this<>) && !target.IsInstanceOfType(this))
+            return System.Activator.CreateInstance(target,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public,
+                null, new object[] { this }, null);
+
         // A CLR collection target: each row lowers ITSELF to the element type (terminal —
         // a scalar row hits ChangeType, a nested container its own Clr), assembled into
         // the target's shape. A mutable list/array/IList fills directly; a read-only domain

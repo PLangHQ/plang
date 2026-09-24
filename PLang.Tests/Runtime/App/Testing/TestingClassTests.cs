@@ -169,6 +169,19 @@ public class TestingClassTests
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
     }
 
+    // Exclude set from the CLI shape (--test={"exclude":["slow"]}) binds and filters.
+    [Test]
+    public async Task Create_ExcludeSetThroughTheWalk_Filters()
+    {
+        var set = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await set.IsSuccess();
+
+        var test = await _app.Test.Create(TaggedGoal("slow"), _app.User.Context);
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
+        await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
+    }
+
     [Test]
     public async Task Create_TakenTest_IsReady()
     {
