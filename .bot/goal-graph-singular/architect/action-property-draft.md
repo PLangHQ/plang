@@ -37,12 +37,22 @@ new Data(p.Name, p.Value, context: context)        // today: action?[name]?.Copy
 
 So the shared program holds no context, and `Data.Context` is never null for this reason.
 
+**7. Defaults stay in the `.pr`, frozen at build (Ingi).** The builder writes the class's `[Default]` for every property the step didn't set into the `.pr` (`module/action/build/code/Default.cs:263-270`, via `module/list/this.cs:173` `GetDefaults`). It is **not a copy**: it's the default as it was when the app was built. If a later runtime changes a default (say `ResolveVariables` becomes `true`), a built app still runs the same. That's determinism. So the action holds what its `.pr` holds: the properties its step set, plus the defaults the build froze. Both come from the `.pr`; both are properties of the action.
+
+**8. A frozen default wins over a setting (Ingi: "no" to a setting winning).** This is today's order, and it stays. The generated binding asks `action[name]` first (`Emission/Property/Data/this.cs:158-160`; `action[name]` = set value ?? frozen default, `action/this.cs:140-142`), and only an empty answer falls to the setting and then `[Default]`:
+
+```
+step value → frozen default (.pr) → setting → [Default] (runtime; only for a .pr without one)
+```
+
+Consequence, recorded: a setting only reaches a property that has no `[Default]`, or a `.pr` built before defaults were frozen. Example: `http.request` `TimeoutInSec` has `[Default(30)]` (`module/action/http/request.cs:40`), so `set %!http.request.TimeoutInSec% = 5` does not change an already-built `http.request` step.
+
 ## Open
 
-1. **The `.pr` default list (`action.Default`).** The builder writes the class's `[Default]` for every property the step didn't set into the `.pr` (`module/action/build/code/Default.cs:263-270`, via `module/list/this.cs:173` `GetDefaults`). With (a), that's the same fact the class declares and the generator already falls back to. It looks like a copy that can go. To confirm.
-2. **`IsVariable`** (`property/this.cs:59-61`) goes: it only repeats "the type is `variable`".
-3. **The `.pr` property bag** (`data/reader/this.cs:138`, `d.Properties = properties`): does the property keep it?
-4. **The synthetic `channel` property** (`property/list/this.cs:57-58`).
-5. **`app.type.Field`** (`type/Field.cs`, `Name` plus `TypeName` as a string) describes a type's fields (open-items #16). It stays separate for now, since `property` stays at `goal/step/action/property`.
+1. **`IsVariable`** (`property/this.cs:59-61`) goes: it only repeats "the type is `variable`".
+2. **The `.pr` property bag** (`data/reader/this.cs:138`, `d.Properties = properties`): does the property keep it?
+3. **The synthetic `channel` property** (`property/list/this.cs:57-58`).
+4. **`app.type.Field`** (`type/Field.cs`, `Name` plus `TypeName` as a string) describes a type's fields (open-items #16). It stays separate for now, since `property` stays at `goal/step/action/property`.
+5. **Set versus frozen default:** does a property need to know whether its step set it or the build froze it (for example for the `.pr` writer)? Today they are two lists, `"parameter"` and `"default"`.
 6. **Cost, not counted yet:** every reader of the action's value list or `action.Default` as `Data`: the builder, validation, graft typing, the `.pr` writer, mock/intercept, goal.call's arguments.
 7. **Coder's step-1 question** (the test `SharedRow_ReadDirectly_FailsWithNamedError` now reads the loader's context) waits on this.
