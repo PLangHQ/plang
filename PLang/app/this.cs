@@ -190,6 +190,14 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public global::app.module.action.build.@this? Build { get; set; }
 
+    /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
+    /// testing when it has a Test, otherwise running. Not a stored field, so there is no second truth
+    /// beside the presence; the App branches on this, never on the presence itself.</summary>
+    public global::app.type.item.choice.@this<global::app.Mode> Mode
+        => Build != null ? global::app.Mode.Build
+         : Test != null ? global::app.Mode.Test
+         : global::app.Mode.Run;
+
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
     /// </summary>
@@ -496,9 +504,7 @@ public sealed partial class @this : IAsyncDisposable
         var context = System.Context;
 
         // Build → PLang builder (runs as User — user is building their code).
-        // Presence is the enable signal (staged: one owned check; full dissolve to
-        // entry-action-at-birth is a follow-up branch, plan §6.C).
-        if (Build != null) return await Build.RunAsync();
+        if (Mode.Value == global::app.Mode.Build) return await Build!.RunAsync();
 
         // Resolve goal file
         var goalFile = await (await context.Variable.Get("goalFile")).Clr<string?>(null);
@@ -529,7 +535,7 @@ public sealed partial class @this : IAsyncDisposable
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
-        if (Test != null)
+        if (Mode.Value == global::app.Mode.Test)
             return global::app.module.action.setting.Sqlite.InMemory($"system-{Id}", System.Context);
 
         // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,

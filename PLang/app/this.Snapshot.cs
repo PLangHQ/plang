@@ -2,14 +2,6 @@ namespace app;
 
 public sealed partial class @this : global::app.snapshot.ISnapshot
 {
-    /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
-    /// testing when it has a Test, otherwise running. Not a stored field, so there is no second truth
-    /// beside the presence.</summary>
-    public global::app.type.item.choice.@this<global::app.Mode> Mode
-        => Build != null ? global::app.Mode.Build
-         : Test != null ? global::app.Mode.Test
-         : global::app.Mode.Run;
-
     /// <summary>The App's snapshot owners, in restore order — providers first, since a later owner may
     /// consume them. Each names its own section; adding an owner is adding it here.</summary>
     private IEnumerable<global::app.snapshot.ISnapshot> Snapshotted(

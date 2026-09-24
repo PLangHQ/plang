@@ -71,10 +71,9 @@ public sealed partial class @this
         // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.
         // TODO(build-mode-inversion): build mode sniffed from a foreign layer (the file op
         // shouldn't know build mode exists) — invert to a build-born .pr read decorator (plan §6.D).
-        var build = context.App.Build;
-        if (build != null && Extension == ".pr")
+        if (context.App.Mode.Value == global::app.Mode.Build && Extension == ".pr")
         {
-            var snapshot = build.GetPrSnapshot(Absolute);
+            var snapshot = context.App.Build!.GetPrSnapshot(Absolute);
             if (snapshot != null)
                 return new global::app.data.@this(Raw, type.Create(snapshot, context), context: context);
         }
@@ -89,8 +88,8 @@ public sealed partial class @this
             // Record the .pr in the build snapshot cache so a later read this build sees
             // the pre-overwrite content. Perimeter decode — a string only appears here.
             // TODO(build-mode-inversion): foreign-layer build sniff — invert (plan §6.D).
-            if (build != null && Extension == ".pr")
-                build.SnapshotPrFile(Absolute, System.Text.Encoding.UTF8.GetString(bytes));
+            if (context.App.Mode.Value == global::app.Mode.Build && Extension == ".pr")
+                context.App.Build!.SnapshotPrFile(Absolute, System.Text.Encoding.UTF8.GetString(bytes));
 
             // Deferred: the source holds the raw bytes under their declared {type, kind};
             // the parse runs through the ONE reader on first touch (.Value()) — a .pr → the

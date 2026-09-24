@@ -133,7 +133,7 @@ namespace PLang
 
 			// Set the goal file on system context — Start() reads it
 			// Tester mode routes to system test runner instead of Start.goal
-			if (app.Test != null && goalFile == "Start.goal")
+			if (app.Mode.Value == global::app.Mode.Test && goalFile == "Start.goal")
 			{
 				app.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
 				return (app, null);
