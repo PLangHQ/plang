@@ -1,5 +1,7 @@
 # architect — goal-graph-singular
 
+**2026-09-24 — #28 cause found; Ingi chose (a).** 500 parallel same-actor runs of `add %x% to %l%` silently lose 5-9 adds (the original NRE is the same race). Two causes: the list's `_items` is unguarded (`list/this.cs:35`), and list.add's get-or-create is a check-then-act across two store calls (`add.cs:16-27`). Ruled (a): the list owns a private lock (mutations plus reader snapshots), and the variable store gets one atomic get-or-create. Rejected: serialising an actor's runs (it changes the execution model). When lists get copy-on-write value semantics (decided, not built), the list's lock goes and the store's atomic step stays.
+
 **2026-09-24 — #17 landed (`4734505f0`); go on the four bugs (Ingi).** `Mode` lives in `app/this.cs` (still derived from Build/Test); the presence checks in startup, the settings store, `Executor.cs:136` and the `.pr` build snapshot read it. Bugs next, test first: #28 (same-actor concurrent list.add NRE), #29 (file://), #9 (path-kind flake), #30 (Error's stored App).
 
 **2026-09-24 — #16 landed (`29c0ff635`); go on #17 (Ingi).** `type.Field` is deleted; `property` lives at `type/property/` and serves both sides; a type has one `Property` list (type objects, not strings); a record is "properties and no Shape". Coder's open-items list is tidied (Error.App is #30).
