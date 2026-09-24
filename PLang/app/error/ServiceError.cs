@@ -9,7 +9,6 @@ namespace app.error;
 /// </summary>
 public class ServiceError : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Runtime;
     public ServiceError(string message, string key = "ServiceError", int statusCode = 400)
         : base(message, key, statusCode) { }
 

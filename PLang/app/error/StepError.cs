@@ -8,7 +8,6 @@ namespace app.error;
 /// </summary>
 public class StepError : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Runtime;
     public StepError(string message, string key = "StepError", int statusCode = 400)
         : base(message, key, statusCode) { }
 

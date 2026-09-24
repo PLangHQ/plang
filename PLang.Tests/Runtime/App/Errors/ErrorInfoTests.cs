@@ -163,74 +163,10 @@ public class ErrorTests
         await Assert.That(error.Step!.Goal!.Name).IsEqualTo("TestGoal");
     }
 
-    [Test]
-    public async Task Format_IncludesKeyAndStatusCode()
-    {
-        var step = new Step { Index = 0, Text = "set name" };
-        var error = new Error("Something went wrong", step, "TestKey", 500);
 
-        var formatted = error.Format();
 
-        await Assert.That(formatted).Contains("TestKey(500)");
-        await Assert.That(formatted).Contains("Something went wrong");
-    }
 
-    [Test]
-    public async Task Format_IncludesGoalAndStep()
-    {
-        var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var step = new Step { Goal = goal, Index = 2, Text = "write to file", LineNumber = 5 };
-        var error = new Error("File not found", step);
 
-        var formatted = error.Format();
-
-        await Assert.That(formatted).Contains("Start.goal:5");
-        await Assert.That(formatted).Contains("write to file");
-    }
-
-    [Test]
-    public async Task Format_IncludesCausingList()
-    {
-        var step = new Step { Index = 0, Text = "do something" };
-        var error1 = new Error("Original error", step);
-        var error2 = new Error("Action error", step, "ActionError", 500);
-        error1.list.Add(error2);
-
-        var formatted = error1.Format();
-
-        await Assert.That(formatted).Contains("Error during error handling [1]");
-        await Assert.That(formatted).Contains("ActionError(500)");
-    }
-
-    [Test]
-    public async Task Format_IncludesFixSuggestionAndLinks()
-    {
-        var step = new Step { Index = 0, Text = "connect db" };
-        var error = new Error("Connection failed", step, "Error", 500)
-        {
-            FixSuggestion = "Check your connection string",
-            HelpfulLinks = "https://docs.example.com/db"
-        };
-
-        var formatted = error.Format();
-
-        await Assert.That(formatted).Contains("Fix Suggestions:");
-        await Assert.That(formatted).Contains("Check your connection string");
-        await Assert.That(formatted).Contains("Helpful Links:");
-        await Assert.That(formatted).Contains("https://docs.example.com/db");
-    }
-
-    [Test]
-    public async Task Format_IncludesException()
-    {
-        var step = new Step { Index = 0, Text = "call api" };
-        var ex = new InvalidOperationException("Boom");
-        var error = new Error("API call failed", step, "Error", 500) { Exception = ex };
-
-        var formatted = error.Format();
-
-        await Assert.That(formatted).Contains("InvalidOperationException: Boom");
-    }
 }
 
 public class GoalErrorTests

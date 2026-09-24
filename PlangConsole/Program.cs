@@ -17,11 +17,12 @@ Console.CancelKeyPress += (_, e) =>
 
 var executor = new Executor(Path.GetFullPath(currentDirectory));
 var result = executor.Run(args, cts.Token).GetAwaiter().GetResult();
-// Process-boundary last resort (the permitted Console.* exception): a failed run
-// must surface its error here, or it exits silently and nothing reports why.
-if (!result.Success && result.Error != null)
+// Process-boundary last resort (the permitted Console.* exception): a failed run the app could not
+// show (the error show itself failed, or the app never started) must surface here, or it exits
+// silently and nothing reports why. A shown failure is not printed twice.
+if (!result.Success && result.Error != null && !result.Properties.Contains("shown"))
 {
-	Console.Error.WriteLine(result.Error.Format());
+	Console.Error.WriteLine(result.Error.ToString());
 }
 return result.Success ? 0 : 1;
 

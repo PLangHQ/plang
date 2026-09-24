@@ -10,7 +10,6 @@ namespace app.error;
 /// </summary>
 public sealed class PermissionDenied : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Application;
 
     /// <summary>The permission grant that was denied.</summary>
     public permission Permission { get; }

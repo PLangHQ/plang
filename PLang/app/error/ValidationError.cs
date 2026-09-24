@@ -8,7 +8,6 @@ namespace app.error;
 /// </summary>
 public class ValidationError : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Application;
     public string? ParameterName { get; init; }
 
     public ValidationError(string message, string key = "ValidationError", int statusCode = 400)

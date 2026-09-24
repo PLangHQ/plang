@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace app.error;
 
 /// <summary>
@@ -8,7 +6,6 @@ namespace app.error;
 /// </summary>
 public class AssertionError : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Application;
     public object? Expected { get; init; }
     public object? Actual { get; init; }
     public string? UserMessage { get; init; }
@@ -33,11 +30,4 @@ public class AssertionError : Error
     }
 
     private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);
-
-    protected override void FormatExtra(StringBuilder sb, string indent)
-    {
-        sb.AppendLine();
-        sb.AppendLine($"{indent}  Expected: {FormatValue(Expected)}");
-        sb.AppendLine($"{indent}  Actual:   {FormatValue(Actual)}");
-    }
 }

@@ -1,4 +1,3 @@
-using System.Text;
 using app.actor.context;
 using Goal = app.goal.@this;
 using Call = app.callstack.call.@this;
@@ -76,7 +75,6 @@ public class Error : global::app.type.item.@this
         writer.Name("key");         writer.String(Key);
         writer.Name("statusCode");  writer.Int(StatusCode);
         writer.Name("createdUtc");  writer.DateTime(CreatedUtc);
-        writer.Name("category");    writer.String(Category.ToString());
         if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
         if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
         WriteSpecific(writer);
@@ -136,8 +134,6 @@ public class Error : global::app.type.item.@this
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context { get; set; }
-
-    public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
     /// <summary>
     /// Creates an error with a message. Use for errors not tied to a specific execution context.
@@ -234,220 +230,7 @@ public class Error : global::app.type.item.@this
         };
     }
 
-    public virtual string Format()
-    {
-        var sb = new StringBuilder();
-        FormatError(this, sb, "");
-
-        for (int i = 0; i < list.Count; i++)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"--- Error during error handling [{i + 1}] ---");
-            FormatError(list[i], sb, "\t");
-        }
-        return sb.ToString().TrimEnd();
-    }
-
-    private static void FormatError(Error error, StringBuilder sb, string indent)
-    {
-        var goalPath = (error.Goal?.Path ?? error.Step?.Goal?.Path)?.ToString();
-        var file = goalPath != null && error.Step != null ? $"{goalPath}:{error.Step.LineNumber}" : goalPath;
-
-        // Header
-        sb.AppendLine($"{indent}\ud83d\udd34   ================== {error.Key}({error.StatusCode}) ==================   \ud83d\udd34");
-        if (file != null)
-            sb.AppendLine($"{indent}\ud83d\udcc4 File: {file}");
-        if (error.Step != null)
-            sb.AppendLine($"{indent}\ud83d\udd22 Line: {error.Step.LineNumber}");
-        sb.AppendLine($"{indent}\ud83e\udde9 Key:  {error.Key}");
-        sb.AppendLine($"{indent}#\ufe0f\u20e3  StatusCode:  {error.StatusCode}");
-        sb.AppendLine($"{indent}\ud83d\udd51 Time: {error.CreatedUtc}");
-
-        // Code snippet
-        sb.AppendLine();
-        sb.AppendLine($"{indent}\ud83d\udd0d   ================== Error Details ==================   \ud83d\udd0d");
-
-        if (error.Step != null)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udcdc Code snippet that the error occurred:");
-            sb.AppendLine($"{indent}    - {error.Step.Text}");
-            if (file != null)
-                sb.AppendLine($"{indent}        at {file}");
-        }
-
-        // Reason
-        sb.AppendLine();
-        sb.AppendLine($"{indent}\ud83e\uddd0 Reason: ");
-        sb.AppendLine($"{indent}    {error.Message}");
-
-        // Attached typed values — the thing thrown (`- throw %order%`). Rendered via
-        // the value's own display (a display leaf), so a dict/list shows in full
-        // rather than as a type name. Resolution happened at throw-time; Peek reads it.
-        if (error.Data?.Peek() is { } payload)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}📦 Data:");
-            sb.AppendLine($"{indent}    {payload}");
-        }
-
-        // Fix suggestions
-        if (error.FixSuggestion != null)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udee0\ufe0f  Fix Suggestions:");
-            sb.AppendLine($"{indent}    {error.FixSuggestion}");
-        }
-
-        // Helpful links
-        if (error.HelpfulLinks != null)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udd17 Helpful Links:");
-            sb.AppendLine($"{indent}    {error.HelpfulLinks}");
-        }
-
-        // Details \u2014 stashed by action handlers (RawResponse, Model, etc.). Without
-        // this, JsonParseError and friends leave the actual response invisible in
-        // the trace and the reader has to re-run with --debug to recover the data
-        // that was already captured.
-        if (error.Details is { Count: > 0 } details)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udcce Details:");
-            foreach (var kvp in details)
-            {
-                // RawResponse, Content, and similar payload fields are the point of
-                // showing Details \u2014 truncating them defeats the diagnostic. Pass
-                // through full-length for these; truncate the others (Model, Schema,
-                // etc.) the normal way.
-                var full = kvp.Key.Contains("Raw", StringComparison.OrdinalIgnoreCase)
-                        || kvp.Key.Contains("Response", StringComparison.OrdinalIgnoreCase)
-                        || kvp.Key.Contains("Content", StringComparison.OrdinalIgnoreCase)
-                        || kvp.Key.Contains("Request", StringComparison.OrdinalIgnoreCase);
-                var val = full && kvp.Value is string fullStr
-                    ? $"\"{fullStr}\""
-                    : FormatVerboseValue(kvp.Value);
-                sb.AppendLine($"{indent}    {kvp.Key}: {val}");
-            }
-        }
-
-        // Variables snapshot
-        if (error.Variables is { CountRaw: > 0 } variables)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83c\udff7\ufe0f  Variables in step:");
-            foreach (var variable in variables.Entries(error.Context!))
-                sb.AppendLine($"{indent}    %{variable.Name}% = {variable.Peek()}");
-        }
-
-        // Call stack \u2014 CallChainRenderer compresses recursive runs.
-        if (error.CallFrames.Count > 0)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udedd  Call stack:");
-            foreach (var line in CallChainRenderer.Render(error.CallFrames))
-                sb.AppendLine($"{indent}    {line}");
-        }
-
-        // Per-parameter snapshot — what the handler actually saw at dispatch.
-        // The source-generated ExecuteAsync captures this on every error path so the
-        // reader doesn't have to re-run with a debug flag to find out which param
-        // was wrong and how. Showing PrValue and FinalValue side-by-side reveals
-        // resolution failures at a glance (PrValue="%messages%", FinalValue=null
-        // → variable lookup returned nothing).
-        if (error.Params is { Count: > 0 } parms)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}📥 Parameters at dispatch:");
-            foreach (var p in parms)
-            {
-                var declared = p.DeclaredType != null ? $" ({p.DeclaredType})" : "";
-                sb.AppendLine($"{indent}    {p.Name}{declared}");
-                var pr = FormatVerboseValue(p.PrValue);
-                var prType = p.PrType != null ? $" [{p.PrType}]" : "";
-                sb.AppendLine($"{indent}        .pr value:  {pr}{prType}");
-                if (p.WasAccessed)
-                {
-                    var final = FormatVerboseValue(p.FinalValue);
-                    sb.AppendLine($"{indent}        final:      {final}");
-                }
-                else
-                {
-                    sb.AppendLine($"{indent}        final:      (not accessed)");
-                }
-            }
-        }
-
-        // Verbose variable dump — shows all variables in scope at point of failure
-        // The error keeps where it happened — its context reaches the App.
-        var errorContext = error.Context;
-        var app = errorContext?.App;
-        if (app?.Debug?.Verbose == true)
-        {
-            var fallbackContext = app.System.Context;
-            var context = errorContext ?? fallbackContext;
-            var allVars = context?.Variable?.GetAll();
-            if (allVars != null)
-            {
-                var ctxId = context?.Id ?? "?";
-                var ctxSource = errorContext != null ? "error context" : "app context (error context not captured)";
-                sb.AppendLine();
-                sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");
-                foreach (var kvp in allVars)
-                {
-                    var val = FormatVerboseValue(kvp.Value.Peek());
-                    sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Name ?? "?"})");
-                }
-            }
-        }
-
-        // Error source (ActionError overrides FormatExtra)
-        error.FormatExtra(sb, indent);
-
-        // Exception details
-        if (error.Exception != null)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udc68\u200d\ud83d\udcbb For C# Developers:");
-            var ex = error.Exception;
-            while (ex != null)
-            {
-                sb.AppendLine($"{indent}    - {ex.GetType().Name}: {ex.Message}");
-                if (ex.StackTrace != null)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine($"{indent}    StackTrace: {ex.StackTrace}");
-                }
-                ex = ex.InnerException;
-                if (ex != null)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine($"{indent}    Inner Exception:");
-                }
-            }
-        }
-    }
-
-    private static string FormatVerboseValue(object? value)
-    {
-        if (value == null) return "(null)";
-        if (value is string s)
-            return s.Length > 200 ? $"\"{s[..200]}...\" ({s.Length} chars)" : $"\"{s}\"";
-        if (value is System.Collections.IDictionary or System.Collections.IList)
-        {
-            try
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(value);
-                return json.Length > 300 ? json[..300] + $"... ({json.Length} chars)" : json;
-            }
-            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return value.ToString() ?? "?"; }
-        }
-        var str = value.ToString() ?? "?";
-        return str.Length > 200 ? $"{str[..200]}... ({str.Length} chars)" : str;
-    }
-
-    protected virtual void FormatExtra(StringBuilder sb, string indent) { }
-
+    /// <summary>The last-resort line, <c>[Key] Message</c>: for when the error cannot be shown by
+    /// <c>/system/error/Show</c> (the show itself failed, or the app never started).</summary>
     public override string ToString() => $"[{Key}] {Message}";
 }

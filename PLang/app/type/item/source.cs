@@ -241,6 +241,30 @@ public class source : @this
         w.String(_value.ToString() ?? "");
     }
 
+    /// <summary>
+    /// A template source renders when it is written out, as a template text does: a whole
+    /// <c>%ref%</c> writes the bound value itself, a partial template writes its rendered text. A
+    /// plain source, and every source in the Store view (a <c>.pr</c> keeps the authored <c>%ref%</c>),
+    /// relays its raw form verbatim.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        if (_type.Template == null || mode == global::app.View.Store || context?.Variable == null || _value is not string template)
+        {
+            Write(writer);
+            return;
+        }
+        if (IsVariable)
+        {
+            var resolved = await Get(context);
+            if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
+            throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
+        }
+        writer.String(await context.Variable.Resolve(template));
+    }
+
 
     internal override object? Clr(System.Type target) => ClrConvert(_value, target);
 

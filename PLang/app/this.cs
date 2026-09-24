@@ -484,10 +484,41 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Bootstrap: loads app identity, resolves the goal file, runs it.
-    /// Building is routed to the PLang builder (system/builder/).
+    /// Bootstrap: loads app identity, resolves the goal file, runs it — and shows a failed run once,
+    /// through <c>/system/error/Show</c>. Building is routed to the PLang builder (system/builder/).
     /// </summary>
     public async Task<data.@this> Start()
+    {
+        var result = await Launch();
+        return result.Success ? result : await Show(result);
+    }
+
+    /// <summary>
+    /// Shows a failed run through the plang goal <c>/system/error/Show</c>, the error handed in as
+    /// <c>%error%</c> — the run is over, so no frame holds it for <c>%!error%</c>. The failure comes
+    /// back marked <c>shown</c>; if Show cannot load or itself fails, it comes back unmarked, for the
+    /// process boundary to print as a last resort.
+    /// </summary>
+    private async Task<data.@this> Show(data.@this failed)
+    {
+        if (failed.Error is not { } error) return failed;
+        var context = User.Context;
+        var loaded = await this.Goal.Load(global::app.type.item.path.@this.Resolve("/system/error/.build/show.pr", context));
+        if (!loaded.Success || await loaded.Value() is not Goal show)
+        {
+            await (Debug?.Write($"error show: /system/error/Show could not load — {loaded.Error}") ?? Task.CompletedTask);
+            return failed;
+        }
+
+        data.@this shown;
+        await using (context.Variable.Calls.Push(new[] { new data.@this("error", error, context: context) }))
+            shown = await show.Run(context);
+        if (shown.Success) failed.Properties.Set("shown", true);
+        else await (Debug?.Write($"error show: /system/error/Show failed — {shown.Error}") ?? Task.CompletedTask);
+        return failed;
+    }
+
+    private async Task<data.@this> Launch()
     {
         await Load();
 

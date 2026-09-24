@@ -57,83 +57,11 @@ public class Phase0Proof
     // Phase 0.2 — Error Categories
     // ================================================================
 
-    [Test]
-    public async Task Phase02_ErrorCategory_400_IsApplication()
-    {
-        // INPUT: Error with status 400
-        var error = new Error("Invalid email", "Validation", 400);
 
-        // OUTPUT: Category = Application
-        await Assert.That(error.Category).IsEqualTo(ErrorCategory.Application);
-    }
 
-    [Test]
-    public async Task Phase02_ErrorCategory_500_IsRuntime()
-    {
-        // INPUT: Error with status 500
-        var error = new Error("Null reference", "NullRef", 500);
 
-        // OUTPUT: Category = Runtime
-        await Assert.That(error.Category).IsEqualTo(ErrorCategory.Runtime);
-    }
 
-    [Test]
-    public async Task Phase02_ValidationError_AlwaysApplication_Even500()
-    {
-        // INPUT: ValidationError with status 500 (unusual but tests override)
-        var error = new ValidationError("bad input", "Validation", 500);
 
-        // OUTPUT: Still Application — ValidationError overrides base logic
-        await Assert.That(error.Category).IsEqualTo(ErrorCategory.Application);
-    }
-
-    [Test]
-    public async Task Phase02_GoalError_AlwaysRuntime_Even400()
-    {
-        // INPUT: GoalError with status 400
-        var error = new GoalError("goal not found", "NotFound", 400);
-
-        // OUTPUT: Still Runtime — GoalError overrides base logic
-        await Assert.That(error.Category).IsEqualTo(ErrorCategory.Runtime);
-    }
-
-    [Test]
-    public async Task Phase02_ApplicationFormat_IsConcise()
-    {
-        // INPUT: Application error (400)
-        var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var step = new Step { Goal = goal, Index = 0, Text = "validate %email% is not empty" };
-        var error = new ValidationError("Email address is required", step);
-
-        // OUTPUT: unified format — full detail for all errors
-        var output = error.Format();
-
-        await Assert.That(output).Contains("Email address is required");
-        await Assert.That(output).Contains("validate %email% is not empty");
-        await Assert.That(output).Contains("Start.goal");
-        await Assert.That(output).Contains("==================");
-    }
-
-    [Test]
-    public async Task Phase02_RuntimeFormat_HasFullDetail()
-    {
-        // INPUT: Runtime error (500) with exception
-        var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var step = new Step { Goal = goal, Index = 0, Text = "read file data.txt" };
-        var ex = new InvalidOperationException("Access denied");
-        var error = new Error("Failed to read file", step, "FileError", 500)
-        {
-            Exception = ex
-        };
-
-        // OUTPUT: full detail with ======, reason, C# developer info
-        var output = error.Format();
-
-        await Assert.That(output).Contains("==================");
-        await Assert.That(output).Contains("FileError(500)");
-        await Assert.That(output).Contains("Failed to read file");
-        await Assert.That(output).Contains("InvalidOperationException: Access denied");
-    }
 
     // ================================================================
     // Phase 0.4 — Type Preservation (list handlers return explicit types)

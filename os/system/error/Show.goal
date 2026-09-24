@@ -1,0 +1,6 @@
+Show
+/ Shows an error: the template for its status code in this folder renders it, and it is written to
+/ the error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`
+/ inside a handler; at the top level the app hands in the failed run's error.
+- render "/system/error/%error.StatusCode%.txt", error=%error%, write to %text%
+- write %text% to error channel

@@ -111,17 +111,4 @@ public class ThrowTests
         await Assert.That(list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("item-9");
     }
 
-    [Test]
-    public async Task Throw_DataRendersFullyInFormat()
-    {
-        // The attached value shows in the error display (Format), not as a type name.
-        var (context, _) = CreateContext();
-
-        var action = new Throw(context) { Message = (Text)"checkout failed", Data = Data.Ok((Text)"order-123") };
-        var result = await action.Run();
-
-        var formatted = result.Error!.Format();
-        await Assert.That(formatted).Contains("checkout failed");
-        await Assert.That(formatted).Contains("order-123");
-    }
 }

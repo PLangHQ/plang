@@ -468,12 +468,15 @@ Error
   .Message, .Key, .StatusCode
   .Step, .Goal              execution location
   .CallFrames               full stack trace
-  .Variables                snapshot at time of error
-  .Category                 Application (<500) or Runtime (>=500)
+  .Variables                each variable's Data at the time of error (assert; every error under --debug)
   .FixSuggestion, .HelpfulLinks
 ```
 
 Error hierarchy: `Error` -> `ActionError`, `StepError`, `GoalError`, `ServiceError`, `ValidationError`, etc.
+
+An error is shown by plang: `/system/error/Show` renders the template for its status code
+(`os/system/error/400.txt` short, `500.txt` full) and writes it to the error channel. A failed top-level
+run is shown once by `App.Start`; the process prints `[Key] Message` only when that show itself failed.
 
 **Convention**: Match error mechanism to return type.
 - `Data` / `Data?` return -> `Data.FromError()`

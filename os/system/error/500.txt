@@ -1,0 +1,90 @@
+================== {{ error.Key }} ({{ error.StatusCode }}) ==================
+{%- if error.Step %}
+File: {{ error.Step.Goal.Path }}:{{ error.Step.LineNumber }}
+{%- elsif error.Goal %}
+File: {{ error.Goal.Path }}
+{%- endif %}
+Time: {{ error.CreatedUtc }}
+{%- if error.Step %}
+
+Step:
+    - {{ error.Step.Text }}
+{%- endif %}
+
+Reason:
+    {{ error.Message }}
+{%- if error.Data %}
+
+Data:
+    {{ error.Data }}
+{%- endif %}
+{%- if error.FixSuggestion %}
+
+Fix suggestion:
+    {{ error.FixSuggestion }}
+{%- endif %}
+{%- if error.HelpfulLinks %}
+
+Helpful links:
+    {{ error.HelpfulLinks }}
+{%- endif %}
+{%- if error.Details %}
+
+Details:
+{%- for detail in error.Details %}
+    {{ detail[0] }}: {{ detail[1] }}
+{%- endfor %}
+{%- endif %}
+{%- if error.Variables %}
+
+Variables:
+{%- for variable in error.Variables %}
+    %{{ variable[0] }}% = {{ variable[1] }}
+{%- endfor %}
+{%- endif %}
+{%- if error.CallFrames.size > 0 %}
+
+Call stack:
+{%- comment %} Consecutive frames on the same goal, module and step fold into one line with ×N
+    (recursion); a frame that holds errors never folds, so the failing frame stays visible. {% endcomment %}
+{%- assign previous = "" %}
+{%- assign count = 0 %}
+{%- for frame in error.CallFrames %}
+{%- capture key %}{{ frame.Action.Step.Goal.Path }}|{{ frame.Action.Module.Name }}|{{ frame.Action.Step.Index }}{% endcapture %}
+{%- if key == previous and frame.Errors.size == 0 %}
+{%- assign count = count | plus: 1 %}
+{%- else %}
+{%- if previous != "" %}
+    {{ name }}{% if count > 1 %} ×{{ count }}{% endif %} - {{ where }}
+{%- endif %}
+{%- capture name %}{{ frame.Action.Step.Goal.Name | default: frame.Action.Module.Name }}{% endcapture %}
+{%- capture where %}{{ frame.Action.Step.Goal.Path }}:{{ frame.Action.Step.LineNumber }}{% endcapture %}
+{%- assign count = 1 %}
+{%- assign previous = key %}
+{%- endif %}
+{%- if frame.Errors.size > 0 %}{% assign previous = "|failing|" %}{% endif %}
+{%- endfor %}
+    {{ name }}{% if count > 1 %} ×{{ count }}{% endif %} - {{ where }}
+{%- endif %}
+{%- if error.Params %}
+
+Parameters at dispatch:
+{%- for parameter in error.Params %}
+    {{ parameter.Name }}{% if parameter.DeclaredType %} ({{ parameter.DeclaredType }}){% endif %}
+        .pr value:  {{ parameter.PrValue }}{% if parameter.PrType %} [{{ parameter.PrType }}]{% endif %}
+        final:      {% if parameter.WasAccessed %}{{ parameter.FinalValue }}{% else %}(not accessed){% endif %}
+{%- endfor %}
+{%- endif %}
+{%- if error.Exception %}
+
+For C# developers:
+    {{ error.Exception }}
+{%- endif %}
+{%- for cause in error.list %}
+
+--- Error during error handling [{{ forloop.index }}] ---
+    {{ cause.Key }} ({{ cause.StatusCode }}): {{ cause.Message }}
+{%- if cause.Step %}
+    at {{ cause.Step.Goal.Path }}:{{ cause.Step.LineNumber }} - {{ cause.Step.Text }}
+{%- endif %}
+{%- endfor %}

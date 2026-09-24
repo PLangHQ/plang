@@ -32,14 +32,5 @@ public class ErrorBuryingReproTest
         await Assert.That(resolved.Error.list.Count).IsEqualTo(1);
         await Assert.That(resolved.Error.list[0].Key).IsEqualTo("TypeMismatch");
 
-        // Format() puts the NullReferenceException header at the very top,
-        // before any "Error during error handling" footer. If this ever
-        // flips, the user is back to reading the conversion scaffolding as
-        // the apparent bug.
-        var format = resolved.Error.Format();
-        var nreHeaderAt = format.IndexOf("NullReferenceException(500)", System.StringComparison.Ordinal);
-        var convHeaderAt = format.IndexOf("TypeMismatch(400)", System.StringComparison.Ordinal);
-        await Assert.That(nreHeaderAt).IsGreaterThanOrEqualTo(0);
-        await Assert.That(convHeaderAt).IsGreaterThan(nreHeaderAt);
     }
 }

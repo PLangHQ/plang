@@ -1,0 +1,105 @@
+{
+  "name": "Show",
+  "step": [
+    {
+      "index": 0,
+      "text": "render \"/system/error/%error.StatusCode%.txt\", error=%error%, write to %text%",
+      "lineNumber": 5,
+      "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error.",
+      "action": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "/system/error/%error.StatusCode%.txt"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "error",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%error%"
+                }
+              ]
+            }
+          ],
+          "modifier": []
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "modifier": []
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write %text% to error channel",
+      "lineNumber": 6,
+      "action": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%text%"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ],
+          "modifier": []
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Private",
+  "path": "/Show.goal",
+  "prPath": "/.build/show.pr",
+  "hash": "90a5571ac6d1107dfd41bd9bc63e184ef1c565342a9951b62cf9a9320a3261fe",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

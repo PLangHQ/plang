@@ -1,4 +1,3 @@
-using System.Text;
 using app.actor.context;
 
 namespace app.error;
@@ -9,8 +8,6 @@ namespace app.error;
 /// </summary>
 public class SettingsError : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Runtime;
-
     public string? TableName { get; init; }
     public string? KeyName { get; init; }
 
@@ -51,13 +48,5 @@ public class SettingsError : Error
             return ("Check file system permissions on the .db directory.", "PermissionDenied");
 
         return (null, "SettingsError");
-    }
-
-    protected override void FormatExtra(StringBuilder sb, string indent)
-    {
-        if (TableName != null)
-            sb.AppendLine($"{indent}    Table: {TableName}");
-        if (KeyName != null)
-            sb.AppendLine($"{indent}    Key: {KeyName}");
     }
 }

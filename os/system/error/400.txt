@@ -1,0 +1,10 @@
+{{ error.Key }} ({{ error.StatusCode }}): {{ error.Message }}
+{%- if error.Step %}
+  at {{ error.Step.Goal.Path }}:{{ error.Step.LineNumber }}
+    - {{ error.Step.Text }}
+{%- elsif error.Goal %}
+  in {{ error.Goal.Path }}
+{%- endif %}
+{%- if error.FixSuggestion %}
+  Fix: {{ error.FixSuggestion }}
+{%- endif %}

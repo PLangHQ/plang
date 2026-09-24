@@ -7,7 +7,6 @@ namespace app.error;
 /// </summary>
 public class AskError : Error
 {
-    public override ErrorCategory Category => ErrorCategory.Application;
 
     /// <summary>
     /// The DataSource table where the value belongs (e.g., "settings").
