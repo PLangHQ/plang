@@ -16,6 +16,27 @@ public class GroupModifiersTests
     }
 
     [Test]
+    public async Task GroupModifiers_AGraftedModifier_HasItsOwnProperties()
+    {
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
+        var actions = new StepActions
+        {
+            Make.Action("file", "read", ("Path", "a.txt")),
+            Make.Action("timeout", "after", ("ms", 5000)),
+        };
+
+        var step = new Step { Action = actions }; step.Nest(modules);
+
+        var action = step.Action[0];
+        var modifier = action.Modifier[0];
+        await Assert.That(modifier["ms"]).IsNotNull();
+        await Assert.That(ReferenceEquals(modifier.Property, action.Property)).IsFalse();
+        await Assert.That(ReferenceEquals(modifier.Default, action.Default)).IsFalse();
+        modifier.Property.Add(Make.Property(new Data("extra", 1, context: app.User.Context)));
+        await Assert.That(action["extra"]).IsNull();
+    }
+
+    [Test]
     public async Task GroupModifiers_NoModifiers_Unchanged()
     {
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;

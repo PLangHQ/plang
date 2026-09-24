@@ -3,7 +3,7 @@
 Step text: `foreach %sections%, call ParseSection`
 
 ```json
-{"module":"loop","name":"foreach","parameter":[{"name":"Collection","value":"%sections%"}]}
+{"module":"loop","name":"foreach","property":[{"name":"Collection","value":"%sections%"}]}
 ```
 
 Inside the called goal (`ParseSection`), `%item%` is the current element. `foreach %sections%, call ParseSection section=%item%` passes it under another name — `section=%item%` is an argument of the `goal.call`, not a `loop.foreach` property.

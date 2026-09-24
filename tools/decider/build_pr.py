@@ -150,7 +150,7 @@ def menu_for(goal, cat, folder=None):
     return menu, probs
 
 # A type whose value is not a scalar shows its shape on the menu line, where the model reads it.
-SHAPES = {'action': '{"module": "goal", "name": "call", "parameter": [{"name": "Name", "value": <goal>}, '
+SHAPES = {'action': '{"module": "goal", "name": "call", "property": [{"name": "Name", "value": <goal>}, '
                      '{"name": "Parameter", "value": [{"name": <argument>, "value": <value>}, ...]}]}'}
 
 def user_message(goal, menu):
@@ -194,7 +194,7 @@ def rows(raw, where):
     dict, or a list of single-key dicts, is accepted but RECORDED — the model drifting back to the
     older shape is something the prompt has to fix, not something to absorb silently."""
     if isinstance(raw, dict):
-        DEVIATIONS.append(f'{where}: parameter as a dict, not a list')
+        DEVIATIONS.append(f'{where}: property as a dict, not a list')
         return [{'name': k, 'value': v} for k, v in raw.items()]
     out = []
     for p in raw or []:
@@ -227,8 +227,10 @@ def pr_action(a, where=''):
         name = a['action']
     where = f'{where} {module}.{name}'
     props, _ = declared(module, name)
+    if 'parameter' in a and 'property' not in a:
+        DEVIATIONS.append(f'{where}: key "parameter", not "property"')
     params = []
-    for p in rows(a.get('parameter'), where):
+    for p in rows(a.get('property', a.get('parameter')), where):
         t = typed(p, (props.get(p['name']) or {}).get('type', 'item'), where)
         value = p.get('value')
         # An argument row (goal.call's Parameter) carries its own type, like any row.
@@ -237,13 +239,13 @@ def pr_action(a, where=''):
         # A held action (a callback slot) is program: it is written in the action's own shape.
         if t.get('name') == 'action' and isinstance(value, dict): value = pr_action(value, where)
         params.append({'name': p['name'], 'type': t, 'value': value})
-    out = {'module': module, 'name': name, 'parameter': params,
+    out = {'module': module, 'name': name, 'property': params,
            'modifier': [pr_action(m, where) for m in a.get('modifier') or []]}
     if a.get('recovery'): out['recovery'] = [pr_action(r, where) for r in a['recovery']]
     return out
 
 def pr_goal(goal, answer, rel):
-    """The answer is in the .pr's own keys — step, action, name, parameter, modifier, recovery. The
+    """The answer is in the .pr's own keys — step, action, name, property, modifier, recovery. The
     older plural keys are read but RECORDED, never silently absorbed."""
     if 'steps' in answer: DEVIATIONS.append(f'{goal["name"]}: answer key "steps", not "step"')
     by_index = {}

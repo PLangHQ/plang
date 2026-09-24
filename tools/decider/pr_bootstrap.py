@@ -54,7 +54,8 @@ def rn(d, old, new):
 def ren_action(a):
     a = dict(a)
     rn(a, "action", "name")
-    rn(a, "parameters", "parameter")
+    rn(a, "parameters", "property")
+    rn(a, "parameter", "property")
     rn(a, "defaults", "default")
     rn(a, "modifiers", "modifier")
     if "modifier" in a:

@@ -160,7 +160,7 @@ public sealed record @this(
         sb.AppendLine($"            var __d = __View<{InnerType}>(action, \"{ParamName}\", context);");
         sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d;");
         sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
-        sb.AppendLine($"            else if (__Frozen<{InnerType}>(action, \"{ParamName}\", context) is var __f && !await __f.IsEmpty()) {Local} = __f;");
+        sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is var __f && !await __f.IsEmpty()) {Local} = __f;");
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)

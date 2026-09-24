@@ -371,7 +371,7 @@ public static class @this
                 // The program holds properties, shared by every run — a run makes its own first Data
                 // from one, born with the running context. A plain slot takes the step's property,
                 // then the frozen default; a typed slot asks the step's (__View) and the frozen
-                // default (__Frozen) separately, so a setting can sit between them.
+                // default (__Default, action.Default's) separately, so a setting can sit between them.
                 private static global::app.data.@this __Copy(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name);
@@ -381,7 +381,7 @@ public static class @this
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
                     => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name).As<T>();
 
-                private static global::app.data.@this<T> __Frozen<T>(
+                private static global::app.data.@this<T> __Default<T>(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
                     => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name).As<T>();

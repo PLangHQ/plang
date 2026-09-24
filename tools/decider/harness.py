@@ -131,7 +131,7 @@ def goals(limit=None, seed=0, chosen=True):
             for mod in a.get('modifier') or a.get('modifiers') or []: yield from walk(mod)
             for child in a.get('child') or []:
                 for ca in child.get('action') or child.get('actions') or []: yield from walk(ca)
-            for p in a.get('parameter') or a.get('parameters') or []:
+            for p in a.get('property') or a.get('parameter') or a.get('parameters') or []:
                 v = p.get('value')
                 if isinstance(v, list):
                     for ra in v:

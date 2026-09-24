@@ -172,7 +172,7 @@ def label_params(step):
         n = pos[0]; pos[0] += 1
         # `defaults` are materialised into the .pr but are never written in the step — they are
         # what happens when nobody answers, so they are not a parameter question.
-        for p in a.get('parameter') or a.get('parameters') or []:
+        for p in a.get('property') or a.get('parameter') or a.get('parameters') or []:
             # `Type` is excluded: the .pr holds CLR names there (object, string, tstring), which
             # are not plang types and are a separate leak — not a parameter question.
             if p.get('name') == 'Type': continue
