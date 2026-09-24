@@ -937,7 +937,7 @@ public sealed class PersonItem : global::app.type.item.@this
     public string? Name { get; set; }
     public long Age { get; set; }
 
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         if (string.Equals(key, "Name", System.StringComparison.OrdinalIgnoreCase))
             Name = value?.ToString();

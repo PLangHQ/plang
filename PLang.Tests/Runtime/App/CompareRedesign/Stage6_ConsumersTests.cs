@@ -189,7 +189,7 @@ public class Stage6_ConsumersTests
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "llm", "code", "OpenAi.cs"));
         await Assert.That(src).DoesNotContain("ToRaw");
         await Assert.That(src).Contains("d.Entries");
-        await Assert.That(src).Contains("c.Enumerate()");
+        await Assert.That(src).Contains("c.Enumerate(");
     }
 
     [Test]

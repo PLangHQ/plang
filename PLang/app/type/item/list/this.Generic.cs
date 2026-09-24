@@ -23,11 +23,9 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// outside code tells the graph (run/wire/walk) or navigates it as values (the Data face,
     /// <c>Items(context)</c>), it never harvests the stored values. The read/parse seam stores
     /// the typed <typeparamref name="T"/> directly, so no context is needed to read them.</summary>
-    internal System.Collections.Generic.IReadOnlyList<T> Items()
+    internal System.Collections.Generic.IEnumerable<T> Items()
     {
-        var built = new System.Collections.Generic.List<T>(CountRaw);
-        foreach (var slot in Slots()) built.Add((T)(slot is global::app.data.@this d ? d.Peek() : slot)!);
-        return built;
+        foreach (var slot in Slots()) yield return (T)(slot is global::app.data.@this d ? d.Peek() : slot)!;
     }
 
     /// <summary>The typed item at a flattened index — INTERNAL, the engine positional face

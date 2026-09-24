@@ -14,9 +14,9 @@ public sealed partial class @this
         => Entries.Get(parent, key);
 
     /// <summary>A child write — sets one of this snapshot's entries (create or overwrite).</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        await Entries.Set(key, isIndex, value);
+        await Entries.Set(key, isIndex, value, context);
         return this;
     }
 }

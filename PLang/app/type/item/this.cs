@@ -169,14 +169,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// The member value opens its Data door, lowers ITSELF to the property type (<c>value.Clr</c> — the
     /// sanctioned crossing), and rides into the slot; returns THIS (mutate-in-place). Containers
     /// (<c>dict</c>/<c>list</c>) override with key/index writes; a value with no writable property for
-    /// <paramref name="key"/> throws. No context needed — reflection writes the slot directly.</para>
+    /// <paramref name="key"/> throws. The writer's <paramref name="context"/> rides along for a value
+    /// that builds its child (a foreign host, a step constructing its actions); reflection needs none.</para>
     /// (Distinct from <see cref="Write(global::app.channel.serializer.IWriter)"/>, which serializes.)
     /// </summary>
-    public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
+    public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        // Keep the Data binding — it carries the born-with Context (and the format value's kind).
-        var binding = value as global::app.data.@this;
-        if (binding != null) value = await binding.Value();
+        if (value is global::app.data.@this binding) value = await binding.Value();
         var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop == null || !prop.CanWrite)
@@ -187,10 +186,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             // entity names WHICH reader (list<action> → the "list" reader) and the element kind
             // ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
             // A value with no format to bridge (item.Read → null) keeps the Clr path.
-            var context = binding?.Context;
-            var entity = context?.App.Type[prop.PropertyType];
-            var reader = entity != null ? context!.App.Type.Reader.Typed(entity.Name, null) : null;
-            var read = reader != null ? iv.Read(reader, entity!.Kind?.Name, context!) : null;
+            var entity = context.App.Type[prop.PropertyType];
+            var reader = entity != null ? context.App.Type.Reader.Typed(entity.Name, null) : null;
+            var read = reader != null ? iv.Read(reader, entity!.Kind?.Name, context) : null;
             // The generic "list" reader produces a base list (its elements already read through their
             // own reader). A typed node slot (list<action>)
             // adopts those rows into ITS type: same rows, the declared container. No type-switch — any
@@ -198,7 +196,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             if (read is global::app.type.item.list.@this made && !prop.PropertyType.IsInstanceOfType(made)
                 && typeof(global::app.type.item.list.@this).IsAssignableFrom(prop.PropertyType))
                 read = (@this?)System.Activator.CreateInstance(prop.PropertyType, made);
-            value = read ?? iv.Clr(prop.PropertyType);
+            value = read ?? iv.Clr(prop.PropertyType, context);
         }
         prop.SetValue(this, value);
         return this;

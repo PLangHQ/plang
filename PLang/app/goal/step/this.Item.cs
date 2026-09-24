@@ -28,15 +28,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// own reader, so the wire shape lives in one place. Every other key falls to the reflected
     /// default.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
-        string key, bool isIndex, object? value)
+        string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         if (isIndex || !string.Equals(key, "action", System.StringComparison.OrdinalIgnoreCase))
-            return await base.Set(key, isIndex, value);
+            return await base.Set(key, isIndex, value, context);
 
         var binding = value as global::app.data.@this;
         var incoming = binding != null ? await binding.Value() : value as global::app.type.item.@this;
-        var context = binding?.Context
-            ?? throw new System.NotSupportedException("writing a step's actions needs the write's context");
 
         // The reader is born holding THIS step, so every action it makes is born holding it too —
         // the value bridges its own format, the reader carries the parent. Nothing is stamped.

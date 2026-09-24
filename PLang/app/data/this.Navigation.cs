@@ -131,7 +131,7 @@ public partial class @this
         if (target is null)
             return _context?.NotFound(key) ?? parent;
 
-        var written = await target.Set(key, isIndex, value);
+        var written = await target.Set(key, isIndex, value, _context);
         if (!ReferenceEquals(written, parent.Peek())) parent.SetValue(written);
         return parent;
     }

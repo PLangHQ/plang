@@ -250,7 +250,7 @@ public sealed partial class @this
 
         // Exact-text match only — robust to reorder/insert/delete; a text change drops the prior
         // mapping and the LLM rebuilds that step fresh. Sets PriorText so the builder can emit @known.
-        var prior = existing.Step.Items();
+        var prior = existing.Step.Items().ToList();
         if (prior.Count > 0)
         {
             var consumed = new HashSet<int>();

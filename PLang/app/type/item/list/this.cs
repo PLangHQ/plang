@@ -483,7 +483,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A list owns its child write — replace the element at the index. The key is already
     /// the resolved literal (data.Set resolved any <c>[%i%]</c> to its value); an out-of-range or
     /// non-numeric key is an authoring error on a list, thrown loud (never silently reshaped to a dict).</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
     {
         if (int.TryParse(key, out var idx) && idx >= 0 && idx < CountRaw)
         {

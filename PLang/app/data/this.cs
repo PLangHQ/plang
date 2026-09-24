@@ -881,13 +881,25 @@ public class @this<T> : @this
 /// </summary>
 public class DynamicData : @this
 {
+    // The cell this Data holds — the computed stores no context; this Data passes its own each
+    // time it asks.
+    private readonly global::app.type.item.computed _cell;
+
     public DynamicData(string name, Func<object?> valueFactory, actor.context.@this context, type? type = null)
         // The declared type rides on the computed instance itself (its label),
         // not through the entry judgement — a computed answers fresh and must
-        // stay reachable as the instance. Born WITH context — the computed lifts
-        // its factory result through it, no post-construction stamp.
-        : base(name, new global::app.type.item.computed(valueFactory, context, type?.IsNull == false ? type.Name : null, type?.Kind?.Name), context: context)
+        // stay reachable as the instance.
+        : this(name, new global::app.type.item.computed(valueFactory, type?.IsNull == false ? type.Name : null, type?.Kind?.Name), context)
     {
     }
+
+    private DynamicData(string name, global::app.type.item.computed cell, actor.context.@this context)
+        : base(name, cell, context: context)
+        => _cell = cell;
+
+    /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
+    public override global::app.type.item.@this Peek() => _cell.Compute(Context);
+
+    public override bool ToBoolean() => IsInitialized && Peek().IsTruthy();
 }
 

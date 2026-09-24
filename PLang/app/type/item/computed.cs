@@ -3,27 +3,21 @@ namespace app.type.item;
 /// <summary>
 /// A value computed fresh at every use — system variables like <c>%!Now%</c>
 /// whose truth changes per read. The factory's result is lifted to its item
-/// form on each ask; <see cref="Cacheable"/> is false so the holding
-/// <c>Data</c> never rebinds — there is nothing to keep, by design (the same
-/// rule that keeps a template render from being stored).
+/// form on each ask, with the asker's context; <see cref="Cacheable"/> is false so
+/// the holding <c>Data</c> never rebinds — there is nothing to keep, by design (the
+/// same rule that keeps a template render from being stored). Stores no context: its
+/// holder (<c>DynamicData</c>) passes its own.
 /// </summary>
-public sealed class computed : @this, module.IContext
+public sealed class computed : @this
 {
     private readonly System.Func<object?> _factory;
     private readonly string? _declared;
     private readonly string? _declaredKind;
 
-    /// <summary>Stamped by the holding <c>Data</c> when its Context is set, so the
-    /// computation's result lifts with context — a host object the factory returns
-    /// (<c>%!app%</c>) can then resolve its registry name (its kind) on mint.</summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this Context { get; set; } = null!;
-
-    public computed(System.Func<object?> factory, actor.context.@this context,
+    public computed(System.Func<object?> factory,
         string? declaredTypeName = null, string? declaredKind = null)
     {
         _factory = factory ?? throw new System.ArgumentNullException(nameof(factory));
-        Context = context ?? throw new System.ArgumentNullException(nameof(context));
         _declared = declaredTypeName;
         _declaredKind = declaredKind;
     }
@@ -39,31 +33,37 @@ public sealed class computed : @this, module.IContext
     /// <summary>Never final — the door computes a fresh answer on every read.</summary>
     internal override bool IsFinal => false;
 
+    /// <summary>The current answer — the factory's result lifted to its item form with the
+    /// asker's context (a host the factory returns, <c>%!app%</c>, resolves its kind through it).</summary>
+    internal @this Compute(actor.context.@this context)
+        => global::app.type.item.@this.Create(_factory(), context);
+
     public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
-        => System.Threading.Tasks.ValueTask.FromResult(Compute());
+        => System.Threading.Tasks.ValueTask.FromResult(Compute(data.Context));
 
     /// <summary>A computed materialises itself (runs the factory) before navigating —
     /// the result (e.g. a datetime) then navigates by its own rules.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => await Compute().Get(parent, key);
+        => await Compute(parent.Context).Get(parent, key);
 
-    /// <summary>Peek computes too — "in memory now" for a computed value IS the
-    /// current computation (no I/O, no parse; the factory is a pure read).</summary>
-    public override object? Peek() => Compute().Peek();
+    /// <summary>Writes the current answer, lifted with the writer's context.</summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+        => Compute(context ?? throw Contextless()).Output(writer, mode, context);
 
-    /// <summary>Shared by reference — a computed cell recomputes fresh at each
-    /// use, so there is nothing to copy, and its Context (held to lift the
-    /// result with kind resolution) points back into the App graph; deep-cloning
-    /// would walk the whole runtime and overflow.</summary>
+    /// <summary>"In memory now" for a computed IS the current computation, which needs the
+    /// asker's context to lift — its holder answers it (<c>DynamicData.Peek</c>).</summary>
+    public override object? Peek() => throw Contextless();
+
+    /// <summary>Shared by reference — a computed cell recomputes fresh at each use, so there
+    /// is nothing to copy.</summary>
     protected internal override @this Clone() => this;
 
-    public override bool IsTruthy() => Compute().IsTruthy();
-    public override string ToString() => Compute().ToString() ?? "";
+    public override bool IsTruthy() => throw Contextless();
+    public override string ToString() => $"(computed {Type.Name})";
 
-    private @this Compute()
-    {
-        var raw = _factory();
-        return global::app.type.item.@this.Create(raw, Context);
-    }
+    private static System.InvalidOperationException Contextless() => new(
+        "a computed value answers only with the asker's context — read it through its Data.");
 }

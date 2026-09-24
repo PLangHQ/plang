@@ -8,7 +8,7 @@ namespace app.type.clr;
 /// graduates to its own item subclass only when a generic answer stops being the true
 /// answer for it.
 /// </summary>
-public class @this : global::app.type.item.@this, global::app.module.IContext, global::app.type.item.ICreate<@this>
+public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>The clr entity's construction face — wrap ANY foreign host in a carrier. A CLR type
     /// no value type owns IS clr(T), so this never declines for a real host; it is terminal, which
@@ -19,9 +19,6 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
         => raw is null ? null : new @this(raw, ctx!);
 
     public object Value { get; }
-
-    [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.actor.context.@this Context { get; set; } = null!;
 
     /// <summary>
     /// The kind the carrier navigates AS — born at construction: the stamp from whoever
@@ -37,14 +34,14 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.kind.@this Kind { get; }
 
-    /// <summary>Born WITH context — the carrier navigates/serializes through it (child
-    /// values, type resolution). A clr always wraps a host for a wired scope. A producer
-    /// may stamp a <paramref name="kind"/> when it knows the host's format; otherwise the
-    /// kind system resolves it from the host's CLR type at birth.</summary>
+    /// <summary>A producer may stamp a <paramref name="kind"/> when it knows the host's format;
+    /// otherwise the kind system resolves it from the host's CLR type at birth, through the
+    /// creator's <paramref name="context"/> — used there and not kept. Every later use (navigate,
+    /// write, enumerate, lower) takes the caller's context.</summary>
     public @this(object value, global::app.actor.context.@this context, global::app.type.kind.@this? kind = null)
     {
         Value = value ?? throw new System.ArgumentNullException(nameof(value));
-        Context = context ?? throw new System.ArgumentNullException(nameof(context));
+        if (context is null) throw new System.ArgumentNullException(nameof(context));
         // Nested Data is not a shape: a Data never rides as a value (Lift forbids it). The
         // carrier is for foreign host objects only — carrying a Data here is courier debt.
         if (value is global::app.data.@this)
@@ -54,7 +51,7 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
         // Born kind: an explicit stamp, else the kind that CLAIMS this CLR form (json → its
         // JsonElement, a list → IList, …), else the `*` reflection kind. The one door answers
         // all three (exact → assignable → catch-all) and never null.
-        Kind = kind ?? Context.App.Type.Kind[value.GetType()];
+        Kind = kind ?? context.App.Type.Kind[value.GetType()];
     }
 
     /// <summary>
@@ -102,30 +99,30 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
     /// segments stay on the generic per-hop walk.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, global::app.variable.path.@this path)
-        => Kind.Get(Value, path, parent, Context);
+        => Kind.Get(Value, path, parent, parent.Context);
 
     /// <summary>The format→type read door — the carrier hands its <see cref="Kind"/> its own content,
     /// the declared type's reader, and the element kind. The kind bridges the format (json → a json
-    /// reader); the type reads its own structure. Born-with-context, so the carrier's own
-    /// <see cref="Context"/> drives.</summary>
+    /// reader); the type reads its own structure, with the reader's context.</summary>
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
                                    global::app.actor.context.@this context)
-        => Kind.Read(Value, reader, kind, Context);
+        => Kind.Read(Value, reader, kind, context);
 
     /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind
     /// reflects a settable property, the list kind writes an index). The kind returns the value
     /// carried back as an item; a host mutates in place, so identity holds.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         // A clr host takes a CONCRETE child (a typed property / element), never a lazy Data — so a
         // Data value opens its own door to its value here. (dict/list hold Data lazily; a host can't.)
         if (value is global::app.data.@this dv) value = await dv.Value();
-        return await Kind.Set(Value, key, isIndex, value, Context);
+        return await Kind.Set(Value, key, isIndex, value, context);
     }
 
-    /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>.</summary>
-    public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
-        => Kind.Enumerate(Value, Context);
+    /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>, handed
+    /// out with the caller's context.</summary>
+    public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(global::app.actor.context.@this context)
+        => Kind.Enumerate(Value, context);
 
     /// <summary>Iterates as (key, value) pairs — the carrier delegates enumeration to its
     /// <see cref="Kind"/> (json array elements / object members), pairing each with its key
@@ -134,24 +131,31 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
     public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
         EnumerateItems(global::app.actor.context.@this? context)
     {
-        var ctx = context ?? Context;
+        var ctx = context ?? throw Contextless();
         int i = 0;
-        foreach (var element in Kind.Enumerate(Value, ctx))
+        foreach (var item in Kind.Enumerate(Value, ctx))
         {
-            var key = string.IsNullOrEmpty(element.Name)
+            var key = string.IsNullOrEmpty(item.Name)
                 ? new global::app.data.@this("", i, context: ctx)
-                : new global::app.data.@this("", element.Name, context: ctx);
+                : new global::app.data.@this("", item.Name, context: ctx);
             i++;
-            yield return (key, element);
+            yield return (key, item);
         }
     }
 
     // The kind owns the lower: identity is a no-op here; otherwise the kind builds (json →
     // reflection Read) or declares it can't (terminal). No shared ClrConvert — clr wraps a
-    // JsonElement or a POCO, neither IConvertible, so there was never a ChangeType to do.
-    internal override object? Clr(System.Type target)
+    // JsonElement or a POCO, neither IConvertible, so there was never a ChangeType to do. The kind's
+    // build needs the asking Data's context (a json → record read resolves paths and types).
+    internal override object? Clr(System.Type target, global::app.actor.context.@this? context)
         => target.IsInstanceOfType(Value) ? Value
-         : Kind.Clr(Value, target, Context);
+         : Kind.Clr(Value, target, context ?? throw Contextless());
+
+    internal override object? Clr(System.Type target)
+        => target.IsInstanceOfType(Value) ? Value : throw Contextless();
+
+    private static System.InvalidOperationException Contextless() => new(
+        "a clr carrier builds another shape only with the caller's context — ask through its Data.");
 
     public override string ToString() => Value.ToString() ?? "";
     public override bool Equals(object? obj) =>
@@ -179,6 +183,6 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
             await serializer.Output(this, writer, mode, context);
             return;
         }
-        await Kind.Output(Value, writer, mode, context ?? Context);
+        await Kind.Output(Value, writer, mode, context);
     }
 }

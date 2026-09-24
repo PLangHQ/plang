@@ -100,56 +100,6 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@null.@this ? NilValue.Instance : null);
 
-        // `formal` filter: the value writes ITSELF the way the catalog writes it — a scalar
-        // bare (hello, 42, true), a dict/list as compact JSON — through the text channel's
-        // writer (bare-at-top / json-nested). Templates use it for the catalog's
-        // "module.action Name([type] value)" shape; pure Liquid can't JSON-render a structured
-        // value, so the value owns that render (converter-free — no STJ, no [JsonConverter]).
-        // The bound value arrives as a native view (unwrap to its backing), a Fluid dict-wrapper
-        // (Fluid re-wraps an IDictionary — walk it to an object), or a raw scalar/item.
-        options.Filters.AddFilter("formal", (input, args, context) =>
-        {
-            using var ms = new System.IO.MemoryStream();
-            var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
-            // Fluid dismantles a bound value into its own wrappers/views at every level, so the
-            // filter bridges the Fluid shape to the writer recursively: a native view or plang
-            // container writes itself; a Fluid dict-wrapper / array is walked (its entries may be
-            // more wrappers); a scalar/leaf rides the writer directly (bare at top, json nested).
-            void Emit(object? v)
-            {
-                switch (v)
-                {
-                    case FluidValue fv: Emit(fv.ToObjectValue()); return;
-                    case NativeDictView dv: Emit(dv.Native); return;
-                    case NativeListView lv: Emit(lv.Native); return;
-                    case global::app.type.item.dict.@this pd:
-                        w.BeginObject();
-                        foreach (var e in pd.Entries(action.Context)) { w.Name(e.Name); Emit(e.Peek()); }
-                        w.EndObject();
-                        return;
-                    case global::app.type.item.list.@this pl:
-                        w.BeginArray(pl.CountRaw);
-                        foreach (var it in pl.Items(action.Context)) Emit(it.Peek());
-                        w.EndArray();
-                        return;
-                    case IFluidIndexable idx:
-                        w.BeginObject();
-                        foreach (var key in idx.Keys) { idx.TryGetValue(key, out var fx); w.Name(key); Emit(fx); }
-                        w.EndObject();
-                        return;
-                    case string s: w.String(s); return;
-                    case System.Collections.IEnumerable e:
-                        w.BeginArray(-1);
-                        foreach (var it in e) Emit(it);
-                        w.EndArray();
-                        return;
-                    default: w.Value(v); return;
-                }
-            }
-            Emit(input.ToObjectValue());
-            return new StringValue(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
-        });
-
         // `store` filter: embed a compiled program value (a step's actions, a goal) as its
         // EXACT .pr wire — the value drives its OWN writer in Store view, %refs% kept literal.
         // The build feedback render shows the LLM the real compiled shape without executing it;
@@ -308,7 +258,7 @@ public class Fluid : ITemplate
     /// </summary>
     private sealed class NativeDictView(app.type.item.dict.@this d, global::app.actor.context.@this context) : IDictionary<string, object?>
     {
-        // The backing native — the `formal` filter reaches the value itself and drives its writer.
+        // The backing native — the `store` filter reaches the value itself and drives its writer.
         internal app.type.item.dict.@this Native => d;
 
         public object? this[string key]
@@ -354,7 +304,7 @@ public class Fluid : ITemplate
     /// </summary>
     private sealed class NativeListView(app.type.item.list.@this l, global::app.actor.context.@this context) : IList<object?>
     {
-        // The backing native — the `formal` filter reaches the value itself (see NativeDictView.Native).
+        // The backing native — the `store` filter reaches the value itself (see NativeDictView.Native).
         internal app.type.item.list.@this Native => l;
 
         public object? this[int index]

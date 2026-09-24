@@ -991,7 +991,7 @@ public sealed class OpenAi : ILlm
         System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
         {
             global::app.type.item.dict.@this d => d.Entries(cached.Context),
-            global::app.type.clr.@this c => c.Enumerate(),
+            global::app.type.clr.@this c => c.Enumerate(cached.Context),
             _ => null
         };
         if (entries != null)
