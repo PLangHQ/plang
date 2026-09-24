@@ -65,3 +65,11 @@ A body written as an expression (recovery actions stored in a parameter) and a r
 ```
 **Prose** (Description, Notes, Examples) lives in `os/system/modules/<module>/<action>.{description,notes,examples}.md`, plus one `module.description.md` per module. The owners read it as their own members — `module.Description`, `action.Description` / `Notes` / `Examples` — lazy file handles built from the module's `Folder` (the one place the folder rule lives); an action reaches it through the module it was born with. An absent file is falsy (`{% if a.Notes %}` checks presence without reading). No loader class, no orphan scan. `[Description]`/`[ModuleDescription]`/`[Example]` do not exist on action handlers — don't add them back.
 ```
+
+## architect — goal-graph-singular — 2026-09-24
+**Target:** /CLAUDE.md (Runtime2 Conventions)
+**Why:** Ingi stated a general rule while ruling on `variable.set` / `is` throwing `KeyNotFoundException` for an unknown type name: developer-caused problems must be plang errors, and exceptions are only for the unexpected. A registry door (`app.Type[name]`) threw on a miss and the exception escaped a handler.
+**Proposed change:**
+```
+- **Errors, not exceptions, for what the developer causes.** An unknown name, a typo, a missing file or a bad value comes back as a plang error (`context.Error(new ServiceError(..., key, 400))`). An exception is only for something the runtime did not expect. A caller holding a developer-supplied name asks the registry first (`app.Type.Contains(name)`) instead of letting an indexer throw.
+```
