@@ -93,23 +93,17 @@ public class Error : global::app.type.item.@this, IError
     /// common fields and before <c>errorChain</c>. Base errors have none.</summary>
     protected virtual void WriteSpecific(global::app.channel.serializer.IWriter writer) { }
 
-    /// <summary>
-    /// Back-reference to the App that observed this error. Set by <see cref="@this.Push"/>
-    /// when the error enters scope. Read by the lazy <see cref="Callback"/> property to
-    /// invoke <c>app.Snapshot()</c> for an ErrorCallback materialisation.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    internal global::app.@this App { get; set; } = null!;
-
     private global::app.data.@this<global::app.snapshot.@this>? _callback;
 
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
-    /// <c>app.Snapshot(this)</c> — the THROW-TIME snapshot: CallStack from this error's
-    /// <see cref="CallFrames"/> (the live stack has unwound past the failing action by
-    /// handler time) and variables via <c>SnapshotAt(this)</c>. Wrapped directly as
-    /// <c>Data&lt;Snapshot&gt;</c>; resume goes through <see cref="app.snapshot.@this.Resume"/>,
-    /// same path as ask-resume. Cached per Error instance — reading twice returns the same Data.
+    /// <c>app.Snapshot(this)</c> on the App the error's own <see cref="Context"/> belongs to — the
+    /// THROW-TIME snapshot: CallStack from this error's <see cref="CallFrames"/> (the live stack has
+    /// unwound past the failing action by handler time) and variables via <c>SnapshotAt(this)</c>.
+    /// Wrapped directly as <c>Data&lt;Snapshot&gt;</c>; resume goes through
+    /// <see cref="app.snapshot.@this.Resume"/>, same path as ask-resume. Cached per Error instance —
+    /// reading twice returns the same Data. An error with no context was not raised inside a run:
+    /// there is nothing to resume, so it has no callback — a <c>NoCallback</c> error, not a throw.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.data.@this<global::app.snapshot.@this> Callback
@@ -117,11 +111,11 @@ public class Error : global::app.type.item.@this, IError
         get
         {
             if (_callback != null) return _callback;
-            if (App == null)
-                throw new InvalidOperationException(
-                    "Error.Callback requires App reference; ensure the error went through Errors.Push.");
-            var snap = App.Snapshot(this, Context ?? App.User.Context);
-            _callback = App.User.Context.Ok<global::app.snapshot.@this>(snap);
+            if (Context == null)
+                return global::app.data.@this<global::app.snapshot.@this>.FromError(new Error(
+                    $"error '{Key}' was not raised inside a run, so it has no callback to resume.", "NoCallback", 400));
+            var snap = Context.App.Snapshot(this, Context);
+            _callback = Context.Ok<global::app.snapshot.@this>(snap);
             _callback.Snapshot = snap;
             return _callback;
         }
