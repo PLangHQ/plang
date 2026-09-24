@@ -1,63 +1,92 @@
 # An action's properties hold their values — the program holds no Data
 
-With Ingi, 2026-09-24. **Draft. NOT for coder yet: its own plan, right after remove-context lands (Ingi).** Until then, remove-context step 1 has the `.pr` reader create an action's property `Data` without a context, on purpose (`data/reader/this.cs:137`). That's today's behaviour made explicit, since the old list stamp wiped it by accident. This change removes it.
+Designed with Ingi, 2026-09-24. **Written, not yet released: waiting for Ingi's go and one open question (the `.pr` key, below).** Follows remove-context (steps 1-6, landed at `c626beea9`).
 
-Cost (coder's inventory, `coder/to-architect-parameter-rows-inventory.md`, `d10cb4b04`): about 20 production places plus two test helpers (`Make.Action` ×107, `TestAction.Create` ×69), 34 direct test lines. No `.pr` of 1,620 carries a `"properties"` bag on a value. It also covers: two Build hooks that change the program's list (goal.call's `SetValue`, variable.set's `Add`); grafting a modifier shares the action's list by reference (`goal/step/this.cs:88`, `Parameter = a.Parameter`); and the binding-order change in 8.
-
-**Vocabulary (Ingi):** an action is a class, and a class has **properties**. The `.pr` holds an action's properties, and each maps to an action property (`goal/step/action/property/this.cs`). The word "parameter" is not used. The code and the `.pr` still say it in three places, and all three become "property": the `.pr` key `"parameter": [...]` (read at `goal/step/action/serializer/Reader.cs:58`), `action.Parameter`, and `goal/step/action/parameter/list`.
+> **You (coder) own this.** The rules are settled with Ingi. Shapes, names not fixed here, and the commit split are yours; each commit green. Code in this doc is direction; NEW marks what does not exist.
 
 ## Why
 
-Found by coder in remove-context step 1. The `.pr` reader creates each of an action's properties as a `Data` with the loading actor's context (`data/reader/this.cs:137`, `new Data(name, value, context: ctx.Context)`). Until now that context was wiped **by accident**: adding the `Data` to the action's list stamped the list's `null` context onto it (`list.Add`, `item.Context = _context`). Step 1 removes that stamp, so the `Data` would keep the loader's context. That's a stale context on the shared program, which is exactly what remove-context removes.
+The program (`.pr`, loaded once, shared by every run of every actor) still holds `Data`: each action's values are `Data` in `action.Parameter` / `action.Default`, born by the `.pr` reader (`data/reader/this.cs:137`). A `Data` carries a context, and the shared program must hold none. Since remove-context step 1 that `Data` is created **without** a context, on purpose (step 1's explicit exception). That is the only place left where a `Data` has no context, and `Data.Context` must not be nullable (Ingi).
 
-Making that `Data`'s context null was rejected (Ingi): `Data.Context` must not become nullable. It already is null in practice for some `Data`, hidden by `!` (`data/this.cs:229`, `_context = context ?? parent?._context!`), and that's a problem to remove, not to extend.
+**Fix: the program holds no `Data`.** An action is a class, and a class has **properties** (Ingi). An action's property holds its value, raw as loaded. The run creates the first `Data` from it, with the run's context.
 
-## Settled with Ingi
+## Vocabulary (Ingi)
 
-**1. The program holds no `Data`.** Every `Data` is created by a run, with that run's context.
+"Parameter" is not used. The `.pr` holds an action's properties, and each maps to an action property, `goal/step/action/property/this.cs`. In code, `action.Parameter` and `goal/step/action/parameter/list` become the action's properties. (For the `.pr` key `"parameter"`, see the open question.)
 
-**2. An action's property holds its value.** Today each action object has two lists about the same properties, matched only by name. `action.Property` (`goal/step/action/this.Schema.cs:43-44`, `_properties ??= new(Handler, Module.App.Type)`) holds the rules, reflected from the handler class per action object and cached. The other list holds the values from the `.pr`, as `Data`. They are two halves of one property on one action, so they become one object:
+## The design (settled with Ingi)
 
-```
-action.Property["Path"]  →  Name: Path, Type: path, Value: "file.txt" (raw, as loaded, no context)
-```
+1. **One `property` class, two sources, each fills what it knows.**
+   - **From the `.pr`** (a program action): `Name`, `Type` (the type the step gave, possibly narrower than declared), `Value` (the raw item as loaded: a `wire`/`source`, or an eager held action/goal.call; never loaded here), the `"properties"` bag (supported; no `.pr` of 1,620 uses it today), and whether the **step set it** or the **build froze it as a default**. Filled by the reader's own field cases (`goal/step/action/serializer/Reader.cs:119-138`). No reflection at load.
+   - **From the handler class** (a catalog action, `module[actionName]`, `module/this.cs:79-80`): `Name`, the declared `Type`, `Nullable`, and the `[Default]` value. Reflected as today (`property/this.cs:19-39`).
+2. **A program action holds only the properties its `.pr` holds** (Ingi, option (a)): the ones its step set, plus the defaults the build froze. The rules (required, declared type, default) come from its catalog twin, `Module[Name].Property`, when the builder or validation ask. The per-program-action reflection at `goal/step/action/this.Schema.cs:43-44` stops: a program action's `Property` is its `.pr`'s; a catalog action's `Property` is its class's.
+3. **Defaults stay frozen in the `.pr`** (Ingi, determinism). The build writes the class's `[Default]` for every property the step didn't set (`module/action/build/code/Default.cs:263-270`). A built app runs the same on a later runtime that changes a default.
+4. **The binding order** (Ingi):
+   ```
+   step value → setting → frozen default (.pr) → [Default] (runtime; only for a .pr without one)
+   ```
+   An explicit setting wins over a frozen default (`set %!http.request.TimeoutInSec% = 5` applies to a built step whose `.pr` froze `30`); a runtime change of `[Default]` never does. Today's order is different: the generated binding asks `action[name]` (set ?? frozen) first and the setting only when that's empty (`Emission/Property/Data/this.cs:158-160`). So a property knows whether its step set it or the build froze it.
+5. **The run's `Data` is the first `Data`.** The generator's door becomes, in direction:
+   ```csharp
+   var p = action[name];                                        // the property (set ones; the order above decides)
+   new Data(p.Name, p.Value, context: context) { … bag … }      // the run's copy, born with the run's context
+   ```
+   (today `action?[name]?.Copy(context)` / `.As<T>(context)`, `Emission/Action/this.cs:374-381`).
+6. **`IsVariable` on `property` goes** (`property/this.cs:33, :61`, no reader). Not to be confused with the value's `data.IsVariable` (`data/this.cs:167`), which stays.
+7. **The synthetic `channel` property** (`property/list/this.cs:57-58`) is unchanged: a property whose declaration is written by hand.
 
-**3. It lives at `goal/step/action/property/this.cs`** (Ingi).
+## What changes, by area (from coder's inventory, `coder/to-architect-parameter-rows-inventory.md`)
 
-**4. One class, two sources, each fills what it knows:**
-- **From the `.pr`**, in the reader's own field cases (`goal/step/action/serializer/Reader.cs:119-138`): `name` → `Name`, `type` → `Type` (the type the step gave, possibly narrower than the class declares), `value` → `Value` (the raw `wire`/`source`, never loaded here). No reflection at load.
-- **From the handler class**, reflected when the builder, validation or the menu ask (`goal/step/action/property/this.cs:19-39`): `Name`, the declared `Type`, `Nullable`, `Default`.
+- **`.pr` reader**: `goal/step/action/serializer/Reader.cs:61, :65, :68, :131-132` build properties, not `Data`. The `Data` reader's context-less row door (step 1's exception, `data/reader/this.cs:137` path) goes.
+- **`.pr` writer**: `goal/step/action/this.Item.cs:53-57` writes the properties back. The `.pr` file format is unchanged by this plan: round-trip byte-identical.
+- **Selection / generator**: `action[name]` (`goal/step/action/this.cs:141-142`) returns the property; `__Copy` / `__View` (`Emission/Action/this.cs:374-381`), the channel binding (`:317`), the null guards (`:178-185, :201-208`) and `SnapshotParams` (`Emission/Property/Data/this.cs:215-216`) read properties; the binding order (4).
+- **Builder**: the default pass (`build/code/Default.cs:267-269`); goal.call's Build (`module/action/goal/call.cs:51-53, :70-72`, today `SetValue` on the program's `Data`) and variable.set's Build (`module/action/variable/set.cs:81-89`, today `Parameter.Add`) change the action's properties; that's building the program, which is allowed at build. The file.read (`file/read.cs:120`), http (`http/HttpBuildHelpers.cs:16`) and llm.query (`llm/query.cs:117, :124`) Build hooks and the action's Build/Callee (`this.Build.cs:46-47`, `this.Callee.cs:19-20`) read property values.
+- **Validation** (`goal/step/action/this.Validate.cs:40-46`): compares the program action's properties with its catalog twin's (a required one missing; a name the class doesn't declare).
+- **Graft typing** (`goal/step/this.cs:88`): a grafted modifier today shares the action's list by reference (`Parameter = a.Parameter`). It gets its own properties; no two actions share one list.
+- **mock/intercept** (`module/action/mock/intercept.cs:87-117`) and **debug** (`module/action/debug/this.cs:289-294, :548-550`) read property values.
+- **Tests**: the two builders (`Make.Action` ×107, `TestAction.Create` ×69) build properties; the 34 direct lines in 15 files follow.
+- **`module/list/this.cs:173` `GetDefaults`** (verb+noun on the registry): the default pass reads the defaults off the catalog action's properties instead; `GetDefaults` goes.
 
-**5. An action holds only the properties its step set (Ingi: option (a)).** For `read file.txt`, the `file.read` class declares `Path` (path, required) and `ResolveVariables` (bool, default false). The step sets only `Path`, so the action holds `Path = "file.txt"`. When the builder or validation need the rules (is `Path` required, what's the default), they ask the handler class, as today. At run time nothing else is needed: the generator binds by name, and a property the step didn't set falls to its setting and `[Default]` in generated code. A `.pr` name the class doesn't declare is caught by validation at build.
+## Order — each commit green; report after each
 
-**6. The run's `Data` is the first `Data`.** `action[name]` returns the property. The generator creates the run's copy from it with the run's context, through the existing item constructor (`data/this.cs:272-283`):
+Your split; one suggestion:
+1. `property` takes a value (Value, the bag, set-or-frozen); the reader builds and the writer writes properties; `action[name]` returns a property; validation against the catalog twin; `IsVariable` goes; test builders.
+2. The generator: the run's `Data` from the property; the binding order.
+3. Builder hooks, the default pass (`GetDefaults` goes), graft typing, mock/intercept, debug.
+4. Removals: `action.Parameter`, `parameter/list`, the data reader's context-less row door, step 1's `parameter.list` no-context enumeration, per-program-action reflection.
 
-```csharp
-var p = action[name];
-new Data(p.Name, p.Value, context: context)        // today: action?[name]?.Copy(context) (Emission/Action/this.cs:374-381)
-```
+## Tests (red first where they aren't red already)
 
-So the shared program holds no context, and `Data.Context` is never null for this reason.
+1. **No Data in the program:** after loading a `.pr`, no action holds a `Data` (reflection over an action's properties); two actors running one goal each get a run `Data` born with their own context.
+2. **A setting beats a frozen default:** `set %!http.request.TimeoutInSec% = 5`, then a built `http.request` whose `.pr` froze `30` uses 5. A step-set value beats the setting.
+3. **A frozen default beats a changed `[Default]`:** a test action whose `.pr` froze one default and whose class declares another uses the frozen one.
+4. **Round trip:** real `.pr` files read then written back are byte-identical.
+5. **Validation:** a `.pr` property the class doesn't declare fails the build; a missing required one fails.
+6. **Graft:** a grafted modifier's properties are its own; changing one doesn't change the other.
+7. **Build hooks:** goal.call and variable.set produce the right properties.
+8. `SharedRow_ReadDirectly_FailsWithNamedError` changes: there is no program `Data` to read; the equivalent is "a property's value can only be read through a run's `Data`".
 
-**7. Defaults stay in the `.pr`, frozen at build (Ingi).** The builder writes the class's `[Default]` for every property the step didn't set into the `.pr` (`module/action/build/code/Default.cs:263-270`, via `module/list/this.cs:173` `GetDefaults`). It is **not a copy**: it's the default as it was when the app was built. If a later runtime changes a default (say `ResolveVariables` becomes `true`), a built app still runs the same. That's determinism. So the action holds what its `.pr` holds: the properties its step set, plus the defaults the build froze. Both come from the `.pr`; both are properties of the action.
+## Demolition
 
-**8. The order: step value → setting → frozen default → `[Default]` (Ingi).** Two different things are kept apart:
-- **The runtime changes its own default** (a new plang version makes `TimeoutInSec` 60). A built app must not notice, and the frozen default protects that.
-- **You set a value on purpose** (`%!http.request.TimeoutInSec%` = 5 at execution). That's an explicit choice, and it wins.
+- `action.Parameter`; `goal/step/action/parameter/list`; the `Data` reader's context-less row door; step 1's `parameter.list` enumeration without a context.
+- The per-program-action reflection (`goal/step/action/this.Schema.cs:43-44` on a program action).
+- `property.IsVariable`.
+- `module/list/this.cs:173` `GetDefaults`.
+- The generator's `Copy(context)` / `As<T>(context)` over a program `Data`.
 
-```
-step value → setting → frozen default (.pr) → [Default] (runtime; only for a .pr without one)
-```
+**Stays:** `goal/step/action/property/this.cs` (the one class); a catalog action's reflected properties; frozen defaults in the `.pr`; the `.pr` file format (see the open question); `app.type.Field` (open-items #16, separate).
 
-This reverses today's order. The generated binding (`Emission/Property/Data/this.cs:158-160`) asks `action[name]` first (the set value ?? the frozen default, `action/this.cs:140-142`), and consults the setting only when that's empty. So a frozen `[Default(30)]` (`module/action/http/request.cs:40`) would shadow `set %!http.request.TimeoutInSec% = 5`. The binding becomes: the step's value, else the setting, else the frozen default, else `[Default]`.
+## Open — for Ingi before release
 
-So **a property knows whether its step set it or the build froze it**, because a setting sits between the two. Today the `.pr` already keeps them apart (`"parameter"` and `"default"`); the property carries that.
+**The `.pr` key `"parameter"`.** Renaming it to `"property"` changes the file format of all 1,620 `.pr` files, including the builder's own under `os/system/builder`, which can't be rebuilt on this branch (#12). The shell hook also blocks editing `.pr` files. Options: (a) keep the `.pr` key `"parameter"` for now (only the code's vocabulary changes) and rename the key with the next full rebuild, on the parent branch once the builder builds itself; (b) rename now, rebuilding every `.pr` (the builder's own included). I lean (a).
 
-## Open
+## OBP validation
 
-1. ~~`IsVariable`~~: **settled (Ingi): goes.** `property.IsVariable` (`property/this.cs:33, :61`) has no reader. It is not the value-level `data.IsVariable` (`data/this.cs:167`, "is this value a `%x%` reference"), which build validation and execution use (`source.cs:127`). That one stays.
-2. ~~The `.pr` property bag~~: **settled (Ingi): supported.** The property keeps the `"properties"` bag the reader accepts next to a value (`data/reader/this.cs:138`, `d.Properties = properties`), whether or not a current `.pr` uses it. The run's copy carries it.
-3. ~~The synthetic `channel` property~~: **settled (Ingi): unchanged.** It is a property whose declaration is written by hand (`property/list/this.cs:57-58`) instead of reflected. The step's value lands on it like any other.
-4. **`app.type.Field`** (`type/Field.cs`, `Name` plus `TypeName` as a string) describes a type's fields (open-items #16). It stays separate for now, since `property` stays at `goal/step/action/property`.
-5. **Cost: coder is counting (read-only, requested 2026-09-24, Ingi agreed)**, along with whether any `.pr` carries a `"properties"` bag. Count every reader of the action's value list or `action.Default` as `Data`: the builder, validation, graft typing, the `.pr` writer, mock/intercept, goal.call's arguments.
-6. **Coder's step-1 question** (the test `SharedRow_ReadDirectly_FailsWithNamedError` now reads the loader's context) waits on this.
+| Surface | Check |
+|---|---|
+| program | holds no `Data`, so no context; construct at load, evaluate in the run |
+| `property` | one class, two sources (the `.pr`, the handler class), each fills what it knows; no parallel name-matched lists |
+| program action vs catalog action | instance values vs class rules; the program action asks its catalog twin (`Module[Name]`) |
+| run `Data` | the first `Data`, born with the run's context; never stamped |
+| binding order | an explicit setting over a frozen default; a frozen default over a runtime default |
+| `GetDefaults` | verb+noun on a registry; the defaults are the catalog action's own knowledge |
