@@ -39,13 +39,17 @@ So the shared program holds no context, and `Data.Context` is never null for thi
 
 **7. Defaults stay in the `.pr`, frozen at build (Ingi).** The builder writes the class's `[Default]` for every property the step didn't set into the `.pr` (`module/action/build/code/Default.cs:263-270`, via `module/list/this.cs:173` `GetDefaults`). It is **not a copy**: it's the default as it was when the app was built. If a later runtime changes a default (say `ResolveVariables` becomes `true`), a built app still runs the same. That's determinism. So the action holds what its `.pr` holds: the properties its step set, plus the defaults the build froze. Both come from the `.pr`; both are properties of the action.
 
-**8. A frozen default wins over a setting (Ingi: "no" to a setting winning).** This is today's order, and it stays. The generated binding asks `action[name]` first (`Emission/Property/Data/this.cs:158-160`; `action[name]` = set value ?? frozen default, `action/this.cs:140-142`), and only an empty answer falls to the setting and then `[Default]`:
+**8. The order: step value → setting → frozen default → `[Default]` (Ingi).** Two different things are kept apart:
+- **The runtime changes its own default** (a new plang version makes `TimeoutInSec` 60). A built app must not notice, and the frozen default protects that.
+- **You set a value on purpose** (`%!http.request.TimeoutInSec%` = 5 at execution). That's an explicit choice, and it wins.
 
 ```
-step value → frozen default (.pr) → setting → [Default] (runtime; only for a .pr without one)
+step value → setting → frozen default (.pr) → [Default] (runtime; only for a .pr without one)
 ```
 
-Consequence, recorded: a setting only reaches a property that has no `[Default]`, or a `.pr` built before defaults were frozen. Example: `http.request` `TimeoutInSec` has `[Default(30)]` (`module/action/http/request.cs:40`), so `set %!http.request.TimeoutInSec% = 5` does not change an already-built `http.request` step.
+This reverses today's order. The generated binding (`Emission/Property/Data/this.cs:158-160`) asks `action[name]` first (the set value ?? the frozen default, `action/this.cs:140-142`), and consults the setting only when that's empty. So a frozen `[Default(30)]` (`module/action/http/request.cs:40`) would shadow `set %!http.request.TimeoutInSec% = 5`. The binding becomes: the step's value, else the setting, else the frozen default, else `[Default]`.
+
+So **a property knows whether its step set it or the build froze it**, because a setting sits between the two. Today the `.pr` already keeps them apart (`"parameter"` and `"default"`); the property carries that.
 
 ## Open
 
@@ -53,6 +57,5 @@ Consequence, recorded: a setting only reaches a property that has no `[Default]`
 2. **The `.pr` property bag** (`data/reader/this.cs:138`, `d.Properties = properties`): does the property keep it?
 3. **The synthetic `channel` property** (`property/list/this.cs:57-58`).
 4. **`app.type.Field`** (`type/Field.cs`, `Name` plus `TypeName` as a string) describes a type's fields (open-items #16). It stays separate for now, since `property` stays at `goal/step/action/property`.
-5. **Set versus frozen default:** does a property need to know whether its step set it or the build froze it (for example for the `.pr` writer)? Today they are two lists, `"parameter"` and `"default"`.
-6. **Cost, not counted yet:** every reader of the action's value list or `action.Default` as `Data`: the builder, validation, graft typing, the `.pr` writer, mock/intercept, goal.call's arguments.
-7. **Coder's step-1 question** (the test `SharedRow_ReadDirectly_FailsWithNamedError` now reads the loader's context) waits on this.
+5. **Cost, not counted yet:** every reader of the action's value list or `action.Default` as `Data`: the builder, validation, graft typing, the `.pr` writer, mock/intercept, goal.call's arguments.
+6. **Coder's step-1 question** (the test `SharedRow_ReadDirectly_FailsWithNamedError` now reads the loader's context) waits on this.
