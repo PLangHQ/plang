@@ -79,6 +79,11 @@ public sealed partial class @this : global::app.type.item.path.@this
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
 
+        // A file URL names an OS location — its local path, shown in plang form.
+        if (global::app.type.item.path.scheme.@this.ParseScheme(rawPath).Equals("file", StringComparison.OrdinalIgnoreCase)
+            && Uri.TryCreate(rawPath, UriKind.Absolute, out var url) && url.IsFile)
+            return new @this(Canonicalize(url.LocalPath), context);
+
         var resolved = rawPath;
 
         // Relative paths resolve against the goal's folder. Prefer the runtime
