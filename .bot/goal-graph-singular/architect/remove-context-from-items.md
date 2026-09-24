@@ -121,15 +121,30 @@ public IEnumerable<Data> Elements(actor.context.@this context)
 
 **What goes:** `_context` on the list, the `Context` setter's walk (`:158-175`), every stamp on an element (`:134, :147, :335, :345, :495, :503`), the list's context on new lists (`Empty()` `:665`, chunk split `:321-322`, `Contains(value)` `:690`), and the navigation stamp (`data/this.Navigation.cs:105-106`).
 
-Dict works the same way (`dict/this.cs:134`, stamps `:123, :279, :291`); confirm when we get to it.
+## The dict: the same as the list (confirmed)
+
+- `Slot(key)` (`dict/this.cs:118-135`) is the list's `Row`. It stamps a stored `Data` (`:123`) or makes a new `Data` for a raw slot on every read (`:134`, `Create(raw, _context)`). It takes the asker's context.
+- `Set(Data)` (`:279`) and `Set(key, value)` (`:291`) stamp added entries; the `Context` setter (`:96-110`) walks them; `Keys` (`:152`) creates a new list with it. All of these go.
+- Two small extra spots:
+  - `Get<T>(path)` (`:243`) is a typed C# path read (6 callers, e.g. reading an LLM response). It turns the result into an item with `Create(cur, _context)`, so the caller passes its context.
+  - `Clr(target)` to a C# record (`:368`) hands `Context` to the reflection kind, which never uses it (`kind/reflection/this.cs:117-134`, `ctx` unused). But it walks `Entries`, which creates the entry `Data`. At the CLR exit a raw slot is already a CLR value, so it can be read without a context.
+
+## The source: stores one, never uses it
+
+`source` (`source.cs:37`, set at `:45`) uses its stored context in one place only: it passes it on to its re-declared copy (`Declared`, `:209`). Everything else gets the context passed in: the load uses the asking `Data`'s (`:114`), `Get(ctx)` (`:31`), `Read(context)` (`:198`). So the source stores none.
+
+Its subclass **wire** (a `.pr` / wire slice, `type/item/wire/this.cs`) does use it:
+- `Write` (`:36`) and `Clr` (`:60`): decoding the slice needs the type registry, and neither door receives a context
+- `Output` (`:51`), which already receives one and falls back to the stored one (`context ?? Context`)
+- `Declared` (`:66`), which passes it on
 
 ## Still open — types that store a context today, beyond the table
 
 Items holding a context now (`module.IContext`): `path`, `file`, `url`, `directory`, `source`, `list`, `dict`, `computed`, `clr`. The path family is settled above. Next, one at a time:
 
-1. **list**: settled above. It stores none, `Row` takes the asker's context, and elements are handed out in one pass. **dict**: confirm it's the same.
-2. **source** (`source.cs:37`): loads already use the asking Data's context (births step 1). What is the stored one still for?
-3. **computed** (`computed.cs:26`) and **clr** (`clr/this.cs:47`).
+1. **list** and **dict**: settled above.
+2. **source**: settled, it stores none. **wire**: `Write` (`:36`) and `Clr` (`:60`) decode with the stored context, and neither door receives one. Open.
+3. **computed** (`computed.cs:26`, used at `:67` `Create(raw, Context)`) and **clr** (`clr/this.cs:47`, its kind's `Get`/`Read`/`Set`/`Enumerate`/`Clr`/`Output` at `:105-182`).
 
 ## Relation to work in flight
 
