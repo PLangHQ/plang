@@ -1,6 +1,6 @@
 # `app.X` is the X system, and it describes itself
 
-With Ingi, 2026-09-24. **Draft, being designed with Ingi. NOT for coder yet.** Planned as a pass after births 3.6, together with the type-system cleanup below (same class).
+With Ingi, 2026-09-24. **PARKED by Ingi 2026-09-24 ("a big change, we dont need it now"). NOT for coder.** Everything settled below stands for when it is picked up.
 
 ## Why
 
