@@ -696,7 +696,7 @@ public partial class @this
     /// parameter row, so the run resolves in its own scope and never writes the row.</summary>
     public @this Copy(actor.context.@this context) => Copy(Name, context);
 
-    private @this Copy(string name, actor.context.@this? context)
+    private protected virtual @this Copy(string name, actor.context.@this? context)
     {
         return new @this(name, _item, context: context)
         {
@@ -901,5 +901,13 @@ public class DynamicData : @this
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);
 
     public override bool ToBoolean() => IsInitialized && Peek().IsTruthy();
+
+    /// <summary>A copy captures the current answer — `set %start% = %Now%` holds the moment of the
+    /// set, not a live cell. Computed with the copy's context (the asker's).</summary>
+    private protected override @this Copy(string name, actor.context.@this? context)
+    {
+        var ctx = context ?? Context;
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone() };
+    }
 }
 
