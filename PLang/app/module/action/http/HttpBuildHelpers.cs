@@ -28,11 +28,11 @@ internal static class HttpBuildHelpers
             return Task.FromResult(data.@this.Ok());
 
         var ext = clean[lastDot..];
-        if (app?.Format is not { } fmt) return Task.FromResult(data.@this.Ok());
+        if (app == null) return Task.FromResult(data.@this.Ok());
 
-        // Stage 6: same shared {name, kind} derivation file.read uses, so the
-        // URL-extension build stamp matches the runtime response-body stamp.
-        var inferred = fmt.TypeFromExtension(ext);
+        // The same {name, kind} derivation file.read uses, so the URL-extension build
+        // stamp matches the runtime response-body stamp.
+        var inferred = app.Type.Extension(ext);
         if (inferred.IsNull || !app.Type.Contains(inferred.Name))
             return Task.FromResult(data.@this.Ok());
 

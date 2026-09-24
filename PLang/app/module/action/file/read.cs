@@ -67,8 +67,8 @@ public partial class Read : IContext
         // A file-backed image carries a source-path facet (image.Path → the
         // file, so %img.Path.Exists% works) that only the read site knows. Build
         // it eagerly — image is terminal, its content type is already known.
-        var mimeType = Context.App.Format?.TypeFromMime(mime);
-        if (mimeType?.Name == "image")
+        var mimeType = Context.App.Type.Mime(mime);
+        if (mimeType.Name == "image")
         {
             var channel = new global::app.channel.type.file.@this(path, Context);
             var read = await channel.Read();

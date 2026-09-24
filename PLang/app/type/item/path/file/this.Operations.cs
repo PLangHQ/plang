@@ -65,7 +65,7 @@ public sealed partial class @this
         // file.read.Build() uses, so build and runtime agree. Only the type is stamped
         // here; materialization is deferred (see below).
         var mime = context.App.Format.Mime(Extension);
-        var type = context.App.Format.TypeFromMime(mime);
+        var type = context.App.Type.Mime(mime);
 
         // During build: a .pr may be mid-rewrite on disk — read the snapshotted bytes.
         // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.

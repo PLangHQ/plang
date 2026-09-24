@@ -387,20 +387,9 @@ public sealed class @this
     }
 
     /// <summary>
-    /// The family a kind belongs to (<c>jpg→image</c>, <c>mp3→audio</c>,
-    /// <c>md→text</c>) — the type a value of this kind narrows to when no
-    /// kind-specific reader names a different owner. Derived from the
-    /// extension→family map. Null for an unknown kind.
-    /// </summary>
-    public string? TypeOf(string? kind)
-    {
-        if (string.IsNullOrEmpty(kind)) return null;
-        return _extensionToKind.TryGetValue("." + kind, out var family) ? family : null;
-    }
-
-    /// <summary>
     /// File extension → Kind (e.g. ".jpg" → "image", ".xlsx" → "spreadsheet").
-    /// Returns null for unknown or null extensions.
+    /// Returns null for unknown or null extensions. A kind token is its extension
+    /// form, so this is also the family a kind belongs to (<c>jpg→image</c>).
     /// </summary>
     public string? Kind(string extension)
     {
@@ -429,53 +418,18 @@ public sealed class @this
     }
 
     /// <summary>
-    /// The structured <c>{name, kind}</c> a read producer (file/http) stamps
-    /// for content of this MIME. ONE derivation both build and runtime call so
-    /// they can't drift (the bug this replaces: build said <c>type=md</c>,
-    /// runtime said <c>type=text/markdown</c>).
-    ///
-    /// <para><c>name</c> is the family for media (image/audio/video — the value
-    /// is a typed blob, not raw bytes) and otherwise the materialized CLR
-    /// type's canonical PLang name (text/object/bytes/...). <c>kind</c> is the
-    /// MIME subtype, canonicalised to the file-extension form
-    /// (<c>markdown→md</c>). Returns the <c>type.@this.Null</c> sentinel for an
-    /// unknown/octet-stream MIME so callers stamp nothing.</para>
+    /// The kind a MIME names — its subtype in file-extension form (<c>image/jpeg → jpg</c>,
+    /// <c>text/markdown → md</c>); the verbose spreadsheet MIMEs map to their clean kinds
+    /// (<c>application/vnd.ms-excel → xls</c>). Null for opaque bytes (empty or
+    /// <c>application/octet-stream</c>): they carry no decode hint.
     /// </summary>
-    public global::app.type.@this TypeFromMime(string mime)
+    public string? Subtype(string mime)
     {
         if (string.IsNullOrWhiteSpace(mime) || mime.Equals("application/octet-stream", System.StringComparison.OrdinalIgnoreCase))
-            return new global::app.type.@this("binary");
-
-        // Content off I/O is raw bytes — it IS binary; the mime's subtype is the
-        // decode hint (the kind). On access the kind names the type the bytes
-        // narrow to (json→item, jpg→image, csv→table) and that type's reader does
-        // the parse — nothing is eagerly typed image/table/item here.
-        //
-        // The tabular map survives only to translate the verbose spreadsheet mimes
-        // (application/vnd.ms-excel → xls) into clean kinds the subtype split can't.
-        if (_tabularMimeToKind.TryGetValue(mime, out var tableKind))
-            return new global::app.type.@this("binary", tableKind);
-
-        // Kind = the subtype canonicalised to its file-extension form (jpeg→jpg,
-        // text/plain→its text extension), which narrows back to a type on access.
+            return null;
+        if (_tabularMimeToKind.TryGetValue(mime, out var tableKind)) return tableKind;
         var slash = mime.IndexOf('/');
-        var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
-        var kind = subtype != null ? CanonicaliseKind(subtype) : null;
-        return new global::app.type.@this("binary", kind);
-    }
-
-    /// <summary>
-    /// <see cref="TypeFromMime"/> keyed by file extension — the kind is the
-    /// extension itself (the authoritative subtype for a file), the name comes
-    /// from the extension's MIME. <c>.md → {text, md}</c>, <c>.json → {object,
-    /// json}</c>, <c>.png → {image, png}</c>.
-    /// </summary>
-    public global::app.type.@this TypeFromExtension(string extension)
-    {
-        if (string.IsNullOrEmpty(extension)) return global::app.type.@this.Null;
-        var t = TypeFromMime(Mime(extension));
-        if (t.IsNull) return t;
-        return new global::app.type.@this(t.Name, CanonicaliseKind(NormalizeExtension(extension).TrimStart('.')));
+        return slash >= 0 && slash < mime.Length - 1 ? CanonicaliseKind(mime[(slash + 1)..]) : null;
     }
 
     /// <summary>
@@ -497,7 +451,7 @@ public sealed class @this
     /// </summary>
     public bool Compressible(global::app.type.@this type)
     {
-        var family = (type.Kind != null ? TypeOf(type.Kind.Name) : null) ?? FamilyOf(type.Name);
+        var family = (type.Kind != null ? Kind(type.Kind.Name) : null) ?? FamilyOf(type.Name);
         return family != null && Compressible(family);
     }
 

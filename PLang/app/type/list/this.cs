@@ -194,6 +194,24 @@ public sealed partial class @this
         return lower != "number" && app.type.item.number.@this.Kinds.ContainsKey(lower) ? lower : null;
     }
 
+    /// <summary>
+    /// The type content of this MIME arrives as. Content off I/O is raw bytes — it IS binary; the
+    /// MIME's subtype is the kind, the decode hint that narrows it on access (json→item, jpg→image,
+    /// csv→table). <c>image/png</c> → {binary, png}; opaque bytes (octet-stream) → {binary}. Not the
+    /// string door: "text/markdown" spelled as a type is {text, md}, as a MIME it is {binary, md}.
+    /// </summary>
+    public app.type.@this Mime(string mime)
+        => this[new app.type.@this("binary", Context.App.Format.Subtype(mime))];
+
+    /// <summary>
+    /// The type a file of this extension holds — binary, the extension itself its kind (the
+    /// authoritative subtype for a file): <c>.md</c> → {binary, md}, agreeing with its MIME.
+    /// The null type for no extension.
+    /// </summary>
+    public app.type.@this Extension(string extension)
+        => string.IsNullOrEmpty(extension) ? app.type.@this.Null
+            : this[new app.type.@this("binary", extension.TrimStart('.'))];
+
     // The full types built per identity {name, kind, strict, template} — each built once.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<(string Name, string? Kind, bool Strict, string? Template), app.type.@this> _full = new();
 

@@ -456,12 +456,12 @@ public class DataTests : System.IAsyncDisposable
         // Context propagation: setting Data.Context stamps the embedded Type
         // entity so registry-keyed reads (TypeOf, Compressible, ClrType) work.
         // Bytes off I/O are binary; the kind (jpg) names how they narrow.
-        var ov = new Data("test", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"), context: context);
+        var ov = new Data("test", new byte[] { 1, 2 }, engine.Type.Mime("image/jpeg"), context: context);
 
         // The family lives on the format registry, keyed by the kind (the
         // subtype) — jpg → image — not by the Name, which is just "binary".
         await Assert.That(ov.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Format.TypeOf(ov.Type!.Kind!.Name)).IsEqualTo("image");
+        await Assert.That(engine.Type.Kind[ov.Type!.Kind!.Name].Type.Name).IsEqualTo("image");
     }
 
     [Test]
@@ -512,7 +512,7 @@ public class DataTests : System.IAsyncDisposable
         // A declared {binary, jpg} (bytes off I/O, the kind names the decode)
         // survives the ctor — the value isn't re-derived to a bare binary that
         // drops the kind.
-        var explicitType = engine.Format.TypeFromMime("image/jpeg");
+        var explicitType = engine.Type.Mime("image/jpeg");
         var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType, context: context);
 
         await Assert.That(ov.Type!.Name).IsEqualTo("binary");
@@ -538,12 +538,12 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("img", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"), context: context);
+        var data = new Data("img", new byte[] { 1, 2 }, engine.Type.Mime("image/jpeg"), context: context);
 
         // Binary content; the kind (jpg) carries the family. The kind's family
         // is image, which is not compressible (already-compressed content).
         await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Format.TypeOf(data.Type!.Kind!.Name)).IsEqualTo("image");
+        await Assert.That(engine.Type.Kind[data.Type!.Kind!.Name].Type.Name).IsEqualTo("image");
         await Assert.That(engine.Format.Compressible(data.Type!)).IsFalse();
     }
 
@@ -564,7 +564,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("txt", "hello", engine.Format.TypeFromMime("text/plain"), context: context);
+        var data = new Data("txt", "hello", engine.Type.Mime("text/plain"), context: context);
 
         await Assert.That(engine.Format.Compressible(data.Type!)).IsTrue();
     }
@@ -619,7 +619,7 @@ public class DataTests : System.IAsyncDisposable
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // text/plain is compressible (kind "text").
-        var data = new Data("", "Hello, this is a test string for compression!", engine.Format.TypeFromMime("text/plain"), context: context);
+        var data = new Data("", "Hello, this is a test string for compression!", engine.Type.Mime("text/plain"), context: context);
 
         var compressed = data.Compress();
 
@@ -636,7 +636,7 @@ public class DataTests : System.IAsyncDisposable
 
         // Bytes off I/O are binary; the kind (jpg) resolves to the image
         // family, which is not compressible (already-compressed content).
-        var data = new Data("", new byte[] { 1, 2, 3 }, engine.Format.TypeFromMime("image/jpeg"), context: context);
+        var data = new Data("", new byte[] { 1, 2, 3 }, engine.Type.Mime("image/jpeg"), context: context);
 
         var result = data.Compress();
 
@@ -650,7 +650,7 @@ public class DataTests : System.IAsyncDisposable
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Compress a plain Data, then decompress — the value round-trips.
-        var inner = new Data("", "Hello world", engine.Format.TypeFromMime("text/plain"), context: context);
+        var inner = new Data("", "Hello world", engine.Type.Mime("text/plain"), context: context);
 
         var compressed = inner.Compress();
         var decompressed = compressed.Decompress();
@@ -675,7 +675,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var content = new Data("", "The quick brown fox jumps over the lazy dog", engine.Format.TypeFromMime("text/plain"), context: context);
+        var content = new Data("", "The quick brown fox jumps over the lazy dog", engine.Type.Mime("text/plain"), context: context);
 
         var compressed = content.Compress();   // born with content's context
         var decompressed = compressed.Decompress();
@@ -723,7 +723,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("msg", "Hello, PLang!", engine.Format.TypeFromMime("text/plain"), context: context);
+        var data = new Data("msg", "Hello, PLang!", engine.Type.Mime("text/plain"), context: context);
 
         var envelope = data.Compress();
 
@@ -738,7 +738,7 @@ public class DataTests : System.IAsyncDisposable
     {
         // A Data that is not an archive item is not decompressable — Decompress
         // is a no-op and returns the Data unchanged (mirrors Decrypt / Unwrap).
-        var data = _app.Data("", "not an archive", _app.Format.TypeFromMime("text/plain"));
+        var data = _app.Data("", "not an archive", _app.Type.Mime("text/plain"));
 
         var result = data.Decompress();
 
@@ -808,7 +808,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var content = new Data("", "Hello", engine.Format.TypeFromMime("text/plain"), context: context);
+        var content = new Data("", "Hello", engine.Type.Mime("text/plain"), context: context);
         content.Properties["metadata"] = "some value";
 
         var compressed = content.Compress();   // born with content's context

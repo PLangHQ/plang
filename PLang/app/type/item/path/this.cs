@@ -243,11 +243,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>
     /// Extension → content-kind: the type entity this location's extension
     /// names (<c>.json</c> → the json-kinded entity), from the caller's format registry.
-    /// Owned by the path + the format registry — replaces consumer-side
-    /// <c>Format.TypeFromExtension(p.Extension)</c>.
+    /// Owned by the path + the type registry.
     /// </summary>
     public global::app.type.@this Kind(actor.context.@this context) =>
-        context.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
+        context.App?.Type.Extension(Extension) ?? global::app.type.@this.Null;
 
     // --- Live filesystem state ---
     //

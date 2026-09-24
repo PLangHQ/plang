@@ -79,7 +79,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         global::app.data.@this read;
         if (!string.IsNullOrEmpty(_contentType))
             read = await new global::app.channel.type.http.@this(_contentType, bytes, context).Read();
-        else if (context.App.Format.TypeFromExtension(Path.Extension) is { IsNull: false })
+        else if (context.App.Type.Extension(Path.Extension) is { IsNull: false })
             read = await new global::app.channel.type.file.@this(Path, context).Read(bytes);
         else
             read = await new global::app.channel.type.http.@this("text/plain", bytes, context).Read();

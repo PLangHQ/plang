@@ -48,9 +48,9 @@ public class @this
                 throw new System.InvalidOperationException(
                     $"kind '{Name}' has no Context — resolving its Type needs a stamped kind.");
             string name = Context.App.Type.Reader.TypeOf(Name)
-                          ?? Context.App.Format.TypeOf(Name)
+                          ?? Context.App.Format.Kind(Name)
                           ?? "binary";
-            return new global::app.type.@this(name, Name);
+            return Context.App.Type[new global::app.type.@this(name, Name)];
         }
     }
 

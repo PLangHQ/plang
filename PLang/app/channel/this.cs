@@ -286,7 +286,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // json→object via the kind narrowing); octet-stream / unset → binary, no kind. The
         // type reads its own raw. Content off I/O is bytes and rides as bytes (no eager split).
         var context = Actor?.Context;
-        var type = Channels?.App?.Format?.TypeFromMime(Mime ?? "")
+        var type = Channels?.App?.Type.Mime(Mime ?? "")
                    ?? new global::app.type.@this("binary");
         return new global::app.data.@this(Name, type.Create(raw, context), context: context);
     }
