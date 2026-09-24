@@ -13,7 +13,7 @@ With Ingi, 2026-09-24. Approved ("ok, like this. you can do both").
 ## Rulings (Ingi)
 
 1. `IError` is removed. `Error` is the one type.
-2. `Error.Variables` is a list of Data: each variable whole (name, type, value). A plang `list` (its rows are Data; `list.@this(IEnumerable<Data>)`, `type/item/list/this.cs:63`), so it navigates and writes itself.
+2. `Error.Variables` keeps each variable's Data whole (name, type, value). **Revised after the step 2 trace (Ingi): a plang `dict`, name → the variable's Data**, not a list. On a list a key it doesn't know goes to the first row (`list.Get` → `First(context).Get(key)`), so `%!error.Variables.foo%` could not find a variable by name. A dict stores a Data as-is (`dict/this.cs:259`), which is the memory stack's own shape (name → Data).
 3. Variables are captured when the error happens, not when it's shown. Assert already does this (`AssertSnapshot.cs:18-19`). Under `--debug`, every error gets them at the frame's `Record` (`call/this.cs:280`), the one door every error passes. Not by default: variables can hold secrets.
 4. A plang goal shows the error: `os/system/error/Show.goal`. The goal works on `%!error%`.
 5. Templates can't see `!` variables (`Fluid.cs:139` loads `GetAll()`, which skips them, and a Liquid name can't start with `!`), so the goal hands the error in by name: `error=%!error%`. The template says `error`.
@@ -28,31 +28,39 @@ With Ingi, 2026-09-24. Approved ("ok, like this. you can do both").
 - Watch for classes with a method or property named `Error` (`actor.context`, `data`): the type may need `global::app.error.Error` there.
 - Docs: `Documentation/v0.2/architecture.md:464` ("Errors implement `IError`") and any other mention state what is.
 
-## Step 2 — `Variables` is a list of Data
+## Step 2 — `Variables` is a dict of the variables' Data
 
 ```csharp
 // variable/list/this.cs:642 — each variable rides whole
-public global::app.type.item.list.@this Snapshot()
+public global::app.type.item.dict.@this Snapshot()
 {
-    var rows = new List<data.@this>();
+    var vars = new global::app.type.item.dict.@this();
     foreach (var kvp in _variables)
     {
         if (kvp.Key.StartsWith("!")) continue;
         if (kvp.Value is data.DynamicData) continue;
-        rows.Add(kvp.Value);                       // was: dict[kvp.Key] = kvp.Value.Peek();
+        vars.Set(kvp.Key, kvp.Value);              // was: dict[kvp.Key] = kvp.Value.Peek();
     }
-    return new global::app.type.item.list.@this(rows);
+    return vars;
 }
 
 // Error.cs — one member; the never-filled Dictionary<string,string> and AssertionError's own Variables go
-public global::app.type.item.list.@this? Variables { get; set; }
+public global::app.type.item.dict.@this? Variables { get; set; }
+
+// call/this.cs:280 — both callers already hold the running context (call/this.cs:250, modifier/this.cs:74)
+public void Record(Error error, actor.context.@this context)
+{
+    error.Context ??= context;                                        // #31's rule, at the third door
+    if (context.App.Debug != null) error.Variables ??= context.Variable.Snapshot();
+    …
+}
 ```
 
 - `AssertSnapshot.cs:18-19` keeps working, assigning the base `Variables`.
-- `call/this.cs:280` `Record`: under `--debug`, `error.Variables ??= <the frame's context>.Variable.Snapshot()`. **Trace:** how `Record` reaches the running context and the debug flag.
-- `report.cs:64, :135`: rows instead of pairs (`%{v.Name}% = …`).
-- **Check:** `TestAssertFailureSnapshotsVariables.test.goal` (in `Tests/TestModule/Assert/` and `Tests/Modules/Test/Assert/`) uses `where Error.Variables.foo equals 42`. On a list that works only if list navigation finds a row by its name. Bring back what it does; don't add name lookup to lists without asking.
-- `VariablesSnapshotTests` / `AssertionErrorVariablesTests` move to the list shape.
+- **The generated handler helper** `Error(err) => data.FromError(err)` creates a Data with no context (against born-with-context, and it bypasses #31's stamp). It becomes `Context.Error(err)` (Ingi).
+- `report.cs:64, :135`: entries of the dict (`%{name}% = …`).
+- `TestAssertFailureSnapshotsVariables` (`where Error.Variables.foo equals 42`) works unchanged through dict navigation.
+- `VariablesSnapshotTests` / `AssertionErrorVariablesTests` move to the dict shape.
 
 ## Step 3 — plang and templates show the error
 
@@ -77,6 +85,8 @@ Show
 | `Error.Variables` as `Dictionary<string,string>` | step 2 |
 | `AssertionError.Variables` (its own, hiding the base) | step 2 |
 | `variable.Snapshot()` returning `Dictionary<string, object?>` of `.Peek()` | step 2 |
+| `Record(Error)` without a context | step 2 |
+| the generated `Error(err) => data.FromError(err)` (no context) | step 2 |
 | `Error.Format()`, static `FormatError`, static `FormatVerboseValue`, virtual `FormatExtra` | step 3 |
 | `AssertionError.FormatExtra`, `SettingsError.FormatExtra` overrides | step 3 |
 | `CallChainRenderer` (its only user is `FormatError`) | step 3 |
@@ -92,7 +102,8 @@ Show
 |---|---|---|
 | `Error` (one type) | nothing named two ways | `IError` gone |
 | `Variables` | noun, one word; Data kept whole | replaces two members with one name; no `.Peek()` |
-| `variable.Snapshot()` | existing name; returns the Data rows | no decomposition |
+| `variable.Snapshot()` | existing name; returns name → Data | no decomposition |
+| `Record(error, context)` | always the context, passed by the caller | the frame stores none |
 | `Show` (goal) | one verb | ok |
 | `400.txt` / `500.txt` | presentation in os templates | settled 2026-07-13 |
 | statics | none added | `FormatError`, `FormatVerboseValue`, `CallChainRenderer` die |
