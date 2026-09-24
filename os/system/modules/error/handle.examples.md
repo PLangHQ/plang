@@ -19,4 +19,7 @@ Step text: `write out "hi", on error ignore`
 Properties: `{"IgnoreError": true}`
 
 Step text: `call Save, on error call Rollback first, then retry 2 times`
-Properties: `{"RetryCount": 2, "Order": "GoalFirst"}` — `Order` says whether the recovery runs before the retry.
+Properties: `{"RetryCount": 2, "Order": "GoalFirst"}` — `GoalFirst` is fix, then retry: the recovery runs, then the step retries and gets the retry's result. Without a `RetryCount` the recovery's result stands.
+
+Step text: `render %template%, on error 404 call Fallback then retry, write to %text%`
+Properties: `{"StatusCode": 404, "RetryCount": 1, "Order": "GoalFirst"}` — the recovery fixes what the step reads (`Fallback` sets `%template%`), and the retry reads it anew.

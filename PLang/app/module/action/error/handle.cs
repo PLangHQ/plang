@@ -48,18 +48,27 @@ public partial class Handle : IContext, IModifier, IAction
 
             if (order == ErrorOrder.GoalFirst)
             {
+                // Fix, then retry: the handler goal runs first, then the step retries (RetryCount
+                // times) and gets the retry's result. With no retry configured the handler's result
+                // stands. A handler that fails still lets the retry run — the failure may not have
+                // needed its fix (a transient one) — and its error joins the list.
+                global::app.data.@this? recoveryResult = null;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await Recover(context);
-                    if (recoveryResult.Success)
-                    {
-                        if (erroredCall != null) erroredCall.Handled = true;
-                        return recoveryResult;
-                    }
-                    result.Error!.list.Add(recoveryResult.Error!);
+                    recoveryResult = await Recover(context);
+                    if (!recoveryResult.Success) result.Error!.list.Add(recoveryResult.Error!);
                 }
                 var retryResult = await Retry(next, context);
-                if (retryResult?.Success == true) return retryResult;
+                if (retryResult != null)
+                {
+                    if (retryResult.Success && erroredCall != null) erroredCall.Handled = true;
+                    return retryResult;
+                }
+                if (recoveryResult is { Success: true })
+                {
+                    if (erroredCall != null) erroredCall.Handled = true;
+                    return recoveryResult;
+                }
             }
             else
             {
@@ -136,6 +145,8 @@ public partial class Handle : IContext, IModifier, IAction
         return true;
     }
 
+    /// <summary>Retries the step RetryCount times, spread over RetryOverMs. Answers the first success,
+    /// or the last attempt's failure; null when no retry is configured.</summary>
     private async Task<global::app.data.@this?> Retry(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
         // Typed reads; the numbers lower at Task.Delay / the loop bound — the
@@ -148,13 +159,14 @@ public partial class Handle : IContext, IModifier, IAction
         var over = RetryOverMs == null ? null : await RetryOverMs.Value();
         int delayMs = over != null ? over.ToInt32() / count : 0;
 
+        global::app.data.@this? last = null;
         for (int attempt = 0; attempt < count; attempt++)
         {
             if (delayMs > 0) await Task.Delay(delayMs, context.CancellationToken);
-            var result = await next();
-            if (result.Success) return result;
+            last = await next();
+            if (last.Success) return last;
         }
-        return null;
+        return last;
     }
 
 }

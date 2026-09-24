@@ -10,13 +10,13 @@
 
 ## GoalFirst Retry Behavior
 
-When `ErrorOrder` is `GoalFirst`, the error goal runs first. If the error goal **succeeds**, the runtime considers the error handled and returns immediately — **retries are skipped entirely**. This is by design: the error goal resolved the problem, so there's nothing to retry.
+When `ErrorOrder` is `GoalFirst`, it means **fix, then retry**: the error goal runs first, then the step retries (`RetryCount` times) and the step gets the retry's result — the first success, or the last attempt's failure. A successful retry takes the error out of play.
 
-Only if the error goal fails (or is absent) does the runtime proceed to retries. This means `GoalFirst` with both a goal and retries configured will only use the retries as a fallback when the error goal can't handle the problem.
+With no `RetryCount`, the error goal's result stands: a succeeding goal handles the error, as before. If the error goal fails, its error joins the error's list and the retry still runs — the failure may not have needed the fix (a transient one).
 
 `RetryFirst` (the default) is the opposite order: retries run first, the error goal only runs if every retry still fails. `IgnoreError` is the final fallback in both orderings — applied after retry and goal are both exhausted.
 
-See `PLang/app/module/error/handle.cs` for the implementation.
+See `PLang/app/module/action/error/handle.cs` for the implementation.
 
 ---
 

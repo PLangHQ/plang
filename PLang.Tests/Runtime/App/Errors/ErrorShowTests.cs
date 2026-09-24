@@ -92,6 +92,32 @@ public class ErrorShowTests : System.IAsyncDisposable
         await Assert.That(text).Contains("RetryFailed (500): retry failed too");
     }
 
+    // A code with no template of its own falls back to its family's: below 500 → 400.txt.
+    [Test]
+    public async Task Show_ACodeWithNoTemplate_Below500_Uses400()
+    {
+        var goal = await Goal("read file %f%");
+        var error = new global::app.error.Error("no such file", goal.Step[0], "NotFound", 404);
+
+        var text = await Show(error);
+
+        await Assert.That(text).Contains("NotFound (404): no such file");
+        await Assert.That(text).DoesNotContain("==================");
+    }
+
+    // ... and from 500 up → 500.txt.
+    [Test]
+    public async Task Show_ACodeWithNoTemplate_From500_Uses500()
+    {
+        var goal = await Goal("call service");
+        var error = new global::app.error.Error("service down", goal.Step[0], "Unavailable", 503);
+
+        var text = await Show(error);
+
+        await Assert.That(text).Contains("================== Unavailable (503) ==================");
+        await Assert.That(text).Contains("service down");
+    }
+
     // Repeated (recursive) frames fold into one line with ×N; the failing frame stays on its own.
     [Test]
     public async Task Show_A500_FoldsRepeatedCallFrames()

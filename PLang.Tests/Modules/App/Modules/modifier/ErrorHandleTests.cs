@@ -375,6 +375,31 @@ public class ErrorHandleTests
         await result.IsSuccess();
     }
 
+    // GoalFirst is fix, then retry: the goal runs first, then the step retries and gets the
+    // retry's result — here the goal sets what the step needs, so the retry succeeds.
+    [Test]
+    public async Task Handle_GoalFirst_WithRetry_FixesThenRetries_StepGetsTheRetrysResult()
+    {
+        RegisterGoal("Fix", "variable", "set", ("name", "%fixed%"), ("value", "yes"));
+        int callCount = 0;
+        Func<Task<global::app.data.@this>> needsFix = async () =>
+        {
+            callCount++;
+            var fixedFlag = await Ctx.Variable.Get("fixed");
+            return fixedFlag.IsInitialized
+                ? Ctx.Ok("done after fix")
+                : global::app.data.@this.FromError(new global::app.error.ServiceError("not fixed yet", "NotFixed", 404));
+        };
+
+        await using var frame = TestFrame.Live(Ctx);
+        var (wrapped, _) = await ErrorHandlerCalling("Fix", ("order", "GoalFirst"), ("retryCount", 1)).Wrap(needsFix, Ctx);
+        var result = await wrapped!();
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("done after fix");
+        await Assert.That(callCount).IsEqualTo(2);   // the failing run, then the retry after the fix
+    }
+
     [Test]
     public async Task Handle_GoalFirst_GoalFails_ErrorChains()
     {

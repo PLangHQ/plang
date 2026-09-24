@@ -3,9 +3,39 @@
   "step": [
     {
       "index": 0,
-      "text": "render \"/system/error/%error.StatusCode%.txt\", error=%error%, write to %text%",
+      "text": "set %template% = \"/system/error/%error.StatusCode%.txt\"",
       "lineNumber": 5,
       "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error.",
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "template"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "/system/error/%error.StatusCode%.txt"
+            }
+          ],
+          "modifier": []
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%",
+      "lineNumber": 6,
       "action": [
         {
           "module": "ui",
@@ -17,7 +47,7 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "/system/error/%error.StatusCode%.txt"
+              "value": "%template%"
             },
             {
               "name": "Parameter",
@@ -36,7 +66,54 @@
               ]
             }
           ],
-          "modifier": []
+          "modifier": [
+            {
+              "module": "error",
+              "name": "handle",
+              "property": [
+                {
+                  "name": "StatusCode",
+                  "type": {
+                    "name": "number",
+                    "kind": "long"
+                  },
+                  "value": 404
+                },
+                {
+                  "name": "RetryCount",
+                  "type": {
+                    "name": "number",
+                    "kind": "long"
+                  },
+                  "value": 1
+                },
+                {
+                  "name": "Order",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "GoalFirst"
+                }
+              ],
+              "modifier": [],
+              "recovery": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "Fallback"
+                    }
+                  ],
+                  "modifier": []
+                }
+              ]
+            }
+          ]
         },
         {
           "module": "variable",
@@ -63,9 +140,9 @@
       "waitForExecution": true
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "write %text% to error channel",
-      "lineNumber": 6,
+      "lineNumber": 7,
       "action": [
         {
           "module": "output",
@@ -93,11 +170,161 @@
       "waitForExecution": true
     }
   ],
-  "child": [],
+  "child": [
+    {
+      "name": "Fallback",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %template% = \"/system/error/400.txt\"",
+          "lineNumber": 11,
+          "comment": "No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.",
+          "action": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "template"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/system/error/400.txt"
+                }
+              ],
+              "modifier": []
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "if %error.StatusCode% >= 500, call Runtime",
+          "lineNumber": 12,
+          "action": [
+            {
+              "module": "condition",
+              "name": "if",
+              "property": [
+                {
+                  "name": "Left",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%error.StatusCode%"
+                },
+                {
+                  "name": "Operator",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": ">="
+                },
+                {
+                  "name": "Right",
+                  "type": {
+                    "name": "number",
+                    "kind": "long"
+                  },
+                  "value": 500
+                }
+              ],
+              "modifier": [],
+              "child": [
+                {
+                  "index": 0,
+                  "text": "call Runtime",
+                  "lineNumber": 0,
+                  "action": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
+                        {
+                          "name": "Name",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "Runtime"
+                        }
+                      ],
+                      "modifier": []
+                    }
+                  ],
+                  "waitForExecution": true
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/Show.goal",
+      "prPath": "/.build/show.pr",
+      "hash": "4742e679f1d5fb071f1c32b6c1b5ae1da00d252ef626c3c0b16ae9e3592b5eb1",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
+    },
+    {
+      "name": "Runtime",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %template% = \"/system/error/500.txt\"",
+          "lineNumber": 15,
+          "action": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "template"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/system/error/500.txt"
+                }
+              ],
+              "modifier": []
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/Show.goal",
+      "prPath": "/.build/show.pr",
+      "hash": "4e744d16d411f9bd6d846e120353410edb484d2c02573faa16028cfb50f360da",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
+    }
+  ],
   "visibility": "Private",
   "path": "/Show.goal",
   "prPath": "/.build/show.pr",
-  "hash": "90a5571ac6d1107dfd41bd9bc63e184ef1c565342a9951b62cf9a9320a3261fe",
+  "hash": "cb40ff1c999c7b16681329fd2bcd019e0cee96290ac187438f0b8598bbb70dde",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
