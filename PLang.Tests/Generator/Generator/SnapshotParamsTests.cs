@@ -47,7 +47,7 @@ public class SnapshotParamsTests
     public async Task SnapshotEntry_PrValue_FromGetParameterValue()
     {
         var snapshotSrc = ReadGenerated("app.module.matrix.snapshot.SnapshotOnError.Action.g.cs");
-        await Assert.That(snapshotSrc).Contains("PrValue = __pr?.Peek()");
+        await Assert.That(snapshotSrc).Contains("PrValue = __pr?.Value");
     }
 
     [Test]

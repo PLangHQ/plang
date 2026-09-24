@@ -165,29 +165,6 @@ public sealed class @this : IAsyncDisposable
     public global::app.type.item.path.@this? Teaching
         => App?.System?.Context == null ? null
             : global::app.type.item.path.@this.Resolve("/system/modules", App.System.Context);
-
-    /// <summary>
-    /// Returns default values for an action's parameters that aren't already provided.
-    /// Checks IConfigure&lt;TConfig&gt; first, falls back to [Default] attributes.
-    /// </summary>
-    public List<data.@this>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
-    {
-        var actionType = GetActionType(module, actionName);
-        if (actionType == null) return null;
-
-        // Defaults come from [Default] attributes on the action params (the setting cascade's floor).
-        var attrDefaults = new List<data.@this>();
-        foreach (var prop in actionType.GetProperties())
-        {
-            if (excludeParams.Contains(prop.Name)) continue;
-            var attrs = prop.GetCustomAttributes(typeof(DefaultAttribute), false);
-            if (attrs.Length == 0) continue;
-            attrDefaults.Add(new data.@this(prop.Name.ToLowerInvariant(),
-                ((DefaultAttribute)attrs[0]).Value, context: App.System.Context));
-        }
-        return attrDefaults.Count > 0 ? attrDefaults : null;
-    }
-
 }
 
 /// <summary>

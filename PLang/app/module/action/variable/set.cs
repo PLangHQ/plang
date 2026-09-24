@@ -76,17 +76,17 @@ public partial class Set : IContext
         // TAPER (see .bot/context-never-null/coder/builder-read-unification-plan.md): the
         // clean typed version (this.Type = …, one deserializer) pends the architect. For
         // now, adopt the type of what I capture (%!buildData%, published by the build pass
-        // from the preceding action) by writing my Type param via __action.Parameter.
-        // User hint wins — an authored Type param already present is left alone.
-        foreach (var p in __action.Parameter)
-            if (string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase)) return Context.Ok();
+        // from the preceding action) by adding my Type property to the program action.
+        // User hint wins — an authored Type property already present is left alone.
+        if (__action["Type"] != null) return Context.Ok();
 
         var source = (await Context.Variable.Get("!buildData")).Peek();
         var inferred = source as global::app.type.@this
             ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
                 && Context.App.Type.Contains(n) ? Context.App.Type[n] : null);
         if (inferred is { IsNull: false })
-            __action.Parameter.Add(new data.@this("Type", inferred, context: Context));
+            __action.Property.Add(new global::app.goal.step.action.property.@this
+                { Name = "Type", Type = Context.App.Type["type"], Value = inferred });
         return Context.Ok();
     }
 

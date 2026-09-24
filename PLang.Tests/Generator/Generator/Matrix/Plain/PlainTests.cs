@@ -27,7 +27,7 @@ public class StringPlainTests
         {
             Module = app.Module["matrix.plain"],
             Name = "stringplain",
-            Parameter = new List<Data> { new Data("path", "hello", context: app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("path", "hello", context: app.User.Context) })
         };
 
         // Touch property twice via the resolved instance — Resolve populates the

@@ -11,34 +11,39 @@ public static class TemplateStamp
 {
     public static void Apply(global::app.goal.step.action.@this action)
     {
-        Stamp(action.Parameter);
-        if (action.Default != null) Stamp(action.Default);
+        Stamp(action.Property);
+        Stamp(action.Default);
         foreach (var modifier in action.Modifier) Apply(modifier);
     }
 
-    private static void Stamp(IEnumerable<global::app.data.@this> parameters)
+    private static void Stamp(global::app.goal.step.action.property.list.@this properties)
     {
-        foreach (var p in parameters)
+        var context = global::PLang.Tests.TestApp.SharedContext;
+        foreach (var p in properties.ToList())
         {
-            var item = p.Peek();
+            var item = p.Value;
+            if (item == null) continue;
             var raw = item.RawText;
             if (raw != null)
             {
-                // Leaf: flag the declared type so the item rebuilds as a template
-                // (Declare re-runs type.Build, which re-kinds a %ref% text to Template="plang").
+                // Leaf: a %ref% text is declared a template, so its value is born one.
                 if (global::app.type.item.text.@this.HasVariable(raw))
                 {
-                    var t = p.Type;
-                    p.Declare(new global::app.type.@this(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, "plang"));
+                    var declared = new global::app.type.@this(p.Type.Name, p.Type.Kind?.Name, p.Type.Strict, "plang");
+                    properties.Set(new global::app.goal.step.action.property.@this
+                    {
+                        Name = p.Name, Type = declared, Properties = p.Properties,
+                        Value = new global::app.data.@this(p.Name, raw, declared, context: context).Peek(),
+                    });
                 }
                 continue;
             }
-            // Container: type.Build holds a container as-is (the flag is not applied
-            // through Declare), so rebuild it as a template-flagged container with
-            // flagged %ref% leaves — the shape a %ref%-bearing container has on the wire.
-            var stamped = StampItem(item, p.Context);
+            // Container: rebuild it as a template-flagged container with flagged %ref% leaves —
+            // the shape a %ref%-bearing container has on the wire.
+            var stamped = StampItem(item, context);
             if (stamped != null && !ReferenceEquals(stamped, item))
-                p.SetValueDirect(stamped);
+                properties.Set(new global::app.goal.step.action.property.@this
+                    { Name = p.Name, Type = p.Type, Properties = p.Properties, Value = stamped });
         }
     }
 

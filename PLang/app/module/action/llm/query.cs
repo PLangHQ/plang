@@ -114,15 +114,13 @@ public partial class query : IContext
     /// </summary>
     public Task<data.@this> Build()
     {
-        var schema = __action?.Parameter?.FirstOrDefault(p =>
-            string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Peek();
+        var schema = __action?["Schema"]?.Value;
         if (schema is not (null or global::app.type.item.@null.@this)
             && !(schema is global::app.type.item.text.@this st
                  && (st.Clr<string>() is "" or null || global::app.type.item.text.@this.HasVariable(st.ToString()))))
             return Task.FromResult(Context.Ok("json"));
 
-        var format = __action?.Parameter?.FirstOrDefault(p =>
-            string.Equals(p.Name, "Format", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
+        var format = __action?["Format"]?.Value?.ToString();
         if (!string.IsNullOrEmpty(format) && !format.Contains('%'))
             return Task.FromResult(Context.Ok(format));
 

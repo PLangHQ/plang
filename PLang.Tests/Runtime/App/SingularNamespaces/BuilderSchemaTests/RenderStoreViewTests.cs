@@ -47,7 +47,7 @@ public class RenderStoreViewTests
         // {{ p.Value }} navigates INTO the authored leaf → executes it → the unset %name% throws.
         // The two doors stay distinct: embedding is raw, member access resolves.
         var r = await Render(app,
-            "{% for a in goal.Step[0].Action %}{% for p in a.Parameter %}{{ p.Value }}{% endfor %}{% endfor %}");
+            "{% for a in goal.Step[0].Action %}{% for p in a.Property %}{{ p.Value }}{% endfor %}{% endfor %}");
         await Assert.That(r.ok).IsFalse();
     }
 }

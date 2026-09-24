@@ -175,14 +175,14 @@ public static class @this
         // [IsNotNull] validation
         if (info.HasAnyIsNotNull)
         {
-            sb.AppendLine("        if (action?.Parameter != null)");
+            sb.AppendLine("        if (action != null)");
             sb.AppendLine("        {");
             foreach (var name in info.IsNotNullProperties)
             {
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__seed?.{{name}} is not { IsInitialized: true } &&
-                                    ((action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true))
+                                    (action["{{lower}}"]?.Value?.IsNull ?? true))
                                     return (null, new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
@@ -198,14 +198,14 @@ public static class @this
             .ToList();
         if (nameProps.Count > 0)
         {
-            sb.AppendLine("        if (action?.Parameter != null)");
+            sb.AppendLine("        if (action != null)");
             sb.AppendLine("        {");
             foreach (var prop in nameProps)
             {
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__seed?.{{prop.Name}} is not { IsInitialized: true } &&
-                                    action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
+                                    action["{{lower}}"]?.Value == null)
                                     return (null, new global::app.error.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
@@ -312,9 +312,9 @@ public static class @this
                             // The channel name is the PARSED value's string face — await Value(), not
                             // Peek(): Peek() hands back the lazy source's RAW wire slice, which for a
                             // .pr text param is the JSON-quoted form (`"builder"`) and misses the
-                            // channel registered under the clean name. Read on this run's own copy of
-                            // the row, never the shared row itself.
-                            var __channelParam = action?["channel"]?.Copy(context);
+                            // channel registered under the clean name. Read on this run's own Data,
+                            // made from the program's property.
+                            var __channelParam = action?["channel"]?.Data(context);
                             var __channelName = __channelParam == null ? null : (await __channelParam.Value())?.ToString();
                             Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)
@@ -368,17 +368,23 @@ public static class @this
     private static void EmitHelpers(StringBuilder sb)
     {
         sb.Append("""
-                // The parameter row is the shared program — every run reads the same one, so a run
-                // never binds it in place: a plain slot gets this run's own copy, a typed slot this
-                // run's own view, each born under the running context.
+                // The program holds properties, shared by every run — a run makes its own first Data
+                // from one, born with the running context. A plain slot takes the step's property,
+                // then the frozen default; a typed slot asks the step's (__View) and the frozen
+                // default (__Frozen) separately, so a setting can sit between them.
                 private static global::app.data.@this __Copy(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                    => action?[name]?.Copy(context) ?? global::app.data.@this.NotFound(name);
+                    => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name);
 
                 private static global::app.data.@this<T> __View<T>(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?[name]?.As<T>(context) ?? global::app.data.@this.NotFound(name).As<T>();
+                    => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name).As<T>();
+
+                private static global::app.data.@this<T> __Frozen<T>(
+                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
+                    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+                    => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name).As<T>();
 
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>

@@ -33,11 +33,17 @@ public partial class @this
     /// wants the qualified form composes the two objects (<c>$"{a.Module}.{a.Name}"</c>).</summary>
     public override string ToString() => Name;
 
-    [Store, LlmBuilder, Debug, Default]
-    public global::app.goal.step.action.parameter.list.@this Parameter { get; init; } = new();
+    /// <summary>The action's properties. A program action's are what its step set (the .pr's
+    /// <c>"property"</c>); a catalog action's (<c>module[name]</c>) are its handler class's, reflected.
+    /// Which one is decided by the list's constructor — the catalog element is born with its own.</summary>
+    [JsonIgnore]
+    public global::app.goal.step.action.property.list.@this Property { get; init; } = new();
 
-    [Store, Debug, Default]
-    public global::app.goal.step.action.parameter.list.@this? Default { get; set; }
+    /// <summary>What the build froze for the properties the step did not set (the .pr's
+    /// <c>"default"</c>) — frozen so a later runtime that changes a <c>[Default]</c> runs the built
+    /// program the same.</summary>
+    [JsonIgnore]
+    public global::app.goal.step.action.property.list.@this Default { get; init; } = new();
 
     /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after) — an
     /// internal typed list; the action owns their right-to-left wrap fold (see RunAsync) and their
@@ -133,13 +139,10 @@ public partial class @this
 
 
     /// <summary>
-    /// The parameter row by name — Parameter first, then Default; null when neither holds it.
-    /// The row is program structure, shared by every run: a run never binds or reads it in place,
-    /// it takes its own copy (<c>Copy(context)</c> / <c>As&lt;T&gt;(context)</c>).
+    /// The property the step set, by name; null when the step did not set it. The program is
+    /// shared by every run: a run makes its own Data from the property (<c>Data(context)</c>).
     /// </summary>
-    public global::app.data.@this? this[string name]
-        => Parameter?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
-           ?? Default?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+    public global::app.goal.step.action.property.@this? this[string name] => Property[name];
 
     /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.

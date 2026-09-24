@@ -23,7 +23,7 @@ public class MergeTests
             Text = "do something",
             Action = new StepActions(new[]
             {
-                new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write", Parameter = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
+                new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) }) }
             })
         };
 

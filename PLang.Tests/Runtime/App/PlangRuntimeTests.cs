@@ -49,7 +49,7 @@ public class PlangRuntimeTests : IDisposable
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"],
                     Name = "write",
-                    Parameter = new List<Data> { new Data("Data", "hello kernel", context: global::PLang.Tests.TestApp.SharedContext) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello kernel", context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
         };
@@ -100,7 +100,7 @@ public class PlangRuntimeTests : IDisposable
 
         var bindings = step.Events.Before;
         await Assert.That(bindings.Count).IsGreaterThan(0);
-        await Assert.That(bindings[0].Parameter.First(p => p.Name == "Name").Peek()?.ToString()).IsEqualTo("LogBefore");
+        await Assert.That(bindings[0]["Name"]!.Value?.ToString()).IsEqualTo("LogBefore");
     }
 
     // --- Step 5: Full PLang runtime loop ---

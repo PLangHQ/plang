@@ -1,7 +1,7 @@
 namespace app.goal.step.action;
 
 // The goals an action calls. The walk is the node's, like Build: it binds its handler and asks it,
-// then walks what it holds — an action held in a parameter (a callback), its modifiers, its recovery,
+// then walks what it holds — an action held in a property (a callback), its modifiers, its recovery,
 // the steps of its branch body.
 public partial class @this
 {
@@ -16,8 +16,8 @@ public partial class @this
         if (handler is global::app.module.IClass own && await own.Callee() is { } goal)
             callee.Add(goal);
 
-        foreach (var parameter in Parameter)
-            if (parameter.Peek() is @this held) callee.AddRange(await held.Callee(context));
+        foreach (var property in Property)
+            if (property.Value is @this held) callee.AddRange(await held.Callee(context));
         foreach (var modifier in Modifier)
             callee.AddRange(await modifier.Callee(context));
         foreach (var recovery in Recovery.Items())

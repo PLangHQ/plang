@@ -286,12 +286,12 @@ public sealed class @this
         foreach (var action in step.Action.Items())   // sync display reads the stored actions, never resolves
         {
             sb.AppendLine($"  Action: {action.Module}.{action.Name}");
-            foreach (var p in action.Parameter)
+            foreach (var p in action.Property)
             {
-                // PEEK, never resolve: a BEFORE-step display must not run param doors —
+                // The value as held, never resolved: a BEFORE-step display must not run value doors —
                 // resolving renders templates / hops refs (side-effecting, and NREs on a
                 // not-yet-ready value), which would perturb the very execution we're observing.
-                sb.AppendLine($"    {p.Name} = {FormatValue(p.Peek(), context)}");
+                sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
             }
 
         }
@@ -545,9 +545,9 @@ public sealed class @this
 
         foreach (var action in step.Action.Items())
         {
-            foreach (var p in action.Parameter)
+            foreach (var p in action.Property)
             {
-                if (p.Peek() is global::app.type.item.text.@this pt
+                if (p.Value is global::app.type.item.text.@this pt
                     && pt.Clr<string>() is { } s)
                 {
                     foreach (Match m in VarRefPattern.Matches(s))

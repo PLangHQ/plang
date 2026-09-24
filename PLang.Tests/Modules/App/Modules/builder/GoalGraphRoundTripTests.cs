@@ -31,7 +31,7 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
             {
               "module": "variable",
               "name": "set",
-              "parameter": [
+              "property": [
                 { "name": "Name",  "type": { "name": "variable" }, "value": "%label%" },
                 { "name": "Value", "type": { "name": "text" },     "value": "big" }
               ],
@@ -79,9 +79,9 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
         var action = step.Action[0];
         await Assert.That(action.Module.Name).IsEqualTo("variable");
         await Assert.That(action.Name).IsEqualTo("set");
-        await Assert.That(action.Parameter.Count).IsEqualTo(2);
-        await Assert.That(action.Parameter[0].Name).IsEqualTo("Name");
-        await Assert.That(action.Parameter[1].Name).IsEqualTo("Value");
-        await Assert.That(action.Default!.Count).IsEqualTo(1);
+        await Assert.That(action.Property.Count).IsEqualTo(2);
+        await Assert.That(action.Property[0].Name).IsEqualTo("Name");
+        await Assert.That(action.Property[1].Name).IsEqualTo("Value");
+        await Assert.That(action.Default.Count).IsEqualTo(1);
     }
 }

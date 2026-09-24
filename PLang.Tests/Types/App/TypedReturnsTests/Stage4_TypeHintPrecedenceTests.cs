@@ -27,7 +27,7 @@ public class Stage4_TypeHintPrecedenceTests
         {
             Module = _app.Module[module],
             Name = action,
-            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };
 
     private static StepActions ActionsOf(params PrAction[] actions)
@@ -99,9 +99,8 @@ public class Stage4_TypeHintPrecedenceTests
         var errors = await RunBuildPass(actions, _app);
         await Assert.That(errors).IsEmpty();
 
-        var typeParam = setAction.Parameter.First(p =>
-            string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
-        await Assert.That((await typeParam.Value())?.ToString()).IsEqualTo("json");
+        var typeParam = setAction["Type"];
+        await Assert.That(typeParam.Value?.ToString()).IsEqualTo("json");
     }
 
     [Test]
@@ -114,13 +113,12 @@ public class Stage4_TypeHintPrecedenceTests
         var errors = await RunBuildPass(actions, _app);
         await Assert.That(errors).IsEmpty();
 
-        var typeParam = setAction.Parameter.FirstOrDefault(p =>
-            string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
+        var typeParam = setAction["Type"];
         await Assert.That(typeParam).IsNotNull();
         // Stage 3: foo.csv infers the file REFERENCE — {file, csv} — stamped on
         // the terminal variable.set; the content shape appears on narrow.
-        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Name).IsEqualTo("file");
-        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Kind?.Name).IsEqualTo("csv");
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Name).IsEqualTo("file");
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Kind?.Name).IsEqualTo("csv");
     }
 
     [Test]
@@ -135,9 +133,8 @@ public class Stage4_TypeHintPrecedenceTests
         var errors = await RunBuildPass(actions, _app);
         await Assert.That(errors).IsEmpty();
 
-        var typeParam = setAction.Parameter.First(p =>
-            string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
-        await Assert.That((await typeParam.Value())?.ToString()).IsEqualTo("object");
+        var typeParam = setAction["Type"];
+        await Assert.That(typeParam.Value?.ToString()).IsEqualTo("object");
     }
 
     [Test]

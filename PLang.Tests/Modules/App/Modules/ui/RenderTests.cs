@@ -655,9 +655,9 @@ public class RenderTests : IDisposable
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
             Name = method,
-            Parameter = parameters is IDictionary<string, object?> dict
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                 ? PrParam.List(actionClass, method, dict)
-                : new List<Data>()
+                : new List<Data>())
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.

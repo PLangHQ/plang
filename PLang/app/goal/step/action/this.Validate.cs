@@ -31,24 +31,24 @@ public partial class @this
         }
         else
         {
-            // Required-parameter check. A property is required when it is non-nullable and carries
-            // no [Default]. The rows are the ONE reflection site — they already drop [Code],
-            // capability and host params — so nothing re-reflects the handler here. The LLM omitting
-            // a required param is build-breaking: without it the parameter record cannot be built.
-            var emitted = new System.Collections.Generic.HashSet<string>(
-                System.StringComparer.OrdinalIgnoreCase);
-            if (Parameter != null)
-                foreach (var p in Parameter) emitted.Add(p.Name);
-
-            foreach (var row in element.Property)
+            // The program action's properties against its catalog twin's rules. A property is
+            // required when it is non-nullable and carries no [Default] — the LLM omitting one is
+            // build-breaking. A property the class does not declare is a name the LLM made up.
+            foreach (var declared in element.Property)
             {
-                if (row.Nullable || row.Default != null) continue;
-                if (!emitted.Contains(row.Name))
+                if (declared.Nullable || declared.Default != null) continue;
+                if (Property[declared.Name] == null)
                     causes.Add(new global::app.error.Error(
-                        $"{Module}.{Name}: required parameter '{row.Name}' is missing. " +
-                        $"Every action must emit all non-nullable, non-default parameters.",
-                        "MissingParameter", 400));
+                        $"{Module}.{Name}: required property '{declared.Name}' is missing. " +
+                        $"Every action must emit all non-nullable, non-default properties.",
+                        "MissingProperty", 400));
             }
+            foreach (var property in Property)
+                if (element.Property[property.Name] == null)
+                    causes.Add(new global::app.error.Error(
+                        $"{Module}.{Name}: '{property.Name}' is not a property of this action. " +
+                        $"Its properties are: {string.Join(", ", element.Property.Select(p => p.Name))}.",
+                        "UnknownProperty", 400));
         }
 
         if (causes.Count == 0) return null;

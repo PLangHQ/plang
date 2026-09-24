@@ -105,22 +105,22 @@ public class DataValueRawTests
         await Assert.That(method).IsNull();
     }
 
-    // Data flows through Action.GetParameter unchanged — the same Data instance is returned.
+    // The value flows through the action's property unchanged — the same value instance is held.
     [Test]
-    public async Task DataFlow_ThroughActionIndex_ReferenceIdentityPreserved()
+    public async Task DataFlow_ThroughActionIndex_ValueIdentityPreserved()
     {
         var stored = _app.Data("greeting", "Hello %name%");
         var action = new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"],
             Name = "fixture",
-            Parameter = new List<Data> { stored }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { stored })
         };
 
         var found = action["greeting"];
 
-        await Assert.That(ReferenceEquals(found, stored)).IsTrue();
-        await Assert.That((await found!.Value())?.ToString()).IsEqualTo("Hello %name%");
+        await Assert.That(ReferenceEquals(found!.Value, stored.Peek())).IsTrue();
+        await Assert.That(found.Value?.ToString()).IsEqualTo("Hello %name%");
     }
 
     // Two parallel readers of the same Data → no race, no shared mutation, same .Value reference.

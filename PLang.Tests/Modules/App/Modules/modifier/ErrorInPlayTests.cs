@@ -26,8 +26,8 @@ public class ErrorInPlayTests
         new()
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
-            Parameter = new List<global::app.data.@this>
-                { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) },
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
+                { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) }),
             Modifier = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
         };
 
@@ -36,9 +36,9 @@ public class ErrorInPlayTests
         new()
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
-            Parameter = parameters
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters
                 .Select(p => new global::app.data.@this(p.name, p.value,
-                    context: global::PLang.Tests.TestApp.SharedContext)).ToList()
+                    context: global::PLang.Tests.TestApp.SharedContext)).ToList())
         };
 
     /// <summary>An error handler whose recovery chain calls <paramref name="goalName"/>.
@@ -50,10 +50,10 @@ public class ErrorInPlayTests
         handler.Recovery.Add(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
-            }
+            })
         });
         return handler;
     }
@@ -78,12 +78,12 @@ public class ErrorInPlayTests
     private static PrAction CaptureError(string varName) => new()
     {
         Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
-        Parameter = new List<global::app.data.@this>
+        Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("name", "%" + varName + "%", new global::app.type.@this("variable"),
                 context: global::PLang.Tests.TestApp.SharedContext),
             new("value", "%!error.Message%", context: global::PLang.Tests.TestApp.SharedContext)
-        }
+        })
     };
 
     // ── The walk answers correctly on a live chain ────────────────────────────────────
@@ -194,12 +194,12 @@ public class ErrorInPlayTests
     private static PrAction CaptureErrorKey(string varName) => new()
     {
         Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
-        Parameter = new List<global::app.data.@this>
+        Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("name", "%" + varName + "%", new global::app.type.@this("variable"),
                 context: global::PLang.Tests.TestApp.SharedContext),
             new("value", "%!error.Key%", context: global::PLang.Tests.TestApp.SharedContext)
-        }
+        })
     };
 
     /// <summary>
@@ -219,7 +219,7 @@ public class ErrorInPlayTests
         var sleep = new PrAction
         {
             Module = ctx.App.Module["timer"], Name = "sleep",
-            Parameter = new List<global::app.data.@this> { new("ms", 3000L, context: ctx) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
         };
         // The slot folds index 0 outermost, so error.handle wraps timeout.after wraps the sleep —
         // the recovery is outside the deadline and sees the verdict the deadline produced.
@@ -227,7 +227,7 @@ public class ErrorInPlayTests
         sleep.Modifier.Add(new global::app.goal.step.action.modifier.@this
         {
             Module = ctx.App.Module["timeout"], Name = "after",
-            Parameter = new List<global::app.data.@this> { new("ms", 1L, context: ctx) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1L, context: ctx) })
         });
 
         var result = await sleep.Run(Ctx);

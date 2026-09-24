@@ -26,19 +26,19 @@ public class CallBuildTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
             Name = "call",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Name", "Sub", context: ctx),
                 new Data("Parameter", args, context: ctx),
-            }
+            })
         };
 
         var (handler, err) = await new global::app.module.action.goal.Call(ctx).Resolve(action, ctx);
         await Assert.That(err).IsNull();
         await ((global::app.module.IClass)handler!).Build();
 
-        var row = action.Parameter.First(p => p.Name == "Parameter");
-        var names = ((global::app.type.item.list.@this)row.Peek()!).Items(global::PLang.Tests.TestApp.SharedContext).Select(p => p.Name).ToList();
+        var arguments = action["Parameter"]!;
+        var names = ((global::app.type.item.list.@this)arguments.Value!).Items(global::PLang.Tests.TestApp.SharedContext).Select(p => p.Name).ToList();
         await Assert.That(names).DoesNotContain("path");   // self-ref dropped
         await Assert.That(names).Contains("kind");
         await Assert.That(names).Contains("target");        // %path% but name != ref → kept

@@ -40,7 +40,7 @@ public class Stage0_BuildMethodTests
         {
             Module = _app.Module[module],
             Name = actionName,
-            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };
 
     private static StepActions ActionsOf(params PrAction[] actions)
@@ -106,12 +106,11 @@ public class Stage0_BuildMethodTests
         var errors = await Build(actions);
 
         await Assert.That(errors).IsEmpty();
-        var typeParam = setAction.Parameter.FirstOrDefault(p =>
-            string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
+        var typeParam = setAction["Type"];
         await Assert.That(typeParam).IsNotNull();
         // The stamp is a structured type entity; a bare-string Build() return is
         // canonicalised into one. The terminal variable.set carries {name:"foo"}.
-        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Name).IsEqualTo("foo");
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Name).IsEqualTo("foo");
     }
 
     // Build() returning Fail aborts and surfaces the error message in the errors list.
@@ -138,8 +137,7 @@ public class Stage0_BuildMethodTests
         var errors = await Build(actions);
 
         await Assert.That(errors).IsEmpty();
-        var typeParam = setAction.Parameter.FirstOrDefault(p =>
-            string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
+        var typeParam = setAction["Type"];
         await Assert.That(typeParam).IsNull();
     }
 
@@ -168,11 +166,9 @@ public class Stage0_BuildMethodTests
         var errors = await Build(actions);
 
         await Assert.That(errors).IsEmpty();
-        await Assert.That(firstSet.Parameter.Any(p =>
-            string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase))).IsFalse();
-        var lastType = lastSet.Parameter.FirstOrDefault(p =>
-            string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
+        await Assert.That(firstSet["Type"] != null).IsFalse();
+        var lastType = lastSet["Type"];
         await Assert.That(lastType).IsNotNull();
-        await Assert.That(((global::app.type.@this)(await lastType!.Value())!).Name).IsEqualTo("foo");
+        await Assert.That(((global::app.type.@this)lastType!.Value!).Name).IsEqualTo("foo");
     }
 }

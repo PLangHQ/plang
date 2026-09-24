@@ -37,11 +37,11 @@ public class BuildTemplateStampTests
     }
 
     [Test]
-    public async Task UntypedRow_IsRefused_NamingTheParameter()
+    public async Task UntypedRow_IsRefused_NamingTheProperty()
     {
         var app = global::PLang.Tests.TestApp.Create("/t");
         var refused = Assert.Throws<System.Text.Json.JsonException>(() =>
             Row(app, """{"name":"Path","value":"notes.txt"}"""));
-        await Assert.That(refused!.Message).Contains("parameter 'Path' has no type");
+        await Assert.That(refused!.Message).Contains("property 'Path' has no type");
     }
 }

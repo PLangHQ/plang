@@ -13,8 +13,7 @@ internal static class HttpBuildHelpers
         global::app.@this? app,
         string paramName)
     {
-        var raw = action?.Parameter?.FirstOrDefault(p =>
-            string.Equals(p.Name, paramName, System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
+        var raw = action?[paramName]?.Value?.ToString();
         if (string.IsNullOrEmpty(raw) || raw.Contains('%'))
             return Task.FromResult(data.@this.Ok());
 

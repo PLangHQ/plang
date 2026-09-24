@@ -19,7 +19,7 @@ public class ModifierActionTests
         {
             Module = app.Module["matrix.modifier"],
             Name = "modifieraction",
-            Parameter = new List<Data> { new Data("tag", "X", context: app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("tag", "X", context: app.User.Context) })
         };
         await action.Run(app.User.Context);
 
@@ -37,7 +37,7 @@ public class ModifierActionTests
         {
             Module = app.Module["matrix.plain"],
             Name = "stringplain",
-            Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("path", "x", context: app.User.Context) })
         };
         // Two dispatches simulate a retry-modifier wrapping the same action twice.
         await action.Run(app.User.Context);
@@ -59,7 +59,7 @@ public class ModifierActionTests
         {
             Module = app.Module["matrix.plain"],
             Name = "stringplain",
-            Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("path", "x", context: app.User.Context) })
         };
 
         // Direct call to App.Run still pushes a frame; the Handled-override happens at
@@ -83,7 +83,7 @@ public class ModifierActionTests
         {
             Module = app.Module["matrix.plain"],
             Name = "stringplain",
-            Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("path", "x", context: app.User.Context) })
         };
         var result = await action.Run(app.User.Context);
         await result.IsSuccess();

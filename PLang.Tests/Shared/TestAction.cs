@@ -13,13 +13,12 @@ public static class TestAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module],
             Name = action,
-            Parameter = parameters
-                .Select(p => new global::app.data.@this(p.name, p.value,
-                    PrParam.IsVarNameSlot(module, action, p.name)
-                        ? new global::app.type.@this("variable") : null,
-                    context: global::PLang.Tests.TestApp.SharedContext))
-                .ToList()
         };
+        foreach (var p in parameters)
+            act.Property.Add(global::PLang.Tests.Shared.Make.Property(new global::app.data.@this(p.name, p.value,
+                PrParam.IsVarNameSlot(module, action, p.name)
+                    ? new global::app.type.@this("variable") : null,
+                context: global::PLang.Tests.TestApp.SharedContext)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
         TemplateStamp.Apply(act);

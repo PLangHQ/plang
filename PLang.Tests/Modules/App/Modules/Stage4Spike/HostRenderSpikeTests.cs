@@ -118,13 +118,14 @@ public class HostRenderSpikeTests
     public async Task LegC_PropertyRowHost()
     {
         // The REAL catalog: an action's property rows are a host list Fluid iterates, each row read
-        // through its own members (Name, Type.Name, IsVariable, Nullable) — the menu template's shape.
+        // through its own members (Name, Type.Name, Nullable) — the menu template's shape. A property
+        // typed `variable` names a variable, so it advertises as %var%.
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-c");
         var ctx = app.User.Context;
         var actions = NativeList(ctx, app.Module["file"]["read"]!, app.Module["variable"]["set"]!);
         var outp = await Render(app,
             "{% for a in modules %}{{ a.Name }}:{% for p in a.Property %} {{ p.Name }}=" +
-            "{% if p.IsVariable %}%var%{% else %}{{ p.Type.Name }}{% if p.Nullable %}?{% endif %}{% endif %}" +
+            "{% if p.Type.Name == 'variable' %}%var%{% else %}{{ p.Type.Name }}{% if p.Nullable %}?{% endif %}{% endif %}" +
             "{% endfor %};{% endfor %}",
             actions);
         await Assert.That(outp).Contains("read: Path=path");

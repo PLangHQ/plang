@@ -385,7 +385,7 @@ public class SetupTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["nonexistent"],
                 Name = "doesnotexist",
-                Parameter = new List<Data>()
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>())
             }
         };
     }

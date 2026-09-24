@@ -27,7 +27,7 @@ public class AppRunScaffoldingTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module],
             Name = actionName,
-            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };
     }
 

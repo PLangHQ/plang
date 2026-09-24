@@ -4,8 +4,8 @@ namespace app.goal.step.action.serializer;
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>action</c> — the read-side
 /// mirror of <see cref="app.goal.step.action.@this.Output"/>. Walks the handed
 /// <see cref="app.channel.serializer.IReader"/> in place (the channel already made the one reader and
-/// positioned it): the action's bare <c>[Store]</c> shape <c>{module, action, parameters[],
-/// defaults?[], modifiers[]}</c>. Parameter/default rows ride the existing <c>@schema:data</c> reader.
+/// positioned it): the action's bare shape <c>{module, name, property[], default?[], modifier[]}</c>.
+/// Each property row is read into a property — raw, no Data, no context.
 /// A modifier rides action's own shape — each element in the <c>modifiers</c> array is populated as the
 /// subtype so catalog/Is asks answer "modifier".
 /// <para>The reader is BORN with the step whose actions it reads, so every action it makes is born
@@ -42,7 +42,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.goal.step.action.@this action, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        var dataReader = new global::app.data.reader.@this();
         reader.BeginObject();
         while (reader.NextName(out var name))
         {
@@ -55,19 +54,23 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // The .pr's own keys are the only keys — the LLM answers in them too, so the answer
                 // reads through the same door a built .pr does.
                 case "name": action.Name = reader.String(); break;
-                case "parameter":
+                case "property":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Parameter.Add(Parameter(reader.RawValue(), ctx, dataReader));
+                        action.Property.Add(Property(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 case "default":
-                    action.Default = new();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Default.Add(dataReader.Row(reader.RawValue(), ctx));
+                        action.Default.Add(Property(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
+                // The old key: skipping it would load the action with no properties, silently.
+                case "parameter":
+                    throw new global::app.error.AppException(
+                        $"'{action.Module}.{action.Name}' is in an old .pr format (\"parameter\" is now \"property\") — rebuild it.",
+                        "PrFormatOutdated", 400);
                 case "modifier":
                     reader.BeginArray();
                     while (reader.NextElement())
@@ -105,12 +108,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         reader.EndObject();
     }
 
-    // One parameter row. A row whose declared type is `action` holds program, not a value: its
-    // action is read HERE, by the reader born with the step, so it is born holding that step — the
-    // same birth fact as recovery and child; the type-reader registry cannot mint one. Every other
-    // row is a value and rides the data reader.
-    private global::app.data.@this Parameter(byte[] raw, global::app.type.reader.ReadContext ctx,
-        global::app.data.reader.@this dataReader)
+    // One property row — {name, type, value, properties?}. A property whose type is `action` holds
+    // program, not a value: its action is read HERE, by the reader born with the step, so it is born
+    // holding that step — the same birth fact as recovery and child; the type-reader registry cannot
+    // mint one. Every other value is read by its type. Nothing is loaded and no Data is made.
+    private global::app.goal.step.action.property.@this Property(byte[] raw, global::app.type.reader.ReadContext ctx)
     {
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
@@ -118,24 +120,37 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
         var name = "";
         global::app.type.@this? type = null;
+        global::app.type.item.@this? value = null;
+        global::app.data.Properties? properties = null;
         row.BeginObject();
         while (row.NextName(out var key))
         {
             switch (key)
             {
-                case "name": name = row.String(); break;
+                case "name": name = row.Null() ? "" : row.String(); break;
                 case "type":
-                    type = ctx.Context.App.Type.Reader.Reader("type", null, ctx.Context)
+                    type = row.Null() ? null : ctx.Context.App.Type.Reader.Reader("type", null, ctx.Context)
                         .Read(ref row, null, ctx) as global::app.type.@this;
                     break;
-                case "value" when type?.Name == "action":
-                    // A program row holds no context; it goes when the action-property change lands.
-                    return new global::app.data.@this(name, Read(ref row, null, ctx));
                 case "value":
-                    return dataReader.Row(raw, ctx);
+                    if (type is not { IsNull: false })
+                        throw new global::app.data.reader.UntypedValueException(name, row.RawValue());
+                    value = type.Name == "action" ? Read(ref row, null, ctx) : type.Read(ref row, ctx);
+                    break;
+                case "properties": properties = global::app.data.Properties.Read(ref row.Inner); break;
                 default: row.Skip(); break;
             }
         }
-        return dataReader.Row(raw, ctx);
+        row.EndObject();
+        // No value slot — a typed absence under its declared type.
+        if (value == null && type is { IsNull: false })
+            value = new global::app.type.item.@null.@this(type.Name, type.Kind?.Name);
+        return new global::app.goal.step.action.property.@this
+        {
+            Name = name,
+            Type = type ?? ctx.Context.App.Type["item"],
+            Value = value,
+            Properties = properties ?? new(),
+        };
     }
 }

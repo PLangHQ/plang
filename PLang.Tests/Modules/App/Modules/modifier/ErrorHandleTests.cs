@@ -27,7 +27,7 @@ public class ErrorHandleTests
         return new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
-            Parameter = parameters,
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters),
             Modifier = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
         };
     }
@@ -39,7 +39,7 @@ public class ErrorHandleTests
         return new global::app.goal.step.action.modifier.@this
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
-            Parameter = list
+            Property = global::PLang.Tests.Shared.Make.Properties(list)
         };
     }
 
@@ -57,10 +57,10 @@ public class ErrorHandleTests
     private static PrAction CallGoal(string goalName) => new()
     {
         Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
-        Parameter = new List<global::app.data.@this>
+        Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
-        }
+        })
     };
 
     [Test]
@@ -69,10 +69,10 @@ public class ErrorHandleTests
         var action = new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
-            },
+            }),
             Modifier = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) }
         };
 
@@ -348,8 +348,8 @@ public class ErrorHandleTests
         var prAction = new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module], Name = actionName,
-            Parameter = parameters.Select(p => new global::app.data.@this(p.name, p.value,
-                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList()
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new global::app.data.@this(p.name, p.value,
+                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList())
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Action.Add(prAction);

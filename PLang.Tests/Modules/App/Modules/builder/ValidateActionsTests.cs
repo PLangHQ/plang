@@ -50,7 +50,7 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
+            new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Path", "test.txt", context: _app.User.Context) }) }
         };
 
         var action = For(actions);
@@ -93,12 +93,12 @@ public class ValidateActionsTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
             Name = "call",
-            Parameter = new List<Data> { new("Name", name, context: _app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", name, context: _app.User.Context) })
         });
         caller.Step.Add(step);
 
         await _app.Run(new validate(_app.User.Context) { Step = new("", step) }, _app.User.Context);
-        return step.Action[0].Parameter.First(p => p.Name == "Name");
+        return step.Action[0]["Name"]!.Data(_app.User.Context);
     }
 
     [Test]
@@ -148,7 +148,7 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
                 Name = "call",
-                Parameter = new List<Data> { goalCallData }
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { goalCallData })
             }
         };
 
@@ -168,7 +168,7 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"],
                 Name = "list",
-                Parameter = new List<Data> { new("Path", "docs/", context: _app.User.Context) }
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Path", "docs/", context: _app.User.Context) })
             }
         };
 
@@ -196,12 +196,12 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
                 Name = "if",
-                Parameter = new List<Data>
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                 {
                     new("Left", "%flag%", context: _app.User.Context),
                     new("Operator", "==", new global::app.type.@this("string"), context: _app.User.Context),
                     new("Right", "false", new global::app.type.@this("bool"), context: _app.User.Context)
-                }
+                })
             }
         };
 
@@ -209,7 +209,7 @@ public class ValidateActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var rightParam = actions[0].Parameter.First(p => p.Name == "Right");
+        var rightParam = actions[0]["Right"]!.Data(_app.User.Context);
         await Assert.That((await rightParam.Value())?.ToString()).IsEqualTo("false");
         await Assert.That((await rightParam.Value()) is global::app.type.item.@bool.@this).IsTrue();
     }
@@ -227,12 +227,12 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
                 Name = "if",
-                Parameter = new List<Data>
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                 {
                     new("Left", "%count%", context: _app.User.Context),
                     new("Operator", ">", new global::app.type.@this("string"), context: _app.User.Context),
                     new("Right", "5", new global::app.type.@this("number", "int"), context: _app.User.Context)
-                }
+                })
             }
         };
 
@@ -240,7 +240,7 @@ public class ValidateActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var rightParam = actions[0].Parameter.First(p => p.Name == "Right");
+        var rightParam = actions[0]["Right"]!.Data(_app.User.Context);
         // The kind="int" carries the precision intent; the value either gets
         // coerced to a number primitive at validate-time OR stays as a string
         // for the runtime to coerce. Either is acceptable post-Stage-2.
@@ -256,12 +256,12 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
                 Name = "if",
-                Parameter = new List<Data>
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                 {
                     new("Left", "%flag%", new global::app.type.@this("bool"), context: _app.User.Context),
                     new("Operator", "==", context: _app.User.Context),
                     new("Right", true, new global::app.type.@this("bool"), context: _app.User.Context)
-                }
+                })
             }
         };
 
@@ -273,7 +273,7 @@ public class ValidateActionsTests
 
         await result.IsSuccess();
         // %flag% is unknown at build — it stays the authored template, never judged as a bool
-        var leftParam = actions[0].Parameter.First(p => p.Name == "Left");
+        var leftParam = actions[0]["Left"]!.Data(_app.User.Context);
         await Assert.That(leftParam.HasVariableReference).IsTrue();
         await Assert.That(leftParam.Peek().RawText).IsEqualTo("%flag%");
     }
@@ -289,7 +289,7 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
                 Name = "sleep",
-                Parameter = new List<Data> { new("Ms", "not a number", context: _app.User.Context) }
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Ms", "not a number", context: _app.User.Context) })
             }
         };
 
@@ -320,12 +320,12 @@ public class ValidateActionsTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
                 Name = "set",
-                Parameter = new List<Data>
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                 {
                     new("Name", "%img%", context: _app.User.Context),
                     new("Value", png, context: _app.User.Context),
                     new("Type", gifStrict, context: _app.User.Context),
-                }
+                })
             }
         };
 

@@ -69,18 +69,18 @@ public class ForeachErrorPropagationTests
         var innerCondAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: context), new Data("Operator", "==", context: context), new Data("Right", true, context: context)
-            }
+            })
         };
         var innerGoalCall = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("name", "MissingGoal", context: context)
-            }
+            })
         };
         // Goal first, then its step — a step is born knowing its goal (Goal is init).
         var innerGoal = new Goal

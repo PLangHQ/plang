@@ -251,8 +251,8 @@ public class StartGoalTests
 
         public async Task<Data> Execute()
         {
-            // The run's own copy of the row, born with this run's context — never the shared row.
-            var contentData = Action?["Data"]?.Copy(Context);
+            // The run's own Data from the program's property, born with this run's context.
+            var contentData = Action?["Data"]?.Data(Context);
             if (contentData != null)
             {
                 // Resolve via the value's OWN door — a template (text- or source-born) fills

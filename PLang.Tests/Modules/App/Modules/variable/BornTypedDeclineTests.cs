@@ -51,11 +51,11 @@ public class BornTypedDeclineTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("name", "%path%", global::PLang.Tests.TestApp.SharedContext.App.Type["string"], context: ctx),
                 new Data("value", ".", context: ctx),
-            }
+            })
         };
 
         var result = await act.Run(ctx);
@@ -74,11 +74,11 @@ public class BornTypedDeclineTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("name", "path", new global::app.type.@this("variable"), context: ctx),
                 new Data("value", ".", context: ctx),
-            }
+            })
         };
 
         var result = await act.Run(ctx);

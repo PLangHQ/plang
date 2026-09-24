@@ -26,7 +26,7 @@ public class Stage4_BuildMethodImplsTests
         {
             Module = _app.Module[module],
             Name = action,
-            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };
 
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)

@@ -51,6 +51,64 @@ public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
         _items.Add(key, value);
     }
 
+    /// <summary>Reads the bag off the reader — its own <c>"properties": {…}</c> object. Values are
+    /// EAGERLY parsed: they are small metadata leaves, so a lazy source buys nothing; a %ref% in a
+    /// value is handled by the async read door (<see cref="Value"/>).</summary>
+    public static Properties Read(ref System.Text.Json.Utf8JsonReader reader)
+    {
+        var props = new Properties();
+        if (reader.TokenType == System.Text.Json.JsonTokenType.Null) return props;
+        if (reader.TokenType != System.Text.Json.JsonTokenType.StartObject)
+            throw new System.Text.Json.JsonException("properties field must be a JSON object");
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == System.Text.Json.JsonTokenType.EndObject) return props;
+            if (reader.TokenType != System.Text.Json.JsonTokenType.PropertyName)
+                throw new System.Text.Json.JsonException("Expected property name inside properties object");
+            var key = reader.GetString()!;
+            reader.Read();
+            props[key] = Leaf(ref reader);
+        }
+        throw new System.Text.Json.JsonException("Unterminated properties object");
+    }
+
+    private static object? Leaf(ref System.Text.Json.Utf8JsonReader reader)
+    {
+        switch (reader.TokenType)
+        {
+            case System.Text.Json.JsonTokenType.Null: return null;
+            case System.Text.Json.JsonTokenType.String: return reader.GetString();
+            case System.Text.Json.JsonTokenType.True: return true;
+            case System.Text.Json.JsonTokenType.False: return false;
+            case System.Text.Json.JsonTokenType.Number:
+                if (reader.TryGetInt64(out var l)) return l;
+                // A bare decimal-point literal defaults to double (universal language
+                // convention); decimal is opt-in via `as number/decimal`.
+                return reader.GetDouble();
+            case System.Text.Json.JsonTokenType.StartArray:
+            {
+                var list = new List<object?>();
+                while (reader.Read() && reader.TokenType != System.Text.Json.JsonTokenType.EndArray)
+                    list.Add(Leaf(ref reader));
+                return list;
+            }
+            case System.Text.Json.JsonTokenType.StartObject:
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                while (reader.Read() && reader.TokenType != System.Text.Json.JsonTokenType.EndObject)
+                {
+                    var key = reader.GetString()!;
+                    reader.Read();
+                    dict[key] = Leaf(ref reader);
+                }
+                return dict;
+            }
+            default:
+                throw new System.Text.Json.JsonException($"Unexpected token in property value: {reader.TokenType}");
+        }
+    }
+
     public bool Remove(string key) => _items.Remove(key);
     public bool ContainsKey(string key) => _items.ContainsKey(key);
     public bool Contains(string key) => _items.ContainsKey(key);

@@ -18,9 +18,9 @@ public class EngineTests
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
                     Name = method,
-                    Parameter = parameters is IDictionary<string, object?> dict
+                    Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
-                        : new List<Data>()
+                        : new List<Data>())
                 }
             }
         };
@@ -38,19 +38,19 @@ public class EngineTests
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
                     Name = method,
-                    Parameter = parameters is IDictionary<string, object?> dict
+                    Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
-                        : new List<Data>(),
+                        : new List<Data>()),
                 },
                 new global::app.goal.step.action.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
                     Name = "set",
-                    Parameter = new List<Data>
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                     {
                         new Data("Name", returnVarName),
                         new Data("Value", "%!data%")
-                    }
+                    })
                 }
             }
         };

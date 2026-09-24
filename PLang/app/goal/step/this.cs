@@ -84,8 +84,9 @@ public sealed partial class @this
                     });
                     continue;
                 }
+                // The flat action is dropped here, so its properties move to the modifier — its own.
                 current.Modifier.Add(new action.modifier.@this
-                    { Module = a.Module, Name = a.Name, Parameter = a.Parameter, Position = catalog.Position });
+                    { Module = a.Module, Name = a.Name, Property = a.Property, Default = a.Default, Position = catalog.Position });
             }
             else
             {

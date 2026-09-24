@@ -24,7 +24,7 @@ public class TimeoutAfterTests
     {
         Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"],
         Name = "after",
-        Parameter = new List<global::app.data.@this> { new("ms", ms, context: global::PLang.Tests.TestApp.SharedContext) }
+        Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", ms, context: global::PLang.Tests.TestApp.SharedContext) })
     };
 
     [Test]
@@ -34,10 +34,10 @@ public class TimeoutAfterTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%fast%", new global::app.type.@this("variable"), context: Ctx), new("value", "done", context: Ctx)
-            },
+            }),
             Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
@@ -54,7 +54,7 @@ public class TimeoutAfterTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
-            Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) }),
             Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(50) }
         };
 
@@ -73,7 +73,7 @@ public class TimeoutAfterTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
-            Parameter = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) }),
             Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(30) }
         };
 
@@ -98,7 +98,7 @@ public class TimeoutAfterTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
-            Parameter = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) }),
             Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
@@ -115,7 +115,7 @@ public class TimeoutAfterTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
-            Parameter = new List<global::app.data.@this> { new("ms", 1000, context: Ctx) },
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1000, context: Ctx) }),
             Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(0) }
         };
 
@@ -135,7 +135,7 @@ public class TimeoutAfterTests
             new global::app.goal.step.action.modifier.@this
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
-                Parameter = new List<global::app.data.@this> { new("ms", 1, context: Ctx) }
+                Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1, context: Ctx) })
             }
         };
 
@@ -164,13 +164,13 @@ public class TimeoutAfterTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
-            Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) }),
             Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
-                    Parameter = new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) })
                 },
                 TimeoutModifier(50)
             }

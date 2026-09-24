@@ -153,11 +153,14 @@ public sealed record @this(
         // A C#-composed Seed's SET value passes through untouched (no As<T> round-trip); only an
         // UNSET slot falls to the step value → setting → [Default] cascade below.
         sb.AppendLine($"        if (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) {Local} = __sv{Name};");
+        // step value → setting → frozen default (.pr) → [Default]: an explicit setting beats what
+        // the build froze; a runtime change of [Default] never does.
         sb.AppendLine("        else");
         sb.AppendLine("        {");
         sb.AppendLine($"            var __d = __View<{InnerType}>(action, \"{ParamName}\", context);");
         sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d;");
         sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
+        sb.AppendLine($"            else if (__Frozen<{InnerType}>(action, \"{ParamName}\", context) is var __f && !await __f.IsEmpty()) {Local} = __f;");
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)
@@ -203,8 +206,8 @@ public sealed record @this(
         // Diagnostic snapshot reads the param's current rung (Peek — no resolve, no
         // await) since there is no public sync .Value door; the value door is async.
         var prValueExpr = IsSensitive
-            ? "__pr?.Peek() != null ? \"******\" : null"
-            : "__pr?.Peek()";
+            ? "__pr?.Value != null ? \"******\" : null"
+            : "__pr?.Value";
         // The instance is always fully populated (every param is bound at construction),
         // so the final value reads straight off the property. Sensitive params mask a
         // present value; a null inner value reports null (accessed-and-null, not redacted).
@@ -212,8 +215,7 @@ public sealed record @this(
             ? $"({Name}.Peek() != null ? (object?)\"******\" : null)"
             : $"(object?){Name}";
         sb.AppendLine($"        {{");
-        sb.AppendLine($"            var __pr = __action?.Parameter?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine($"            __pr ??= __action?.Default?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine($"            var __pr = __action?[\"{Name}\"] ?? __action?.Default[\"{Name}\"];");
         sb.AppendLine($"            __list.Add(new global::app.error.ParamSnapshot {{");
         sb.AppendLine($"                Name = \"{Name}\",");
         sb.AppendLine($"                DeclaredType = \"{declaredType}\",");

@@ -254,19 +254,23 @@ public class Default : IBuilder
     public async Task<data.@this> Validate(validate action)
     {
 
-        var app = action.Context.App;
         var context = action.Context;
-        var modules = app.Module;
 
         var step = (await action.Step.Value())!;
 
+        // Freeze the class's [Default] for every property the step did not set — a built app runs
+        // the same on a later runtime that changes a default. The defaults are the catalog twin's.
         for (int i = 0; i < step.Action.Count; i++)
         {
             var a = step.Action[i];
-            var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var p in a.Parameter) paramNames.Add(p.Name);
-            a.Default = modules.GetDefaults(a.Module.Name, a.Name, paramNames) is { } defs
-                ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
+            if (a.Module[a.Name] is not { } catalog) continue;
+            foreach (var declared in catalog.Property)
+            {
+                if (declared.Default == null || a[declared.Name] != null || a.Default[declared.Name] != null) continue;
+                var frozen = new data.@this(declared.Name.ToLowerInvariant(), declared.Default, context: context);
+                a.Default.Add(new global::app.goal.step.action.property.@this
+                    { Name = frozen.Name, Type = frozen.Type, Value = frozen.Peek() });
+            }
         }
 
         // Construction is done; the step judges itself and the builder only reacts. The verdict stays

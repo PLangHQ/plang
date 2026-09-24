@@ -24,7 +24,7 @@ public class StepTests : System.IAsyncDisposable
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["http"],
                     Name = "get",
-                    Parameter = new List<Data> { app.Data("url", "https://api.example.com") },
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { app.Data("url", "https://api.example.com") }),
                 }
             },
             WaitForExecution = false

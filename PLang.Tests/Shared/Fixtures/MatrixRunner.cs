@@ -42,11 +42,12 @@ public static class MatrixRunner
         {
             Module = app.Module[module],
             Name = actionName,
-            Parameter = (parameters ?? Array.Empty<(string, object?)>())
-                .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
-            Default = defaults == null ? null : new(defaults.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList()),
             Step = step
         };
+        foreach (var p in parameters ?? Array.Empty<(string, object?)>())
+            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.User.Context)));
+        foreach (var d in defaults ?? Array.Empty<(string, object?)>())
+            action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.User.Context)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
         TemplateStamp.Apply(action);
@@ -81,11 +82,12 @@ public static class MatrixRunner
         {
             Module = app.Module[module],
             Name = actionName,
-            Parameter = (parameters ?? Array.Empty<(string, object?)>())
-                .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
-            Default = defaults == null ? null : new(defaults.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList()),
             Step = step
         };
+        foreach (var p in parameters ?? Array.Empty<(string, object?)>())
+            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.User.Context)));
+        foreach (var d in defaults ?? Array.Empty<(string, object?)>())
+            action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.User.Context)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
         TemplateStamp.Apply(action);

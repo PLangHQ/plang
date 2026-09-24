@@ -66,7 +66,7 @@ public class RunActionTests
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actions[i].module],
                 Name = actions[i].actionName,
-                Parameter = actions[i].parameters
+                Property = global::PLang.Tests.Shared.Make.Properties(actions[i].parameters)
             });
             goal.Step.Add(step);
         }
@@ -539,12 +539,12 @@ public class RunActionTests
                 new Step { Index = 0, Text = "h0", Action = new StepActions
                 {
                     new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
-                        Parameter = new List<Data> { new("Name", new global::app.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) } }
+                        Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) }) }
                 }},
                 new Step { Index = 1, Text = "h1", Action = new StepActions
                 {
                     new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
-                        Parameter = new List<Data> { new("Name", new global::app.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) } }
+                        Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }) }
                 }}
             }
         };

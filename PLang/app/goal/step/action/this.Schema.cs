@@ -32,17 +32,6 @@ public partial class @this
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
-    private global::app.goal.step.action.property.list.@this? _properties;
-
-    /// <summary>The action's declared parameter slots — its own <c>property.list</c> collection, the
-    /// ONE reflection site (the collection owns the reflect + catalog filter). Build validation reads
-    /// Nullable / Default / Name off the rows; the catalog templates render each row. Reached through
-    /// the module the action was born with (its handler and the type registry are the module's to
-    /// know). Cached per element.</summary>
-    [JsonIgnore]
-    public global::app.goal.step.action.property.list.@this Property
-        => _properties ??= new(Handler, Module.App.Type);
-
     private string? _return;
     private bool _returnComputed;
 

@@ -25,9 +25,9 @@ public class TemplateFlagTests
                     Make.Param("plain", "Hello %name%", plainType))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
-        var prms = loaded.Step[0].Action[0].Parameter;
-        var flagged = await prms.First(p => p.Name == "flagged").Value();
-        var plain = await prms.First(p => p.Name == "plain").Value();
+        var properties = loaded.Step[0].Action[0].Property;
+        var flagged = await properties["flagged"]!.Data(app.User.Context).Value();
+        var plain = await properties["plain"]!.Data(app.User.Context).Value();
 
         await Assert.That(flagged.ToString()).IsEqualTo("Hello World");
         await Assert.That(plain.ToString()).IsEqualTo("Hello %name%");

@@ -74,16 +74,16 @@ public class ModifierFoldTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "wrapped", context: global::PLang.Tests.TestApp.SharedContext)
-            },
+            }),
             Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
-                    Parameter = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
         };
@@ -103,21 +103,21 @@ public class ModifierFoldTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%z%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "nested", context: global::PLang.Tests.TestApp.SharedContext)
-            },
+            }),
             Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
-                    Parameter = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) })
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
-                    Parameter = new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
         };
@@ -136,30 +136,30 @@ public class ModifierFoldTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%q%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "full", context: global::PLang.Tests.TestApp.SharedContext)
-            },
+            }),
             Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
-                    Parameter = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) })
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["cache"], Name = "wrap",
-                    Parameter = new List<global::app.data.@this>
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                     {
                         new("durationMs", 60_000L, context: global::PLang.Tests.TestApp.SharedContext),
                         new("key", "fold-test-key", context: global::PLang.Tests.TestApp.SharedContext)
-                    }
+                    })
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
-                    Parameter = new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) }
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
         };
@@ -178,20 +178,20 @@ public class ModifierFoldTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
             Name = "set",
-            Parameter = new List<global::app.data.@this>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%nope%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "x", context: global::PLang.Tests.TestApp.SharedContext)
-            },
+            }),
             Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 // variable.set as a modifier is invalid
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
-                    Parameter = new List<global::app.data.@this>
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                     {
                         new("name", "%bad%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "no", context: global::PLang.Tests.TestApp.SharedContext)
-                    }
+                    })
                 }
             }
         };

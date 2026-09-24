@@ -44,7 +44,7 @@ public class SaveGoalsTests
         step.Action.Add(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
-            Parameter = new() { new Data("Data", "hello", context: _app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello", context: _app.User.Context) })
         });
         var goal = new Goal
         {

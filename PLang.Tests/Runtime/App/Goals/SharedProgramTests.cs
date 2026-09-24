@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Goals;
 
 /// <summary>
-/// The program graph is shared by every run. A run never writes to it: each run takes its own Data
-/// over a parameter, born with the run's context, and a value loads with the context of the Data
+/// The program graph is shared by every run. A run never writes to it: each run makes its own Data
+/// from a property, born with the run's context, and a value loads with the context of the Data
 /// that asks — so two actors running the same program each resolve in their own memory and check
 /// their own permissions. Rows are read from a real .pr (the goal's own writer and reader).
 /// </summary>
@@ -95,20 +95,18 @@ public class SharedProgramTests
     }
 
     [Test]
-    public async Task Binding_NeverWritesTheSharedRow()
+    public async Task Binding_NeverWritesTheSharedProperty()
     {
         await _app.User.Context.Variable.Set("x", "user");
         var shared = await ActionFromPr("list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"));
-        var row = shared["Value"]!;
-        var rowContext = row.Context;
-        var rowValue = row.Peek();
+        var property = shared["Value"]!;
+        var held = property.Value;
 
         var bound = await Bound<global::app.module.action.list.Add>(shared, _app.User.Context);
         await bound.Value.Value();
 
-        await Assert.That(ReferenceEquals(bound.Value, row)).IsFalse();
-        await Assert.That(ReferenceEquals(row.Context, rowContext)).IsTrue();
-        await Assert.That(ReferenceEquals(row.Peek(), rowValue)).IsTrue();
+        await Assert.That(ReferenceEquals(bound.Value.Context, _app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(property.Value, held)).IsTrue();
     }
 
     [Test]
@@ -190,14 +188,14 @@ public class SharedProgramTests
         _app.Goal.Add(callee);
         var call = await ActionFromPr("goal", "call", ("Name", "Weather"), ("Actor", "system"),
             ("Parameter", new List<object?> { new Data("place", "%city%", context: _app.User.Context) }));
-        var row = call.Parameter.First(p => p.Name == "Parameter");
-        var rowValue = row.Peek();
+        var property = call["Parameter"]!;
+        var held = property.Value;
 
         var result = await call.Run(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await (await _app.System.Context.Variable.Get("seen")).Value()).ToString()).IsEqualTo("Reykjavik");
-        // The row still holds the same unloaded value — the call read its own copy.
-        await Assert.That(ReferenceEquals(row.Peek(), rowValue)).IsTrue();
+        // The property still holds the same unloaded value — the call read its own Data.
+        await Assert.That(ReferenceEquals(property.Value, held)).IsTrue();
     }
 }

@@ -4,7 +4,7 @@ namespace app.goal.step.action;
 // model: goal/step/action/modifier are items, holding their C# internals behind faces. This is
 // what lets an action value enter the apex at rung 1 (`is item`) instead of bouncing
 // item.Create ⇄ type.Create through a synthetic ("list", element) entity (the layer-4 stack
-// overflow). The engine still reads the typed internals directly (Module, Parameters, …) — the
+// overflow). The engine still reads the typed internals directly (Module, Property, …) — the
 // item faces are the boundary layer only.
 //
 // TRANSITION: Output delegates to the reflection (*) kind — the SAME code that wrote the action
@@ -33,8 +33,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override bool IsLeaf => false;
 
     /// <summary>The action writes ITSELF — the bare [Store] shape it owns:
-    /// <c>{module, action, parameters, defaults?, modifiers}</c> (nulls omitted, matching the reflected
-    /// write). Parameters/Defaults are Data rows (their own self-describing envelope); modifiers are
+    /// <c>{module, name, property, default?, modifier}</c>. Each property writes its own row
+    /// (<c>{name, type, value, properties?}</c>); modifiers are
     /// action-shaped items (each writes itself). The DEBUG view (the live --debug channel, never the
     /// persisted wire) still routes through the reflection (*) kind so diagnostic props ride.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
@@ -49,9 +49,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.BeginObject();
         writer.Name("module"); writer.String(Module.Name);
         writer.Name("name"); writer.String(Name);
-        writer.Name("parameter");
-        await Parameter.Output(writer, mode, context);   // params ride the base value face (Data envelopes)
-        if (Default != null)
+        writer.Name("property");
+        await Property.Output(writer, mode, context);
+        if (Default.Count > 0)
         {
             writer.Name("default");
             await Default.Output(writer, mode, context);

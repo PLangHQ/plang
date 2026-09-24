@@ -47,10 +47,10 @@ public partial class Call : IContext
         if (await Callee() is { } target
             && (await Name.Value())?.RawText is { } authored
             && !Equals(target.Path, caller?.Path) && target.Address is { } address
-            && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
-            foreach (var row in __action!.Parameter)
-                if (string.Equals(row.Name, "Name", System.StringComparison.OrdinalIgnoreCase))
-                    row.SetValue(new global::app.type.item.text.@this(address));
+            && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase)
+            && __action!["Name"] is { } name)
+            __action.Property.Set(new global::app.goal.step.action.property.@this
+                { Name = name.Name, Type = name.Type, Value = new global::app.type.item.text.@this(address), Properties = name.Properties });
 
         if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
 
@@ -65,11 +65,10 @@ public partial class Call : IContext
             }
             kept.Add(arg);
         }
-        // The argument list is the action's own row — rebind it with the survivors.
-        if (kept.Count != args.CountRaw)
-            foreach (var row in __action.Parameter)
-                if (string.Equals(row.Name, "Parameter", System.StringComparison.OrdinalIgnoreCase))
-                    row.SetValue(new global::app.type.item.list.@this(kept));
+        // The argument list is the action's own property — replace it with the survivors.
+        if (kept.Count != args.CountRaw && __action?["Parameter"] is { } arguments)
+            __action.Property.Set(new global::app.goal.step.action.property.@this
+                { Name = arguments.Name, Type = arguments.Type, Value = new global::app.type.item.list.@this(kept), Properties = arguments.Properties });
         return Context.Ok();
     }
 

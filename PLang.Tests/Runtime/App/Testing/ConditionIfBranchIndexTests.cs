@@ -178,12 +178,12 @@ public class ConditionIfBranchIndexTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
             Name = "if",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new("Left", "hello", context: _app.User.Context),
                 new("Operator", ">", context: _app.User.Context),
                 new("Right", new app.type.item.dict.@this(), context: _app.User.Context) // not orderable
-            }
+            })
         };
 
         var result = await RunSingleStep(action);

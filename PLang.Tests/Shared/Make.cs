@@ -3,7 +3,7 @@ namespace PLang.Tests.Shared;
 /// <summary>
 /// Concise goal construction for tests — instead of the nested
 /// <c>new Goal { Step = new GoalSteps { new Step { Action = new StepActions {
-/// new PrAction { Parameter = ... } } } } }</c>, write:
+/// new PrAction { Property = ... } } } } }</c>, write:
 ///
 /// <code>
 /// var goal = Make.Goal("MyGoal",
@@ -53,12 +53,25 @@ public static class Make
             // borns as text/template="plang" (the builder stamps this on any %var% value, so the
             // read fills the holes against live variables — a plain `("Left", "%x%")` would otherwise
             // ride as literal text and never resolve at eval).
-            action.Parameter.Add(value is global::app.data.@this typed
+            action.Property.Add(Property(value is global::app.data.@this typed
                 ? typed
                 : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
                     ? new global::app.data.@this(name, s, new global::app.type.@this("text", template: "plang"), context: global::PLang.Tests.TestApp.SharedContext)
-                    : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
+                    : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext)));
         return action;
+    }
+
+    /// <summary>The program property a test's Data describes — its name, type, value as held and bag.
+    /// The program holds properties, never Data; a test authors the value as a Data and hands it over.</summary>
+    public static global::app.goal.step.action.property.@this Property(global::app.data.@this data)
+        => new() { Name = data.Name, Type = data.Type, Value = data.Peek(), Properties = data.Properties };
+
+    /// <summary>A program property list from the Data a test authored — see <see cref="Property"/>.</summary>
+    public static global::app.goal.step.action.property.list.@this Properties(IEnumerable<global::app.data.@this> data)
+    {
+        var list = new global::app.goal.step.action.property.list.@this();
+        foreach (var d in data) list.Add(Property(d));
+        return list;
     }
 
     /// <summary>A <c>goal.call</c> action: <c>Name</c> is the goal, each argument one row of its
@@ -84,9 +97,9 @@ public static class Make
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         var tool = Action("goal", "call", ("Name", goal));
         if (parameter is { Count: > 0 })
-            tool.Parameter.Add(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter), context: ctx));
+            tool.Property.Add(Property(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter), context: ctx)));
         if (parallel)
-            tool.Parameter.Add(new global::app.data.@this("Parallel", true, context: ctx));
+            tool.Property.Add(Property(new global::app.data.@this("Parallel", true, context: ctx)));
         return tool;
     }
 
@@ -136,7 +149,7 @@ public static class Make
         foreach (var m in modifiers)
             inner.Modifier.Add(m as global::app.goal.step.action.modifier.@this
                 ?? new global::app.goal.step.action.modifier.@this
-                { Module = m.Module, Name = m.Name, Parameter = m.Parameter });
+                { Module = m.Module, Name = m.Name, Property = m.Property, Default = m.Default });
         return inner;
     }
 
@@ -151,11 +164,10 @@ public static class Make
         global::app.goal.step.action.@this action,
         params (string name, object? value)[] defaults)
     {
-        action.Default ??= new List<global::app.data.@this>();
         foreach (var (name, value) in defaults)
-            action.Default.Add(value is global::app.data.@this typed
+            action.Default.Add(Property(value is global::app.data.@this typed
                 ? typed
-                : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
+                : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext)));
         return action;
     }
 

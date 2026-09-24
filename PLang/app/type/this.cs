@@ -298,6 +298,45 @@ public sealed class @this : item.@this
     public item.@this Create(string slice, global::app.channel.serializer.ITransport reader)
         => new item.wire.@this(slice, this, reader);
 
+    /// <summary>Reads a value slot of this type off the reader — the one door for a
+    /// <c>{name, type, value}</c> row's value, a Data's or an action property's. A type whose values
+    /// are STRUCTURE (an action, a goal.call) is read eagerly through its own reader; a string holding
+    /// a <c>%var%</c> is born a template of this type; a variable name or a template takes the
+    /// content door; every other slot is a lazy wire over its verbatim bytes.</summary>
+    public item.@this Read(ref global::app.channel.serializer.json.Reader reader,
+        global::app.type.reader.ReadContext ctx)
+    {
+        // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names.
+        if (ctx.Context.App.Type.Reader.Typed(Name, null) is { IsEager: true } eager)
+            return eager.Read(ref reader, null, ctx);
+
+        var transport = ctx.Context.Actor?.Channel.Serializers?.Transport
+            ?? throw new JsonException(
+                "wire capture reached before the actor channel wired its transport serializer — "
+                + "cannot decode a .pr value slot.");
+
+        if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
+        {
+            var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
+            // plang's own %var% syntax, parsed — never a guessed type: a string carrying a
+            // variable reference is born a template of this type.
+            var type = this;
+            if (Template == null && global::app.type.item.text.@this.HasVariable(slice))
+                type = ctx.Context.App.Type[new @this(Name, Kind?.Name, Strict, "plang")];
+            // A SEMANTIC string — a %ref%/template (the IsVariable birth gate needs the decoded
+            // content) or a variable NAME (type.Create resolves it to its binding) — takes the
+            // content door; the kind-parse stays lazy on the content source. A literal string under
+            // any other type rides the wire (strict, byte-identical).
+            return type.Template != null
+                    || ctx.Context.App.Type[type.Name]?.ClrType == typeof(global::app.variable.@this)
+                ? type.Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
+                : type.Create(slice, transport);
+        }
+        // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
+        // mint site. Face validation is free — the type's own pull IS the validator on first touch.
+        return Create(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport);
+    }
+
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared
     // kind off the carrier's Type and landing a decline on data.Fail (the retype path Convert owned).
     public item.@this? Create(object? raw, global::app.data.@this data) => _byData(raw, data);

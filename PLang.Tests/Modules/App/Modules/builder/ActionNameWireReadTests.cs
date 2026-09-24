@@ -49,20 +49,20 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     {
         var goal = await ReadOneAction("""
         [ { "module": "event", "name": "on",
-            "parameter": [
+            "property": [
               { "name": "Trigger", "type": { "name": "text" }, "value": "BeforeGoal" },
               { "name": "Goal", "type": { "name": "action" },
                 "value": { "module": "goal", "name": "call",
-                           "parameter": [ { "name": "Name", "type": { "name": "text" }, "value": "LogIt" } ] } } ] } ]
+                           "property": [ { "name": "Name", "type": { "name": "text" }, "value": "LogIt" } ] } } ] } ]
         """);
         var on = goal.Step[0].Action[0];
-        var held = on.Parameter.First(p => p.Name == "Goal").Peek() as global::app.goal.step.action.@this;
+        var held = on["Goal"]!.Value as global::app.goal.step.action.@this;
         await Assert.That(held).IsNotNull();
         await Assert.That(held!.Module.Name).IsEqualTo("goal");
         await Assert.That(held.Name).IsEqualTo("call");
         await Assert.That(held.Step).IsSameReferenceAs(goal.Step[0]);
-        // A reader of the program reads its own copy, with its own context — never the shared row.
-        await Assert.That((await held["Name"]!.Copy(_app.User.Context).Value())?.RawText).IsEqualTo("LogIt");
+        // A reader of the program makes its own Data, with its own context.
+        await Assert.That((await held["Name"]!.Data(_app.User.Context).Value())?.RawText).IsEqualTo("LogIt");
     }
 
     [Test]
@@ -70,9 +70,9 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     {
         var goal = await ReadOneAction("""
         [ { "module": "output", "name": "write",
-            "parameter": [ { "name": "Data", "type": { "name": "text" }, "value": "hi" } ] } ]
+            "property": [ { "name": "Data", "type": { "name": "text" }, "value": "hi" } ] } ]
         """);
-        await Assert.That(goal.Step[0].Action[0].Parameter.Count).IsEqualTo(1);
-        await Assert.That(goal.Step[0].Action[0].Parameter[0].Name).IsEqualTo("Data");
+        await Assert.That(goal.Step[0].Action[0].Property.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Action[0].Property[0].Name).IsEqualTo("Data");
     }
 }

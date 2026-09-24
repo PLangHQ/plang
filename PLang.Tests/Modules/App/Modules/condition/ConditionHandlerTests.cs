@@ -64,15 +64,15 @@ public class ConditionHandlerTests : IDisposable
         var condAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
-            }
+            })
         };
         var thenAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
-            Parameter = new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) })
         };
 
         var step = new Step
@@ -103,28 +103,28 @@ public class ConditionHandlerTests : IDisposable
         var condAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", false, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
-            }
+            })
         };
         var thenAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
-            Parameter = new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) })
         };
         var elseCondAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
-            Parameter = new List<Data>
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
-            }
+            })
         };
         var elseAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
-            Parameter = new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) }
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) })
         };
 
         var step = new Step

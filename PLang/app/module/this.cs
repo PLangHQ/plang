@@ -53,11 +53,12 @@ public sealed class @this
         // The catalog element carries the [Action] cache flag so the teaching template can tag
         // [no-cache] — read off the attribute, its single source, not defaulted.
         var cacheable = clr?.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
+        // The catalog element is born with its class's properties, reflected on first read.
         global::app.goal.step.action.@this element = order != null
             ? new global::app.goal.step.action.modifier.@this
-                { Module = this, Name = actionName, Position = order.Value, Cacheable = cacheable }
+                { Module = this, Name = actionName, Position = order.Value, Cacheable = cacheable, Property = new(this, actionName) }
             : new global::app.goal.step.action.@this
-                { Module = this, Name = actionName, Cacheable = cacheable };
+                { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) };
         _action[actionName] = new Row(new global::app.module.list.ActionEntry(type, instance), element);
     }
 

@@ -21,12 +21,12 @@ public class ChannelStreamLoadTests
         await Assert.That(action.Module.Name).IsEqualTo("output");
         await Assert.That(action.Name).IsEqualTo("write");
 
-        var param = action.Parameter.First(p => p.Name == "Content");
+        var property = action["Content"]!;
         // The type survives the read — self-describing, no Judge needed.
-        await Assert.That(param.Type.Name).IsEqualTo("text");
+        await Assert.That(property.Type.Name).IsEqualTo("text");
         // And the %ref% borns a live template — a goal is authored code, so the goal
         // read stamps (mode rides the goal type, not the read path).
-        await Assert.That(param.HasVariableReference).IsTrue();
+        await Assert.That(property.Data(app.User.Context).HasVariableReference).IsTrue();
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class ChannelStreamLoadTests
                     ("Count", 5))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
-        var ps = loaded.Step[0].Action[0].Parameter;
+        var ps = loaded.Step[0].Action[0].Property;
 
         await Assert.That(ps.First(p => p.Name == "Name").Type.Name).IsEqualTo("variable");
         await Assert.That(ps.First(p => p.Name == "Count").Type.Name).IsEqualTo("number");

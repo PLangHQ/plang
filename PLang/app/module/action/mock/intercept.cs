@@ -84,11 +84,8 @@ public partial class intercept : IContext
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
 
-        foreach (var param in action.Parameter)
-        {
-            var value = ResolveParamValue(param, variables);
-            result[param.Name] = value;
-        }
+        foreach (var property in action.Property)
+            result[property.Name] = ResolveParamValue(property, variables);
         return result;
     }
 
@@ -97,24 +94,22 @@ public partial class intercept : IContext
     {
         foreach (var (name, expected) in matchers)
         {
-            var param = action.Parameter.FirstOrDefault(p =>
-                p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            if (param == null) continue;
+            if (action[name] is not { } property) continue;
 
-            var actual = ResolveParamValue(param, variables);
+            var actual = ResolveParamValue(property, variables);
             if (!MatchValue(expected, actual))
                 return false;
         }
         return true;
     }
 
-    private static object? ResolveParamValue(data.@this param, global::app.variable.list.@this variables)
+    private static object? ResolveParamValue(app.goal.step.action.property.@this property, global::app.variable.list.@this variables)
     {
         // A live ref is a stamped template — the stamp gates resolution.
-        if (param.Peek() is global::app.type.item.text.@this { Template: not null } st)
+        if (property.Value is global::app.type.item.text.@this { Template: not null } st)
             return variables.Resolve(st.Clr<string>()!);
 
-        return param.Peek();
+        return property.Value;
     }
 
     /// <summary>

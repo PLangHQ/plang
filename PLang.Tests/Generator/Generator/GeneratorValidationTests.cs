@@ -148,13 +148,13 @@ public class GeneratorValidationTests
     }
 
     [Test]
-    public async Task GeneratedPropertyBody_TakesTheRunsOwnViewOfTheRow()
+    public async Task GeneratedPropertyBody_MakesTheRunsOwnDataFromTheProperty()
     {
         var generated = ReadAnyGeneratedHandler();
-        // The row is the shared program: a typed slot takes this run's own view
-        // (action[name].As<T>(context)), a plain slot this run's own copy — the row is never stamped.
-        await Assert.That(generated).Contains("action?[name]?.As<T>(context)");
-        await Assert.That(generated).Contains("action?[name]?.Copy(context)");
+        // The program holds properties: each run makes its own first Data from one, born with the
+        // run's context — the step's property, then (a separate door) the frozen default.
+        await Assert.That(generated).Contains("action?[name]?.Data(context).As<T>()");
+        await Assert.That(generated).Contains("action?.Default[name]?.Data(context).As<T>()");
         await Assert.That(generated.Contains("data.Context = context")).IsFalse();
     }
 
