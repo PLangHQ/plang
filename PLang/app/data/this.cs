@@ -102,27 +102,16 @@ public partial class @this
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
-    // Context RIDES THE VALUE. A value is born with context at the one
-    // creation point (the I/O input layer / resolve); the Data wrapper only
-    // ever inherits it, never erases it. The getter falls back to the value's
-    // own context so a wrapper minted context-less (a static `Ok(pathWithCtx)`)
-    // still answers the context the value carries. The setter propagates only
-    // a NON-null context downward — it can adopt or rebind, never clobber a
-    // value that already knows its context.
+    // Context rides the Data, not the value. An item stores no context; when it
+    // needs one, the Data that holds it passes its own.
     [JsonIgnore]
     public actor.context.@this Context
     {
         // Born-with-context: _context is set at construction on every birth (Stage 3).
         // No fallback to the item's context — a null here is a bug to fix at the caller,
-        // not a state to paper over. The setter still propagates a non-null context onto
-        // a context-aware value (adopt/rebind), never clobbering with null.
+        // not a state to paper over. Items hold no context, so nothing is pushed down.
         get => _context;
-        set
-        {
-            _context = value;
-            if (value != null && _item is module.IContext contextual)
-                contextual.Context = value;
-        }
+        set => _context = value;
     }
 
     /// <summary>
@@ -318,10 +307,7 @@ public partial class @this
         // pre-Run guard) and navigation (MaterializeFailed to the developer).
         var answer = await _item.Value(this);
         if (!ReferenceEquals(answer, _item) && _item.Cacheable)
-        {
-            if (answer is module.IContext contextual) contextual.Context = _context;
             _item = answer;
-        }
         return answer;
     }
 
@@ -350,8 +336,6 @@ public partial class @this
         _item = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
-        if (_item is module.IContext contextual)
-            contextual.Context = _context;
         // Data owns OnChange — fires whenever the wrapped value mutates.
         // Constructors set _item directly and bypass this. SetValueDirect also bypasses.
         FireOnChange(this);
@@ -400,11 +384,6 @@ public partial class @this
         _item = value is null ? null
             : value as global::app.type.item.@this
             ?? new Clr(value, _context);
-        // Context propagates immediately — a context-resolved identity (the
-        // carrier's registry name) must be stable from the first mint, or the
-        // signed canonical form drifts when a later bind stamps Context.
-        if (_item is module.IContext contextual && _context != null)
-            contextual.Context = _context;
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
     }
@@ -526,9 +505,7 @@ public partial class @this
     /// </summary>
     internal @this<T> As<T>(T? answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        // Context rides the value — prefer the answer's own (born at I/O / resolve), fall back to
-        // this binding's.
-        var clone = new @this<T>(Name, default, null, Parent, (answer as module.IContext)?.Context ?? _context)
+        var clone = new @this<T>(Name, default, null, Parent, _context)
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
