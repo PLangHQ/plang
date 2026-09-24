@@ -276,6 +276,27 @@ public partial class @this
         return await root.Set(path.Tail, value);
     }
 
+    /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
+    /// <paramref name="value"/> makes, stored under it in one step: runs asking at once all answer
+    /// the same Data, never each a value of their own. A forked flow's own scope and a write at a
+    /// path keep <see cref="Set(string, object?)"/>'s rules.</summary>
+    public async System.Threading.Tasks.ValueTask<data.@this> Ensure(string name, System.Func<global::app.type.item.@this> value)
+    {
+        var existing = await Get(name);
+        if (existing.IsInitialized) return existing;
+        if (Calls.Current != null || !global::app.variable.path.@this.Parse(name).Tail.IsEmpty)
+            return await Set(name, value());
+
+        data.@this? born = null;
+        var held = _variables.GetOrAdd(name, _ => born = new data.@this(name, value(), context: _context));
+        if (ReferenceEquals(held, born))
+        {
+            born.FireOnCreate();
+            OnCreate?.Invoke(name, born.Peek());
+        }
+        return held;
+    }
+
 
     /// <summary>
     /// Gets a variable by name (supports dot notation path).

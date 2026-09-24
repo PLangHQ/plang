@@ -13,7 +13,8 @@ public partial class Add : IContext
     public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var listName = (await ListName.Value());
-        var data = await Context.Variable.Get(listName);
+        // What %l% holds, or a new list stored in one step — runs adding at once all reach one list.
+        var data = await Context.Variable.Ensure(listName, () => new app.type.item.list.@this());
         var existing = (await data.Value());
         var list = existing as app.type.item.list.@this;
 

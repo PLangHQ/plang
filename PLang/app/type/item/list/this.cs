@@ -34,6 +34,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // and an aliased source stays the same instance for the CLR exit door).
     private readonly List<object?> _items;
 
+    // The rows' one guard, private to the list: every mutation holds it, and a reader walks a copy
+    // of the rows taken under it — so an enumeration never sees the list mid-change, whoever else
+    // is adding. A chunk's list guards its own rows.
+    private readonly object _gate = new();
+
+    // The rows as they are now — a copy, for a reader to walk.
+    private object?[] Rows { get { lock (_gate) return _items.ToArray(); } }
+
     // The backing has diverged from a pure-raw aliased source: at least one slot
     // holds a Data or an item.@this wrapper (a write elevated it, `add` dropped one
     // in, or the wire parse built a nested container). Drives three O(1) decisions:
@@ -98,23 +106,26 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// generic list reader produced as a base <c>list</c>. The rows are already the right elements
     /// (the element reader ran); only the container wrapper needs to be the declared type.
     /// Context-free (a program node adopts nothing run-scoped).</summary>
-    protected @this(@this source) : this(new List<object?>(source._items)) { }
+    protected @this(@this source) : this(new List<object?>(source.Rows)) { }
 
-    // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot, born with the asker's
+    // Type-on-read: a row's slot as a FRESH Data wrapping the raw value, born with the asker's
     // context — never cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
     // and it stays the same instance the source handed over). A stored Data goes by reference,
     // with its own context.
-    private Data Row(int i, actor.context.@this context)
-        => _items[i] is Data d ? d
-           : new Data("", global::app.type.item.@this.Create(_items[i], context), context: context);
+    private static Data Row(object? slot, actor.context.@this context)
+        => slot is Data d ? d
+           : new Data("", global::app.type.item.@this.Create(slot, context), context: context);
 
     /// <summary>Appends a raw value (store raw, type on read) — the wire reader /
     /// literal-parse seam. A scalar rides verbatim; a native container holds its
     /// own raw slots; a Data carries its own type.</summary>
     internal @this AddRaw(object? raw)
     {
-        if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
-        _items.Add(raw);
+        lock (_gate)
+        {
+            if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
+            _items.Add(raw);
+        }
         return this;
     }
 
@@ -123,7 +134,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // the slots themselves.
     protected internal IEnumerable<object?> Slots()
     {
-        foreach (var row in _items)
+        foreach (var row in Rows)
         {
             if (row is Chunk chunk)
                 foreach (var s in chunk.List.Slots()) yield return s;
@@ -135,9 +146,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // range. The program nodes store their elements directly, so their typed / Data-row positional
     // faces read them without a context.
     private protected object? Stored(int index)
-        => Locate(index, out int row, out int offset, out @this? inner)
-            ? (inner != null ? inner.Stored(offset) : _items[row])
-            : null;
+    {
+        lock (_gate)
+            return Locate(index, out int row, out int offset, out @this? inner)
+                ? (inner != null ? inner.Stored(offset) : _items[row])
+                : null;
+    }
 
     // The stored value at a flattened index — a stored Data's value, or the raw slot itself.
     private protected object? Slot(int index) => Stored(index) is Data d ? d.Peek() : Stored(index);
@@ -160,7 +174,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         get
         {
             int n = 0;
-            foreach (var row in _items) n += LeafCount(row);
+            lock (_gate)
+                foreach (var row in _items) n += LeafCount(row);
             return n;
         }
     }
@@ -174,11 +189,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// value.</summary>
     public IEnumerable<Data> Items(actor.context.@this context)
     {
-        for (int r = 0; r < _items.Count; r++)
+        foreach (var row in Rows)
         {
-            if (_items[r] is Chunk chunk)
+            if (row is Chunk chunk)
                 foreach (var e in chunk.List.Items(context)) yield return e;
-            else yield return Row(r, context);
+            else yield return Row(row, context);
         }
     }
 
@@ -218,9 +233,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The flattened element Data at <paramref name="index"/>, handed out with the
     /// asker's context, or C# null when out of range.</summary>
     internal Data? At(int index, actor.context.@this context)
-        => Locate(index, out int row, out int offset, out @this? inner)
-            ? (inner != null ? inner.At(offset, context) : Row(row, context))
-            : null;
+    {
+        lock (_gate)
+            return Locate(index, out int row, out int offset, out @this? inner)
+                ? (inner != null ? inner.At(offset, context) : Row(_items[row], context))
+                : null;
+    }
 
     /// <summary>First flattened element, or null when empty.</summary>
     public Data? First(actor.context.@this context) => At(0, context);
@@ -230,7 +248,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // Resolve an element index to the owning row + the offset within it. `inner` is the
     // chunk's list when the row is a chunk (offset indexes into it); null for a one-element
-    // row (offset 0). Returns false when the index is out of range.
+    // row (offset 0). Returns false when the index is out of range. Called under the gate — the
+    // row index it answers is used before the gate is let go.
     private bool Locate(int flatIndex, out int rowIndex, out int offset, out @this? inner)
     {
         rowIndex = 0; offset = 0; inner = null;
@@ -257,8 +276,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <c>Data</c>. A list value is one element that is a list.</summary>
     public @this Add(global::app.type.item.@this value)
     {
-        _hasWrapped = true;
-        _items.Add(value);
+        lock (_gate)
+        {
+            _hasWrapped = true;
+            _items.Add(value);
+        }
         return this;
     }
 
@@ -268,8 +290,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <see cref="Add(global::app.type.item.@this)"/> for a list argument.</summary>
     public @this Add(@this other)
     {
-        _hasWrapped = true;
-        _items.Add(new Chunk(other));
+        lock (_gate)
+        {
+            _hasWrapped = true;
+            _items.Add(new Chunk(other));
+        }
         return this;
     }
 
@@ -277,20 +302,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <paramref name="index"/> (clamped to [0, Count]) — one chunk, never a copy.</summary>
     internal @this Insert(int index, @this other)
     {
-        _hasWrapped = true;
-        if (index < 0) index = 0;
-        if (Locate(index, out int row, out int offset, out @this? inner) && inner == null)
-            _items.Insert(row, new Chunk(other));
-        else if (inner != null)
+        lock (_gate)
         {
-            // inside a chunk: split it at the offset so the extend lands between its halves
-            var head = new @this(inner.Slots().Take(offset).ToList()) { _hasWrapped = true };
-            var tail = new @this(inner.Slots().Skip(offset).ToList()) { _hasWrapped = true };
-            _items[row] = new Chunk(tail);
-            _items.Insert(row, new Chunk(other));
-            _items.Insert(row, new Chunk(head));
+            _hasWrapped = true;
+            if (index < 0) index = 0;
+            if (Locate(index, out int row, out int offset, out @this? inner) && inner == null)
+                _items.Insert(row, new Chunk(other));
+            else if (inner != null)
+            {
+                // inside a chunk: split it at the offset so the extend lands between its halves
+                var head = new @this(inner.Slots().Take(offset).ToList()) { _hasWrapped = true };
+                var tail = new @this(inner.Slots().Skip(offset).ToList()) { _hasWrapped = true };
+                _items[row] = new Chunk(tail);
+                _items.Insert(row, new Chunk(other));
+                _items.Insert(row, new Chunk(head));
+            }
+            else _items.Add(new Chunk(other));   // index >= Count → append
         }
-        else _items.Add(new Chunk(other));   // index >= Count → append
         return this;
     }
 
@@ -298,8 +326,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     public @this Add(Data item)
     {
-        _hasWrapped = true;
-        _items.Add(item);
+        lock (_gate)
+        {
+            _hasWrapped = true;
+            _items.Add(item);
+        }
         return this;
     }
 
@@ -307,14 +338,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (clamped to [0, Count]).</summary>
     internal @this Insert(int index, Data item)
     {
-        _hasWrapped = true;
-        if (index < 0) index = 0;
-        if (Locate(index, out int row, out int offset, out @this? inner))
+        lock (_gate)
         {
-            if (inner != null) inner.Insert(offset, item);
-            else _items.Insert(row, item);
+            _hasWrapped = true;
+            if (index < 0) index = 0;
+            if (Locate(index, out int row, out int offset, out @this? inner))
+            {
+                if (inner != null) inner.Insert(offset, item);
+                else _items.Insert(row, item);
+            }
+            else _items.Add(item);   // index >= Count → append
         }
-        else _items.Add(item);   // index >= Count → append
         return this;
     }
 
@@ -332,14 +366,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)
     {
-        _hasWrapped = true;
-        if (!Locate(index, out int row, out int offset, out @this? inner)) return;
-        if (inner != null)
+        lock (_gate)
         {
-            inner.RemoveAt(offset);
-            if (inner.Count == 0) _items.RemoveAt(row);   // drop an emptied chunk
+            _hasWrapped = true;
+            if (!Locate(index, out int row, out int offset, out @this? inner)) return;
+            if (inner != null)
+            {
+                inner.RemoveAt(offset);
+                if (inner.Count == 0) _items.RemoveAt(row);   // drop an emptied chunk
+            }
+            else _items.RemoveAt(row);
         }
-        else _items.RemoveAt(row);
     }
 
     /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
@@ -458,9 +495,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private void ResetTo(IEnumerable<object?> flat)
     {
         var slots = flat.ToList();
-        _hasWrapped = true;
-        _items.Clear();
-        _items.AddRange(slots);
+        lock (_gate)
+        {
+            _hasWrapped = true;
+            _items.Clear();
+            _items.AddRange(slots);
+        }
     }
 
 
@@ -471,13 +511,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // context of whoever reads it.
     private void Put(int index, object? slot)
     {
-        if (IsWrapped(slot)) _hasWrapped = true;
-        if (Locate(index, out int row, out int offset, out @this? inner))
+        lock (_gate)
         {
-            if (inner != null) inner.Put(offset, slot);
-            else _items[row] = slot;
+            if (IsWrapped(slot)) _hasWrapped = true;
+            if (Locate(index, out int row, out int offset, out @this? inner))
+            {
+                if (inner != null) inner.Put(offset, slot);
+                else _items[row] = slot;
+            }
+            else if (index == Count) _items.Add(slot);
         }
-        else if (index == Count) _items.Add(slot);
     }
 
     /// <summary>A list owns its child write — replace the element at the index. The key is already

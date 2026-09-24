@@ -138,6 +138,25 @@ public class SharedProgramTests
         await Assert.That(user.All(s => s == "user")).IsTrue();
     }
 
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task OneGoal_RunConcurrentlyBySameActor_EveryAddLands(bool listExists)
+    {
+        const int n = 500;
+        await _app.User.Context.Variable.Set("x", "user");
+        if (listExists) await _app.User.Context.Variable.Set("l", new global::app.type.item.list.@this());
+        var goal = await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("add x",
+            global::PLang.Tests.Shared.Make.Action("list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
+
+        var runs = await Task.WhenAll(Enumerable.Range(0, n).Select(_ => Task.Run(() => goal.Run(_app.User.Context))));
+        foreach (var run in runs)
+            await Assert.That(run.Success).IsTrue().Because(run.Error?.Exception?.ToString() ?? run.Error?.Message ?? "");
+
+        var list = (global::app.type.item.list.@this)(await (await _app.User.Context.Variable.Get("l")).Value())!;
+        await Assert.That(list.Items(_app.User.Context).Count()).IsEqualTo(n);
+    }
+
     // A literal file read by two actors: the one holding the grant reads it, the other is denied
     // (never served the first run's content), and a later run reads the file as it is now.
     [Test]
