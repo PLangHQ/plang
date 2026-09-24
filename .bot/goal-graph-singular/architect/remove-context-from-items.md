@@ -178,8 +178,10 @@ Found by searching item classes for a context field or property.
 | `computed` | `computed.cs:20` | settled: stores none |
 | `clr` | `clr/this.cs:24` | settled: stores none |
 | `error.Error` | `error/Error.cs:140` | **the exception** (Ingi): keeps where it happened, on `Error` only; its stored `App` (`:102`) is a separate item |
-| `snapshot` | `snapshot/this.cs:21` | open, but snapshot is **parked** (Ingi) |
-| `actor` | `actor/this.cs:79` (creates its own) | different case: the actor **owns** its context, one per actor, and doesn't hold a copy of someone else's. Confirm with Ingi. |
+| `snapshot` | `snapshot/this.cs:21` | **parked** (Ingi): its architecture is wrong, and that's on the global todo list. Not part of this work |
+| `actor` | `actor/this.cs:79` (creates its own) | **stays** (Ingi): the actor owns its own context, one per actor |
+
+**Every item type is accounted for.** None stores a context, except the actor (which owns it), `Error` (the record of where it happened), and snapshot (parked).
 
 Not items, and they keep theirs: `Data` (the box that carries the context), the memory stack (`variable/list`), the channel list, serializers, the settings store.
 
