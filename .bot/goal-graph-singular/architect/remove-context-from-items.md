@@ -1,6 +1,8 @@
 # Remove context from item types
 
-With Ingi, 2026-09-24. **Draft, being designed with Ingi. Not for coder yet.**
+Designed with Ingi, 2026-09-24. **Released to coder 2026-09-24.** Coder: the handoff (held tree, order, tests, demolition) is in the "Coder handoff" section at the end; the sections in between are the spec, per item type.
+
+> **You (coder) own this.** The rules are settled with Ingi. Shapes, names not fixed here (`Elements(context)`, how `Relative`/`MimeType` take a context, `Clr(target, context)` versus the `Data` door), and the commit split are yours. Code in this doc is direction; NEW marks what does not exist.
 
 ## Why
 
@@ -188,3 +190,55 @@ Not items, and they keep theirs: `Data` (the box that carries the context), the 
 ## Relation to work in flight
 
 Births step 3 is landed through 3.5 (`d3ac19588`). Coder holds uncommitted changes for my held rulings 1, 3, 4, 5 (sent before Ingi answered). This design may replace them, especially ruling 1 (list elements).
+
+## Coder handoff
+
+### Your held tree (from my 3.5 rulings, sent before Ingi answered)
+
+Stash it; don't commit it. Start this work from `d3ac19588`. Rulings 3, 4 and 5 stay held for Ingi and are not part of this plan. Ruling 1 (`element.Copy(parent.Context)`) is **replaced** by the list design above: no copy, `Row(i, context)`, a stored `Data` by reference. Its navigation-stamp deletion and `SharedListNavigationTests` fit this plan; reuse them from the stash.
+
+### Order — one step at a time: commit when green, then report to the architect and wait for the go
+
+After each step, stop and report. The architect reports to Ingi and asks him to continue.
+
+1. **list and dict.** `Row(i, context)` / `Slot(key, context)`. One-pass `Elements(context)` replaces the up-front `Items` list; `At`, `First`, `Last` take a context; external callers pass theirs (28 `.Items`, 6 `At`/`First`/`Last`). `Get<T>(path)` takes the caller's context, and `Clr` to a record reads raw slots without one. `_context`, the setter walks, every element stamp and the navigation stamp (`data/this.Navigation.cs:105-106`) go.
+2. **source and wire.** The stored context goes. `wire.Clr` gets it from its parent `Data`. `wire.Write` is only reached through the writers' `Value(item)` tombstone branch (`json/writer.cs:184`, `text/writer.cs:95`), so trace those feeders. If moving them to `Output(writer, mode, context)` is more than this step can carry, report before widening. The `Output` fallback (`context ?? Context`) goes.
+3. **computed and clr.** Parents pass it (computed's `DynamicData`; clr's `Data`/handler callers). The `context ?? Context` fallbacks go.
+4. **The path family.** Facts only: `_location`, `_absolute`. `Resolve(raw, context)` stays the creation door and keeps nothing. Verbs, `Authorize`, the result `Data`, `Relative`, `MimeType` and the kind from the extension get the caller's context (about 110 verb call sites). Writing a derived path goes through `Output`; `IWriter` stays context-free. Truthiness becomes `AsBooleanAsync(context)` (6 implementers, 2 callers). `Data.Type` passes its context to the item's `Type` (only file and image use it). Fix the JSON path converter's context-less constructor (`channel/serializer/json/converter.cs:26, :78`).
+5. **The interface.** When no item stores a context, `module.IContext` on items and the stamps that use it (`if (x is IContext c) c.Context = …`) are gone. Verify what, if anything, still implements it.
+
+Run the six suites by name after each step. Nothing red committed.
+
+### Tests (red first where they aren't red already)
+
+1. Two actors navigate the same program list (`%goal.Step[0].Text%`) at the same time; each gets its own element `Data`, and the stored elements are unchanged afterwards.
+2. A raw element of a program list navigates onward (the `Set_GoalStepsBracketIndex_PreservesGoalIdentity` case), with no stamp.
+3. A stored `Data` element comes back by reference (`ListNavigator_Element_ReturnsElementDataDirectly` stays green).
+4. A path verb checks permission as the caller's actor: the same path value, read by two actors, one without the grant, gets denied.
+5. Writing a derived path (`Parent`, `Combine`) out gives its root-relative form.
+6. `if file.txt` still answers "does it exist".
+7. An unloaded wire lowered to C# (`Data.Clr<T>()`) decodes with the `Data`'s context.
+8. `%Now%`, `%!app%` and a clr (json) navigation still work.
+9. **Guard:** no `item.@this` subclass declares a context field or property, except `actor`, `error.Error` and `snapshot` (parked). A reflection test.
+
+### Demolition — what must not survive
+
+- On `path` (and `file`/`url`/`directory` through it), `list`, `dict`, `source`, `wire`, `computed` and `clr`: the context field or property, and `module.IContext`.
+- list/dict: every element stamp, the `Context` setter walks, the up-front `Items` list (O(2N)), the context passed to new lists (`Empty()`, chunk split, `Keys`, `Contains(value)`).
+- The navigation stamp (`data/this.Navigation.cs:105-106`).
+- Every `context ?? Context` fallback (`clr :137, :182`, `wire :52`, `dict :196`).
+- `source.Declared` / `wire.Declared` passing a stored context.
+- path: `Context` (`:154`), the constructor's `Context = context` (`:91`), `RootAbsolutePath` through a stored context (`:70`).
+
+**Stays:** `Data`'s context; the actor's own context; `Error`'s context (where it happened; its stored `App` is a separate item, not this plan); the memory stack; `Resolve(raw, context)`; `IWriter` without a context.
+
+### OBP validation
+
+| Surface | Check |
+|---|---|
+| item types | no stored context: no late stamp, no stale state on shared values |
+| `Row(i, context)` / `Elements(context)` | the list owns turning its rows into elements; the asker brings the context; one pass |
+| path | stores facts about itself only; every behaviour takes the caller's context |
+| `IWriter` | writes tokens, never knows who is running |
+| `Data` | the box that carries the context; its doors pass it to the item |
+| `Error` | the one item that keeps a context, as the record of where it happened |
