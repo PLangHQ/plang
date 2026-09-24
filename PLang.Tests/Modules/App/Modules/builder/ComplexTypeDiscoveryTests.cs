@@ -27,8 +27,8 @@ public class ComplexTypeDiscoveryTests
     private static string RenderEntry(global::app.type.@this e)
     {
         if (e.Values != null) return string.Join(" | ", e.Values);
-        if (e.Fields != null)
-            return "{ " + string.Join(", ", e.Fields.Select(f => f.Name + ": " + f.TypeName)) + " }";
+        if (e.Property != null)
+            return "{ " + string.Join(", ", e.Property.Select(f => f.Name + ": " + f.Type)) + " }";
         return e.Shape ?? "";
     }
 
@@ -84,7 +84,7 @@ public class ComplexTypeDiscoveryTests
         // Born-native scalars (number/text/bool/…) DO appear as scalar entries
         // (Shape only, no Fields) — that is their catalog form, same as number/text.
         var complex = TypeMapping.BuildTypeEntries(_app.Module)
-            .Where(e => e.Fields != null && e.Fields.Count > 0)
+            .Where(e => e.Property != null && e.Property.Count > 0)
             .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(complex.ContainsKey("string")).IsFalse();

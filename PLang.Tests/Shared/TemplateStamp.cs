@@ -16,7 +16,7 @@ public static class TemplateStamp
         foreach (var modifier in action.Modifier) Apply(modifier);
     }
 
-    private static void Stamp(global::app.goal.step.action.property.list.@this properties)
+    private static void Stamp(global::app.type.property.list.@this properties)
     {
         var context = global::PLang.Tests.TestApp.SharedContext;
         foreach (var p in properties.ToList())
@@ -30,7 +30,7 @@ public static class TemplateStamp
                 if (global::app.type.item.text.@this.HasVariable(raw))
                 {
                     var declared = new global::app.type.@this(p.Type.Name, p.Type.Kind?.Name, p.Type.Strict, "plang");
-                    properties.Set(new global::app.goal.step.action.property.@this
+                    properties.Set(new global::app.type.property.@this
                     {
                         Name = p.Name, Type = declared, Properties = p.Properties,
                         Value = new global::app.data.@this(p.Name, raw, declared, context: context).Peek(),
@@ -42,7 +42,7 @@ public static class TemplateStamp
             // the shape a %ref%-bearing container has on the wire.
             var stamped = StampItem(item, context);
             if (stamped != null && !ReferenceEquals(stamped, item))
-                properties.Set(new global::app.goal.step.action.property.@this
+                properties.Set(new global::app.type.property.@this
                     { Name = p.Name, Type = p.Type, Properties = p.Properties, Value = stamped });
         }
     }

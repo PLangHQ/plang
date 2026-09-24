@@ -57,8 +57,8 @@ public class TypeAccessorTests
     {
         await using var app = TestApp.Create("/test");
         var g = app.Type["goal"];
-        await Assert.That(g.Fields).IsNotNull();
-        await Assert.That(g.Fields!.Any(f => f.Name == "name")).IsTrue();
+        await Assert.That(g.Property).IsNotNull();
+        await Assert.That(g.Property!.Any(f => f.Name == "name")).IsTrue();
     }
 
     [Test] public async Task AppType_IndexByName_Shape_OnScalarType_FoldedFromEntry()

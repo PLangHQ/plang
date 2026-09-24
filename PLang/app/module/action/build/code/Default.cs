@@ -268,7 +268,7 @@ public class Default : IBuilder
             {
                 if (declared.Default == null || a[declared.Name] != null || a.Default[declared.Name] != null) continue;
                 var frozen = new data.@this(declared.Name.ToLowerInvariant(), declared.Default, context: context);
-                a.Default.Add(new global::app.goal.step.action.property.@this
+                a.Default.Add(new global::app.type.property.@this
                     { Name = frozen.Name, Type = frozen.Type, Value = frozen.Peek() });
             }
         }

@@ -85,7 +85,7 @@ public partial class Set : IContext
             ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
                 && Context.App.Type.Contains(n) ? Context.App.Type[n] : null);
         if (inferred is { IsNull: false })
-            __action.Property.Add(new global::app.goal.step.action.property.@this
+            __action.Property.Add(new global::app.type.property.@this
                 { Name = "Type", Type = Context.App.Type["type"], Value = inferred });
         return Context.Ok();
     }

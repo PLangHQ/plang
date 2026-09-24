@@ -1,18 +1,20 @@
 using System.Linq;
 using System.Reflection;
-using Property = global::app.goal.step.action.property.@this;
+using Property = global::app.type.property.@this;
 
-namespace app.goal.step.action.property.list;
+namespace app.type.property.list;
 
 /// <summary>
-/// An action's properties. Two sources, chosen by constructor:
+/// A class's properties. Three sources, chosen by constructor:
 /// <list type="bullet">
 ///   <item>a PROGRAM list (<c>new()</c>) — what a .pr step set, or what the build froze as defaults;
 ///   filled by the .pr reader and the builder through <see cref="Add"/>;</item>
-///   <item>a CATALOG list (<c>new(module, actionName)</c>) — the handler class's declared properties,
-///   reflected on first read (the module registers its actions before App exists). The reflection
-///   drops the framework slots the LLM must never author (<c>[Code]</c>, capability interfaces,
-///   <c>EqualityContract</c>, host + graph-infra properties).</item>
+///   <item>a TYPE's list — its record fields / navigable members, filled by the type registry
+///   through <see cref="Add"/>;</item>
+///   <item>a CATALOG list (<c>new(module, actionName)</c>) — an action handler class's declared
+///   properties, reflected on first read (the module registers its actions before App exists). The
+///   reflection drops the framework slots the LLM must never author (<c>[Code]</c>, capability
+///   interfaces, <c>EqualityContract</c>, host + graph-infra properties).</item>
 /// </list>
 /// </summary>
 public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
@@ -32,7 +34,7 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     private global::app.module.@this? _module;
     private readonly string? _action;
 
-    /// <summary>A program list — empty until its reader or builder adds to it.</summary>
+    /// <summary>A program (or type) list — empty until its reader or builder adds to it.</summary>
     public @this() { }
 
     /// <summary>A catalog list — <paramref name="actionName"/>'s handler properties, reflected on first read.</summary>

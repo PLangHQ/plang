@@ -112,7 +112,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     // program, not a value: its action is read HERE, by the reader born with the step, so it is born
     // holding that step — the same birth fact as recovery and child; the type-reader registry cannot
     // mint one. Every other value is read by its type. Nothing is loaded and no Data is made.
-    private global::app.goal.step.action.property.@this Property(byte[] raw, global::app.type.reader.ReadContext ctx)
+    private global::app.type.property.@this Property(byte[] raw, global::app.type.reader.ReadContext ctx)
     {
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
@@ -145,7 +145,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // No value slot — a typed absence under its declared type.
         if (value == null && type is { IsNull: false })
             value = new global::app.type.item.@null.@this(type.Name, type.Kind?.Name);
-        return new global::app.goal.step.action.property.@this
+        return new global::app.type.property.@this
         {
             Name = name,
             Type = type ?? ctx.Context.App.Type["item"],

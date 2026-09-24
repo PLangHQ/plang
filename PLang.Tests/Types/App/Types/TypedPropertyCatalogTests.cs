@@ -56,10 +56,10 @@ public class TypedPropertyCatalogTests
     {
         var image = FindEntry("kind-fixture-image");
         await Assert.That(image).IsNotNull();
-        await Assert.That(image!.Properties).IsNotNull();
-        var pathProp = image.Properties!.FirstOrDefault(p => p.Name == "path");
+        await Assert.That(image!.Property).IsNotNull();
+        var pathProp = image.Property!.FirstOrDefault(p => p.Name == "path");
         await Assert.That(pathProp).IsNotNull();
-        await Assert.That(pathProp!.TypeName).IsEqualTo("path");
+        await Assert.That(pathProp!.Type.ToString()).IsEqualTo("path");
     }
 
     [Test]
@@ -69,7 +69,7 @@ public class TypedPropertyCatalogTests
         // still lists it as the same field, where it is declared among the properties.
         var path = FindEntry("path");
         await Assert.That(path).IsNotNull();
-        var names = path!.Properties!.Select(p => p.Name + ":" + p.TypeName).ToList();
+        var names = path!.Property!.Select(p => p.Name + ":" + p.Type.ToString()).ToList();
         var at = names.IndexOf("fileName:text");
         await Assert.That(at).IsGreaterThanOrEqualTo(0).Because(string.Join(", ", names));
         await Assert.That(string.Join(", ", names.Skip(at).Take(6))).IsEqualTo(
@@ -84,7 +84,7 @@ public class TypedPropertyCatalogTests
         // dot navigation type-check).
         var image = FindEntry("kind-fixture-image");
         await Assert.That(image).IsNotNull();
-        await Assert.That(image!.Properties!.Any(p => p.TypeName == "path")).IsTrue();
+        await Assert.That(image!.Property!.Any(p => p.Type.ToString() == "path")).IsTrue();
     }
 
     [Test]
@@ -118,6 +118,6 @@ public class TypedPropertyCatalogTests
         var bare = FindEntry("kind-fixture-bare");
         await Assert.That(bare).IsNotNull();
         await Assert.That(bare!.Kinds).IsNull();
-        await Assert.That(bare.Properties).IsNull();
+        await Assert.That(bare.Property).IsNull();
     }
 }

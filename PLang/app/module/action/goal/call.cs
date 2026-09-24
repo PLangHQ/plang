@@ -49,7 +49,7 @@ public partial class Call : IContext
             && !Equals(target.Path, caller?.Path) && target.Address is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase)
             && __action!["Name"] is { } name)
-            __action.Property.Set(new global::app.goal.step.action.property.@this
+            __action.Property.Set(new global::app.type.property.@this
                 { Name = name.Name, Type = name.Type, Value = new global::app.type.item.text.@this(address), Properties = name.Properties });
 
         if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
@@ -67,7 +67,7 @@ public partial class Call : IContext
         }
         // The argument list is the action's own property — replace it with the survivors.
         if (kept.Count != args.CountRaw && __action?["Parameter"] is { } arguments)
-            __action.Property.Set(new global::app.goal.step.action.property.@this
+            __action.Property.Set(new global::app.type.property.@this
                 { Name = arguments.Name, Type = arguments.Type, Value = new global::app.type.item.list.@this(kept), Properties = arguments.Properties });
         return Context.Ok();
     }

@@ -11,10 +11,6 @@ stored in the `.pr`. Recomputed 2026-09-23 over `os/system/builder/**/.build/*.p
 rebuilds write to `tools/decider/out/`, never over the live files, so they did not refresh these. Anything using
 the hash for staleness sees a lie. Not recomputed unilaterally on a bootstrap artifact (ties to #12).
 
-**24. `test.Create(goal, context)` is a static async factory** — the no-statics rule catches it (only the
-C#-mandated `ICreate` statics are exempt). OBP home: the test collection's lifecycle mints its elements
-(`app.Test` asked by discover, as the module list mints module elements). Decide with the births pass.
-
 **25. Births pass — inventory done** (`births-inventory.md` + `.tsv`, at `22e6dafd6`): readers 68, typed ask 39,
 pure core 4 external, implicit-in 237, direct `new` 526 (errors 270), raw result doors 150; 34 `Type => new(...)`
 getters; `new app.type` outside the registry at 7 sites.
@@ -27,24 +23,18 @@ cause. Suspected shared-state race; not quarantined (no named cause yet).
 `os/system/builder/*/.build/*.pr` is a hand-edit; nothing forces the builder's own goals to still compile — how
 #5b drifted. Ingi: decide on the parent branch, do not chase now.
 
-**14. Named survivors of the type registry pass** — executioner: the *type entities born with context* pass
-(shape with Ingi). Until then these statics stay, by name: `type.list.@this.GetPrimitiveOrMime` (the
-context-less `ClrType` fallback, `type/this.cs:163`), `type.list.@this.ClrFromMime`, and the static
-`app.type.primitive.@this` table (read by the entity's context-less constructor: `Canonicalise`,
-`StampPrimitive`). `Get(name)` / `Clr(name)` die with them (`variable/set.cs:217`'s `type.ClrType ?? Type.Get(name)`
-fallback included).
+**16. Two descriptors for "a named, typed slot" — IN PROGRESS (Ingi's go).** `app.type.Field` (Name +
+`TypeName` string) goes; `property` moves to `type/property/this.cs` and serves both a type's and an action's
+properties; the type's `Fields` + `Properties` merge into one `Property` list of `property` entries carrying
+type objects. The builder (`type/list/this.cs`) builds `property` entries; the view/templates render the face.
 
-**15. Action return type is a flat copy** — `action.Return` / `ReturnTypeName` is a string read off the entity's
-face (`goal/step/action/this.Schema.cs:83`), stored beside the type it names. It becomes the type entity; the
-catalog renders its face.
+**17. Runtime presence checks → `App.Mode` — queued (Ingi's go).** `Mode` moves out of the snapshot partial
+(`app/this.Snapshot.cs`) into `app/this.cs`; `if (Build != null)` / `if (Test != null)` and any other presence
+checks read `Mode`.
 
-**16. Two descriptors for "a named, typed slot"** (for the type-entity pass) — `goal.step.action.property.@this`
-(Name, Type entity, Nullable, Default, IsVariable) and `app.type.Field` (Name, `TypeName` — a string). Same
-concept; when the entity describes itself, a record's fields are read by the same reflection `property.list`
-does. Likely one type.
-
-**17. Runtime presence checks → `App.Mode`** — the runtime still branches on presence (`app/this.cs:516`
-`if (Build != null)`, `:547` `if (Test != null)`); reading `Mode` there is its own later item.
+**30. Error stores an App — queued (Ingi's go).** `error/Error.cs:102` (set by `Errors.Push`, used by
+`Callback` at :123). Remove it; the error reaches its App through its own Context. An error with no context has
+no callback — a named error, not an NRE. Snapshot is parked: keep that part minimal.
 
 **18. Snapshot restore — PARKED by Ingi.** Landed and kept: `be8a30fc5` (owner-named sections, one owner list,
 `App.Mode` replaces presence bits), `64cca5d21` (guarded frame reads; action verified), `8a8bd8c01` (each captured
@@ -73,10 +63,6 @@ out-of-root path instead.
 registers every `[PlangType]`, enums included, with no item check; `Registry.cs:172` skips non-items. A plugin's
 closed set would land as a type there.
 
-**27. The LLM sees no closed-set options until the menu renders choice values** — the actor's `[Choices]` class
-was the only closed set that ever reached `Schema.Types`; closed sets now ride only on their slot's
-`{choice, kind}` entity (`app.Type[slotClr].Values`). The births plan's "menu template gets choice values" closes it.
-
 **21. `plang --test` loud readers + zero-discovered guard** — a test run that discovers nothing, or whose graph
 readers fail quietly, must fail loud. Needs a running builder.
 
@@ -96,6 +82,14 @@ open rulings: blast-radius list, honest mock). Also parked here:
 
 ## Done
 
+- **24 `test.Create` static** — `app.Test.Create(goal, context)` makes the whole test (tags, coverage, skip,
+  exclusion); discover just asks; test ctor has no context: `da601665c`.
+- **15 Action return type** — `action.Return` is the type object; the name door reads `list<path>` as
+  {list, path}: `b342137e2`.
+- **14 Static type tables** — primitive tables are `app.Type`'s instance data, the type ctor no longer
+  canonicalises, `GetPrimitiveOrMime` / `ClrFromMime` / `type.FromMime` gone (`96eba3f70`, `e9fb08c27`); format →
+  type (`app.Type.Mime` / `.Extension`, format keeps format facts): `f2d582b72`.
+- **27 LLM closed-set options** — closed (see architect).
 - **20 Actor as a choice** — `choice<actor>` over `{system, user}` on the 5 slots, `app.Actor[name]` collection,
   GetActor/Convert/Resolve/Choices gone; environment.run's dead `Actor` slot now wired (see commit).
 - **19 `clr`-named wrappers** — list actions return the native list (`6031fdfd7`); setting.set/remove return no

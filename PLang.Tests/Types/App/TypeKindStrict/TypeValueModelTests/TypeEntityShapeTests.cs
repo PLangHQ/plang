@@ -78,7 +78,7 @@ public class TypeEntityShapeTests
         // A bare type object is identity only; the facts live on its full type in app.type.
         await using var app = TestApp.Create("/test");
         var bare = new global::app.type.@this("identity");
-        await Assert.That(bare.Fields).IsNull();
-        await Assert.That(app.Type[bare].Fields).IsNotNull();
+        await Assert.That(bare.Property).IsNull();
+        await Assert.That(app.Type[bare].Property).IsNotNull();
     }
 }

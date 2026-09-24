@@ -126,8 +126,8 @@ public sealed partial class @this
                 // "goal" via the @this convention), prefer the catalog-richer
                 // entry.  First-wins TryAdd over reflection-ordered types is
                 // non-deterministic — a Scalar entry could shadow a Record with
-                // populated Fields depending on assembly load order.
-                // Richness rank: Record (has Fields) > Enum (has Values) > Scalar.
+                // populated properties depending on assembly load order.
+                // Richness rank: Record (has properties) > Enum (has Values) > Scalar.
                 // (codeanalyzer v2 finding #1.)
                 if (!dict.TryGetValue(entry.Name, out var existing))
                 {
@@ -143,7 +143,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Index by PLang type name.  Returns the catalog-built entity — fully
-    /// populated with Fields / Values / Shape / Example / Description / Kinds
+    /// populated with Property / Values / Shape / Example / Description / Kinds
     /// / ClrType.  Throws on miss; index-miss is a hard error.
     /// </summary>
     /// <remarks>
@@ -242,9 +242,8 @@ public sealed partial class @this
             : entry.ClrType;
         return new app.type.@this(entry.Name, clr, kind, strict, template)
         {
-            Fields = entry.Fields,
+            Property = entry.Property,
             Values = entry.Name == "choice" && kind != null && Choice.Contains(kind) ? Choice[kind].Values : entry.Values,
-            Properties = entry.Properties,
             Shape = entry.Shape,
             ConstructorSignature = entry.ConstructorSignature,
             Example = entry.Example,
@@ -419,7 +418,7 @@ public sealed partial class @this
     /// Walks action parameter types and returns structured catalog entries.
     /// Discovery is transitive: every type referenced in a schema is itself surfaced.
     ///   - Enum (or ValidValues) → TypeEntry with Values populated.
-    ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
+    ///   - Record                → TypeEntry with Property built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
     [System.Obsolete("Type/module discovery moves to list<type>/list<module> + a Fluid render — do not add new callers.")]
@@ -524,19 +523,22 @@ public sealed partial class @this
                 }
             }
 
-            var llmProps = new List<app.type.Field>();
+            var llmProps = new app.type.property.list.@this();
             // A member that needs the asker's context is a one-context method; it is the same
-            // field to the catalog, listed where it is declared among the properties.
+            // property to the catalog, listed where it is declared among the properties.
             var llmMethods = new Queue<MethodInfo>(type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(m => Attribute.IsDefined(m, typeof(LlmBuilderAttribute)) && m.ReturnType != typeof(void)
                     && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(actor.context.@this))
                 .OrderBy(m => m.MetadataToken));
             void AddField(string name, System.Type fieldType)
             {
-                llmProps.Add(new app.type.Field
+                // The catalog is still being built here, so the property's type is born from its
+                // name and class directly rather than asked of the door.
+                var (fieldName, fieldKind) = PlangName(fieldType);
+                llmProps.Add(new app.type.property.@this
                 {
                     Name = char.ToLower(name[0]) + name[1..],
-                    TypeName = Face(PlangName(fieldType)),
+                    Type = new app.type.@this(fieldName, ResolveType(fieldName), fieldKind),
                 });
                 Enqueue(UnwrapType(fieldType));
             }
@@ -572,7 +574,7 @@ public sealed partial class @this
                 {
                     Shape = derivedShape ?? staticShape ?? "string",
                     ConstructorSignature = constructorSignature,
-                    Properties = llmProps.Count > 0 ? llmProps : null,
+                    Property = llmProps.Count > 0 ? llmProps : null,
                     Description = staticDescription,
                     Example = staticExample,
                     Kinds = staticKinds,
@@ -584,7 +586,7 @@ public sealed partial class @this
             {
                 entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
                 {
-                    Fields = llmProps,
+                    Property = llmProps,
                     Description = staticDescription,
                     Example = staticExample,
                     Kinds = staticKinds,

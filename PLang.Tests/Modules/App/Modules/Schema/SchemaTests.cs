@@ -64,8 +64,8 @@ public class SchemaTests
         var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
 
         await Assert.That(goal).IsNotNull();
-        await Assert.That(goal!.Fields).IsNotNull();
-        await Assert.That(goal.Fields!.Any(f => f.Name == "name")).IsTrue();
+        await Assert.That(goal!.Property).IsNotNull();
+        await Assert.That(goal.Property!.Any(f => f.Name == "name")).IsTrue();
         await Assert.That(goal.Values).IsNull();
     }
 
@@ -80,8 +80,8 @@ public class SchemaTests
 
         var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
         await Assert.That(goal).IsNotNull();
-        await Assert.That(goal!.Fields).IsNotNull();
-        await Assert.That(goal.Fields!.Count).IsGreaterThan(0);
+        await Assert.That(goal!.Property).IsNotNull();
+        await Assert.That(goal.Property!.Count).IsGreaterThan(0);
 
         await Assert.That(ActorSlot().Values!).Contains("system");
     }
@@ -100,7 +100,7 @@ public class SchemaTests
 
         var actor = ActorSlot();
         await Assert.That(actor.Values!).Contains("system");   // closed set: Values on the slot
-        await Assert.That(actor.Fields).IsNull();              // not a record
+        await Assert.That(actor.Property).IsNull();              // not a record
 
         // ClrType is internal — never on the public/serializable surface.
         await Assert.That(typeof(global::app.type.@this)

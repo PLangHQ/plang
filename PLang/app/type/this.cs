@@ -7,7 +7,7 @@ namespace app.type;
 
 /// <summary>
 /// PLang type entity carrying the <c>{Name, Kind, Strict}</c> identity plus the
-/// folded catalog knowledge (Fields, Values, Properties, Shape,
+/// folded catalog knowledge (Property, Values, Shape,
 /// ConstructorSignature, Example, Description, Kinds).
 ///
 /// <para><c>Name</c> is the family/primitive ("text", "number", "image", "long",
@@ -432,14 +432,13 @@ public sealed class @this : item.@this
     // (%x!type.Description%) answers them through the full type — see Get below. The wire form is
     // Write's {name, kind?, strict?, template?}; these never ride it.
 
-    /// <summary>Record fields. Non-null marks this as a record-shape type.</summary>
-    public IReadOnlyList<Field>? Fields { get; init; }
+    /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
+    /// named slot carrying its type. Null when the type declares none. A record is a type with
+    /// properties and no <see cref="Shape"/>.</summary>
+    public property.list.@this? Property { get; init; }
 
     /// <summary>Enum values. Non-null marks this as an enum-shape type.</summary>
     public IReadOnlyList<string>? Values { get; init; }
-
-    /// <summary>Read-only navigation properties for scalar types.</summary>
-    public IReadOnlyList<Field>? Properties { get; init; }
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get; init; }
@@ -460,11 +459,11 @@ public sealed class @this : item.@this
     /// </summary>
     public IReadOnlyList<string>? Kinds { get; init; }
 
-    /// <summary>How much catalog this entry carries — a record (fields) over a closed set (values)
-    /// over a scalar (shape) over a bare name. Breaks a same-name tie in the catalog
+    /// <summary>How much catalog this entry carries — a record (properties, no shape) over a closed
+    /// set (values) over a scalar (shape) over a bare name. Breaks a same-name tie in the catalog
     /// deterministically.</summary>
     internal int Richness =>
-        Fields is { Count: > 0 } ? 3
+        Shape == null && Property is { Count: > 0 } ? 3
         : Values is { Count: > 0 } ? 2
         : Shape != null || ConstructorSignature != null ? 1
         : 0;

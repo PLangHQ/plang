@@ -1,13 +1,15 @@
 using System.Reflection;
 
-namespace app.goal.step.action.property;
+namespace app.type.property;
 
 /// <summary>
-/// One property of an action — an action is a class, and a class has properties. One class, two
-/// sources, each filling what it knows: a catalog action's properties come from its handler class
-/// (Name, the declared Type, Nullable, the [Default] rule); a program action's come from its .pr
-/// (Name, the Type the step gave, the raw Value as loaded, the Properties bag). The program is
-/// shared by every run, so a property holds no Data and no context: a run makes its own Data from it.
+/// One property of a class — a named, typed slot, as C#'s <c>PropertyInfo</c> is. A type's
+/// properties (<c>type.Property</c>: a record's fields, a scalar's navigable members) and an
+/// action's properties (<c>action.Property</c> / <c>action.Default</c>) are both these. Each source
+/// fills what it knows: a type's come from its class (Name, Type); a catalog action's from its
+/// handler class (Name, the declared Type, Nullable, the [Default] rule); a program action's from
+/// its .pr (Name, the Type the step gave, the raw Value as loaded, the Properties bag). The program
+/// is shared by every run, so a property holds no Data and no context: a run makes its own Data from it.
 /// </summary>
 public sealed class @this
 {
@@ -36,7 +38,7 @@ public sealed class @this
         Default = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
     }
 
-    /// <summary>A property built by hand — the synthetic channel property, a .pr row, a builder's.</summary>
+    /// <summary>A property built by hand — a type's field, the synthetic channel property, a .pr row, a builder's.</summary>
     public @this() { }
 
     /// <summary>The property name — "Path", "Encoding".</summary>

@@ -37,13 +37,13 @@ public partial class @this
     /// <c>"property"</c>); a catalog action's (<c>module[name]</c>) are its handler class's, reflected.
     /// Which one is decided by the list's constructor — the catalog element is born with its own.</summary>
     [JsonIgnore]
-    public global::app.goal.step.action.property.list.@this Property { get; init; } = new();
+    public global::app.type.property.list.@this Property { get; init; } = new();
 
     /// <summary>What the build froze for the properties the step did not set (the .pr's
     /// <c>"default"</c>) — frozen so a later runtime that changes a <c>[Default]</c> runs the built
     /// program the same.</summary>
     [JsonIgnore]
-    public global::app.goal.step.action.property.list.@this Default { get; init; } = new();
+    public global::app.type.property.list.@this Default { get; init; } = new();
 
     /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after) — an
     /// internal typed list; the action owns their right-to-left wrap fold (see RunAsync) and their
@@ -142,7 +142,7 @@ public partial class @this
     /// The property the step set, by name; null when the step did not set it. The program is
     /// shared by every run: a run makes its own Data from the property (<c>Data(context)</c>).
     /// </summary>
-    public global::app.goal.step.action.property.@this? this[string name] => Property[name];
+    public global::app.type.property.@this? this[string name] => Property[name];
 
     /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.

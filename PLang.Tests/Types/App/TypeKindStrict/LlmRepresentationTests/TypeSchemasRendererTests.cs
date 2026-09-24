@@ -39,7 +39,7 @@ public class TypeSchemasRendererTests
     {
         await using var app = TestApp.Create("/test");
         var record = (app.Module.Schema.Build()).Types
-            .FirstOrDefault(t => t.Fields != null && t.Fields.Count > 0);
+            .FirstOrDefault(t => t.Property != null && t.Property.Count > 0);
         await Assert.That(record).IsNotNull();
     }
 

@@ -61,10 +61,10 @@ public class TypeEntityHomeTests
     {
         await using var app = TestApp.Create("/test");
         var entries = app.Type.BuildTypeEntries(app.Module);
-        var record = entries.FirstOrDefault(e => e.Fields != null && e.Fields.Count > 0);
+        var record = entries.FirstOrDefault(e => e.Property != null && e.Property.Count > 0);
         await Assert.That(record).IsNotNull();
-        await Assert.That(record!.Fields).IsNotNull();
-        await Assert.That(record.Fields!.Count).IsGreaterThan(0);
+        await Assert.That(record!.Property).IsNotNull();
+        await Assert.That(record.Property!.Count).IsGreaterThan(0);
     }
 
     [Test] public async Task BuilderTypesEntry_FieldAndEntryKind_TypesDoNotExist_AfterFold()

@@ -86,9 +86,9 @@ public class PlangTypesCut3_CompositionNavigationTests
         var entries = types.BuildTypeEntries(null);
         var imageEntry = entries.FirstOrDefault(e => e.Name == "image");
         await Assert.That(imageEntry).IsNotNull();
-        await Assert.That(imageEntry!.Properties).IsNotNull();
-        var pathProp = imageEntry.Properties!.FirstOrDefault(p => p.Name == "path");
+        await Assert.That(imageEntry!.Property).IsNotNull();
+        var pathProp = imageEntry.Property!.FirstOrDefault(p => p.Name == "path");
         await Assert.That(pathProp).IsNotNull();
-        await Assert.That(pathProp!.TypeName).IsEqualTo("path");
+        await Assert.That(pathProp!.Type.ToString()).IsEqualTo("path");
     }
 }

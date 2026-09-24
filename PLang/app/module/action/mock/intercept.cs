@@ -103,7 +103,7 @@ public partial class intercept : IContext
         return true;
     }
 
-    private static object? ResolveParamValue(app.goal.step.action.property.@this property, global::app.variable.list.@this variables)
+    private static object? ResolveParamValue(global::app.type.property.@this property, global::app.variable.list.@this variables)
     {
         // A live ref is a stamped template — the stamp gates resolution.
         if (property.Value is global::app.type.item.text.@this { Template: not null } st)
