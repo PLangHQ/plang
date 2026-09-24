@@ -27,11 +27,11 @@ public sealed class @this
     public int? Step { get; set; }
 
     /// <summary>
-    /// Variables to watch. Each can optionally track events (OnCreate/OnChange/OnDelete).
-    /// Variables without Event set are displayed at step boundaries.
-    /// Set via: --debug={"variables":[{"name":"trace","event":"onchange"}]}
+    /// The variables to watch, by name. A watched variable prints at every step and logs each time
+    /// it is created, changed or deleted.
+    /// Set via: --debug={"variables":["trace","goal"]}
     /// </summary>
-    public List<DebugVariable>? Variables { get; set; }
+    public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; } = new();
 
     /// <summary>
     /// Max characters per line before truncation. Default 500.
@@ -105,8 +105,12 @@ public sealed class @this
         return ch.WriteAsync(envelope);
     }
 
+    // The watched names, as the store names them (no %).
+    private HashSet<string> Watched => Variables.Items(_context).Select(v => (v.Peek()?.ToString() ?? "").Trim('%'))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
-    /// Activates debug tracing: strips % from watched names, wires watcher placeholders,
+    /// Activates debug tracing: watches the named variables through the User store's own events,
     /// subscribes the LLM request/response hooks, compiles the grep regex, and registers the
     /// step/goal(/action) event bindings. The scalar config is set beforehand by the --debug
     /// walk (<c>app.Setting.Set(app.Debug, dict)</c>); this does the side-effects only —
@@ -115,34 +119,14 @@ public sealed class @this
     /// </summary>
     public void Activate()
     {
-        // Strip % from variable names
-        if (Variables != null)
+        // The store announces every create, change and delete for any name; the watch filters by name.
+        if (Variables.CountRaw > 0)
         {
-            foreach (var v in Variables)
-                v.Name = v.Name.Trim('%');
-
-            // Create placeholder Data with event handlers for watched variables
-            var vars = _context.App.User.Context.Variable;
-            foreach (var v in Variables.Where(v => v.Event.HasValue))
-            {
-                // Born with context (Uninitialized == a value-less NotFound); the watched
-                // variable's placeholder must carry a context like every other Data.
-                var placeholder = _context.App.User.Context.NotFound(v.Name);
-                if (v.Event == DebugEvent.OnCreate)
-                    placeholder.OnCreate.Add((data) => LogEvent(v.Name, "CREATED", data));
-                if (v.Event == DebugEvent.OnChange)
-                    placeholder.OnChange.Add((oldData, newData) => LogMutation(v.Name, oldData, newData));
-                if (v.Event == DebugEvent.OnDelete)
-                    placeholder.OnDelete.Add((data) => LogEvent(v.Name, "DELETED", data));
-                if (v.Event == DebugEvent.OnTypeChange)
-                    placeholder.OnChange.Add((oldData, newData) =>
-                    {
-                        var oldType = oldData.Type.Name;
-                        var newType = newData.Type.Name;
-                        if (oldType != newType) LogMutation(v.Name, oldData, newData);
-                    });
-                vars.Set(placeholder);
-            }
+            var watched = Watched;
+            var store = _context.App.User.Context.Variable;
+            store.OnCreate += (name, value) => { if (watched.Contains(name)) Watch(name, "CREATED", null, value); };
+            store.OnSet += (name, before, after) => { if (watched.Contains(name)) Watch(name, "CHANGED", before, after); };
+            store.OnRemove += name => { if (watched.Contains(name)) Watch(name, "DELETED", null, null); };
         }
 
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
@@ -236,39 +220,24 @@ public sealed class @this
     }
 
 
-    public void LogMutation(string name, data.@this oldData, data.@this newData)
+    /// <summary>One watched variable was created, changed or deleted: where it happened (goal, step)
+    /// and its type — before → after on a change. The store's events are sync, so this writes
+    /// fire-and-forget through the debug channel.</summary>
+    private void Watch(string name, string change, object? before, object? after)
     {
         var context = _context.App.User.Context;
-        var goalName = context?.Goal?.Name ?? "?";
-        var stepIndex = context?.Step?.Index.ToString() ?? "?";
-        var stepText = context?.Step?.Text;
+        var goalName = context.Goal?.Name ?? "?";
+        var stepIndex = context.Step?.Index.ToString() ?? "?";
+        var stepText = context.Step?.Text;
         if (stepText != null && stepText.Length > 60) stepText = stepText[..60];
-        var stack = new System.Diagnostics.StackTrace(2, true);
+        string TypeOf(object? value) => (value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name ?? "null";
 
         var sb = new StringBuilder();
-        sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
+        sb.AppendLine($"=== WATCH [{name}] {change} ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
-        sb.AppendLine($"  Type: {oldData.Type.Name} → {newData.Type.Name}");
-        for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
-        {
-            var frame = stack.GetFrame(i);
-            if (frame?.GetMethod() != null)
-                sb.AppendLine($"  at {frame.GetMethod()!.DeclaringType?.Name}.{frame.GetMethod()!.Name}:{frame.GetFileLineNumber()}");
-        }
-        sb.AppendLine("==============================");
-        // Subscribed as sync OnChange callback — fire-and-forget through the
-        // debug channel. Console.Error was non-awaitable too, so ordering
-        // guarantees are unchanged.
+        if (change == "CHANGED") sb.AppendLine($"  Type: {TypeOf(before)} → {TypeOf(after)}");
+        else if (change == "CREATED") sb.AppendLine($"  Type: {TypeOf(after)}");
         _ = Write(sb.ToString());
-    }
-
-    public void LogEvent(string name, string eventType, data.@this data)
-    {
-        var context = _context.App.User.Context;
-        var goalName = context?.Goal?.Name ?? "?";
-        var stepIndex = context?.Step?.Index.ToString() ?? "?";
-
-        _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Type.Name} ==={Environment.NewLine}");
     }
 
     private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
@@ -557,10 +526,9 @@ public sealed class @this
         }
 
         // Add explicitly watched variables
-        var watchVars = context.App?.Debug.Variables;
-        if (watchVars != null)
-            foreach (var v in watchVars)
-                varNames.Add(v.Name);
+        if (context.App?.Debug is { } debug)
+            foreach (var name in debug.Watched)
+                varNames.Add(name);
 
         if (varNames.Count == 0) return;
 
@@ -682,14 +650,6 @@ public sealed class @this
         var str = value.ToString() ?? "?";
         return str.Length > max ? $"{str[..max]}...[{str.Length - max} more chars]" : str;
     }
-}
-
-public enum DebugEvent { OnCreate, OnChange, OnDelete, OnTypeChange }
-
-public class DebugVariable
-{
-    public string Name { get; set; } = "";
-    public DebugEvent? Event { get; set; }
 }
 
 /// <summary>

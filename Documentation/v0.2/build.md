@@ -51,7 +51,7 @@ The cache key is based on the goal content hash. If you change the `.goal` file,
 
 ```bash
 # Build one file, debug the builder, watch variables
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":[{"name":"%actionSummary%"},{"name":"%goalForLlm%"}]}'
+plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":["actionSummary","goalForLlm"]}'
 ```
 
 See [debug.md](debug.md) for full debug documentation.

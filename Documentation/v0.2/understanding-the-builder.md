@@ -342,19 +342,12 @@ All `--debug` output goes to **stderr** (it never pollutes program output), and
 the JSON maps onto `Debug.@this` (`PLang/app/module/debug/this.cs`). The pieces
 that answer "where did this variable come from / change / go wrong?":
 
-- **Watch a value at step boundaries** — see it BEFORE/AFTER each step:
+- **Watch a value** — see it BEFORE/AFTER each step, and a log line each time it is created,
+  changed (with the goal, step and old → new type) or deleted. This is the tool for "this
+  variable became the wrong thing — where?":
   ```bash
-  plang build '--build={"files":"x.goal","cache":false}' '--debug={"variables":[{"name":"actionSummary"}]}'
+  plang build '--build={"files":"x.goal","cache":false}' '--debug={"variables":["actionSummary","trace"]}'
   ```
-- **Track every mutation** — log each time the variable is replaced, with the
-  goal, step, old/new CLR type, and a C# stack trace (the top frames) showing
-  *who* changed it. This is the tool for "this variable became the wrong thing —
-  where?":
-  ```bash
-  plang '--debug={"variables":[{"name":"trace","event":"onchange"}]}'
-  ```
-  Events: `oncreate`, `onchange`, `ondelete`, `ontypechange` (fires only when the
-  value's CLR type changes — e.g. Dictionary → String).
 - **Drop to action granularity** — `level:"action"` shows BEFORE/AFTER for each
   action *within* a step, so you can watch `%!data%` flow between chained actions
   (e.g. `goal.call` → `variable.set`):

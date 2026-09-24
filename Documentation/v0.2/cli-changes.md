@@ -12,8 +12,9 @@ The CLI flags are now uniform: every flag is a walk onto the matching app-tree n
 - **`--debug` no longer carries callstack config.** Callstack capture is its own flag:
   `--callstack={"timing":true,"diff":true,...}`. There is no shorthand (`callstack:true` is gone) —
   name each knob. It applies to the run's startup actors (System + User).
-- **`--debug`'s `variables` bare-string shorthand is gone.** Write objects:
-  `--debug={"variables":[{"name":"x"}]}`, not `["x"]`.
+- **`--debug`'s `variables` is a list of names:** `--debug={"variables":["x","y"]}`. A watched
+  variable prints at every step and logs each create, change and delete (the old per-variable
+  `{"name","event"}` objects are gone).
 - **`--test` config is validated by the types, and unknown keys are rejected.** `format` is a
   closed set (`json`/`junit` — anything else errors); `timeoutSeconds`/`parallel` accept any
   number, with `≤ 0` read as a sentinel (`timeoutSeconds ≤ 0` = no timeout, `parallel ≤ 0` =

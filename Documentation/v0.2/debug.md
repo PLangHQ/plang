@@ -18,11 +18,8 @@ plang '--debug={"goal":"BuildGoal"}'
 # Debug a specific step index within a goal
 plang '--debug={"goal":"BuildGoal","step":3}'
 
-# Watch specific variables (display at step boundaries)
-plang '--debug={"variables":[{"name":"response"},{"name":"goal"}]}'
-
-# Track variable mutations (logs every change with goal, step, type, stack trace)
-plang '--debug={"variables":[{"name":"trace","event":"onchange"}]}'
+# Watch variables: each prints at every step and logs its create, change and delete
+plang '--debug={"variables":["response","goal"]}'
 
 # Set max line length (default 500)
 plang '--debug={"maxLength":2000}'
@@ -31,7 +28,7 @@ plang '--debug={"maxLength":2000}'
 plang '--debug={"grep":"actions"}'
 
 # Combine options
-plang '--debug={"goal":"BuildGoal","step":3,"variables":[{"name":"%actions%"}],"maxLength":2000,"grep":"Module"}'
+plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"maxLength":2000,"grep":"Module"}'
 ```
 
 ## Properties
@@ -40,7 +37,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":[{"name":"%actions%"}],"
 |----------|------|---------|-------------|
 | `goal` | string | null | Filter to a specific goal name. Null = all goals. |
 | `step` | int | null | Filter to a specific step index. Null = all steps. |
-| `variables` | DebugVariable[] | null | Variables to watch. Each entry is an object with `name` and optional `event` (`[{"name":"x"}]` — no bare-string shorthand). |
+| `variables` | list&lt;text&gt; | [] | Names of the variables to watch (`["trace","goal"]`; a `%` around a name is fine). A watched variable prints at every step and logs each create, change and delete. |
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | choice | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). Any other value is rejected. |
@@ -56,7 +53,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":[{"name":"%actions%"}],"
 **action**: Also shows BEFORE/AFTER for each action within a step. Useful for seeing how `%!data%` flows between actions like `goal.call` → `variable.set`.
 
 ```bash
-plang '--debug={"level":"action","variables":[{"name":"%!data%"}]}'
+plang '--debug={"level":"action","variables":["!data"]}'
 ```
 
 ## Output Format
@@ -110,80 +107,32 @@ All debug output goes to **stderr** (not stdout), so it doesn't interfere with p
 
 ```bash
 # Build one file, debug the BuildGoal steps, watch a variable
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":[{"name":"%actionSummary%"}]}'
+plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":["actionSummary"]}'
 ```
 
 The `cache:false` option bypasses the LLM cache, forcing a fresh LLM call.
 
 ## Variable Watch
 
-The `variables` property accepts objects with `name` and optional `event`:
-
-```json
-{"name": "trace", "event": "onchange"}
-```
-
-### Events
-
-| Event | Description |
-|-------|-------------|
-| (none) | Display variable at step boundaries only (default) |
-| `oncreate` | Log when the variable is first created in the store |
-| `onchange` | Log every time the variable is replaced with a new value |
-| `ondelete` | Log when the variable is removed from the store |
-| `ontypechange` | Log only when the value's CLR type changes (e.g., Dictionary → String) |
-
-### How it works
-
-The debugger creates placeholder Data objects in the variable store with event handlers attached. When the runtime creates or replaces the variable, events fire and the handler logs:
-- Goal name and step index
-- Old and new value types
-- C# stack trace (top 5 frames)
-
-Event subscribers are **aliased** when a variable is replaced — `Variables.Set` shares the prev binding's `OnCreate`/`OnChange`/`OnDelete` list refs onto the new Data, so subscribers follow the *name* across any number of re-bindings. Subscribers added later (to either the prev ref or the current one) are visible from every alias because they share the same list.
-
-### Example: Track type mutations
+`variables` is a list of names: `["trace","goal"]`. A watched variable prints at every step, and
+logs each time it is created, changed or deleted. The watch listens to the User actor's variable
+store, which announces every create, change and delete for any name; it logs the ones it watches.
 
 ```bash
-plang build '--build={"files":"myfile.goal","cache":false}' \
-  '--debug={"variables":[{"name":"trace","event":"onchange"}]}'
+plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"variables":["trace"]}'
 ```
 
 Output:
 ```
-=== WATCH [trace] CHANGED ===
+=== WATCH [trace] CREATED ===
   Goal: BuildGoal/Start[8] set %trace% = {"id": "%traceId%"...
-  Raw: null → Dictionary`2
-  Resolved: null → Dictionary`2
-  at this.FireOnChange:109
-  at this.Set:71
-  at Set.Run:52
-==============================
+  Type: dict
+=== WATCH [trace] CHANGED ===
+  Goal: BuildGoal/Start[9] set %trace% = "done"
+  Type: dict → text
+=== WATCH [trace] DELETED ===
+  Goal: BuildGoal/Start[12] remove %trace%
 ```
-
-The output shows both `Raw` (the stored `_value` field) and `Resolved` (what `.Value` returns after NeedsResolution). If Raw shows a type but Resolved shows null, the issue is in variable resolution. If Raw shows null, the Data itself has no value.
-
-### Example: Detect variable creation
-
-```bash
-plang '--debug={"variables":[{"name":"config","event":"oncreate"}]}'
-```
-
-Output:
-```
-=== WATCH [config] CREATED in Start[2] type=Dictionary`2 ===
-```
-
-### Example: Catch type changes only
-
-Use `ontypechange` to filter out noise — only fires when the CLR type of the value changes:
-
-```bash
-plang build '--build={"files":"myfile.goal","cache":false}' \
-  '--debug={"variables":[{"name":"trace","event":"ontypechange"}]}'
-```
-
-Only fires for mutations like `null → Dictionary`, `Dictionary → String`, not `Dictionary → Dictionary`.
 
 ## LLM Message Tracing
 

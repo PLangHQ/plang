@@ -69,4 +69,40 @@ public class DebugSmokeTests
         await Assert.That(debugOut).Contains("ACTION [BEFORE]");
         await Assert.That(debugOut).Contains("ACTION [AFTER]");
     }
+
+    // --debug={"variables":["trace"]} binds through the setting walk as a list of names.
+    [Test]
+    public async Task Debug_Variables_BindAsNames()
+    {
+        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
+        var set = _app.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
+
+        await set.IsSuccess();
+        await Assert.That(_app.Debug.Variables.Items(_app.System.Context).Select(v => v.Peek()?.ToString()).ToList())
+            .IsEquivalentTo(new List<string> { "trace", "%goal%" });
+    }
+
+    // A watched variable logs its create, change and delete through the store's own events; an
+    // unwatched one logs nothing.
+    [Test]
+    public async Task Debug_WatchedVariable_LogsCreatedChangedDeleted()
+    {
+        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
+        _app.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
+        _app.Debug.Activate();
+        var store = _app.User.Context.Variable;
+
+        await store.Set("trace", 1);
+        await store.Set("trace", "now text");
+        store.Remove("trace");
+        await store.Set("other", 1);
+        await Task.Delay(50);   // the watch writes fire-and-forget
+
+        var debugOut = ReadCapture();
+        await Assert.That(debugOut).Contains("WATCH [trace] CREATED");
+        await Assert.That(debugOut).Contains("WATCH [trace] CHANGED");
+        await Assert.That(debugOut).Contains("Type: number → text");
+        await Assert.That(debugOut).Contains("WATCH [trace] DELETED");
+        await Assert.That(debugOut).DoesNotContain("WATCH [other]");
+    }
 }
