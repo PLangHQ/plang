@@ -7,14 +7,9 @@ namespace PLang.Tests.App.SingularNamespaces.NullabilityTests;
 
 // Batch E — Stage 2 nullability contract (architect spec).
 //
-// Architectural decision (Ingi, post-tester-v1): production producers always stamp
-// Context downstream of mint (Variables.Set, Action.RunAsync, snapshot restore).
-// The static GetPrimitiveOrMime / GetTypeNameStatic surfaces stay as the entity's
-// documented no-context primitive lookup — `new type("string").ClrType` works
-// without an App.  What's removed are the EXTERNAL `?? GetPrimitiveOrMime` /
-// `?? GetTypeNameStatic` chains at consumer sites (Sqlite, As, set.cs, module
-// schema describers) — those callers used the fallback to mask their own
-// stamping bugs; with Context guaranteed by the producer, the chain is dead.
+// Production producers always stamp Context downstream of mint (Variables.Set,
+// Action.RunAsync, snapshot restore); a type's class is answered by the registry
+// (`app.Type`), never by a static no-context lookup.
 //
 // The 5 structural back-refs (step.Goal, channel.Actor, channel.Channels and
 // the App back-refs on module/goal/error) are flipped non-null.
@@ -31,17 +26,9 @@ public class NonNullInvariantTests
 
     [Test] public async Task DataType_OnStampedData_ResolvesDomainType_ViaRegistry_NotStaticFallback()
     {
-        // Asserting on `int` would be meaningless — both the registry and the
-        // static GetPrimitiveOrMime path return typeof(int) for "int", so the
-        // assertion couldn't distinguish them.  Use a domain type registered
-        // only in the per-App catalog: `path` lives in the registry, has no
-        // entry in the static primitive/MIME table, so resolving its ClrType
-        // proves the read went through Context.App.Type.Clr — not the static
-        // fallback (which would return null).
+        // `path` lives only in the per-App catalog, so resolving its ClrType proves the
+        // read went through Context.App.Type.Clr.
         await using var app = new PLangEngine("/test");
-        var staticAnswer = global::app.type.list.@this.GetPrimitiveOrMime("path");
-        await Assert.That(staticAnswer).IsNull()
-            .Because("guard: if the static path ever learns about 'path', this test no longer proves what its name claims.");
 
         // A bare type object answers only the class stamped at its birth; the asker brings the
         // context and the registry answers by name.
@@ -55,31 +42,6 @@ public class NonNullInvariantTests
         await Assert.That(clr!.Name).IsEqualTo("this")
             .Because("the registered CLR type for 'path' is app.type.item.path.@this — Type.Name strips the @-escape.");
         await Assert.That(clr!.Namespace).IsEqualTo("app.type.item.path");
-    }
-
-    [Test] public async Task GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved()
-    {
-        // The `Context?.X ?? GetPrimitiveOrMime(...)` chain at consumer sites is gone.
-        // Static GetPrimitiveOrMime stays on type.list.@this as the no-context surface,
-        // and type.@this still uses it as its OWN entity-level fallback for primitives;
-        // what's removed is consumer sites chaining it as `?? fallback` after a context
-        // lookup of their own.
-        var sources = new[] {
-            "PLang/app/data/this.cs",
-            "PLang/app/module/action/variable/set.cs",
-        };
-        var repo = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-        foreach (var rel in sources)
-        {
-            var path = System.IO.Path.Combine(repo, rel);
-            // Fail loud if the guard file is missing — otherwise a CI layout change
-            // would silently skip both sources and the test would pass vacuously.
-            await Assert.That(System.IO.File.Exists(path)).IsTrue()
-                .Because($"guard file {rel} not found at {path} — relative-walk from BaseDirectory broke.");
-            var text = await System.IO.File.ReadAllTextAsync(path);
-            await Assert.That(text.Contains("?? AppTypes.GetPrimitiveOrMime") || text.Contains("?? global::app.type.list.@this.GetPrimitiveOrMime"))
-                .IsFalse().Because($"{rel} still has a `?? GetPrimitiveOrMime` fallback chain");
-        }
     }
 
     [Test] public async Task AppParent_OnRootApp_IsNull_ByDesign()

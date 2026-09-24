@@ -74,31 +74,11 @@ public sealed partial class @this
     /// </summary>
     public reader.@this Reader { get; } = new();
 
-    // --- Primitive lookup tables ---
-    // Aliases / canonical-name data lives on app.type.primitive.@this — one
-    // home for the seeded entries that both the registry (instance lookup) and
-    // the static no-context fallback (GetPrimitiveOrMime / GetPrimitiveName)
-    // read from.
+    /// <summary>The primitives' spelled names — this registry's own data. <c>app.Type[name]</c> is
+    /// the one door that turns a spelled name into its canonical type.</summary>
+    internal app.type.primitive.@this Primitive { get; } = new();
 
     private const int MaxGenericDepth = 20;
-
-    /// <summary>
-    /// Static-friendly subset of <see cref="Get"/> that handles primitives and MIME without
-    /// touching the per-App registry. Used as a fallback when no <c>Context</c> is available
-    /// (e.g. <c>Data.Type.ClrType</c> on a Data minted outside an action's context).
-    /// </summary>
-    public static System.Type? GetPrimitiveOrMime(string typeName)
-    {
-        if (string.IsNullOrWhiteSpace(typeName)) return null;
-        if (app.type.primitive.@this.Aliases.TryGetValue(typeName, out var primitive)) return primitive;
-        // Context-free domain types — resolvable without an App registry so the
-        // entry-seam fold (type.Judge runs at Data construction, before Context
-        // is wired) can ask a declared type its CLR nature. `variable` is the
-        // raw-name type judged here; it carries [PlangType] for the registry path too.
-        if (string.Equals(typeName, "variable", System.StringComparison.OrdinalIgnoreCase))
-            return typeof(app.variable.@this);
-        return ClrFromMime(typeName);
-    }
 
 
     // --- PLang name → CLR type ---
@@ -114,7 +94,9 @@ public sealed partial class @this
 
     /// <summary>True when <paramref name="typeName"/> names a plang type — the presence question
     /// beside the indexer, which selects and throws on a miss.</summary>
-    public bool Contains(string typeName) => Get(typeName) != null;
+    public bool Contains(string typeName)
+        // A spelled {name/kind} ("text/md") is known when its name is — the same split the name door makes.
+        => Get(typeName.IndexOf('/') is > 0 and var slash && !typeName.Contains('<') ? typeName[..slash] : typeName) != null;
 
     // --- Stage 3 accessor surface ---
 
@@ -181,16 +163,31 @@ public sealed partial class @this
             var slash = typeName.IndexOf('/');
             if (slash > 0 && !typeName.Contains('<'))
                 return this[new app.type.@this(typeName[..slash], typeName[(slash + 1)..])];
-            if (Get(typeName) == null)
+            if (Get(typeName) is not { } clr)
                 throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
-            // An alias lands on its canonical type: "string" → the "text" entry, "int" → {number, int}.
-            var named = new app.type.@this(typeName, Get(typeName));
-            if (named.Kind != null) return this[named];
-            if (CatalogByName.TryGetValue(named.Name, out var canonical)) return canonical;
-            // Primitive / generic-shape: not in the catalog (catalog covers domain types only)
-            // but the name resolves — a type born knowing its class, no facts to carry.
-            return named;
+            // THE canonicalising door: an alias lands on the name of the item that owns it —
+            // "string" → the "text" entry — and a precision name is a kind of number: "int" → {number, int}.
+            if (_typeToName.TryGetValue(clr, out var canonicalName))
+            {
+                if (Precision(typeName, canonicalName) is { } precision)
+                    return this[new app.type.@this(canonicalName, precision)];
+                if (!string.Equals(canonicalName, typeName, StringComparison.OrdinalIgnoreCase))
+                    return this[canonicalName];
+                if (CatalogByName.TryGetValue(canonicalName, out var canonical)) return canonical;
+            }
+            // Not in the catalog (a generic shape, a primitive item the catalog doesn't list) but the
+            // name resolves — a type born knowing its class, no facts to carry.
+            return new app.type.@this(typeName.ToLowerInvariant(), clr);
         }
+    }
+
+    // A number spelled by its precision ("int", "integer", "long?") — the precision is number's kind.
+    private static string? Precision(string spelled, string canonicalName)
+    {
+        if (canonicalName != "number") return null;
+        var lower = spelled.ToLowerInvariant().TrimEnd('?');
+        if (lower == "integer") return "int";
+        return lower != "number" && app.type.item.number.@this.Kinds.ContainsKey(lower) ? lower : null;
     }
 
     // The full types built per identity {name, kind, strict, template} — each built once.
@@ -217,8 +214,11 @@ public sealed partial class @this
         if (!Contains(name)) return new app.type.@this(name, kind, strict, template);
         var entry = this[name];
         if (kind == null && !strict && template == null) return entry;
-        // A number's precision kind carries its own class ({number, int} → Int32), stamped at birth.
-        return new app.type.@this(entry.Name, entry.Name == "number" && kind != null ? null : entry.ClrType, kind, strict, template)
+        // A number's precision kind carries its own C# mate ({number, int} → Int32), stamped at birth.
+        var clr = entry.Name == "number" && kind != null
+            ? (Primitive.Aliases.TryGetValue(kind, out var mate) ? mate : null)
+            : entry.ClrType;
+        return new app.type.@this(entry.Name, clr, kind, strict, template)
         {
             Fields = entry.Fields,
             Values = entry.Name == "choice" && kind != null && Choice.Contains(kind) ? Choice[kind].Values : entry.Values,
@@ -321,42 +321,8 @@ public sealed partial class @this
             }
         }
 
-        // Registry is the single source of truth — primitives are seeded into
-        // it at init via SeedClrPrimitives. The static Primitives dict still
-        // backs the no-context fallback (GetPrimitiveOrMime / GetPrimitiveName).
-        var domainType = ResolveType(typeName);
-        if (domainType != null) return domainType;
-
-        var mimeType = ClrFromMime(typeName);
-        if (mimeType != null) return mimeType;
-
-        return null;
-    }
-
-    /// <summary>
-    /// MIME content-type → CLR type for deserialization. Returns <c>null</c>
-    /// when the input isn't a MIME string (no slash) or isn't a recognised family.
-    /// Pure logic with no instance state — exposed as static so it's reachable from
-    /// any caller, and from <see cref="Get"/>'s internal path.
-    /// </summary>
-    public static System.Type? ClrFromMime(string mimeType)
-    {
-        if (string.IsNullOrWhiteSpace(mimeType) || !mimeType.Contains('/')) return null;
-
-        if (mimeType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
-            return typeof(string);
-        if (mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-            || mimeType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)
-            || mimeType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-            return typeof(byte[]);
-        if (mimeType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
-            return typeof(object);
-        if (mimeType.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
-            return typeof(app.goal.@this);
-        if (mimeType.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
-            return typeof(byte[]);
-
-        return null;
+        // The registry is the single source of truth — an item, or an alias resolving to one.
+        return ResolveType(typeName);
     }
 
     // --- CLR type → PLang name ---
@@ -384,7 +350,7 @@ public sealed partial class @this
         // non-item @this classes (callstack, the serializers registry), and those are not plang types.
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && _typeToName.TryGetValue(type, out var declared))
             return (declared, null);
-        if (app.type.primitive.@this.Canonical.TryGetValue(type, out var primitive)) return (primitive, null);
+        if (Primitive.Canonical.TryGetValue(type, out var primitive)) return (primitive, null);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
     }

@@ -101,30 +101,6 @@ public class EngineTypesTests
     }
 
     [Test]
-    public async Task Clr_MimeTextPlain_ReturnsString()
-    {
-        await Assert.That(_types.Clr("text/plain")).IsEqualTo(typeof(string));
-    }
-
-    [Test]
-    public async Task Clr_MimeImageJpeg_ReturnsByteArray()
-    {
-        await Assert.That(_types.Clr("image/jpeg")).IsEqualTo(typeof(byte[]));
-    }
-
-    [Test]
-    public async Task Clr_MimeApplicationJson_ReturnsObject()
-    {
-        await Assert.That(_types.Clr("application/json")).IsEqualTo(typeof(object));
-    }
-
-    [Test]
-    public async Task Clr_MimeOctetStream_ReturnsByteArray()
-    {
-        await Assert.That(_types.Clr("application/octet-stream")).IsEqualTo(typeof(byte[]));
-    }
-
-    [Test]
     public async Task Clr_NullOrEmpty_ReturnsNull()
     {
         await Assert.That(_types.Clr(null!)).IsNull();
@@ -539,7 +515,9 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ReturnsNonEmptyList()
     {
-        var names = global::app.type.primitive.@this.BuilderNames;
+        #pragma warning disable CS0618
+        var names = new global::app.type.list.view.@this(null!).BuilderNames;
+#pragma warning restore CS0618
 
         await Assert.That(names).IsNotNull();
         await Assert.That(names.Count).IsGreaterThan(0);
@@ -548,7 +526,9 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ContainsCommonTypes()
     {
-        var names = global::app.type.primitive.@this.BuilderNames;
+        #pragma warning disable CS0618
+        var names = new global::app.type.list.view.@this(null!).BuilderNames;
+#pragma warning restore CS0618
 
         await Assert.That(names).Contains("text");
         await Assert.That(names).Contains("number");
@@ -559,7 +539,9 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ExcludesNullableVariants()
     {
-        var names = global::app.type.primitive.@this.BuilderNames;
+        #pragma warning disable CS0618
+        var names = new global::app.type.list.view.@this(null!).BuilderNames;
+#pragma warning restore CS0618
 
         await Assert.That(names).DoesNotContain("int?");
         await Assert.That(names).DoesNotContain("bool?");
@@ -568,7 +550,9 @@ public class EngineTypesTests
     [Test]
     public async Task BuilderNames_ExcludesDuplicateClrTypes()
     {
-        var names = global::app.type.primitive.@this.BuilderNames;
+        #pragma warning disable CS0618
+        var names = new global::app.type.list.view.@this(null!).BuilderNames;
+#pragma warning restore CS0618
 
         // "string" and "text" both map to typeof(string) — only the first should appear
         var stringCount = names.Count(n => n == "string" || n == "text");

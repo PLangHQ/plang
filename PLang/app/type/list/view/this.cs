@@ -28,6 +28,29 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(app.module.list.@this modules) { _modules = modules; }
 
+    /// <summary>
+    /// <b>Inline fundamentals</b> — the value can be a literal (<c>5</c> → number, <c>true</c> →
+    /// bool, <c>"hi"</c> → text). The LLM tags these by looking at the written value; their kind
+    /// is the numeric precision or an explicit <c>as</c> — never the literal's spelling.
+    /// </summary>
+    public IReadOnlyList<string> InlineFundamentals { get; } = new[]
+        { "text", "number", "bool", "list", "dict", "datetime", "date", "time", "duration", "guid" };
+
+    /// <summary>
+    /// <b>Reference fundamentals</b> — PLang is higher-level than C# (it is <em>for</em> files,
+    /// media, web, AI): you can only write a path/handle to one, never the data inline. Their kind
+    /// is declared (<c>as image</c>) or produced by an action (<c>read</c>).
+    /// </summary>
+    public IReadOnlyList<string> ReferenceFundamentals { get; } = new[]
+        { "image", "video", "audio", "path", "bytes" };
+
+    /// <summary>The builder's always-on vocabulary — the inline and reference fundamentals.</summary>
+    public IReadOnlyList<string> BuilderNames => InlineFundamentals.Concat(ReferenceFundamentals).ToList();
+
+    private bool IsFundamental(string name)
+        => InlineFundamentals.Contains(name, System.StringComparer.OrdinalIgnoreCase)
+           || ReferenceFundamentals.Contains(name, System.StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Ordered list of primitive type names exposed to the builder.</summary>
     [LlmBuilder]
     public IReadOnlyList<string> PrimitiveNames { get; init; } = System.Array.Empty<string>();
@@ -54,7 +77,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Build()
     {
-        var primitives = app.type.primitive.@this.BuilderNames;
+        var primitives = BuilderNames;
         var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
         // name → kind vocabulary the LLM may emit, scoped to the FUNDAMENTAL
@@ -72,12 +95,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (_modules.App?.Format is { } fmt)
         {
             foreach (var kvp in fmt.KindsByFamily())
-                if (app.type.primitive.@this.Fundamentals.Contains(kvp.Key))
+                if (IsFundamental(kvp.Key))
                     kindsByName[kvp.Key] = kvp.Value;
         }
         var allKnown = _modules.App?.Type.BuildTypeEntries(null) ?? new List<global::app.type.@this>();
         foreach (var t in allKnown)
-            if (t.Kinds is { Count: > 0 } && app.type.primitive.@this.Fundamentals.Contains(t.Name))
+            if (t.Kinds is { Count: > 0 } && IsFundamental(t.Name))
                 kindsByName[t.Name] = t.Kinds;
 
         return new @this(_modules)

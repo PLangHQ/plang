@@ -35,6 +35,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
         if (name == null) return new global::app.type.item.@null.@this("type", kind);
-        return new global::app.type.@this(name, typeKind, strict, template);
+        // A spelled name (string, int) canonicalises at the registry's door; a name the registry
+        // doesn't know stays as written, for the reader of the type to judge.
+        var types = ctx.Context.App.Type;
+        return types.Contains(name) ? types[new global::app.type.@this(name, typeKind, strict, template)]
+            : new global::app.type.@this(name, typeKind, strict, template);
     }
 }

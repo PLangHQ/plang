@@ -17,19 +17,15 @@ public class ClrTypeRerouteTests
     [Test] public async Task FileRead_StillResolves_ClrTypeViaRegistry()
     {
         // Surface check: registry's Clr() handles every name the old call-site
-        // would have asked the entity's ClrType for. The reroute uses
-        // App.Type.Clr(name) ?? GetPrimitiveOrMime(name) — identical fallback chain.
+        // would have asked the entity's ClrType for.
         await using var app = TestApp.Create("/test");
         await Assert.That(app.Type.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
         await Assert.That(app.Type.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
-        // MIME path that file.read uses on image/* extension reads:
-        await Assert.That(global::app.type.list.@this.GetPrimitiveOrMime("image/jpeg")).IsEqualTo(typeof(byte[]));
     }
 
     [Test] public async Task VariableSet_StillResolves_ClrTypeViaRegistry()
     {
-        // variable.set reroutes value.Type.ClrType to
-        // value.Context.App.Type.Clr(value.Type.Name) ?? GetPrimitiveOrMime(...).
+        // variable.set reroutes value.Type.ClrType to value.Context.App.Type.Clr(value.Type.Name).
         await using var app = TestApp.Create("/test");
         await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(app.Type.Clr("long")).IsEqualTo(typeof(global::app.type.item.number.@this));
@@ -38,8 +34,7 @@ public class ClrTypeRerouteTests
 
     [Test] public async Task SettingsSqlite_StillResolves_ClrTypeViaRegistry()
     {
-        // Sqlite reroutes data.Type.ClrType to
-        // data.Context.App.Type.Clr(data.Type.Name) ?? GetPrimitiveOrMime(...).
+        // Sqlite reroutes data.Type.ClrType to data.Context.App.Type.Clr(data.Type.Name).
         await using var app = TestApp.Create("/test");
         await Assert.That(app.Type.Clr("guid")).IsEqualTo(typeof(global::app.type.item.guid.@this));
         await Assert.That(app.Type.Clr("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));

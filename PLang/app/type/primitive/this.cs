@@ -3,25 +3,14 @@ using System.Text.Json.Nodes;
 namespace app.type.primitive;
 
 /// <summary>
-/// The CLR-primitive entries seeded into <c>app.type.list.@this</c>'s registry
-/// at App init — the "no folder, no Resolve, no Build" types that still need
-/// a PLang name (<c>string</c>, <c>int</c>, <c>decimal</c>, …) plus their
-/// aliases (<c>text</c>, <c>integer</c>, <c>boolean</c>, …).
-///
-/// Owns three views:
-///   <see cref="Aliases"/> — every name (including aliases) → CLR type.
-///   <see cref="Canonical"/> — CLR type → canonical short PLang name.
-///   <see cref="MimeMap"/>  — MIME content-type → CLR type (read by
-///     <c>app.type.list.@this.ClrFromMime</c>, kept here so the seeded data
-///     stays in one place).
-///
-/// Pure data, no per-App divergence — exposed as static so the no-context
-/// fallback helpers on <c>app.type.list.@this</c> can read it without an
-/// instance.
+/// The primitives' spelled names — the type registry's own data (<c>app.Type.Primitive</c>).
+///   <see cref="Aliases"/> — every spelled name (<c>string</c>, <c>int</c>, <c>boolean</c>, …) → the
+///     C# type it spells; the registry resolves it to the item that owns that C# type.
+///   <see cref="Canonical"/> — a C# type → the canonical plang name of the item that owns it.
 /// </summary>
-public static class @this
+public sealed class @this
 {
-    public static IReadOnlyDictionary<string, System.Type> Aliases { get; } =
+    public IReadOnlyDictionary<string, System.Type> Aliases { get; } =
         new Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase)
         {
             ["string"] = typeof(string),
@@ -74,7 +63,7 @@ public static class @this
             ["guid?"] = typeof(System.Guid?),
         };
 
-    public static IReadOnlyDictionary<System.Type, string> Canonical { get; } =
+    public IReadOnlyDictionary<System.Type, string> Canonical { get; } =
         new Dictionary<System.Type, string>
         {
             // `text` is the canonical PLang name for textual content; `string`
@@ -105,47 +94,5 @@ public static class @this
             [typeof(app.type.item.list.@this)] = "list",
             [typeof(app.type.item.tag.@this)] = "tag",
         };
-
-    /// <summary>
-    /// The always-on fundamental vocabulary the LLM builder sees, split by the
-    /// one question that decides where a kind comes from: can the value be
-    /// written inline in a goal, or only referenced?
-    ///
-    /// <para><b>Inline fundamentals</b> — the value can be a literal
-    /// (<c>5</c> → number, <c>true</c> → bool, <c>"hi"</c> → text). The LLM tags
-    /// these by looking at the written value. Their kind is the numeric
-    /// precision or comes from an explicit <c>as</c> — never the literal's
-    /// spelling.</para>
-    /// </summary>
-    public static IReadOnlyList<string> InlineFundamentals { get; } = new[]
-        { "text", "number", "bool", "list", "dict", "datetime", "date", "time", "duration", "guid" };
-
-    /// <summary>
-    /// <b>Reference fundamentals</b> — PLang is higher-level than C# (it is
-    /// <em>for</em> files, media, web, AI), so these are fundamental language
-    /// types, not library types. You can only write a path/handle to one, never
-    /// the data inline — there is no image literal in a goal. Their kind is
-    /// declared (<c>as image</c>) or produced by an action (<c>read</c>), parsed
-    /// from the path's extension. (<c>bytes</c> is borderline — base64 is
-    /// sort-of-writable — but behaves like a reference fundamental.)
-    /// </summary>
-    public static IReadOnlyList<string> ReferenceFundamentals { get; } = new[]
-        { "image", "video", "audio", "path", "bytes" };
-
-    /// <summary>The full fundamental set — membership test for prompt scoping.</summary>
-    public static IReadOnlySet<string> Fundamentals { get; } =
-        new HashSet<string>(InlineFundamentals.Concat(ReferenceFundamentals), System.StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// Names exposed to the LLM builder catalog — the fundamental vocabulary,
-    /// always-on so the LLM can tag inline literals and recognise a developer's
-    /// <c>as image</c>. `text` is canonical for strings, `number` for numerics
-    /// (kind carries the precision); the media/path reference fundamentals are
-    /// first-class here, not buried in the format-family kinds. Domain/result
-    /// types are surfaced separately via schemas; their kinds never join the
-    /// always-on table.
-    /// </summary>
-    public static IReadOnlyList<string> BuilderNames { get; } =
-        InlineFundamentals.Concat(ReferenceFundamentals).ToList();
 
 }

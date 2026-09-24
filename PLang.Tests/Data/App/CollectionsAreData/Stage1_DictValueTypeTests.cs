@@ -87,7 +87,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     {
         // type/primitive/this.cs maps "dict" to the new value type; the raw
         // Dictionary<string,object> entry that used to back "dict" is gone (J).
-        var aliases = global::app.type.primitive.@this.Aliases;
+        var aliases = new global::app.type.primitive.@this().Aliases;
         await Assert.That(aliases["dict"]).IsEqualTo(typeof(Dict));
         await Assert.That(aliases["dictionary"]).IsEqualTo(typeof(Dict));
         await Assert.That(aliases["map"]).IsEqualTo(typeof(Dict));

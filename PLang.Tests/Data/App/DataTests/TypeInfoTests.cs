@@ -6,21 +6,23 @@ namespace PLang.Tests.App.DataTests;
 public class TypeTests
 {
     [Test]
-    public async Task Constructor_WithStringValue_SetsValue()
+    public async Task Constructor_HoldsTheNameAsGiven()
     {
+        // A type object holds an already-canonical name — the constructor never canonicalises;
+        // the registry's name door does.
         var type = new Type("string");
 
-        await Assert.That(type.Name).IsEqualTo("text");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(type.Name).IsEqualTo("string");
+        await Assert.That(type.ClrType).IsNull();
     }
 
     [Test]
-    public async Task Constructor_WithIntValue_SetsValue()
+    public async Task FromName_WithInt_CanonicalisesToNumberOfKindInt()
     {
-        var type = new Type("int");
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["int"];
 
         await Assert.That(type.Name).IsEqualTo("number");
-        await Assert.That(type.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.Kind?.Name).IsEqualTo("int");
     }
 
     [Test]
@@ -36,7 +38,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CreatesType()
     {
-        var type = new global::app.type.@this("int");
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["int"];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }
@@ -66,51 +68,6 @@ public class TypeTests
 
         await Assert.That(type.Name).IsEqualTo("unknowntype");
         await Assert.That(type.ClrType).IsNull();
-    }
-
-    [Test]
-    public async Task FromMime_WithTextPlain_ReturnsStringClrType()
-    {
-        var type = Type.FromMime("text/plain");
-
-        await Assert.That(type.Name).IsEqualTo("text/plain");
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(string));
-    }
-
-    [Test]
-    public async Task FromMime_WithTextMarkdown_ReturnsStringClrType()
-    {
-        var type = Type.FromMime("text/markdown");
-
-        await Assert.That(type.Name).IsEqualTo("text/markdown");
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(string));
-    }
-
-    [Test]
-    public async Task FromMime_WithImageJpeg_ReturnsByteArrayClrType()
-    {
-        var type = Type.FromMime("image/jpeg");
-
-        await Assert.That(type.Name).IsEqualTo("image/jpeg");
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(byte[]));
-    }
-
-    [Test]
-    public async Task FromMime_WithApplicationJson_ReturnsObjectClrType()
-    {
-        var type = Type.FromMime("application/json");
-
-        await Assert.That(type.Name).IsEqualTo("application/json");
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(object));
-    }
-
-    [Test]
-    public async Task FromMime_WithOctetStream_ReturnsByteArrayClrType()
-    {
-        var type = Type.FromMime("application/octet-stream");
-
-        await Assert.That(type.Name).IsEqualTo("application/octet-stream");
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type.Clr(type.Name)).IsEqualTo(typeof(byte[]));
     }
 
     [Test]
@@ -171,8 +128,7 @@ public class TypeTests
     [Test]
     public async Task ToString_ReturnsValue()
     {
-        // Constructor canonicalises "string" → "text" (post-Stage-2).
-        var type = new Type("string");
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["string"];
 
         var str = type.ToString();
 

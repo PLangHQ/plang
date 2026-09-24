@@ -141,7 +141,7 @@ public sealed partial class @this
     /// </summary>
     private void SeedAliases()
     {
-        foreach (var (alias, clr) in app.type.primitive.@this.Aliases)
+        foreach (var (alias, clr) in Primitive.Aliases)
         {
             var shape = Nullable.GetUnderlyingType(clr) ?? clr;
             var owner = typeof(app.type.item.@this).IsAssignableFrom(shape) ? shape

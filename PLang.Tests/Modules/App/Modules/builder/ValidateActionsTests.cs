@@ -199,7 +199,7 @@ public class ValidateActionsTests
                 Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                 {
                     new("Left", "%flag%", context: _app.User.Context),
-                    new("Operator", "==", new global::app.type.@this("string"), context: _app.User.Context),
+                    new("Operator", "==", _app.Type["string"], context: _app.User.Context),
                     new("Right", "false", new global::app.type.@this("bool"), context: _app.User.Context)
                 })
             }
@@ -230,7 +230,7 @@ public class ValidateActionsTests
                 Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                 {
                     new("Left", "%count%", context: _app.User.Context),
-                    new("Operator", ">", new global::app.type.@this("string"), context: _app.User.Context),
+                    new("Operator", ">", _app.Type["string"], context: _app.User.Context),
                     new("Right", "5", new global::app.type.@this("number", "int"), context: _app.User.Context)
                 })
             }

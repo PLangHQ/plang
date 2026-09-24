@@ -123,7 +123,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     {
         // type/primitive/this.cs maps "list"/"array" to the new value type; the raw
         // List<object> entry is gone (J).
-        var aliases = global::app.type.primitive.@this.Aliases;
+        var aliases = new global::app.type.primitive.@this().Aliases;
         await Assert.That(aliases["list"]).IsEqualTo(typeof(ListV));
         await Assert.That(aliases["array"]).IsEqualTo(typeof(ListV));
         await Assert.That(aliases["list"]).IsNotEqualTo(typeof(List<object>));

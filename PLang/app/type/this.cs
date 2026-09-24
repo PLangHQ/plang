@@ -100,9 +100,11 @@ public sealed class @this : item.@this
         + "Right: `{\"name\":\"text\",\"kind\":\"md\"}`. The slash form leaks past the wire.";
 
     [JsonConstructor]
+    /// <summary>A type object holds an already-canonical name — <c>app.Type[name]</c> is the one door
+    /// that turns a spelled name (<c>string</c>, <c>int</c>) into its canonical type.</summary>
     public @this(string name, string? kind = null, bool strict = false, string? template = null)
     {
-        Name = Canonicalise(name);
+        Name = name.ToLowerInvariant();
         Kind = kind is null ? null : new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
@@ -111,33 +113,6 @@ public sealed class @this : item.@this
         // invocation, no null check. Field initializers can't reference `this`, so bind here.
         _byContext = Bind;
         _byData = Bind;
-        StampPrimitive(name);
-        // Numeric precision tokens collapse into Kind when used as a name.
-        // `new type("int")` → {Name:"number", Kind:"int"}: the precision
-        // wasn't lost in the canonicalisation. Only applies when the caller
-        // didn't supply an explicit kind.
-        if (Kind == null && Name == "number")
-        {
-            var lower = name.ToLowerInvariant();
-            if (lower is "int" or "integer" or "long" or "float" or "double" or "decimal")
-                Kind = new global::app.type.kind.@this(lower == "integer" ? "int" : lower);
-        }
-        // The mirror direction, numbers only: a precision kind stamps the exact
-        // CLR mate ({number, int} → Int32) — the name alone collapses the tower
-        // and can't answer it. Other families' kinds are formats ({file, json}),
-        // never CLR mates.
-        if (_clrType == null && Name == "number" && Kind != null)
-            StampPrimitive(Kind.Name);
-    }
-
-    private void StampPrimitive(string rawName)
-    {
-        // When the canonical name folds away the original CLR mate hint
-        // (e.g. `int`→`number`, `text` whose CLR is typeof(string)), stamp
-        // ClrType from the alias the caller passed in so the entity still
-        // answers the .ClrType question without a registry round-trip.
-        if (app.type.primitive.@this.Aliases.TryGetValue(rawName.ToLowerInvariant(), out var clr))
-            _clrType = clr;
     }
 
     /// <summary>
@@ -396,20 +371,6 @@ public sealed class @this : item.@this
                m => m.Name == nameof(Create) && m.IsGenericMethodDefinition
                     && m.GetParameters()[1].ParameterType == second)!;
 
-    private static string Canonicalise(string name)
-    {
-        // PLang type names are case-insensitive. Fold through the alias table
-        // to land on the canonical name: `string`→`text`, `integer`→`number`,
-        // etc. Unknown names lowercase through unchanged.
-        var lower = name.ToLowerInvariant();
-        if (app.type.primitive.@this.Aliases.TryGetValue(lower, out var clr))
-        {
-            if (app.type.primitive.@this.Canonical.TryGetValue(clr, out var canonical))
-                return canonical;
-        }
-        return lower;
-    }
-
     // The entity's face — the kind rides IN the name for a family whose kind is its content (a
     // list<path>, a dict<number>, a choice<operator>), and stands alone for a scalar sub-kind (a
     // "text" with kind "md" is still "text" to the vocabulary). Templates and catalog text print this.
@@ -515,7 +476,7 @@ public sealed class @this : item.@this
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, string? template = null)
         : this(name, kind, strict, template)
     {
-        _clrType = clrType ?? _clrType;
+        _clrType = clrType;
     }
 
     /// <summary>A type answers navigation as its full type — the registry's, found with the

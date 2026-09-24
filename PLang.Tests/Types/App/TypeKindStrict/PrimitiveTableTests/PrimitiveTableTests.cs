@@ -9,37 +9,42 @@ namespace PLang.Tests.App.TypeKindStrict.PrimitiveTableTests;
 // canonical to number; BuilderNames trimmed (text in, string/numerics out).
 public class PrimitiveTableTests
 {
+#pragma warning disable CS0618
+    private static readonly global::app.type.list.view.@this View = new(null!);
+#pragma warning restore CS0618
+    private static readonly Prim Table = new();
+
     [Test] public async Task Canonical_StringMapsToText()
-        => await Assert.That(Prim.Canonical[typeof(string)]).IsEqualTo("text");
+        => await Assert.That(Table.Canonical[typeof(string)]).IsEqualTo("text");
 
     [Test] public async Task Aliases_StringStillResolves()
-        => await Assert.That(Prim.Aliases["string"]).IsEqualTo(typeof(string));
+        => await Assert.That(Table.Aliases["string"]).IsEqualTo(typeof(string));
 
     [Test] public async Task Aliases_TextStillResolves()
-        => await Assert.That(Prim.Aliases["text"]).IsEqualTo(typeof(string));
+        => await Assert.That(Table.Aliases["text"]).IsEqualTo(typeof(string));
 
     [Test] public async Task BuilderNames_IncludesText()
-        => await Assert.That(Prim.BuilderNames).Contains("text");
+        => await Assert.That(View.BuilderNames).Contains("text");
 
     [Test] public async Task BuilderNames_ExcludesString()
-        => await Assert.That(Prim.BuilderNames).DoesNotContain("string");
+        => await Assert.That(View.BuilderNames).DoesNotContain("string");
 
     [Test] public async Task BuilderNames_ExcludesIntLongDecimalDouble()
     {
-        await Assert.That(Prim.BuilderNames).DoesNotContain("int");
-        await Assert.That(Prim.BuilderNames).DoesNotContain("long");
-        await Assert.That(Prim.BuilderNames).DoesNotContain("decimal");
-        await Assert.That(Prim.BuilderNames).DoesNotContain("double");
+        await Assert.That(View.BuilderNames).DoesNotContain("int");
+        await Assert.That(View.BuilderNames).DoesNotContain("long");
+        await Assert.That(View.BuilderNames).DoesNotContain("decimal");
+        await Assert.That(View.BuilderNames).DoesNotContain("double");
     }
 
     [Test] public async Task Canonical_IntLongDecimalDouble_MapToNumber()
     {
-        await Assert.That(Prim.Canonical[typeof(int)]).IsEqualTo("number");
-        await Assert.That(Prim.Canonical[typeof(long)]).IsEqualTo("number");
-        await Assert.That(Prim.Canonical[typeof(decimal)]).IsEqualTo("number");
-        await Assert.That(Prim.Canonical[typeof(double)]).IsEqualTo("number");
+        await Assert.That(Table.Canonical[typeof(int)]).IsEqualTo("number");
+        await Assert.That(Table.Canonical[typeof(long)]).IsEqualTo("number");
+        await Assert.That(Table.Canonical[typeof(decimal)]).IsEqualTo("number");
+        await Assert.That(Table.Canonical[typeof(double)]).IsEqualTo("number");
     }
 
     [Test] public async Task Canonical_FloatMapsToNumber()
-        => await Assert.That(Prim.Canonical[typeof(float)]).IsEqualTo("number");
+        => await Assert.That(Table.Canonical[typeof(float)]).IsEqualTo("number");
 }
