@@ -62,6 +62,13 @@ public void Record(Error error, actor.context.@this context)
 - `TestAssertFailureSnapshotsVariables` (`where Error.Variables.foo equals 42`) works unchanged through dict navigation.
 - `VariablesSnapshotTests` / `AssertionErrorVariablesTests` move to the dict shape.
 
+## Step 3 rulings after coder's trace (Ingi, 2026-09-24)
+
+1. **Show takes `%error%`** (revises ruling 4). At the top, every frame has popped, so `%!error%` is empty. `App.Start` runs Show with the error handed in by name (`Calls.Push([Data("error", result.Error)])`). Inside Show and its template it is `error`; a handler that wants the same display writes `call /system/error/Show error=%!error%`. If Show can't load or fails, Start returns the original failure.
+2. **Exactly once: (a).** Start marks the returned Data as shown; `Program.cs` prints `error.ToString()` only when it isn't marked (Show failed, or a `Configure` error from before the app started).
+3. **The fallback is the render step's own error handling (Ingi's shape):** `render %template%` / `on error 404, call Fallback` / `write to %text%`; Fallback sets `%template%` to the 400/500 path and the step retries. A missing template file gives `NotFound` 404 (`ui/code/Fluid.cs:44-46`). A plain goal call shares the caller's variables (`goal/call.cs:98-100`, "goal-call is not a fork"), so Fallback's `set` reaches Show's `%template%`. **Open with Ingi:** `error.handle` never retries after a successful recovery (`GoalFirst` returns the recovery's result, `handle.cs:49-58`), so "then retry" needs a change there.
+4. **`Category` is removed** (Ingi: "I don't know what it is for"). StatusCode is the one axis. `ErrorCategory`, the virtual and its 8 overrides, and the wire's `category` field go.
+
 ## Step 3 — plang and templates show the error
 
 ```
