@@ -79,13 +79,55 @@ The item's doors already receive the context from whoever asks: `Value(data)`, `
 
 **The one place list code consumes it:** `Row` turns a raw stored value into an item, `global::app.type.item.@this.Create(raw, _context)` (`:137`), which needs the type registry. That happens when an element is handed out, and someone is always asking at that moment (navigation's `Get(parent, key)`, a handler, `Output`), so it can use their context.
 
-**So the list does not store a context.** An element gets its context from whoever asks for it. Open: how the asker's context reaches the element. Either (a) the list hands out `element.Copy(parent.Context)`, or (b) the walk passes the context along. Dict works the same way (`dict/this.cs:134`, stamps `:123, :279, :291`); confirm when we get to it.
+**So the list does not store a context.** An element gets its context from whoever asks for it.
+
+**How the asker's context reaches an element (traced, `%list[0].name%`):**
+
+```
+memory stack Get("list") → the list's Data                  (has the context)
+ Data.Get("[0].name")                   data/this.Navigation.cs:62
+   child = _item.Get(this, "0")         ← `this` = the list's Data: the asker, with the context
+     list.Get(parent, "0") → At(0) → Row(0)                  list/this.cs:548-549, :127-138
+       a stored Data → returned as-is (by reference, with its own context)
+       a raw slot    → new Data("", Create(raw, _context), context: _context)   ← a NEW Data, made on every read
+ child.Get(".name")                     :109  ← the element's Data is now the asker
+```
+
+- A **stored `Data`** is handed out by reference and keeps its own context. Nothing to do.
+- A **raw slot** is the only case that needs a context. `Row` makes a new `Data` for it on every read ("type on read, never cached back", `:38-43`). It takes the context of whoever asks: `Row(i, context)`.
+- This replaces both earlier options (a copy per element, or passing the context along the walk). There's no copy and no threading.
+
+**The element doors, and one pass instead of two.** Elements are handed out through navigation `Get(parent, key)` (`:533-553`, has the asker as `parent`), `Items` (`:206`), `At` (`:254`), `First` / `Last` (`:260-263`), `foreach` (`GetEnumerator`, `:27`), and `EnumerateItems` (`:245-251`). Turning rows into elements stays in the list: only the list knows whether a row is a raw value, a stored `Data`, or a chunk. Moving that up would leak its internals.
+
+Today it is O(2N). `Items` loops every row first, creating a `Data` for each into a new `List<Data>` (`:210-216`). Then every caller loops that list again: `Output` (`:239`), `foreach` (`:27`, `Items.GetEnumerator()`), `EnumerateItems` (`:249`). Ingi: no looping over a list twice.
+
+The fix is one pass. The list hands out each element as the caller reaches it, created with the caller's context:
+
+```csharp
+// list/this.cs — NEW (name open), replaces Items / GetEnumerator's up-front List<Data>
+public IEnumerable<Data> Elements(actor.context.@this context)
+{
+    for (int r = 0; r < _items.Count; r++)
+    {
+        if (_items[r] is Chunk chunk)
+            foreach (var e in chunk.Items.Elements(context)) yield return e;
+        else
+            yield return Row(r, context);   // raw slot → a new Data with the caller's context; a stored Data as-is
+    }
+}
+```
+
+`At(i, context)`, `First` and `Last` take the caller's context the same way. Every caller has one: `Output(writer, mode, context)`, handlers (`Context`), navigation (`parent.Context`). The 28 external `.Items` callers pass theirs; the 6 `At` / `First` / `Last` callers too.
+
+**What goes:** `_context` on the list, the `Context` setter's walk (`:158-175`), every stamp on an element (`:134, :147, :335, :345, :495, :503`), the list's context on new lists (`Empty()` `:665`, chunk split `:321-322`, `Contains(value)` `:690`), and the navigation stamp (`data/this.Navigation.cs:105-106`).
+
+Dict works the same way (`dict/this.cs:134`, stamps `:123, :279, :291`); confirm when we get to it.
 
 ## Still open — types that store a context today, beyond the table
 
 Items holding a context now (`module.IContext`): `path`, `file`, `url`, `directory`, `source`, `list`, `dict`, `computed`, `clr`. The path family is settled above. Next, one at a time:
 
-1. **list**: settled above, it stores none. Still open: (a) or (b) for the hand-out. **dict**: confirm it's the same.
+1. **list**: settled above. It stores none, `Row` takes the asker's context, and elements are handed out in one pass. **dict**: confirm it's the same.
 2. **source** (`source.cs:37`): loads already use the asking Data's context (births step 1). What is the stored one still for?
 3. **computed** (`computed.cs:26`) and **clr** (`clr/this.cs:47`).
 
