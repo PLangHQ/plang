@@ -13,11 +13,13 @@ public partial class Remove : IContext
     public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var listName = (await ListName.Value());
-        if (await (await Context.Variable.Get(listName)).Value() is not app.type.item.list.@this nl)
+        var held = await Context.Variable.Get(listName);
+        if (await held.Value() is not app.type.item.list.@this nl)
             return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
-        // Persist the retrieved instance so the in-place remove sticks.
-        await Context.Variable.Set(listName, nl);
+        // Persist the retrieved instance so the in-place remove sticks — unless a newer value
+        // took the name in between.
+        await Context.Variable.Replace(listName, held, nl);
 
         // Typed read — number end to end; the list lowers inside its own boundary.
         var atIndex = (await AtIndex.Value())!;

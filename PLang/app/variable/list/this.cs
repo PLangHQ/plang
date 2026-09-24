@@ -297,6 +297,40 @@ public partial class @this
         return held;
     }
 
+    /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
+    /// holds <paramref name="expected"/> — the Data the caller read — in one step; a newer value set
+    /// in between is left alone. Answers whether the name now holds the value. When
+    /// <paramref name="expected"/> already holds it there is nothing to write. A write at a path
+    /// keeps <see cref="Set(string, object?)"/>'s rules (a path's Data is born per read, so there
+    /// is nothing to compare).</summary>
+    public async System.Threading.Tasks.ValueTask<bool> Replace(string name, data.@this expected, global::app.type.item.@this value)
+    {
+        if (ReferenceEquals(expected.Peek(), value)) return true;
+        if (!global::app.variable.path.@this.Parse(name).Tail.IsEmpty)
+        {
+            await Set(name, value);
+            return true;
+        }
+
+        var frame = Calls.Current;
+        if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
+                          : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
+            return false;
+
+        // Rebind, carrying the name's subscribers across — the same rebind Set does.
+        var rebound = new data.@this(name, value, context: _context)
+        {
+            OnCreate = expected.OnCreate,
+            OnChange = expected.OnChange,
+            OnDelete = expected.OnDelete,
+        };
+        if (frame != null) frame.Set(name, rebound);
+        else if (!_variables.TryUpdate(name, rebound, expected)) return false;
+        expected.FireOnChange(rebound);
+        OnSet?.Invoke(name, expected.Peek(), value);
+        return true;
+    }
+
 
     /// <summary>
     /// Gets a variable by name (supports dot notation path).

@@ -12,11 +12,13 @@ public partial class Set : IContext
     public async Task<data.@this<app.type.item.list.@this>> Run()
     {
         var name = await ListName.Value();
-        if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)
+        var held = await Context.Variable.Get(name);
+        if (await held.Value() is not app.type.item.list.@this nl)
             return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{name}' is not a list"));
-        // Persist the retrieved instance so the in-place set sticks.
-        await Context.Variable.Set(name, nl);
+        // Persist the retrieved instance so the in-place set sticks — unless a newer value
+        // took the name in between.
+        await Context.Variable.Replace(name, held, nl);
 
         // Typed read — the index is a number end to end; the list lowers it
         // inside its own index-math boundary.
