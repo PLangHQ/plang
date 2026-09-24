@@ -53,9 +53,9 @@ So **a property knows whether its step set it or the build froze it**, because a
 
 ## Open
 
-1. **`IsVariable`** (`property/this.cs:59-61`) goes: it only repeats "the type is `variable`".
-2. **The `.pr` property bag** (`data/reader/this.cs:138`, `d.Properties = properties`): does the property keep it?
-3. **The synthetic `channel` property** (`property/list/this.cs:57-58`).
+1. ~~`IsVariable`~~: **settled (Ingi): goes.** `property.IsVariable` (`property/this.cs:33, :61`) has no reader. It is not the value-level `data.IsVariable` (`data/this.cs:167`, "is this value a `%x%` reference"), which build validation and execution use (`source.cs:127`). That one stays.
+2. ~~The `.pr` property bag~~: **settled (Ingi): supported.** The property keeps the `"properties"` bag the reader accepts next to a value (`data/reader/this.cs:138`, `d.Properties = properties`), whether or not a current `.pr` uses it. The run's copy carries it.
+3. ~~The synthetic `channel` property~~: **settled (Ingi): unchanged.** It is a property whose declaration is written by hand (`property/list/this.cs:57-58`) instead of reflected. The step's value lands on it like any other.
 4. **`app.type.Field`** (`type/Field.cs`, `Name` plus `TypeName` as a string) describes a type's fields (open-items #16). It stays separate for now, since `property` stays at `goal/step/action/property`.
-5. **Cost, not counted yet:** every reader of the action's value list or `action.Default` as `Data`: the builder, validation, graft typing, the `.pr` writer, mock/intercept, goal.call's arguments.
+5. **Cost: coder is counting (read-only, requested 2026-09-24, Ingi agreed)**, along with whether any `.pr` carries a `"properties"` bag. Count every reader of the action's value list or `action.Default` as `Data`: the builder, validation, graft typing, the `.pr` writer, mock/intercept, goal.call's arguments.
 6. **Coder's step-1 question** (the test `SharedRow_ReadDirectly_FailsWithNamedError` now reads the loader's context) waits on this.
