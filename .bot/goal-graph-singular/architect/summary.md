@@ -1,5 +1,7 @@
 # architect — goal-graph-singular
 
+**2026-09-24 — #17 landed (`4734505f0`); go on the four bugs (Ingi).** `Mode` lives in `app/this.cs` (still derived from Build/Test); the presence checks in startup, the settings store, `Executor.cs:136` and the `.pr` build snapshot read it. Bugs next, test first: #28 (same-actor concurrent list.add NRE), #29 (file://), #9 (path-kind flake), #30 (Error's stored App).
+
 **2026-09-24 — #16 landed (`29c0ff635`); go on #17 (Ingi).** `type.Field` is deleted; `property` lives at `type/property/` and serves both sides; a type has one `Property` list (type objects, not strings); a record is "properties and no Shape". Coder's open-items list is tidied (Error.App is #30).
 
 **2026-09-24 — #24 landed (`da601665c`); go on #16 (Ingi).** `app.Test.Create(goal, context)` makes the whole test (tags, its own coverage, skip, its own exclusion); the static and the test's unused constructor context are gone; the dead eager-image branches (Run and Build) are deleted. Open with Ingi: the face of `app.type` (proposal: `.list` entries `{name, description, kinds}`, `.choice` `{name, values}`, `.scheme`; every registered type listed; properties/example by navigation only; Store view = identity).
