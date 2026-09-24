@@ -32,7 +32,7 @@ public partial class @this
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
-    private string? _return;
+    private global::app.type.@this? _return;
     private bool _returnComputed;
 
     /// <summary>The PLang type this action returns, read off <c>Run()</c>'s signature. Every Run
@@ -41,7 +41,7 @@ public partial class @this
     /// unconstrained plang type, C#'s <c>object</c>. Null only when <c>Run</c> isn't Data-shaped
     /// at all, which no real action is.</summary>
     [JsonIgnore]
-    public string? Return
+    public global::app.type.@this? Return
     {
         get
         {
@@ -57,11 +57,11 @@ public partial class @this
             if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
                 ret = ret.GetGenericArguments()[0];
 
-            if (ret == typeof(global::app.data.@this)) return _return = "item";
+            if (ret == typeof(global::app.data.@this)) return _return = App.Type["item"];
             if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
                 return null;
             var t = ret.GetGenericArguments()[0];
-            return _return = t == typeof(object) ? "item" : App!.Type[t].ToString();
+            return _return = t == typeof(object) ? App.Type["item"] : App.Type[t];
         }
     }
 

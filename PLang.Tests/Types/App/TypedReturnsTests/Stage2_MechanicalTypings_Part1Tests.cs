@@ -58,7 +58,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     {
         var row = _app.Module["test"]["discover"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo("list<test>");
+        await Assert.That(row!.Return).IsEqualTo(_app.Type["list<test>"]);
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     {
         var row = _app.Module["test"]["run"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo("list<test>");
+        await Assert.That(row!.Return).IsEqualTo(_app.Type["list<test>"]);
     }
 
     // Catalog renders output.ask's return as "ask" — the runtime return type
@@ -76,7 +76,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     {
         var row = _app.Module["output"]["ask"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo("ask");
+        await Assert.That(row!.Return).IsEqualTo(_app.Type["ask"]);
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     {
         var row = _app.Module["channel"]["set"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo("item")
+        await Assert.That(row!.Return).IsEqualTo(_app.Type["item"])
             .Because("An undefined T is the unconstrained plang type item, C#'s object.");
     }
 

@@ -163,6 +163,10 @@ public sealed partial class @this
             var slash = typeName.IndexOf('/');
             if (slash > 0 && !typeName.Contains('<'))
                 return this[new app.type.@this(typeName[..slash], typeName[(slash + 1)..])];
+            // The container spelling a type prints — "list<path>" is {list, path}: the element is the kind.
+            var open = typeName.IndexOf('<');
+            if (open > 0 && typeName.EndsWith('>'))
+                return this[new app.type.@this(typeName[..open], typeName[(open + 1)..^1])];
             if (Get(typeName) is not { } clr)
                 throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
             // THE canonicalising door: an alias lands on the name of the item that owns it —

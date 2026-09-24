@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Modules;
 /// <summary>
 /// Guards <c>app.goal.step.action.@this.Return</c>.
 ///
-/// The catalog row a built action carries surfaces the PLang name of T from
+/// The catalog row a built action carries surfaces the PLang type of T from
 /// <c>Run()</c>'s declared return type. Compile.llm uses this to pick the
 /// type-stamp for a trailing <c>variable.set</c> after a <c>write to %x%</c>.
 ///
@@ -49,15 +49,14 @@ public class ModulesDescribeReturnTypeTests
         => _app.Module[module][action]
            ?? throw new InvalidOperationException($"catalog missing {module}.{action} — fixture stale");
 
-    // Bare Task<Data> — polymorphic. The reflection layer flattens both
-    // bare Data and Data<object> to "data" because both mean "value type
-    // unknown statically." Pinning a known bare action keeps that rule honest.
+    // Bare Task<Data> — polymorphic. Both bare Data and Data<object> are the
+    // item type: the value type is unknown statically.
     [Test]
     public async Task Return_BareData_IsItem()
     {
         // variable.set returns bare Task<Data>.
         var row = Find("variable", "set");
-        await Assert.That(row.Return).IsEqualTo("item");
+        await Assert.That(row.Return).IsEqualTo(_app.Type["item"]);
     }
 
     // Data<global::app.type.item.@bool.@this>
@@ -67,7 +66,7 @@ public class ModulesDescribeReturnTypeTests
         // file.exists.Run() returns Task<Data<path>> — the path is the value;
         // condition.compare returns Data<global::app.type.item.@bool.@this>. Use compare to pin "bool".
         var row = Find("condition", "compare");
-        await Assert.That(row.Return).IsEqualTo("bool");
+        await Assert.That(row.Return).IsEqualTo(_app.Type["bool"]);
     }
 
     // Data<path>
@@ -76,7 +75,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.save → Task<Data<path>>.
         var row = Find("file", "save");
-        await Assert.That(row.Return).IsEqualTo("path");
+        await Assert.That(row.Return).IsEqualTo(_app.Type["path"]);
     }
 
     // Data<global::app.type.item.list.@this<path>> — generic collection rendering.
@@ -85,7 +84,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.list → Task<Data<global::app.type.item.list.@this<path>>>.
         var row = Find("file", "list");
-        await Assert.That(row.Return).IsEqualTo("list<path>");
+        await Assert.That(row.Return).IsEqualTo(_app.Type["list<path>"]);
     }
 
     // Data<Identity> — domain type. [PlangType("identity")] on the class
@@ -94,7 +93,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_DataOfIdentity_IsIdentity()
     {
         var row = Find("identity", "get");
-        await Assert.That(row.Return).IsEqualTo("identity");
+        await Assert.That(row.Return).IsEqualTo(_app.Type["identity"]);
     }
 
     // Data<global::app.type.item.list.@this<Identity>> — list of domain type.
@@ -102,18 +101,16 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_DataOfListOfIdentity_IsListOfIdentity()
     {
         var row = Find("identity", "list");
-        await Assert.That(row.Return).IsEqualTo("list<identity>");
+        await Assert.That(row.Return).IsEqualTo(_app.Type["list<identity>"]);
     }
 
-    // Sanity: every catalog row carries a non-empty value (a row's
-    // Return should never silently go null at build time —
-    // either "data" or a real T name).
+    // Sanity: every catalog row carries a type — item or a real T.
     [Test]
     public async Task Return_AllCatalogRows_HaveAValue()
     {
         var catalog = _app.Module.Names
             .SelectMany(n => _app.Module.GetActions(n).Select(a => _app.Module[n][a]!));
-        var missing = catalog.Where(a => string.IsNullOrEmpty(a.Return))
+        var missing = catalog.Where(a => a.Return == null)
                              .Select(a => $"{a.Module}.{a.Name}")
                              .ToList();
 
