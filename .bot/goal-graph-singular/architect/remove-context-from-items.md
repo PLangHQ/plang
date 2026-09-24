@@ -242,3 +242,18 @@ Run the six suites by name after each step. Nothing red committed.
 | `IWriter` | writes tokens, never knows who is running |
 | `Data` | the box that carries the context; its doors pass it to the item |
 | `Error` | the one item that keeps a context, as the record of where it happened |
+
+### Step 6 (proposed with Ingi 2026-09-24, not released): Data's context is set at birth, never after
+
+Ingi agreed: "set at birth, never after". `Data` keeps its context (it's the box that carries it), but today it can still be set after the `Data` is created, which is a late stamp. The setter's callers at HEAD, leaving out step 5's four dead branches in `data/this.cs` and the memory stack's own `Variable.Context` (`actor/context/this.cs:151`), are about 14:
+- `data/this.cs:726` (`Copy`, `clone.Context = _context`)
+- `data/schema/signature.cs:84, :87, :104`
+- `data/this.Transport.cs:75, :153`
+- `variable/list/this.cs:376, :543`
+- `module/action/error/throw.cs:64`
+- `actor/permission/this.cs:71`
+- `actor/context/this.cs:241` (`NotFound`)
+- `channel/serializer/plang/this.cs:174`
+- `error/Error.cs:125` (`_callback`)
+
+Each one becomes a `Data` created with its context. `Data.Context` becomes get-only.
