@@ -635,20 +635,21 @@ public partial class @this
     ///  - infrastructure vars (!-prefixed, e.g. !app, !fileSystem)
     ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
     /// (Settings is a navigable resolver, not a Data subclass — never appears in _variables.)
-    /// Values are captured by reference (architect §5.7). Called from assert handlers
-    /// on failure only; the App is about to be disposed, so by-ref is safe.
-    /// ConcurrentDictionary enumeration is snapshot-style and safe during concurrent writes.
+    /// Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
+    /// name, so <c>%!error.Variables.foo%</c> navigates to it. Called when an error happens (assert,
+    /// and every recorded error under --debug). ConcurrentDictionary enumeration is snapshot-style
+    /// and safe during concurrent writes.
     /// </summary>
-    public Dictionary<string, object?> Snapshot()
+    public global::app.type.item.dict.@this Snapshot()
     {
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var vars = new global::app.type.item.dict.@this();
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;
             if (kvp.Value is data.DynamicData) continue;
-            dict[kvp.Key] = kvp.Value.Peek();
+            vars.Set(kvp.Key, kvp.Value);
         }
-        return dict;
+        return vars;
     }
 
     private static string CleanName(string name)

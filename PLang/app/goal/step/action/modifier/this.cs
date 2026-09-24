@@ -78,7 +78,7 @@ public class @this : global::app.goal.step.action.@this
             ?? throw new System.InvalidOperationException(
                 $"{Module}.{Name} has no live frame to record '{error.Key}' on — a modifier runs inside " +
                 "the frame its action pushed, so reaching here means it was wrapped outside one.");
-        frame.Record(error);
+        frame.Record(error, context);
         return error;
     }
 }

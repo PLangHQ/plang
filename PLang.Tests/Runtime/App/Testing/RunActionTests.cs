@@ -1,3 +1,4 @@
+using PLang.Tests.Shared;
 using System.Text.Json;
 using app.test;
 
@@ -402,10 +403,10 @@ public class RunActionTests
         // failure path → global::app.test.Run.Error. Batch 5's headline feature.
         var assertionError = (global::app.error.AssertionError)run.Error!;
         await Assert.That(assertionError.Variables).IsNotNull();
-        await Assert.That(assertionError.Variables!.ContainsKey("score")).IsTrue();
+        await Assert.That(assertionError.Variables!.Has("score")).IsTrue();
         // Value roundtrips through JSON (int→long via System.Text.Json);
         // normalize to long for a type-tolerant check.
-        await Assert.That(Convert.ToInt64(assertionError.Variables["score"])).IsEqualTo(42L);
+        await Assert.That(assertionError.Variables!.Held("score")?.ToString()).IsEqualTo("42");
     }
 
     // Boundary: Tests=[] → global::app.test.Run[] is empty, no exception, no subscription

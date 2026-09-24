@@ -1,3 +1,4 @@
+using PLang.Tests.Shared;
 using app.variable;
 
 namespace PLang.Tests.App.Tester;
@@ -25,7 +26,7 @@ public class VariablesSnapshotTests
     public async Task Snapshot_EmptyNonSystemVars_ReturnsEmptyDictionary()
     {
         var snapshot = _app.User.Context.Variable.Snapshot();
-        await Assert.That(snapshot.Count).IsEqualTo(0);
+        await Assert.That(snapshot.CountRaw).IsEqualTo(0);
     }
 
     // Setting %foo%=1, %bar%="x", %baz%=[1,2,3] — snapshot contains all three with correct values.
@@ -38,10 +39,10 @@ public class VariablesSnapshotTests
         vars.Set("baz", new List<int> { 1, 2, 3 });
 
         var snapshot = vars.Snapshot();
-        await Assert.That(snapshot.ContainsKey("foo")).IsTrue();
-        await Assert.That(snapshot["foo"]).IsEqualTo(1);
-        await Assert.That((snapshot["bar"])?.ToString()).IsEqualTo("x");
-        await Assert.That(snapshot["baz"]).IsNotNull();
+        await Assert.That(snapshot!.Has("foo")).IsTrue();
+        await Assert.That(snapshot.Held("foo")?.ToString()).IsEqualTo("1");
+        await Assert.That((snapshot.Held("bar"))?.ToString()).IsEqualTo("x");
+        await Assert.That(snapshot.Held("baz")).IsNotNull();
     }
 
     // Convention: %!app%, %!fileSystem%, Now, GUID, etc. are excluded from the default
@@ -51,10 +52,10 @@ public class VariablesSnapshotTests
     public async Task Snapshot_SystemVariables_ExcludedByDefault()
     {
         var snapshot = _app.User.Context.Variable.Snapshot();
-        await Assert.That(snapshot.ContainsKey("Now")).IsFalse();
-        await Assert.That(snapshot.ContainsKey("NowUtc")).IsFalse();
-        await Assert.That(snapshot.ContainsKey("GUID")).IsFalse();
-        await Assert.That(snapshot.Keys.Any(k => k.StartsWith("!"))).IsFalse();
+        await Assert.That(snapshot!.Has("Now")).IsFalse();
+        await Assert.That(snapshot!.Has("NowUtc")).IsFalse();
+        await Assert.That(snapshot!.Has("GUID")).IsFalse();
+        await Assert.That(snapshot.KeyNames.Any(k => k.StartsWith("!"))).IsFalse();
     }
 
     // A variable explicitly set to null is in the dict with value==null — distinguishable
@@ -67,8 +68,8 @@ public class VariablesSnapshotTests
         vars.Set("maybe", null);
 
         var snapshot = vars.Snapshot();
-        await Assert.That(snapshot.ContainsKey("maybe")).IsTrue();
-        await Assert.That(snapshot["maybe"]).IsNull();
+        await Assert.That(snapshot!.Has("maybe")).IsTrue();
+        await Assert.That(snapshot.Held("maybe")).IsNull();
     }
 
     // A name never set is not in the dict. Architect's example: %result% rendered as "(unset)".
@@ -76,7 +77,7 @@ public class VariablesSnapshotTests
     public async Task Snapshot_UnsetVariable_AbsentFromDictionary()
     {
         var snapshot = _app.User.Context.Variable.Snapshot();
-        await Assert.That(snapshot.ContainsKey("neverSet")).IsFalse();
+        await Assert.That(snapshot!.Has("neverSet")).IsFalse();
     }
 
     // Architect spec: snapshot values are by-reference, no deep clone. Mutating a list
@@ -93,7 +94,7 @@ public class VariablesSnapshotTests
         var snapshot = vars.Snapshot();
         list.Add(3); // mutate after snapshot
 
-        var captured = (List<int>)snapshot["items"]!;
+        var captured = (List<int>)snapshot.Held("items")!;
         await Assert.That(captured.Count).IsEqualTo(3);
     }
 
@@ -110,7 +111,7 @@ public class VariablesSnapshotTests
         {
             vars.Set("x", 2);
             var snapshot = vars.Snapshot();
-            await Assert.That(snapshot["x"]).IsEqualTo(2);
+            await Assert.That(snapshot.Held("x")?.ToString()).IsEqualTo("2");
         }
         finally { vars.Restore(saved); }
     }
@@ -135,7 +136,7 @@ public class VariablesSnapshotTests
         for (int i = 0; i < 1000; i++)
         {
             var snap = vars.Snapshot();
-            await Assert.That(snap.Count).IsGreaterThanOrEqualTo(1);
+            await Assert.That(snap.CountRaw).IsGreaterThanOrEqualTo(1);
         }
 
         stop.Cancel();

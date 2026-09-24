@@ -126,7 +126,10 @@ public class Error : global::app.type.item.@this
     public Step? Step { get; set; }
     public Goal? Goal { get; set; }
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
-    public Dictionary<string, string> Variables { get; set; } = new();
+    /// <summary>The variables as they were when the error happened — each variable's Data whole,
+    /// keyed by name (<c>%!error.Variables.foo%</c>). Captured by assert, and by the frame for every
+    /// error under --debug; null otherwise (variables can hold secrets).</summary>
+    public global::app.type.item.dict.@this? Variables { get; set; }
 
     /// <summary>
     /// The execution context where this error occurred. Used by verbose debug to dump variables.
@@ -330,14 +333,12 @@ public class Error : global::app.type.item.@this
         }
 
         // Variables snapshot
-        if (error.Variables.Count > 0)
+        if (error.Variables is { CountRaw: > 0 } variables)
         {
             sb.AppendLine();
             sb.AppendLine($"{indent}\ud83c\udff7\ufe0f  Variables in step:");
-            foreach (var (name, value) in error.Variables)
-            {
-                sb.AppendLine($"{indent}    %{name}% = {value}");
-            }
+            foreach (var variable in variables.Entries(error.Context!))
+                sb.AppendLine($"{indent}    %{variable.Name}% = {variable.Peek()}");
         }
 
         // Call stack \u2014 CallChainRenderer compresses recursive runs.

@@ -34,7 +34,7 @@ public partial class report : IContext
         if (testing.Current == null)
         {
             var console = new StringBuilder();
-            RenderConsole(console, results, testing);
+            RenderConsole(console, results, testing, Context);
             RenderCoverageTables(console, testing, Context.App.Module);
             await Context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
         }
@@ -61,7 +61,7 @@ public partial class report : IContext
         // Surface the artefact for observability: PLang tests inspect these on %report%
         // without a filesystem round-trip. All values are scalars so assert.* validate them.
         var summary = testing.Summary();
-        int variableSnapshotCount = results.Count(t => t.Error is AssertionError { Variables: { Count: > 0 } });
+        int variableSnapshotCount = results.Count(t => t.Error?.Variables is { CountRaw: > 0 });
 
         // Return the tests so a parent runner can propagate them via `write to %results%`.
         var result = Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
@@ -102,7 +102,8 @@ public partial class report : IContext
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
-    private static void RenderConsole(StringBuilder sb, IReadOnlyList<global::app.test.@this> results, global::app.test.list.@this testing)
+    private static void RenderConsole(StringBuilder sb, IReadOnlyList<global::app.test.@this> results,
+        global::app.test.list.@this testing, actor.context.@this context)
     {
         var summary = testing.Summary();
         sb.AppendLine($"Test summary: {results.Count} total, "
@@ -121,22 +122,22 @@ public partial class report : IContext
                 + (drift ? " [builder drift]" : ""));
 
             if (test.Status == global::app.test.Status.Fail && test.Error != null)
-                RenderFailure(sb, test);
+                RenderFailure(sb, test, context);
         }
     }
 
-    private static void RenderFailure(StringBuilder sb, global::app.test.@this test)
+    private static void RenderFailure(StringBuilder sb, global::app.test.@this test, actor.context.@this context)
     {
         sb.AppendLine("    FAIL: " + test.Goal.Path);
         if (test.Error is AssertionError assert)
         {
             sb.AppendLine($"      Expected: {FormatValue(assert.Expected)}");
             sb.AppendLine($"      Actual:   {FormatValue(assert.Actual)}");
-            if (assert.Variables is { Count: > 0 } variables)
+            if (assert.Variables is { CountRaw: > 0 } variables)
             {
                 sb.AppendLine("      Variables:");
-                foreach (var (name, value) in variables)
-                    sb.AppendLine($"        %{name}% = {FormatValue(value)}");
+                foreach (var variable in variables.Entries(context))
+                    sb.AppendLine($"        %{variable.Name}% = {FormatValue(variable.HasValue ? variable.Peek() : null)}");
             }
         }
         else

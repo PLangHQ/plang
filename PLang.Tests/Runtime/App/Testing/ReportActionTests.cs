@@ -1,3 +1,4 @@
+using PLang.Tests.Shared;
 using System.Xml.Linq;
 using app.error;
 using app.test;
@@ -269,15 +270,11 @@ public class ReportActionTests
     [Test]
     public async Task Report_FailureDetail_RendersVariablesSnapshot_WithUnsetAndNullMarkers()
     {
-        var err = new AssertionError(1, 2)
-        {
-            Variables = new Dictionary<string, object?>
-            {
-                ["idx"] = 1,
-                ["items"] = new List<int> { 1, 2, 3 },
-                ["maybe"] = null
-            }
-        };
+        var vars = _app.User.Context.Variable;
+        await vars.Set("idx", 1);
+        await vars.Set("items", new List<int> { 1, 2, 3 });
+        await vars.Set("maybe", null);
+        var err = new AssertionError(1, 2) { Variables = vars.Snapshot() };
         _app.Test.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 
         await Report();

@@ -147,7 +147,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected static global::app.data.@this Error(global::app.error.Error error) => global::app.data.@this.FromError(error);
+                    protected global::app.data.@this Error(global::app.error.Error error) => Context.Error(error);
 
                 """);
         }

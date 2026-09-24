@@ -1,3 +1,4 @@
+using PLang.Tests.Shared;
 using app.error;
 using AssertEquals = global::app.module.action.assert.Equals;
 using AssertNotEquals = global::app.module.action.assert.NotEquals;
@@ -48,10 +49,11 @@ public class AssertionErrorVariablesTests
     public async Task AssertionError_Variables_PropertyRoundtrip()
     {
         var err = new AssertionError(1, 2);
-        var captured = new Dictionary<string, object?> { ["x"] = 1 };
+        await _app.User.Context.Variable.Set("x", 1);
+        var captured = _app.User.Context.Variable.Snapshot();
         err.Variables = captured;
         await Assert.That(err.Variables).IsNotNull();
-        await Assert.That(err.Variables!["x"]).IsEqualTo(1);
+        await Assert.That(err.Variables!.Held("x")?.ToString()).IsEqualTo("1");
     }
 
     // Canonical failure path: assert.equals fails → returned Data.Error is AssertionError
@@ -71,8 +73,8 @@ public class AssertionErrorVariablesTests
         var err = result.Error as AssertionError;
         await Assert.That(err).IsNotNull();
         await Assert.That(err!.Variables).IsNotNull();
-        await Assert.That(err.Variables!["score"]).IsEqualTo(42);
-        await Assert.That((err.Variables!["label"])?.ToString()).IsEqualTo("foo");
+        await Assert.That(err.Variables!.Held("score")?.ToString()).IsEqualTo("42");
+        await Assert.That((err.Variables!.Held("label"))?.ToString()).IsEqualTo("foo");
     }
 
     // Guard (architect spec): no snapshot cost on passing assertions. A successful
@@ -129,7 +131,7 @@ public class AssertionErrorVariablesTests
             var err = result.Error as AssertionError;
             await Assert.That(err).IsNotNull();
             await Assert.That(err!.Variables).IsNotNull();
-            await Assert.That((err.Variables!["watched"])?.ToString()).IsEqualTo("sentinel");
+            await Assert.That((err.Variables!.Held("watched"))?.ToString()).IsEqualTo("sentinel");
         }
     }
 }

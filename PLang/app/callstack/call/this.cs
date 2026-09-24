@@ -240,7 +240,7 @@ public sealed partial class @this : IAsyncDisposable
             var (resolved, resolveErr) = await handler.Resolve(Action, context);
             if (resolveErr != null)
             {
-                Record(resolveErr);
+                Record(resolveErr, context);
                 return context.Error(resolveErr);
             }
             real = resolved;
@@ -250,7 +250,7 @@ public sealed partial class @this : IAsyncDisposable
             if (!result.Success && result.Error is { } err)
             {
                 if (err.Params == null) err.Params = real.SnapshotParams();
-                Record(err);
+                Record(err, context);
             }
             return result;
         }
@@ -267,19 +267,23 @@ public sealed partial class @this : IAsyncDisposable
             var serviceErr = new ServiceError(
                 ex.Message, Action.Step!, SnapshotChain(), appEx?.Key ?? "ServiceError", appEx?.StatusCode ?? 400) { Exception = ex };
             serviceErr.Params = real?.SnapshotParams();
-            Record(serviceErr);
+            Record(serviceErr, context);
             return context.Error(serviceErr);
         }
     }
 
-    /// <summary>The frame records an error against itself — the one door. Stamps the failing chain
-    /// if the error does not carry one yet, then files it on the frame and in the run's audit.
+    /// <summary>The frame records an error against itself — the one door. Stamps what the error does
+    /// not carry yet: the failing chain, the context of the run it met here, and — under --debug —
+    /// the variables as they are now (not by default: variables can hold secrets). Then files it on
+    /// the frame and in the run's audit.
     /// <para>Recording each error ONCE is the frame's own contract, kept by instance identity, so no
     /// caller guards: a retry mints a fresh error per attempt and each is kept (real history), while
     /// a layer that passes the same error through records nothing new.</para></summary>
-    public void Record(global::app.error.Error error)
+    public void Record(global::app.error.Error error, actor.context.@this context)
     {
         if (error.CallFrames.Count == 0) error.CallFrames = SnapshotChain();
+        error.Context ??= context;
+        if (context.App.Debug != null) error.Variables ??= context.Variable.Snapshot();
         if (Errors.Any(x => ReferenceEquals(x, error))) return;
         Errors.Add(error);
         _stack.Audit.Add(error);
