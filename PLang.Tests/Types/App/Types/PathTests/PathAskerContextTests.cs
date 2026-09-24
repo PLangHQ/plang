@@ -25,6 +25,36 @@ public class PathAskerContextTests
         await Assert.That(await Nav(d, "!mimetype")).IsEqualTo("application/json");
     }
 
+    [Test] public async Task OsLocation_ShowsItsPlangForm_NeverTheInstallRoot()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var inside = System.IO.Path.Combine(app.AbsolutePath, "data", "x.txt");
+        var outside = "//tmp/plang-outside-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt";
+
+        await Assert.That(global::app.type.item.path.@this.Resolve(inside, ctx).ToString()).IsEqualTo("/data/x.txt");
+        await Assert.That(global::app.type.item.path.@this.Resolve(outside, ctx).ToString()).IsEqualTo(outside);
+        // A typed location stays as typed.
+        await Assert.That(global::app.type.item.path.@this.Resolve("data/x.txt", ctx).ToString()).IsEqualTo("data/x.txt");
+    }
+
+    [Test] public async Task ListingEntries_FromAnOsRoot_ShowTheirPlangForm()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var dir = System.IO.Path.Combine(app.AbsolutePath, "docs");
+        System.IO.Directory.CreateDirectory(dir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a.txt"), "a");
+
+        var root = global::app.type.item.path.@this.Resolve(dir, ctx);
+        var listed = await root.List(ctx);
+        await listed.IsSuccess();
+        var entries = (await listed.Value())!.Items().Select(p => p.ToString()).ToList();
+
+        await Assert.That(root.ToString()).IsEqualTo("/docs");
+        await Assert.That(entries).Contains("/docs/a.txt");
+    }
+
     [Test] public async Task Relative_IsTheAskersRoot_NotTheCreators()
     {
         await using var app1 = NewApp();

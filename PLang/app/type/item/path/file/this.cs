@@ -106,6 +106,24 @@ public sealed partial class @this : global::app.type.item.path.@this
             }
         }
 
-        return new @this(ValidatePath(resolved, context.App)) { Raw = rawPath };
+        var absolute = ValidatePath(resolved, context.App);
+        // An OS location handed in (C# infra, a listing root) is shown in its plang form;
+        // a location the developer typed is shown as typed.
+        var isOsLocation = PathHelper.IsPathRooted(rawPath)
+            && string.Equals(Canonicalize(rawPath), absolute, RootComparison);
+        return isOsLocation ? new @this(absolute, context) : new @this(absolute) { Raw = rawPath };
+    }
+
+    /// <summary>An OS location, shown as a plang form under <paramref name="context"/>'s root —
+    /// never the install root: "/x" under the app root, "/system/x" in the runtime's system
+    /// folder, "//x" (or "c:/x") anywhere else. The context is not kept.</summary>
+    private @this(string absolute, actor.context.@this context) : this(absolute)
+    {
+        var relative = Relative(context);
+        var system = PathHelper.Combine(context.App.OsAbsolutePath, "system") + PathHelper.DirectorySeparatorChar;
+        if (!string.Equals(relative, Absolute, StringComparison.Ordinal)) Raw = relative;
+        else if (Absolute.StartsWith(system, RootComparison)) Raw = "/system/" + Absolute[system.Length..].Replace('\\', '/');
+        else if (Absolute.StartsWith("//") || OperatingSystem.IsWindows()) Raw = Absolute.Replace('\\', '/');
+        else Raw = "/" + Absolute;
     }
 }
