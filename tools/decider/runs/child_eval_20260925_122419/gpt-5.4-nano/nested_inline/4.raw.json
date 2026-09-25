@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERzGuFqgvmqpC9YSw3vAwZBO8D6rb",
+ "object": "chat.completion",
+ "created": 1790339092,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%a%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \">\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 0\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"if %b% > 0, call BothPositive\",\n              \"action\": [\n                {\n                  \"module\": \"condition\",\n                  \"name\": \"if\",\n                  \"property\": [\n                    {\n                      \"name\": \"Left\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": \"%b%\"\n                    },\n                    {\n                      \"name\": \"Operator\",\n                      \"type\": {\n                        \"name\": \"choice\",\n                        \"kind\": \"operator\"\n                      },\n                      \"value\": \">\"\n                    },\n                    {\n                      \"name\": \"Right\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": 0\n                    }\n                  ],\n                  \"child\": [\n                    {\n                      \"text\": \"call BothPositive\",\n                      \"action\": [\n                        {\n                          \"module\": \"goal\",\n                          \"name\": \"call\",\n                          \"property\": [\n                            {\n                              \"name\": \"Name\",\n                              \"type\": {\n                                \"name\": \"text\"\n                              },\n                              \"value\": \"BothPositive\"\n                            }\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 4499,
+  "completion_tokens": 404,
+  "total_tokens": 4903,
+  "prompt_tokens_details": {
+   "cached_tokens": 3840,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

@@ -1,0 +1,29 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%threshold%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "number"
+       },
+       "value": 0.5
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

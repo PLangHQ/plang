@@ -1,0 +1,75 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%count%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 0
+      }
+     ],
+     "child": [
+      {
+       "text": "call ProcessItems",
+       "action": [
+        {
+         "module": "goal",
+         "name": "call",
+         "property": [
+          {
+           "name": "Name",
+           "type": {
+            "name": "text"
+           },
+           "value": "ProcessItems"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "text": "write out \"done\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "done"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

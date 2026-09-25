@@ -1,0 +1,105 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%lang%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "=="
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "text"
+       },
+       "value": "is"
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"Halló\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "Halló"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "module": "condition",
+     "name": "elseif",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%lang%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "=="
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "text"
+       },
+       "value": "en"
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"Hello\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "Hello"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

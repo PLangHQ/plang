@@ -1,0 +1,29 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%menu[step.Index]%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%choices%"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

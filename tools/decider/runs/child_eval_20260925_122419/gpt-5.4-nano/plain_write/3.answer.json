@@ -1,0 +1,22 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "output",
+     "name": "write",
+     "property": [
+      {
+       "name": "Data",
+       "type": {
+        "name": "item"
+       },
+       "value": "hello"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

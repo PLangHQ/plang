@@ -1,0 +1,61 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%user%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "=="
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "item"
+       },
+       "value": null
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"no user\" and return",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "no user"
+          }
+         ]
+        },
+        {
+         "module": "goal",
+         "name": "return"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERzGdHs8o9e5kyanw2xF2cE9Yopg5",
+ "object": "chat.completion",
+ "created": 1790339075,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%n%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \"==\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"number\"\n              },\n              \"value\": 0\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"write out \\\"none\\\"\",\n              \"action\": [\n                {\n                  \"module\": \"output\",\n                  \"name\": \"write\",\n                  \"property\": [\n                    {\n                      \"name\": \"Data\",\n                      \"type\": {\n                        \"name\": \"text\"\n                      },\n                      \"value\": \"none\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"index\": 1,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%n%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \">\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"number\"\n              },\n              \"value\": 0\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"write out \\\"some\\\"\",\n              \"action\": [\n                {\n                  \"module\": \"output\",\n                  \"name\": \"write\",\n                  \"property\": [\n                    {\n                      \"name\": \"Data\",\n                      \"type\": {\n                        \"name\": \"text\"\n                      },\n                      \"value\": \"some\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 5630,
+  "completion_tokens": 475,
+  "total_tokens": 6105,
+  "prompt_tokens_details": {
+   "cached_tokens": 2816,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

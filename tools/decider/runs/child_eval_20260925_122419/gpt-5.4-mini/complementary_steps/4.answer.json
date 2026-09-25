@@ -1,0 +1,110 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%n%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "=="
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 0
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"none\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "none"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%n%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 0
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"some\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "some"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

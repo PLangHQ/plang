@@ -1,0 +1,37 @@
+
+Guard
+
+step 0: if %count% is less than 3, return
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+        notes:
+          ## Operators — runtime-supported only
+          Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or` (`is` asks the type: `%x% is number`). There is NO `isnotempty`/`istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
+          | phrasing | Operator | Right | Negate |
+          |---|---|---|---|
+          | `is empty` | isempty | omit | omit |
+          | `is not empty` / `not blank` | isempty | omit | true |
+          | `is true` / `is false` | == | true / false | — |
+          | `is null` / `is not null` | == / != | null | — |
+          | `equals %b%` / `does not equal %b%` | == / != | %b% | — |
+          | `contains 'foo'` / `does not contain 'foo'` | contains | 'foo' | — / true |
+          | `is a number` / `is text` / `is not a list` | is | the type name: number / text / list | — / — / true |
+          `Negate=true` inverts ANY operator — the only way to negate ones with no inverse (`isempty`, etc.).
+          ## Omit `Right`/`Negate` when not applicable
+          `Right` is for binary operators only — omit it for unary `isempty` (never `Right=%!data%` or `Right=false`). `Negate` defaults false — omit when not negating.
+          - `if %content% is not empty` → `condition.if(Left=%content%, Operator="isempty", Negate=true)` (no Right)
+          - `if %flag% is true` → `condition.if(Left=%flag%, Operator="==", Right=true)` (no Negate)
+          ## Compound `and`/`or`
+          Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, with the body in its `child`. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
+          `if %a% > 1 and %b% < 10, call DoThing`:
+          `condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%, child=[{text: "call DoThing", action: [goal.call(Name="DoThing")]}])`
+     goal.return
+        Data (item, optional)
+        Depth (number, optional, default 1)
+        notes:
+          `Depth` is the number of goal levels to exit: `1` (the default) exits the current goal, `2` exits the current goal and its caller. Leave it out unless the step names how far to return.
+

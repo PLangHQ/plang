@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERzH0n09qdAzKNydPcCDgLkOCSQm3",
+ "object": "chat.completion",
+ "created": 1790339098,
+ "model": "gpt-5.4-mini-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\"step\":[{\"index\":0,\"action\":[{\"module\":\"condition\",\"name\":\"if\",\"property\":[{\"name\":\"Left\",\"type\":{\"name\":\"item\"},\"value\":\"%items%\"},{\"name\":\"Operator\",\"type\":{\"name\":\"choice\",\"kind\":\"operator\"},\"value\":\"isempty\"},{\"name\":\"Negate\",\"type\":{\"name\":\"bool\"},\"value\":true}],\"child\":[{\"text\":\"call ProcessItems\",\"action\":[{\"module\":\"goal\",\"name\":\"call\",\"property\":[{\"name\":\"Name\",\"type\":{\"name\":\"text\"},\"value\":\"ProcessItems\"}]}]}]}]}]}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 4491,
+  "completion_tokens": 122,
+  "total_tokens": 4613,
+  "prompt_tokens_details": {
+   "cached_tokens": 4352,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}
