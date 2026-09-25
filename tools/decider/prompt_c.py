@@ -88,8 +88,11 @@ def user_message_c(goal, picks):
             head = prefill(m, s['text'])[:-len(' { ? }')]
             if f.takes_recovery(*m.split('.', 1)):
                 # `on error call X` names what the recovery runs: a goal.call — a known value, like write to
-                recovery = 'goal.call(Name=?)' if ON_ERROR_CALL.search(s['text']) else '?'
-                head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + f'Recovery=[{recovery}])'
+                # no `?` nested inside: the model fills the goal.call as it fills any action
+                if ON_ERROR_CALL.search(s['text']):
+                    head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=[goal.call(…)])'
+                else:
+                    head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=?)'
             filled = [f'{head} {{ {filled[0] if filled else "?"} }}'] + filled[1:]
         if known: filled.append(prefill('variable.set', s['text']))
         if filled: out += f'\n  {pad}  formal:  ' + '; '.join(filled)

@@ -153,6 +153,8 @@ class _Reader:
         rows, recovery = [], None
         while not self.peek(')'):
             if self.at_end(): self.fail(f'`{module}.{name}(` is not closed: expected `)`')
+            if self.text.startswith('…', self.pos):
+                self.fail(f'a `…` is still there: fill in {module}.{name}\'s properties, as the step gives them')
             if rows or recovery is not None: self.take(',')
             self.space()
             at = self.pos
@@ -227,6 +229,12 @@ class _Reader:
             value = bare.group()
         elif bare and bare.group() not in ('true', 'false', 'null'):
             self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{bare.group()}` is not', at)
+        elif declared == 'text' and (word := re.compile(r'[A-Za-z_]\w*(?![\w.(%])').match(self.text, self.pos)) \
+                and word.group() not in ('true', 'false', 'null'):
+            # A single unquoted word in a text property is that text (Name=HandleBuildFailure): it is not a
+            # %variable%, a number, a bool or null, so it can't mean anything else. The writer quotes it.
+            self.pos = word.end()
+            value = word.group()
         else:
             value = self.value()
         if spec.get('options') and value not in spec['options']:
