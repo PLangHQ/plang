@@ -161,3 +161,54 @@ Raw: `tools/decider/runs/c_eval_round4_20260925_220431/`. Requests: `/shared/cod
      - make the check refuse an explicit `null` for an optional property ("leave it out: its default applies"). That's the placeholder class.
 
 With (1a) and (2), this round would read 57–58/58 on the first attempt, with no silent misses. It's one run: the bar needs repeats before it counts.
+
+---
+
+# Round 5 — C + nano, 3 runs: per-step retry, variable coverage, null dropping, common steps, the popular-action choice, noul criteria
+
+Commits:
+- `62a66fc39`: bare variable names, per-step parsing.
+- `44f5f80d7`: per-step retry, variable coverage, nulls dropped, ui.render notes.
+- `7ae0fd284`: the common steps in PropertiesC.llm.
+- `de1bce22c`: the popular-action choice on unsure steps, and the noul criteria on the 6 common-action questions.
+
+Raw: `tools/decider/runs/c_eval_round5_20260925_2212{23,29,34}/`. Requests with their decider requests: `/shared/coder/llm/plang/builder-formal/prompt-c-round5{,-run2,-run3}/<goal>/{system.txt,user.txt,decider/}`.
+
+(An earlier 3-run round 5 used the first (b), the raw list of 15 signatures. It's kept as `c_eval_round5_*_b-v1`. The list was never shown: no step was unsure then.)
+
+| run | first-attempt right | caught | silent | after retry right | silent | loud | warnings | seconds | cost |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | **57/58** | 0 | 1 | 57 | 1 | 0 | 5 | 16.9 | $0.0054 |
+| 2 | 55/58 | 2 | 1 | 57 | 1 | 0 | 6 | 17.1 | $0.0057 |
+| 3 | 54/58 | 2 | 2 | 56 | 2 | 0 | 5 | 16.3 | $0.0058 |
+| **total** | **166/174 (95%)** | 4 | 4 | **170/174** | **4** | **0** | 16 | | |
+| round 4 (1 run) | 46/58 | 11 | 1 | 57 | 1 | 0 | 0 | 14.7 | $0.0054 |
+
+## The decider with criteria (common-action scores, round 4 → round 5)
+
+| | round 4 / v5 | round 5 |
+|---|---|---|
+| write-to → variable.set (13 steps) | 0.53–0.86 | **0.79–0.96** |
+| output.write on `build.load, write to %app%` | 0.38 | **0.08** |
+| goal.call, start 0 (`call /system/builder/EmitBuildEvent …`) | 0.88 | 0.63–0.73 |
+| goal.call, start 3 (`call Compile, on error call …`) | 0.95 | 0.73–0.78 |
+| goal.call, weekly 10 (`call SendReport …, on error call …`) | 0.94 | 0.65–0.68 |
+
+The criteria fixed write-to. They hurt goal.call on steps that also say `on error call X`: goal.call's `false` says "a goal named to run later — `…, on error call X` … — is not called by the step", and the model reads the whole step as that. **All 16 warnings are these goal.call picks** (0.63–0.89), which are right; the others were error.throw 0.87/0.88.
+
+## The popular-action choice
+
+Asked on **1 step per run**: start 0, unsure because of the goal.call drop above. It picked goal.call at 1.00 each time, which is right, and the LLM's answer was right. **It caused no wrong pick.** On these goals, the steps it exists for (a decider that doesn't know) never came up.
+
+## Every miss, prompt-first
+
+| run | step | what | cause | proposal |
+|---|---|---|---|---|
+| 1, 2, 3 | weekly 11 `write out "Report sent" to "log" channel` | **silent**: `channel` missing | prompt: the new common step `write out "Hello %name%" → output.write(Data=…)` shows output.write without a channel, and channel is optional, so the pre-fill doesn't show it either. Round 4 (without the common steps) had it right | add the common step `write out "Done" to "log" channel → output.write(Data="Done", channel="log")` |
+| 3 | checkout 2 `if … else if … else …` | **silent**: an extra `output.write(Data="%itemCount%")` ahead of the if | model | — (the chain rule allows an action before the if) |
+| 2, 3 | weekly 3, 6 | caught, right after the per-step retry: `condition.else() { }`, an empty else invented on a condition whose body is indented | model; the parse error said only "expected a name" | the parser says "`{ }` holds at least one action; a condition whose body is indented below it has no `{ }`" |
+| all | start 0, 3, weekly 10 | warnings only (right) | goal.call's criteria (above) | rewrite goal.call's criteria: true gets "`call Compile, on error call Fix` calls Compile", and false drops the on-error example |
+
+Also seen in round 5's b-v1 runs: foreach with `Item=%item%` spelled out, which is exactly the default binding. Declaring `[Default("item")]` on loop.foreach's Item would make it a default that the builder leaves out.
+
+**Where C + nano is:** 95% first attempt and 170/174 after the retry over 3 runs, with no loud failures. The one silent miss that repeats (weekly 11) has a one-line fix. The bar (100% on every run) isn't met yet: 4 silent in 174.
