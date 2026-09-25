@@ -5,7 +5,7 @@
       "id": "6a5d9446-76bb-4d0a-b892-82d3711e7756",
       "bot": "architect",
       "timestamp_start": "2026-09-25T16:13:22",
-      "timestamp_end": "2026-09-25T16:13:22",
+      "timestamp_end": "2026-09-25T21:43:22",
       "intent": "Open builder-formal and plan Ingi's direction: decider picks with scores, stage 3 answers in a formal notation, double validation",
       "before": {
         "assumptions": "Prompt B and the 5-goal golden set on get-builder-running are the baseline; python eval first",
@@ -22,12 +22,22 @@
           "category": "doc",
           "confidence": "medium",
           "context": "Plan drafted for Ingi's read; coder holding"
+        },
+        {
+          "paths": [
+            ".bot/builder-formal/architect/vision.md",
+            ".bot/builder-formal/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi AFK, architect in charge: formal notation settled (typed, wrapping modifiers, thin envelope), what the LLM sees, decider v5 as the shape; coder sent 2b -> output.write examples -> stage 3, stop before stage 4"
         }
       ],
       "after": {
-        "status": "plan awaiting Ingi's read",
-        "health": "no code changed",
-        "notes": "5 open questions in plan.md"
+        "status": "coder on 2b/stage 3",
+        "health": "no production C# changed on this branch yet",
+        "notes": "decisions log at top of summary.md"
       }
     }
   ]
