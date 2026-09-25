@@ -81,17 +81,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.EndObject();
     }
 
-    /// <summary>The action in formal. Each modifier wraps it, outermost first — its call, then the
-    /// wrapped action on its own line one level in; then the action's own call; a condition's body inline
-    /// after it (<c>{ a; b }</c>).</summary>
+    /// <summary>The action in formal: its own call; a condition's body inline after it (<c>{ a; b }</c>);
+    /// then its modifiers after it, innermost first (the list is outermost first) — each the next call in
+    /// the same sequence: <c>file.read(…); cache.wrap(…); error.handle(…)</c>.</summary>
     private async System.Threading.Tasks.ValueTask Formal(global::app.channel.serializer.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        foreach (var m in Modifier)
-        {
-            await m.Call(writer, mode, context);
-            writer.BeginWrap();
-        }
         await Call(writer, mode, context);
         if (Child.Count > 0)
         {
@@ -100,7 +95,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 foreach (var action in step.Code.Items()) await action.Output(writer, mode, context);
             writer.EndBody();
         }
-        for (var i = 0; i < Modifier.Count; i++) writer.EndWrap();
+        for (var i = Modifier.Count - 1; i >= 0; i--) await Modifier[i].Call(writer, mode, context);
     }
 
     /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties, its frozen defaults

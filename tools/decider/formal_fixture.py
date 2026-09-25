@@ -57,6 +57,8 @@ BAD = [
     'error.handle(Recovery=[goal.call(…)]) { goal.call(Name="X") }',
     'variable.set(Name=%d%, Value={name: text = "a"})',
     'condition.if(Left=%n%, Operator=<>, Right=5)',
+    'error.handle(Recovery=[goal.call(Name="Fix")]); file.read(Path="x")',
+    'file.read(Path="x"); error.handle(Recovery=[goal.call(Name="Fix")]) { goal.call(Name="Y") }',
     '',
 ]
 

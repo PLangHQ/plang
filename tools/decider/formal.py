@@ -1,9 +1,7 @@
 """Formal — a step's actions written as calls, and the two directions between it and the .pr rows.
 
     [0] file.read(Path: path = "orders/%orderId%.json"); variable.set(Name: variable = %order%, Value: item = %!data%)
-    [3] error.handle(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: text = "FixProperties")]) {
-            goal.call(Name: text = "Compile")
-        }
+    [3] goal.call(Name: text = "Compile"); error.handle(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: text = "FixProperties")])
 
 Grammar (ours, strict — the programmer's language has no syntax, this notation does). Whitespace,
 new lines included, may sit between any two tokens.
@@ -17,10 +15,10 @@ new lines included, may sit between any two tokens.
     list      = "[" [ value { "," value } ] "]"
     dict      = "{" [ key ":" value { "," key ":" value } ] "}"      key = name | "text"
 
-`{ }` holds the actions an action contains: a condition's body (its child), or the one action a
-modifier wraps. A modifier's recovery is its `Recovery` property. Nesting gives the wrap order —
-`error.handle(…) { cache.wrap(…) { file.read(…) } }` — and the rows keep it outermost first in the
-wrapped action's `modifier` list.
+`{ }` is only a condition's body (its child). A modifier follows the action it modifies, in the same
+list: `file.read(…); cache.wrap(…); error.handle(…)` — the first written is innermost, and the rows
+keep them outermost first in the action's `modifier` list. A modifier's recovery is its `Recovery`
+property.
 
 A value's TYPE never comes from the model. Written or not, it is the property's declared type, or —
 where that is `item`, the open slot — the written type if any, else the literal's own (a quoted text is
@@ -97,8 +95,8 @@ def _split(t):
 
 # ---------------------------------------------------------------- reading
 class _Reader:
-    def __init__(self, text):
-        self.text, self.pos = text, 0
+    def __init__(self, text, index=0):
+        self.text, self.pos, self.index = text, 0, index
 
     def fail(self, message, at=None):
         if at is not None: self.pos = at
@@ -133,21 +131,29 @@ class _Reader:
         return self.pos >= len(self.text)
 
     def actions(self, closing=None):
-        """action { ";" action } — up to `closing` or the end."""
-        out = [self.action()]
+        """action { ";" action } — up to `closing` or the end. A modifier modifies the action before it
+        in the same list: several attach in written order, the first written innermost (the modifier
+        list is outermost first, so each one read goes in at 0)."""
+        out = []
+        self.attach(out, self.action())
         while not (self.peek(closing) if closing else self.at_end()):
-            m = re.compile(r'([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*\(').match(self.text, self.pos)
-            if m and known(*m.groups()) and is_modifier(*m.groups()):
-                self.fail(f'`{m.group(1)}.{m.group(2)}` wraps the action it modifies: {m.group(1)}.{m.group(2)}(…) {{ action }}')
             if not self.peek(';'):
                 if self.peek('·'): self.fail('separate a step\'s actions with `;`, not `·`')
                 if self.at_action(): self.fail('separate a step\'s actions with `;`')
                 self.fail(f'expected `;`{" or `" + closing + "`" if closing else ""}' + ('' if closing else ' or the end of the step'))
             self.take(';')
-            out.append(self.action())
+            self.attach(out, self.action())
         return out
 
-    # action = module "." name "(" props ")" [ "{" actions "}" ]
+    def attach(self, out, read):
+        act, at = read
+        if not is_modifier(act['module'], act['name']):
+            out.append(act); return
+        if not out:
+            self.fail(f'{act["module"]}.{act["name"]} modifies the action before it; step {self.index} has none', at)
+        out[-1]['modifier'].insert(0, act)
+
+    # action = module "." name "(" props ")" [ "{" actions "}" ] — (the action, where it starts)
     def action(self):
         self.space()
         start = self.pos
@@ -181,34 +187,26 @@ class _Reader:
         self.take(')')
         act = {'module': module, 'name': name, 'property': rows, 'modifier': []}
         if recovery is not None: act['recovery'] = recovery
-        brace = self.pos
         if self.peek('{'):
             self.space(); brace = self.pos
-            if not (modifier or (module, name) in CONDITIONS):
-                self.fail(f'`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}; '
+            if modifier:
+                self.fail(f'`{module}.{name}` takes no {{ }}: write the action first, then {module}.{name} after it — '
+                          f'next.action(…); {module}.{name}(…)', brace)
+            if (module, name) not in CONDITIONS:
+                self.fail(f'`{module}.{name}` contains no actions: only a condition takes {{ }} (its body); '
                           f'write the actions one after the other: {module}.{name}(…); next.action(…)')
             self.take('{')
             if self.peek('}'):
-                if modifier:
-                    self.fail(f'`{module}.{name}` wraps one action: {module}.{name}(…) {{ action }}', brace)
                 # an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
                 # with the step's other problems, saying where the body goes for that step
                 self.take('}')
                 act['child'] = []
-                return act
+                return act, start
             body = self.actions('}')
             self.take('}')
-            if modifier:
-                if len(body) != 1:
-                    self.fail(f'`{module}.{name}` wraps one action; to wrap it in more modifiers, nest them', brace)
-                wrapped = body[0]
-                wrapped['modifier'] = [act] + wrapped.get('modifier', [])
-                return wrapped
             # formal has no place for the body's words: the child's text is the body in formal
             act['child'] = [{'text': write_actions(body, types=False), 'action': body}]
-        elif modifier:
-            self.fail(f'`{module}.{name}` is a modifier: it wraps an action — {module}.{name}(…) {{ action }}', start)
-        return act
+        return act, start
 
     def written_type(self, prop, declared):
         """An optional `: type` after the name. Against a declared type it must be that type."""
@@ -328,15 +326,19 @@ class _Reader:
             return float(m.group()) if m.group(1) else int(m.group())
         for word, v in (('true', True), ('false', False), ('null', None)):
             if re.compile(rf'{word}\b').match(t, p): self.pos = p + len(word); return v
-        if self.at_action(): return self.action()
+        if self.at_action():
+            # an action held as a value stands alone: a modifier there has no action before it
+            held = []
+            self.attach(held, self.action())
+            return held[0]
         if (m := re.compile(r'[A-Za-z_][\w./-]*').match(t, p)):
             self.fail(f'a text is quoted: "{m.group()}"')
         if t[p] == '?': self.fail('a `?` is still there: fill it with the value the step gives')
         self.fail('expected a value: "text", a number, true, false, null, %variable%, [list], {dict} or an action')
 
-def parse(text):
-    """One step's formal (without its [i]) → its action rows, in the .pr's own shape."""
-    r = _Reader(text)
+def parse(text, index=0):
+    """Step `index`'s formal (without its [i]) → its action rows, in the .pr's own shape."""
+    r = _Reader(text, index)
     if r.at_end(): r.fail('a step holds at least one action')
     return r.actions()
 
@@ -353,7 +355,7 @@ def parse_answer(text):
         i = int(h.group(1))
         if i in out: raise FormalError(f'step [{i}] is answered twice', text, h.start())
         try:
-            out[i] = parse(text[h.end():end].rstrip())
+            out[i] = parse(text[h.end():end].rstrip(), i)
         except FormalError as e:
             # the position in the whole answer, not in the step
             raise FormalError(e.reason, text, h.end() + _offset(text[h.end():end], e)) from None
@@ -373,7 +375,7 @@ def parse_steps(text):
         if i in rows or i in errors:
             whole.append(f'step [{i}] is answered twice'); continue
         try:
-            rows[i] = parse(text[h.end():end].rstrip())
+            rows[i] = parse(text[h.end():end].rstrip(), i)
         except FormalError as e:
             e.text = f'[{i}] ' + text[h.end():end].strip()   # the step's own line, for the refusal
             errors[i] = e
@@ -437,13 +439,13 @@ def _head(a, types=True):
     return f'{a["module"]}.{a["name"]}({", ".join(props)})'
 
 def write_action(a, types=True):
-    """One action; a condition's body inline in { }, and each modifier wrapping it, outermost first,
-    the wrapped action on its own indented line."""
+    """One action; a condition's body inline in { }; then its modifiers after it, innermost first (the
+    modifier list is outermost first)."""
     s = _head(a, types)
     if a.get('child'):
         s += ' { ' + '; '.join(write_action(x, types) for c in a['child'] for x in c.get('action') or []) + ' }'
     for m in reversed(a.get('modifier') or []):
-        s = f'{_head(m, types)} {{\n    ' + s.replace('\n', '\n    ') + '\n}'
+        s += '; ' + _head(m, types)
     return s
 
 def write_actions(actions, types=True):

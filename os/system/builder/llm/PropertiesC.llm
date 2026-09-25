@@ -34,12 +34,13 @@ A value is written as the step writes it:
 The arguments a step passes to a goal are one dict in Parameter:
   `call SendMail to=%email%, subject="Hi"` → goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
 
-{ } holds the actions an action contains, and only a condition or a modifier has one. Anything else is
-written one after the other: `foreach %list%, call X item=%item%` → loop.foreach(Collection=%list%); goal.call(Name="X", Parameter={item: %item%})
+{ } is a condition's body, and only a condition has one. Anything else is written one after the other:
+`foreach %list%, call X item=%item%` → loop.foreach(Collection=%list%); goal.call(Name="X", Parameter={item: %item%})
 A condition's body goes in its { }; the next branch of the same chain follows after ; :
   condition.if(Left=%n%, Operator="<", Right=5) { goal.return() }; condition.else() { output.write(Data="ok") }
-A modifier wraps the one action it modifies; what it runs on error is its Recovery:
-  error.handle(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")]) { goal.call(Name="Compile") }
+A modifier comes right after the action it modifies; what it runs on error is its Recovery:
+  goal.call(Name="Compile"); error.handle(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")])
+  file.read(Path="file.txt"); error.handle(StatusCode=404, Recovery=[goal.call(Name="Fix")]); variable.set(Name=%content%, Value=%!data%)
 
 Common steps, and their formal:
   read 'notes.txt', write to %content%            file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)
@@ -53,7 +54,7 @@ Common steps, and their formal:
   get https://example.com/rates, write to %rates% http.request(Url="https://example.com/rates"); variable.set(Name=%rates%, Value=%!data%)
   render "page.html", title=%title%, write to %html%
                                                   ui.render(Template="page.html", Parameter={title: %title%}); variable.set(Name=%html%, Value=%!data%)
-  call Compile, on error call LogError            error.handle(Recovery=[goal.call(Name="LogError")]) { goal.call(Name="Compile") }
+  call Compile, on error call LogError            goal.call(Name="Compile"); error.handle(Recovery=[goal.call(Name="LogError")])
 
 Rules
 1. One line per step, [i] being the step's index. A step's actions come only from its own words: never move
@@ -74,5 +75,5 @@ Rules
 7. A negation is its own operator: "does not contain" → "notcontains", "is not empty" → "isnotempty",
    likewise "notstartswith", "notendswith", "notin", "isnot". "is 1" or "is "x"" compares a value → "==".
    "is" and "isnot" take only a type name: "is a number" → Operator="is", Right="number".
-8. "on error call X" → error.handle(Recovery=[goal.call(Name="X")]) { the action }. "call X, then retry N
+8. "on error call X" → the action; error.handle(Recovery=[goal.call(Name="X")]). "call X, then retry N
    times" runs X first: Order="GoalFirst", RetryCount=N. "retry N times, then call X" leaves Order out.

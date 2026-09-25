@@ -33,15 +33,15 @@
  },
  {
   "input": "goal.call(Name=\"X\")\n    error.handle() { goal.call(Name=\"Y\") }",
-  "message": "line 2, column 5: `error.handle` wraps the action it modifies: error.handle(…) { action }"
+  "message": "line 2, column 5: separate a step's actions with `;`"
  },
  {
   "input": "error.handle(Recovery=[goal.call(Name=\"Y\")])",
-  "message": "line 1, column 1: `error.handle` is a modifier: it wraps an action — error.handle(…) { action }"
+  "message": "line 1, column 1: error.handle modifies the action before it; step 0 has none"
  },
  {
   "input": "error.handle() { goal.call(Name=\"X\"); goal.call(Name=\"Y\") }",
-  "message": "line 1, column 16: `error.handle` wraps one action; to wrap it in more modifiers, nest them"
+  "message": "line 1, column 16: `error.handle` takes no { }: write the action first, then error.handle after it — next.action(…); error.handle(…)"
  },
  {
   "input": "error.handle(Recovery=\"Y\") { goal.call(Name=\"X\") }",
@@ -49,7 +49,7 @@
  },
  {
   "input": "goal.call(Name=\"X\") { output.write(Data=\"y\") }",
-  "message": "line 1, column 21: `goal.call` contains no actions: only a condition (its body) and a modifier (the action it wraps) take { }; write the actions one after the other: goal.call(…); next.action(…)"
+  "message": "line 1, column 21: `goal.call` contains no actions: only a condition takes { } (its body); write the actions one after the other: goal.call(…); next.action(…)"
  },
  {
   "input": "condition.if(Left=%a%, Operator=isempty) { output.write(Data=\"x\") }; condition.else() { }",
@@ -90,6 +90,14 @@
  {
   "input": "condition.if(Left=%n%, Operator=<>, Right=5)",
   "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `<>` is not"
+ },
+ {
+  "input": "error.handle(Recovery=[goal.call(Name=\"Fix\")]); file.read(Path=\"x\")",
+  "message": "line 1, column 1: error.handle modifies the action before it; step 0 has none"
+ },
+ {
+  "input": "file.read(Path=\"x\"); error.handle(Recovery=[goal.call(Name=\"Fix\")]) { goal.call(Name=\"Y\") }",
+  "message": "line 1, column 69: `error.handle` takes no { }: write the action first, then error.handle after it — next.action(…); error.handle(…)"
  },
  {
   "input": "",

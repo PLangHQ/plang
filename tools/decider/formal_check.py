@@ -121,11 +121,12 @@ def main():
         except f.FormalError as e:
             mock = [('parse', str(e))]
 
-    # 3b. the notation's own cases, not in the golden: a frozen default, nested modifiers (outermost
-    #     first in the wrapped action's modifier list), an explicit type in an open slot
+    # 3b. the notation's own cases, not in the golden: a frozen default, two modifiers after their action
+    #     (the first written innermost; outermost first in the action's modifier list), an explicit type
+    #     in an open slot
     own = {}
     for text in ['goal.return(Depth: number ?= 1)',
-                 'error.handle(Key="A", Recovery=[goal.call(Name="RA")]) { error.handle(Key="B", Recovery=[goal.call(Name="RB")]) { goal.call(Name="X") } }',
+                 'goal.call(Name="X"); error.handle(Key="B", Recovery=[goal.call(Name="RB")]); error.handle(Key="A", Recovery=[goal.call(Name="RA")])',
                  'variable.set(Name=%d%, Value: date = "2026-01-01")']:
         try:
             rows = f.parse(text)

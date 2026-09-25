@@ -568,8 +568,8 @@
     ]
    }
   ],
-  "formal": "error.handle(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")]) {\n    goal.call(Name: text = \"Compile\")\n}",
-  "untyped": "error.handle(Recovery=[goal.call(Name=\"HandleBuildFailure\")]) {\n    goal.call(Name=\"Compile\")\n}"
+  "formal": "goal.call(Name: text = \"Compile\"); error.handle(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")])",
+  "untyped": "goal.call(Name=\"Compile\"); error.handle(Recovery=[goal.call(Name=\"HandleBuildFailure\")])"
  },
  {
   "goal": "start",
@@ -948,8 +948,8 @@
     ]
    }
   ],
-  "formal": "error.handle(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")]) {\n    build.fold(Goal: goal = %goal%)\n}",
-  "untyped": "error.handle(Recovery=[goal.call(Name=\"HandleBuildFailure\")]) {\n    build.fold(Goal=%goal%)\n}"
+  "formal": "build.fold(Goal: goal = %goal%); error.handle(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")])",
+  "untyped": "build.fold(Goal=%goal%); error.handle(Recovery=[goal.call(Name=\"HandleBuildFailure\")])"
  },
  {
   "goal": "start",
@@ -2476,8 +2476,8 @@
     ]
    }
   ],
-  "formal": "error.handle(Recovery: list<action> = [goal.call(Name: text = \"LogFailure\")]) {\n    goal.call(Name: text = \"SendReport\", Parameter: list = {to: text = \"ops@example.com\", subject: text = \"Weekly report\"})\n}",
-  "untyped": "error.handle(Recovery=[goal.call(Name=\"LogFailure\")]) {\n    goal.call(Name=\"SendReport\", Parameter={to: \"ops@example.com\", subject: \"Weekly report\"})\n}"
+  "formal": "goal.call(Name: text = \"SendReport\", Parameter: list = {to: text = \"ops@example.com\", subject: text = \"Weekly report\"}); error.handle(Recovery: list<action> = [goal.call(Name: text = \"LogFailure\")])",
+  "untyped": "goal.call(Name=\"SendReport\", Parameter={to: \"ops@example.com\", subject: \"Weekly report\"}); error.handle(Recovery=[goal.call(Name=\"LogFailure\")])"
  },
  {
   "goal": "weekly_report",

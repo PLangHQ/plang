@@ -51,15 +51,14 @@ def holds_actions(action):
 
 def prefill(action, text):
     """One pick as the formal line pre-fills it: its required properties as `?`, what the step already
-    says filled — `write to %x%` → variable.set(Name=%x%, Value=%!data%). A modifier wraps `{ ? }`."""
+    says filled — `write to %x%` → variable.set(Name=%x%, Value=%!data%)."""
     module, name = action.split('.', 1)
-    props, modifier = b.declared(module, name)
+    props, _ = b.declared(module, name)
     if action == 'variable.set' and (m := WRITE_TO.search(text)):
         return f'variable.set(Name={m.group(1)}, Value=%!data%)'
     required = [f'{n}=?' for n, p in props.items() if not p['nullable'] and p['default'] is None]
     if action == 'goal.call' and ARGUMENTS.search(text): required.append('Parameter={?}')
-    s = f'{action}(' + ', '.join(required) + ')'
-    return s + ' { ? }' if modifier else s
+    return f'{action}(' + ', '.join(required) + ')'
 
 def user_message_c(goal, picks):
     """picks: {step index: {action: score}} — every score the decider gave."""
@@ -85,9 +84,9 @@ def user_message_c(goal, picks):
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
         certain = [a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)]
         filled = [prefill(a, s['text']) for a in certain if not b.declared(*a.split('.', 1))[1]]
-        # a certain modifier is shown wrapping the step's first action — `{ }` is what it wraps, not what it runs
+        # a certain modifier is shown right after the step's first action — the action it modifies
         for m in [a for a in certain if b.declared(*a.split('.', 1))[1]]:
-            head = prefill(m, s['text'])[:-len(' { ? }')]
+            head = prefill(m, s['text'])
             if f.takes_recovery(*m.split('.', 1)):
                 # `on error call X` names what the recovery runs: a goal.call — a known value, like write to
                 # no `?` nested inside: the model fills the goal.call as it fills any action
@@ -95,7 +94,7 @@ def user_message_c(goal, picks):
                     head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=[goal.call(…)])'
                 else:
                     head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=?)'
-            filled = [f'{head} {{ {filled[0] if filled else "?"} }}'] + filled[1:]
+            filled = [filled[0] if filled else '?', head] + filled[1:]
         if known: filled.append(prefill('variable.set', s['text']))
         if filled: out += ' => formal: ' + '; '.join(filled)
         shown += [a for a, _ in step_picks]

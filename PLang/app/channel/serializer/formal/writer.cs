@@ -12,9 +12,9 @@ namespace app.channel.serializer.formal;
 /// array (<c>[a, b]</c>), a dict its object (<c>{"k": v}</c>, keys quoted). The action, its property rows and
 /// a list of arguments write their own shapes through the structure below, each in its formal branch
 /// (<see cref="Token"/> is the <see cref="IWriter.Format"/> they branch on): a call
-/// (<see cref="BeginCall"/>), a row (<see cref="Row"/>), a body (<see cref="BeginBody"/>), a wrap
-/// (<see cref="BeginWrap"/>). The writer owns the layout — separators, quoting, indentation — so the
-/// text is the same byte for byte whoever writes it.</para>
+/// (<see cref="BeginCall"/>), a row (<see cref="Row"/>), a body (<see cref="BeginBody"/>); a modifier is
+/// the next call after its action. The writer owns the layout — separators and quoting — so the text is
+/// the same byte for byte whoever writes it.</para>
 /// </summary>
 public sealed class Writer : IWriter
 {
@@ -24,10 +24,9 @@ public sealed class Writer : IWriter
     public string Format => Token;
 
     private readonly StringBuilder _out = new();
-    private int _indent;
 
     // What the next value sits in: its separator, and whether one was written yet.
-    private enum Frame { Top, Array, Dict, Rows, Call, Actions, Body, Wrap, Record }
+    private enum Frame { Top, Array, Dict, Rows, Call, Actions, Body, Record }
     private readonly Stack<(Frame Kind, int Count)> _frames = new();
 
     public Writer() => _frames.Push((Frame.Top, 0));
@@ -48,8 +47,6 @@ public sealed class Writer : IWriter
     private void Open(Frame kind) => _frames.Push((kind, 0));
 
     private void Close() => _frames.Pop();
-
-    private void NewLine() => _out.Append('\n').Append(' ', 4 * _indent);
 
     // ---------------------------------------------------------------- leaves
 
@@ -208,22 +205,4 @@ public sealed class Writer : IWriter
     /// <summary>A condition's body, inline: <c> { a; b }</c>.</summary>
     public void BeginBody() { _out.Append(" { "); Open(Frame.Body); }
     public void EndBody() { Close(); _out.Append(" }"); }
-
-    /// <summary>What a modifier wraps: <c> {</c>, the wrapped action on its own line one level in,
-    /// then <c>}</c> on its own line.</summary>
-    public void BeginWrap()
-    {
-        _out.Append(" {");
-        _indent++;
-        NewLine();
-        Open(Frame.Wrap);
-    }
-
-    public void EndWrap()
-    {
-        Close();
-        _indent--;
-        NewLine();
-        _out.Append('}');
-    }
 }

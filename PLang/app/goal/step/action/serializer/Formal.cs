@@ -14,8 +14,9 @@ namespace app.goal.step.action.serializer;
 ///   row     = Name [ ":" type ] ( "=" | "?=" ) value          ?= : a frozen default (the action's Default)
 ///   value   = "text" | number | true | false | null | %variable% | [ … ] | { … } | action
 /// </code>
-/// <para><c>{ }</c> holds what an action contains: a condition's body (its child step), or the one action a
-/// modifier wraps (nesting is the wrap order, outermost first). A modifier's recovery is its
+/// <para><c>{ }</c> is only a condition's body (its child step). A modifier follows the action it modifies,
+/// in the same list — <c>file.read(…); cache.wrap(…); error.handle(…)</c> — the first written innermost;
+/// the action's modifier list keeps them outermost first. A modifier's recovery is its
 /// <c>Recovery=[…]</c>.</para>
 ///
 /// <para>A value's type never comes from the text alone: it is the catalogue's declared type for the
@@ -40,7 +41,7 @@ public sealed class Formal
     {
         try
         {
-            var cursor = new Cursor(text, _step, context);
+            var cursor = new Cursor(text, _step, context, _step.Index);
             cursor.Space();
             if (cursor.AtEnd) cursor.Fail("a step holds at least one action");
             var list = new global::app.goal.step.action.list.@this();
@@ -77,13 +78,15 @@ public sealed class Formal
         private readonly string _text;
         private readonly global::app.goal.step.@this _step;
         private readonly global::app.actor.context.@this _context;
+        private readonly int _index;   // the step's index — a body's cursor names the step it is in
         private int _pos;
 
-        public Cursor(string text, global::app.goal.step.@this step, global::app.actor.context.@this context)
+        public Cursor(string text, global::app.goal.step.@this step, global::app.actor.context.@this context, int index)
         {
             _text = text;
             _step = step;
             _context = context;
+            _index = index;
         }
 
         public bool AtEnd { get { Space(); return _pos >= _text.Length; } }
@@ -129,15 +132,15 @@ public sealed class Formal
 
         // ---------------------------------------------------------------- actions
 
-        /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end.</summary>
+        /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end. A modifier modifies
+        /// the action before it in the same list: several attach in written order, the first written
+        /// innermost (the modifier list is outermost first, so each one read goes in at 0).</summary>
         public List<global::app.goal.step.action.@this> Actions(string? closing)
         {
-            var actions = new List<global::app.goal.step.action.@this> { Action() };
+            var actions = new List<global::app.goal.step.action.@this>();
+            Attach(actions, Action());
             while (!(closing != null ? Peek(closing) : AtEnd))
             {
-                if (Match(@"[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(") is { } next
-                    && Catalog(next[..next.IndexOf('.')], next[(next.IndexOf('.') + 1)..next.IndexOf('(')].Trim()) is global::app.goal.step.action.modifier.@this)
-                    Fail($"`{next.TrimEnd('(', ' ')}` wraps the action it modifies: {next.TrimEnd('(', ' ')}(…) {{ action }}");
                 if (!Peek(";"))
                 {
                     if (Peek("·")) Fail("separate a step's actions with `;`, not `·`");
@@ -145,15 +148,24 @@ public sealed class Formal
                     Fail(closing != null ? $"expected `;` or `{closing}`" : "expected `;` or the end of the step");
                 }
                 Take(";");
-                actions.Add(Action());
+                Attach(actions, Action());
             }
             return actions;
+        }
+
+        private void Attach(List<global::app.goal.step.action.@this> actions, (global::app.goal.step.action.@this Action, int At) read)
+        {
+            if (read.Action is not global::app.goal.step.action.modifier.@this modifier) { actions.Add(read.Action); return; }
+            if (actions.Count == 0)
+                Fail($"{modifier.Module.Name}.{modifier.Name} modifies the action before it; step {_index} has none", read.At);
+            actions[^1].Modifier.Insert(0, modifier);
         }
 
         private global::app.goal.step.action.@this? Catalog(string module, string name)
             => _context.App.Module.Contains(module) ? _context.App.Module[module][name] : null;
 
-        private global::app.goal.step.action.@this Action()
+        // action = module "." name "(" rows ")" [ "{" actions "}" ] — the action, and where it starts
+        private (global::app.goal.step.action.@this Action, int At) Action()
         {
             Space();
             var start = _pos;
@@ -206,32 +218,25 @@ public sealed class Formal
             {
                 Space();
                 var brace = _pos;
-                if (!isModifier && !isCondition)
-                    Fail($"`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}; " +
+                if (isModifier)
+                    Fail($"`{module}.{name}` takes no {{ }}: write the action first, then {module}.{name} after it — " +
+                         $"next.action(…); {module}.{name}(…)", brace);
+                if (!isCondition)
+                    Fail($"`{module}.{name}` contains no actions: only a condition takes {{ }} (its body); " +
                          $"write the actions one after the other: {module}.{name}(…); next.action(…)");
                 Take("{");
                 if (Peek("}"))
                 {
-                    if (isModifier) Fail($"`{module}.{name}` wraps one action: {module}.{name}(…) {{ action }}", brace);
                     // an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
                     // with the step's other problems, saying where the body goes for that step
                     Take("}");
                     action.Child.Add(new global::app.goal.step.@this { Goal = _step.Goal });
-                    return action;
+                    return (action, start);
                 }
                 var bodyStart = _pos;
-                if (isModifier)
-                {
-                    // the wrapped action is read with THIS step; it takes this modifier outermost
-                    var wrapped = Actions("}");
-                    if (wrapped.Count != 1) Fail($"`{module}.{name}` wraps one action; to wrap it in more modifiers, nest them", brace);
-                    Take("}");
-                    wrapped[0].Modifier.Insert(0, (global::app.goal.step.action.modifier.@this)action);
-                    return wrapped[0];
-                }
                 // a condition's body is a child step of this step's goal, its actions born holding it
                 var child = new global::app.goal.step.@this { Goal = _step.Goal };
-                var body = new Cursor(_text, child, _context) { _pos = _pos };
+                var body = new Cursor(_text, child, _context, _index) { _pos = _pos };
                 var bodyActions = body.Actions("}");
                 _pos = body._pos;
                 child.Text = _text[bodyStart.._pos].Trim();
@@ -239,9 +244,7 @@ public sealed class Formal
                 foreach (var a in bodyActions) child.Code.Add(a);
                 action.Child.Add(child);
             }
-            else if (isModifier)
-                Fail($"`{module}.{name}` is a modifier: it wraps an action — {module}.{name}(…) {{ action }}", start);
-            return action;
+            return (action, start);
         }
 
         // An optional `: type` after a row's name. Against a declared type it must be that type.
@@ -449,7 +452,13 @@ public sealed class Formal
             }
             foreach (var (word, kind) in new[] { ("true", System.Text.Json.JsonValueKind.True), ("false", System.Text.Json.JsonValueKind.False), ("null", System.Text.Json.JsonValueKind.Null) })
                 if (Match(word + @"\b") != null) { _pos += word.Length; return Scalar(word, kind); }
-            if (AtAction()) return new Literal { Action = Action() };
+            if (AtAction())
+            {
+                // an action held as a value stands alone: a modifier there has no action before it
+                var held = new List<global::app.goal.step.action.@this>();
+                Attach(held, Action());
+                return new Literal { Action = held[0] };
+            }
             if (Match(@"[A-Za-z_][\w./-]*") is { } bare) Fail($"a text is quoted: \"{bare}\"");
             if (_text[_pos] == '?') Fail("a `?` is still there: fill it with the value the step gives");
             Fail("expected a value: \"text\", a number, true, false, null, %variable%, [list], {dict} or an action");
