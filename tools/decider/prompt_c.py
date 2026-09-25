@@ -15,6 +15,7 @@ The check — the LLM and the decider must agree:
 import collections, copy, os, re
 import build_pr as b
 import formal as f
+import harness as h
 
 ROOT = b.ROOT
 SYSTEM_C = open(f'{ROOT}/os/system/builder/llm/PropertiesC.llm', encoding='utf-8').read()
@@ -24,17 +25,21 @@ WRITE_TO = re.compile(r'write to\s+(%[^%\s]+%)', re.I)
 def listed(picks_i, text=''):
     """The step's picks shown to the LLM: ≥ 0.5, most certain first. A step that says `write to %x%`
     has variable.set whatever the decider scored it: that is a known value, not a guess. An unsure step
-    adds the top 3 of the decider's popular-action choice, whatever their probability."""
+    adds the top 3 of the decider's popular-action choice that reach the choice floor (h.RUNNER_UP, 0.2:
+    an option worth considering); below it an option is not listed."""
     out = {a: p for a, p in picks_i.items() if not a.startswith('@') and p is not None and p >= POSSIBLE}
     if WRITE_TO.search(text) and 'variable.set' not in out: out['variable.set'] = picks_i.get('variable.set') or 0.0
-    for a, p in (picks_i.get('@popular') or {}).items():
-        if a not in out: out[a] = p or 0.0
+    for a, p in popular(picks_i).items():
+        if a not in out: out[a] = p
     return sorted(out.items(), key=lambda ap: -ap[1])
+
+def popular(picks_i):
+    """The popular-action choice's options that reach the choice floor."""
+    return {a: p or 0.0 for a, p in (picks_i.get('@popular') or {}).items() if (p or 0.0) >= h.RUNNER_UP}
 
 def popular_only(picks_i):
     """The actions an unsure step lists only because the popular-action choice ranked them."""
-    return {a for a in (picks_i.get('@popular') or {})
-            if not ((picks_i.get(a) or 0) >= POSSIBLE)}
+    return {a for a in popular(picks_i) if not ((picks_i.get(a) or 0) >= POSSIBLE)}
 
 def is_unsure(picks_i, text=''):
     """The decider was unsure of the step: it asked the popular-action choice (harness.unsure)."""

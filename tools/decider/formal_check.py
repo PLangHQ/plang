@@ -168,6 +168,15 @@ def main():
     if errs or not all(any(x in r for r in refusal) for x in expected):
         failures.append(f'checkout[4]: one refusal with every problem expected, got parse errors {errs} and {refusal}')
 
+    # 6. The popular-action choice lists only options at or above the choice floor (0.2): start[0] in
+    # round 10 (goal.call 0.79, popular output.write 0.01) renders without output.write.
+    run10 = os.path.join(HERE, 'runs', 'c_eval_round10_20260925_234638')
+    picks10 = {int(k): v for k, v in json.load(open(os.path.join(run10, 'decider.json')))['picks']['start'].items()}
+    _, user10 = ce.request('C', next(c for c in e.GOLDEN if c['id'] == 'start'), picks10)
+    line0 = next(l for l in user10.split('\n') if l.strip().startswith('[0]'))
+    if 'output.write' in line0 or 'goal.call' not in line0:
+        failures.append(f'start[0]: a popular option below the floor is listed: {line0.strip()}')
+
     print(f'round trip + formal step vs LLM path: {total} steps, {len(failures)} failures')
     for x in failures: print('  ', x)
     print(f'\nchild text: {len(child_texts)} bodies; formal keeps the body\'s actions, not its words:')
