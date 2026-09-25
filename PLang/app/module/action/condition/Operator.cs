@@ -26,23 +26,32 @@ public sealed class Operator
             // rank picks the driver, the driver's typed hook compares) and this boundary
             // maps the sign-free Comparison per operator. The value never throws; the
             // boundary answers NotEqual-on-ordering and Incomparable with an error.
+            // Every question has its negative beside it: the positive's answer inverted (an error
+            // stays the error). The negation is the operator's, so a step never carries a flag
+            // that flips its logic.
             ["=="] = Equal,
-            ["!="] = async (l, r, c) => Not(await Equal(l, r, c), c),
+            ["!="] = Negated(Equal),
             [">"] = (l, r, c) => Ordered(l, r, c, ">", x => x == global::app.data.Comparison.Greater),
             ["<"] = (l, r, c) => Ordered(l, r, c, "<", x => x == global::app.data.Comparison.Less),
             [">="] = (l, r, c) => Ordered(l, r, c, ">=", x => x is global::app.data.Comparison.Greater or global::app.data.Comparison.Equal),
             ["<="] = (l, r, c) => Ordered(l, r, c, "<=", x => x is global::app.data.Comparison.Less or global::app.data.Comparison.Equal),
-            ["contains"] = async (l, r, c) => Answer(c, await Contains(l, r)),
-            ["startswith"] = async (l, r, c) => Answer(c, StringOp(await Val(l), await Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase))),
-            ["endswith"] = async (l, r, c) => Answer(c, StringOp(await Val(l), await Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
-            ["in"] = async (l, r, c) => Answer(c, await Contains(r, l)),
+            ["contains"] = ContainsOp,
+            ["notcontains"] = Negated(ContainsOp),
+            ["startswith"] = StartsWith,
+            ["notstartswith"] = Negated(StartsWith),
+            ["endswith"] = EndsWith,
+            ["notendswith"] = Negated(EndsWith),
+            ["in"] = In,
+            ["notin"] = Negated(In),
             // The ITEM owns emptiness (text → whitespace-only, containers →
             // zero entries, null/absent → empty); the binding answers absence.
-            ["isempty"] = async (l, _, c) => Answer(c, l == null || await l.IsEmpty()),
+            ["isempty"] = IsEmpty,
+            ["isnotempty"] = Negated(IsEmpty),
             // `%x% is dict` / `is number` / `is item` — IS-A query against the
             // value-type lattice. The right operand is the PLang type name. `item`
             // is the apex (true for any value).
             ["is"] = IsType,
+            ["isnot"] = Negated(IsType),
             // A failed operand is an error that passes through.
             ["and"] = (l, r, c) => Logical(l, r, c, and: true),
             ["or"] = (l, r, c) => Logical(l, r, c, and: false),
@@ -91,6 +100,26 @@ public sealed class Operator
     // The negation of an answer; an error stays the error.
     private static Answer Not(Answer answer, actor.context.@this context)
         => answer.Success ? Answer(context, !answer.ToBoolean()) : answer;
+
+    // A negative operator: its positive, the answer inverted.
+    private static Func<data.@this?, data.@this?, actor.context.@this, Task<Answer>> Negated(
+        Func<data.@this?, data.@this?, actor.context.@this, Task<Answer>> positive)
+        => async (l, r, c) => Not(await positive(l, r, c), c);
+
+    private static async Task<Answer> ContainsOp(data.@this? l, data.@this? r, actor.context.@this c)
+        => Answer(c, await Contains(l, r));
+
+    private static async Task<Answer> StartsWith(data.@this? l, data.@this? r, actor.context.@this c)
+        => Answer(c, StringOp(await Val(l), await Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase)));
+
+    private static async Task<Answer> EndsWith(data.@this? l, data.@this? r, actor.context.@this c)
+        => Answer(c, StringOp(await Val(l), await Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase)));
+
+    private static async Task<Answer> In(data.@this? l, data.@this? r, actor.context.@this c)
+        => Answer(c, await Contains(r, l));
+
+    private static async Task<Answer> IsEmpty(data.@this? l, data.@this? _, actor.context.@this c)
+        => Answer(c, l == null || await l.IsEmpty());
 
     private static async Task<Answer> Logical(data.@this? l, data.@this? r, actor.context.@this context, bool and)
     {

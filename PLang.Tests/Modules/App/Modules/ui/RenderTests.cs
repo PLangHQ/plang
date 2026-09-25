@@ -81,8 +81,8 @@ public class RenderTests : IDisposable
     [Test]
     public async Task BuilderMenu_DefaultSlot_IsOptional_AndShowsAFalseDefault()
     {
-        var menu = await BuilderMenuFor("condition", "if");
-        await Assert.That(menu).Contains("Negate (bool, optional, default false)");
+        var menu = await BuilderMenuFor("goal", "call");
+        await Assert.That(menu).Contains("Parallel (bool, optional, default false)");
     }
 
     [Test]

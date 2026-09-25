@@ -1,25 +1,25 @@
 ## Operators — runtime-supported only
 
-Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or` (`is` asks the type: `%x% is number`). There is NO `isnotempty`/`istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
+Valid `Operator` values: `==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or` (`is` asks the type: `%x% is number`). Every question has its negative as its own operator — a negation is always written in the operator, never anywhere else. There is NO `istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
 
-| phrasing | Operator | Right | Negate |
-|---|---|---|---|
-| `is empty` | isempty | omit | omit |
-| `is not empty` / `not blank` | isempty | omit | true |
-| `is true` / `is false` | == | true / false | — |
-| `is null` / `is not null` | == / != | null | — |
-| `equals %b%` / `does not equal %b%` | == / != | %b% | — |
-| `contains 'foo'` / `does not contain 'foo'` | contains | 'foo' | — / true |
-| `is a number` / `is text` / `is not a list` | is | the type name: number / text / list | — / — / true |
+| phrasing | Operator | Right |
+|---|---|---|
+| `is empty` / `is not empty`, `not blank` | isempty / isnotempty | omit |
+| `is true` / `is false` | == | true / false |
+| `is null` / `is not null` | == / != | null |
+| `equals %b%` / `does not equal %b%` | == / != | %b% |
+| `contains 'foo'` / `does not contain 'foo'` | contains / notcontains | 'foo' |
+| `starts with 'x'` / `does not start with 'x'` | startswith / notstartswith | 'x' |
+| `ends with 'x'` / `does not end with 'x'` | endswith / notendswith | 'x' |
+| `is in [..]` / `is not in [..]` | in / notin | the list |
+| `is a number` / `is not a list` | is / isnot | the type name: number / list |
 
-`Negate=true` inverts ANY operator — the only way to negate ones with no inverse (`isempty`, etc.).
+## Omit `Right` when not applicable
 
-## Omit `Right`/`Negate` when not applicable
+`Right` is for binary operators only — omit it for unary `isempty` / `isnotempty` (never `Right=%!data%` or `Right=false`).
 
-`Right` is for binary operators only — omit it for unary `isempty` (never `Right=%!data%` or `Right=false`). `Negate` defaults false — omit when not negating.
-
-- `if %content% is not empty` → `condition.if(Left=%content%, Operator="isempty", Negate=true)` (no Right)
-- `if %flag% is true` → `condition.if(Left=%flag%, Operator="==", Right=true)` (no Negate)
+- `if %content% is not empty` → `condition.if(Left=%content%, Operator="isnotempty")` (no Right)
+- `if %name% does not contain "admin"` → `condition.if(Left=%name%, Operator="notcontains", Right="admin")`
 
 ## Compound `and`/`or`
 

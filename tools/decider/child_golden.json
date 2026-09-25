@@ -51,20 +51,20 @@
      {"module": "condition", "name": "else",
       "child": [{"text": "return", "action": [{"module": "goal", "name": "return"}]}]}]}},
 
-  {"id": "negate_contains", "covers": "negation (does not contain)",
+  {"id": "negate_contains", "covers": "negation (does not contain) — the operator's: notcontains",
    "goal": "Access",
    "steps": [{"text": "if %name% does not contain \"admin\", call Deny", "indent": 0}],
    "menu": {"0": ["condition.if", "goal.call"]},
    "expect": {"0": [
-     {"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "contains", "Right": "admin", "Negate": true},
+     {"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "notcontains", "Right": "admin"},
       "child": [{"text": "call Deny", "action": [{"module": "goal", "name": "call", "property": {"Name": "Deny"}}]}]}]}},
 
-  {"id": "negate_isempty", "covers": "negation (is not empty, unary operator)",
+  {"id": "negate_isempty", "covers": "negation (is not empty, unary operator) — isnotempty",
    "goal": "Work",
    "steps": [{"text": "if %items% is not empty, call ProcessItems", "indent": 0}],
    "menu": {"0": ["condition.if", "goal.call"]},
    "expect": {"0": [
-     {"module": "condition", "name": "if", "property": {"Left": "%items%", "Operator": "isempty", "Negate": true},
+     {"module": "condition", "name": "if", "property": {"Left": "%items%", "Operator": "isnotempty"},
       "child": [{"text": "call ProcessItems", "action": [{"module": "goal", "name": "call", "property": {"Name": "ProcessItems"}}]}]}]}},
 
   {"id": "setup_before_if", "covers": "a setup action before the if",

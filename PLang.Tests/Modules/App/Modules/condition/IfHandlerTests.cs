@@ -202,26 +202,55 @@ public class IfHandlerTests : IDisposable
         await Assert.That(await result.ToBooleanAsync()).IsFalse();
     }
 
-    [Test]
-    public async Task Run_Negate_FlipsTrue_ToFalse()
+    private async Task<global::app.data.@this> Ask(object? left, string op, object? right)
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5), Negate = (global::app.type.item.@bool.@this)true };
-        await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var ctx = _app.User.Context;
+        var action = new If(ctx)
+        {
+            Left = left == null ? null : ctx.Ok(left),
+            Operator = ctx.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)),
+            Right = right == null ? null : ctx.Ok(right)
+        };
+        await action.Attach(null, ctx);
+        return await action.Run();
+    }
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
+    // Every negative operator is its positive with the answer inverted.
+    [Test]
+    [Arguments("notcontains", "contains", "hello admin", "admin")]
+    [Arguments("notcontains", "contains", "hello", "admin")]
+    [Arguments("notstartswith", "startswith", "/api/users", "/api")]
+    [Arguments("notstartswith", "startswith", "/web", "/api")]
+    [Arguments("notendswith", "endswith", "report.pdf", ".pdf")]
+    [Arguments("notendswith", "endswith", "report.txt", ".pdf")]
+    [Arguments("isnotempty", "isempty", "", null)]
+    [Arguments("isnotempty", "isempty", "x", null)]
+    [Arguments("isnot", "is", "text", "text")]
+    public async Task NegativeOperator_IsItsPositiveInverted(string negative, string positive, string left, string? right)
+    {
+        var yes = await Ask(left, positive, right);
+        var no = await Ask(left, negative, right);
+
+        await yes.IsSuccess();
+        await no.IsSuccess();
+        await Assert.That(await no.ToBooleanAsync()).IsEqualTo(!await yes.ToBooleanAsync());
     }
 
     [Test]
-    public async Task Run_Negate_FlipsFalse_ToTrue()
+    public async Task NotIn_IsInInverted()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5), Negate = (global::app.type.item.@bool.@this)true };
-        await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var list = new List<object?> { "admin", "owner" };
+        await Assert.That(await (await Ask("admin", "notin", list)).ToBooleanAsync()).IsFalse();
+        await Assert.That(await (await Ask("guest", "notin", list)).ToBooleanAsync()).IsTrue();
+    }
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
+    [Test]
+    public async Task NegativeOperator_KeepsThePositivesError()
+    {
+        // `is` with a type name that doesn't exist is the developer's error — so is `isnot`.
+        var result = await Ask("x", "isnot", "nosuchtype");
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
     }
 
     // --- Data.ToBoolean tests ---
