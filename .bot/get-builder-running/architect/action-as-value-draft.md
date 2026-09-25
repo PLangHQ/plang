@@ -13,6 +13,7 @@ With Ingi, 2026-09-25. **Parked** ("we might be going over too much"); not for c
 3. **The LLM is taught one general rule** in `Properties.llm`: a property can take an action instead of a value; its result is the value. The exception is taught by type: a `variable` property (a name to write to) cannot take one.
 4. **Truthiness belongs to the type.** Each type's description carries one line on what true means for it (path: exists; bool: itself; number: not zero; text/list: not empty). The LLM sees it when `condition.if` is on the menu. The value must be typed right: `%file%` as `path` is existence, as `text` only "not empty".
 5. **`Operator` becomes optional:** `if` with only `Left` tests Left's truthiness.
+6. **Any action can be a value, side effects included** (Ingi: "`if (file.delete x)` should work fine"). No list of "question" actions; its result is the value.
 
 ## Sketch (NEW, not traced)
 
