@@ -58,6 +58,8 @@ public sealed class @this : global::app.type.item.list.@this<Action>
                 "the compiled step has no actions — every step maps to at least one action.",
                 "EmptyActions", 400);
 
+        if (Orphan() is { } orphan) return orphan;
+
         var causes = new List<global::app.error.Error>();
         for (int i = 0; i < Count; i++)
             if (await this[i].Validate(context) is { } invalid) causes.Add(invalid);
@@ -65,6 +67,29 @@ public sealed class @this : global::app.type.item.list.@this<Action>
         if (causes.Count == 0) return null;
         return new global::app.error.Error(
             string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes };
+    }
+
+    /// <summary>An <c>elseif</c>/<c>else</c> continues the chain of the <c>if</c>/<c>elseif</c> right
+    /// before it in this same list; one with no such condition before it — at the start of the list,
+    /// after an ordinary action, after an <c>else</c> — is the programmer's else written apart from its
+    /// if (a standalone <c>- else</c> step). Null when every else has its if.</summary>
+    private global::app.error.Error? Orphan()
+    {
+        for (int i = 0; i < Count; i++)
+        {
+            var action = this[i];
+            if (!action.IsCondition || string.Equals(action.Name, "if", System.StringComparison.OrdinalIgnoreCase)) continue;
+            var before = i > 0 ? this[i - 1] : null;
+            if (before is { IsCondition: true } && !string.Equals(before.Name, "else", System.StringComparison.OrdinalIgnoreCase)) continue;
+
+            var message = action.Step is { } step
+                ? $"step {step.Index} \"{step.Text}\" — an {action.Name} must be in the same step as its if."
+                : $"\"{action.Name}\" — an {action.Name} must be in the same step as its if.";
+            return action.Step is { } owner
+                ? new global::app.error.StepError(message, owner, "ElseWithoutIf", 400)
+                : new global::app.error.StepError(message, "ElseWithoutIf", 400);
+        }
+        return null;
     }
 
     /// <summary>Finishes every action in this chain at build, in order — each walks what it holds.

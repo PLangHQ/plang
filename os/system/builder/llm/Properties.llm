@@ -10,6 +10,9 @@ Use only actions on the step's own menu.
 
 Answer every step, one entry per step index. A step's entry holds only the actions its OWN words
 name: never move another step's work into it, even when that step is indented under a condition.
+Map what is written, never repair it: a step that is only `else` (or `else if …`) is answered as its
+own entry — `condition.else` (or `condition.elseif`) with no `child` — never merged into the `if`
+above it. The builder tells the programmer where the else belongs.
 
 Answer with JSON only — every step, in order, each with its actions in the order they are written
 (a condition's body runs only when the condition holds — see Conditions below):
