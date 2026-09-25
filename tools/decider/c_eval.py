@@ -84,9 +84,13 @@ def judge_c(case, picks, parsed, errors, whole):
     goal = e.goal_of(case)
     w, per_step, warnings = c.check(goal, picks, parsed)
     whole = whole + [x for x in w if not any(x.startswith(f'step {i} ') for i in errors)]
+    # a line that doesn't parse still reports every problem it shows: its parse error, and each action it
+    # names that isn't one of the step's
+    texts = {s['index']: s['text'] for s in goal['steps']}
     for i, ex in errors.items():
         per_step.setdefault(i, []).append(f'step {i} does not parse: {ex.reason} — in: {ex.text.strip()}')
-    agreement = [r for p in per_step.values() for r in p if 'decider' in r]
+        per_step[i] += c.unlisted(i, c.named(ex.text), picks.get(i, {}), texts.get(i, ''))
+    agreement = [r for p in per_step.values() for r in p if 'decider' in r or "isn't one of step" in r]
     return {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}, whole, per_step, warnings, agreement
 
 def one_c(model, case, picks):

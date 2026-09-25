@@ -22,7 +22,7 @@ GenerateHtml
         scheme: {html:string, components:string[]}
         write %result%
 - if %result.components.count% > 0 then 
-    - foreach %result.components% call ReadComponentFile item=%file%
+    - foreach %result.components% call ReadComponentFile file=%item%
     - call GenerateHtml user=%componentDocs%
     - end goal
 - [llm] system: "Generate any javascript and css include <script> and <style>"

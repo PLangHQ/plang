@@ -142,14 +142,26 @@ def held_actions(rows):
     for a in rows: walk(a)
     return out
 
+NAMED = re.compile(r'\b([a-z]+)\.([A-Za-z_]+)\(')
+
+def named(line):
+    """The actions a line names (module.name( …), for a line that doesn't parse: its refusal still
+    reports every problem it can see, not only the first one the parser stopped at."""
+    return [f'{m}.{n}' for m, n in NAMED.findall(line) if f.known(m, n)]
+
+def unlisted(i, used, picks_i, text=''):
+    """The step's own actions the decider did not list for it — named with the step's list."""
+    shown = dict(listed(picks_i, text))
+    return [f'{a} isn\'t one of step {i}\'s actions ({", ".join(shown)})'
+            for a in dict.fromkeys(used) if a not in shown]
+
 def disagreements(i, rows, picks_i, text=''):
     """What the LLM and the decider disagree on in step i: (refusals, unsure)."""
     used = own_actions(rows)
     shown = dict(listed(picks_i, text))
     refused = [f'step {i} leaves out {a}, which the decider is certain of ({p:.2f})'
                for a, p in shown.items() if p >= CERTAIN and a not in used]
-    refused += [f'step {i} uses {a}, which the decider did not list for it'
-                for a in dict.fromkeys(used) if a not in shown]
+    refused += unlisted(i, used, picks_i, text)
     # an action listed only through the popular-action choice builds with a warning of its own
     popular = [a for a in dict.fromkeys(used) if a in popular_only(picks_i)]
     refused += [f'step {i} holds {a}, which is not listed; only goal.call may be held without being listed'
