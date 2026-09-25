@@ -141,15 +141,26 @@ public class MatchTests
         Make.Step("call ProcessItems", 1),
         Make.Step("write out \"done\"", 1));
 
+    // The copy is the builder's to drop: build.fold places the indented steps as the child anyway.
     [Test]
-    public async Task Match_ChildOnAStepWithIndentedSteps_Refused()
+    public async Task Match_ChildCopyingTheIndentedSteps_Passes()
     {
         await using var app = TestApp.Create("/test");
         var result = await Match(MaybeProcess(), NanoChildOverIndentAnswer, app.System.Context);
+        await result.IsSuccess();
+    }
+
+    [Test]
+    public async Task Match_ChildNotInTheStepsWords_OnAStepWithIndentedSteps_Refused()
+    {
+        await using var app = TestApp.Create("/test");
+        var invented = NanoChildOverIndentAnswer.Replace(
+            "\"child\": [{\"text\": \"call ProcessItems\",", "\"child\": [{\"text\": \"call Cleanup\",");
+        var result = await Match(MaybeProcess(), invented, app.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message)
-            .Contains("step 0's body is the indented steps below it (step 1, step 2); leave its child empty");
+            .Contains("step 0 has a child its own words don't name (\"call Cleanup\") — its entry holds only what step 0 says");
     }
 
     [Test]

@@ -136,13 +136,6 @@ public sealed partial class @this
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
     [JsonIgnore]
     public global::app.goal.@this Goal { get; init; } = null!;
-
-    /// <summary>The steps indented under this one in its goal — its body as the author laid it out.
-    /// The builder places them in the condition's <c>Child</c>; the stage-3 prompt names them so the
-    /// LLM leaves the child to the builder.</summary>
-    [JsonIgnore]
-    public global::app.goal.step.list.@this Body => Goal.Step.Body(Index);
-
     /// <summary>
     /// Runs this step: lifecycle events → actions.
     /// Error handling, caching, and timeouts are per-action modifiers, not step-level.

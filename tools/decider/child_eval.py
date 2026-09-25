@@ -8,7 +8,7 @@ RUNS times. The prompt is frozen for the whole run. Raw answers land in runs/chi
     python3 child_eval.py                       # gpt-5.4-nano and gpt-5.4-mini, 3 runs each
     MODELS=gpt-5.4-nano RUNS=1 python3 child_eval.py
 """
-import json, os, re, sys, time, urllib.request, urllib.error, concurrent.futures as cf
+import json, os, re, sys, time, copy, collections, urllib.request, urllib.error, concurrent.futures as cf
 import build_pr as b
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -176,17 +176,23 @@ if __name__ == '__main__':
     # What the builder's checks would do with each answer: build.match + the action list's chain rule
     # (build_pr.match mirrors both). A wrong answer they refuse goes to the retry; one they pass is a
     # SILENT miss — it would reach the .pr wrong.
+    # A wrong answer the builder's normalization repairs (build.fold drops a child over an indented
+    # body) is FIXED — the .pr comes out right with no retry.
     by_id = {c['id']: c for c in GOLDEN}
-    summary = [{'model': m, 'case': c, 'run': r, 'notes': n,
-                'caught': b.match(goal_of(by_id[c]), a) if a is not None else ['no answer'],
-                'steps': {str(i): {'misses': ms, 'got': [short(x) for x in got]} for i, (ms, got) in sc.items()}}
-               for m, c, r, a, sc, n in results]
+    summary = []
+    for m, c, r, a, sc, n in results:
+        caught = b.match(goal_of(by_id[c]), a) if a is not None else ['no answer']
+        normalized = score(by_id[c], b.normalize(goal_of(by_id[c]), copy.deepcopy(a))) if a is not None and not caught else {}
+        steps = {}
+        for i, (ms, got) in sc.items():
+            outcome = 'right' if not ms else 'caught' if caught else \
+                      'fixed' if i in normalized and not normalized[i][0] else 'silent'
+            steps[str(i)] = {'misses': ms, 'got': [short(x) for x in got], 'outcome': outcome}
+        summary.append({'model': m, 'case': c, 'run': r, 'notes': n, 'caught': caught, 'steps': steps})
     json.dump(summary, open(os.path.join(OUT, 'summary.json'), 'w'), indent=1, ensure_ascii=False)
     for model in MODELS:
-        rows = [s for s in summary if s['model'] == model]
-        steps = sum(len(s['steps']) for s in rows)
-        right = sum(1 for s in rows for v in s['steps'].values() if not v['misses'])
-        silent = sum(1 for s in rows if not s['caught'] for v in s['steps'].values() if v['misses'])
-        caught = sum(1 for s in rows if s['caught'] for v in s['steps'].values() if v['misses'])
-        print(f'{model}: first-attempt {right}/{steps} steps; misses caught (→ retry) {caught}; SILENT {silent}')
+        count = collections.Counter(v['outcome'] for s in summary if s['model'] == model for v in s['steps'].values())
+        total = sum(count.values())
+        print(f'{model}: first-attempt {count["right"]}/{total} steps; caught (→ retry) {count["caught"]}; '
+              f'fixed by the builder {count["fixed"]}; SILENT {count["silent"]}')
     print('wrote', OUT)

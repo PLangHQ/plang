@@ -77,18 +77,25 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 ? await held.Value<global::app.type.item.list.@this>() : null;
             if (actions == null || actions.CountRaw == 0) { problems.Add($"step {i} (\"{this[i].Text}\") has no actions"); continue; }
 
-            // A step with steps indented under it has its body placed from that layout by the
-            // builder; a child the answer wrote for it is the body written twice.
+            // A step with steps indented under it gets its body from that layout (build.fold places
+            // it). A child the answer wrote as a copy of those steps is dropped by the fold; a child
+            // that is not them is invented — refused, in words about the step, not its layout.
             var body = Body(i);
             if (body.CountRaw == 0) continue;
+            var bodyTexts = body.Items().Select(b => Words(b.Text)).ToHashSet();
             foreach (var row in actions.Items(context))
             {
                 if (await row.Value<global::app.type.item.dict.@this>() is not { } answered
-                    || answered.Get("child", context) is not { } child
-                    || await child.Value<global::app.type.item.list.@this>() is not { CountRaw: > 0 }) continue;
-                problems.Add($"step {i}'s body is the indented steps below it " +
-                    $"({string.Join(", ", body.Items().Select(b => $"step {b.Index}"))}); leave its child empty");
-                break;
+                    || answered.Get("child", context) is not { } written
+                    || await written.Value<global::app.type.item.list.@this>() is not { CountRaw: > 0 } child) continue;
+                foreach (var childRow in child.Items(context))
+                {
+                    var text = await childRow.Value<global::app.type.item.dict.@this>() is { } childStep
+                               && childStep.Get("text", context) is { } t ? (await t.Value())?.ToString() ?? "" : "";
+                    if (bodyTexts.Contains(Words(text))) continue;
+                    problems.Add($"step {i} has a child its own words don't name (\"{text}\") — its entry holds only what step {i} says");
+                    break;
+                }
             }
         }
         if (problems.Count == 0) return null;
@@ -97,6 +104,10 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             "Answer exactly one entry per step, in order — entry i with \"index\": i — each with its actions.",
             "AnswerMismatch", 400);
     }
+
+    /// <summary>A step's words for comparing — quotes and repeated whitespace set aside.</summary>
+    private string Words(string text)
+        => System.Text.RegularExpressions.Regex.Replace(text.Replace("\"", "").Replace("'", ""), @"\s+", " ").Trim().ToLowerInvariant();
 
     /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
     /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>
