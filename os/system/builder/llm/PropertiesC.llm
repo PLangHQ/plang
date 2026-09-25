@@ -37,12 +37,27 @@ A condition's body goes in its { }; the next branch of the same chain follows af
 A modifier wraps the one action it modifies; what it runs on error is its Recovery:
   error.handle(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")]) { goal.call(Name="Compile") }
 
+Common steps, and their formal:
+  read 'notes.txt', write to %content%            file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)
+  write out "Hello %name%"                        output.write(Data="Hello %name%")
+  set %count% = 0                                 variable.set(Name=%count%, Value=0)
+  call SendMail to=%email%, subject="Hi"          goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
+  foreach %orders%, call Ship order=%item%        loop.foreach(Collection=%orders%); goal.call(Name="Ship", Parameter={order: %item%})
+  save %report% to file 'report.txt'              file.save(Path="report.txt", Value=%report%)
+  if %age% >= 18, call Adult                      condition.if(Left=%age%, Operator=">=", Right=18) { goal.call(Name="Adult") }
+  get https://example.com/rates, write to %rates% http.request(Url="https://example.com/rates"); variable.set(Name=%rates%, Value=%!data%)
+  render "page.html", title=%title%, write to %html%
+                                                  ui.render(Template="page.html", Parameter={title: %title%}); variable.set(Name=%html%, Value=%!data%)
+  call Compile, on error call LogError            error.handle(Recovery=[goal.call(Name="LogError")]) { goal.call(Name="Compile") }
+
 Rules
 1. One line per step, [i] being the step's index. A step's actions come only from its own words: never move
    another step's work into it. A step that is only `else` (or `else if …`) is its own line.
 2. Use the decider's actions for the step. Every action it is certain of (0.90 or more) is in your line. A
    possible action (below 0.90) is used only when the step's words need it. Never use an action not listed
-   for the step — except goal.call where a listed action holds actions (an action property, a Recovery).
+   for the step — except goal.call where a listed action holds actions (an action property, a Recovery),
+   and, on a step marked unsure, one of the other common actions when the listed ones don't do what the
+   step says.
 3. Fill every `?` with a value written as above — a text always in quotes: Name="AddStepToState". Order the
    actions by what the step does, not by the order they are listed. An action may be used more than once.
 4. Give a property only when the step's words give its value; otherwise leave it out and its default applies.

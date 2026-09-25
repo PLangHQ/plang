@@ -124,7 +124,11 @@ def one_c(model, case, picks):
             parsed2 = merged
         final, whole2, steps2, warn2, agree2 = judge_c(case, picks, parsed2, errors2, whole2)
         if agree1 and not agree2: warn2 = warn2 + [f'settled on retry: {x}' for x in agree1]
+    goal = e.goal_of(case)
+    unsure = [s['index'] for s in goal['steps'] if c.is_unsure(picks.get(s['index'], {}), s['text'])]
+    popular = [w for w in warn2 if 'other common actions' in w]
     return {'prompt': 'C', 'model': model, 'case': case['id'], 'first': first, 'before': before,
+            'unsure': unsure, 'popular_used': popular,
             'refused1': whole1 + [r for p in steps1.values() for r in p], 'caught': sorted(caught),
             'final': final, 'refused2': (whole2 + [r for p in steps2.values() for r in p]) if (whole1 or steps1) else [],
             'warnings': warn2, 'disagreements': agree1, 'calls': calls}
@@ -187,11 +191,14 @@ def cost(model, usage): return e.cost(model, usage)
 
 if __name__ == '__main__':
     cat = h.catalogue()
-    d.DUMP = f'{SHARED}/decider-round{ROUND}'
+    # the rendered requests of a round, and its decider requests beside them: <dir>/<goal>/{system,user}.txt, <goal>/decider/
+    run = os.environ.get('RUN', '')
+    reqdir = lambda prompt: os.path.join(SHARED, f'prompt-{prompt.lower()}-round{ROUND}' + (f'-run{run}' if run not in ('', '1') else ''))
     os.makedirs(OUT, exist_ok=True)
-    print(f'round {ROUND}: decider v5 on {len(e.GOLDEN)} goals', flush=True)
+    print(f'round {ROUND} run {run or 1}: decider v5 on {len(e.GOLDEN)} goals', flush=True)
     with cf.ThreadPoolExecutor(5) as ex:
-        decided = dict(zip([c_['id'] for c_ in e.GOLDEN], ex.map(lambda case: d.one(case, cat), e.GOLDEN)))
+        decided = dict(zip([c_['id'] for c_ in e.GOLDEN],
+                           ex.map(lambda case: d.one(case, cat, os.path.join(reqdir(PROMPTS[-1]), case['id'], 'decider')), e.GOLDEN)))
     picks = {cid: {s['index']: {a: v['score'] for a, v in s['pick'].items()} for s in r['steps']} for cid, r in decided.items()}
     json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
                'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},
@@ -200,7 +207,7 @@ if __name__ == '__main__':
     for prompt in PROMPTS:
         for case in e.GOLDEN:
             system, user = request(prompt, case, picks[case['id']])
-            folder = os.path.join(SHARED, f'prompt-{prompt.lower()}-round{ROUND}', case['id'])
+            folder = os.path.join(reqdir(prompt), case['id'])
             os.makedirs(folder, exist_ok=True)
             open(os.path.join(folder, 'system.txt'), 'w', encoding='utf-8').write(system)
             open(os.path.join(folder, 'user.txt'), 'w', encoding='utf-8').write(user)

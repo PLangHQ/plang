@@ -28,6 +28,18 @@ def listed(picks_i, text=''):
     if WRITE_TO.search(text) and 'variable.set' not in out: out['variable.set'] = picks_i.get('variable.set') or 0.0
     return sorted(out.items(), key=lambda ap: -ap[1])
 
+# The actions most steps use (share of steps over tools/decider/labels/, the builder's .pr files and the
+# golden set), test-only families (assert.*, identity.*, test.*) left out. A step the decider is unsure
+# of — its top pick under UNSURE — also sees these, and may use one, built with a warning.
+POPULAR = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read', 'file.save',
+           'error.throw', 'file.delete', 'signing.sign', 'list.count', 'math.add', 'loop.foreach', 'signing.verify',
+           'cache.wrap']
+UNSURE = 0.8
+
+def is_unsure(picks_i, text=''):
+    shown = listed(picks_i, text)
+    return not shown or max(p for _, p in shown) < UNSURE
+
 ON_ERROR_CALL = re.compile(r'on error[^,;]*?\bcall\b', re.I)
 ARGUMENTS = re.compile(r'\bcall\b[^,]*?\s[A-Za-z_]\w*\s*=', re.I)   # `call X name=value`: the step passes arguments
 
@@ -56,6 +68,7 @@ def user_message_c(goal, picks):
         lines.append((s, f'[{s["index"]}] {"    " * s.get("indent", 0)}- {s["text"]}'))
     out = 'Goal, as written:\n  ' + goal['name']
     shown = []
+    unsure_any = False
     for s, line in lines:
         pad = ' ' * (len(f'[{s["index"]}] ') + 4 * s.get('indent', 0))
         for c in (s.get('comment') or '').split('\n') if s.get('comment') else []:
@@ -66,6 +79,9 @@ def user_message_c(goal, picks):
         decider = ', '.join(f'{a} {p:.2f}' + ('' if p >= CERTAIN else ' (write to)' if a == 'variable.set' and known else ' (possible)')
                             for a, p in step_picks)
         out += f'\n  {pad}  decider: {decider or "(nothing it is sure of)"}'
+        if is_unsure(picks.get(s['index'], {}), s['text']):
+            out += f'\n  {pad}  unsure: an action from "Other common actions" below may be used if the listed ones don\'t fit'
+            unsure_any = True
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
         certain = [a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)]
         filled = [prefill(a, s['text']) for a in certain if not b.declared(*a.split('.', 1))[1]]
@@ -89,6 +105,11 @@ def user_message_c(goal, picks):
         for p in b.declared(*a.split('.', 1))[0].values():
             faces.setdefault(p['type'], p.get('options'))
     out += '\n\nTypes' + ''.join('\n' + b.type_line(t, o) for t, o in faces.items())
+    if unsure_any:   # the popular actions, once — each its signature and what it does
+        out += '\n\nOther common actions (for a step marked unsure):'
+        for a in POPULAR:
+            d = b.doc(*a.split('.', 1), 'description')
+            out += f'\n  {b.signature(a)}' + (f' — {d.splitlines()[0]}' if d else '')
     for a in shown:
         module, name = a.split('.', 1)
         out += f'\n\n## {b.signature(a)}'
@@ -127,10 +148,13 @@ def disagreements(i, rows, picks_i, text=''):
     """What the LLM and the decider disagree on in step i: (refusals, unsure)."""
     used = own_actions(rows)
     shown = dict(listed(picks_i, text))
+    unsure = is_unsure(picks_i, text)
     refused = [f'step {i} leaves out {a}, which the decider is certain of ({p:.2f})'
                for a, p in shown.items() if p >= CERTAIN and a not in used]
+    # on an unsure step an other common action is allowed — built with a warning, below
     refused += [f'step {i} uses {a}, which the decider did not list for it'
-                for a in dict.fromkeys(used) if a not in shown]
+                for a in dict.fromkeys(used) if a not in shown and not (unsure and a in POPULAR)]
+    popular = [a for a in dict.fromkeys(used) if a not in shown and unsure and a in POPULAR]
     refused += [f'step {i} holds {a}, which is not listed; only goal.call may be held without being listed'
                 for a in dict.fromkeys(held_actions(rows)) if a != 'goal.call' and a not in shown]
     # a recovery that runs the very action it wraps (the same action, the same values) is not a recovery
@@ -145,9 +169,10 @@ def disagreements(i, rows, picks_i, text=''):
     # unsure = built from a possible pick; a pick the known-value rule placed (write to → variable.set)
     # is not a guess, so it carries no warning
     known = {'variable.set'} if WRITE_TO.search(text) else set()
-    unsure = [f'step {i} uses {a}, which the decider was not sure of ({shown[a]:.2f})'
-              for a in dict.fromkeys(used) if a in shown and shown[a] < CERTAIN and a not in known]
-    return refused, unsure
+    warnings = [f'step {i} uses {a}, which the decider was not sure of ({shown[a]:.2f})'
+                for a in dict.fromkeys(used) if a in shown and shown[a] < CERTAIN and a not in known]
+    warnings += [f'step {i} uses {a} from the other common actions: the decider did not pick it' for a in popular]
+    return refused, warnings
 
 def fold(goal, parsed):
     """A step with steps indented under it gets its body from that layout (build.fold). A child the

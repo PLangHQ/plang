@@ -37,9 +37,10 @@ def readable(folder, label):
         json.dump(json.load(open(resp, encoding='utf-8')).get('answers'),
                   open(os.path.join(folder, f'{label}.answers.json'), 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
 
-def one(case, cat):
+def one(case, cat, folder=None):
+    """folder: where this goal's decider requests and responses go (default DUMP/<goal>)."""
     goal = e.goal_of(case)
-    folder = os.path.join(DUMP, case['id'])
+    folder = folder or os.path.join(DUMP, case['id'])
     dump_to(folder, '1.decider')
     probs, s1, b1, q1, u1 = h.stage1(goal, cat)
     readable(folder, '1.decider')
