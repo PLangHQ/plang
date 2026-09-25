@@ -153,6 +153,106 @@
      "1": [{"module": "condition", "name": "if", "property": {"Left": "%n%", "Operator": ">", "Right": 0},
             "child": [{"text": "write out \"some\"", "action": [{"module": "output", "name": "write", "property": {"Data": "some"}}]}]}]}},
 
+  {"id": "builder_set_default", "covers": "real builder line (Build.goal:6)",
+   "goal": "Build",
+   "steps": [{"text": "set default %path% = \"/\"", "indent": 0}],
+   "menu": {"0": ["variable.set"]},
+   "expect": {"0": [{"module": "variable", "name": "set", "property": {"Name": "%path%", "Value": "/", "AsDefault": true}}]}},
+
+  {"id": "builder_set_number", "covers": "real builder line (Decide.goal:18)",
+   "goal": "Decide",
+   "steps": [{"text": "set %threshold% = 0.5", "indent": 0}],
+   "menu": {"0": ["variable.set"]},
+   "expect": {"0": [{"module": "variable", "name": "set", "property": {"Name": "%threshold%", "Value": 0.5}}]}},
+
+  {"id": "builder_set_empty_list", "covers": "real builder line (Start.goal Menu)",
+   "goal": "Menu",
+   "steps": [{"text": "set %choices% = []", "indent": 0}],
+   "menu": {"0": ["variable.set"]},
+   "expect": {"0": [{"module": "variable", "name": "set", "property": {"Name": "%choices%", "Value": []}}]}},
+
+  {"id": "builder_set_indexed", "covers": "real builder line (Start.goal Menu)",
+   "goal": "Menu",
+   "steps": [{"text": "set %menu[step.Index]% = %choices%", "indent": 0}],
+   "menu": {"0": ["variable.set"]},
+   "expect": {"0": [{"module": "variable", "name": "set", "property": {"Name": "%menu[step.Index]%", "Value": "%choices%"}}]}},
+
+  {"id": "builder_math_write_to", "covers": "real builder line (Start.goal:15): named arguments + write to",
+   "goal": "Start",
+   "steps": [{"text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%", "indent": 0}],
+   "menu": {"0": ["math.subtract", "variable.set"]},
+   "expect": {"0": [
+     {"module": "math", "name": "subtract", "property": {"A": "%Now.Ticks%", "B": "%buildStart%"}},
+     {"module": "variable", "name": "set", "property": {"Name": "%elapsedTicks%", "Value": "%!data%"}}]}},
+
+  {"id": "builder_render_template", "covers": "real builder line (Properties.goal:12)",
+   "goal": "Properties",
+   "steps": [{"text": "render template \"/system/builder/llm/templates/propertiesUser.template\", write to %propertiesUserMsg%", "indent": 0}],
+   "menu": {"0": ["ui.render", "variable.set"]},
+   "expect": {"0": [
+     {"module": "ui", "name": "render", "property": {"Template": "/system/builder/llm/templates/propertiesUser.template"}},
+     {"module": "variable", "name": "set", "property": {"Name": "%propertiesUserMsg%", "Value": "%!data%"}}]}},
+
+  {"id": "builder_decider", "covers": "real builder line (Decide.goal:26)",
+   "goal": "Decide",
+   "steps": [{"text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%", "indent": 0}],
+   "menu": {"0": ["llm.decider", "variable.set"]},
+   "expect": {"0": [
+     {"module": "llm", "name": "decider", "property": {"State": "%state%", "Question": "%moduleQuestions%"}},
+     {"module": "variable", "name": "set", "property": {"Name": "%moduleAnswer%", "Value": "%!data%"}}]}},
+
+  {"id": "builder_save_file", "covers": "real builder line (Start.goal:19)",
+   "goal": "Start",
+   "steps": [{"text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'", "indent": 0}],
+   "menu": {"0": ["file.save"]},
+   "expect": {"0": [{"module": "file", "name": "save", "property": {"Path": "/.build/traces/%!trace.id%/%goal.Name%.json", "Value": "%trace%"}}]}},
+
+  {"id": "builder_add_to_list", "covers": "real builder line (Start.goal:20)",
+   "goal": "Start",
+   "steps": [{"text": "add %goal.Name% to %traceGoals%", "indent": 0}],
+   "menu": {"0": ["list.add"]},
+   "expect": {"0": [{"module": "list", "name": "add", "property": {"ListName": "%traceGoals%", "Value": "%goal.Name%"}}]}},
+
+  {"id": "indented_two_levels", "covers": "a lone if with a lone if indented under it, and a call two levels deep; then an outdented step",
+   "goal": "BothPositive",
+   "steps": [
+     {"text": "if %a% > 0", "indent": 0},
+     {"text": "if %b% > 0", "indent": 1},
+     {"text": "call BothPositive", "indent": 2},
+     {"text": "write out \"checked\"", "indent": 0}],
+   "menu": {"0": ["condition.if"], "1": ["condition.if"], "2": ["goal.call"], "3": ["output.write"]},
+   "expect": {
+     "0": [{"module": "condition", "name": "if", "property": {"Left": "%a%", "Operator": ">", "Right": 0}}],
+     "1": [{"module": "condition", "name": "if", "property": {"Left": "%b%", "Operator": ">", "Right": 0}}],
+     "2": [{"module": "goal", "name": "call", "property": {"Name": "BothPositive"}}],
+     "3": [{"module": "output", "name": "write", "property": {"Data": "checked"}}]}},
+
+  {"id": "indented_then_outdented", "covers": "a lone if with a two-step body, then a step after the body",
+   "goal": "Retry",
+   "steps": [
+     {"text": "if %retries% > 3", "indent": 0},
+     {"text": "write out \"giving up\"", "indent": 1},
+     {"text": "return", "indent": 1},
+     {"text": "write out \"trying again\"", "indent": 0}],
+   "menu": {"0": ["condition.if"], "1": ["output.write"], "2": ["goal.return"], "3": ["output.write"]},
+   "expect": {
+     "0": [{"module": "condition", "name": "if", "property": {"Left": "%retries%", "Operator": ">", "Right": 3}}],
+     "1": [{"module": "output", "name": "write", "property": {"Data": "giving up"}}],
+     "2": [{"module": "goal", "name": "return"}],
+     "3": [{"module": "output", "name": "write", "property": {"Data": "trying again"}}]}},
+
+  {"id": "inline_if_then_step", "covers": "an inline if followed by an ordinary step that sets the variable it tested: two separate entries",
+   "goal": "Sizes",
+   "steps": [
+     {"text": "if %n% > 5, call Big", "indent": 0},
+     {"text": "count %items%, write to %n%", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.call"], "1": ["list.count", "variable.set"]},
+   "expect": {
+     "0": [{"module": "condition", "name": "if", "property": {"Left": "%n%", "Operator": ">", "Right": 5},
+            "child": [{"text": "call Big", "action": [{"module": "goal", "name": "call", "property": {"Name": "Big"}}]}]}],
+     "1": [{"module": "list", "name": "count", "property": {"ListName": "%items%"}},
+           {"module": "variable", "name": "set", "property": {"Name": "%n%", "Value": "%!data%"}}]}},
+
   {"id": "plain_write", "covers": "no condition: no invented child",
    "goal": "Hello",
    "steps": [{"text": "write out \"hello\"", "indent": 0}],
