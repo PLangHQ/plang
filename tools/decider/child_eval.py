@@ -173,8 +173,20 @@ if __name__ == '__main__':
             model, cid, run, _, sc, _ = res
             ok = all(not m for m, _ in sc.values())
             print(f'{model:<14} {cid:<22} run {run}: {"YES" if ok else "NO"}', flush=True)
+    # What the builder's checks would do with each answer: build.match + the action list's chain rule
+    # (build_pr.match mirrors both). A wrong answer they refuse goes to the retry; one they pass is a
+    # SILENT miss — it would reach the .pr wrong.
+    by_id = {c['id']: c for c in GOLDEN}
     summary = [{'model': m, 'case': c, 'run': r, 'notes': n,
-                'steps': {str(i): {'misses': ms, 'got': [short(a) for a in got]} for i, (ms, got) in sc.items()}}
-               for m, c, r, _, sc, n in results]
+                'caught': b.match(goal_of(by_id[c]), a) if a is not None else ['no answer'],
+                'steps': {str(i): {'misses': ms, 'got': [short(x) for x in got]} for i, (ms, got) in sc.items()}}
+               for m, c, r, a, sc, n in results]
     json.dump(summary, open(os.path.join(OUT, 'summary.json'), 'w'), indent=1, ensure_ascii=False)
+    for model in MODELS:
+        rows = [s for s in summary if s['model'] == model]
+        steps = sum(len(s['steps']) for s in rows)
+        right = sum(1 for s in rows for v in s['steps'].values() if not v['misses'])
+        silent = sum(1 for s in rows if not s['caught'] for v in s['steps'].values() if v['misses'])
+        caught = sum(1 for s in rows if s['caught'] for v in s['steps'].values() if v['misses'])
+        print(f'{model}: first-attempt {right}/{steps} steps; misses caught (→ retry) {caught}; SILENT {silent}')
     print('wrote', OUT)

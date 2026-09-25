@@ -57,6 +57,108 @@ public class ElseWithoutIfTests
         await Assert.That(error!.Key).IsEqualTo("ElseWithoutIf");
     }
 
+    private static global::app.goal.step.action.@this WithBody(global::app.goal.step.action.@this condition, string text,
+        params global::app.goal.step.action.@this[] body)
+    {
+        var step = new Step { Text = text };
+        foreach (var a in body) step.Action.Add(a);
+        condition.Child.Add(step);
+        return condition;
+    }
+
+    // gpt-5.4-mini, child eval run 3, inline_if_then_step: `if %n% > 5, call Big` answered flat.
+    [Test]
+    public async Task BodyBesideTheCondition_IsRefused()
+    {
+        var error = await Validate(
+            Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
+            Make.Action("goal", "call", ("Name", "Big")));
+        await Assert.That(error!.Key).IsEqualTo("BodyBesideCondition");
+        await Assert.That(error.Message).Contains("`goal.call` is after the if — a branch's body goes in its child");
+    }
+
+    // gpt-5.4-mini, child eval run 3, setup_before_if: the setup stays, the call lands beside the if.
+    [Test]
+    public async Task SetupThenBodyBesideTheCondition_IsRefused()
+    {
+        var error = await Validate(
+            Make.Action("list", "count", ("ListName", "%items%")),
+            Make.Action("variable", "set", Make.Param("Name", "%n%", "variable"), ("Value", "%!data%")),
+            Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 10)),
+            Make.Action("goal", "call", ("Name", "Paginate")));
+        await Assert.That(error!.Key).IsEqualTo("BodyBesideCondition");
+    }
+
+    // gpt-5.4-mini, child eval run 3, else_return: `if %ok% == true, call Continue, else return` —
+    // the if lost its body, the else kept its.
+    [Test]
+    public async Task ConditionWithoutItsBody_IsRefused()
+    {
+        var error = await Validate(
+            Make.Action("condition", "if", ("Left", "%ok%"), ("Operator", "=="), ("Right", true)),
+            WithBody(Else(), "return", Make.Action("goal", "return")));
+        await Assert.That(error!.Key).IsEqualTo("BodyMissing");
+    }
+
+    [Test]
+    public async Task SetupThenIfElseIfElse_EachWithItsBody_IsWhole()
+    {
+        var error = await Validate(
+            Write("setup"),
+            WithBody(If(), "write out \"one\"", Write("one")),
+            WithBody(ElseIf(), "write out \"two\"", Write("two")),
+            WithBody(Else(), "write out \"other\"", Write("other")));
+        await Assert.That(error?.Key).IsNotEqualTo("BodyBesideCondition");
+        await Assert.That(error?.Key).IsNotEqualTo("BodyMissing");
+        await Assert.That(error?.Key).IsNotEqualTo("ElseWithoutIf");
+    }
+
+    [Test]
+    public async Task LoneIf_OverIndentedSteps_NeedsNoChild()
+    {
+        // `- if %count% > 0` with steps indented under it: its body comes from the layout (build.fold).
+        await using var app = TestApp.Create("/test");
+        var ctx = app.System.Context;
+        var goal = global::app.goal.@this.Parse("G\n- if %count% > 0\n    - call ProcessItems\n",
+            global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
+        var ifStep = goal.Step[0];
+        var condition = If();
+        condition.Step = ifStep;
+        ifStep.Action.Add(condition);
+
+        var error = await ifStep.Action.Validate(ctx);
+
+        await Assert.That(error?.Key).IsNotEqualTo("BodyMissing");
+    }
+
+    // Settle catches by key what build.validate returns: the key must survive the step's verdict.
+    [Test]
+    public async Task BuildValidate_KeepsTheChainsKey_ForSettleToRouteBy()
+    {
+        await using var app = TestApp.Create("/test");
+        var ctx = app.System.Context;
+        var goal = global::app.goal.@this.Parse("G\n- else\n- if %n% > 5, call Big\n",
+            global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
+        var elseStep = goal.Step[0];
+        var elseAction = Else();
+        elseAction.Step = elseStep;
+        elseStep.Action.Add(elseAction);
+        var ifStep = goal.Step[1];
+        foreach (var a in new[] { Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
+                                  Make.Action("goal", "call", ("Name", "Big")) })
+        {
+            a.Step = ifStep;
+            ifStep.Action.Add(a);
+        }
+        var builder = new global::app.module.action.build.code.Default();
+
+        var elseVerdict = await builder.Validate(new global::app.module.action.build.validate(ctx) { Step = ctx.Ok<Step>(elseStep) });
+        var besideVerdict = await builder.Validate(new global::app.module.action.build.validate(ctx) { Step = ctx.Ok<Step>(ifStep) });
+
+        await Assert.That(elseVerdict.Error!.Key).IsEqualTo("ElseWithoutIf");
+        await Assert.That(besideVerdict.Error!.Key).IsEqualTo("BodyBesideCondition");
+    }
+
     [Test]
     public async Task IfElseIfElse_InOneStep_IsNotElseWithoutIf()
     {

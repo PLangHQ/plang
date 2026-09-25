@@ -343,7 +343,30 @@ def match(goal, answer):
         if body and any(isinstance(a, dict) and a.get('child') for a in actions):
             problems.append(f"step {i}'s body is the indented steps below it "
                             f"({', '.join(f'step {n}' for n in body)}); leave its child empty")
+        if broken := chain(actions, bool(body)):
+            problems.append(f'step {i} ("{steps[i]["text"]}") — {broken}')
     return problems
+
+def chain(actions, body_below):
+    """The condition chain's shape in one step's actions — the same rule as the action list's Chain
+    (goal/step/action/list/this.cs): from the first if on, only elseif/else may follow, each right after
+    an if/elseif; every branch has a body. Empty when the chain is whole."""
+    def is_cond(a): return isinstance(a, dict) and a.get('module') == 'condition' and a.get('name') in ('if', 'elseif', 'else')
+    condition, missing = None, ''
+    for n, a in enumerate(actions):
+        if is_cond(a) and a['name'] != 'if':
+            before = actions[n - 1] if n > 0 else None
+            if not is_cond(before) or before['name'] == 'else':
+                return f'ElseWithoutIf: an {a["name"]} must be in the same step as its if'
+        if is_cond(a):
+            if not missing and not a.get('child') and not body_below:
+                missing = f'BodyMissing: the {a["name"]} has no body — what the step does when it holds goes in its child'
+            condition = a
+            continue
+        if condition is not None:
+            return (f'BodyBesideCondition: `{a.get("module")}.{a.get("name")}` is after the {condition["name"]}'
+                    " — a branch's body goes in its child")
+    return missing
 
 # ---------------------------------------------------------------- run
 def build_goal(g, rel, cat):

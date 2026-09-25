@@ -205,6 +205,7 @@ public class ValidateActionsTests
             }
         };
 
+        actions[0].Child.Add(new Step { Text = "the if's body" });   // a whole if: it has its body
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
@@ -236,6 +237,7 @@ public class ValidateActionsTests
             }
         };
 
+        actions[0].Child.Add(new Step { Text = "the if's body" });   // a whole if: it has its body
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
@@ -267,6 +269,7 @@ public class ValidateActionsTests
 
         // The .pr reader stamps a %ref% row a template of its type — author it the same way.
         global::PLang.Tests.TemplateStamp.Apply(actions[0]);
+        actions[0].Child.Add(new Step { Text = "the if's body" });   // a whole if: it has its body
 
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);

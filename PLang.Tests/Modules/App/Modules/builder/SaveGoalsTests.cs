@@ -138,7 +138,7 @@ public class SaveGoalsTests
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalInvalid");
         var stepVerdict = result.Error.list.Single();
-        await Assert.That(stepVerdict.Key).IsEqualTo("StepInvalid");
+        await Assert.That(stepVerdict.Key).IsEqualTo("EmptyActions");
         await Assert.That(stepVerdict.list.Single().Key).IsEqualTo("EmptyActions");
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(_tempDir, ".build", "empty.pr"))).IsFalse();
     }
