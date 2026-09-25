@@ -1,0 +1,4388 @@
+[
+ {
+  "goal": "build",
+  "steps": [
+   {
+    "index": 0,
+    "text": "set default %path% = \"/\"",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "environment": 0.0,
+     "test": 0.0,
+     "llm": 0.0,
+     "list": 0.0,
+     "timeout": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "cache": 0.0,
+     "signing": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "settings": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 1.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "build": 0.0,
+     "http": 0.0,
+     "channel": 0.0,
+     "ui": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set default %!build.cache% = true",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "timeout": 0.0,
+     "environment": 0.0,
+     "ui": 0.0,
+     "list": 0.0,
+     "llm": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "math": 0.0,
+     "signing": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "settings": 0.0,
+     "cache": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 1.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "build": 0.0,
+     "channel": 0.0,
+     "http": 0.0,
+     "test": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set default %!build.summary% = true",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "timeout": 0.0,
+     "environment": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "llm": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "signing": 0.0,
+     "cache": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "settings": 0.01,
+     "math": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.99,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "build": 0.0,
+     "http": 0.0,
+     "ui": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "set channel \"builder\" call BuilderChannel",
+    "expected": [
+     "channel.set"
+    ],
+    "main": "channel",
+    "modules": {
+     "llm": 0.0,
+     "timeout": 0.0,
+     "environment": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "signing": 0.0,
+     "settings": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "cache": 0.0,
+     "math": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "build": 0.0,
+     "channel": 1.0,
+     "ui": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.38,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "channel.set": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
+    "expected": [
+     "goal.call"
+    ],
+    "main": "goal",
+    "modules": {
+     "environment": 0.0,
+     "test": 0.0,
+     "timeout": 0.0,
+     "list": 0.0,
+     "llm": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.9,
+     "crypto": 0.0,
+     "module": 0.0,
+     "cache": 0.0,
+     "math": 0.0,
+     "timer": 0.0,
+     "output": 0.03,
+     "signing": 0.0,
+     "settings": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.05,
+     "condition": 0.0,
+     "channel": 0.0,
+     "http": 0.0,
+     "build": 0.02,
+     "ui": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.33,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "build.load, write to %app%",
+    "expected": [
+     "build.load",
+     "variable.set"
+    ],
+    "main": "build",
+    "modules": {
+     "timeout": 0.0,
+     "llm": 0.0,
+     "environment": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "signing": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "build": 1.0,
+     "http": 0.0,
+     "ui": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.63,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.38,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.14,
+      "from": "stage 1"
+     },
+     "build.load": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "build.goals path=%path%, write to %goals%",
+    "expected": [
+     "build.goals",
+     "variable.set"
+    ],
+    "main": "build",
+    "modules": {
+     "environment": 0.0,
+     "llm": 0.0,
+     "timeout": 0.0,
+     "list": 0.0,
+     "ui": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "signing": 0.0,
+     "settings": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "cache": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "error": 0.0,
+     "variable": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "build": 1.0,
+     "channel": 0.0,
+     "test": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.6,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.18,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "build.goals": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
+    "expected": [
+     "goal.call"
+    ],
+    "main": "goal",
+    "modules": {
+     "environment": 0.0,
+     "timeout": 0.0,
+     "llm": 0.0,
+     "list": 0.0,
+     "ui": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.87,
+     "crypto": 0.0,
+     "module": 0.0,
+     "math": 0.0,
+     "settings": 0.0,
+     "timer": 0.0,
+     "output": 0.04,
+     "signing": 0.0,
+     "cache": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.08,
+     "condition": 0.0,
+     "build": 0.01,
+     "http": 0.0,
+     "channel": 0.0,
+     "test": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.36,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "foreach %goals%, call BuildGoal goal=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "main": "loop",
+    "modules": {
+     "llm": 0.0,
+     "environment": 0.0,
+     "timeout": 0.0,
+     "list": 0.0,
+     "ui": 0.0,
+     "file": 0.0,
+     "loop": 0.81,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.19,
+     "crypto": 0.0,
+     "module": 0.0,
+     "math": 0.0,
+     "settings": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "cache": 0.0,
+     "signing": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "build": 0.0,
+     "channel": 0.0,
+     "test": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.98,
+      "from": "stage 2 yes/no",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+    "expected": [
+     "file.save"
+    ],
+    "main": "file",
+    "modules": {
+     "environment": 0.0,
+     "timeout": 0.0,
+     "llm": 0.0,
+     "list": 0.0,
+     "ui": 0.0,
+     "file": 0.97,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "math": 0.0,
+     "settings": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "cache": 0.0,
+     "signing": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "error": 0.0,
+     "variable": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "build": 0.03,
+     "channel": 0.0,
+     "http": 0.0,
+     "test": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.save": {
+      "score": 0.97,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "build.appSave",
+    "expected": [
+     "build.appSave"
+    ],
+    "main": "build",
+    "modules": {
+     "llm": 0.0,
+     "environment": 0.0,
+     "timeout": 0.0,
+     "list": 0.0,
+     "ui": 0.0,
+     "file": 0.0,
+     "loop": 0.0,
+     "identity": 0.0,
+     "debug": 0.0,
+     "goal": 0.0,
+     "crypto": 0.0,
+     "module": 0.0,
+     "signing": 0.0,
+     "math": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "settings": 0.0,
+     "cache": 0.0,
+     "callback": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "variable": 0.0,
+     "error": 0.0,
+     "code": 0.0,
+     "event": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "build": 1.0,
+     "http": 0.0,
+     "test": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "build.appSave": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "variable"
+   ],
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "variable"
+   ],
+   [
+    4,
+    "goal"
+   ],
+   [
+    7,
+    "goal"
+   ]
+  ],
+  "stage1": {
+   "secs": 0.9417996406555176,
+   "bytes": 30695,
+   "questions": 77,
+   "usage": {
+    "input_tokens": 9164,
+    "output_tokens": 3872
+   }
+  },
+  "stage2": {
+   "secs": 0.837376594543457,
+   "bytes": 14937,
+   "questions": 6,
+   "usage": {
+    "input_tokens": 4136,
+    "output_tokens": 507
+   }
+  }
+ },
+ {
+  "goal": "start",
+  "steps": [
+   {
+    "index": 0,
+    "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
+    "expected": [
+     "goal.call"
+    ],
+    "main": "goal",
+    "modules": {
+     "goal": 0.63,
+     "file": 0.0,
+     "cache": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.01,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "crypto": 0.0,
+     "event": 0.06,
+     "code": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.3,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.15,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "build.actions": {
+      "score": 0.18,
+      "from": "stage 2 yes/no",
+      "confidence": 0.58
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %buildStart% = %Now.Ticks%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 1.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "module": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.01,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "cache": 0.0,
+     "variable": 1.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "list": 0.0,
+     "module": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.11,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "call Compile, on error call HandleBuildFailure",
+    "expected": [
+     "goal.call",
+     "error.handle"
+    ],
+    "main": "goal",
+    "modules": {
+     "goal": 0.6,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "code": 0.0,
+     "test": 0.0,
+     "loop": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "module": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.35000000000000003,
+     "environment": 0.0,
+     "error": 0.05,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "build.validate": {
+      "score": 0.15,
+      "from": "stage 2 yes/no",
+      "confidence": 0.25
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "set %trace.menu% = %menu%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "cache": 0.0,
+     "variable": 1.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "set %parentGoal% = %goal%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "variable": 1.0,
+     "cache": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "file": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "loop": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "main": "loop",
+    "modules": {
+     "goal": 0.17,
+     "variable": 0.0,
+     "cache": 0.0,
+     "file": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "loop": 0.81,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.01,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.13,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.98,
+      "from": "stage 2 yes/no",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "set %goal% = %parentGoal%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "variable": 1.0,
+     "cache": 0.0,
+     "file": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "loop": 0.0,
+     "code": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.01,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
+    "expected": [
+     "math.subtract",
+     "variable.set"
+    ],
+    "main": "math",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "file": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 1.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "loop": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.54,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "math.subtract": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
+    "expected": [
+     "math.divide",
+     "variable.set"
+    ],
+    "main": "math",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 1.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "loop": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.63,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "math.divide": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "set %trace.durationMs% = %elapsedMs%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "variable": 1.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "file": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.01,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 11,
+    "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+    "expected": [
+     "file.save"
+    ],
+    "main": "file",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "file": 0.99,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "code": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "loop": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 0.01,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.13,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.save": {
+      "score": 0.99,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 12,
+    "text": "add %goal.Name% to %traceGoals%",
+    "expected": [
+     "list.add"
+    ],
+    "main": "list",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "cache": 0.0,
+     "variable": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "code": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "loop": 0.0,
+     "list": 1.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.16,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "list.add": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 13,
+    "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
+    "expected": [
+     "build.fold",
+     "error.handle"
+    ],
+    "main": "build",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "file": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "code": 0.0,
+     "test": 0.0,
+     "loop": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "module": 0.0,
+     "list": 0.0,
+     "assert": 0.0,
+     "build": 1.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.21,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "build.fold": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 14,
+    "text": "build.goalsSave Goal=%goal%",
+    "expected": [
+     "build.goalsSave"
+    ],
+    "main": "build",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "variable": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "cache": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 1.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "build.goalsSave": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "goal"
+   ],
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "variable"
+   ],
+   [
+    3,
+    "goal"
+   ],
+   [
+    4,
+    "variable"
+   ],
+   [
+    5,
+    "variable"
+   ],
+   [
+    7,
+    "variable"
+   ],
+   [
+    10,
+    "variable"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.004725456237793,
+   "bytes": 38323,
+   "questions": 105,
+   "usage": {
+    "input_tokens": 11722,
+    "output_tokens": 5304
+   }
+  },
+  "stage2": {
+   "secs": 0.8887901306152344,
+   "bytes": 25653,
+   "questions": 11,
+   "usage": {
+    "input_tokens": 7297,
+    "output_tokens": 1048
+   }
+  }
+ },
+ {
+  "goal": "decide",
+  "steps": [
+   {
+    "index": 0,
+    "text": "set %threshold% = 0.5",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "module": 0.0,
+     "build": 0.0,
+     "timeout": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "math": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "output": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "list": 0.0,
+     "timer": 0.0,
+     "test": 0.0,
+     "variable": 1.0,
+     "environment": 0.0,
+     "code": 0.0,
+     "mock": 0.0,
+     "identity": 0.0,
+     "goal": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %modules% = %!app.module.list%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "module": 0.11,
+     "timeout": 0.0,
+     "math": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.01,
+     "assert": 0.0,
+     "build": 0.05,
+     "settings": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "output": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "list": 0.01,
+     "timer": 0.0,
+     "test": 0.0,
+     "variable": 0.78,
+     "environment": 0.0,
+     "identity": 0.0,
+     "mock": 0.0,
+     "code": 0.03,
+     "goal": 0.01,
+     "file": 0.0,
+     "llm": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.05,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set %state.goal% = %goal.Name%",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "module": 0.0,
+     "timeout": 0.0,
+     "math": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "output": 0.0,
+     "channel": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "list": 0.0,
+     "timer": 0.0,
+     "test": 0.0,
+     "variable": 0.99,
+     "environment": 0.0,
+     "code": 0.0,
+     "mock": 0.0,
+     "identity": 0.0,
+     "goal": 0.01,
+     "file": 0.0,
+     "llm": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "foreach %goal.Step%, call AddStepToState item=%step%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "main": "loop",
+    "modules": {
+     "module": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "math": 0.0,
+     "condition": 0.0,
+     "output": 0.0,
+     "channel": 0.0,
+     "debug": 0.0,
+     "loop": 0.63,
+     "list": 0.01,
+     "timer": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "code": 0.0,
+     "mock": 0.0,
+     "llm": 0.0,
+     "goal": 0.36,
+     "file": 0.0,
+     "identity": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.13,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.98,
+      "from": "stage 2 yes/no",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "foreach %modules%, call AddModuleToState item=%module%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "main": "loop",
+    "modules": {
+     "module": 0.01,
+     "settings": 0.0,
+     "build": 0.01,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "math": 0.0,
+     "timeout": 0.0,
+     "condition": 0.0,
+     "output": 0.0,
+     "channel": 0.0,
+     "debug": 0.0,
+     "loop": 0.49,
+     "list": 0.02,
+     "timer": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "identity": 0.0,
+     "llm": 0.0,
+     "code": 0.0,
+     "goal": 0.47000000000000003,
+     "file": 0.0,
+     "mock": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.14,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.98,
+      "from": "stage 2 yes/no",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "main": "ui",
+    "modules": {
+     "module": 0.0,
+     "settings": 0.0,
+     "timeout": 0.0,
+     "ui": 1.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "math": 0.0,
+     "build": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "output": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "timer": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "code": 0.0,
+     "mock": 0.0,
+     "identity": 0.0,
+     "goal": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.66,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.26,
+      "from": "stage 1"
+     },
+     "ui.render": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%",
+    "expected": [
+     "llm.decider",
+     "variable.set"
+    ],
+    "main": "llm",
+    "modules": {
+     "module": 0.0,
+     "settings": 0.0,
+     "timeout": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "math": 0.0,
+     "build": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "output": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "timer": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "code": 0.0,
+     "mock": 0.0,
+     "identity": 0.0,
+     "goal": 0.0,
+     "file": 0.0,
+     "llm": 1.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.55,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "llm.decider": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "main": "ui",
+    "modules": {
+     "module": 0.0,
+     "build": 0.0,
+     "timeout": 0.0,
+     "ui": 1.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "settings": 0.0,
+     "math": 0.0,
+     "condition": 0.0,
+     "output": 0.0,
+     "channel": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "timer": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "code": 0.0,
+     "llm": 0.0,
+     "mock": 0.0,
+     "goal": 0.0,
+     "file": 0.0,
+     "identity": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.64,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.15,
+      "from": "stage 1"
+     },
+     "ui.render": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%",
+    "expected": [
+     "llm.decider",
+     "variable.set"
+    ],
+    "main": "llm",
+    "modules": {
+     "module": 0.0,
+     "build": 0.0,
+     "timeout": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "math": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "output": 0.0,
+     "channel": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "timer": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "identity": 0.0,
+     "llm": 1.0,
+     "code": 0.0,
+     "goal": 0.0,
+     "file": 0.0,
+     "mock": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.0,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.54,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "llm.decider": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
+    "expected": [
+     "goal.call"
+    ],
+    "main": "goal",
+    "modules": {
+     "module": 0.0,
+     "settings": 0.0,
+     "timeout": 0.0,
+     "ui": 0.0,
+     "snapshot": 0.0,
+     "assert": 0.0,
+     "build": 0.19,
+     "math": 0.0,
+     "condition": 0.0,
+     "channel": 0.0,
+     "output": 0.0,
+     "debug": 0.0,
+     "loop": 0.0,
+     "timer": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "variable": 0.0,
+     "environment": 0.0,
+     "identity": 0.0,
+     "llm": 0.0,
+     "mock": 0.0,
+     "goal": 0.51,
+     "file": 0.0,
+     "code": 0.0,
+     "callback": 0.0,
+     "signing": 0.0,
+     "event": 0.3,
+     "crypto": 0.0,
+     "cache": 0.0,
+     "error": 0.0,
+     "http": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.01,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "event.on": {
+      "score": 0.15,
+      "from": "stage 2 yes/no",
+      "confidence": 0.9
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "variable"
+   ],
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "variable"
+   ],
+   [
+    9,
+    "goal"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.1491634845733643,
+   "bytes": 31035,
+   "questions": 70,
+   "usage": {
+    "input_tokens": 9231,
+    "output_tokens": 3516
+   }
+  },
+  "stage2": {
+   "secs": 1.0877926349639893,
+   "bytes": 12435,
+   "questions": 6,
+   "usage": {
+    "input_tokens": 3517,
+    "output_tokens": 171
+   }
+  }
+ },
+ {
+  "goal": "checkout",
+  "steps": [
+   {
+    "index": 0,
+    "text": "read 'orders/%orderId%.json', write to %order%",
+    "expected": [
+     "file.read",
+     "variable.set"
+    ],
+    "main": "file",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "loop": 0.0,
+     "build": 0.0,
+     "list": 0.0,
+     "file": 1.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "timeout": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "signing": 0.0,
+     "error": 0.0,
+     "snapshot": 0.0,
+     "math": 0.0,
+     "event": 0.0,
+     "callback": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "identity": 0.0,
+     "assert": 0.0,
+     "module": 0.0,
+     "output": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.79,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.98,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "count %order.items%, write to %itemCount%",
+    "expected": [
+     "list.count",
+     "variable.set"
+    ],
+    "main": "list",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "loop": 0.0,
+     "list": 0.96,
+     "build": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.03,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 0.01,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "module": 0.0,
+     "assert": 0.0,
+     "identity": 0.0,
+     "output": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.78,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "list.count": {
+      "score": 0.96,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"",
+    "expected": [
+     "condition.if",
+     "condition.elseif",
+     "condition.else",
+     "output.write"
+    ],
+    "main": "condition",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.53,
+     "http": 0.0,
+     "loop": 0.0,
+     "list": 0.0,
+     "build": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "identity": 0.0,
+     "assert": 0.0,
+     "module": 0.0,
+     "output": 0.47,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.99,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.elseif": {
+      "score": 0.97,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.95,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "if %order.email% does not contain \"@\", throw \"Invalid email address\"",
+    "expected": [
+     "condition.if",
+     "error.throw"
+    ],
+    "main": "error",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.44,
+     "http": 0.0,
+     "loop": 0.0,
+     "build": 0.0,
+     "list": 0.0,
+     "file": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "timeout": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.55,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "identity": 0.0,
+     "assert": 0.01,
+     "module": 0.0,
+     "output": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.4,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.throw": {
+      "score": 0.89,
+      "from": "stage 2 yes/no",
+      "confidence": 1.0
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.05,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%",
+    "expected": [
+     "condition.if",
+     "goal.call"
+    ],
+    "main": "goal",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.04,
+     "http": 0.0,
+     "loop": 0.0,
+     "build": 0.0,
+     "list": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.96,
+     "identity": 0.0,
+     "output": 0.0,
+     "assert": 0.0,
+     "module": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.06,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "if %order.total% is not a number, throw \"The total must be a number\"",
+    "expected": [
+     "condition.if",
+     "error.throw"
+    ],
+    "main": "error",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.31,
+     "http": 0.0,
+     "loop": 0.0,
+     "build": 0.0,
+     "list": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "signing": 0.0,
+     "error": 0.64,
+     "snapshot": 0.0,
+     "math": 0.0,
+     "event": 0.0,
+     "callback": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "module": 0.0,
+     "output": 0.0,
+     "assert": 0.05,
+     "identity": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.38,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.throw": {
+      "score": 0.9,
+      "from": "stage 2 yes/no",
+      "confidence": 0.99
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.09,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25",
+    "expected": [
+     "condition.if",
+     "condition.else",
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.17,
+     "http": 0.0,
+     "loop": 0.0,
+     "build": 0.0,
+     "list": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.83,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "module": 0.0,
+     "output": 0.0,
+     "identity": 0.0,
+     "assert": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.elseif": {
+      "score": 0.31,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.94,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "math.multiply A=%order.total%, B=%vat%, write to %vatAmount%",
+    "expected": [
+     "math.multiply",
+     "variable.set"
+    ],
+    "main": "math",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "loop": 0.0,
+     "list": 0.0,
+     "build": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 1.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "module": 0.0,
+     "assert": 0.0,
+     "output": 0.0,
+     "identity": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.62,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "math.multiply": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "if %order.note% does not start with \"#\", add %order.note% to %notes%",
+    "expected": [
+     "condition.if",
+     "list.add"
+    ],
+    "main": "list",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.04,
+     "http": 0.0,
+     "loop": 0.0,
+     "list": 0.96,
+     "build": 0.0,
+     "file": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "timeout": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "math": 0.0,
+     "event": 0.0,
+     "callback": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "identity": 0.0,
+     "assert": 0.0,
+     "output": 0.0,
+     "module": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.15,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "list.add": {
+      "score": 0.96,
+      "from": "stage 2",
+      "confidence": 1.0
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.06,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "write out \"Total: %order.total%, VAT: %vatAmount%\"",
+    "expected": [
+     "output.write"
+    ],
+    "main": "output",
+    "modules": {
+     "mock": 0.0,
+     "settings": 0.0,
+     "condition": 0.0,
+     "http": 0.0,
+     "loop": 0.0,
+     "build": 0.0,
+     "list": 0.0,
+     "timeout": 0.0,
+     "crypto": 0.0,
+     "variable": 0.0,
+     "file": 0.0,
+     "llm": 0.0,
+     "ui": 0.0,
+     "environment": 0.0,
+     "timer": 0.0,
+     "code": 0.0,
+     "debug": 0.0,
+     "error": 0.0,
+     "signing": 0.0,
+     "snapshot": 0.0,
+     "callback": 0.0,
+     "event": 0.0,
+     "math": 0.0,
+     "channel": 0.0,
+     "test": 0.0,
+     "goal": 0.0,
+     "identity": 0.0,
+     "output": 1.0,
+     "module": 0.0,
+     "assert": 0.0,
+     "cache": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.99,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "file"
+   ],
+   [
+    2,
+    "condition"
+   ],
+   [
+    4,
+    "goal"
+   ],
+   [
+    6,
+    "variable"
+   ],
+   [
+    9,
+    "output"
+   ]
+  ],
+  "stage1": {
+   "secs": 0.9608230590820312,
+   "bytes": 31589,
+   "questions": 70,
+   "usage": {
+    "input_tokens": 9471,
+    "output_tokens": 3514
+   }
+  },
+  "stage2": {
+   "secs": 0.8681466579437256,
+   "bytes": 24800,
+   "questions": 19,
+   "usage": {
+    "input_tokens": 6889,
+    "output_tokens": 775
+   }
+  }
+ },
+ {
+  "goal": "weekly_report",
+  "steps": [
+   {
+    "index": 0,
+    "text": "list files in '/logs', pattern \"*.log\", write to %files%",
+    "expected": [
+     "file.list",
+     "variable.set"
+    ],
+    "main": "file",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "timeout": 0.0,
+     "file": 1.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "cache": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "module": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.86,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "file.list": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %errors% = []",
+    "expected": [
+     "variable.set"
+    ],
+    "main": "variable",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 1.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "loop": 0.0,
+     "code": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "foreach %files%, call ScanFile file=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "main": "loop",
+    "modules": {
+     "goal": 0.12,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.88,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "list": 0.0,
+     "module": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.15,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.2,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.98,
+      "from": "stage 2 yes/no",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "if %errors% is empty",
+    "expected": [
+     "condition.if"
+    ],
+    "main": "condition",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 1.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "module": 0.0,
+     "code": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.elseif": {
+      "score": 0.04,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.08,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "write out \"No errors this week\"",
+    "expected": [
+     "output.write"
+    ],
+    "main": "output",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "variable": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "cache": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 1.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "module": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "return",
+    "expected": [
+     "goal.return"
+    ],
+    "main": "goal",
+    "modules": {
+     "goal": 1.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "file": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "list": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.43,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "goal.return": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "if %files% is a list",
+    "expected": [
+     "condition.if"
+    ],
+    "main": "condition",
+    "modules": {
+     "goal": 0.0,
+     "file": 0.0,
+     "timeout": 0.0,
+     "cache": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "variable": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 1.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.elseif": {
+      "score": 0.04,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.12,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "write out \"Scanned the log files\"",
+    "expected": [
+     "output.write"
+    ],
+    "main": "output",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "file": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 1.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "list": 0.0,
+     "code": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.11,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "render template \"report.html\", errors=%errors%, write to %html%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "main": "ui",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "timeout": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "file": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 1.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "module": 0.0,
+     "test": 0.0,
+     "list": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "code": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "error": 0.0,
+     "environment": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.53,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.15,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "ui.render": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "save %html% to file '/reports/week.html'",
+    "expected": [
+     "file.save"
+    ],
+    "main": "file",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "file": 1.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "code": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "list": 0.0,
+     "module": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.27,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.save": {
+      "score": 1.0,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "call SendReport to=\"ops@example.com\", subject=\"Weekly report\", on error call LogFailure",
+    "expected": [
+     "goal.call",
+     "error.handle"
+    ],
+    "main": "goal",
+    "modules": {
+     "goal": 0.62,
+     "variable": 0.0,
+     "cache": 0.0,
+     "file": 0.0,
+     "settings": 0.0,
+     "http": 0.37,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "output": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "condition": 0.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "loop": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "list": 0.0,
+     "code": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.01,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.92,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.17,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "http.request": {
+      "score": 0.18,
+      "from": "stage 2 yes/no",
+      "confidence": 0.98
+     }
+    }
+   },
+   {
+    "index": 11,
+    "text": "write out \"Report sent\" to \"log\" channel",
+    "expected": [
+     "output.write"
+    ],
+    "main": "output",
+    "modules": {
+     "goal": 0.0,
+     "variable": 0.0,
+     "cache": 0.0,
+     "file": 0.0,
+     "settings": 0.0,
+     "http": 0.0,
+     "timeout": 0.0,
+     "timer": 0.0,
+     "condition": 0.0,
+     "llm": 0.0,
+     "debug": 0.0,
+     "output": 1.0,
+     "math": 0.0,
+     "mock": 0.0,
+     "snapshot": 0.0,
+     "identity": 0.0,
+     "ui": 0.0,
+     "channel": 0.0,
+     "signing": 0.0,
+     "code": 0.0,
+     "test": 0.0,
+     "module": 0.0,
+     "crypto": 0.0,
+     "event": 0.0,
+     "list": 0.0,
+     "loop": 0.0,
+     "assert": 0.0,
+     "build": 0.0,
+     "environment": 0.0,
+     "error": 0.0,
+     "callback": 0.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    1,
+    "variable"
+   ],
+   [
+    3,
+    "condition"
+   ],
+   [
+    4,
+    "output"
+   ],
+   [
+    6,
+    "condition"
+   ],
+   [
+    7,
+    "output"
+   ],
+   [
+    10,
+    "goal"
+   ],
+   [
+    11,
+    "output"
+   ]
+  ],
+  "stage1": {
+   "secs": 0.96527099609375,
+   "bytes": 32263,
+   "questions": 84,
+   "usage": {
+    "input_tokens": 9485,
+    "output_tokens": 4230
+   }
+  },
+  "stage2": {
+   "secs": 0.864593505859375,
+   "bytes": 16167,
+   "questions": 10,
+   "usage": {
+    "input_tokens": 4444,
+    "output_tokens": 334
+   }
+  }
+ }
+]

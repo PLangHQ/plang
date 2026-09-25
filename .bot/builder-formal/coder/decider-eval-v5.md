@@ -158,3 +158,20 @@ stage 2 skipped: step 0 file, step 2 condition, step 6 variable, step 9 output
 | 11 | `write out "Report sent" to "log" channel` | output.write | output.write 0.97 | output 1.00 | ok | ok |
 
 stage 2 skipped: step 1 variable, step 3 condition, step 4 output, step 6 condition, step 7 output, step 10 goal, step 11 output
+
+## Addendum — output.write example step texts (architect's call)
+
+`os/system/modules/output/write.examples.md` is new. It holds step texts only, worded away from the golden steps:
+
+```
+Step text: `write out "Welcome back, %user.name%"`
+Step text: `show %message% to the user`
+Step text: `print %result%`
+Step text: `write %error.Message% to "errors" channel`
+```
+
+v5, 1 run (`tools/decider/runs/decider_eval_20260925_214621.json`; requests in `/shared/coder/llm/plang/builder-formal/decider-v5-outexamples/`):
+- cut 0.5: **58/58** steps exact, 0 missed, 0 extra;
+- cut 0.9: 44/58.
+
+build 5 `build.load, write to %app%` → output.write is now **0.38** (0.51–0.69 in 3 of the 4 earlier runs), so it's no longer an extra. The decide 9 "builder" path didn't fire this run. With one run, this is a single sample.
