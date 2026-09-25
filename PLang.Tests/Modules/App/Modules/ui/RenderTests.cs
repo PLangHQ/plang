@@ -93,6 +93,39 @@ public class RenderTests : IDisposable
     }
 
     [Test]
+    public async Task BuilderMenu_ChoiceDefault_ShowsItsName_NotItsNumber()
+    {
+        var menu = await BuilderMenuFor("math", "subtract");
+        await Assert.That(menu).Contains("Overflow (choice<overflow>: one of Promote, Throw, optional, default Promote)");
+    }
+
+    [Test]
+    public async Task Template_ComparesAChoiceByItsName()
+    {
+        var context = _app.User.Context;
+        var subtract = _app.Module["math"].Action.Items(global::PLang.Tests.TestApp.SharedContext)
+            .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "subtract");
+        await context.Variable.Set("a", subtract);
+        var action = new Render(context)
+        {
+            Template = (global::app.type.item.text.@this)
+                "{% for p in a.Property %}{% if p.Name == \"Overflow\" and p.Default == \"Promote\" %}matched{% endif %}{% endfor %}",
+            IsFile = (global::app.type.item.@bool.@this)false
+        };
+        var result = await _provider.Render(action);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("matched");
+    }
+
+    [Test]
+    public async Task Choice_TypedClrAsk_StillGetsTheEnum()
+    {
+        global::app.type.item.choice.@this<global::app.type.item.number.@this.Overflow> promote =
+            global::app.type.item.number.@this.Overflow.Promote;
+        await Assert.That(promote.Clr<global::app.type.item.number.@this.Overflow>())
+            .IsEqualTo(global::app.type.item.number.@this.Overflow.Promote);
+    }
+
+    [Test]
     public async Task BuilderMenu_NoNullNoDefault_IsRequired()
     {
         var menu = await BuilderMenuFor("goal", "call");

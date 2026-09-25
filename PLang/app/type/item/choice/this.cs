@@ -49,6 +49,9 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     /// <summary>The CLR exit door — choice hands its enum backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
+    /// <summary>A choice's raw face is its name, as it writes itself — a template compares and prints
+    /// `Promote`, never the enum's number. Typed CLR asks still get the enum (<see cref="Clr"/>).</summary>
+    internal override object? Backing => ToString();
     public override string ToString() => Value.ToString() ?? "";
     public override bool IsTruthy() => true;
     public override bool IsLeaf => true;

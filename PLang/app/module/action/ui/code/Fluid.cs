@@ -217,7 +217,7 @@ public class Fluid : ITemplate
             // its AUTHORED form is never member-accessed here — it's embedded via the `store` filter,
             // which drives the value's own Store writer (%refs% literal) instead of this resolve door.
             var resolved = await (await new global::app.data.@this("", obj, context: context).Get(name)).Value();
-            return global::app.type.item.@this.Backing(resolved)!;
+            return (resolved is global::app.type.item.@this value ? value.Backing : resolved)!;
         }
 
         // The value door is async (a path stat, a computed render). Templates render via

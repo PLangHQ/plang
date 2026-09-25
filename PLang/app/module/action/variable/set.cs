@@ -22,7 +22,8 @@ public partial class Set : IContext
     {
         // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
         // CLR-facing machinery).
-        var valueBacking = global::app.type.item.@this.Backing(Value.Peek());
+        var peeked = Value.Peek();
+        var valueBacking = peeked is global::app.type.item.@this value ? value.Backing : peeked;
 
         // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
         // string) against the literal's content. %var% values defer to Run.

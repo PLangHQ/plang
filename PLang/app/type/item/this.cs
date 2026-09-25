@@ -426,14 +426,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                                   global::app.actor.context.@this context) => null;
 
     /// <summary>
-    /// The typed source-face seam for CLR-facing machinery (ctor matching,
-    /// kind probes, TryConvert): a LEAF value lowers to its own backing via
-    /// its <see cref="Clr(System.Type)"/>; containers and non-items pass
-    /// through. The single owner of the old per-site
-    /// "<c>is item { IsLeaf: true } ? Clr&lt;object&gt;() : v</c>" transform.
+    /// The value's raw face for templates and CLR-facing probes (kind probes, ctor matching): a LEAF
+    /// is its own backing via <see cref="Clr(System.Type)"/>; a container stays itself. A value whose
+    /// raw face isn't its CLR backing answers its own — a choice is its name.
     /// </summary>
-    internal static object? Backing(object? v)
-        => v is @this { IsLeaf: true } l ? l.Clr<object>() : v;
+    internal virtual object? Backing => IsLeaf ? Clr<object>() : this;
 
 
     /// <summary>
