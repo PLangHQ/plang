@@ -216,7 +216,16 @@ class _Reader:
         self.take('?=' if frozen else '=')
         self.space()
         at = self.pos
-        value = self.value()
+        # A choice's option may stand bare (Operator=isempty): it is a name out of a closed set, not
+        # a text, so it can't be misread. The writer always quotes it.
+        bare = re.compile(r'[A-Za-z_]\w*(?![\w.(])').match(self.text, self.pos) if spec.get('options') else None
+        if bare and bare.group() in spec['options'] and bare.group() not in ('true', 'false', 'null'):
+            self.pos = bare.end()
+            value = bare.group()
+        elif bare and bare.group() not in ('true', 'false', 'null'):
+            self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{bare.group()}` is not', at)
+        else:
+            value = self.value()
         if spec.get('options') and value not in spec['options']:
             self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{value}` is not', at)
         if declared == 'variable' and not (isinstance(value, str) and VARIABLE.fullmatch(value)):
