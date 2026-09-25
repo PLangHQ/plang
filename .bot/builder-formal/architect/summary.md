@@ -2,6 +2,15 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-25 (evening) — Ingi AFK: the architect is in charge ("you can answer everything, your are in charge")
+
+**Decisions log while Ingi is away. Read this first when he's back.**
+- **Formal notation settled** (vision.md §4): the `.pr` is formal only, in a thin JSON envelope; types in the formal (`Name: type = value`, written always, optional on input); a frozen default is `Name: type ?= value`; a modifier WRAPS its action with `{ }` (Ingi's shape) and error.handle's recovery becomes `Recovery=[…]`; `{ }` always = the actions an action contains.
+- **What the LLM is shown** (§4b): picks ≥ 0.5 with scores; ≥ 0.9 pre-filled; 0.5–0.9 listed as "possible". Ingi suggested hiding < 0.9; kept because that band holds the 12 correct write-to → variable.set. `?` for a value to fill (not `%Prop%`: real variable syntax, silent if unfilled; `build.goals path=%path%` is a real Path=%path%); known values pre-filled (write to → `Value=%!data%`).
+- **Decider:** v5 (`e83acd9b1`) is the shape (2 runs: 44/43 exact at 0.9, 57/56 at 0.5, nothing ≥ 0.9 wrong). Stop tuning write-to at the decider; stage 3's double check measures it. output.write gets example step texts.
+- **Not touched (parked by Ingi):** snapshot, security, app-systems, runtime registrations, the action-as-value and timeout drafts, prompt B's A-vs-B run on get-builder-running.
+- **Next, in order:** formal notation revision (2b) → prompt C + double check, C vs B on both models, 1 run × 2–3 rounds, then pick one model → stage 4 (the plang builder: formal .pr, the parser in C#, the catalog filter, the decider in Decide.goal).
+
 ## 2026-09-25 — decider v3 (`fc72d3083`); v4 queued (architect, delegated by Ingi)
 
 v3 with the clause off: 51/58 exact at 0.5 (5 missed, 2 extra), 36/58 at 0.9 (none wrong), 150 KB. else/elseif asked by name works (0.95–0.98). The long clause on the common questions hurt (46/58, 7 extras), so it's off by default. The runner-up rule names the right action, but its score is the module's ~50% share of one choice. The write-to step texts had no effect when shown only under the module. **v4 (my calls; queued after plan stage 2):** (1) a runner-up module ≥ 0.2 gets a yes/no "does step N also use X?", and that is the action's score; (2) each common action's example step texts shown beside it; (3) an action held as a value (an action-typed property, a modifier's recovery) is not a decider pick, and the builder includes goal.call's definition when a picked action takes actions, so the golden expectations drop those goal.calls; (4) action- and goal-typed properties reach the LLM (only `clr` hidden; C# in stage 4). Coder is on plan stage 2 (formal notation + parser + writer).

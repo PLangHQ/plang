@@ -25,11 +25,12 @@ That is the whole contract **(Ingi)**: a step is a **list** of actions, each `{m
 [2] math.multiply(A=%order.total%, B=%vat%); variable.set(Name=%vatAmount%, Value=%!data%)
 ```
 
-A modifier — `on error …`, `cache …`, `timeout …` — is written on the **next line**, under the action it wraps **(Ingi)**, still in `module.action` form:
+A modifier — `on error …`, `cache …`, `timeout …` — **wraps** the action it applies to, like try **(Ingi)**; its recovery is a property (§4):
 
 ```
-[3] goal.call(Name="Compile")
-    error.handle(RetryCount=2, Order="GoalFirst") { goal.call(Name="FixProperties") }
+[3] error.handle(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")]) {
+        goal.call(Name="Compile")
+    }
 ```
 
 ## 3. The builder: two readers who must agree **(Ingi: "double validation … two llm are reading over the code")**
@@ -49,11 +50,37 @@ For each goal, in one pass over the whole goal (the steps refer to each other):
 
 **Indentation is the parser's**, never the LLM's: an indented step is the body of the condition above it, placed by the builder from the layout **(Ingi, earlier)**.
 
-## 4. The `.pr` shows both
+## 4. The `.pr` is formal, typed, in a thin envelope
 
-Each step in the `.pr` carries its actions as JSON rows — what the runtime reads, typed — **and its formal line** — what the programmer reads **(Ingi)**. The formal is written by the action itself (the action writes itself in formal, as it writes itself as JSON), so the two can never disagree **(architect)**. Warnings sit on the step.
+**Settled 2026-09-25 (architect, in charge while Ingi is away; Ingi: "we need the types in there", modifiers "error.handle(...) { goal.call(...) } same with caching").** This replaces "the `.pr` shows both": one representation, not two.
 
-A value's type in the JSON comes from its literal and the property's declared type (`"orders/…json"` into `Path: path` is a path) — the LLM never names types **(architect)**.
+- The `.pr` keeps a **thin JSON envelope** for the goal and step facts (name, path, hash, each step's index, text, line, warnings, child steps from indentation) and each step's actions as **one formal string**.
+- **Types are in the formal**, in the same shape as the signatures the LLM reads: `Name: type = value`. The **writer always writes them**; in the LLM's answer and in a formal step in a `.goal` they are optional — the parser adds them from the property's declared type and the literal.
+- A **frozen default** is written `Name: type ?= value`, so the runtime can still let a setting override it (step value → setting → frozen default → `[Default]`).
+- **A modifier wraps its action**, like try: `{ }` always holds the actions an action contains — a condition's body, or what a modifier wraps. `error.handle`'s recovery is a property holding actions:
+  ```
+  [3] error.handle(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst",
+                   Recovery: list<action> = [goal.call(Name: text = "FixProperties")]) {
+          goal.call(Name: text = "Compile")
+      }
+  [5] cache.wrap(Duration: duration = "10 min") {
+          http.get(Url: path = "https://…")
+      }
+  ```
+  Nesting shows the wrap order (`error.handle { cache.wrap { file.read } }`).
+- The runtime reads the formal through the parser (the action list reads itself from formal); nothing else stores the actions.
+
+```json
+{"name": "Checkout", "path": "/Checkout.goal", "hash": "…",
+ "step": [{"index": 0, "text": "read 'orders/%orderId%.json', write to %order%", "lineNumber": 3,
+           "action": "file.read(Path: path = \"orders/%orderId%.json\"); variable.set(Name: variable = %order%, Value: item = %!data%)"}]}
+```
+
+## 4b. What the LLM is shown and answers (settled, architect)
+
+- Each step lists the decider's picks **≥ 0.5 with their scores**. Picks **≥ 0.9 are pre-filled** in the formal line; 0.5–0.9 are listed as "possible" (the band holds most `write to` → `variable.set`, all right — hiding it would make every such step fail). Below 0.5 is not shown.
+- The pre-filled line uses `?` for a value to fill (loud if left unfilled — `%Prop%` is real variable syntax and would parse silently) and **pre-fills what is already known**: `write to %x%` → `variable.set(Name=%x%, Value=%!data%)`.
+- The LLM answers in formal **without types**; the parser types every value.
 
 ## 5. When plang gets a step wrong **(architect)**
 
@@ -80,8 +107,10 @@ The runtime runs the JSON actions, step by step. The formal is for reading, and 
 
 | | where |
 |---|---|
-| Modifiers on the next line in formal | plan stage 2 (the notation) |
-| The action writes itself in formal → the `.pr`'s formal line | plan stage 2 (python stand-in), stage 4 (C#) |
+| Modifiers wrap their action (`{ }`), recovery as a `Recovery=[…]` property | plan stage 2b (the notation, revised) |
+| Types in the formal (`Name: type = value`, `?=` frozen default), written always, optional on input | plan stage 2b (writer + parser) |
+| The `.pr` is formal only, in a thin JSON envelope; the action list reads/writes itself in formal | plan stage 4 (C#) |
+| Picks ≥ 0.5 shown with scores, ≥ 0.9 pre-filled, `?` for unfilled, known values pre-filled | plan stage 3 (prompt C) |
 | A `.goal` step written in formal is parsed directly, no decider/LLM | plan stage 2 (the parser), stage 4 (the builder) |
 | Unsure → build + warning on the step; certain contradiction → loud failure | plan stage 3 (the check) |
 | The LLM never names types | plan stage 3 (prompt C) |
