@@ -66,7 +66,7 @@ Rules
 5. "write to %x%" is variable.set(Name=%x%, Value=%!data%), right after the action whose result it keeps.
 6. A condition's body goes in its { }. After a condition, only the next branch of the same chain (elseif,
    else) may follow in the step. An action the step does before it tests stays ahead of the if. A condition
-   whose step names no body has no { }.
+   whose step names no body has no { } — its body is the steps indented below it, and { } is never empty.
 7. A negation is its own operator: "does not contain" → "notcontains", "is not empty" → "isnotempty",
    likewise "notstartswith", "notendswith", "notin", "isnot". "is 1" or "is "x"" compares a value → "==".
    "is" and "isnot" take only a type name: "is a number" → Operator="is", Right="number".

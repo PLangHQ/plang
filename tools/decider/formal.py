@@ -180,6 +180,8 @@ class _Reader:
                 self.fail(f'`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}; '
                           f'write the actions one after the other: {module}.{name}(…); next.action(…)')
             self.take('{')
+            if self.peek('}'):
+                self.fail('`{ }` holds at least one action; a condition whose body is indented below it has no `{ }`')
             body = self.actions('}')
             self.take('}')
             if modifier:
