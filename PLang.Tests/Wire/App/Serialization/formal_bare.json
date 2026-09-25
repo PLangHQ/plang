@@ -1,0 +1,26 @@
+[
+ {
+  "input": "condition.if(Left=%n%, Operator===, Right=5) { goal.return() }",
+  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"==\", Right: number = 5) { goal.return() }"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=!=, Right=5) { goal.return() }",
+  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"!=\", Right: number = 5) { goal.return() }"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=>, Right=5) { goal.return() }",
+  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \">\", Right: number = 5) { goal.return() }"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=<, Right=5) { goal.return() }",
+  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<\", Right: number = 5) { goal.return() }"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=>=, Right=5) { goal.return() }",
+  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \">=\", Right: number = 5) { goal.return() }"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=<=, Right=5) { goal.return() }",
+  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<=\", Right: number = 5) { goal.return() }"
+ }
+]

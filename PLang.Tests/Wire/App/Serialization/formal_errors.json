@@ -88,6 +88,10 @@
   "message": "line 1, column 30: `Value` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments"
  },
  {
+  "input": "condition.if(Left=%n%, Operator=<>, Right=5)",
+  "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `<>` is not"
+ },
+ {
   "input": "",
   "message": "line 1, column 1: a step holds at least one action"
  }

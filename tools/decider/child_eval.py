@@ -76,7 +76,7 @@ def words(t):
 def same_value(expected, got):
     if isinstance(expected, dict) and '$oneOf' in expected:
         return any(same_value(e, got) for e in expected['$oneOf'])
-    if isinstance(expected, dict) and 'module' in expected:   # an action-typed property holds an action
+    if isinstance(expected, dict) and 'module' in expected and 'name' in expected:   # an action-typed property holds an action
         return isinstance(got, dict) and not compare_actions([expected], [got], '')
     if isinstance(expected, dict) and isinstance(got, dict):
         return expected.keys() == got.keys() and all(same_value(v, got[k]) for k, v in expected.items())

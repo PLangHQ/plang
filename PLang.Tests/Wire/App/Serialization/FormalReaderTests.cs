@@ -64,6 +64,28 @@ public class FormalReaderTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // A choice's symbol option written bare (Operator=>=) reads as that option, as python reads it
+    // (formal_bare.json); a symbol that is not an option is in formal_errors.json.
+    [Test]
+    public async Task EveryBareSymbolOption_ReadsAsTheOption_AsPythonReadsIt()
+    {
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "PLang.Tests", "Wire", "App", "Serialization", "formal_bare.json")))
+            dir = dir.Parent;
+        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
+            System.IO.Path.Combine(dir!.FullName, "PLang.Tests", "Wire", "App", "Serialization", "formal_bare.json"))).RootElement.EnumerateArray().ToList();
+        var differ = new List<string>();
+        foreach (var c in cases)
+        {
+            var input = c.GetProperty("input").GetString()!;
+            var read = Read(input, out _);
+            var written = read.Success ? await Written(read) : read.Error!.Message;
+            if (written != c.GetProperty("formal").GetString()) differ.Add($"{input}\n  python: {c.GetProperty("formal").GetString()}\n  c#:     {written}");
+        }
+        await Assert.That(cases.Count).IsEqualTo(6);
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
     [Test]
     public async Task AnError_IsReturned_KeyedFormalInvalid_WithTheFix()
     {

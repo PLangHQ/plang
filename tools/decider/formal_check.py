@@ -27,7 +27,7 @@ def rows_of(a):
     for name, v in (a.get('property') or {}).items():
         if isinstance(v, dict) and '$oneOf' in v: v = v['$oneOf'][0]
         spec = declared.get(name, {'type': 'item'})
-        if isinstance(v, dict) and v.get('module'): v = rows_of(v)
+        if f.is_action(v): v = rows_of(v)
         elif spec['type'].startswith('list') and isinstance(v, list) and v and isinstance(v[0], dict) and 'name' in v[0]:
             v = [{'name': r['name'], 'type': f.typed('item', r['value']), 'value': r['value']} for r in v]
         props.append({'name': name, 'type': f.typed(spec['type'], v), 'value': v})
@@ -47,7 +47,7 @@ def without_child_text(actions):
         for m in a.get('modifier') or []: strip(m)
         for r in a.get('recovery') or []: strip(r)
         for p in a.get('property') or []:
-            if isinstance(p['value'], dict) and p['value'].get('module'): strip(p['value'])
+            if f.is_action(p['value']): strip(p['value'])
     for a in out: strip(a)
     return out
 

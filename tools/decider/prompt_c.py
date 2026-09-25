@@ -133,7 +133,7 @@ def held_actions(rows):
         for r in a.get('property') or []:
             v = r['value']
             for x in (v if isinstance(v, list) else [v]):
-                if isinstance(x, dict) and x.get('module'): out.append(f'{x["module"]}.{x["name"]}'); walk(x)
+                if f.is_action(x): out.append(f'{x["module"]}.{x["name"]}'); walk(x)
         for m in a.get('modifier') or []:
             for x in m.get('recovery') or []: out.append(f'{x["module"]}.{x["name"]}'); walk(x)
             walk(m)
@@ -207,7 +207,7 @@ def drop_nulls(rows):
         for r in a['property']:
             v = r['value']
             for x in (v if isinstance(v, list) else [v]):
-                if isinstance(x, dict) and x.get('module'): drop_nulls([x])
+                if f.is_action(x): drop_nulls([x])
         for c in a.get('child') or []: drop_nulls(c.get('action') or [])
         drop_nulls(a.get('modifier') or [])
         for m in a.get('modifier') or []: drop_nulls(m.get('recovery') or [])
@@ -234,7 +234,7 @@ def drop_defaults(rows):
         for r in a['property']:
             v = r['value']
             for x in (v if isinstance(v, list) else [v]):
-                if isinstance(x, dict) and x.get('module'): drop_defaults([x])
+                if f.is_action(x): drop_defaults([x])
         for c in a.get('child') or []: drop_defaults(c.get('action') or [])
         drop_defaults(a.get('modifier') or [])
         for m in a.get('modifier') or []: drop_defaults(m.get('recovery') or [])

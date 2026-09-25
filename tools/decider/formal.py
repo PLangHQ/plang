@@ -41,6 +41,7 @@ CONDITIONS = {('condition', 'if'), ('condition', 'elseif'), ('condition', 'else'
 RECOVERY = 'Recovery'   # a modifier's property holding the actions it runs when the wrapped action fails
 VARIABLE = re.compile(r'%[^%\s]+%')
 BARE_NAME = re.compile(r'!?[A-Za-z_][\w.\[\]]*')   # a variable's name without its % signs
+SYMBOL = re.compile(r'[=!<>]+')                     # a choice's symbol option written bare: Operator=>=
 
 class FormalError(Exception):
     """Where the formal stops making sense: line and column (1-based) and what was expected."""
@@ -54,6 +55,11 @@ class FormalError(Exception):
 def properties(module, name):
     """{Name: {type, options, …}} the action declares — the catalogue's rows, action- and goal-typed included."""
     return dict(b.declared(module, name)[0])
+
+def is_action(v):
+    """Is this value an action (held as a value, a recovery, a child)? An action has a module AND a name;
+    a dict literal may have a `module` key ({module: %item%}) and is still a dict."""
+    return isinstance(v, dict) and 'module' in v and 'name' in v
 
 def is_modifier(module, name):
     return b.declared(module, name)[1]
@@ -75,7 +81,7 @@ def typed(declared, value, written=None):
     if isinstance(value, bool): return {'name': 'bool'}
     if isinstance(value, (int, float)): return {'name': 'number'}
     if isinstance(value, list): return {'name': 'list'}
-    if isinstance(value, dict): return {'name': 'action'} if value.get('module') else {'name': 'dict'}
+    if isinstance(value, dict): return {'name': 'action'} if is_action(value) else {'name': 'dict'}
     if value is None: return {'name': 'item'}
     return {'name': 'item'} if VARIABLE.fullmatch(value) else {'name': 'text'}
 
@@ -164,7 +170,7 @@ class _Reader:
                 self.written_type(prop, 'list<action>')
                 self.take('=')
                 recovery = self.value()
-                if not (isinstance(recovery, list) and recovery and all(isinstance(x, dict) and x.get('module') for x in recovery)):
+                if not (isinstance(recovery, list) and recovery and all(is_action(x) for x in recovery)):
                     self.fail(f'`{prop}` is a list of actions: [goal.call(Name="X")]', at)
                 continue
             if prop not in declared:
@@ -216,15 +222,24 @@ class _Reader:
         written = self.written_type(prop, declared)
         self.space()
         frozen = self.text.startswith('?=', self.pos)
-        if self.text.startswith('==', self.pos):
+        # a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="
+        after_equals = SYMBOL.match(self.text, self.pos + (2 if frozen else 1))
+        if self.text.startswith('==', self.pos) and not (
+                spec.get('options') and after_equals and after_equals.group() in spec['options']):
             self.fail(f'one `=` gives a value: {prop}="=="')
         self.take('?=' if frozen else '=')
         self.space()
         at = self.pos
-        # A choice's option may stand bare (Operator=isempty): it is a name out of a closed set, not
-        # a text, so it can't be misread. The writer always quotes it.
+        # A choice's option may stand bare (Operator=isempty, Operator=>=): it is a name out of a closed
+        # set, not a text, so it can't be misread. The writer always quotes it.
+        symbol = SYMBOL.match(self.text, self.pos) if spec.get('options') else None
         bare = re.compile(r'[A-Za-z_]\w*(?![\w.(])').match(self.text, self.pos) if spec.get('options') else None
-        if bare and bare.group() in spec['options'] and bare.group() not in ('true', 'false', 'null'):
+        if symbol:
+            if symbol.group() not in spec['options']:
+                self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{symbol.group()}` is not', at)
+            self.pos = symbol.end()
+            value = symbol.group()
+        elif bare and bare.group() in spec['options'] and bare.group() not in ('true', 'false', 'null'):
             self.pos = bare.end()
             value = bare.group()
         elif bare and bare.group() not in ('true', 'false', 'null'):
@@ -247,7 +262,7 @@ class _Reader:
             self.fail(f'`{prop}` names a variable: write it with its % signs', at)
         # A dict handed to a list property is its rows: Parameter={to: %x%} → [{name: to, …}], each
         # typed like any row — the written type, else the literal's (the slot is open).
-        if declared.startswith('list') and isinstance(value, dict) and not value.get('module'):
+        if declared.startswith('list') and isinstance(value, dict) and not is_action(value):
             types = getattr(value, 'types', {})
             value = [{'name': k, 'type': typed('item', v, types.get(k)), 'value': v} for k, v in value.items()]
         elif getattr(value, 'types', None):
@@ -383,7 +398,7 @@ def _literal(v, t=None):
         if VARIABLE.fullmatch(v) and (t or {}).get('name') != 'text': return v
         return json.dumps(v, ensure_ascii=False)
     if isinstance(v, list):
-        if v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not r.get('module') for r in v):
+        if v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not is_action(r) for r in v):
             return '{' + ', '.join(f'{_key(r["name"])}: {_literal(r["value"], r.get("type"))}' for r in v) + '}'
         return '[' + ', '.join(_literal(x) for x in v) + ']'
     if isinstance(v, dict):   # a dict literal: keys quoted, so it never reads as argument rows
@@ -394,15 +409,15 @@ def _key(k):
     return k if re.fullmatch(r'[A-Za-z_]\w*', k) else json.dumps(k)
 
 def write_value(v, t=None, types=True):
-    if isinstance(v, dict) and v.get('module'): return write_action(v, types)
-    if isinstance(v, list) and v and all(isinstance(x, dict) and x.get('module') for x in v):
+    if is_action(v): return write_action(v, types)
+    if isinstance(v, list) and v and all(is_action(x) for x in v):
         return '[' + ', '.join(write_action(x, types) for x in v) + ']'
     if types and _rows(v):   # argument rows carry their types like any property: {kind: text = "x"}
         return '{' + ', '.join(f'{_key(r["name"])}: {face(r["type"])} = {_literal(r["value"], r.get("type"))}' for r in v) + '}'
     return _literal(v, t)
 
 def _rows(v):
-    return isinstance(v, list) and v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not r.get('module') for r in v)
+    return isinstance(v, list) and v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not is_action(r) for r in v)
 
 def _head(a, types=True):
     """module.name(Name: type = value, …) — every row with its type (types=False: the form the LLM

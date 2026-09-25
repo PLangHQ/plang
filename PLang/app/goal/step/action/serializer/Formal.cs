@@ -259,13 +259,23 @@ public sealed class Formal
             var written = WrittenType(prop, declaredFace);
             Space();
             var frozen = Peek("?=");
-            if (Peek("==")) Fail($"one `=` gives a value: {prop}=\"==\"");
+            var options = declared.Type.Values;
+            // a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="
+            var afterEquals = new System.Text.RegularExpressions.Regex(@"\G[=!<>]+").Match(_text, System.Math.Min(_pos + (frozen ? 2 : 1), _text.Length)).Value;
+            if (Peek("==") && !(options is { Count: > 0 } && options.Contains(afterEquals)))
+                Fail($"one `=` gives a value: {prop}=\"==\"");
             Take(frozen ? "?=" : "=");
             Space();
             var at = _pos;
-            var options = declared.Type.Values;
             Literal value;
-            if (options is { Count: > 0 } && Match(@"[A-Za-z_]\w*(?![\w.(])") is { } word && word is not ("true" or "false" or "null"))
+            if (options is { Count: > 0 } && Match(@"[=!<>]+") is { } symbol)
+            {
+                // a symbol option, bare: a name out of the same closed set, written with no quotes
+                if (!options.Contains(symbol)) Fail($"`{prop}` is one of {string.Join(", ", options)}; `{symbol}` is not", at);
+                _pos += symbol.Length;
+                value = Scalar(System.Text.Json.JsonSerializer.Serialize(symbol), System.Text.Json.JsonValueKind.String);
+            }
+            else if (options is { Count: > 0 } && Match(@"[A-Za-z_]\w*(?![\w.(])") is { } word && word is not ("true" or "false" or "null"))
             {
                 // a choice's option may stand bare: it is a name out of a closed set
                 if (!options.Contains(word)) Fail($"`{prop}` is one of {string.Join(", ", options)}; `{word}` is not", at);

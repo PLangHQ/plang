@@ -47,8 +47,15 @@ BAD = [
     'file.read(Path="x") · output.write(Data="y")',
     'error.handle(Recovery=[goal.call(…)]) { goal.call(Name="X") }',
     'variable.set(Name=%d%, Value={name: text = "a"})',
+    'condition.if(Left=%n%, Operator=<>, Right=5)',
     '',
 ]
+
+# A choice's symbol option written bare reads as the option — the C# reader must read each the same.
+BARE = [f'condition.if(Left=%n%, Operator={op}, Right=5) {{ goal.return() }}' for op in ('==', '!=', '>', '<', '>=', '<=')]
+bare = [{'input': text, 'formal': f.write(f.parse(text))} for text in BARE]
+json.dump(bare, open(OUT.replace('formal_golden.json', 'formal_bare.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
+print(len(bare), 'bare choice cases:', '; '.join(b['formal'].split('Operator: ')[1].split(',')[0] for b in bare))
 errors = []
 for bad in BAD:
     try:
