@@ -27,11 +27,12 @@ def score(recs, threshold):
             # the result-store: `variable` beside another module is the trailing write, scored on its own
             stores = 'variable' in label_mods and len(label_mods) > 1
             if stores: label_mods.discard('variable')
-            pred = {m for m, p in probs.get(i, {}).items() if m != '@store' and p is not None and p >= threshold}
+            # module answers only: `@store` (older runs) and the common actions (`variable.set`, …) are not modules
+            pred = {m for m, p in probs.get(i, {}).items() if m != '@store' and '.' not in m and p is not None and p >= threshold}
             # Decision rule: a step whose only work is the variable module IS the store — there is
             # nothing extra to keep. The store answer only counts when other work was done.
             work = pred - {'variable'}
-            p_store = probs.get(i, {}).get('@store')
+            p_store = probs.get(i, {}).get('@store', probs.get(i, {}).get('variable.set'))
             if p_store is not None and work:
                 store_n += 1
                 if (p_store >= 0.5) == stores: store_ok += 1

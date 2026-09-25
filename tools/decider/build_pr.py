@@ -169,18 +169,18 @@ def menu_for(goal, cat, folder=None):
     if folder: dump_to(folder, '1.decider')
     probs, *_ = h.stage1(goal, cat)
     if folder: readable(folder, '1.decider'); dump_to(folder, '2.decider')
-    # `@store` is its own question — "does this step keep its result in a variable?" — so it never
-    # reaches stage 2 as a module; it puts variable.set on the menu directly.
-    chosen = {i: [m for m, p in probs[i].items() if m in cat and p is not None and p >= 0.5] for i in probs}
+    # The common actions are asked by name in stage 1: one scored at or above 0.5 is on the menu, and
+    # a near-certain one settles its module, which then skips stage 2.
+    split = {i: h.picks(probs[i], cat) for i in probs}
+    chosen = {i: ask2 for i, (_, ask2) in split.items()}
     acts, *_ = h.stage2(goal, cat, chosen)
     if folder: readable(folder, '2.decider'); h._local.dump = None
     menu = {}
     for s in goal['steps']:
         i = s['index']
-        entries = [f'{m}.{acts[(i, m)][0]}' for m in chosen.get(i, []) if (i, m) in acts]
-        if (probs.get(i, {}).get('@store') or 0) >= 0.5 and 'variable.set' not in entries:
-            entries.append('variable.set')
-        menu[i] = entries
+        common = [a for a, p in split.get(i, ({}, []))[0].items() if p >= 0.5]
+        entries = common + [f'{m}.{acts[(i, m)][0]}' for m in chosen.get(i, []) if (i, m) in acts]
+        menu[i] = list(dict.fromkeys(entries))
     return menu, probs
 
 def notes_block(module, action):

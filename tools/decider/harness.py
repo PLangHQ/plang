@@ -236,26 +236,45 @@ def windows(steps):
     for i in range(0, len(steps), WINDOW):
         yield steps[i:i + WINDOW]
 
+# The actions most steps use, asked by name in stage 1 beside the modules — counted, not guessed: the
+# share of steps using each across tools/decider/labels/, the builder's own .pr files and the golden
+# set (variable.set 42%, goal.call 8.7%, output.write 6.4%, error.handle 6.2%, condition.if 4.2%,
+# file.read 2.3%). The assert.* actions rank high only because the labels are mostly tests.
+COMMON = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read']
+NEAR_CERTAIN = 0.9   # a common action scored at or above this is picked; its module skips stage 2
+
 def stage1(goal, cat):
+    """noul per (step, module) and per (step, common action), one request per window. Every score is
+    kept: probs[i] holds module names and `module.action` names alike."""
     state = state_for(goal, cat)
     probs = collections.defaultdict(dict); secs = nbytes = nq = 0; usage = collections.Counter()
     for win in windows(goal['steps']):
         qs = {f's{s["index"]}_{m}': {'type': 'noul', 'instructions':
                   f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. Does step {step_no(s)} — its own work, or '
                   f'anything it guards behind a condition, repeats in a loop, or hands to an error handler — need an '
-                  f'action from the plang module `{m}`? (Keeping the result in a variable afterwards is asked separately.)'}
+                  f'action from the plang module `{m}`?'}
               for s in win for m in cat}
-        # stage 1b, same request: the result-store is its own question, not a module decision
         for s in win:
-            qs[f's{s["index"]}_@store'] = {'type': 'noul', 'instructions':
-                f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. After doing its work, does step {step_no(s)} '
-                f'keep its result for later use in a variable?'}
+            for a in COMMON:
+                m, an = a.split('.', 1)
+                qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
+                    f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. Does step {step_no(s)} — its own work, or '
+                    f'anything it guards behind a condition, repeats in a loop, or hands to an error handler — use the '
+                    f'action `{a}`: {cat[m]["actions"][an]["description"]}?'}
         resp, t, b = ask(state, qs)
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():
             i, m = k[1:].split('_', 1)
             probs[int(i)][m] = a.get('noul')
     return probs, secs, nbytes, nq, dict(usage)
+
+def picks(probs_i, cat, threshold=0.5):
+    """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must still ask).
+    A module is skipped in stage 2 when one of its common actions is near-certain: that action is its answer."""
+    common = {a: probs_i.get(a) for a in COMMON if probs_i.get(a) is not None}
+    settled = {a.split('.', 1)[0] for a, p in common.items() if p >= NEAR_CERTAIN}
+    ask2 = [m for m, p in probs_i.items() if m in cat and p is not None and p >= threshold and m not in settled]
+    return common, ask2
 
 def stage2(goal, cat, chosen):   # chosen: {step_index: [modules]}
     used = {m for ms in chosen.values() for m in ms}
@@ -291,7 +310,7 @@ def run(name, limit, seed, threshold=0.5, workers=4):
         rec = {'goal': goal['name'], 'file': goal['file'], 'steps': goal['steps']}
         try:
             probs, s1, b1, q1, u1 = stage1(goal, cat)
-            chosen = {i: [m for m, p in probs[i].items() if m in cat and p is not None and p >= threshold] for i in probs}
+            chosen = {i: picks(probs[i], cat, threshold)[1] for i in probs}
             acts, s2, b2, q2, u2 = stage2(goal, cat, chosen)
             rec.update(stage1={'probs': {str(i): probs[i] for i in probs}, 'secs': s1, 'bytes': b1, 'questions': q1, 'usage': u1},
                        stage2={'choice': {f'{i}|{m}': v for (i, m), v in acts.items()}, 'secs': s2, 'bytes': b2, 'questions': q2, 'usage': u2})

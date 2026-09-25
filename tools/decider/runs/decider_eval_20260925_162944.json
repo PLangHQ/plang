@@ -1,0 +1,4355 @@
+[
+ {
+  "goal": "build",
+  "steps": [
+   {
+    "index": 0,
+    "text": "set default %path% = \"/\"",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.03,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.03,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.04,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.04,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.03,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.04,
+     "settings": 0.06,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.02,
+     "timeout": 0.03,
+     "timer": 0.02,
+     "ui": 0.03,
+     "variable": 0.98
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set default %!build.cache% = true",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.05,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.03,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.05,
+     "settings": 0.07,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.02,
+     "ui": 0.03,
+     "variable": 0.97
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set default %!build.summary% = true",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.05,
+     "settings": 0.08,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.97
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "set channel \"builder\" call BuilderChannel",
+    "expected": [
+     "channel.set",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.04,
+     "callback": 0.05,
+     "channel": 0.98,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.06,
+     "error": 0.05,
+     "event": 0.06,
+     "file": 0.03,
+     "goal": 0.23,
+     "http": 0.03,
+     "identity": 0.04,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.07,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.09
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.6,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.11,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "channel.set": {
+      "score": 0.98,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
+    "expected": [
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.12,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.25,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.07,
+     "error": 0.06,
+     "event": 0.26,
+     "file": 0.05,
+     "goal": 0.92,
+     "http": 0.05,
+     "identity": 0.03,
+     "list": 0.05,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.42,
+     "settings": 0.06,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.38
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.34,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "build.load, write to %app%",
+    "expected": [
+     "build.load",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.98,
+     "cache": 0.05,
+     "callback": 0.04,
+     "channel": 0.06,
+     "code": 0.05,
+     "condition": 0.05,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.07,
+     "event": 0.05,
+     "file": 0.22,
+     "goal": 0.07,
+     "http": 0.05,
+     "identity": 0.04,
+     "list": 0.06,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.18,
+     "settings": 0.06,
+     "signing": 0.05,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.05,
+     "timer": 0.04,
+     "ui": 0.04,
+     "variable": 0.8
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.61,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.8,
+      "confidence": 1.0
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.3,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.19,
+      "from": "stage 1"
+     },
+     "build.load": {
+      "score": 0.98,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "build.goals path=%path%, write to %goals%",
+    "expected": [
+     "build.goals",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.98,
+     "cache": 0.05,
+     "callback": 0.03,
+     "channel": 0.06,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.06,
+     "event": 0.05,
+     "file": 0.2,
+     "goal": 0.1,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.14,
+     "llm": 0.03,
+     "loop": 0.05,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.06,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.03,
+     "variable": 0.83
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.65,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.83,
+      "confidence": 0.99
+     },
+     "goal.call": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.12,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.11,
+      "from": "stage 1"
+     },
+     "build.goals": {
+      "score": 0.98,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
+    "expected": [
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.08,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.19,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.29,
+     "file": 0.06,
+     "goal": 0.93,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.39,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.31
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.36,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "foreach %goals%, call BuildGoal goal=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.11,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.06,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.06,
+     "event": 0.05,
+     "file": 0.07,
+     "goal": 0.97,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.22,
+     "llm": 0.03,
+     "loop": 0.92,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.05,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.23
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.92,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+    "expected": [
+     "file.save"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.41,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.07,
+     "event": 0.05,
+     "file": 0.81,
+     "goal": 0.07,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.06,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.05,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.22
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.save": {
+      "score": 0.81,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "build.appSave",
+    "expected": [
+     "build.appSave"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.99,
+     "cache": 0.05,
+     "callback": 0.04,
+     "channel": 0.06,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.06,
+     "event": 0.05,
+     "file": 0.28,
+     "goal": 0.07,
+     "http": 0.04,
+     "identity": 0.04,
+     "list": 0.06,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.08,
+     "settings": 0.07,
+     "signing": 0.04,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.03,
+     "variable": 0.1
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "build.appSave": {
+      "score": 0.99,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "variable"
+   ],
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "variable"
+   ],
+   [
+    4,
+    "goal"
+   ],
+   [
+    7,
+    "goal"
+   ],
+   [
+    8,
+    "goal"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.5943946838378906,
+   "bytes": 135988,
+   "questions": 407,
+   "usage": {
+    "input_tokens": 32516,
+    "output_tokens": 7455
+   }
+  },
+  "stage2": {
+   "secs": 0.8522911071777344,
+   "bytes": 20168,
+   "questions": 7,
+   "usage": {
+    "input_tokens": 5691,
+    "output_tokens": 620
+   }
+  }
+ },
+ {
+  "goal": "start",
+  "steps": [
+   {
+    "index": 0,
+    "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
+    "expected": [
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.18,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.05,
+     "code": 0.03,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.08,
+     "event": 0.09,
+     "file": 0.05,
+     "goal": 0.93,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.05,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.28
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.88,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.93,
+      "confidence": 1.0
+     },
+     "output.write": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %buildStart% = %Now.Ticks%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.04,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.05,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.09,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.04,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.11,
+     "ui": 0.03,
+     "variable": 0.97
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.05,
+     "file": 0.05,
+     "goal": 0.16,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.14,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.05,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.05,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.07,
+     "ui": 0.05,
+     "variable": 0.95
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "call Compile, on error call HandleBuildFailure",
+    "expected": [
+     "goal.call",
+     "error.handle"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.44,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.05,
+     "condition": 0.07,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.06,
+     "error": 0.92,
+     "event": 0.05,
+     "file": 0.12,
+     "goal": 0.95,
+     "http": 0.04,
+     "identity": 0.04,
+     "list": 0.06,
+     "llm": 0.04,
+     "loop": 0.05,
+     "math": 0.05,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.06,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.04,
+     "test": 0.04,
+     "timeout": 0.05,
+     "timer": 0.04,
+     "ui": 0.03,
+     "variable": 0.11
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.89,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.92,
+      "confidence": 1.0
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.05,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "set %trace.menu% = %menu%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.06,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.05,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.07,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.05,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.96
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "set %parentGoal% = %goal%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.06,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.04,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.04,
+     "event": 0.03,
+     "file": 0.03,
+     "goal": 0.1,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.06,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.04,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.02,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.97
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.23,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.08,
+     "event": 0.04,
+     "file": 0.05,
+     "goal": 0.96,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.28,
+     "llm": 0.03,
+     "loop": 0.92,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.05,
+     "output": 0.05,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.35
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.92,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "set %goal% = %parentGoal%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.06,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.02,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.04,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.07,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.04,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.97
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
+    "expected": [
+     "math.subtract",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.07,
+     "event": 0.03,
+     "file": 0.03,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.04,
+     "math": 0.99,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.05,
+     "settings": 0.04,
+     "signing": 0.02,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.07,
+     "ui": 0.03,
+     "variable": 0.75
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.6,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.75,
+      "confidence": 0.95
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "math.subtract": {
+      "score": 0.99,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
+    "expected": [
+     "math.divide",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.08,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.99,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.05,
+     "settings": 0.03,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.06,
+     "ui": 0.03,
+     "variable": 0.84
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.66,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.84,
+      "confidence": 0.95
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "math.divide": {
+      "score": 0.99,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "set %trace.durationMs% = %elapsedMs%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.04,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.04,
+     "crypto": 0.02,
+     "debug": 0.04,
+     "environment": 0.03,
+     "error": 0.05,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.05,
+     "http": 0.03,
+     "identity": 0.02,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.07,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.04,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.02,
+     "timeout": 0.03,
+     "timer": 0.06,
+     "ui": 0.03,
+     "variable": 0.98
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 11,
+    "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+    "expected": [
+     "file.save"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.09,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.12,
+     "event": 0.05,
+     "file": 0.94,
+     "goal": 0.07,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.06,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.05,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.07,
+     "settings": 0.05,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.03,
+     "variable": 0.54
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.save": {
+      "score": 0.94,
+      "from": "stage 2",
+      "confidence": 1.0
+     },
+     "variable.get": {
+      "score": 0.54,
+      "from": "stage 2",
+      "confidence": 0.78
+     }
+    }
+   },
+   {
+    "index": 12,
+    "text": "add %goal.Name% to %traceGoals%",
+    "expected": [
+     "list.add"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.03,
+     "error": 0.06,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.08,
+     "http": 0.03,
+     "identity": 0.02,
+     "list": 0.97,
+     "llm": 0.02,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.04,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.5
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.14,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "list.add": {
+      "score": 0.97,
+      "from": "stage 2",
+      "confidence": 1.0
+     },
+     "variable.get": {
+      "score": 0.5,
+      "from": "stage 2",
+      "confidence": 0.59
+     }
+    }
+   },
+   {
+    "index": 13,
+    "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
+    "expected": [
+     "build.fold",
+     "error.handle",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.05,
+     "build": 0.96,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.05,
+     "condition": 0.07,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.06,
+     "error": 0.93,
+     "event": 0.05,
+     "file": 0.11,
+     "goal": 0.42,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.1,
+     "llm": 0.03,
+     "loop": 0.1,
+     "math": 0.05,
+     "mock": 0.03,
+     "module": 0.05,
+     "output": 0.06,
+     "settings": 0.05,
+     "signing": 0.04,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.03,
+     "variable": 0.17
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.63,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.9,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "build.fold": {
+      "score": 0.96,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 14,
+    "text": "build.goalsSave Goal=%goal%",
+    "expected": [
+     "build.goalsSave"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.98,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.1,
+     "event": 0.05,
+     "file": 0.35,
+     "goal": 0.09,
+     "http": 0.04,
+     "identity": 0.04,
+     "list": 0.12,
+     "llm": 0.03,
+     "loop": 0.06,
+     "math": 0.05,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.06,
+     "settings": 0.06,
+     "signing": 0.04,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.04,
+     "variable": 0.18
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "build.goalsSave": {
+      "score": 0.98,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "variable"
+   ],
+   [
+    3,
+    "goal"
+   ],
+   [
+    4,
+    "variable"
+   ],
+   [
+    5,
+    "variable"
+   ],
+   [
+    6,
+    "goal"
+   ],
+   [
+    7,
+    "variable"
+   ],
+   [
+    10,
+    "variable"
+   ],
+   [
+    13,
+    "error"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.8111698627471924,
+   "bytes": 188230,
+   "questions": 555,
+   "usage": {
+    "input_tokens": 46588,
+    "output_tokens": 10299
+   }
+  },
+  "stage2": {
+   "secs": 0.8499040603637695,
+   "bytes": 35089,
+   "questions": 12,
+   "usage": {
+    "input_tokens": 10035,
+    "output_tokens": 1067
+   }
+  }
+ },
+ {
+  "goal": "decide",
+  "steps": [
+   {
+    "index": 0,
+    "text": "set %threshold% = 0.5",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.04,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.03,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.03,
+     "error": 0.04,
+     "event": 0.03,
+     "file": 0.03,
+     "goal": 0.04,
+     "http": 0.02,
+     "identity": 0.02,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.05,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.04,
+     "settings": 0.04,
+     "signing": 0.02,
+     "snapshot": 0.03,
+     "test": 0.02,
+     "timeout": 0.03,
+     "timer": 0.02,
+     "ui": 0.03,
+     "variable": 0.98
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %modules% = %!app.module.list%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.42,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.3,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.09,
+     "error": 0.06,
+     "event": 0.06,
+     "file": 0.07,
+     "goal": 0.23,
+     "http": 0.05,
+     "identity": 0.03,
+     "list": 0.49,
+     "llm": 0.06,
+     "loop": 0.05,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.12,
+     "output": 0.07,
+     "settings": 0.11,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.05,
+     "variable": 0.89
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.93,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.14,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set %state.goal% = %goal.Name%",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.09,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.02,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.4,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.04,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.05,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.95
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "foreach %goal.Step%, call AddStepToState item=%step%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.08,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.05,
+     "file": 0.03,
+     "goal": 0.94,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.3,
+     "llm": 0.04,
+     "loop": 0.93,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.05,
+     "output": 0.05,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.2
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.9,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.93,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "foreach %modules%, call AddModuleToState item=%module%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.08,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.05,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.94,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.54,
+     "llm": 0.04,
+     "loop": 0.94,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.08,
+     "output": 0.05,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.23
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.93,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     },
+     "list.add": {
+      "score": 0.54,
+      "from": "stage 2",
+      "confidence": 0.55
+     },
+     "loop.foreach": {
+      "score": 0.94,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.05,
+     "cache": 0.05,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.08,
+     "event": 0.04,
+     "file": 0.12,
+     "goal": 0.06,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.05,
+     "llm": 0.05,
+     "loop": 0.05,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.08,
+     "settings": 0.05,
+     "signing": 0.04,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.05,
+     "timer": 0.04,
+     "ui": 0.97,
+     "variable": 0.75
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.74,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.75,
+      "confidence": 0.98
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.35,
+      "from": "stage 1"
+     },
+     "ui.render": {
+      "score": 0.97,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%",
+    "expected": [
+     "llm.decider",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.05,
+     "cache": 0.05,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.07,
+     "event": 0.05,
+     "file": 0.05,
+     "goal": 0.09,
+     "http": 0.07,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.98,
+     "loop": 0.05,
+     "math": 0.04,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.07,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.06,
+     "timer": 0.04,
+     "ui": 0.08,
+     "variable": 0.58
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.5,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.58,
+      "confidence": 0.59
+     },
+     "goal.call": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "llm.decider": {
+      "score": 0.98,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.05,
+     "cache": 0.05,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.05,
+     "error": 0.06,
+     "event": 0.05,
+     "file": 0.1,
+     "goal": 0.07,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.06,
+     "llm": 0.07,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.08,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.97,
+     "variable": 0.76
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.67,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.76,
+      "confidence": 0.98
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.25,
+      "from": "stage 1"
+     },
+     "ui.render": {
+      "score": 0.97,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%",
+    "expected": [
+     "llm.decider",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.05,
+     "cache": 0.05,
+     "callback": 0.04,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.06,
+     "event": 0.05,
+     "file": 0.05,
+     "goal": 0.08,
+     "http": 0.06,
+     "identity": 0.03,
+     "list": 0.06,
+     "llm": 0.98,
+     "loop": 0.05,
+     "math": 0.04,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.06,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.06,
+     "timer": 0.04,
+     "ui": 0.07,
+     "variable": 0.59
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.59,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.59,
+      "confidence": 0.79
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "llm.decider": {
+      "score": 0.98,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
+    "expected": [
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.43,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.07,
+     "code": 0.04,
+     "condition": 0.04,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.05,
+     "error": 0.06,
+     "event": 0.36,
+     "file": 0.05,
+     "goal": 0.83,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.06,
+     "llm": 0.05,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.05,
+     "output": 0.1,
+     "settings": 0.04,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.09
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.93,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "variable"
+   ],
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "variable"
+   ],
+   [
+    3,
+    "goal"
+   ],
+   [
+    4,
+    "goal"
+   ],
+   [
+    9,
+    "goal"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.5952696800231934,
+   "bytes": 133597,
+   "questions": 370,
+   "usage": {
+    "input_tokens": 32367,
+    "output_tokens": 6744
+   }
+  },
+  "stage2": {
+   "secs": 0.8478741645812988,
+   "bytes": 19808,
+   "questions": 7,
+   "usage": {
+    "input_tokens": 5723,
+    "output_tokens": 487
+   }
+  }
+ },
+ {
+  "goal": "checkout",
+  "steps": [
+   {
+    "index": 0,
+    "text": "read 'orders/%orderId%.json', write to %order%",
+    "expected": [
+     "file.read",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.11,
+     "event": 0.03,
+     "file": 0.98,
+     "goal": 0.05,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.03,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.05,
+     "timer": 0.04,
+     "ui": 0.03,
+     "variable": 0.93
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.9,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.96,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "count %order.items%, write to %itemCount%",
+    "expected": [
+     "list.count",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.03,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.06,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.07,
+     "event": 0.03,
+     "file": 0.06,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.82,
+     "llm": 0.02,
+     "loop": 0.06,
+     "math": 0.38,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.91
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.86,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.91,
+      "confidence": 0.97
+     },
+     "goal.call": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "list.count": {
+      "score": 0.82,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"",
+    "expected": [
+     "condition.if",
+     "condition.elseif",
+     "condition.else",
+     "output.write"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.06,
+     "code": 0.03,
+     "condition": 0.97,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.08,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.06,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.97,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.05,
+     "variable": 0.2
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "if %order.email% does not contain \"@\", throw \"Invalid email address\"",
+    "expected": [
+     "condition.if",
+     "error.throw"
+    ],
+    "modules": {
+     "assert": 0.06,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.04,
+     "code": 0.03,
+     "condition": 0.97,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.92,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.07,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.11,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.04,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.13
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.91,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.throw": {
+      "score": 0.92,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%",
+    "expected": [
+     "condition.if",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.05,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.09,
+     "condition": 0.97,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.09,
+     "event": 0.05,
+     "file": 0.06,
+     "goal": 0.95,
+     "http": 0.06,
+     "identity": 0.04,
+     "list": 0.07,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.05,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.07,
+     "settings": 0.05,
+     "signing": 0.05,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.24
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.95,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.05,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "if %order.total% is not a number, throw \"The total must be a number\"",
+    "expected": [
+     "condition.if",
+     "error.throw"
+    ],
+    "modules": {
+     "assert": 0.09,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.96,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.91,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.08,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.1,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.04,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.15
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.92,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.throw": {
+      "score": 0.91,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25",
+    "expected": [
+     "condition.if",
+     "condition.else",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.05,
+     "build": 0.03,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.03,
+     "code": 0.03,
+     "condition": 0.97,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.04,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.07,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.05,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.06,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.06,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.96
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.97,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "math.multiply A=%order.total%, B=%vat%, write to %vatAmount%",
+    "expected": [
+     "math.multiply",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.07,
+     "event": 0.03,
+     "file": 0.04,
+     "goal": 0.05,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.03,
+     "math": 0.99,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.07,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.02,
+     "ui": 0.03,
+     "variable": 0.84
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.79,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.84,
+      "confidence": 0.76
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "math.multiply": {
+      "score": 0.99,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "if %order.note% does not start with \"#\", add %order.note% to %notes%",
+    "expected": [
+     "condition.if",
+     "list.add"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.04,
+     "condition": 0.98,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.95,
+     "llm": 0.03,
+     "loop": 0.03,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.03,
+     "output": 0.06,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.32
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "list.add": {
+      "score": 0.95,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "write out \"Total: %order.total%, VAT: %vatAmount%\"",
+    "expected": [
+     "output.write"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.08,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.06,
+     "event": 0.04,
+     "file": 0.04,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.06,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.97,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.05,
+     "variable": 0.33
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    0,
+    "file"
+   ],
+   [
+    0,
+    "variable"
+   ],
+   [
+    2,
+    "output"
+   ],
+   [
+    2,
+    "condition"
+   ],
+   [
+    3,
+    "condition"
+   ],
+   [
+    4,
+    "goal"
+   ],
+   [
+    4,
+    "condition"
+   ],
+   [
+    5,
+    "condition"
+   ],
+   [
+    6,
+    "condition"
+   ],
+   [
+    6,
+    "variable"
+   ],
+   [
+    8,
+    "condition"
+   ],
+   [
+    9,
+    "output"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.591688871383667,
+   "bytes": 136221,
+   "questions": 370,
+   "usage": {
+    "input_tokens": 33507,
+    "output_tokens": 6744
+   }
+  },
+  "stage2": {
+   "secs": 0.8430683612823486,
+   "bytes": 22870,
+   "questions": 7,
+   "usage": {
+    "input_tokens": 6675,
+    "output_tokens": 621
+   }
+  }
+ },
+ {
+  "goal": "weekly_report",
+  "steps": [
+   {
+    "index": 0,
+    "text": "list files in '/logs', pattern \"*.log\", write to %files%",
+    "expected": [
+     "file.list",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.03,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.05,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.08,
+     "event": 0.03,
+     "file": 0.99,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.09,
+     "llm": 0.03,
+     "loop": 0.05,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.09,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.93
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.85,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.93,
+      "confidence": 0.99
+     },
+     "goal.call": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.list": {
+      "score": 0.99,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %errors% = []",
+    "expected": [
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.03,
+     "build": 0.04,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.04,
+     "code": 0.03,
+     "condition": 0.04,
+     "crypto": 0.02,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.04,
+     "event": 0.04,
+     "file": 0.03,
+     "goal": 0.05,
+     "http": 0.03,
+     "identity": 0.02,
+     "list": 0.18,
+     "llm": 0.02,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.05,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.03,
+     "variable": 0.97
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.02,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "foreach %files%, call ScanFile file=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.08,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.08,
+     "event": 0.04,
+     "file": 0.35,
+     "goal": 0.95,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.2,
+     "llm": 0.04,
+     "loop": 0.94,
+     "math": 0.03,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.08,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.04,
+     "variable": 0.38
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.12,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.96,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.31,
+      "from": "stage 1"
+     },
+     "loop.foreach": {
+      "score": 0.94,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "if %errors% is empty",
+    "expected": [
+     "condition.if"
+    ],
+    "modules": {
+     "assert": 0.05,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.03,
+     "condition": 0.96,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.05,
+     "file": 0.06,
+     "goal": 0.23,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.11,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.04,
+     "module": 0.04,
+     "output": 0.28,
+     "settings": 0.05,
+     "signing": 0.03,
+     "snapshot": 0.04,
+     "test": 0.05,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.06,
+     "variable": 0.2
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.48,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.93,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "write out \"No errors this week\"",
+    "expected": [
+     "output.write"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.11,
+     "code": 0.03,
+     "condition": 0.13,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.04,
+     "error": 0.06,
+     "event": 0.04,
+     "file": 0.05,
+     "goal": 0.07,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.07,
+     "llm": 0.03,
+     "loop": 0.05,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.97,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.06,
+     "variable": 0.09
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.9,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.18,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "return",
+    "expected": [
+     "goal.return"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.03,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.03,
+     "condition": 0.08,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.05,
+     "file": 0.04,
+     "goal": 0.92,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.06,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.08,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.04,
+     "variable": 0.08
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.36,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.13,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "goal.return": {
+      "score": 0.92,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "if %files% is a list",
+    "expected": [
+     "condition.if"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.05,
+     "code": 0.04,
+     "condition": 0.95,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.07,
+     "goal": 0.11,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.12,
+     "llm": 0.03,
+     "loop": 0.06,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.1,
+     "settings": 0.05,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.05,
+     "timeout": 0.03,
+     "timer": 0.03,
+     "ui": 0.05,
+     "variable": 0.15
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.33,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.93,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "write out \"Scanned the log files\"",
+    "expected": [
+     "output.write"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.03,
+     "cache": 0.04,
+     "callback": 0.03,
+     "channel": 0.1,
+     "code": 0.04,
+     "condition": 0.16,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.05,
+     "error": 0.05,
+     "event": 0.04,
+     "file": 0.07,
+     "goal": 0.07,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.08,
+     "llm": 0.03,
+     "loop": 0.07,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.96,
+     "settings": 0.04,
+     "signing": 0.03,
+     "snapshot": 0.04,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.05,
+     "variable": 0.09
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.86,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.96,
+      "confidence": 1.0
+     },
+     "error.handle": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.22,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "render template \"report.html\", errors=%errors%, write to %html%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.07,
+     "code": 0.04,
+     "condition": 0.07,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.05,
+     "error": 0.12,
+     "event": 0.05,
+     "file": 0.25,
+     "goal": 0.1,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.09,
+     "llm": 0.04,
+     "loop": 0.05,
+     "math": 0.04,
+     "mock": 0.03,
+     "module": 0.05,
+     "output": 0.16,
+     "settings": 0.04,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.04,
+     "ui": 0.97,
+     "variable": 0.81
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.63,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.81,
+      "confidence": 0.51
+     },
+     "goal.call": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.09,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.3,
+      "from": "stage 1"
+     },
+     "ui.render": {
+      "score": 0.97,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "save %html% to file '/reports/week.html'",
+    "expected": [
+     "file.save"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.03,
+     "cache": 0.03,
+     "callback": 0.03,
+     "channel": 0.06,
+     "code": 0.03,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.03,
+     "environment": 0.04,
+     "error": 0.11,
+     "event": 0.04,
+     "file": 0.96,
+     "goal": 0.06,
+     "http": 0.03,
+     "identity": 0.03,
+     "list": 0.05,
+     "llm": 0.03,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.03,
+     "output": 0.08,
+     "settings": 0.05,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.05,
+     "timer": 0.04,
+     "ui": 0.07,
+     "variable": 0.39
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.1,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.04,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.save": {
+      "score": 0.96,
+      "from": "stage 2",
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "call SendReport to=\"ops@example.com\", subject=\"Weekly report\", on error call LogFailure",
+    "expected": [
+     "goal.call",
+     "error.handle"
+    ],
+    "modules": {
+     "assert": 0.05,
+     "build": 0.04,
+     "cache": 0.04,
+     "callback": 0.05,
+     "channel": 0.11,
+     "code": 0.04,
+     "condition": 0.08,
+     "crypto": 0.04,
+     "debug": 0.04,
+     "environment": 0.07,
+     "error": 0.92,
+     "event": 0.09,
+     "file": 0.07,
+     "goal": 0.86,
+     "http": 0.45,
+     "identity": 0.05,
+     "list": 0.07,
+     "llm": 0.04,
+     "loop": 0.05,
+     "math": 0.04,
+     "mock": 0.04,
+     "module": 0.05,
+     "output": 0.3,
+     "settings": 0.07,
+     "signing": 0.04,
+     "snapshot": 0.03,
+     "test": 0.04,
+     "timeout": 0.05,
+     "timer": 0.05,
+     "ui": 0.05,
+     "variable": 0.14
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.94,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.18,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.87,
+      "from": "stage 1",
+      "also": "stage 2",
+      "module": 0.92,
+      "confidence": 1.0
+     },
+     "condition.if": {
+      "score": 0.06,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.04,
+      "from": "stage 1"
+     }
+    }
+   },
+   {
+    "index": 11,
+    "text": "write out \"Report sent\" to \"log\" channel",
+    "expected": [
+     "output.write"
+    ],
+    "modules": {
+     "assert": 0.04,
+     "build": 0.03,
+     "cache": 0.04,
+     "callback": 0.04,
+     "channel": 0.42,
+     "code": 0.04,
+     "condition": 0.05,
+     "crypto": 0.03,
+     "debug": 0.04,
+     "environment": 0.06,
+     "error": 0.09,
+     "event": 0.05,
+     "file": 0.05,
+     "goal": 0.07,
+     "http": 0.04,
+     "identity": 0.03,
+     "list": 0.04,
+     "llm": 0.02,
+     "loop": 0.04,
+     "math": 0.03,
+     "mock": 0.03,
+     "module": 0.04,
+     "output": 0.96,
+     "settings": 0.06,
+     "signing": 0.03,
+     "snapshot": 0.03,
+     "test": 0.03,
+     "timeout": 0.04,
+     "timer": 0.03,
+     "ui": 0.05,
+     "variable": 0.08
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.05,
+      "from": "stage 1"
+     },
+     "goal.call": {
+      "score": 0.07,
+      "from": "stage 1"
+     },
+     "output.write": {
+      "score": 0.93,
+      "from": "stage 1"
+     },
+     "error.handle": {
+      "score": 0.08,
+      "from": "stage 1"
+     },
+     "condition.if": {
+      "score": 0.03,
+      "from": "stage 1"
+     },
+     "file.read": {
+      "score": 0.03,
+      "from": "stage 1"
+     }
+    }
+   }
+  ],
+  "skipped": [
+   [
+    1,
+    "variable"
+   ],
+   [
+    2,
+    "goal"
+   ],
+   [
+    3,
+    "condition"
+   ],
+   [
+    4,
+    "output"
+   ],
+   [
+    6,
+    "condition"
+   ],
+   [
+    10,
+    "goal"
+   ],
+   [
+    11,
+    "output"
+   ]
+  ],
+  "stage1": {
+   "secs": 1.6278331279754639,
+   "bytes": 147367,
+   "questions": 444,
+   "usage": {
+    "input_tokens": 34493,
+    "output_tokens": 8166
+   }
+  },
+  "stage2": {
+   "secs": 0.8415110111236572,
+   "bytes": 20675,
+   "questions": 7,
+   "usage": {
+    "input_tokens": 5881,
+    "output_tokens": 366
+   }
+  }
+ }
+]
