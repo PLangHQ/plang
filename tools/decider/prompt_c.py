@@ -12,7 +12,7 @@ The check — the LLM and the decider must agree:
               (goal.call held as a value or a recovery is allowed: it is not the step's own action)
     warning   the step was built from a possible pick (0.5–0.9), or a disagreement was settled on retry
 """
-import os, re
+import collections, os, re
 import build_pr as b
 import formal as f
 
@@ -148,18 +148,19 @@ def disagreements(i, rows, picks_i, text=''):
 
 def fold(goal, parsed):
     """A step with steps indented under it gets its body from that layout (build.fold). A child the
-    answer wrote over it that holds the same actions as the indented steps is a copy: dropped. Any
-    other child there is invented: refused. Returns the refusals; the copies are removed in place."""
+    answer wrote over it whose actions all come from the indented steps — all of them, or some — is a
+    copy: dropped. A child holding anything else is invented: refused. Returns the refusals; the
+    copies are removed in place."""
     refused = []
     steps = goal['steps']
     for i, rows in parsed.items():
         body = b.body_of(steps, i) if i < len(steps) else []
         if not body: continue
-        below = [a for n in body for a in own_actions(parsed.get(n, []))]
+        below = collections.Counter(a for n in body for a in own_actions(parsed.get(n, [])))
         for a in rows:
             if not a.get('child'): continue
-            inside = [x for c in a['child'] for x in own_actions(c.get('action') or [])]
-            if inside == below: a.pop('child')
+            inside = collections.Counter(x for c in a['child'] for x in own_actions(c.get('action') or []))
+            if not inside - below: a.pop('child')
             else: refused.append(f'step {i}\'s body is the steps indented under it ({", ".join(str(n) for n in body)}); '
                                  f'the builder places them — write step {i} without {{ }} and each indented step on its own line')
     return refused
