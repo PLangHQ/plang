@@ -44,7 +44,13 @@ value     = "text" | number | true | false | null | %variable% | [list] | {dict}
 | `goal.return(Depth: number ?= 1)` → frozen → written back identical | same |
 | two nested error.handles → modifier order [A, B] → written back | same |
 
-**One choice of mine:** goal.call's argument rows (`Parameter: list = {kind: "goalHeader", goal: %goal%}`) carry no written types inside the dict. A row's type there is always its literal's (the slot is open), so it can't differ from what the parser derives, and `{k: v}` has no place for a type without a new mini-syntax. Tell me if you want `{kind: text = "goalHeader"}`.
+**Argument rows carry their types too (architect's ruling):**
+- The writer writes `goal.call(Name: text = "EmitBuildEvent", Parameter: list = {kind: text = "build-path", path: item = %path%})`.
+- On input the type stays optional (and is then the literal's); a written one wins (`{a: date = "2026-01-01"}`).
+- A dict LITERAL keeps untyped entries, and the writer quotes its keys, so the two forms never look alike: `Value: dict = {"name": "a", "n": 5}`.
+- The grammar tells them apart: after `key:`, a `type =` makes the entry a typed row.
+- A typed entry given to a non-list property is refused: "`Value` takes a value, not argument rows".
+- Round trip is still 58/58 typed, 58/58 untyped, and the mock 10/10.
 
 A condition's child text is its body's untyped formal (the open point from stage 2; no ruling yet, so it stands).
 
