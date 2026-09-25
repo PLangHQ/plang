@@ -249,6 +249,13 @@ def windows(steps):
 COMMON = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read']
 NEAR_CERTAIN = 0.9   # a common action scored at or above this is picked; its module skips stage 2
 
+# What a common-action question counts as the step's own. CLAUSE=1 adds "its own work, or anything it
+# guards, loops or hands to an error handler"; measured on the golden goals it made output.write and
+# error.handle fire where they don't belong (46/58 steps exact at 0.5 against 51/58 without), so the
+# bare question is the default.
+CLAUSE = (' — its own work, or anything it guards behind a condition, repeats in a loop, or hands to an '
+          'error handler —') if os.environ.get('CLAUSE', '0') == '1' else ''
+
 def stage1(goal, cat):
     """v0.1's shape (origin/main PLang/Building/StepBuilder.cs PrefetchModules) plus the common actions:
     per step ONE choice — which module does the main work — whose options are the bare module names
@@ -266,7 +273,7 @@ def stage1(goal, cat):
                 f'Step {step_no(s)} of this goal is `{text}`. Which plang module does the main work of step {step_no(s)}?'}
             for a in COMMON:
                 qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
-                    f'Step {step_no(s)} is `{text}`. Does step {step_no(s)} use `{a}`?'}
+                    f'Step {step_no(s)} is `{text}`. Does step {step_no(s)}{CLAUSE} use `{a}`?'}
         resp, t, b = ask(state, qs)
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():
@@ -280,21 +287,37 @@ def main_module(probs_i, cat):
     scored = {m: p for m, p in probs_i.items() if m in cat and p is not None}
     return max(scored, key=scored.get) if scored else None
 
+RUNNER_UP = 0.2   # the choice's second module at or above this is asked in stage 2 as well
+
 def picks(probs_i, cat, threshold=0.5):
     """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must ask): the
-    main module, unless one of its common actions is near-certain — then that action is its answer."""
+    main module, and the runner-up when its probability is at least RUNNER_UP — a step whose work two
+    modules share — each unless one of its common actions is near-certain, which is then its answer."""
     common = {a: probs_i.get(a) for a in COMMON if probs_i.get(a) is not None}
     settled = {a.split('.', 1)[0] for a, p in common.items() if p >= NEAR_CERTAIN}
-    main = main_module(probs_i, cat)
-    return common, [main] if main and main not in settled else []
+    ranked = sorted(((m, p) for m, p in probs_i.items() if m in cat and p is not None), key=lambda mp: -mp[1])
+    asked = ranked[:1] + [(m, p) for m, p in ranked[1:2] if p >= RUNNER_UP]
+    return common, [m for m, _ in asked if m not in settled]
 
-def stage2(goal, cat, chosen):   # chosen: {step_index: [modules]}
-    used = {m for ms in chosen.values() for m in ms}
+# The branches that can follow an if in the same step. Stage 2 is one choice per module, so it can
+# never give two actions of the condition module; a picked condition.if asks these by name.
+BRANCHES = ['condition.elseif', 'condition.else']
+
+def stage2(goal, cat, chosen, conditions=()):
+    """chosen: {step_index: [modules]} — one choice per (step, module) for its action. conditions: the
+    steps with condition.if picked — each also asked noul for every BRANCHES action, answered as
+    out[(i, 'condition.else')] = (None, noul)."""
+    used = {m for ms in chosen.values() for m in ms} | ({'condition'} if conditions else set())
     state = state_for(goal, cat, modules=used)
     out = {}; secs = nbytes = nq = 0; usage = collections.Counter()
     for win in windows(goal['steps']):
         qs = {}
         for s in win:
+            if s['index'] in conditions:
+                for a in BRANCHES:
+                    qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
+                        f'Step {step_no(s)} is `{s["text"].strip()}`. It tests a condition. Does step {step_no(s)} also have `{a}` — '
+                        f'{cat["condition"]["actions"][a.split(".", 1)[1]]["description"]}?'}
             for m in chosen.get(s['index'], []):
                 acts = cat[m]['actions']
                 if len(acts) == 1:
@@ -308,7 +331,7 @@ def stage2(goal, cat, chosen):   # chosen: {step_index: [modules]}
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():
             i, m = k[1:].split('_', 1)
-            out[(int(i), m)] = (a.get('choice'), a.get('confidence'))
+            out[(int(i), m)] = (None, a.get('noul')) if m in BRANCHES else (a.get('choice'), a.get('confidence'))
     return out, secs, nbytes, nq, dict(usage)
 
 # ---------------------------------------------------------------- run

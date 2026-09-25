@@ -173,13 +173,15 @@ def menu_for(goal, cat, folder=None):
     # a near-certain one settles its module, which then skips stage 2.
     split = {i: h.picks(probs[i], cat) for i in probs}
     chosen = {i: ask2 for i, (_, ask2) in split.items()}
-    acts, *_ = h.stage2(goal, cat, chosen)
+    conditions = {i for i, (common, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
+    acts, *_ = h.stage2(goal, cat, chosen, conditions)
     if folder: readable(folder, '2.decider'); h._local.dump = None
     menu = {}
     for s in goal['steps']:
         i = s['index']
         common = [a for a, p in split.get(i, ({}, []))[0].items() if p >= 0.5]
-        entries = common + [f'{m}.{acts[(i, m)][0]}' for m in chosen.get(i, []) if (i, m) in acts]
+        branches = [a for a in h.BRANCHES if (acts.get((i, a), (None, 0))[1] or 0) >= 0.5]
+        entries = common + branches + [f'{m}.{acts[(i, m)][0]}' for m in chosen.get(i, []) if (i, m) in acts]
         menu[i] = list(dict.fromkeys(entries))
     return menu, probs
 

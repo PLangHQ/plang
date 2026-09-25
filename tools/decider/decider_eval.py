@@ -4,8 +4,10 @@ its conditions' bodies and modifiers included).
 
     stage 1  per step one choice (which module does the main work) + noul per common action
                                                                         harness.stage1
-    stage 2  per step one choice (which action of the main module), unless a near-certain common
-             action of that module already answers it                  harness.picks, harness.stage2
+    stage 2  per step one choice (which action) for the main module and for a runner-up module at
+             ≥ 0.2, each unless a near-certain common action of it already answers it; and, where
+             condition.if was picked, noul for condition.elseif and condition.else
+                                                                        harness.picks, harness.stage2
 
 A pick's score: a common action's own noul (when stage 2 also names it, its module's probability and the
 choice's confidence are kept beside it); the main module's action scores the module's probability, with
@@ -18,7 +20,7 @@ import json, os, time, collections, concurrent.futures as cf
 import harness as h
 import child_eval as e
 
-DUMP = os.environ.get('DUMP', '/shared/coder/llm/plang/builder-formal/decider-v2')
+DUMP = os.environ.get('DUMP', '/shared/coder/llm/plang/builder-formal/decider-v3')
 OUT = os.path.join(h.OUT, 'decider_eval_' + time.strftime('%Y%m%d_%H%M%S') + '.json')
 
 def dump_to(folder, label):
@@ -48,9 +50,10 @@ def one(case, cat):
     skipped = []
     for i in probs:
         main = h.main_module(probs[i], cat)
-        if main and not split[i][1] and len(cat[main]['actions']) > 1: skipped.append((i, main))
+        if main and main not in split[i][1] and len(cat[main]['actions']) > 1: skipped.append((i, main))
     dump_to(folder, '2.decider')
-    acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen)
+    conditions = {i for i, (common, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
+    acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen, conditions)
     if q2: readable(folder, '2.decider')
     h._local.dump = None
     steps = []
@@ -65,6 +68,8 @@ def one(case, cat):
             # naming it too is recorded beside it.
             if name in pick: pick[name].update(also='stage 2', module=probs[i][m], confidence=confidence); continue
             pick[name] = {'score': probs[i][m], 'from': 'stage 2', 'confidence': confidence}
+        for a in h.BRANCHES:   # asked by name when condition.if was picked
+            if (i, a) in acts: pick[a] = {'score': acts[(i, a)][1], 'from': 'branch'}
         steps.append({'index': i, 'text': s['text'], 'expected': case['menu'][str(i)],
                       'main': h.main_module(probs[i], cat),
                       'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick})

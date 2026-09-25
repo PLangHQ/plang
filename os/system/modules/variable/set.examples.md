@@ -30,3 +30,11 @@ Properties: `{"Name": "%img%", "Value": "real.gif", "Type": {"name": "image", "k
 
 Step text: `set %n% = "42" as int`
 Properties: `{"Name": "%n%", "Value": "42", "Type": {"name": "number", "kind": "int"}}` — `int` is a kind of `number`, never a name of its own.
+
+Step text: `get 'https://example.com/rates.json', write to %rates%`
+
+Step text: `hash %password%, write to %passwordHash%`
+
+Step text: `call GetUser id=%userId%, write to %user%`
+
+Step text: `sort %names%, write to %sortedNames%`
