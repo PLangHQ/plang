@@ -3,10 +3,10 @@
   "step": [
     {
       "index": 0,
-      "text": "set default %path% = '.'",
+      "text": "set default %path% = \u0027.\u0027",
       "lineNumber": 4,
-      "comment": "Replacement for the iteration-based runner — uses C# test.discover/run/report.\nThe C# test.run loop ensures one test's failure can't silent-skip the rest.",
-      "action": [
+      "comment": "Replacement for the iteration-based runner \u2014 uses C# test.discover/run/report.\nThe C# test.run loop ensures one test\u0027s failure can\u0027t silent-skip the rest.",
+      "code": [
         {
           "module": "variable",
           "name": "set",
@@ -42,7 +42,7 @@
       "index": 1,
       "text": "test.discover tests in %path% recursive, write to %tests%",
       "lineNumber": 5,
-      "action": [
+      "code": [
         {
           "module": "test",
           "name": "discover",
@@ -93,7 +93,7 @@
       "index": 2,
       "text": "test.run tests %tests%",
       "lineNumber": 6,
-      "action": [
+      "code": [
         {
           "module": "test",
           "name": "run",
@@ -116,7 +116,7 @@
       "index": 3,
       "text": "test.report",
       "lineNumber": 7,
-      "action": [
+      "code": [
         {
           "module": "test",
           "name": "report",

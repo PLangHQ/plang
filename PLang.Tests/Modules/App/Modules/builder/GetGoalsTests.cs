@@ -141,7 +141,7 @@ public class GetGoalsTests
                 new Step
                 {
                     Text = "write out 'hello'",
-                    Action = new StepActions(new[]
+                    Code = new StepActions(new[]
                     {
                         new global::app.goal.step.action.@this
                         {
@@ -170,8 +170,8 @@ public class GetGoalsTests
         var startGoal = goals!.FirstOrDefault(g => g.Name == "Start");
         await Assert.That(startGoal).IsNotNull();
         // Merged actions from .pr data
-        await Assert.That(startGoal!.Step[0].Action.Count).IsEqualTo(1);
-        await Assert.That(startGoal.Step[0].Action[0].Module.Name).IsEqualTo("output");
+        await Assert.That(startGoal!.Step[0].Code.Count).IsEqualTo(1);
+        await Assert.That(startGoal.Step[0].Code[0].Module.Name).IsEqualTo("output");
     }
 
     [Test]
@@ -299,7 +299,7 @@ public class GetGoalsTests
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
         // Steps should have empty actions (no merge happened)
-        await Assert.That(goals[0].Step[0].Action.Count).IsEqualTo(0);
+        await Assert.That(goals[0].Step[0].Code.Count).IsEqualTo(0);
         // The corrupt .pr is a build diagnostic about the goal that rebuilt — it hangs on that goal
         await Assert.That(goals[0].Warning.Any(w => w.Key == "CorruptPrFile")).IsTrue();
     }

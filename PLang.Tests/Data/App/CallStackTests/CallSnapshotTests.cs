@@ -14,7 +14,7 @@ public class CallSnapshotTests
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module], Name = actionName };
         action.Step = step;
-        step.Action.Add(action);
+        step.Code.Add(action);
         goal.Step.Add(step);
         app.Goal.Add(goal);
         return (app, action);
@@ -69,7 +69,7 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
             dstAction.Step = dstStep;
-            dstStep.Action.Add(dstAction);
+            dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
@@ -114,7 +114,7 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
             var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
             dstAction.Step = dstStep;
-            dstStep.Action.Add(dstAction);
+            dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
@@ -141,7 +141,7 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = "same step text", Goal = dstGoal };
             var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" };
             dstAction.Step = dstStep;
-            dstStep.Action.Add(dstAction);
+            dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
@@ -168,7 +168,7 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
             dstAction.Step = dstStep;
-            dstStep.Action.Add(dstAction);
+            dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
@@ -181,7 +181,7 @@ public class CallSnapshotTests
             // Same instances — Restore is read-only on the registry.
             await Assert.That(dst.Goal.Get("PureGoal")).IsSameReferenceAs(goalBefore);
             await Assert.That(goalBefore.Step[0]).IsSameReferenceAs(stepBefore);
-            await Assert.That(stepBefore.Action[0]).IsSameReferenceAs(actionBefore);
+            await Assert.That(stepBefore.Code[0]).IsSameReferenceAs(actionBefore);
         }
     }
 

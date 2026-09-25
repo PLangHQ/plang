@@ -65,7 +65,7 @@ public class ActionPropertyPrTests
     [Test] public async Task LoadedProgram_HoldsNoData()
     {
         var read = await Read(await Write(Sample()));
-        var action = ((await read.Value()) as global::app.goal.@this)!.Step[0].Action[0];
+        var action = ((await read.Value()) as global::app.goal.@this)!.Step[0].Code[0];
 
         await Assert.That(action.Property.Count).IsEqualTo(1);
         await Assert.That(action.Default.Count).IsEqualTo(1);

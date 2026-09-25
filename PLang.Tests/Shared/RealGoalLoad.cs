@@ -31,8 +31,13 @@ public static class RealGoalLoad
             app.User.Channel.Serializers.GetOrDefault("application/plang");
         using var outMs = new System.IO.MemoryStream();
         await serializer.SerializeItemAsync(outMs, goal, global::app.View.Store);
-        var prJson = System.Text.Encoding.UTF8.GetString(outMs.ToArray());
+        return await Read(app, System.Text.Encoding.UTF8.GetString(outMs.ToArray()));
+    }
 
+    /// <summary>A .pr's text read the way the runtime reads one off I/O: a stream channel, mime
+    /// <c>application/plang-goal</c>.</summary>
+    public static async Task<global::app.goal.@this> Read(global::app.@this app, string prJson)
+    {
         var ms = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(prJson));
         var channel = new global::app.channel.type.stream.@this(
             "real-load", ms, global::app.channel.ChannelDirection.Input, ownsStream: true)

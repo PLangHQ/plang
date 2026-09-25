@@ -352,7 +352,7 @@ public class ErrorHandleTests
                 PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList())
         };
         var step = new Step { Text = $"test step for {name}" };
-        step.Action.Add(prAction);
+        step.Code.Add(prAction);
         var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Step.Add(step);
         _app.Goal.Add(goal);

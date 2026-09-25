@@ -63,7 +63,7 @@ public class RunActionTests
         for (int i = 0; i < actions.Length; i++)
         {
             var step = new Step { Index = i, Text = $"action {i}" };
-            step.Action.Add(new PrAction
+            step.Code.Add(new PrAction
             {
                 Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actions[i].module],
                 Name = actions[i].actionName,
@@ -537,12 +537,12 @@ public class RunActionTests
             Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
             Step = new GoalSteps
             {
-                new Step { Index = 0, Text = "h0", Action = new StepActions
+                new Step { Index = 0, Text = "h0", Code = new StepActions
                 {
                     new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
                         Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) }) }
                 }},
-                new Step { Index = 1, Text = "h1", Action = new StepActions
+                new Step { Index = 1, Text = "h1", Code = new StepActions
                 {
                     new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
                         Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }) }

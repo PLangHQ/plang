@@ -11,7 +11,7 @@ public class SnapshotAtErrorTests
         var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
-        action.Step = step; step.Action.Add(action); goal.Step.Add(step);
+        action.Step = step; step.Code.Add(action); goal.Step.Add(step);
         app.Goal.Add(goal);
         return (app, action);
     }

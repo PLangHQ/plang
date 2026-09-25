@@ -199,7 +199,7 @@ public static class Make
                 Index = i,
                 Indent = steps[i].Indent,
                 Text = steps[i].Text,
-                Action = actionNode,
+                Code = actionNode,
             });
         }
         goal.Step = stepNode;

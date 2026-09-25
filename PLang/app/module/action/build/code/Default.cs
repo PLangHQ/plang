@@ -177,8 +177,8 @@ public class Default : IBuilder
             if (block.CountRaw > 0)
             {
                 global::app.goal.step.action.@this? gate = null;
-                for (int k = 0; k < step.Action.Count && gate == null; k++)
-                    if (step.Action[k].IsCondition) gate = step.Action[k];
+                for (int k = 0; k < step.Code.Count && gate == null; k++)
+                    if (step.Code[k].IsCondition) gate = step.Code[k];
                 if (gate == null)
                     errors.Add(new global::app.error.StepError(
                         $"indented steps under non-condition step '{step.Text}'",
@@ -257,9 +257,9 @@ public class Default : IBuilder
 
         // Freeze the class's [Default] for every property the step did not set — a built app runs
         // the same on a later runtime that changes a default. The defaults are the catalog twin's.
-        for (int i = 0; i < step.Action.Count; i++)
+        for (int i = 0; i < step.Code.Count; i++)
         {
-            var a = step.Action[i];
+            var a = step.Code[i];
             if (a.Module[a.Name] is not { } catalog) continue;
             foreach (var declared in catalog.Property)
             {
@@ -277,7 +277,7 @@ public class Default : IBuilder
 
         // The chain finishes itself — each action binds its handler, runs its Validate()/Build()
         // hooks and walks what it holds (modifiers, recovery, branch body). The builder reacts.
-        if (await step.Action.Build(context) is { } failed) return context.Error(failed);
+        if (await step.Code.Build(context) is { } failed) return context.Error(failed);
 
         return context.Ok(true);
     }
@@ -309,8 +309,8 @@ public class Default : IBuilder
         var step = await action.Step.Value();
         var from = await action.StepFromLlm.Value();
         _ = action.Context.App.Debug?.Write(
-            $"builder.merge: step.Index={step?.Index} step.Action={step?.Action.Count} " +
-            $"from.Index={from?.Index} from.Keep={from?.Keep} from.Action={from?.Action.Count}");
+            $"builder.merge: step.Index={step?.Index} step.Code={step?.Code.Count} " +
+            $"from.Index={from?.Index} from.Keep={from?.Keep} from.Code={from?.Code.Count}");
 
         step!.Merge(from!);
         return action.Context.Ok(step);

@@ -18,7 +18,7 @@ public class StepTests : System.IAsyncDisposable
             LineNumber = 10,
             Indent = 2,
             Comment = "This makes an HTTP call",
-            Action = new StepActions
+            Code = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {
@@ -35,9 +35,9 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.LineNumber).IsEqualTo(10);
         await Assert.That(step.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
-        await Assert.That(step.Action.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Module.Name).IsEqualTo("http");
-        await Assert.That(step.Action[0].Name).IsEqualTo("get");
+        await Assert.That(step.Code.Count).IsEqualTo(1);
+        await Assert.That(step.Code[0].Module.Name).IsEqualTo("http");
+        await Assert.That(step.Code[0].Name).IsEqualTo("get");
         await Assert.That(step.WaitForExecution).IsFalse();
     }
 
@@ -54,8 +54,8 @@ public class StepTests : System.IAsyncDisposable
     {
         var step = new Step();
 
-        await Assert.That(step.Action).IsNotNull();
-        await Assert.That(step.Action.Count).IsEqualTo(0);
+        await Assert.That(step.Code).IsNotNull();
+        await Assert.That(step.Code.Count).IsEqualTo(0);
     }
 
     [Test]

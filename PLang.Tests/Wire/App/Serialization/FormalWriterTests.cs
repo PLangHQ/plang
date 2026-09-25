@@ -21,12 +21,12 @@ public class FormalWriterTests
         return global::app.goal.@this.Parse("Formal\n- a step\n", path, context)!;
     }
 
-    // The step as the .pr holds it: {index, text, action: [rows]} — read through the step reader.
+    // The step as the .pr holds it: {index, text, code: [rows]} — read through the step reader.
     internal static global::app.goal.step.@this Step(global::app.goal.@this goal, System.Text.Json.JsonElement entry)
     {
         var json = "{\"index\":" + entry.GetProperty("index").GetInt32()
                    + ",\"text\":" + System.Text.Json.JsonSerializer.Serialize(entry.GetProperty("text").GetString())
-                   + ",\"action\":" + entry.GetProperty("pr").GetRawText() + "}";
+                   + ",\"code\":" + entry.GetProperty("pr").GetRawText() + "}";
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
@@ -38,7 +38,7 @@ public class FormalWriterTests
     internal static async Task<string> Formal(global::app.goal.step.@this step)
     {
         var writer = new global::app.channel.serializer.formal.Writer();
-        await step.Action.Output(writer, global::app.View.Store, global::PLang.Tests.TestApp.SharedContext);
+        await step.Code.Output(writer, global::app.View.Store, global::PLang.Tests.TestApp.SharedContext);
         return writer.ToString();
     }
 

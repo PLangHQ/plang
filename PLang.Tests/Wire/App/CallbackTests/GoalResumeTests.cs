@@ -25,7 +25,7 @@ public class GoalResumeTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
-        step.Action.Add(action);
+        step.Code.Add(action);
         goal.Step.Add(step);
         return step;
     }
@@ -42,7 +42,7 @@ public class GoalResumeTests
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
         actionA.Step = step; actionB.Step = step;
-        step.Action.Add(actionA); step.Action.Add(actionB);
+        step.Code.Add(actionA); step.Code.Add(actionB);
 
         var result = await step.Resume(context, 0);
         await result.IsSuccess();
@@ -59,7 +59,7 @@ public class GoalResumeTests
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
         actionA.Step = step; actionB.Step = step;
-        step.Action.Add(actionA); step.Action.Add(actionB);
+        step.Code.Add(actionA); step.Code.Add(actionB);
 
         var result = await step.Resume(context, 1);
         await result.IsSuccess();

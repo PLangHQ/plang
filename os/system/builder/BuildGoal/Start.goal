@@ -58,7 +58,7 @@ Settle
 
 Apply
 / The step constructs its own actions from the rows the LLM answered — each born holding the step.
-- set %goal.step[step.Index].action% = %properties.step[step.Index].action%
+- set %goal.step[step.Index].code% = %properties.step[step.Index].action%
 - build.validate step=%goal.step[step.Index]%
 
 

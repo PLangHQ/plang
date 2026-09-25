@@ -92,7 +92,7 @@ public sealed class Coverage
         var goalId = goal.Path?.ToString() ?? goal.Name ?? "?";
         foreach (var step in goal.Step.Items())
         {
-            var conditions = step.Action.Items().Where(a => a.IsCondition).ToList();
+            var conditions = step.Code.Items().Where(a => a.IsCondition).ToList();
             if (conditions.Count == 0) continue;
             RecordBranchChain($"{goalId}:{step.Index}", conditions.Count == 1
                 ? new[] { "true", "false" }

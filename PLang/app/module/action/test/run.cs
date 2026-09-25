@@ -114,7 +114,7 @@ public partial class run : IContext
                         var goalId = goal?.Path?.ToString() ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
-                        var branchIdx = action.Step != null ? action.Step.Action.IndexOf(action) : -1;
+                        var branchIdx = action.Step != null ? action.Step.Code.IndexOf(action) : -1;
                         childApp.Test.Coverage.RecordBranch(site, branchIdx);
                         childApp.Test.Coverage.RecordBranchLabel(site, action.Name);
                     }

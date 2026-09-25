@@ -273,7 +273,7 @@ public class EventHandlerTests
         goal.Step.Add(step);
         var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
         set.Step = step;   // an action is born holding its step
-        step.Action.Add(set);
+        step.Code.Add(set);
         await step.Run(context);
 
         var moment = await Moment();

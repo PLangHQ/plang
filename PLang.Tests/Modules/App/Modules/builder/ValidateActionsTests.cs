@@ -19,7 +19,7 @@ public class ValidateActionsTests
     private validate For(StepActions actions)
     {
         var step = new Step { Text = "step under validation", Index = 0 };
-        foreach (var a in actions) step.Action.Add(a);
+        foreach (var a in actions) step.Code.Add(a);
         return new validate(_app.User.Context) { Step = new("", step) };
     }
 
@@ -89,7 +89,7 @@ public class ValidateActionsTests
         _app.Goal.Add(caller);
 
         var step = new Step { Goal = caller, Text = $"call {name}", Index = 0 };
-        step.Action.Add(new Action
+        step.Code.Add(new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
             Name = "call",
@@ -98,7 +98,7 @@ public class ValidateActionsTests
         caller.Step.Add(step);
 
         await _app.Run(new validate(_app.User.Context) { Step = new("", step) }, _app.User.Context);
-        return step.Action[0]["Name"]!.Data(_app.User.Context);
+        return step.Code[0]["Name"]!.Data(_app.User.Context);
     }
 
     [Test]

@@ -15,7 +15,7 @@ public class SharedRowLoadTests
             Make.Step("set %x% = hello",
                 Make.Action("variable", "set", ("Name", "%x%"), ("Value", "hello")))));
 
-        var property = goal.Step[0].Action[0]["Value"]!;
+        var property = goal.Step[0].Code[0]["Value"]!;
         var run = property.Data(app.User.Context);
 
         await Assert.That(property.Value).IsNotTypeOf<global::app.data.@this>();

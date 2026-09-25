@@ -380,7 +380,7 @@ public sealed partial class @this
     public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
     {
         foreach (var step in Step.Items())
-            foreach (var action in step.Action.Items())
+            foreach (var action in step.Code.Items())
                 visitor(step, action);
     }
 

@@ -95,9 +95,9 @@ public class SetupTests
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
         };
         var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
-            Action = CreateNoOpActions() };
+            Code = CreateNoOpActions() };
         var step2 = new Step { Goal = goal, Index = 1, Text = "step two",
-            Action = CreateNoOpActions() };
+            Code = CreateNoOpActions() };
         goal.Step.Add(step1);
         goal.Step.Add(step2);
 
@@ -131,7 +131,7 @@ public class SetupTests
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
         };
         var step = new Step { Goal = goal, Index = 0, Text = "create table",
-            Action = CreateNoOpActions() };
+            Code = CreateNoOpActions() };
         goal.Step.Add(step);
         _app.Goal.Add(goal);
 
@@ -141,7 +141,7 @@ public class SetupTests
 
         // Simulate changed step (different hash) — new step object with different hash
         var changedStep = new Step { Goal = goal, Index = 0, Text = "create table v2",
-            Action = CreateNoOpActions() };
+            Code = CreateNoOpActions() };
 
         // The changed step should NOT be found as executed
         await Assert.That(await _app.Goal.Setup.IsExecuted(changedStep, _app)).IsFalse();
@@ -189,7 +189,7 @@ public class SetupTests
         var step = new Step
         {
             Goal = goal, Index = 0, Text = "failing step",
-            Action = CreateFailingActions()
+            Code = CreateFailingActions()
         };
         goal.Step.Add(step);
         _app.Goal.Add(goal);
@@ -211,9 +211,9 @@ public class SetupTests
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
         };
         var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
-            Action = CreateNoOpActions() };
+            Code = CreateNoOpActions() };
         var step2 = new Step { Goal = goal, Index = 1, Text = "step two",
-            Action = CreateNoOpActions() };
+            Code = CreateNoOpActions() };
         goal.Step.Add(step1);
         goal.Step.Add(step2);
         _app.Goal.Add(goal);

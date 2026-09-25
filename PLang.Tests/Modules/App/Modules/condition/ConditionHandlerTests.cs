@@ -78,7 +78,7 @@ public class ConditionHandlerTests : IDisposable
         var step = new Step
         {
             Index = 0, Text = "if true, write true-branch",
-            Action = new StepActions { condAction, thenAction }
+            Code = new StepActions { condAction, thenAction }
         };
         condAction.Step = step;
 
@@ -130,7 +130,7 @@ public class ConditionHandlerTests : IDisposable
         var step = new Step
         {
             Index = 0, Text = "if false then, else write else",
-            Action = new StepActions { condAction, thenAction, elseCondAction, elseAction }
+            Code = new StepActions { condAction, thenAction, elseCondAction, elseAction }
         };
         condAction.Step = step;
 

@@ -22,7 +22,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure, never a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>The step takes its own children. A write to <c>action</c> — the builder handing over
+    /// <summary>The step takes its own children. A write to <c>code</c> — the builder handing over
     /// what it just compiled — is the step CONSTRUCTING those actions, not a slot assignment: each one
     /// is born holding this step, the same birth fact a .pr load gives them. The rows ride the action's
     /// own reader, so the wire shape lives in one place. Every other key falls to the reflected
@@ -30,7 +30,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        if (isIndex || !string.Equals(key, "action", System.StringComparison.OrdinalIgnoreCase))
+        if (isIndex || !string.Equals(key, "code", System.StringComparison.OrdinalIgnoreCase))
             return await base.Set(key, isIndex, value, context);
 
         var binding = value as global::app.data.@this;
@@ -45,7 +45,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             else if (row.Read(reader, null, context) is global::app.goal.step.action.@this made) node.Add(made);
             else throw new System.NotSupportedException(
                 $"cannot build an action from a {row.Type.Name} — an action reads from its own wire shape.");
-        _action = node;
+        _code = node;
         return this;
     }
 
@@ -65,10 +65,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (!any) yield return incoming;
     }
 
-    /// <summary>The step writes ITSELF — its bare [Store] shape in declaration order, singular keys,
-    /// nulls omitted (byte-identical to the reflected write it replaces). Actions are action-shaped
-    /// items (each writes itself). The DEBUG view (the live --debug channel, never the persisted wire)
-    /// routes through the reflection (*) kind so diagnostic props (Errors/Warnings) ride.</summary>
+    /// <summary>The step writes ITSELF — its bare [Store] shape, singular keys, nulls omitted. Its
+    /// <c>code</c> is the action list's own JSON tree (each action writes itself); <c>indent</c> is
+    /// written when the step is indented, <c>warning</c> when the build left any. The DEBUG view (the
+    /// live --debug channel, never the persisted wire) routes through the reflection (*) kind.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
@@ -82,11 +82,25 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("index"); writer.Int(Index);
         writer.Name("text"); writer.String(Text);
         writer.Name("lineNumber"); writer.Int(LineNumber);
+        if (Indent > 0) { writer.Name("indent"); writer.Int(Indent); }
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
-        writer.Name("action");
-        await Action.Output(writer, mode, context);   // the action.list writes its own bare array
+        writer.Name("code");
+        await Code.Output(writer, mode, context);   // the action.list writes its own bare array
         if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
         if (Source != null) { writer.Name("source"); writer.String(Source); }
+        if (Warning.Count > 0)
+        {
+            writer.Name("warning");
+            writer.BeginArray(Warning.Count);
+            foreach (var warning in Warning)
+            {
+                writer.BeginObject();
+                writer.Name("key"); writer.String(warning.Key);
+                writer.Name("message"); writer.String(warning.Message);
+                writer.EndObject();
+            }
+            writer.EndArray();
+        }
         writer.Name("waitForExecution"); writer.Bool(WaitForExecution);
         writer.EndObject();
     }

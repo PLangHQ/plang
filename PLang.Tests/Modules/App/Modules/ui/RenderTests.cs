@@ -732,7 +732,7 @@ public class RenderTests : IDisposable
         {
             Index = index,
             Text = text,
-            Action = new StepActions { action }
+            Code = new StepActions { action }
         };
     }
 

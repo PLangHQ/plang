@@ -97,7 +97,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             writer.BeginBody();
             foreach (var step in Child.Items())
-                foreach (var action in step.Action.Items()) await action.Output(writer, mode, context);
+                foreach (var action in step.Code.Items()) await action.Output(writer, mode, context);
             writer.EndBody();
         }
         for (var i = 0; i < Modifier.Count; i++) writer.EndWrap();

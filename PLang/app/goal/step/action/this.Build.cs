@@ -49,7 +49,7 @@ public partial class @this
             if (await modifier.Build(context) is { } invalid) causes.Add(invalid);
         if (await Recovery.Build(context) is { } recovery) causes.Add(recovery);
         for (int i = 0; i < Child.Count; i++)
-            if (await Child[i].Action.Build(context) is { } branch) causes.Add(branch);
+            if (await Child[i].Code.Build(context) is { } branch) causes.Add(branch);
 
         if (causes.Count == 0) return null;
         return new global::app.error.Error(

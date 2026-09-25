@@ -17,7 +17,7 @@ public class ChannelStreamLoadTests
 
         var loaded = await RealGoalLoad.ViaChannel(app, SampleGoal());
 
-        var action = loaded.Step[0].Action[0];
+        var action = loaded.Step[0].Code[0];
         await Assert.That(action.Module.Name).IsEqualTo("output");
         await Assert.That(action.Name).IsEqualTo("write");
 
@@ -42,7 +42,7 @@ public class ChannelStreamLoadTests
                     ("Count", 5))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
-        var ps = loaded.Step[0].Action[0].Property;
+        var ps = loaded.Step[0].Code[0].Property;
 
         await Assert.That(ps.First(p => p.Name == "Name").Type.Name).IsEqualTo("variable");
         await Assert.That(ps.First(p => p.Name == "Count").Type.Name).IsEqualTo("number");

@@ -61,7 +61,7 @@ public class ElseWithoutIfTests
         params global::app.goal.step.action.@this[] body)
     {
         var step = new Step { Text = text };
-        foreach (var a in body) step.Action.Add(a);
+        foreach (var a in body) step.Code.Add(a);
         condition.Child.Add(step);
         return condition;
     }
@@ -124,9 +124,9 @@ public class ElseWithoutIfTests
         var ifStep = goal.Step[0];
         var condition = If();
         condition.Step = ifStep;
-        ifStep.Action.Add(condition);
+        ifStep.Code.Add(condition);
 
-        var error = await ifStep.Action.Validate(ctx);
+        var error = await ifStep.Code.Validate(ctx);
 
         await Assert.That(error?.Key).IsNotEqualTo("BodyMissing");
     }
@@ -142,13 +142,13 @@ public class ElseWithoutIfTests
         var elseStep = goal.Step[0];
         var elseAction = Else();
         elseAction.Step = elseStep;
-        elseStep.Action.Add(elseAction);
+        elseStep.Code.Add(elseAction);
         var ifStep = goal.Step[1];
         foreach (var a in new[] { Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
                                   Make.Action("goal", "call", ("Name", "Big")) })
         {
             a.Step = ifStep;
-            ifStep.Action.Add(a);
+            ifStep.Code.Add(a);
         }
         var builder = new global::app.module.action.build.code.Default();
 
@@ -225,9 +225,9 @@ public class ElseWithoutIfTests
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else", Else()));
         var elseStep = goal.Step[1];
-        elseStep.Action[0].Step = elseStep;
+        elseStep.Code[0].Step = elseStep;
 
-        var error = await elseStep.Action.Validate(app.System.Context);
+        var error = await elseStep.Code.Validate(app.System.Context);
 
         await Assert.That(error!.Key).IsEqualTo("ElseWithoutIf");
         await Assert.That(error.Message).IsEqualTo("step 1 \"else\" — an else must be in the same step as its if.");

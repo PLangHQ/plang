@@ -20,7 +20,7 @@ public class SnapshotResumeTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
-        step.Action.Add(action);
+        step.Code.Add(action);
         goal.Step.Add(step);
         return step;
     }
@@ -68,7 +68,7 @@ public class SnapshotResumeTests
         app.Goal.Add(goal);
 
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
-        await using (var call = context.CallStack.Push(step1.Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))
         {
             var snap = app.Snapshot(app.User.Context);
             // Pop the call frame before Resume so Restore doesn't conflict.

@@ -11,7 +11,7 @@ public class CallStackSnapshotTests
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module], Name = actionName };
         action.Step = step;
-        step.Action.Add(action);
+        step.Code.Add(action);
         goal.Step.Add(step);
         return (goal, step, action);
     }

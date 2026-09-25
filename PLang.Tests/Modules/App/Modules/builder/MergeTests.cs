@@ -21,7 +21,7 @@ public class MergeTests
         var source = new Step
         {
             Text = "do something",
-            Action = new StepActions(new[]
+            Code = new StepActions(new[]
             {
                 new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) }) }
             })
@@ -29,8 +29,8 @@ public class MergeTests
 
         target.Merge(source);
 
-        await Assert.That(target.Action.Count).IsEqualTo(1);
-        await Assert.That(target.Action[0].Module.Name).IsEqualTo("output");
+        await Assert.That(target.Code.Count).IsEqualTo(1);
+        await Assert.That(target.Code[0].Module.Name).IsEqualTo("output");
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class MergeTests
             Index = 99,
             Indent = 0,
             LineNumber = 1,
-            Action = new StepActions(new[]
+            Code = new StepActions(new[]
             {
                 new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read" }
             })
@@ -57,7 +57,7 @@ public class MergeTests
         await Assert.That(target.Indent).IsEqualTo(2);
         await Assert.That(target.LineNumber).IsEqualTo(10);
         // LLM field copied
-        await Assert.That(target.Action.Count).IsEqualTo(1);
+        await Assert.That(target.Code.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -67,14 +67,14 @@ public class MergeTests
         var target = new Step
         {
             Text = "step",
-            Action = new StepActions(new[] { originalAction })
+            Code = new StepActions(new[] { originalAction })
         };
         var source = new Step { Text = "step" }; // Empty LLM fields
 
         target.Merge(source);
 
         // Actions not cleared because source has 0 actions
-        await Assert.That(target.Action.Count).IsEqualTo(1);
+        await Assert.That(target.Code.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -128,7 +128,7 @@ public class MergeTests
                 new Step
                 {
                     Text = "do something",
-                    Action = new StepActions(new[]
+                    Code = new StepActions(new[]
                     {
                         new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" }
                     })
@@ -139,9 +139,9 @@ public class MergeTests
         freshGoal.Merge(existingGoal);
 
         // Matched step gets actions
-        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Step[0].Code.Count).IsEqualTo(1);
         // Unmatched step keeps empty
-        await Assert.That(freshGoal.Step[1].Action.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[1].Code.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -164,7 +164,7 @@ public class MergeTests
                 new Step
                 {
                     Text = "old step text",
-                    Action = new StepActions(new[]
+                    Code = new StepActions(new[]
                     {
                         new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read" }
                     })
@@ -174,7 +174,7 @@ public class MergeTests
 
         freshGoal.Merge(existingGoal);
 
-        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[0].Code.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -190,7 +190,7 @@ public class MergeTests
         freshGoal.Merge(null);
 
         await Assert.That(freshGoal.Step.Count).IsEqualTo(1);
-        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[0].Code.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -215,7 +215,7 @@ public class MergeTests
                 new Step
                 {
                     Text = "do something",
-                    Action = new StepActions(new[]
+                    Code = new StepActions(new[]
                     {
                         new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" }
                     })
@@ -226,8 +226,8 @@ public class MergeTests
         freshGoal.Merge(existingGoal);
 
         // First match gets the actions, second stays empty
-        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(1);
-        await Assert.That(freshGoal.Step[1].Action.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[0].Code.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Step[1].Code.Count).IsEqualTo(0);
     }
 
     #endregion

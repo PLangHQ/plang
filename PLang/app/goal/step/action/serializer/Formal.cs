@@ -228,7 +228,7 @@ public sealed class Formal
                 _pos = body._pos;
                 child.Text = _text[bodyStart.._pos].Trim();
                 Take("}");
-                foreach (var a in bodyActions) child.Action.Add(a);
+                foreach (var a in bodyActions) child.Code.Add(a);
                 action.Child.Add(child);
             }
             else if (isModifier)

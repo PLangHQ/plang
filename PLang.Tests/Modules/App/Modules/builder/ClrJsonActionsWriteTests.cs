@@ -5,9 +5,9 @@ namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
 /// Pins the builder blocker (navigation-driven-record-builder, Stage 1): writing a
-/// clr(json) actions array onto a plang-typed <c>%goal.Step[i].Action%</c> slot.
+/// clr(json) actions array onto a plang-typed <c>%goal.Step[i].Code%</c> slot.
 ///
-/// The builder's compile step does <c>set %goal.Step[i].Action% = %compileResult.actions%</c>,
+/// The builder's compile step does <c>set %goal.Step[i].Code% = %compileResult.actions%</c>,
 /// where the RHS is a clr(json) (the LLM result). Today the write lowers the clr(json)
 /// into <c>StepActions</c>/<c>List&lt;action&gt;</c> via <c>ClrConvert</c>, which terminal-throws
 /// ("the type must own this Clr projection") — the built goal ends up with no actions.
@@ -63,17 +63,17 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
             context.App.Type[new Type("object", "json")].Create(element, context), context: context);
 
         // The builder write: the STEP constructs its children from the incoming json.
-        await context.Variable.Set("goal.Step[0].Action", clrJsonActions);
+        await context.Variable.Set("goal.Step[0].Code", clrJsonActions);
 
-        await Assert.That(goal.Step[0].Action.Count).IsEqualTo(2);
-        await Assert.That(goal.Step[0].Action[0].Module.Name).IsEqualTo("variable");
-        await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("set");
-        await Assert.That(goal.Step[0].Action[1].Module.Name).IsEqualTo("output");
-        await Assert.That(goal.Step[0].Action[1].Name).IsEqualTo("write");
+        await Assert.That(goal.Step[0].Code.Count).IsEqualTo(2);
+        await Assert.That(goal.Step[0].Code[0].Module.Name).IsEqualTo("variable");
+        await Assert.That(goal.Step[0].Code[0].Name).IsEqualTo("set");
+        await Assert.That(goal.Step[0].Code[1].Module.Name).IsEqualTo("output");
+        await Assert.That(goal.Step[0].Code[1].Name).IsEqualTo("write");
 
         // The birth fact: an action written onto a step belongs to that step from the moment it is
         // written. The host constructs its children — nothing stamps a step on afterwards.
-        await Assert.That(goal.Step[0].Action[0].Step).IsEqualTo(goal.Step[0]);
-        await Assert.That(goal.Step[0].Action[1].Step).IsEqualTo(goal.Step[0]);
+        await Assert.That(goal.Step[0].Code[0].Step).IsEqualTo(goal.Step[0]);
+        await Assert.That(goal.Step[0].Code[1].Step).IsEqualTo(goal.Step[0]);
     }
 }

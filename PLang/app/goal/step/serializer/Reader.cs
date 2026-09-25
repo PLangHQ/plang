@@ -41,16 +41,34 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "lineNumber": step.LineNumber = (int)reader.Long(); break;
                 case "indent": step.Indent = (int)reader.Long(); break;
                 case "comment": step.Comment = reader.String(); break;
-                case "action":
+                case "code":
                     reader.BeginArray();
                     while (reader.NextElement())
                         if (action.Read(ref reader, null, ctx) is global::app.goal.step.action.@this a)
-                            step.Action.Add(a);
+                            step.Code.Add(a);
                     reader.EndArray();
                     break;
                 case "intent": step.Intent = reader.String(); break;
                 case "source": step.Source = reader.String(); break;
                 case "waitForExecution": step.WaitForExecution = reader.Bool(); break;
+                case "warning":
+                    reader.BeginArray();
+                    while (reader.NextElement())
+                    {
+                        string key = "", message = "";
+                        reader.BeginObject();
+                        while (reader.NextName(out var field))
+                            switch (field)
+                            {
+                                case "key": key = reader.String(); break;
+                                case "message": message = reader.String(); break;
+                                default: throw new global::app.error.PrFormatOutdatedException($"warning key '{field}' isn't in this .pr format");
+                            }
+                        reader.EndObject();
+                        step.Warning.Add(new global::app.warning.@this { Key = key, Message = message });
+                    }
+                    reader.EndArray();
+                    break;
                 // Every key the step writes is read above; an unknown one means another builder wrote it.
                 default: throw new global::app.error.PrFormatOutdatedException($"step key '{name}' isn't in this .pr format");
             }

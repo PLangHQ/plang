@@ -9,7 +9,7 @@ public sealed partial class @this
     public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
         global::app.actor.context.@this context)
     {
-        if (await Action.Validate(context) is not { } invalid) return null;
+        if (await Code.Validate(context) is not { } invalid) return null;
         return new global::app.error.StepError(
             $"step {Index} '{Text}': {invalid.Message}", this, invalid.Key, invalid.StatusCode) { list = { invalid } };
     }

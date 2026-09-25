@@ -43,7 +43,7 @@ public class PlangRuntimeTests : IDisposable
         {
             Index = 0,
             Text = "write hello",
-            Action = new StepActions
+            Code = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {

@@ -41,7 +41,7 @@ public class SaveGoalsTests
     public async Task SaveGoal_SerializesToPrPath()
     {
         var step = new Step { Text = "write hello", Index = 0 };
-        step.Action.Add(new PrAction
+        step.Code.Add(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello", context: _app.User.Context) })

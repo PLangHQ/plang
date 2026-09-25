@@ -123,7 +123,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     public async Task Show_A500_FoldsRepeatedCallFrames()
     {
         var goal = await Goal("recurse");
-        var action = goal.Step[0].Action[0];
+        var action = goal.Step[0].Code[0];
         var context = _app.User.Context;
         global::app.error.Error error;
         await using (context.CallStack.Push(action, context.Variable))

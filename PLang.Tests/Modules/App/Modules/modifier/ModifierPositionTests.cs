@@ -34,14 +34,14 @@ public class ModifierPositionTests
         var step = new Step { Goal = goal, Index = 0, Text = "step" };
 
         // Authored innermost-first — the reverse of the nesting we expect out.
-        step.Action.Add(TestAction.Create("variable", "set", ("name", "%x%"), ("value", "v")));
-        step.Action.Add(TestAction.Create("timeout", "after", ("ms", 1L)));
-        step.Action.Add(TestAction.Create("cache", "wrap", ("key", "k")));
-        step.Action.Add(TestAction.Create("error", "handle"));
+        step.Code.Add(TestAction.Create("variable", "set", ("name", "%x%"), ("value", "v")));
+        step.Code.Add(TestAction.Create("timeout", "after", ("ms", 1L)));
+        step.Code.Add(TestAction.Create("cache", "wrap", ("key", "k")));
+        step.Code.Add(TestAction.Create("error", "handle"));
 
         step.Nest(_app.Module);
 
-        var modifiers = step.Action[0].Modifier;
+        var modifiers = step.Code[0].Modifier;
         await Assert.That(modifiers.Count).IsEqualTo(3);
         await Assert.That($"{modifiers[0].Module}.{modifiers[0].Name}").IsEqualTo("error.handle");
         await Assert.That($"{modifiers[1].Module}.{modifiers[1].Name}").IsEqualTo("cache.wrap");

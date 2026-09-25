@@ -29,7 +29,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
         var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();
         var clrJsonActions = new global::app.data.@this("actions",
             context.App.Type[new Type("object", "json")].Create(element, context), context: context);
-        await context.Variable.Set("goal.Step[0].Action", clrJsonActions);
+        await context.Variable.Set("goal.Step[0].Code", clrJsonActions);
         return goal;
     }
 
@@ -37,9 +37,9 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     public async Task WireKey_name_PopulatesActionName()
     {
         var goal = await ReadOneAction("""[ { "module": "output", "name": "write" } ]""");
-        await Assert.That(goal.Step[0].Action.Count).IsEqualTo(1);
-        await Assert.That(goal.Step[0].Action[0].Module.Name).IsEqualTo("output");
-        await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
+        await Assert.That(goal.Step[0].Code.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Code[0].Module.Name).IsEqualTo("output");
+        await Assert.That(goal.Step[0].Code[0].Name).IsEqualTo("write");
     }
 
     // A row declared `action` holds program: the holding action's reader reads it, so the held action
@@ -55,7 +55,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
                 "value": { "module": "goal", "name": "call",
                            "property": [ { "name": "Name", "type": { "name": "text" }, "value": "LogIt" } ] } } ] } ]
         """);
-        var on = goal.Step[0].Action[0];
+        var on = goal.Step[0].Code[0];
         var held = on["Goal"]!.Value as global::app.goal.step.action.@this;
         await Assert.That(held).IsNotNull();
         await Assert.That(held!.Module.Name).IsEqualTo("goal");
@@ -72,7 +72,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
         [ { "module": "output", "name": "write",
             "property": [ { "name": "Data", "type": { "name": "text" }, "value": "hi" } ] } ]
         """);
-        await Assert.That(goal.Step[0].Action[0].Property.Count).IsEqualTo(1);
-        await Assert.That(goal.Step[0].Action[0].Property[0].Name).IsEqualTo("Data");
+        await Assert.That(goal.Step[0].Code[0].Property.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Code[0].Property[0].Name).IsEqualTo("Data");
     }
 }

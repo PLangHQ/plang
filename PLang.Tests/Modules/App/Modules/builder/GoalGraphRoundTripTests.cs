@@ -75,8 +75,8 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
         await Assert.That(step.LineNumber).IsEqualTo(2);
         await Assert.That(step.WaitForExecution).IsTrue();
 
-        await Assert.That(step.Action.Count).IsEqualTo(1);
-        var action = step.Action[0];
+        await Assert.That(step.Code.Count).IsEqualTo(1);
+        var action = step.Code[0];
         await Assert.That(action.Module.Name).IsEqualTo("variable");
         await Assert.That(action.Name).IsEqualTo("set");
         await Assert.That(action.Property.Count).IsEqualTo(2);

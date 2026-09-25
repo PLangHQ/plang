@@ -41,7 +41,7 @@ public partial class Foreach : IContext, IStep
 
         // The loop body — the actions after this foreach in the step's chain (v0.1 flat model).
         // Materialized once; the Handled flag below stops the outer chain from re-running them.
-        var chain = Step?.Action;
+        var chain = Step?.Code;
         int myIndex = chain?.IndexOf(__action) ?? -1;
         var bodyActions = myIndex >= 0
             ? chain!.Items().Skip(myIndex + 1).ToList()
@@ -94,7 +94,7 @@ public partial class Foreach : IContext, IStep
     /// </summary>
     private global::app.goal.step.action.list.@this GetBodyActions()
     {
-        var actions = Step?.Action;
+        var actions = Step?.Code;
         if (actions == null || __action == null) return new();
 
         int myIndex = actions.IndexOf(__action);

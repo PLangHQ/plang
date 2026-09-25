@@ -22,7 +22,7 @@ public class ListNestingTests
         using var ms = new System.IO.MemoryStream();
         await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
         using var doc = System.Text.Json.JsonDocument.Parse(ms.ToArray());
-        return doc.RootElement.GetProperty("step")[0].GetProperty("action")[0].GetProperty("property").Clone();
+        return doc.RootElement.GetProperty("step")[0].GetProperty("code")[0].GetProperty("property").Clone();
     }
 
     [Test]

@@ -25,7 +25,7 @@ public class TemplateFlagTests
                     Make.Param("plain", "Hello %name%", plainType))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
-        var properties = loaded.Step[0].Action[0].Property;
+        var properties = loaded.Step[0].Code[0].Property;
         var flagged = await properties["flagged"]!.Data(app.User.Context).Value();
         var plain = await properties["plain"]!.Data(app.User.Context).Value();
 

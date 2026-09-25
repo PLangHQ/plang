@@ -38,11 +38,46 @@ public class PrLoadTests : System.IAsyncDisposable
     [Test]
     public async Task AnUnknownStepKey_IsRefused_NamingIt()
     {
-        var loaded = await Load("start.pr", "{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"warning\":[],\"action\":[]}]}");
+        var loaded = await Load("start.pr", "{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"ModuleType\":\"x\",\"code\":[]}]}");
 
         await Assert.That(loaded.Error?.Key).IsEqualTo("PrFormatOutdated");
-        await Assert.That(loaded.Error!.Message).Contains("step key 'warning' isn't in this .pr format");
+        await Assert.That(loaded.Error!.Message).Contains("step key 'ModuleType' isn't in this .pr format");
     }
+
+    // A step's actions are its `code`; a .pr that holds them under `action` was built by an older builder.
+    [Test]
+    public async Task AnActionKeyPr_IsRefused_NamingAction()
+    {
+        var loaded = await Load("start.pr", "{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"action\":[]}]}");
+
+        await Assert.That(loaded.Error?.Key).IsEqualTo("PrFormatOutdated");
+        await Assert.That(loaded.Error!.Message).Contains("step key 'action' isn't in this .pr format");
+    }
+
+    // A small goal saved as a .pr and loaded through the real load path runs: its variable is set and
+    // its output written. Its indented step and its warning ride the .pr and come back.
+    [Test]
+    public async Task ASmallGoal_SavedAndLoaded_Runs()
+    {
+        var built = Make.Goal("Start", "/Start.goal",
+            Make.Step("set %n% = 5", Make.Action("variable", "set", Make.Param("Name", "n", "variable"), ("Value", 5))),
+            Make.Step("write out \"n is %n%\"", Make.Action("output", "write", ("Data", "n is %n%"))));
+        built.Step[1].Indent = 1;
+        built.Step[1].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "step 1 uses output.write" });
+        var output = new System.IO.MemoryStream();
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, output, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
+
+        var goal = await RealGoalLoad.ViaChannel(_app, built);
+        var ran = await goal.Run(_app.User.Context);
+
+        await ran.IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(output.ToArray())).Contains("n is 5");
+        await Assert.That((await (await _app.User.Context.Variable.Get("n")).Value())?.ToString()).IsEqualTo("5");
+        await Assert.That(goal.Step[1].Indent).IsEqualTo(1);
+        await Assert.That(goal.Step[1].Warning.Single().Key).IsEqualTo("Unsure");
+    }
+
 
     [Test]
     public async Task AGoalWithNoName_IsRefused()

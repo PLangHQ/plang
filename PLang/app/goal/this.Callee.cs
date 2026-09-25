@@ -15,7 +15,7 @@ public sealed partial class @this
 
         while (pending.Count > 0)
             foreach (var step in pending.Dequeue().Step.Items())
-                foreach (var action in step.Action.Items())
+                foreach (var action in step.Code.Items())
                     foreach (var goal in await action.Callee(context))
                         if (seen.Add(goal))
                         {

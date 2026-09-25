@@ -168,7 +168,7 @@ public class AppRunScaffoldingTests
         {
             Index = 0,
             Text = "test",
-            Action = new StepActions { action }
+            Code = new StepActions { action }
         };
         action.Step = step;
 

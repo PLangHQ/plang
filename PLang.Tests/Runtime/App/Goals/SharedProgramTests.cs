@@ -23,7 +23,7 @@ public class SharedProgramTests
 
     private async Task<global::app.goal.step.action.@this> ActionFromPr(string module, string action, params (string, object?)[] parameters)
         => (await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("a step",
-            global::PLang.Tests.Shared.Make.Action(module, action, parameters)))).Step[0].Action[0];
+            global::PLang.Tests.Shared.Make.Action(module, action, parameters)))).Step[0].Code[0];
 
     // A variable-naming row, typed `variable` as the builder writes it into the .pr.
     private Data Var(string slot, string name) => new(slot, name, new global::app.type.@this("variable"), context: _app.User.Context);

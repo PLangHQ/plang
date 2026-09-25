@@ -99,7 +99,7 @@ public class DiscoverActionTests
         var buildContext = _app.User.Context;
         await buildContext.Variable.Set("goal", goal);
         foreach (var step in goal.Step.Items())
-            await step.Action.Build(buildContext);
+            await step.Code.Build(buildContext);
 
         var prDir = System.IO.Path.Combine(absDir, ".build");
         System.IO.Directory.CreateDirectory(prDir);
@@ -140,7 +140,8 @@ public class DiscoverActionTests
     [Arguments("{\"step\":[]}", "it has no 'name'")]
     [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"actions\":[]}]}", "step key 'actions' isn't in this .pr format")]
     [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"ModuleType\":\"x\",\"action\":[]}]}", "step key 'ModuleType' isn't in this .pr format")]
-    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"action\":[{\"module\":\"variable\",\"name\":\"set\",\"parameters\":[]}]}]}", "action key 'parameters' is now 'property'")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"code\":[{\"module\":\"variable\",\"name\":\"set\",\"parameters\":[]}]}]}", "action key 'parameters' is now 'property'")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"action\":[]}]}", "step key 'action' isn't in this .pr format")]
     public async Task Discover_OldFormatPr_IsStaleWithTheReason(string pr, string reason)
     {
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Old.test.goal"), "Start\n- a\n");
@@ -256,7 +257,7 @@ public class DiscoverActionTests
                 new Step
                 {
                     Index = 0, Text = "http get",
-                    Action = new StepActions
+                    Code = new StepActions
                     {
                         new PrAction
                         {

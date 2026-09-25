@@ -222,9 +222,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
                 throw new CallbackGoalNotFound($"{goalPrPath} (stepIndex {stepIndex} out of range)");
             var liveStep = liveGoal.Step[stepIndex];
 
-            if (actionIndex < 0 || actionIndex >= liveStep.Action.Count)
+            if (actionIndex < 0 || actionIndex >= liveStep.Code.Count)
                 throw new CallbackGoalNotFound($"{goalPrPath} (actionIndex {actionIndex} out of range at step {stepIndex})");
-            var liveAction = liveStep.Action[actionIndex];
+            var liveAction = liveStep.Code[actionIndex];
 
             // The hash covers the source text, not the compiled actions — the captured action is the
             // check it can't make.
@@ -292,8 +292,8 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         var actionIndex = -1;
         if (step != null)
         {
-            for (int i = 0; i < step.Action.Count; i++)
-                if (ReferenceEquals(step.Action[i], call.Action))
+            for (int i = 0; i < step.Code.Count; i++)
+                if (ReferenceEquals(step.Code[i], call.Action))
                 {
                     actionIndex = i;
                     break;

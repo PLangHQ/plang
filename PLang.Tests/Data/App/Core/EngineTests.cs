@@ -12,7 +12,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Action = new StepActions
+            Code = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {
@@ -32,7 +32,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Action = new StepActions
+            Code = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {

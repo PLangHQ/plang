@@ -68,7 +68,7 @@ public sealed partial class @this
         foreach (var g in reached)
         {
             foreach (var step in g.Step.Items())
-                foreach (var action in step.Action.Items())
+                foreach (var action in step.Code.Items())
                     foreach (var required in action.Requirement)
                         if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
             Coverage.Add(g);

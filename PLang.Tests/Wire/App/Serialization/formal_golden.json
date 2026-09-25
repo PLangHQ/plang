@@ -1527,7 +1527,7 @@
     "child": [
      {
       "text": "write out \"Your cart is empty\"",
-      "action": [
+      "code": [
        {
         "module": "output",
         "name": "write",
@@ -1577,7 +1577,7 @@
     "child": [
      {
       "text": "write out \"One item\"",
-      "action": [
+      "code": [
        {
         "module": "output",
         "name": "write",
@@ -1604,7 +1604,7 @@
     "child": [
      {
       "text": "write out \"%itemCount% items\"",
-      "action": [
+      "code": [
        {
         "module": "output",
         "name": "write",
@@ -1663,7 +1663,7 @@
     "child": [
      {
       "text": "throw \"Invalid email address\"",
-      "action": [
+      "code": [
        {
         "module": "error",
         "name": "throw",
@@ -1715,7 +1715,7 @@
     "child": [
      {
       "text": "call ApplyCoupon code=%order.coupon%, order=%order%",
-      "action": [
+      "code": [
        {
         "module": "goal",
         "name": "call",
@@ -1796,7 +1796,7 @@
     "child": [
      {
       "text": "throw \"The total must be a number\"",
-      "action": [
+      "code": [
        {
         "module": "error",
         "name": "throw",
@@ -1855,7 +1855,7 @@
     "child": [
      {
       "text": "set %vat% = 0.24",
-      "action": [
+      "code": [
        {
         "module": "variable",
         "name": "set",
@@ -1889,7 +1889,7 @@
     "child": [
      {
       "text": "set %vat% = 0.25",
-      "action": [
+      "code": [
        {
         "module": "variable",
         "name": "set",
@@ -2006,7 +2006,7 @@
     "child": [
      {
       "text": "add %order.note% to %notes%",
-      "action": [
+      "code": [
        {
         "module": "list",
         "name": "add",

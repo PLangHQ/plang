@@ -23,7 +23,7 @@ public partial class @this
         foreach (var recovery in Recovery.Items())
             callee.AddRange(await recovery.Callee(context));
         for (int i = 0; i < Child.Count; i++)
-            foreach (var branch in Child[i].Action.Items())
+            foreach (var branch in Child[i].Code.Items())
                 callee.AddRange(await branch.Callee(context));
 
         return callee;

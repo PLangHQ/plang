@@ -88,7 +88,7 @@ public class SnapshotWireTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
-        step.Action.Add(action);
+        step.Code.Add(action);
         goal.Step.Add(step);
         return step;
     }
@@ -110,7 +110,7 @@ public class SnapshotWireTests
 
         // Suspend at step1/action0 (what the throw-time snapshot captures).
         string json;
-        await using (var call = context.CallStack.Push(step1.Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));   // <-- to disk (string)
             await call.DisposeAsync();
@@ -142,7 +142,7 @@ public class SnapshotWireTests
         app.Goal.Add(goal);
 
         string json;
-        await using (var call = context.CallStack.Push(step1.Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
             await call.DisposeAsync();
@@ -164,7 +164,7 @@ public class SnapshotWireTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", expr));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
         action.Step = step;
-        step.Action.Add(action);
+        step.Code.Add(action);
         goal.Step.Add(step);
         return step;
     }
@@ -202,8 +202,8 @@ public class SnapshotWireTests
 
         // Suspend mid-stack: Start at its call step (1,0), Sub at its throw step (1,0).
         string json;
-        await using (var startFrame = context.CallStack.Push(start.Step[1].Action[0], context.Variable))
-        await using (var subFrame = context.CallStack.Push(sub.Step[1].Action[0], context.Variable))
+        await using (var startFrame = context.CallStack.Push(start.Step[1].Code[0], context.Variable))
+        await using (var subFrame = context.CallStack.Push(sub.Step[1].Code[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
         }
@@ -244,7 +244,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
         }
@@ -314,7 +314,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
         {
             var err = new ServiceError("boom", goal.Step[1],
                 context.CallStack.Current!.SnapshotChain());
@@ -355,7 +355,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
@@ -389,7 +389,7 @@ public class SnapshotWireTests
         // Suspend at step1 with %x% = 1 captured.
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
         }

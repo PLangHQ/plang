@@ -14,12 +14,21 @@ import formal_check as fc
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', '..', 'PLang.Tests', 'Wire', 'App', 'Serialization', 'formal_golden.json')
 
+def pr_shape(v):
+    """The rows as the .pr holds them: a step's actions are its `code` (python's rows keep `action` —
+    build_pr.py moves to the .pr shape in 4d)."""
+    if isinstance(v, list): return [pr_shape(x) for x in v]
+    if not isinstance(v, dict): return v
+    out = {k: pr_shape(x) for k, x in v.items()}
+    if 'text' in out and 'action' in out and 'module' not in out: out['code'] = out.pop('action')
+    return out
+
 entries = []
 for case in e.GOLDEN:
     for k, acts in sorted(case['expect'].items(), key=lambda kv: int(kv[0])):
         rows = [fc.rows_of(a) for a in acts]
         entries.append({'goal': case['id'], 'index': int(k), 'text': case['steps'][int(k)]['text'],
-                        'pr': rows, 'formal': f.write(rows), 'untyped': f.write(rows, types=False)})
+                        'pr': pr_shape(rows), 'formal': f.write(rows), 'untyped': f.write(rows, types=False)})
 json.dump(entries, open(OUT, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
 print(len(entries), 'steps ->', os.path.relpath(OUT, os.path.join(HERE, '..', '..')))
 

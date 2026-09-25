@@ -35,7 +35,7 @@ public class FoldTests
         await Assert.That(goal.Step[0].Text).IsEqualTo("if %x% = 1");
         await Assert.That(goal.Step[1].Text).IsEqualTo("write out after");
 
-        var cond = goal.Step[0].Action[0];
+        var cond = goal.Step[0].Code[0];
         await Assert.That(cond.IsCondition).IsTrue();
         await Assert.That(cond.Child.Count).IsEqualTo(1);
         await Assert.That(cond.Child[0].Text).IsEqualTo("write out inside");
@@ -56,9 +56,9 @@ public class FoldTests
         await Assert.That(result.Success).IsTrue();
 
         await Assert.That(goal.Step.Count).IsEqualTo(1);
-        var outer = goal.Step[0].Action[0];
+        var outer = goal.Step[0].Code[0];
         await Assert.That(outer.Child.Count).IsEqualTo(1);
-        var inner = outer.Child[0].Action[0];
+        var inner = outer.Child[0].Code[0];
         await Assert.That(inner.IsCondition).IsTrue();
         await Assert.That(inner.Child.Count).IsEqualTo(1);
         await Assert.That(inner.Child[0].Text).IsEqualTo("write out deep");

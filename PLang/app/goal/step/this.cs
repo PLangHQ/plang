@@ -46,14 +46,15 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    private global::app.goal.step.action.list.@this _action = new();
+    private global::app.goal.step.action.list.@this _code = new();
+    /// <summary>The step's code: the actions it runs, as the .pr holds them under <c>code</c>.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.action.list.@this Action
+    public global::app.goal.step.action.list.@this Code
     {
         // A plain slot. Every action in it was born knowing this step — the reader constructs the
         // step shell first and hands it down, so there is nothing to repair on read.
-        get => _action;
-        set => _action = value ?? new();
+        get => _code;
+        set => _code = value ?? new();
     }
 
     /// <summary>
@@ -65,7 +66,7 @@ public sealed partial class @this
     /// </summary>
     public void Nest(global::app.module.list.@this modules)
     {
-        var flat = _action.Items().ToList();
+        var flat = _code.Items().ToList();
         if (flat.Count == 0) return;
 
         var node = new global::app.goal.step.action.list.@this();   // Add non-modifier actions into the node
@@ -105,7 +106,7 @@ public sealed partial class @this
             foreach (var m in ordered) a.Modifier.Add(m);
         }
 
-        _action = node;
+        _code = node;
     }
 
     /// <summary>
@@ -153,7 +154,7 @@ public sealed partial class @this
         data.@this result;
         try
         {
-            result = await Action.Run(context);   // action.list owns the chain loop + fire
+            result = await Code.Run(context);   // action.list owns the chain loop + fire
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
         {
@@ -184,8 +185,8 @@ public sealed partial class @this
     /// </summary>
     public void Merge(Step from)
     {
-        if (from.Action.Count > 0)
-            _action = from.Action;   // take the node — from is discarded; the graph is read-only after load
+        if (from.Code.Count > 0)
+            _code = from.Code;   // take the node — from is discarded; the graph is read-only after load
 
         if (from.Warning.Count > 0)
         {
