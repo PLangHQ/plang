@@ -35,6 +35,7 @@ Compile
 
 Menu
 / Every module that said yes for this step, with the action chosen for it.
+- set %choices% = []
 - foreach %modules%, call MenuModule module=%item%
 - set %menu[step.Index]% = %choices%
 
