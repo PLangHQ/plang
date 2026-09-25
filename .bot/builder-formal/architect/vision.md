@@ -25,13 +25,13 @@ That is the whole contract **(Ingi)**: a step is a **list** of actions, each `{m
 [2] math.multiply(A=%order.total%, B=%vat%); variable.set(Name=%vatAmount%, Value=%!data%)
 ```
 
-A modifier — `on error …`, `cache …`, `timeout …` — **wraps** the action it applies to, like try **(Ingi)**; its recovery is a property (§4):
+A modifier (`on error …`, `cache …`, `timeout …`) wraps the action it applies to at run time, like try **(Ingi)**. In formal it **follows that action, in the step's written order** **(Ingi, 2026-09-25)**, and its recovery is a property:
 
 ```
-[3] error.handle(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")]) {
-        goal.call(Name="Compile")
-    }
+[3] goal.call(Name="Compile"); error.handle(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")])
 ```
+
+The parser attaches it, not the LLM's layout: an action declared `[Modifier]` modifies the action before it. With several, the first written is the innermost (`goal.call; timeout.after; error.handle`: the handler also catches the timeout). A modifier with no action before it is a parse error. Indentation in the answer is allowed for reading and ignored.
 
 ## 3. The builder: two readers who must agree **(Ingi: "double validation … two llm are reading over the code")**
 
@@ -50,31 +50,26 @@ For each goal, in one pass over the whole goal (the steps refer to each other):
 
 **Indentation is the parser's**, never the LLM's: an indented step is the body of the condition above it, placed by the builder from the layout **(Ingi, earlier)**.
 
-## 4. The `.pr` is formal, typed, in a thin envelope
+## 4. The `.pr` holds each step's code, in JSON
 
-**Settled 2026-09-25 (architect, in charge while Ingi is away; Ingi: "we need the types in there", modifiers "error.handle(...) { goal.call(...) } same with caching").** This replaces "the `.pr` shows both": one representation, not two.
+**Ingi, 2026-09-25:** "I want the builder to save the full execution path (json) into the pr file, under code"; on each step: "this is what c# code does".
 
-- The `.pr` keeps a **thin JSON envelope** for the goal and step facts (name, path, hash, each step's index, text, line, warnings, child steps from indentation) and each step's actions as **one formal string**.
-- **Types are in the formal**, in the same shape as the signatures the LLM reads: `Name: type = value`. The **writer always writes them**; in the LLM's answer and in a formal step in a `.goal` they are optional — the parser adds them from the property's declared type and the literal.
-- A **frozen default** is written `Name: type ?= value`, so the runtime can still let a setting override it (step value → setting → frozen default → `[Default]`).
-- **A modifier wraps its action**, like try: `{ }` always holds the actions an action contains — a condition's body, or what a modifier wraps. `error.handle`'s recovery is a property holding actions:
-  ```
-  [3] error.handle(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst",
-                   Recovery: list<action> = [goal.call(Name: text = "FixProperties")]) {
-          goal.call(Name: text = "Compile")
-      }
-  [5] cache.wrap(Duration: duration = "10 min") {
-          http.get(Url: path = "https://…")
-      }
-  ```
-  Nesting shows the wrap order (`error.handle { cache.wrap { file.read } }`).
-- The runtime reads the formal through the parser (the action list reads itself from formal); nothing else stores the actions.
+- The `.pr` is JSON: the goal's facts (name, path, hash, …) and its steps. **Each step holds its own `code`**: its actions as the JSON tree the action writes itself (`goal/step/action/this.Item.cs`). That covers module, name, typed property rows, frozen `default`, `modifier` (inside the action it modifies), a condition's body steps under `child`, and error.handle's `recovery`. The step's member is `step.Code`.
+- **Formal is not stored.** It is the LLM's answer notation and a view: the builder parses the answer into actions, and the action renders itself in formal when a prompt or a person needs it.
+- Read top to bottom, the program is the object walk: each step in order, then its `step.Code`.
+- A key the reader doesn't know means another builder made the file: it is refused as `PrFormatOutdated`, naming the key.
 
 ```json
 {"name": "Checkout", "path": "/Checkout.goal", "hash": "…",
- "step": [{"index": 0, "text": "read 'orders/%orderId%.json', write to %order%", "lineNumber": 3,
-           "action": "file.read(Path: path = \"orders/%orderId%.json\"); variable.set(Name: variable = %order%, Value: item = %!data%)"}]}
+ "step": [{"index": 0, "text": "read 'orders/%orderId%.json', write to %order%", "lineNumber": 4,
+           "code": [{"module": "file", "name": "read",
+                     "property": [{"name": "Path", "type": {"name": "path"}, "value": "orders/%orderId%.json"}]},
+                    {"module": "variable", "name": "set",
+                     "property": [{"name": "Name", "type": {"name": "variable"}, "value": "order"},
+                                  {"name": "Value", "type": {"name": "item"}, "value": "%!data%"}]}]}]}
 ```
+
+- **Types in formal**, when it is rendered: `Name: type = value`, and `Name: type ?= value` for a frozen default. The LLM's answer and a formal step in a `.goal` leave types out, and the parser adds them from the property's declared type and the literal.
 
 ## 4b. What the LLM is shown and answers (settled, architect)
 
@@ -107,9 +102,9 @@ The runtime runs the JSON actions, step by step. The formal is for reading, and 
 
 | | where |
 |---|---|
-| Modifiers wrap their action (`{ }`), recovery as a `Recovery=[…]` property | plan stage 2b (the notation, revised) |
+| A modifier follows its action in formal; the parser attaches it by `[Modifier]`; recovery as a `Recovery=[…]` property | stage 4 (after 4b) |
 | Types in the formal (`Name: type = value`, `?=` frozen default), written always, optional on input | plan stage 2b (writer + parser) |
-| The `.pr` is formal only, in a thin JSON envelope; the action list reads/writes itself in formal | plan stage 4 (C#) |
+| The `.pr` holds each step's `code` (JSON); formal is not stored | stage 4b |
 | Picks ≥ 0.5 shown with scores, ≥ 0.9 pre-filled, `?` for unfilled, known values pre-filled | plan stage 3 (prompt C) |
 | A `.goal` step written in formal is parsed directly, no decider/LLM | plan stage 2 (the parser), stage 4 (the builder) |
 | Unsure → build + warning on the step; certain contradiction → loud failure | plan stage 3 (the check) |
