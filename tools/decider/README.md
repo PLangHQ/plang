@@ -6,7 +6,9 @@ time to get right.
 
 ## What it measures
 
-Accuracy of the typesafe two-stage pipeline against `Tests/**/.pr` as labels:
+Accuracy of the typesafe two-stage pipeline against the labels — the `Tests/**/.pr` files, kept at
+`labels/<same path under Tests/>` (e.g. `Tests/Simple/.build/start.test.pr` →
+`labels/Simple/.build/start.test.pr`) so each maps back to its `.goal` under `Tests/`:
 
 - **stage 1** — `noul` per (step, module) → the module SET for each step
 - **stage 2** — `choice` per (step, module-in-set) → the action for each (step, module)

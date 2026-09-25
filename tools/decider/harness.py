@@ -1,4 +1,5 @@
-"""Decider harness — measures the two-stage typesafe pipeline against Tests/**/.pr as labels.
+"""Decider harness — measures the two-stage typesafe pipeline against the labels: the Tests/**/.pr
+files, kept at tools/decider/labels/<same path under Tests/>.
 
 stage 1  noul per (step, module)           -> module set per step      vs .pr modules
 stage 2  choice per (step, module-in-set)  -> action per (step,module) vs .pr action
@@ -66,19 +67,19 @@ def catalogue():
 
 # ---------------------------------------------------------------- dataset
 CHOSEN = [   # 5 goals, varied size and modules; one long one
-    'Tests/Modules/Http/DownloadSkip/.build/downloadskip.test.pr',        #  6 steps: http, file, condition, output
-    'Tests/BuilderSanity/.build/buildersanity.test.pr',                    #  7 steps: condition, goal, loop
-    'Tests/Modules/Variable/Scoping/.build/variablescoping.test.pr',       # 12 steps: goal, list, loop
-    'Tests/Condition/Compound/.build/conditioncompound.test.pr',           # 18 steps: if + call
-    'Tests/Modules/List/.build/listops.test.pr',                           # 34 steps: the long one
+    'tools/decider/labels/Modules/Http/DownloadSkip/.build/downloadskip.test.pr',        #  6 steps: http, file, condition, output
+    'tools/decider/labels/BuilderSanity/.build/buildersanity.test.pr',                    #  7 steps: condition, goal, loop
+    'tools/decider/labels/Modules/Variable/Scoping/.build/variablescoping.test.pr',       # 12 steps: goal, list, loop
+    'tools/decider/labels/Condition/Compound/.build/conditioncompound.test.pr',           # 18 steps: if + call
+    'tools/decider/labels/Modules/List/.build/listops.test.pr',                           # 34 steps: the long one
 ]
 
 FRESH = [   # five goals NOT tuned on: modules with no example files, and Icelandic goal names
-    'Tests/Http/ConfigBaseUrl/.build/configbaseurl.test.pr',                          # http, condition, output
-    'Tests/App/Retry/.build/retry.test.pr',                                            # error, assert
-    'Tests/Modules/Signing/ContractMismatch/.build/signingcontractmismatch.test.pr',   # signing, identity
-    'Tests/Builder/.build/mockllmsmoke.test.pr',                                       # llm, mock
-    'Tests/Modules/Test/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr',# Icelandic names, test, list
+    'tools/decider/labels/Http/ConfigBaseUrl/.build/configbaseurl.test.pr',                          # http, condition, output
+    'tools/decider/labels/App/Retry/.build/retry.test.pr',                                            # error, assert
+    'tools/decider/labels/Modules/Signing/ContractMismatch/.build/signingcontractmismatch.test.pr',   # signing, identity
+    'tools/decider/labels/Builder/.build/mockllmsmoke.test.pr',                                       # llm, mock
+    'tools/decider/labels/Modules/Test/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr',# Icelandic names, test, list
 ]
 
 BUILDER = [   # the builder itself, written in plang — the hardest goals we have
@@ -90,37 +91,37 @@ BUILDER = [   # the builder itself, written in plang — the hardest goals we ha
 ]
 
 WIDE = [   # ten more unseen goals, picked for module variety
-    'Tests/TestModule/TypedReturns/Stage1/.build/testrunnerpipelinestillworksaftertesterfilerename.test.pr',
-    'Tests/Modules/Signing/TimedOut/.build/signingtimedout.test.pr',
-    'Tests/Modules/Signing/Expired/.build/signingexpired.test.pr',
-    'Tests/Http/UploadFile/.build/uploadfile.test.pr',
-    'Tests/Modules/Test/Report/.build/testreportwritesjunitxml.test.pr',
-    'Tests/Event/Multiple/.build/eventmultiple.test.pr',
-    'Tests/Modules/Cache/DynamicKey/.build/cachedynamickey.test.pr',
-    'Tests/Modules/Event/Remove/.build/eventremove.test.pr',
-    'Tests/Modules/Signing/DotNavigation/.build/signingdotnavigation.test.pr',
+    'tools/decider/labels/TestModule/TypedReturns/Stage1/.build/testrunnerpipelinestillworksaftertesterfilerename.test.pr',
+    'tools/decider/labels/Modules/Signing/TimedOut/.build/signingtimedout.test.pr',
+    'tools/decider/labels/Modules/Signing/Expired/.build/signingexpired.test.pr',
+    'tools/decider/labels/Http/UploadFile/.build/uploadfile.test.pr',
+    'tools/decider/labels/Modules/Test/Report/.build/testreportwritesjunitxml.test.pr',
+    'tools/decider/labels/Event/Multiple/.build/eventmultiple.test.pr',
+    'tools/decider/labels/Modules/Cache/DynamicKey/.build/cachedynamickey.test.pr',
+    'tools/decider/labels/Modules/Event/Remove/.build/eventremove.test.pr',
+    'tools/decider/labels/Modules/Signing/DotNavigation/.build/signingdotnavigation.test.pr',
     'os/system/error/.build/consoleerror.pr',
 ]
 
 HOLDOUT = [   # never seen: picked at random from everything not yet used
-    'Tests/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr',
-    'Tests/Modules/Test/Report/.build/testreportmaskssensitivevariables.test.pr',
-    'Tests/Modules/Signing/Roundtrip/.build/signingroundtrip.test.pr',
-    'Tests/Crypto/VerifyWrongHash/.build/verifywronghash.test.pr',
-    'Tests/CompareRedesign/Plane_MembershipNeverErrors/.build/plane_membershipnevererrors.test.pr',
-    'Tests/CompareRedesign/Cut1_CrossTypeAntisymmetry/.build/cut1.test.pr',
-    'Tests/Modules/Test/Report/.build/testreportrendersfailurewithvariables.test.pr',
-    'Tests/Identity/Unarchive/.build/identityunarchive.test.pr',
+    'tools/decider/labels/Signing/HeaderMismatch/.build/signingheadermismatch.test.pr',
+    'tools/decider/labels/Modules/Test/Report/.build/testreportmaskssensitivevariables.test.pr',
+    'tools/decider/labels/Modules/Signing/Roundtrip/.build/signingroundtrip.test.pr',
+    'tools/decider/labels/Crypto/VerifyWrongHash/.build/verifywronghash.test.pr',
+    'tools/decider/labels/CompareRedesign/Plane_MembershipNeverErrors/.build/plane_membershipnevererrors.test.pr',
+    'tools/decider/labels/CompareRedesign/Cut1_CrossTypeAntisymmetry/.build/cut1.test.pr',
+    'tools/decider/labels/Modules/Test/Report/.build/testreportrendersfailurewithvariables.test.pr',
+    'tools/decider/labels/Identity/Unarchive/.build/identityunarchive.test.pr',
 ]
 
-TWO = ['Tests/App/CallStack/.build/throwitem.pr']
+TWO = ['tools/decider/labels/App/CallStack/.build/throwitem.pr']
 
 SETS = {'two': TWO, 'fresh': FRESH, 'builder': BUILDER, 'wide': WIDE, 'holdout': HOLDOUT}
 
 def goals(limit=None, seed=0, chosen=True):
     out = []
     picks = SETS.get(os.environ.get('SET', ''), CHOSEN)
-    files = [f'{ROOT}/{p}' for p in picks] if chosen else sorted(glob.glob(f'{ROOT}/Tests/**/.build/*.pr', recursive=True))
+    files = [f'{ROOT}/{p}' for p in picks] if chosen else sorted(glob.glob(f'{ROOT}/tools/decider/labels/**/.build/*.pr', recursive=True))
     for f in files:
         try: d = json.load(open(f, encoding='utf-8'))
         except Exception: continue
