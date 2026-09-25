@@ -1,0 +1,153 @@
+"""Formal, checked on the golden set — no LLM calls.
+
+1. Round trip: each expected answer (child_golden.json) as .pr rows → formal.write → formal.parse →
+   equal to the rows it started from.
+2. A .goal step written in formal is recognised (formal.is_formal) and parsed directly, and gives the
+   rows the LLM path gives (build_pr.pr_action over the same answer as JSON); no natural step text is
+   taken for formal.
+3. The hand-written prompt-C answer (/shared/coder/2.0/checkout/expected.txt) parses to the golden rows.
+4. Parse errors name the line and column.
+
+    python3 formal_check.py
+"""
+import json, os, sys, copy
+import formal as f
+import build_pr as b
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+GOLDEN = json.load(open(os.path.join(HERE, 'child_golden.json'), encoding='utf-8'))['cases']
+MOCK = '/shared/coder/2.0/checkout/expected.txt'
+
+def rows_of(a):
+    """A golden expected action ({module, name, property: {Name: value}, child, modifier, recovery}) as
+    .pr rows, each typed the way the parser types it: the declared type, or the literal's own in an
+    open slot."""
+    declared = f.properties(a['module'], a['name'])
+    props = []
+    for name, v in (a.get('property') or {}).items():
+        if isinstance(v, dict) and '$oneOf' in v: v = v['$oneOf'][0]
+        spec = declared.get(name, {'type': 'item'})
+        if isinstance(v, dict) and v.get('module'): v = rows_of(v)
+        elif spec['type'].startswith('list') and isinstance(v, list) and v and isinstance(v[0], dict) and 'name' in v[0]:
+            v = [{'name': r['name'], 'type': f.typed('item', r['value']), 'value': r['value']} for r in v]
+        props.append({'name': name, 'type': f.typed(spec['type'], v), 'value': v})
+    out = {'module': a['module'], 'name': a['name'], 'property': props,
+           'modifier': [rows_of(m) for m in a.get('modifier') or []]}
+    if a.get('recovery'): out['recovery'] = [rows_of(r) for r in a['recovery']]
+    if a.get('child'): out['child'] = [{'text': c['text'], 'action': [rows_of(x) for x in c['action']]} for c in a['child']]
+    return out
+
+def without_child_text(actions):
+    """The rows with each child's text set aside — formal has no place for the body's words."""
+    out = copy.deepcopy(actions)
+    def strip(a):
+        for c in a.get('child') or []:
+            c.pop('text', None)
+            for x in c['action']: strip(x)
+        for m in a.get('modifier') or []: strip(m)
+        for r in a.get('recovery') or []: strip(r)
+        for p in a.get('property') or []:
+            if isinstance(p['value'], dict) and p['value'].get('module'): strip(p['value'])
+    for a in out: strip(a)
+    return out
+
+def diff(x, y, at=''):
+    """The first place two row trees differ, or None."""
+    if type(x) != type(y) and not (isinstance(x, (int, float)) and isinstance(y, (int, float))):
+        return f'{at}: {x!r} vs {y!r}'
+    if isinstance(x, dict):
+        for k in sorted(set(x) | set(y)):
+            if k not in x or k not in y: return f'{at}.{k}: only on one side ({x.get(k, y.get(k))!r})'
+            d = diff(x[k], y[k], f'{at}.{k}')
+            if d: return d
+        return None
+    if isinstance(x, list):
+        if len(x) != len(y): return f'{at}: {len(x)} items vs {len(y)}'
+        for i, (p, q) in enumerate(zip(x, y)):
+            d = diff(p, q, f'{at}[{i}]')
+            if d: return d
+        return None
+    return None if x == y else f'{at}: {x!r} vs {y!r}'
+
+def main():
+    failures = []
+    child_texts = []
+    total = 0
+    answers = {}
+    # 1. round trip, and 2. the .goal formal step against the LLM path
+    for c in GOLDEN:
+        answers[c['id']] = {}
+        for k, expected in sorted(c['expect'].items(), key=lambda kv: int(kv[0])):
+            total += 1
+            rows = [rows_of(a) for a in expected]
+            text = f.write(rows)
+            answers[c['id']][int(k)] = text
+            try:
+                back = f.parse(text)
+            except f.FormalError as e:
+                failures.append(f'{c["id"]}[{k}] does not parse back: {e}\n      {text}'); continue
+            if d := diff(without_child_text(rows), without_child_text(back)):
+                failures.append(f'{c["id"]}[{k}] round trip differs at {d}\n      {text}')
+            for a, a2 in zip(rows, back):
+                for ch, ch2 in zip(a.get('child') or [], a2.get('child') or []):
+                    child_texts.append((f'{c["id"]}[{k}]', ch['text'], ch2['text']))
+            # 2. the step as a .goal line in formal, and the LLM path over the same answer as JSON
+            goal_line = text
+            if not f.is_formal(goal_line):
+                failures.append(f'{c["id"]}[{k}] written in formal is not recognised as formal')
+            llm = [b.pr_action(json.loads(json.dumps(a))) for a in rows]
+            if d := diff(without_child_text(llm), without_child_text(f.parse(goal_line))):
+                failures.append(f'{c["id"]}[{k}] formal step vs LLM path differ at {d}')
+        # no natural step is taken for formal
+        for i, s in enumerate(c['steps']):
+            if f.is_formal(s['text']):
+                failures.append(f'{c["id"]}[{i}] natural step text read as formal: {s["text"]}')
+
+    # 3. the hand-written prompt-C answer
+    mock = None
+    if os.path.exists(MOCK):
+        text = open(MOCK, encoding='utf-8').read()
+        checkout = next(c for c in GOLDEN if c['id'] == 'checkout')
+        try:
+            parsed = f.parse_answer(text)
+            mock = []
+            for k, expected in checkout['expect'].items():
+                d = diff(without_child_text([rows_of(a) for a in expected]), without_child_text(parsed.get(int(k), [])))
+                mock.append((k, d))
+        except f.FormalError as e:
+            mock = [('parse', str(e))]
+
+    # 4. errors name the line and column
+    errors = {}
+    for bad in ['file.read(Path="x")\n    variable.set(Name=%y% Value=%!data%)',
+                'file.read(Pth="x")',
+                'condition.if(Left=%n%, Operator="less", Right=5)',
+                'variable.set(Name="y", Value=1)',
+                'error.handle() { goal.call(Name="X") }',
+                'goal.call(Name="X") { output.write(Data="y") }',
+                'file.read(Path="x"',
+                'nope.nothing()']:
+        try:
+            f.parse(bad); errors[bad] = 'PARSED (should fail)'
+        except f.FormalError as e:
+            errors[bad] = str(e)
+
+    print(f'round trip + formal step vs LLM path: {total} steps, {len(failures)} failures')
+    for x in failures: print('  ', x)
+    print(f'\nchild text: {len(child_texts)} bodies; formal keeps the body\'s actions, not its words:')
+    for at, was, now in child_texts[:4]: print(f'   {at}: {was!r} -> {now!r}')
+    if mock is not None:
+        bad = [(k, d) for k, d in mock if d]
+        print(f'\nmock answer {MOCK}: {len(mock) - len(bad)}/{len(mock)} steps equal the golden rows')
+        for k, d in bad: print(f'   step {k}: {d}')
+    print('\nparse errors:')
+    for t, e in errors.items(): print(f'   {t!r}\n      -> {e}')
+    out = os.path.join(HERE, 'formal_golden.txt')
+    with open(out, 'w', encoding='utf-8') as fh:
+        for cid, steps in answers.items():
+            fh.write(f'# {cid}\n' + f.write_answer({i: f.parse(t) for i, t in steps.items()}) + '\n\n')
+    print('\nwrote', out)
+    return 1 if failures else 0
+
+if __name__ == '__main__':
+    sys.exit(main())

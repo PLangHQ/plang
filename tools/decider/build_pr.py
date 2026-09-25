@@ -17,7 +17,7 @@ import harness as h
 
 ROOT = h.ROOT
 OUT = os.path.join(os.path.dirname(__file__), 'out')
-OPENAI_KEY = os.environ['OPENAI_API_KEY']
+OPENAI_KEY = os.environ.get('OPENAI_API_KEY')   # only the stage-3 call needs it; the formal parser reads the catalogue alone
 MODEL = os.environ.get('STAGE3_MODEL', 'gpt-5.4-nano')
 SYSTEM = open(f'{ROOT}/os/system/builder/llm/Properties.llm', encoding='utf-8').read()
 
@@ -87,11 +87,12 @@ def default_text(literal):
 NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'modifier'}
 
 _decl = {}
-def declared(module, action):
+def declared(module, action, held_actions=False):
     """(properties, is_modifier) as the handler declares them — the same rows the plang catalog
     reflects (app/type/property/list/this.cs Reflect): infra-typed slots dropped, an IChannel
-    action's synthetic `channel` row added last."""
-    key = (module, action)
+    action's synthetic `channel` row added last. held_actions keeps the `action`-typed slots (a
+    callback's goal, channel.set Goal) that the catalog drops — the formal parser reads those."""
+    key = (module, action, held_actions)
     if key in _decl: return _decl[key]
     src = handler_source(module, action) or ''
     lines = src.split('\n')
@@ -101,7 +102,7 @@ def declared(module, action):
         if not m: continue
         d = next((DEFAULT.search(l) for l in reversed(lines[max(0, i - 3):i]) if DEFAULT.search(l)), None)
         t = plang_type(m.group('type'))
-        if t in NOT_ON_MENU: continue
+        if t in NOT_ON_MENU and not (held_actions and t == 'action'): continue
         options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
         props[m.group('name')] = {'type': t, 'options': options, 'nullable': bool(m.group('opt')),
                                   'default': default_text(d.group('value')) if d else None}
@@ -223,7 +224,8 @@ def signature(choice):
     props, _ = declared(module, action)
     parts = []
     for name, p in props.items():
-        optional = '?' if p['nullable'] and p['default'] is None else ''
+        # `?` marks every property the step may leave out — a nullable one, and one with a default.
+        optional = '?' if p['nullable'] or p['default'] is not None else ''
         default = f' = {p["default"]}' if p['default'] is not None else ''
         parts.append(f'{name}{optional}: {p["type"]}{default}')
     return f'{choice}({", ".join(parts)})'

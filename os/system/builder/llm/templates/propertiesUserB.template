@@ -91,7 +91,7 @@ Types
 {%- assign name = m.Name | append: "." | append: a.Name -%}
 {%- if name == choice %}
 
-## {{ choice }}({% for p in a.Property %}{{ p.Name }}{% unless p.Required or p.HasDefault %}?{% endunless %}: {{ p.Type }}{% if p.HasDefault %} = {{ p.Default }}{% endif %}{% unless forloop.last %}, {% endunless %}{% endfor %})
+## {{ choice }}({% for p in a.Property %}{{ p.Name }}{% unless p.Required %}?{% endunless %}: {{ p.Type }}{% if p.HasDefault %} = {{ p.Default }}{% endif %}{% unless forloop.last %}, {% endunless %}{% endfor %})
 {%- if a.Description -%}
 {%- assign descriptionLines = a.Description | strip | split: "\n" %}
 {{ descriptionLines[0] }}

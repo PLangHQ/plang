@@ -1,0 +1,71 @@
+# build
+[0] variable.set(Name=%path%, Value="/", AsDefault=true)
+[1] variable.set(Name=%!build.cache%, Value=true, AsDefault=true)
+[2] variable.set(Name=%!build.summary%, Value=true, AsDefault=true)
+[3] channel.set(Name="builder", Goal=goal.call(Name="BuilderChannel"))
+[4] goal.call(Name="EmitBuildEvent", Parameter={kind: "build-path", path: %path%})
+[5] build.load(); variable.set(Name=%app%, Value=%!data%)
+[6] build.goals(Path=%path%); variable.set(Name=%goals%, Value=%!data%)
+[7] goal.call(Name="EmitBuildEvent", Parameter={kind: "goals-found", goals: %goals%})
+[8] loop.foreach(Collection=%goals%); goal.call(Name="BuildGoal", Parameter={goal: %item%})
+[9] file.save(Path="/.build/traces/%!trace.id%/manifest.json", Value=%traceGoals%)
+[10] build.appSave()
+
+# start
+[0] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goalHeader", goal: %goal%})
+[1] variable.set(Name=%buildStart%, Value=%Now.Ticks%)
+[2] variable.set(Name=%trace%, Value="{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}")
+[3] goal.call(Name="Compile")
+    error.handle() { goal.call(Name="HandleBuildFailure") }
+[4] variable.set(Name=%trace.menu%, Value=%menu%)
+[5] variable.set(Name=%parentGoal%, Value=%goal%)
+[6] loop.foreach(Collection=%parentGoal.Child%); goal.call(Name="BuildSubGoal", Parameter={subGoal: %item%})
+[7] variable.set(Name=%goal%, Value=%parentGoal%)
+[8] math.subtract(A=%Now.Ticks%, B=%buildStart%); variable.set(Name=%elapsedTicks%, Value=%!data%)
+[9] math.divide(A=%elapsedTicks%, B=10000); variable.set(Name=%elapsedMs%, Value=%!data%)
+[10] variable.set(Name=%trace.durationMs%, Value=%elapsedMs%)
+[11] file.save(Path="/.build/traces/%!trace.id%/%goal.Name%.json", Value=%trace%)
+[12] list.add(ListName=%traceGoals%, Value=%goal.Name%)
+[13] build.fold()
+    error.handle() { goal.call(Name="HandleBuildFailure") }
+[14] build.goalsSave()
+
+# decide
+[0] variable.set(Name=%threshold%, Value=0.5)
+[1] variable.set(Name=%modules%, Value=%!app.module.list%)
+[2] variable.set(Name=%state.goal%, Value=%goal.Name%)
+[3] loop.foreach(Collection=%goal.Step%); goal.call(Name="AddStepToState", Parameter={item: %step%})
+[4] loop.foreach(Collection=%modules%); goal.call(Name="AddModuleToState", Parameter={item: %module%})
+[5] ui.render(Template="/system/builder/llm/templates/deciderModuleQuestions.template"); variable.set(Name=%moduleQuestions%, Value=%!data%)
+[6] llm.decider(State=%state%, Question=%moduleQuestions%); variable.set(Name=%moduleAnswer%, Value=%!data%)
+[7] ui.render(Template="/system/builder/llm/templates/deciderActionQuestions.template"); variable.set(Name=%actionQuestions%, Value=%!data%)
+[8] llm.decider(State=%state%, Question=%actionQuestions%); variable.set(Name=%actionAnswer%, Value=%!data%)
+[9] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goal-decided", goal: %goal%})
+
+# checkout
+[0] file.read(Path="orders/%orderId%.json"); variable.set(Name=%order%, Value=%!data%)
+[1] list.count(ListName=%order.items%); variable.set(Name=%itemCount%, Value=%!data%)
+[2] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }; condition.elseif(Left=%itemCount%, Operator="==", Right=1) { output.write(Data="One item") }; condition.else() { output.write(Data="%itemCount% items") }
+[3] condition.if(Left=%order.email%, Operator="notcontains", Right="@") { error.throw(Message="Invalid email address") }
+[4] condition.if(Left=%order.coupon%, Operator="isnotempty") { goal.call(Name="ApplyCoupon", Parameter={code: %order.coupon%, order: %order%}) }
+[5] condition.if(Left=%order.total%, Operator="isnot", Right="number") { error.throw(Message="The total must be a number") }
+[6] condition.if(Left=%order.country%, Operator="==", Right="IS") { variable.set(Name=%vat%, Value=0.24) }; condition.else() { variable.set(Name=%vat%, Value=0.25) }
+[7] math.multiply(A=%order.total%, B=%vat%); variable.set(Name=%vatAmount%, Value=%!data%)
+[8] condition.if(Left=%order.note%, Operator="notstartswith", Right="#") { list.add(ListName=%notes%, Value=%order.note%) }
+[9] output.write(Data="Total: %order.total%, VAT: %vatAmount%")
+
+# weekly_report
+[0] file.list(Path="/logs", Pattern="*.log"); variable.set(Name=%files%, Value=%!data%)
+[1] variable.set(Name=%errors%, Value=[])
+[2] loop.foreach(Collection=%files%); goal.call(Name="ScanFile", Parameter={file: %item%})
+[3] condition.if(Left=%errors%, Operator="isempty")
+[4] output.write(Data="No errors this week")
+[5] goal.return()
+[6] condition.if(Left=%files%, Operator="is", Right="list")
+[7] output.write(Data="Scanned the log files")
+[8] ui.render(Template="report.html", Parameter={errors: %errors%}); variable.set(Name=%html%, Value=%!data%)
+[9] file.save(Path="/reports/week.html", Value=%html%)
+[10] goal.call(Name="SendReport", Parameter={to: "ops@example.com", subject: "Weekly report"})
+    error.handle() { goal.call(Name="LogFailure") }
+[11] output.write(Data="Report sent", channel="log")
+
