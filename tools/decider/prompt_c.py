@@ -213,6 +213,34 @@ def uncovered(text, rows):
     written = f.write_actions(rows, types=False)
     return [v for v in dict.fromkeys(f.VARIABLE.findall(text)) if v not in written]
 
+# A quoted literal in a step's text — "…" or '…' (a single quote only when not inside a word, so
+# `don't` is not one). Quotes are the programmer's literal marker, not a human language.
+LITERAL = re.compile(r'"([^"]*)"|(?<!\w)\'([^\']*)\'(?!\w)')
+
+def values_of(rows):
+    """Every text the answer holds — each value, each dict key and argument name — however deep."""
+    out = []
+    def walk(v):
+        if isinstance(v, dict):
+            for k, x in v.items():
+                if k not in ('module', 'name', 'type', 'property', 'modifier', 'child', 'recovery', 'action', 'frozen'): out.append(str(k))
+                walk(x)
+        elif isinstance(v, list):
+            for x in v: walk(x)
+        elif isinstance(v, str): out.append(v)
+    for a in rows:
+        for r in a.get('property') or []: walk(r['value']); out.append(r['name'])
+        for c in a.get('child') or []: out += values_of(c.get('action') or [])
+        out += values_of(a.get('modifier') or [])
+        for m in a.get('modifier') or []: out += values_of(m.get('recovery') or [])
+    return out
+
+def uncovered_literals(text, rows):
+    """The quoted literals of the step's text that no value of its answer holds."""
+    held = values_of(rows)
+    lits = [m.group(1) if m.group(1) is not None else m.group(2) for m in LITERAL.finditer(text)]
+    return [l for l in dict.fromkeys(lits) if l and not any(l in v for v in held)]
+
 WHOLE = ('has no entry', 'is extra', 'is labelled', 'has no index', 'is not an object')
 
 def check(goal, picks, parsed):
@@ -235,4 +263,5 @@ def check(goal, picks, parsed):
         r, w = disagreements(i, rows, picks.get(i, {}), steps[i]['text'])
         problems += r; warnings += w
         problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], rows)]
+        problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], rows)]
     return whole, {i: p for i, p in per_step.items() if p}, warnings

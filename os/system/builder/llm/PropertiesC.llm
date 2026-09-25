@@ -40,6 +40,7 @@ A modifier wraps the one action it modifies; what it runs on error is its Recove
 Common steps, and their formal:
   read 'notes.txt', write to %content%            file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)
   write out "Hello %name%"                        output.write(Data="Hello %name%")
+  write out "Done" to "log" channel               output.write(Data="Done", channel="log")
   set %count% = 0                                 variable.set(Name=%count%, Value=0)
   call SendMail to=%email%, subject="Hi"          goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
   foreach %orders%, call Ship order=%item%        loop.foreach(Collection=%orders%); goal.call(Name="Ship", Parameter={order: %item%})
