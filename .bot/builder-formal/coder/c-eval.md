@@ -261,3 +261,71 @@ It didn't reproduce. 85 decider state files are checked by `harness.misplaced_ex
 - the 5 copies in `/shared/coder/2.0`.
 
 Every `e.g.` line comes from its own entry. The write-to lines (`get 'https://…', write to %rates%` …) at line 140 of checkout's state are the **variable** module's own (from `variable/set.examples.md`). They sit under `- variable:`, the module above `- variable.set:` in the asked-by-name list. The guard now runs on every state written, so a real shift would fail the run.
+
+---
+
+# Decider v6 vs v5, and round 7
+
+## Decider v6 (Ingi's design) — measured, and v5 stays
+
+Commit `65f5c860c`. The design:
+- **stage 1:** per step one `choice` over the modules and the 15 popular actions. Each option carries structured criteria (`what`, `not_for`, `examples` as step texts), and the state holds only the goal and the task.
+- **stage 2:** every option with a share ≥ 0.15 gets a `score`: 0 not used / 1 only named to run later / 2 inside a condition, loop or error handler / 3 the step's own work. A pick is level ≥ 2.
+- **stage 3:** the action of a picked module option, plus else/elseif by name.
+
+Requests: `/shared/coder/2.0/rounds/decider-v6-run{1,2}/` and `decider-v5-run{1,2}/`, with `readable.txt`.
+
+| | v6 run 1 | v6 run 2 | v5 run 1 | v5 run 2 |
+|---|---|---|---|---|
+| cut 0.5: steps exact | 33/58 | 30/58 | **58/58** | **58/58** |
+| cut 0.5: missed / extra | 23 / 6 | 26 / 6 | 0 / 0 | 0 / 0 |
+| cut 0.9: steps exact | 28/58 | 27/58 | **45/58** | **47/58** |
+| stage 1: questions, KB | 58, 719 | 58, 719 | 406, ~158 | 406, ~158 |
+| stage 1: tokens in / out | 227,768 / 19,206 | 227,768 / 19,206 | ~49k / 20k | ~49k / 20k |
+
+**Why v6 loses (prompt-first):**
+1. **One choice per step can't name a step's second action.** A choice's shares sum to 1, so on `build.load, write to %app%` the build module takes 0.99 and variable.set is never a candidate; the same goes for goal.call in `foreach … call X`. This is the "which one, not which ones" limit, and v5's yes/no per common action is what covers it.
+2. **The score question reads the step's words, not its structure:**
+   - `call EmitBuildEvent …` made `event` a 0.16 candidate that then scored level 2.9, so event.on was picked, an extra;
+   - `call /system/builder/EmitBuildEvent …` scored goal.call at level 0.84, "not used".
+3. **The criteria ride in every question:** stage 1 is 719 KB, 4.5× v5's.
+
+A pick's score was P(level ≥ 2). The docs' normalized level (score / 3) would put a right "inside a condition" pick at 0.67, so it's kept beside the pick score, not used as it.
+
+## The near-certain cut stays at 0.9
+
+27 decider runs on the golden goals (v3–v5 evals, the v5 runs above, rounds 1–7's deciders), 10,676 scored picks:
+- **every pick at or above 0.9 (1,976) was right;**
+- in the 0.8–0.9 band, 157 were right and **8 were wrong**:
+  - `build.actions` 0.80–0.85 on decide 9 (`call /system/builder/EmitBuildEvent …`), 7 times: the word "builder" in the path;
+  - `output.write` 0.80 on build 5 (`build.load, write to %app%`), once (v3).
+
+So 0.8 would have pre-filled a wrong action. The cut stays at 0.9.
+
+## Round 7 — C + nano, 3 runs, decider v5
+
+Changes (`3820e0ee5`), all with the indentation kept (Ingi):
+- the Recovery pre-fill has no nested `?` (`Recovery=[goal.call(…)]`, and an unfilled `…` says so);
+- a single unquoted word in a text property is that text (`Name=HandleBuildFailure`).
+
+Raw: `tools/decider/runs/c_eval_round7_20260925_2228{19,35,43}/`. Requests: `/shared/coder/2.0/<goal>/` (run 3) and `rounds/round7-run{1,2,3}/`.
+
+| run | first-attempt right | fixed | caught | silent | after retry right | silent | loud | warnings | seconds | cost |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | **58/58** | 0 | 0 | 0 | 58/58 | 0 | 0 | 4 | 13.1 | $0.0054 |
+| 2 | 57/58 | 0 | 0 | 1 | 57/58 | **1** | 0 | 5 | 11.8 | $0.0054 |
+| 3 | 55/58 | 2 | 1 | 0 | 58/58 | 0 | 0 | 5 | 13.8 | $0.0056 |
+| **total** | **170/174 (98%)** | 2 | 1 | 1 | **173/174** | **1** | **0** | 14 | | |
+| round 6 total | 153/174 | 0 | 21 | 0 | 174/174 | 0 | 0 | 32 | | |
+
+**The first run with every step right on the first attempt: run 1, 58/58.** The first attempt goes from 88% (round 6) to 98%: the start 3/13 recovery misses and weekly_report's nesting are gone. Weekly_report didn't nest in any run, even with the indentation shown.
+
+### Every miss, prompt-first
+
+| run | step | what | cause | proposal |
+|---|---|---|---|---|
+| 2 | weekly 10 `call SendReport to=…, subject=…, on error call LogFailure` | **silent**: error.handle got `RetryCount=1, Order="GoalFirst"`, an invented retry | prompt: rule 8's example ("call X, then retry N times" → `Order="GoalFirst", RetryCount=N`) sits next to a step that has an on-error but no retry. No check sees an invented number | **reverse number coverage**: every number the answer writes must appear in the step's text (a number is plang's own literal, like a quoted text). It would refuse `RetryCount=1` here and pass every golden answer (all their numbers are in their steps); I'll verify that before building it. `Order="GoalFirst"` is only allowed with RetryCount, so it would go on the retry too |
+| 3 | start 8, 9 | fixed: `Overflow="Promote"`, `Precision="Error"` spelled out | model; S1 drops them (the defaults) | — |
+| 3 | weekly 8 `render template "report.html", errors=%errors%, …` | caught by variable coverage (`%errors%` missing), right after the per-step retry | model | — |
+
+Warnings: goal.call 0.79–0.89 (build 4/7, start 0, decide 9) and error.throw 0.84–0.89 (checkout 3/5), all on right steps.
