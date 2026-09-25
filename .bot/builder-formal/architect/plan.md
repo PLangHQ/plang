@@ -1,6 +1,6 @@
 # builder-formal — the decider picks, the LLM fills a formal, two readers must agree
 
-Branch `builder-formal` off `get-builder-running` at `92fcae51f` (prompt B, the 5-goal golden set, the eval harness). With Ingi, 2026-09-25. **Draft for Ingi's read — coder has not started.**
+Branch `builder-formal` off `get-builder-running` at `92fcae51f` (prompt B, the 5-goal golden set, the eval harness). With Ingi, 2026-09-25. **Approved by Ingi, all five open questions answered as proposed (see "Open" — now rulings).**
 
 > **Coder, you own this.** The notation, the parser and the prompts below are sketches; the rulings are fixed, the shape is yours. Bring back anything that doesn't hold up when you build it.
 
@@ -59,13 +59,13 @@ modifier= action | error.handle(RetryCount=2, Order="GoalFirst") { recovery acti
 3. **Prompt C + the double check** (python). B's shape + the per-step picks and pre-filled formal; the answer in formal; the check. Eval C vs B on the 5 goals, both models, 1 run (Ingi), 2–3 rounds, then pick one model. Numbers: first-attempt, caught, silent, disagreements flagged, latency, cost, tokens in/out.
 4. **Into the plang builder** — only after C wins. Direction for the C# side, to design then: formal is a *format of the action* — the action writes itself in formal and reads itself from formal (a reader beside the `.pr` JSON reader), so the parser has an owner and no second structure exists. `Decide.goal` gets the common-action questions; `Properties.goal` asks in formal; Settle's check compares with the picks.
 
-## Open — for Ingi
+## Rulings (Ingi, 2026-09-25)
 
-1. **Which common actions** get their own stage-1 question — proposal: the most frequent 5–8 by count (likely `variable.set`, `output.write`, `goal.call`, `file.read`, `condition.if`, `list.add`).
-2. **"Near-certain"** — the score above which stage 2 is skipped and a missing pick is refused. Proposal: start at 0.9, set it from stage 1's measured calibration.
-3. **Does the LLM see scores or only picks?** Proposal: scores (Ingi's idea) — the eval shows whether they help.
-4. **When the decider misses** (the right action never picked): the LLM can only use listed actions. Proposal: list picks ≥ 0.9 as pre-filled, and 0.5–0.9 as "possible" with scores; an action below 0.5 can't be used — the build fails loudly naming the step, and the miss is the decider's to fix (examples in stage 1/2, the `<action>.examples.md` direction).
-5. **A disagreement's retry** — the LLM is told what it dropped or added and answers again. If it insists, is that a build failure (loud) or does a targeted decider question break the tie ("does step 3 keep its result in a variable?")? Proposal: loud failure first; the tie-breaker is a later refinement.
+1. **Common actions:** start with the top 5–8 by count (likely `variable.set`, `output.write`, `goal.call`, `file.read`, `condition.if`, `list.add`) — "you will learn"; the list is adjusted from measurement.
+2. **Near-certain = 0.9** to start (stage 2 skipped at or above it; a missing pick at or above it is refused); set from stage 1's measured calibration.
+3. **The LLM sees the scores**, not only the picks.
+4. **Decider misses:** picks ≥ 0.9 are pre-filled; 0.5–0.9 are listed as "possible" with their scores; below 0.5 can't be used — the build fails loudly naming the step, and the miss is the decider's to fix (its teaching: `<action>.examples.md` step texts in stages 1/2).
+5. **A disagreement** is told back to the LLM (what it dropped or added) and answered again; if it insists, the build fails loudly. A targeted decider tie-breaker is a later refinement.
 
 ## Demolition (what must not survive, when C wins)
 
