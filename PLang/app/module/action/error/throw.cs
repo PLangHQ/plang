@@ -26,11 +26,19 @@ public partial class Throw : IContext
     [Default("error")]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
+    /// <summary>How the programmer fixes it — <c>- throw %!error%, fix suggestion %fix%</c>. A re-raised
+    /// error keeps its identity and gains the suggestion; a new error is born with it.</summary>
+    public partial data.@this<global::app.type.item.text.@this>? FixSuggestion { get; init; }
+
     public async Task<data.@this> Run()
     {
         // An error is a point-in-time capture (like the callstack snapshot), so the
         // attached values bind at throw, not at display.
         global::app.type.item.@this? thrown = Data == null ? null : await Data.Value();
+        // An absent slot is empty, not C# null — asked through IsEmpty, so an error thrown without a
+        // fix gets none rather than "".
+        string? fix = FixSuggestion == null || await FixSuggestion.IsEmpty() ? null
+            : (await FixSuggestion.Value())?.Clr<string>();
 
         // Re-raise: `- throw %!error%` hands an existing error straight through rather
         // than wrapping it as a new error's payload. A first-class, intended pattern.
@@ -39,13 +47,19 @@ public partial class Throw : IContext
         // becomes `thrown is error.@this err → Error(err.Inner)`, no Clr. (todos.md
         // "error as a first-class plang type")
         if (thrown?.Clr<object>() is global::app.error.Error existing)
+        {
+            if (fix != null) existing.FixSuggestion = fix;
             return Error(existing);
+        }
 
         // `- throw %!error%` lands the error in the (text) Message slot, not Data. Re-raise
         // it from there too — resolve Message as the apex value (NOT text, which would choke
         // coercing the error object) and hand the existing error straight through.
         if (Message != null && (await Message.Value<global::app.type.item.@this>())?.Clr<object>() is global::app.error.Error msgError)
+        {
+            if (fix != null) msgError.FixSuggestion = fix;
             return Error(msgError);
+        }
 
         // Key carries its own [Default] — the unset case is answered there, once, where the
         // builder can also read it. A second fallback here would be the default stored twice.
@@ -63,6 +77,6 @@ public partial class Throw : IContext
             attached = Context.Ok<List>(list);
         }
 
-        return Error(new ServiceError(message, key, status) { Data = attached });
+        return Error(new ServiceError(message, key, status) { Data = attached, FixSuggestion = fix });
     }
 }

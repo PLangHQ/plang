@@ -24,7 +24,9 @@ public class Error : global::app.type.item.@this
     public string Message { get; }
     public string Key { get; }
     public int StatusCode { get; }
-    public string? FixSuggestion { get; init; }
+    /// <summary>How the programmer fixes it. Born with the error, or attached when a handler re-raises
+    /// it (<c>- throw %!error%, fix suggestion %fix%</c>) — the same error, now with its fix.</summary>
+    public string? FixSuggestion { get; internal set; }
     public string? HelpfulLinks { get; init; }
     public DateTime CreatedUtc { get; }
     public Exception? Exception { get; init; }

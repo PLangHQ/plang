@@ -73,6 +73,48 @@ public class ThrowTests
     }
 
     [Test]
+    public async Task Throw_ReRaiseWithFixSuggestion_SameErrorGainsTheFix()
+    {
+        // `- throw %!error%, fix suggestion %fix%` — the same error instance, now with its fix.
+        var (context, _) = CreateContext();
+        var original = new global::app.error.ServiceError("else apart from its if", "ElseWithoutIf", 400);
+
+        var action = new Throw(context)
+        {
+            Data = context.Ok(original),
+            FixSuggestion = (Text)"- if %x% == 1, write out \"one\", else write out \"other\""
+        };
+        var result = await action.Run();
+
+        await result.IsFailure();
+        await Assert.That(ReferenceEquals(result.Error, original)).IsTrue();
+        await Assert.That(result.Error!.FixSuggestion).IsEqualTo("- if %x% == 1, write out \"one\", else write out \"other\"");
+    }
+
+    [Test]
+    public async Task Throw_NewErrorWithFixSuggestion_IsBornWithIt()
+    {
+        var (context, _) = CreateContext();
+
+        var action = new Throw(context) { Message = (Text)"bad input", FixSuggestion = (Text)"pass a number" };
+        var result = await action.Run();
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.FixSuggestion).IsEqualTo("pass a number");
+    }
+
+    [Test]
+    public async Task Throw_ReRaiseWithoutFixSuggestion_LeavesTheErrorsOwn()
+    {
+        var (context, _) = CreateContext();
+        var original = new global::app.error.ServiceError("boom", "K", 400) { FixSuggestion = "its own" };
+
+        var result = await new Throw(context) { Data = context.Ok(original) }.Run();
+
+        await Assert.That(result.Error!.FixSuggestion).IsEqualTo("its own");
+    }
+
+    [Test]
     public async Task Throw_AttachesSingleValue_AsListOfOne()
     {
         // `- throw %order%` — a single value attaches as a list of one, kept typed,
