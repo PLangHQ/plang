@@ -126,7 +126,7 @@ def one_c(model, case, picks):
         if agree1 and not agree2: warn2 = warn2 + [f'settled on retry: {x}' for x in agree1]
     goal = e.goal_of(case)
     unsure = [s['index'] for s in goal['steps'] if c.is_unsure(picks.get(s['index'], {}), s['text'])]
-    popular = [w for w in warn2 if 'other common actions' in w]
+    popular = [w for w in warn2 if 'popular-action choice' in w]
     return {'prompt': 'C', 'model': model, 'case': case['id'], 'first': first, 'before': before,
             'unsure': unsure, 'popular_used': popular,
             'refused1': whole1 + [r for p in steps1.values() for r in p], 'caught': sorted(caught),
@@ -199,7 +199,10 @@ if __name__ == '__main__':
     with cf.ThreadPoolExecutor(5) as ex:
         decided = dict(zip([c_['id'] for c_ in e.GOLDEN],
                            ex.map(lambda case: d.one(case, cat, os.path.join(reqdir(PROMPTS[-1]), case['id'], 'decider')), e.GOLDEN)))
-    picks = {cid: {s['index']: {a: v['score'] for a, v in s['pick'].items()} for s in r['steps']} for cid, r in decided.items()}
+    # a step's picks; an unsure step also carries '@popular': the top 3 of the decider's popular-action choice
+    picks = {cid: {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
+                                **({'@popular': s['popular']} if s.get('popular') else {})} for s in r['steps']}
+             for cid, r in decided.items()}
     json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
                'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},
               open(os.path.join(OUT, 'decider.json'), 'w'), indent=1)

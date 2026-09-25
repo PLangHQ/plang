@@ -55,9 +55,9 @@ Rules
    another step's work into it. A step that is only `else` (or `else if …`) is its own line.
 2. Use the decider's actions for the step. Every action it is certain of (0.90 or more) is in your line. A
    possible action (below 0.90) is used only when the step's words need it. Never use an action not listed
-   for the step — except goal.call where a listed action holds actions (an action property, a Recovery),
-   and, on a step marked unsure, one of the other common actions when the listed ones don't do what the
-   step says.
+   for the step — except goal.call where a listed action holds actions (an action property, a Recovery).
+   An action marked (possible, popular) is the decider's best guess on a step it was unsure of: use it
+   only when the step's words need it.
 3. Fill every `?` with a value written as above — a text always in quotes: Name="AddStepToState". Order the
    actions by what the step does, not by the order they are listed. An action may be used more than once.
 4. Give a property only when the step's words give its value; otherwise leave it out and its default applies.

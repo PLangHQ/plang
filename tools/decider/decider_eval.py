@@ -55,7 +55,8 @@ def one(case, cat, folder=None):
         if main and main not in split[i][1] and len(cat[main]['actions']) > 1: skipped.append((i, main))
     dump_to(folder, '2.decider')
     conditions = {i for i, (common, _, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
-    acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen, conditions, runners)
+    unsure = {i for i in probs if h.unsure(probs[i], cat)}
+    acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen, conditions, runners, unsure)
     if q2: readable(folder, '2.decider')
     h._local.dump = None
     steps = []
@@ -75,7 +76,10 @@ def one(case, cat, folder=None):
             pick[name] = {'score': score, 'from': 'stage 2' + (' yes/no' if m in runners.get(i, []) else ''), 'confidence': confidence}
         for a in h.BRANCHES:   # asked by name when condition.if was picked
             if (i, a) in acts: pick[a] = {'score': acts[(i, a)][1], 'from': 'branch'}
+        # an unsure step: which one of the popular actions — the top 3 of that choice, with their probabilities
+        popular = sorted((acts.get((i, '@popular'), (None, {}))[1] or {}).items(), key=lambda ap: -(ap[1] or 0))[:3]
         steps.append({'index': i, 'text': s['text'], 'expected': case['menu'][str(i)],
+                      'popular': dict(popular) if (i, '@popular') in acts else None,
                       'main': h.main_module(probs[i], cat),
                       'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick})
     return {'goal': case['id'], 'steps': steps, 'skipped': skipped,

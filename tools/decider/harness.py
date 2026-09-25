@@ -250,6 +250,24 @@ def windows(steps):
 COMMON = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read']
 NEAR_CERTAIN = 0.9   # a common action scored at or above this is picked; its module skips stage 2
 
+# What yes and no mean for each common-action question (the noul's optional criteria, docs.typesafe.ai):
+# the action's meaning, with example steps as step texts. CRITERIA=0 asks without them.
+CRITERIA = os.environ.get('CRITERIA', '1') != '0'
+COMMON_CRITERIA = {
+    'variable.set': {'true': 'the step sets a variable or keeps a result in one: `set %x% = 5`, `set default %x% = …`, `…, write to %x%`',
+                     'false': 'the step keeps no value in a variable'},
+    'goal.call': {'true': 'the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`',
+                  'false': 'the step calls no goal now; a goal named to run later — `…, on error call X`, the goal behind a channel or an event — is not called by the step'},
+    'output.write': {'true': 'the step shows or writes something out, to the user or to a named channel: `write out "Hello"`, `show %message%`, `write %x% to "log" channel`',
+                     'false': 'the step shows nothing; `…, write to %x%` keeps a value in a variable, it is not output'},
+    'error.handle': {'true': 'the step says what happens when it fails: `…, on error call X`, `…, on error retry 3 times`',
+                     'false': 'the step says nothing about failing; throwing an error (`throw "…"`) is not handling one'},
+    'condition.if': {'true': 'the step tests something and does its work only when it holds: `if %x% > 5, …`, `if %list% is empty`',
+                     'false': 'the step tests nothing'},
+    'file.read': {'true': 'the step reads a file\'s content: `read \'notes.txt\'`, `read file %path%, write to %text%`',
+                  'false': 'the step reads no file; saving, listing or deleting a file is not reading it'},
+}
+
 # What a common-action question counts as the step's own. CLAUSE=1 adds "its own work, or anything it
 # guards, loops or hands to an error handler"; measured on the golden goals it made output.write and
 # error.handle fire where they don't belong (46/58 steps exact at 0.5 against 51/58 without), so the
@@ -275,6 +293,7 @@ def stage1(goal, cat):
             for a in COMMON:
                 qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
                     f'Step {step_no(s)} is `{text}`. Does step {step_no(s)}{CLAUSE} use `{a}`?'}
+                if CRITERIA and a in COMMON_CRITERIA: qs[f's{s["index"]}_{a}']['criteria'] = COMMON_CRITERIA[a]
         resp, t, b = ask(state, qs)
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():
@@ -287,6 +306,20 @@ def main_module(probs_i, cat):
     """The module the step's choice named: the most probable one."""
     scored = {m: p for m, p in probs_i.items() if m in cat and p is not None}
     return max(scored, key=scored.get) if scored else None
+
+# The actions most steps use (share of steps over tools/decider/labels/, the builder's .pr files and the
+# golden set), test-only families (assert.*, identity.*, test.*) left out. A step stage 1 is unsure of
+# (its best score under UNSURE) is asked, in stage 2, which one of these it uses — a choice, so it
+# answers "which one", not "which ones".
+POPULAR = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read', 'file.save',
+           'error.throw', 'file.delete', 'signing.sign', 'list.count', 'math.add', 'loop.foreach', 'signing.verify',
+           'cache.wrap']
+UNSURE = 0.8
+
+def unsure(probs_i, cat):
+    """Stage 1 is unsure of a step when neither a common action nor the main module scores UNSURE."""
+    scores = [p for a, p in probs_i.items() if p is not None and (a in COMMON or a in cat)]
+    return not scores or max(scores) < UNSURE
 
 RUNNER_UP = 0.2   # the choice's second module at or above this is asked in stage 2 as well
 MAIN_YESNO = os.environ.get('MAIN_YESNO', '1') != '0'
@@ -311,19 +344,27 @@ def picks(probs_i, cat, threshold=0.5):
 # never give two actions of the condition module; a picked condition.if asks these by name.
 BRANCHES = ['condition.elseif', 'condition.else']
 
-def stage2(goal, cat, chosen, conditions=(), runners=None):
+def stage2(goal, cat, chosen, conditions=(), runners=None, unsure_steps=()):
     """chosen: {step_index: [modules]} — one choice per (step, module) for its action. conditions: the
     steps with condition.if picked — each also asked noul for every BRANCHES action, answered as
     out[(i, 'condition.else')] = (None, noul). runners: {step_index: [module]} — the modules asked
     noul "does the step use it" (the runner-up, and a main module under NEAR_CERTAIN), answered as
-    out[(i, '@also.<module>')] = (None, noul)."""
+    out[(i, '@also.<module>')] = (None, noul). unsure_steps: steps asked which one of the POPULAR
+    actions they use (a choice, bare names; the descriptions once in the state), answered as
+    out[(i, '@popular')] = (choice, {action: probability})."""
     runners = runners or {}
     used = {m for ms in chosen.values() for m in ms} | ({'condition'} if conditions else set())
     state = state_for(goal, cat, modules=used)
+    if unsure_steps:
+        state += '\n\nThese actions are offered by name:\n' + '\n'.join(
+            f'- {a}: {cat[a.split(".", 1)[0]]["actions"][a.split(".", 1)[1]]["description"]}' for a in POPULAR)
     out = {}; secs = nbytes = nq = 0; usage = collections.Counter()
     for win in windows(goal['steps']):
         qs = {}
         for s in win:
+            if s['index'] in unsure_steps:
+                qs[f's{s["index"]}_@popular'] = {'type': 'choice', 'criteria': {a: None for a in POPULAR}, 'instructions':
+                    f'Step {step_no(s)} is `{s["text"].strip()}`. Which of these actions does step {step_no(s)} use?'}
             if s['index'] in conditions:
                 for a in BRANCHES:
                     qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
@@ -348,7 +389,8 @@ def stage2(goal, cat, chosen, conditions=(), runners=None):
         for k, a in resp['answers'].items():
             i, m = k[1:].split('_', 1)
             noul = m in BRANCHES or m.startswith('@also.')
-            out[(int(i), m)] = (None, a.get('noul')) if noul else (a.get('choice'), a.get('confidence'))
+            if m == '@popular': out[(int(i), m)] = (a.get('choice'), a.get('probabilities') or {a.get('choice'): a.get('confidence')})
+            else: out[(int(i), m)] = (None, a.get('noul')) if noul else (a.get('choice'), a.get('confidence'))
     return out, secs, nbytes, nq, dict(usage)
 
 # ---------------------------------------------------------------- run
