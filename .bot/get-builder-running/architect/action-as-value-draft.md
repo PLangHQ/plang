@@ -39,3 +39,4 @@ public override async ValueTask<item.@this> Value(data.@this data)
 1. How the asking Data knows its declared property type (callbacks must get the action, not its result).
 2. The result is never cached: an action runs on every read.
 3. Where each type's truthiness line lives and how it reaches the LLM (depends on #22: stage 3 sees no notes today).
+4. **Properties typed `action` never reach the LLM today** (found in the child eval, F3): building `%action.Property%`, `type/property/list/this.cs:82` drops every property whose type is `clr`, `goal`, `step`, `action` or `modifier`, so `channel.set`'s `Goal` is never listed under `channel.set` in the stage-3 user message. Action-as-value must let action-typed properties through (and teach them).
