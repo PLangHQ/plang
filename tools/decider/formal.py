@@ -40,6 +40,7 @@ import build_pr as b
 CONDITIONS = {('condition', 'if'), ('condition', 'elseif'), ('condition', 'else')}
 RECOVERY = 'Recovery'   # a modifier's property holding the actions it runs when the wrapped action fails
 VARIABLE = re.compile(r'%[^%\s]+%')
+BARE_NAME = re.compile(r'!?[A-Za-z_][\w.\[\]]*')   # a variable's name without its % signs
 
 class FormalError(Exception):
     """Where the formal stops making sense: line and column (1-based) and what was expected."""
@@ -228,6 +229,10 @@ class _Reader:
             value = self.value()
         if spec.get('options') and value not in spec['options']:
             self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{value}` is not', at)
+        # A variable slot given the bare name as a text ("path") names the same variable as %path% —
+        # the runtime reads both alike (Variable.Resolve). The writer always writes %path%.
+        if declared == 'variable' and isinstance(value, str) and BARE_NAME.fullmatch(value):
+            value = f'%{value}%'
         if declared == 'variable' and not (isinstance(value, str) and VARIABLE.fullmatch(value)):
             self.fail(f'`{prop}` names a variable: write it with its % signs', at)
         # A dict handed to a list property is its rows: Parameter={to: %x%} → [{name: to, …}], each
@@ -322,6 +327,26 @@ def parse_answer(text):
             # the position in the whole answer, not in the step
             raise FormalError(e.reason, text, h.end() + _offset(text[h.end():end], e)) from None
     return out
+
+def parse_steps(text):
+    """A whole answer read step by step: ({i: rows} for the steps that parse, {i: FormalError} for the
+    ones that don't, [whole-answer problems]). One bad line refuses only its own step; a missing
+    `[i]`, text before it or a step answered twice is the whole answer's."""
+    heads = list(STEP.finditer(text))
+    if not heads or text[:heads[0].start()].strip():
+        return {}, {}, ['each step\'s line starts with its index: [0] action; action']
+    rows, errors, whole = {}, {}, []
+    for n, h in enumerate(heads):
+        end = heads[n + 1].start() if n + 1 < len(heads) else len(text)
+        i = int(h.group(1))
+        if i in rows or i in errors:
+            whole.append(f'step [{i}] is answered twice'); continue
+        try:
+            rows[i] = parse(text[h.end():end].rstrip())
+        except FormalError as e:
+            e.text = f'[{i}] ' + text[h.end():end].strip()   # the step's own line, for the refusal
+            errors[i] = e
+    return rows, errors, whole
 
 def _offset(text, e):
     lines = text.split('\n')
