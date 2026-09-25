@@ -1,1 +1,2 @@
-`Depth` is the number of goal levels to exit: `1` (the default) exits the current goal, `2` exits the current goal and its caller. Leave it out unless the step names how far to return.
+Data — the value the goal returns, only when the step names one (`return %result%`).
+Depth — how many goal levels to leave; left out unless the step says how far (1 leaves the current goal).

@@ -1,12 +1,15 @@
-"""Child eval — stage 3 only: does the model put a condition's body in its `child`?
+"""Stage-3 eval: every golden goal (child_golden.json, one request per goal, scored per step) is sent
+with each prompt under test to each model, RUNS times.
 
-Every golden case (child_golden.json) is sent with the prompt the builder ships — the system message
-build_pr.SYSTEM_SENT (Properties.llm + the Properties.schema instruction, as OpenAi.cs appends it) and
-the user message build_pr.user_message() renders (the propertiesUser.template format) — to each model,
-RUNS times. The prompt is frozen for the whole run. Raw answers land in runs/child_eval_<stamp>/.
+    A  the prompt before B, frozen in prompt_a/ (Properties.llm + the schema; the propertiesUser.template
+       user message as build_pr.user_message rendered it)
+    B  PropertiesB.llm + the schema, and build_pr.user_message_b (propertiesUserB.template)
 
-    python3 child_eval.py                       # gpt-5.4-nano and gpt-5.4-mini, 3 runs each
-    MODELS=gpt-5.4-nano RUNS=1 python3 child_eval.py
+The schema rides in the system message, as OpenAi.cs appends it. Raw answers land in
+runs/child_eval_<stamp>/<prompt>/<model>/<goal>/.
+
+    python3 child_eval.py                                  # A and B, nano and mini, 1 run each
+    PROMPTS=B MODELS=gpt-5.4-nano RUNS=3 python3 child_eval.py
 """
 import json, os, re, sys, time, copy, collections, urllib.request, urllib.error, concurrent.futures as cf
 import build_pr as b
@@ -16,20 +19,34 @@ GOLDEN = json.load(open(os.path.join(HERE, 'child_golden.json'), encoding='utf-8
 if os.environ.get('CASES'):
     GOLDEN = [c for c in GOLDEN if c['id'] in os.environ['CASES'].split(',')]
 MODELS = os.environ.get('MODELS', 'gpt-5.4-nano,gpt-5.4-mini').split(',')
-RUNS = int(os.environ.get('RUNS', 3))
+RUNS = int(os.environ.get('RUNS', 1))
 OUT = os.path.join(HERE, 'runs', 'child_eval_' + time.strftime('%Y%m%d_%H%M%S'))
 
 def goal_of(case):
-    return {'name': case['goal'], 'steps': [{'index': i, 'text': s['text'], 'indent': s['indent']}
-                                             for i, s in enumerate(case['steps'])]}
+    return {'name': case['goal'], 'comment': case.get('comment'),
+            'steps': [{'index': i, 'text': s['text'], 'indent': s['indent'], 'comment': s.get('comment')}
+                      for i, s in enumerate(case['steps'])]}
 
 def menu_of(case):
     return {int(k): v for k, v in case['menu'].items()}
 
+# ---------------------------------------------------------------- the prompts under test
+# A is the prompt as it stood before B (run 5's): frozen in prompt_a/, because the notes it prints
+# have since been rewritten for B. B renders live — PropertiesB.llm + propertiesUserB.template.
+PROMPTS = os.environ.get('PROMPTS', 'A,B').split(',')
+FROZEN_A = os.path.join(HERE, 'prompt_a')
+
+def request(prompt, case):
+    """(system, user) exactly as sent for this prompt and goal."""
+    if prompt == 'A':
+        return (open(os.path.join(FROZEN_A, 'system.txt'), encoding='utf-8').read(),
+                open(os.path.join(FROZEN_A, f'{case["id"]}.user.txt'), encoding='utf-8').read())
+    return b.SYSTEM_B_SENT, b.user_message_b(goal_of(case), menu_of(case))
+
 # ---------------------------------------------------------------- the call (the request OpenAi.cs builds)
-def ask(model, user):
+def ask(model, system, user):
     body = json.dumps({'model': model, 'temperature': 0.0, 'max_completion_tokens': 16000,
-                       'messages': [{'role': 'system', 'content': b.SYSTEM_SENT},
+                       'messages': [{'role': 'system', 'content': system},
                                     {'role': 'user', 'content': user}]}).encode()
     for attempt in range(4):
         req = urllib.request.Request('https://api.openai.com/v1/chat/completions', data=body,
@@ -57,6 +74,12 @@ def words(t):
     return re.sub(r'\s+', ' ', re.sub(r'["\'`]', '', str(t))).strip(' ,.;').lower()
 
 def same_value(expected, got):
+    if isinstance(expected, dict) and '$oneOf' in expected:
+        return any(same_value(e, got) for e in expected['$oneOf'])
+    if isinstance(expected, dict) and 'module' in expected:   # an action-typed property holds an action
+        return isinstance(got, dict) and not compare_actions([expected], [got], '')
+    if isinstance(expected, dict) and isinstance(got, dict):
+        return expected.keys() == got.keys() and all(same_value(v, got[k]) for k, v in expected.items())
     if isinstance(expected, bool) or isinstance(got, bool):
         return expected is got
     if isinstance(expected, (int, float)) and isinstance(got, (int, float)):
@@ -97,6 +120,16 @@ def compare_actions(expected, got, where, loose_split=False):
             if name not in (e.get('property') or {}):
                 misses.append(f'{at} {e["module"]}.{e["name"]}: extra {name} = {got_rows[name]!r}')
         misses += compare_child(e.get('child'), g.get('child'), f'{at} child', e.get('note', '').startswith('one child step'))
+        misses += compare_modifiers(e.get('modifier') or [], g.get('modifier') or [], f'{at} {e["module"]}.{e["name"]} modifier')
+    return misses
+
+def compare_modifiers(expected, got, where):
+    """A modifier is an action that wraps the one it sits on; its recovery is a list of actions."""
+    if not isinstance(got, list): return [f'{where}: not a list']
+    misses = compare_actions(expected, got, where) if expected or got else []
+    for i, (e, g) in enumerate(zip(expected, got)):
+        if isinstance(g, dict) and (e.get('recovery') or g.get('recovery')):
+            misses += compare_actions(e.get('recovery') or [], g.get('recovery') or [], f'{where}[{i}] recovery')
     return misses
 
 def compare_child(expected, got, where, loose_split):
@@ -147,20 +180,20 @@ def score(case, answer):
     return result
 
 # ---------------------------------------------------------------- run
-def one(model, case, run):
-    user = b.user_message(goal_of(case), menu_of(case))
-    folder = os.path.join(OUT, model, case['id'])
+def one(prompt, model, case, run):
+    system, user = request(prompt, case)
+    folder = os.path.join(OUT, prompt, model, case['id'])
     os.makedirs(folder, exist_ok=True)
     started = time.time()
     try:
-        raw = ask(model, user)
+        raw = ask(model, system, user)
         seconds = time.time() - started   # wall-clock of the call, retries included
         json.dump(raw, open(os.path.join(folder, f'{run}.raw.json'), 'w'), indent=1, ensure_ascii=False)
         answer, notes = answer_of(raw)
     except Exception as ex:
-        return model, case['id'], run, None, {-1: ([f'call/parse failed: {type(ex).__name__}: {ex}'], [])}, [], None, {}
+        return prompt, model, case['id'], run, None, {-1: ([f'call/parse failed: {type(ex).__name__}: {ex}'], [])}, [], None, {}
     json.dump(answer, open(os.path.join(folder, f'{run}.answer.json'), 'w'), indent=1, ensure_ascii=False)
-    return model, case['id'], run, answer, score(case, answer), notes, seconds, raw.get('usage') or {}
+    return prompt, model, case['id'], run, answer, score(case, answer), notes, seconds, raw.get('usage') or {}
 
 # USD per 1M tokens (input, cached input, output) — the table OpenAi.cs prices a call with.
 PRICES = {'gpt-5.4-nano': (0.20, 0.02, 1.25), 'gpt-5.4-mini': (0.75, 0.075, 4.50), 'gpt-5.4': (2.50, 0.25, 15.00)}
@@ -177,18 +210,20 @@ def percentile(values, p):
     return ordered[min(len(ordered) - 1, int(round(p * (len(ordered) - 1))))] if ordered else 0
 
 if __name__ == '__main__':
-    os.makedirs(OUT, exist_ok=True)
-    open(os.path.join(OUT, 'system.txt'), 'w').write(b.SYSTEM_SENT)
-    for case in GOLDEN:
-        open(os.path.join(OUT, f'user.{case["id"]}.txt'), 'w').write(b.user_message(goal_of(case), menu_of(case)))
-    jobs = [(m, c, r) for m in MODELS for c in GOLDEN for r in range(1, RUNS + 1)]
+    for prompt in PROMPTS:
+        os.makedirs(os.path.join(OUT, prompt), exist_ok=True)
+        for case in GOLDEN:
+            system, user = request(prompt, case)
+            open(os.path.join(OUT, prompt, 'system.txt'), 'w').write(system)
+            open(os.path.join(OUT, prompt, f'user.{case["id"]}.txt'), 'w').write(user)
+    jobs = [(p, m, c, r) for p in PROMPTS for m in MODELS for c in GOLDEN for r in range(1, RUNS + 1)]
     results = []
     with cf.ThreadPoolExecutor(int(os.environ.get('WORKERS', 12))) as ex:
         for res in ex.map(lambda j: one(*j), jobs):
             results.append(res)
-            model, cid, run, _, sc, _, _, _ = res
+            prompt, model, cid, run, _, sc, _, _, _ = res
             ok = all(not m for m, _ in sc.values())
-            print(f'{model:<14} {cid:<22} run {run}: {"YES" if ok else "NO"}', flush=True)
+            print(f'{prompt} {model:<14} {cid:<16} run {run}: {"YES" if ok else "NO"}', flush=True)
     # What the builder's checks would do with each answer: build.match + the action list's chain rule
     # (build_pr.match mirrors both). A wrong answer they refuse goes to the retry; one they pass is a
     # SILENT miss — it would reach the .pr wrong.
@@ -196,7 +231,7 @@ if __name__ == '__main__':
     # body) is FIXED — the .pr comes out right with no retry.
     by_id = {c['id']: c for c in GOLDEN}
     summary = []
-    for m, c, r, a, sc, n, seconds, usage in results:
+    for p, m, c, r, a, sc, n, seconds, usage in results:
         caught = b.match(goal_of(by_id[c]), a) if a is not None else ['no answer']
         normalized = score(by_id[c], b.normalize(goal_of(by_id[c]), copy.deepcopy(a))) if a is not None and not caught else {}
         steps = {}
@@ -204,18 +239,18 @@ if __name__ == '__main__':
             outcome = 'right' if not ms else 'caught' if caught else \
                       'fixed' if i in normalized and not normalized[i][0] else 'silent'
             steps[str(i)] = {'misses': ms, 'got': [short(x) for x in got], 'outcome': outcome}
-        summary.append({'model': m, 'case': c, 'run': r, 'notes': n, 'caught': caught, 'steps': steps,
+        summary.append({'prompt': p, 'model': m, 'case': c, 'run': r, 'notes': n, 'caught': caught, 'steps': steps,
                         'seconds': seconds, 'usage': usage, 'cost': cost(m, usage) if usage else None})
     json.dump(summary, open(os.path.join(OUT, 'summary.json'), 'w'), indent=1, ensure_ascii=False)
-    for model in MODELS:
-        rows = [s for s in summary if s['model'] == model]
+    for prompt, model in [(p, m) for p in PROMPTS for m in MODELS]:
+        rows = [s for s in summary if s['model'] == model and s['prompt'] == prompt]
         count = collections.Counter(v['outcome'] for s in rows for v in s['steps'].values())
         total = sum(count.values())
         seconds = [s['seconds'] for s in rows if s['seconds'] is not None]
         prompt = [s['usage'].get('prompt_tokens', 0) for s in rows if s['usage']]
         answer = [s['usage'].get('completion_tokens', 0) for s in rows if s['usage']]
         costs = [s['cost'] for s in rows if s['cost'] is not None]
-        print(f'{model}: first-attempt {count["right"]}/{total} steps; caught (→ retry) {count["caught"]}; '
+        print(f'{prompt} {model}: first-attempt {count["right"]}/{total} steps; caught (→ retry) {count["caught"]}; '
               f'fixed by the builder {count["fixed"]}; SILENT {count["silent"]}')
         print(f'    latency s: median {percentile(seconds, .5):.1f}, p90 {percentile(seconds, .9):.1f}, max {max(seconds, default=0):.1f}'
               f' | tokens: prompt median {percentile(prompt, .5)}, answer median {percentile(answer, .5)} (max {max(answer, default=0)})'

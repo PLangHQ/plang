@@ -1,17 +1,7 @@
-`call X, param=value` (standalone or inside `foreach`) → `Name` is the goal, and each named argument is one row in `Parameter` — `{"name": <argument>, "value": <value>}`. The arguments belong to the CALLEE; they never become properties of `goal.call` itself.
+Name — the goal to call, copied exactly as the step writes it: `Goal`, `Folder/Goal`, `/system/builder/Goal`. Never an action name like `goal.call`.
+Parameter — the arguments: every `name=value` after the goal name is one row {name, type, value}, the value as written. Left out when the step passes none.
+Actor — the actor the goal runs on, only when the step names one (`on actor "system"`, `as user`). Not because the goal is a system goal, a sub-goal or a recovery.
+Parallel — true only when the step says the call may run beside others.
 
-`goal.call` has:
-- `Name` (required) — the goal identifier.
-- `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
-- `Actor` (optional, almost always omitted) — explicit cross-actor delegation only: the actor's name, `system` or `user`.
-
-**`Actor`: omit unless the step text NAMES an actor** (`call X on actor "system"`, `call X as user`, `actor=%who%` where `%who%` holds the name). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
-
-`foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
-```json
-{"module":"goal","name":"call","property":[
-  {"name":"Name","type":{"name":"text"},"value":"X"},
-  {"name":"Parameter","type":{"name":"list"},"value":[{"name":"section","type":{"name":"item"},"value":"%item%"}]}]}
-```
-
-**`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.
+- The arguments belong to the called goal; they are never properties of goal.call.
+- `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.

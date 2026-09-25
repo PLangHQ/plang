@@ -1,0 +1,129 @@
+
+Build
+
+step 0: set default %path% = "/"
+   menu:
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+        notes:
+          `set %x% = …` is ONE `variable.set`. Judge the Value's type from its form + the variable's intent (`"2026-01-01"` → date, `"PT30S"` → duration, `"42"` → number; written dates normalized to ISO; labels / identifiers / relative-dates stay text). Emit the separate `Type` parameter ONLY for an explicit `as <name>[/<kind>] [strict]` or `(<kind>)` annotation — that is a FORCE/override; without it, the value's own judged type rides the Value wrapper. A `(<kind>)` token on the target (`set %iso%(duration) = …`) is STRIPPED from the `Name` (PLang ignores `(...)` in a `%var%` name) and becomes the `Type` — the Name is `%iso%`, never `%iso%(duration)`.
+          `set %x% = … as default` / "default to" / "only if unset" → plain `variable.set` with `{"name":"AsDefault","value":true,"type":{"name":"bool"}}`. NEVER `code.setDefault` (that picks a signing/crypto provider — unrelated to assigning a `%variable%`).
+          `<producer>, write to %x%` → the producer + a trailing PEER `variable.set(Name=%x%, Value=%!data%)` (never a modifier). Don't add a separate `Type` — the producer's result carries its own type.
+
+step 1: set default %!build.cache% = true
+   menu:
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 2: set default %!build.summary% = true
+   menu:
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 3: set channel "builder" call BuilderChannel
+   menu:
+     channel.set
+        Name (text, required)
+        Actor (choice<actor>: one of system, user, optional)
+        Buffer (number, optional)
+        Timeout (duration, optional)
+        Mime (text, optional)
+        Encoding (text, optional)
+        Direction (text, optional)
+        Encryption (variable, optional)
+        Signing (variable, optional)
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+        notes:
+          `call X, param=value` (standalone or inside `foreach`) → `Name` is the goal, and each named argument is one row in `Parameter` — `{"name": <argument>, "value": <value>}`. The arguments belong to the CALLEE; they never become properties of `goal.call` itself.
+          `goal.call` has:
+          - `Name` (required) — the goal identifier.
+          - `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
+          - `Actor` (optional, almost always omitted) — explicit cross-actor delegation only: the actor's name, `system` or `user`.
+          **`Actor`: omit unless the step text NAMES an actor** (`call X on actor "system"`, `call X as user`, `actor=%who%` where `%who%` holds the name). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
+          `foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
+          ```json
+          {"module":"goal","name":"call","property":[
+            {"name":"Name","type":{"name":"text"},"value":"X"},
+            {"name":"Parameter","type":{"name":"list"},"value":[{"name":"section","type":{"name":"item"},"value":"%item%"}]}]}
+          ```
+          **`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.
+
+step 4: call EmitBuildEvent kind="build-path", path=%path%
+   menu:
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+
+step 5: build.load, write to %app%
+   menu:
+     build.load
+        Path (path, optional, default .)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 6: build.goals path=%path%, write to %goals%
+   menu:
+     build.goals
+        Path (path, required)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 7: call EmitBuildEvent kind="goals-found", goals=%goals%
+   menu:
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+
+step 8: foreach %goals%, call BuildGoal goal=%item%
+   menu:
+     loop.foreach
+        Collection (item, required)
+        Item (variable, optional)
+        Key (variable, optional)
+        notes:
+          `loop.foreach` has three properties: `Collection` (required), and `Item` / `Key` (optional variables). Each element is bound to `%item%` unless the step names another variable (`as %product%` → `Item`). The key — a dict key or a list index — is bound only when the step names one (`with key %sku%` → `Key`). Leave `Item` and `Key` out when the step names neither.
+          Step text: `foreach %sections%, call ParseSection`
+          ```json
+          {"module":"loop","name":"foreach","property":[{"name":"Collection","value":"%sections%"}]}
+          ```
+          Inside the called goal (`ParseSection`), `%item%` is the current element. `foreach %sections%, call ParseSection section=%item%` passes it under another name — `section=%item%` is an argument of the `goal.call`, not a `loop.foreach` property.
+          `loop.foreach` is a **peer** of its body action — `goal.call` (or whatever runs per iteration) sits as a separate top-level entry in the step's `action` list. Never nest the body inside `loop.foreach`'s `modifier` list; the runtime rejects that with "goal.call is not a modifier".
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+
+step 9: save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
+   menu:
+     file.save
+        Path (path, required)
+        Value (item, optional)
+
+step 10: build.appSave
+   menu:
+     build.appSave
+

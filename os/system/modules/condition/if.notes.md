@@ -1,29 +1,19 @@
-## Operators — runtime-supported only
+Left — the value tested, as the step writes it.
+Operator — the comparison, one of choice<operator>. A negation is its own operator, never written anywhere else.
+Right — what Left is compared to. Left out for isempty / isnotempty.
 
-Valid `Operator` values: `==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or` (`is` asks the type: `%x% is number`). Every question has its negative as its own operator — a negation is always written in the operator, never anywhere else. There is NO `istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
-
-| phrasing | Operator | Right |
+| the step says | Operator | Right |
 |---|---|---|
-| `is empty` / `is not empty`, `not blank` | isempty / isnotempty | omit |
-| `is true` / `is false` | == | true / false |
-| `is null` / `is not null` | == / != | null |
-| `equals %b%` / `does not equal %b%` | == / != | %b% |
-| `contains 'foo'` / `does not contain 'foo'` | contains / notcontains | 'foo' |
-| `starts with 'x'` / `does not start with 'x'` | startswith / notstartswith | 'x' |
-| `ends with 'x'` / `does not end with 'x'` | endswith / notendswith | 'x' |
+| `is 5`, `equals %b%`, `is "x"`, `is true`, `is null` | == | the value |
+| `is not 5`, `does not equal %b%`, `is not null` | != | the value |
+| `is less than`, `is more than`, `is at least`, `is at most` | <, >, >=, <= | the value |
+| `contains` / `does not contain` | contains / notcontains | the value |
+| `starts with` / `does not start with` | startswith / notstartswith | the value |
+| `ends with` / `does not end with` | endswith / notendswith | the value |
 | `is in [..]` / `is not in [..]` | in / notin | the list |
-| `is a number` / `is not a list` | is / isnot | the type name: number / list |
+| `is empty` / `is not empty` | isempty / isnotempty | left out |
+| `is a number` / `is not a list` | is / isnot | the type name: number, list |
 
-## Omit `Right` when not applicable
-
-`Right` is for binary operators only — omit it for unary `isempty` / `isnotempty` (never `Right=%!data%` or `Right=false`).
-
-- `if %content% is not empty` → `condition.if(Left=%content%, Operator="isnotempty")` (no Right)
-- `if %name% does not contain "admin"` → `condition.if(Left=%name%, Operator="notcontains", Right="admin")`
-
-## Compound `and`/`or`
-
-Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, with the body in its `child`. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
-
-`if %a% > 1 and %b% < 10, call DoThing`:
-`condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%, child=[{text: "call DoThing", action: [goal.call(Name="DoThing")]}])`
+- `is` and `isnot` take only a type name; a value after "is" is `==`.
+- There is no istrue, isfalse, isnull or isnotnull.
+- `if A and B`: one condition.if cannot hold both. Compare each side with condition.compare, keep each result with variable.set, then one condition.if over the two with Operator `and` (or `or`).

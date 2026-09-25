@@ -1,4 +1,3 @@
-`Template` is the template as the step names it — a file path or the inline template text.
-
-- `Parameter` only when the step passes values to the template (`render x.html, name=%name%`) — one row per value. Never an empty list: a step that passes nothing leaves `Parameter` out.
-- `IsFile` is left out: the render finds out itself whether `Template` is a file. Write it only when the step says so — `inline` / `as text` → `false`, `from file` → `true`.
+Template — the template as the step names it: a file path or the template text itself.
+Parameter — the values the step passes to the template (`render x.html, name=%name%`), one row {name, type, value} each. Left out when the step passes none.
+IsFile — only when the step says so: `inline` / `as text` → false, `from file` → true. Otherwise left out; the render finds out itself.

@@ -1,0 +1,184 @@
+
+Checkout
+
+step 0: read 'orders/%orderId%.json', write to %order%
+   menu:
+     file.read
+        Path (path, required)
+        ResolveVariables (bool, optional, default false)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+        notes:
+          `set %x% = …` is ONE `variable.set`. Judge the Value's type from its form + the variable's intent (`"2026-01-01"` → date, `"PT30S"` → duration, `"42"` → number; written dates normalized to ISO; labels / identifiers / relative-dates stay text). Emit the separate `Type` parameter ONLY for an explicit `as <name>[/<kind>] [strict]` or `(<kind>)` annotation — that is a FORCE/override; without it, the value's own judged type rides the Value wrapper. A `(<kind>)` token on the target (`set %iso%(duration) = …`) is STRIPPED from the `Name` (PLang ignores `(...)` in a `%var%` name) and becomes the `Type` — the Name is `%iso%`, never `%iso%(duration)`.
+          `set %x% = … as default` / "default to" / "only if unset" → plain `variable.set` with `{"name":"AsDefault","value":true,"type":{"name":"bool"}}`. NEVER `code.setDefault` (that picks a signing/crypto provider — unrelated to assigning a `%variable%`).
+          `<producer>, write to %x%` → the producer + a trailing PEER `variable.set(Name=%x%, Value=%!data%)` (never a modifier). Don't add a separate `Type` — the producer's result carries its own type.
+
+step 1: count %order.items%, write to %itemCount%
+   menu:
+     list.count
+        ListName (variable, required)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 2: if %itemCount% is 0, write out "Your cart is empty", else if %itemCount% is 1, write out "One item", else write out "%itemCount% items"
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+        notes:
+          ## Operators — runtime-supported only
+          Valid `Operator` values: `==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or` (`is` asks the type: `%x% is number`). Every question has its negative as its own operator — a negation is always written in the operator, never anywhere else. There is NO `istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
+          | phrasing | Operator | Right |
+          |---|---|---|
+          | `is empty` / `is not empty`, `not blank` | isempty / isnotempty | omit |
+          | `is true` / `is false` | == | true / false |
+          | `is null` / `is not null` | == / != | null |
+          | `equals %b%` / `does not equal %b%` | == / != | %b% |
+          | `contains 'foo'` / `does not contain 'foo'` | contains / notcontains | 'foo' |
+          | `starts with 'x'` / `does not start with 'x'` | startswith / notstartswith | 'x' |
+          | `ends with 'x'` / `does not end with 'x'` | endswith / notendswith | 'x' |
+          | `is in [..]` / `is not in [..]` | in / notin | the list |
+          | `is a number` / `is not a list` | is / isnot | the type name: number / list |
+          ## Omit `Right` when not applicable
+          `Right` is for binary operators only — omit it for unary `isempty` / `isnotempty` (never `Right=%!data%` or `Right=false`).
+          - `if %content% is not empty` → `condition.if(Left=%content%, Operator="isnotempty")` (no Right)
+          - `if %name% does not contain "admin"` → `condition.if(Left=%name%, Operator="notcontains", Right="admin")`
+          ## Compound `and`/`or`
+          Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, with the body in its `child`. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
+          `if %a% > 1 and %b% < 10, call DoThing`:
+          `condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%, child=[{text: "call DoThing", action: [goal.call(Name="DoThing")]}])`
+     condition.elseif
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+     condition.else
+     output.write
+        Data (item, required)
+        channel (text, optional)
+        notes:
+          `output.write` has a `channel` parameter for routing to a non-default channel. The channel clause names an EXISTING registered channel — it is routing, not registration.
+          **Only emit `channel` when the step text expresses intent to send output to a named channel** (any phrasing: `channel=X`, `to X channel`, `on X channel`, `via X`, etc.). When the step text has no channel clause, OMIT `channel` entirely. Do NOT fill it with `%!data%` or any placeholder — `%!data%` is the prior action's result for chaining into intended slots, never a fallback for unnamed optional slots.
+          Correct (`write out %message%`, no channel named):
+          ```json
+          {"module":"output","name":"write","property":[{"name":"Data","value":"%message%","type":{"name":"item"}}]}
+          ```
+          Correct (`write out "hi" to logger channel`):
+          ```json
+          {"module":"output","name":"write","property":[
+            {"name":"Data","value":"hi","type":{"name":"text"}},
+            {"name":"channel","value":"logger","type":{"name":"text"}}
+          ]}
+          ```
+          **DO NOT** emit a peer `channel.set` action when the user names a routing channel — `channel.set` is for *registering* a channel handler, never for routing on `output.write`.
+          ## `Data` type for `output.write`
+          `write out "Hello %name%"` → ONE `output.write`, `Data` is `text` (the template interpolates at runtime): `{"name":"Data","type":{"name":"text"},"value":"Hello %name%"}`. A plain literal string (no `%var%`) is also `text`. A bare `%var%` reference uses `{"name":"item"}` (runtime resolves the actual type).
+
+step 3: if %order.email% does not contain "@", throw "Invalid email address"
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+     error.throw
+        Message (text, optional)
+        Data (item, optional)
+        StatusCode (number, optional, default 400)
+        Key (text, optional, default error)
+        FixSuggestion (text, optional)
+
+step 4: if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+        notes:
+          `call X, param=value` (standalone or inside `foreach`) → `Name` is the goal, and each named argument is one row in `Parameter` — `{"name": <argument>, "value": <value>}`. The arguments belong to the CALLEE; they never become properties of `goal.call` itself.
+          `goal.call` has:
+          - `Name` (required) — the goal identifier.
+          - `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
+          - `Actor` (optional, almost always omitted) — explicit cross-actor delegation only: the actor's name, `system` or `user`.
+          **`Actor`: omit unless the step text NAMES an actor** (`call X on actor "system"`, `call X as user`, `actor=%who%` where `%who%` holds the name). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
+          `foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
+          ```json
+          {"module":"goal","name":"call","property":[
+            {"name":"Name","type":{"name":"text"},"value":"X"},
+            {"name":"Parameter","type":{"name":"list"},"value":[{"name":"section","type":{"name":"item"},"value":"%item%"}]}]}
+          ```
+          **`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.
+
+step 5: if %order.total% is not a number, throw "The total must be a number"
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+     error.throw
+        Message (text, optional)
+        Data (item, optional)
+        StatusCode (number, optional, default 400)
+        Key (text, optional, default error)
+        FixSuggestion (text, optional)
+
+step 6: if %order.country% is "IS", set %vat% = 0.24, else set %vat% = 0.25
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+     condition.else
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 7: math.multiply A=%order.total%, B=%vat%, write to %vatAmount%
+   menu:
+     math.multiply
+        A (item, required)
+        B (item, required)
+        Overflow (choice<overflow>: one of Promote, Throw, optional, default Promote)
+        Precision (choice<precision>: one of Error, Double, Decimal, optional, default Error)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 8: if %order.note% does not start with "#", add %order.note% to %notes%
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+     list.add
+        ListName (variable, required)
+        Value (item, required)
+        AtIndex (number, optional, default -1)
+        notes:
+          Step text `add <X> to %list%` → `list.add(ListName=%list%, Value=<X>)`. The Value parameter takes whatever the step text supplies, including JSON object/array literals — there is NO need for a separate "construction" action. The literal `{key: value, ...}` or `[a, b, c]` IS the value, typed as what it is: `{"name":"dict"}` or `{"name":"list"}`.
+          **Common wrong shapes to avoid:**
+          - Don't add a trailing `variable.set` unless the step text has `, write to %x%`. Step text ending with `to %list%` is the target list, not a capture variable.
+          - Don't fill `Value=%!data%` as a placeholder. Set Value to the actual literal from the step text.
+          - Don't invent an `AtIndex` parameter when the step text doesn't say "at position N" / "insert at N". Default behavior is append.
+          - A multi-field `{...}` literal is still just one Value parameter.
+
+step 9: write out "Total: %order.total%, VAT: %vatAmount%"
+   menu:
+     output.write
+        Data (item, required)
+        channel (text, optional)
+

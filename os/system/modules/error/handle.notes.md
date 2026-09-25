@@ -1,22 +1,13 @@
-`error.handle` is the **modifier** that wraps an action with recovery — it goes inside the host action's `modifier` list, NEVER as a top-level peer.
+A modifier: it wraps the action it sits on, in that action's `modifier` list.
 
-When the step text has a trailing `on error <recovery>` clause (in ANY natural language — "on error", "if it fails", "catch error" and their equivalents in other languages all count), the recovery action goes INSIDE the error.handle's `recovery` (a list of actions, the same shape as a step's own). Never drop the clause.
+recovery — the actions to run when the wrapped action fails: what the step says after "on error" (or "if it fails", in any language).
+StatusCode — handle only errors with this status code.
+Key — handle only errors with this key (`on error key "NotFound"`).
+Message — handle only errors whose message contains this text.
+RetryCount — how many times to run the wrapped action again ("retry 3 times").
+RetryOverMs — the time, in milliseconds, the retries are spread over.
+Order — GoalFirst when the step runs the recovery before retrying ("call X, then retry"); left out for the default, retrying first ("retry 3 times, then call X").
+IgnoreError — true when the step says to carry on past the error.
 
-Three failure modes to avoid:
-
-1. **Don't duplicate** — the recovery action appears ONCE, inside `recovery`. Never also as a top-level peer (a peer would run it unconditionally every execution, defeating "on error").
-2. **Don't stuff recovery content into `Key`/`Message`** — `Key` filters by a named error key (e.g. `"Conflict"`, `"404"`), `Message` by a message substring. The recovery's content (a goal name, variable, `"true"`) is never a filter. If the step names no filter (`key X`, a status code, a message match), leave `Key`/`Message`/`StatusCode` absent — don't invent one.
-3. **Don't fill the host's callback slots** (`OnToolCall`, `OnValidateResponse`, `OnStream`) with the error handler — those are unrelated parameters.
-
-`write 'hi' to logger, on error set %writeFailed% = true`:
-```json
-{"module": "output", "name": "write",
- "property": [{"name": "Data", "type": {"name": "text"}, "value": "hi"},
-              {"name": "channel", "type": {"name": "text"}, "value": "logger"}],
- "modifier": [
-   {"module": "error", "name": "handle",
-    "recovery": [
-      {"module": "variable", "name": "set",
-       "property": [{"name": "Name", "type": {"name": "variable"}, "value": "%writeFailed%"},
-                    {"name": "Value", "type": {"name": "bool"}, "value": true}]}]}]}
-```
+- The recovery runs only on error: it is never also an action of the step.
+- StatusCode, Key and Message filter which errors are handled; they never hold what the recovery does. Left out when the step names no filter.

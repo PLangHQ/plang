@@ -1,22 +1,4 @@
-`output.write` has a `channel` parameter for routing to a non-default channel. The channel clause names an EXISTING registered channel — it is routing, not registration.
+Data — what to write, as the step writes it: a quoted text (with or without %variables% in it) is text, a bare %variable% is item.
+channel — the name of a registered channel to write to, only when the step names one (`to "log" channel`, `on X channel`, `via X`). Left out otherwise: the actor's output.
 
-**Only emit `channel` when the step text expresses intent to send output to a named channel** (any phrasing: `channel=X`, `to X channel`, `on X channel`, `via X`, etc.). When the step text has no channel clause, OMIT `channel` entirely. Do NOT fill it with `%!data%` or any placeholder — `%!data%` is the prior action's result for chaining into intended slots, never a fallback for unnamed optional slots.
-
-Correct (`write out %message%`, no channel named):
-```json
-{"module":"output","name":"write","property":[{"name":"Data","value":"%message%","type":{"name":"item"}}]}
-```
-
-Correct (`write out "hi" to logger channel`):
-```json
-{"module":"output","name":"write","property":[
-  {"name":"Data","value":"hi","type":{"name":"text"}},
-  {"name":"channel","value":"logger","type":{"name":"text"}}
-]}
-```
-
-**DO NOT** emit a peer `channel.set` action when the user names a routing channel — `channel.set` is for *registering* a channel handler, never for routing on `output.write`.
-
-## `Data` type for `output.write`
-
-`write out "Hello %name%"` → ONE `output.write`, `Data` is `text` (the template interpolates at runtime): `{"name":"Data","type":{"name":"text"},"value":"Hello %name%"}`. A plain literal string (no `%var%`) is also `text`. A bare `%var%` reference uses `{"name":"item"}` (runtime resolves the actual type).
+- Naming a channel routes the output; it never registers one (that is channel.set).

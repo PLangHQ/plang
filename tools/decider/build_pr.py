@@ -210,10 +210,80 @@ def user_message(goal, menu):
         out += '\n'
     return out + '\n'
 
+def doc(module, action, part):
+    """An action's <action>.<part>.md, stripped; None when there is none."""
+    path = f'{ROOT}/os/system/modules/{module}/{action}.{part}.md'
+    return open(path, encoding='utf-8').read().strip() if os.path.exists(path) else None
+
+def signature(choice):
+    """`module.action(Name: type, Name?: type, Name: type = default)` as propertiesUserB.template writes it."""
+    module, action = choice.split('.', 1)
+    props, _ = declared(module, action)
+    parts = []
+    for name, p in props.items():
+        optional = '?' if p['nullable'] and p['default'] is None else ''
+        default = f' = {p["default"]}' if p['default'] is not None else ''
+        parts.append(f'{name}{optional}: {p["type"]}{default}')
+    return f'{choice}({", ".join(parts)})'
+
+def type_static(name, member):
+    """A type's `public static string <member> => "…" + "…";` — what the registry folds into
+    app.Type[name] (Example, Description). None when the class declares none."""
+    path = f'{ROOT}/PLang/app/type/item/{name}/this.cs'
+    if not os.path.exists(path): return None
+    m = re.search(rf'public\s+static\s+string\s+{member}\s*=>\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+)',
+                  open(path, encoding='utf-8').read(), re.S)
+    return ''.join(json.loads(s) for s in re.findall(r'"(?:[^"\\]|\\.)*"', m.group(1))) if m else None
+
+def type_line(face, options):
+    """One Types line as propertiesUserB.template writes it: the type's Description, a choice's
+    options, its Example — whichever it has."""
+    name = face.split('<', 1)[0]
+    line = f'- {face}'
+    if name != 'choice' and (description := type_static(name, 'Description')): line += f' — {description}'
+    if options: line += f' — one of: {", ".join(options)}'
+    if name != 'choice' and (example := type_static(name, 'Example')): line += f' (e.g. {example})'
+    return line
+
+def user_message_b(goal, menu):
+    """Prompt B's user message, byte for byte what templates/propertiesUserB.template renders: the goal
+    as written with each step's actions after `→`, then each action once, in the order first listed."""
+    lines = []
+    for s in goal['steps']:
+        lines.append((s, f'[{s["index"]}] {"    " * s.get("indent", 0)}- {s["text"]}'))
+    width = max((len(l) for _, l in lines if len(l) <= 72), default=0)
+    out = 'Goal, as written:\n  ' + goal['name']
+    for s, line in lines:
+        for c in (s.get('comment') or '').split('\n') if s.get('comment') else []:
+            out += f'\n      {"    " * s.get("indent", 0)}/ {c}'
+        out += f'\n  {line}{" " * (width - len(line) + 3 if len(line) <= width else 3)}→ {", ".join(menu.get(s["index"], []))}'
+    # Types: the literal types, then every type a listed action's properties use, first reached first.
+    faces = {f: None for f in ('text', 'number', 'bool', 'list', 'dict')}
+    for s in goal['steps']:
+        for choice in menu.get(s['index'], []):
+            for p in declared(*choice.split('.', 1))[0].values():
+                faces.setdefault(p['type'], p.get('options'))
+    out += '\n\nTypes' + ''.join('\n' + type_line(f, o) for f, o in faces.items())
+    printed = []
+    for s in goal['steps']:
+        for choice in menu.get(s['index'], []):
+            if choice in printed: continue
+            printed.append(choice)
+            module, action = choice.split('.', 1)
+            out += f'\n\n## {signature(choice)}'
+            if description := doc(module, action, 'description'):
+                out += '\n' + description.split('\n')[0]
+            if notes := doc(module, action, 'notes'):
+                out += '\n' + notes.replace('## ', '### ')
+    return out + '\n'
+
 # The stage-3 answer shape — the file BuildGoal/Properties.goal passes as Schema, so python sends
 # what plang sends. OpenAi.cs appends it to the system message; there is no response_format.
 SCHEMA = open(f'{ROOT}/os/system/builder/llm/Properties.schema', encoding='utf-8').read()
 SYSTEM_SENT = SYSTEM + '\n' + f'You MUST respond in JSON, schema: {SCHEMA}'
+# Prompt B: rules only (PropertiesB.llm), the same schema appended; its user message is user_message_b.
+SYSTEM_B = open(f'{ROOT}/os/system/builder/llm/PropertiesB.llm', encoding='utf-8').read()
+SYSTEM_B_SENT = SYSTEM_B + '\n' + f'You MUST respond in JSON, schema: {SCHEMA}'
 
 def properties(goal, menu, folder=None):
     user = user_message(goal, menu)

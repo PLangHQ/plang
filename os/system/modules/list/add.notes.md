@@ -1,8 +1,5 @@
-Step text `add <X> to %list%` → `list.add(ListName=%list%, Value=<X>)`. The Value parameter takes whatever the step text supplies, including JSON object/array literals — there is NO need for a separate "construction" action. The literal `{key: value, ...}` or `[a, b, c]` IS the value, typed as what it is: `{"name":"dict"}` or `{"name":"list"}`.
+ListName — the list variable to add to, with its % signs: in `add X to %list%` it is %list%.
+Value — what to add, as the step writes it; a `{…}` or `[…]` literal is one value, typed dict or list.
+AtIndex — the position to insert at, only when the step names one ("at position 2"); otherwise it appends.
 
-**Common wrong shapes to avoid:**
-
-- Don't add a trailing `variable.set` unless the step text has `, write to %x%`. Step text ending with `to %list%` is the target list, not a capture variable.
-- Don't fill `Value=%!data%` as a placeholder. Set Value to the actual literal from the step text.
-- Don't invent an `AtIndex` parameter when the step text doesn't say "at position N" / "insert at N". Default behavior is append.
-- A multi-field `{...}` literal is still just one Value parameter.
+- `add X to %list%` has no variable.set: %list% is the target, not a result to keep.

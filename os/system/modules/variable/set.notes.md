@@ -1,5 +1,7 @@
-`set %x% = …` is ONE `variable.set`. Judge the Value's type from its form + the variable's intent (`"2026-01-01"` → date, `"PT30S"` → duration, `"42"` → number; written dates normalized to ISO; labels / identifiers / relative-dates stay text). Emit the separate `Type` parameter ONLY for an explicit `as <name>[/<kind>] [strict]` or `(<kind>)` annotation — that is a FORCE/override; without it, the value's own judged type rides the Value wrapper. A `(<kind>)` token on the target (`set %iso%(duration) = …`) is STRIPPED from the `Name` (PLang ignores `(...)` in a `%var%` name) and becomes the `Type` — the Name is `%iso%`, never `%iso%(duration)`.
+Name — the variable to set, with its % signs. A `(<kind>)` written after it is not part of the name: it is the Type.
+Value — the value as the step writes it, typed as what it is (a quoted date is a date, "42" a number, a label stays text). After another action in the same step it is %!data%.
+Type — only when the step forces a type: `as <type>` or `(<kind>)`.
+AsDefault — true when the step says "set default", "default to" or "only if unset"; the variable keeps a value it already has.
 
-`set %x% = … as default` / "default to" / "only if unset" → plain `variable.set` with `{"name":"AsDefault","value":true,"type":{"name":"bool"}}`. NEVER `code.setDefault` (that picks a signing/crypto provider — unrelated to assigning a `%variable%`).
-
-`<producer>, write to %x%` → the producer + a trailing PEER `variable.set(Name=%x%, Value=%!data%)` (never a modifier). Don't add a separate `Type` — the producer's result carries its own type.
+- `set %x% = …` is one variable.set.
+- `<action>, write to %x%` is that action followed by variable.set(Name=%x%, Value=%!data%) — its own action, never a modifier, and without a Type.
