@@ -21,7 +21,7 @@ public class PrLoadTests : System.IAsyncDisposable
     private async Task<global::app.data.@this> Load(string file, string pr)
     {
         System.IO.File.WriteAllText(System.IO.Path.Combine(_root, ".build", file), pr);
-        return await _app.Goal.Load(global::app.type.item.path.@this.Resolve("/.build/" + file, _app.User.Context));
+        return await _app.Goal.Load("/.build/" + file);
     }
 
     [Test]
@@ -62,7 +62,7 @@ public class PrLoadTests : System.IAsyncDisposable
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
 
-        var loaded = await os.Goal.Load(global::app.type.item.path.@this.Resolve(pr, os.User.Context));
+        var loaded = await os.Goal.Load(pr);
 
         await loaded.IsSuccess();
         await Assert.That((await loaded.Value() as global::app.goal.@this)!.Step.Count).IsEqualTo(steps);

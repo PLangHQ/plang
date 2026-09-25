@@ -186,7 +186,7 @@ public sealed class @this
         var rootExists = await rootCandidate.ExistsAsync(context);
         if (rootExists.Success && await rootExists.ToBooleanAsync())
         {
-            var result = await Load(rootCandidate, cancellationToken: ct);
+            var result = await Read(rootCandidate, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = (await result.Value()) as global::app.goal.@this;
@@ -212,7 +212,7 @@ public sealed class @this
             var sysExists = await sysCandidate.ExistsAsync(context);
             if (sysExists.Success && await sysExists.ToBooleanAsync())
             {
-                var result = await Load(sysCandidate, cancellationToken: ct);
+                var result = await Read(sysCandidate, cancellationToken: ct);
                 if (result.Success)
                 {
                     var goal = (await result.Value()) as global::app.goal.@this;
@@ -323,42 +323,26 @@ public sealed class @this
     public IEnumerable<goal.@this> Events => _goals.Values.Where(g => g.IsEvent);
 
     /// <summary>
-    /// Gets a goal by its .pr file path. Loads from disk if not cached.
+    /// The goal a .pr holds, by its location (<c>/system/error/.build/show.pr</c>, or absolute): the
+    /// collection resolves it with the context it reads with, answers the goal already loaded from
+    /// there, else reads the .pr and adds it. A setup goal is refused — it runs only through Setup.
     /// </summary>
-    public async Task<goal.@this?> GetByPrPathAsync(string prPath, CancellationToken ct = default)
+    public async Task<data.@this> Load(string pr, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(prPath))
-            return null;
-
-        // Resolve the raw string through the scheme registry so dict lookups key on
-        // the canonical Path (born with the System context — always available).
-        global::app.type.item.path.@this key =
-            global::app.type.item.path.@this.Resolve(prPath, App.System.Context);
-        if (_goals.TryGetValue(key, out var cached))
-            return cached.IsSetup ? null : cached;
-        if (_byPath.TryGetValue(key, out cached))
-            return cached.IsSetup ? null : cached;
-
-        var resolved = global::app.type.item.path.@this.Resolve(prPath, App.System.Context!);
-        var exists = await resolved.ExistsAsync(App.System.Context);
-        if (!exists.Success || (await exists.Value())?.Value != true)
-            return null;
-
-        var loadResult = await Load(resolved, cancellationToken: ct);
-        if (!loadResult.Success)
-            return null;
-
-        var loaded = (await loadResult.Value()) as global::app.goal.@this;
-        if (loaded is { IsSetup: true }) return null;
-        if (loaded != null)
-            _byPath[key] = loaded;
+        var context = App.System.Context;
+        var location = global::app.type.item.path.@this.Resolve(pr, context);
+        var loaded = _goals.TryGetValue(location, out var cached)
+            ? context.Ok(cached)
+            : await Read(location, cancellationToken);
+        if (loaded.Success && await loaded.Value() is global::app.goal.@this { IsSetup: true })
+            return context.Error(new Error($"{location}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
     }
 
     /// <summary>
-    /// Loads a goal from a .pr file, deserializes and adds to this collection.
+    /// Reads a goal from a .pr file and adds it to this collection.
     /// </summary>
-    public async Task<data.@this> Load(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
+    private async Task<data.@this> Read(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
     {
         try
         {

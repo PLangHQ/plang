@@ -23,7 +23,7 @@ public class PrPipelineTests
         engine.Module.Register("output", "write", capture);
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
-        var loadResult = await engine.Goal.Load(global::app.type.item.path.@this.Resolve("FullPipeline.pr", engine.System.Context!));
+        var loadResult = await engine.Goal.Load("FullPipeline.pr");
         await loadResult.IsSuccess();
 
         // Execute
@@ -56,7 +56,7 @@ public class PrPipelineTests
         engine.Module.Register("output", "write", capture);
 
         // Load and execute
-        var loadResult = await engine.Goal.Load(global::app.type.item.path.@this.Resolve("ReadFile.pr", engine.System.Context!));
+        var loadResult = await engine.Goal.Load("ReadFile.pr");
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
@@ -82,7 +82,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = TestApp.Create(fixturesDir);
 
-        var loadResult = await engine.Goal.Load(global::app.type.item.path.@this.Resolve("FilePathsFromRoot.pr", engine.System.Context!));
+        var loadResult = await engine.Goal.Load("FilePathsFromRoot.pr");
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
@@ -108,7 +108,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = TestApp.Create(fixturesDir);
 
-        var loadResult = await engine.Goal.Load(global::app.type.item.path.@this.Resolve(System.IO.Path.Combine("sub", "FilePathsFromSub.pr"), engine.System.Context!));
+        var loadResult = await engine.Goal.Load(System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;

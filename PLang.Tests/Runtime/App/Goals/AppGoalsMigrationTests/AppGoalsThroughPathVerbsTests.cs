@@ -26,13 +26,15 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.Goal.Load(global::app.type.item.path.@this.Resolve("/.build/start.pr", app.System.Context!));
+        var result = await app.Goal.Load("/.build/start.pr");
         await result.IsSuccess();
         var goal = (await result.Value()) as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");
     }
 
-    [Test] public async Task GetByPrPathAsync_ResolvesRelativeAndAbsolute_ViaPath()
+    // The collection resolves the location itself: relative and absolute name the same .pr, and the
+    // second load answers the goal the first one read.
+    [Test] public async Task Load_ResolvesRelativeAndAbsolute_ToTheSameGoal()
     {
         var (app, root) = await NewApp();
         var buildDir = System.IO.Path.Combine(root, ".build");
@@ -40,10 +42,11 @@ public class AppGoalsThroughPathVerbsTests
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
 
-        var byRel = await app.Goal.GetByPrPathAsync("/.build/start.pr");
-        await Assert.That(byRel).IsNotNull();
-        var byAbs = await app.Goal.GetByPrPathAsync(prAbs);
-        await Assert.That(byAbs).IsNotNull();
+        var byRel = await app.Goal.Load("/.build/start.pr");
+        await byRel.IsSuccess();
+        var byAbs = await app.Goal.Load(prAbs);
+        await byAbs.IsSuccess();
+        await Assert.That(await byAbs.Value()).IsSameReferenceAs(await byRel.Value());
     }
 
     [Test] public async Task AppGoals_FuzzyGetByName_StaysSeparateFromPathKeying()

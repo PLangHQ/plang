@@ -365,7 +365,7 @@ public class GoalsTests
     }
 
     [Test]
-    public async Task GetByPrPathAsync_ReturnsNull_ForSetupGoal()
+    public async Task Load_RefusesASetupGoal()
     {
         var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
@@ -380,9 +380,9 @@ public class GoalsTests
             var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
-            var result = await engine.Goal.GetByPrPathAsync(prPath);
+            var result = await engine.Goal.Load(prPath);
 
-            await Assert.That(result).IsNull();
+            await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
         }
         finally
         {
@@ -391,15 +391,15 @@ public class GoalsTests
     }
 
     [Test]
-    public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
+    public async Task Load_RefusesACachedSetupGoal()
     {
         var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
         var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(setupGoal);
 
-        var result = await goals.GetByPrPathAsync("/.build/setupdb.pr");
+        var result = await goals.Load("/.build/setupdb.pr");
 
-        await Assert.That(result).IsNull();
+        await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
     }
 
     // --- PrPath keying tests ---
