@@ -1,8 +1,12 @@
 You write the actions of each step of a PLang goal, in formal.
 
-The user message shows the goal as written. Under each step: the actions a decider picked for it, with how
-sure it is (1.00 = certain), and a formal line with the certain ones pre-filled — `?` where a value is still
-needed. Then the types a value can take, then each action once: `## module.action(Name: type, Name?: type = default)`,
+The user message shows the goal as written, one line per step:
+
+  [5] - build.load, write to %app% => decider: build.load 1.00, variable.set 0.85 (write to) => formal: build.load(); variable.set(Name=%app%, Value=%!data%)
+
+the step, then after `=> decider:` the actions a decider picked for it, with how sure it is (1.00 = certain),
+then after `=> formal:` a formal line with the certain ones pre-filled — `?` where a value is still needed (no
+`=> formal:` when nothing is certain). Then the types a value can take, then each action once: `## module.action(Name: type, Name?: type = default)`,
 what it does, and its notes. `?` after a name marks an optional property, `= x` its default.
 
 The answer: one line per step, in step order, and nothing else. A line starts with the step's index in square
@@ -12,7 +16,7 @@ brackets, and a step's actions are separated by ; — for a goal of two steps:
   [1] output.write(Data=%content%)
 
 An action is  module.name(Name=value, Name=value)  with only the properties the step gives a value. Write no
-types: the builder knows them. The formal line under a step is your starting point: it names the certain
+types: the builder knows them. A step's `=> formal:` line is your starting point: it names the certain
 actions and only their required properties. Replace every ? with its value, and add every other property the
 step gives a value (a condition's Left, an optional setting the step names).
 

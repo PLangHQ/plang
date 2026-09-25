@@ -211,8 +211,8 @@ questions, each answered with a score.
 
 **2. The LLM, stage 3, prompt C.**
 - `system.txt`: how a formal answer is written, the common steps, then the rules.
-- `user.txt`: the goal as written; under each step the decider's picks with scores and the pre-filled formal line;
-  the types; each action once.
+- `user.txt`: the goal as written, one line per step — the step `=> decider:` its picks with scores
+  `=> formal:` the pre-filled formal line; the types; each action once.
 
 **3. What came back, and what should have.**
 - `answer.txt`: the model's answer; `answer.retry.txt` when a step or the answer was refused and asked again.

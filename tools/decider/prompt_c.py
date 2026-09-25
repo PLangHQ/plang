@@ -1,8 +1,8 @@
 """Prompt C — the decider's picks pre-filled in formal, the answer in formal, and the double check.
 
     system  os/system/builder/llm/PropertiesC.llm (no schema: the answer is formal text)
-    user    the goal as written; under each step the decider's picks ≥ 0.5 with their scores and a formal
-            line with the certain ones (≥ 0.9) pre-filled — `?` for a value to fill, known values filled
+    user    the goal as written, one line per step: the step, `=> decider:` its picks ≥ 0.5 with their scores,
+            `=> formal:` the certain ones (≥ 0.9) pre-filled — `?` for a value to fill, known values filled
             (`write to %x%` → variable.set(Name=%x%, Value=%!data%)); then Types; then each listed action
             once (signature, description line, notes), and goal.call's definition when a listed action
             holds actions (an action-typed property, error.handle's Recovery)
@@ -79,7 +79,9 @@ def user_message_c(goal, picks):
         decider = ', '.join(f'{a} {p:.2f}' + ('' if p >= CERTAIN else ' (write to)' if a == 'variable.set' and known
                                               else ' (possible, popular)' if a in pop else ' (possible)')
                             for a, p in step_picks)
-        out += f'\n  {pad}  decider: {decider or "(nothing it is sure of)"}'
+        # one line per step: the step as written, => its picks, => the pre-filled formal (after a multi-line
+        # step's last line)
+        out += f' => decider: {decider or "(nothing it is sure of)"}'
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
         certain = [a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)]
         filled = [prefill(a, s['text']) for a in certain if not b.declared(*a.split('.', 1))[1]]
@@ -95,7 +97,7 @@ def user_message_c(goal, picks):
                     head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=?)'
             filled = [f'{head} {{ {filled[0] if filled else "?"} }}'] + filled[1:]
         if known: filled.append(prefill('variable.set', s['text']))
-        if filled: out += f'\n  {pad}  formal:  ' + '; '.join(filled)
+        if filled: out += ' => formal: ' + '; '.join(filled)
         shown += [a for a, _ in step_picks]
     shown = list(dict.fromkeys(shown))
     if any(holds_actions(a) for a in shown) and 'goal.call' not in shown:
