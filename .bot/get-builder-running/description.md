@@ -19,7 +19,17 @@ The child branch `goal-graph-singular` (about 540 commits, 2026-07-17 → 2026-0
 
 ## Start here
 
-**0. The builder's own `.pr` files are in an old format, so `plang build` cannot load itself.** The readers refuse old keys loudly (`PrFormatOutdated`), never load them empty. `os/system/builder/.build/build.pr:22` still says `"parameter"`. Bring the builder bootstrap set to the current format — by hand-editing (Ingi allowed it for these files in July) or by regenerating through the python pipeline (`tools/decider`). The set today: `os/system/builder/.build/{app,build,builderchannel,buildgoal,emitbuildevent}.pr` and `os/system/builder/BuildGoal/.build/start.pr` (the July list also named `BuildGoal/{llmfixer,plan,validate}` and `BuildStep/{start,validate}`, which no longer exist — verify by what boot actually loads).
+**0. The builder's own `.pr` files are in an old format, so `plang build` cannot load itself.** The readers refuse old keys loudly (`PrFormatOutdated`), never load them empty. `os/system/builder/.build/build.pr:22` still says `"parameter"`. The live set today: `os/system/builder/.build/{app,build,builderchannel,buildgoal,emitbuildevent}.pr` and `os/system/builder/BuildGoal/.build/start.pr` (verify by what boot actually loads).
+
+**Get started with the python builder** (Ingi): `tools/decider/build_pr.py` is the python stand-in for the plang builder — the same pipeline (typesafe decider for stages 1–2; stage 3 through `os/system/builder/llm/Properties.llm` read verbatim, so tuning the prompt there tunes the plang builder too). It builds from the `.goal` SOURCE, writes the current keys (`property` since `c32ac59bd`) and fresh hashes (so #5b goes too), and lists every deviation from the current format. It writes to a staging tree, `tools/decider/out/<folder>/.build/…`, never over the live files. See `tools/decider/README.md` (keys: `TYPESAFE_API_KEY`, `OPENAI_API_KEY`).
+
+1. `python3 tools/decider/build_pr.py os/system/builder` — every `.goal` under the builder (a folder or one file as the argument).
+2. Review its deviations and the diff against the live `os/system/builder/**/.build/*.pr`; install the reviewed files over the live ones (Ingi sees every change — no shell rewrite of `.pr` files).
+3. `plang build` now loads → verify layer 3 → work down the chain.
+4. Once the plang builder runs, let it rebuild its own goals and diff against the python output — same pipeline, same prompt. That is the check for #12 (the builder builds itself).
+
+- Mechanical fallback, no LLM: `tools/decider/pr_bootstrap.py` renames the old keys in existing `.pr` files (and folds a flat inline condition into its child). It keeps whatever the old files had, including stale hashes.
+- The same script takes any folder, so `build_pr.py Tests/…` could rebuild the `Tests/` `.pr` before the plang builder runs (#21) — Ingi's call.
 
 The current `.pr` keys (the readers: `goal/serializer/Reader.cs`, `goal/step/serializer/Reader.cs`, `goal/step/action/serializer/Reader.cs`):
 
