@@ -1,7 +1,7 @@
-`error.handle` is the action behind an `on error …` clause (in any wording: "on error", "if it fails", "catch error", "on failure"). It wraps the action before it. The clause's own content — a call, a set — is its own action and is not a property of `error.handle`.
+`error.handle` is the action behind an `on error …` clause (in any wording: "on error", "if it fails", "catch error", "on failure"). It wraps the action before it. The clause's own content — a call, a set — is an action in the handler's `recovery`: never a property of `error.handle`, never beside it. Several `on error` clauses in one step are several `error.handle` modifiers, asked in the order written.
 
 Step text: `read file.txt, on error call HandleMissing`
-Properties: `{}` — no filter, no retry, nothing to ignore. The read and the recovery call are their own actions.
+Properties: `{}` — no filter, no retry, nothing to ignore. The read is the step's action; the call is in the handler's `recovery`.
 
 Step text: `verify %data% with contracts ['C1'], on error call HandleContractError`
 Properties: `{}`
@@ -17,6 +17,9 @@ Properties: `{"RetryCount": 3}` — retry with no recovery body.
 
 Step text: `write out "hi", on error ignore`
 Properties: `{"IgnoreError": true}`
+
+Step text: `call Save, on error retry 2 times, then call Rollback`
+Properties: `{"RetryCount": 2}` — retry first, then the recovery: the default order, so `Order` is left out.
 
 Step text: `call Save, on error call Rollback first, then retry 2 times`
 Properties: `{"RetryCount": 2, "Order": "GoalFirst"}` — `GoalFirst` is fix, then retry: the recovery runs, then the step retries and gets the retry's result. Without a `RetryCount` the recovery's result stands.

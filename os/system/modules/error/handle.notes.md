@@ -11,10 +11,12 @@ Three failure modes to avoid:
 `write 'hi' to logger, on error set %writeFailed% = true`:
 ```json
 {"module": "output", "name": "write",
- "property": [{"name": "Data", "value": "hi"}, {"name": "channel", "value": "logger"}],
+ "property": [{"name": "Data", "type": {"name": "text"}, "value": "hi"},
+              {"name": "channel", "type": {"name": "text"}, "value": "logger"}],
  "modifier": [
    {"module": "error", "name": "handle",
     "recovery": [
       {"module": "variable", "name": "set",
-       "property": [{"name": "Name", "value": "%writeFailed%"}, {"name": "Value", "value": true}]}]}]}
+       "property": [{"name": "Name", "type": {"name": "variable"}, "value": "%writeFailed%"},
+                    {"name": "Value", "type": {"name": "bool"}, "value": true}]}]}]}
 ```

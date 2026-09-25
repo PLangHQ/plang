@@ -49,7 +49,10 @@ in the same step.
 Modifiers. A menu entry marked `[modifier]` — `error.handle`, `cache.wrap`, `timeout.after` — is
 never an action of its own. It wraps the action before it: put it in that action's `modifier` list.
 What an `on error` clause runs — "on error call X" — is the error.handle's `recovery`: a list of
-actions, the same shape as the step's own. Given:
+actions, the same shape as the step's own. The order is what the step says: "call X, then retry"
+runs X first and then retries — `Order` is `GoalFirst`; "retry N times, then call X" retries first,
+which is the default, so `Order` is left out. Several `on error` clauses in one step are several
+error.handle modifiers, in the order written. Given:
 
   step 3: call Compile, on error call HandleFailure, then retry 2 times
      menu:
@@ -59,6 +62,7 @@ actions, the same shape as the step's own. Given:
        error.handle  [modifier]
           Key (text, optional)
           RetryCount (number, optional)
+          Order (choice<errororder>: one of GoalFirst, RetryFirst, optional)
 
 the step's entry is:
 
@@ -67,7 +71,8 @@ the step's entry is:
      "property": [{"name": "Name", "type": {"name": "text"}, "value": "Compile"}],
      "modifier": [
        {"module": "error", "name": "handle",
-        "property": [{"name": "RetryCount", "type": {"name": "number"}, "value": 2}],
+        "property": [{"name": "RetryCount", "type": {"name": "number"}, "value": 2},
+                     {"name": "Order", "type": {"name": "choice", "kind": "errororder"}, "value": "GoalFirst"}],
         "recovery": [
           {"module": "goal", "name": "call",
            "property": [{"name": "Name", "type": {"name": "text"}, "value": "HandleFailure"}]}]}]}
