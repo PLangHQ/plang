@@ -131,12 +131,16 @@ public class DiscoverActionTests
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
     }
 
-    // A .pr in an old format never loads as an empty goal: the test is Stale, and its reason says
-    // what is old and to rebuild.
+    // A .pr in a shape this builder doesn't write never loads as an empty goal: any key the reader
+    // doesn't know, or a goal with no name, is refused — the test is Stale, and its reason names the
+    // key and says to rebuild.
     [Test]
-    [Arguments("{\"name\":\"Start\",\"steps\":[]}", "\"steps\" is now \"step\"")]
-    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"actions\":[]}]}", "\"actions\" is now \"action\"")]
-    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"action\":[{\"module\":\"variable\",\"name\":\"set\",\"parameters\":[]}]}]}", "\"parameters\" is now \"property\"")]
+    [Arguments("{\"name\":\"Start\",\"steps\":[]}", "key 'steps' isn't in this .pr format")]
+    [Arguments("{\"GoalName\":\"Start\",\"GoalSteps\":[]}", "key 'GoalName' isn't in this .pr format")]
+    [Arguments("{\"step\":[]}", "it has no 'name'")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"actions\":[]}]}", "step key 'actions' isn't in this .pr format")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"ModuleType\":\"x\",\"action\":[]}]}", "step key 'ModuleType' isn't in this .pr format")]
+    [Arguments("{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"action\":[{\"module\":\"variable\",\"name\":\"set\",\"parameters\":[]}]}]}", "action key 'parameters' is now 'property'")]
     public async Task Discover_OldFormatPr_IsStaleWithTheReason(string pr, string reason)
     {
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Old.test.goal"), "Start\n- a\n");
@@ -146,8 +150,8 @@ public class DiscoverActionTests
         var test = (await Discover()).Single();
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Stale);
-        await Assert.That(test.StatusReason?.ToString()).Contains("old .pr format");
         await Assert.That(test.StatusReason?.ToString()).Contains(reason);
+        await Assert.That(test.StatusReason?.ToString()).Contains("built by an older builder. Rebuild the goal.");
     }
 
     // Walks the tree of *.test.goal files under the target path; every match surfaces

@@ -368,19 +368,11 @@ public sealed partial class @this : IAsyncDisposable
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync(System.Context!);
         if (!exists.Success || (await exists.Value())?.Value != true) return;
-        var readResult = await prPath.ReadText(System.Context!);
-        if (!readResult.Success) return;
-        var json = (await readResult.Value() as global::app.type.item.text.@this)?.Clr<string>();
-        // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
-        // to the raw text by reading directly through ReadBytes when .pr's MIME
-        // converted the JSON to a typed object. For app.pr we only need the
-        // identity fields.
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            var bytes = await prPath.ReadBytes(System.Context!);
-            if (!bytes.Success || bytes.Peek().IsNull) return;
-            json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!);
-        }
+        // app.pr is the app's identity, not a goal: read its bytes. ReadText would map the .pr
+        // extension to the goal reader, which refuses a file that isn't a goal.
+        var bytes = await prPath.ReadBytes(System.Context!);
+        if (!bytes.Success || bytes.Peek().IsNull) return;
+        var json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!);
         if (string.IsNullOrWhiteSpace(json)) return;
         try
         {

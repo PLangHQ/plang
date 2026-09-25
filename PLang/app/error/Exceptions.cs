@@ -24,6 +24,15 @@ public class AppException : Exception
 }
 
 /// <summary>
+/// A .pr in a shape this builder doesn't write — another (older) builder made it. The goal has to be rebuilt.
+/// </summary>
+public class PrFormatOutdatedException : AppException
+{
+    public PrFormatOutdatedException(string reason)
+        : base($"{reason} — it was built by an older builder. Rebuild the goal.", "PrFormatOutdated", 400) { }
+}
+
+/// <summary>
 /// Exception thrown when a goal is not found.
 /// </summary>
 public class GoalNotFoundException : AppException

@@ -44,12 +44,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var goal = new global::app.goal.@this { Parent = parent };
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
+        var named = false;
         reader.BeginObject();
         while (reader.NextName(out var field))
         {
             switch (field)
             {
-                case "name": goal.Name = reader.String(); break;
+                case "name": goal.Name = reader.String(); named = true; break;
                 case "description": goal.Description = reader.String(); break;
                 case "comment": goal.Comment = reader.String(); break;
                 case "step":
@@ -86,14 +87,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         goal.Tag.Add(tag.Read(ref reader, null, ctx));
                     reader.EndArray();
                     break;
-                // The old key: skipping it would load the goal with no steps, silently.
-                case "steps":
-                    throw new global::app.error.AppException(
-                        "old .pr format (\"steps\" is now \"step\") — rebuild it.", "PrFormatOutdated", 400);
-                default: reader.Skip(); break;
+                // Every key the goal writes is read above. A key it doesn't know means another builder
+                // wrote this .pr — skipping it would load a goal missing what that key held, silently.
+                default: throw new global::app.error.PrFormatOutdatedException($"key '{field}' isn't in this .pr format");
             }
         }
         reader.EndObject();
+        if (!named) throw new global::app.error.PrFormatOutdatedException("it has no 'name'");
         return goal;
     }
 }

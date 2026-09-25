@@ -51,11 +51,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "intent": step.Intent = reader.String(); break;
                 case "source": step.Source = reader.String(); break;
                 case "waitForExecution": step.WaitForExecution = reader.Bool(); break;
-                // The old key: skipping it would load the step with no actions, silently.
-                case "actions":
-                    throw new global::app.error.AppException(
-                        "old .pr format (\"actions\" is now \"action\") — rebuild it.", "PrFormatOutdated", 400);
-                default: reader.Skip(); break;
+                // Every key the step writes is read above; an unknown one means another builder wrote it.
+                default: throw new global::app.error.PrFormatOutdatedException($"step key '{name}' isn't in this .pr format");
             }
         }
         reader.EndObject();

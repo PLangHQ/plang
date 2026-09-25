@@ -385,6 +385,12 @@ public sealed class @this
             // above mutated `primary`, which IS its inner object, so the changes are visible.
             return readResult;
         }
+        // The reader doesn't know its file; the load does — a refused .pr names itself.
+        catch (global::app.error.PrFormatOutdatedException outdated)
+        {
+            return App.System.Context.Error(new Error($"{prPath}: {outdated.Message}", outdated.Key, outdated.StatusCode)
+                { Exception = outdated });
+        }
         catch (Exception ex)
         {
             return App.System.Context.Error(Error.FromException(ex));
