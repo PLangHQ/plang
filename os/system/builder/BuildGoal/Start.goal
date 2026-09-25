@@ -51,8 +51,9 @@ MenuModule
 
 Settle
 / Graft and judge are one unit: a bad literal fails at the graft, a missing property at the
-/ judge — either way the properties conversation gets the complaint and both run again.
-- call Apply step=%step%, on error call FixProperties, then retry 2 times
+/ judge — either way the properties conversation gets the complaint and both run again. An else
+/ written apart from its if is the programmer's to fix, not the LLM's: it never goes to the retry.
+- call Apply step=%step%, on error key "ElseWithoutIf" call SourceError, on error call FixProperties, then retry 2 times
 
 
 Apply
@@ -82,9 +83,19 @@ BuildSubGoal
 - call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
 
 
+SourceError
+/ The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the
+/ corrected plang for the programmer; the same error is raised again carrying it, and the build of
+/ this goal stops there.
+- render template "/system/builder/llm/SourceFix.llm", write to %sourceFixSystem%
+- set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]
+- llm.query Message=%sourceFixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, write to %sourceFix%
+- throw %!error%, fix suggestion %sourceFix%
+
+
 HandleBuildFailure
 / Capture error onto trace, save, rethrow. No null-pass inference.
-- call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%
+- call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%
 - set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - throw %!error%

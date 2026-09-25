@@ -1,0 +1,20 @@
+[
+ {
+  "id": "else_line_with_indented_bodies",
+  "goal": "OneOrOther\n- if %x% == 1\n    - write out \"one\"\n- else\n    - write out \"other\"",
+  "error": "ElseWithoutIf: step 2 \"else\" — an else must be in the same step as its if.",
+  "expected": "- if %x% == 1, write out \"one\", else write out \"other\"",
+  "model": "gpt-5.4-nano",
+  "answer": "- if %x% == 1, write out \"one\", else write out \"other\"",
+  "match": true
+ },
+ {
+  "id": "else_line_with_inline_body",
+  "goal": "Proceed\n- if %ok% is true, call Continue\n- else call Stop",
+  "error": "ElseWithoutIf: step 1 \"else call Stop\" — an else must be in the same step as its if.",
+  "expected": "- if %ok% is true, call Continue, else call Stop",
+  "model": "gpt-5.4-nano",
+  "answer": "- if %ok% is true, call Continue, else call Stop",
+  "match": true
+ }
+]
