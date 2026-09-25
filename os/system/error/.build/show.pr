@@ -3,9 +3,9 @@
   "step": [
     {
       "index": 0,
-      "text": "set %template% = \u0022/system/error/%error.StatusCode%.txt\u0022",
+      "text": "set %template% = \"/system/error/%error.StatusCode%.txt\"",
       "lineNumber": 5,
-      "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name \u2014 \u0060call /system/error/Show error=%!error%\u0060\ninside a handler; at the top level the app hands in the failed run\u0027s error.",
+      "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error.",
       "code": [
         {
           "module": "variable",
@@ -176,9 +176,9 @@
       "step": [
         {
           "index": 0,
-          "text": "set %template% = \u0022/system/error/400.txt\u0022",
+          "text": "set %template% = \"/system/error/400.txt\"",
           "lineNumber": 11,
-          "comment": "No template for this code: its family\u0027s \u2014 400.txt below 500, 500.txt from 500 up.",
+          "comment": "No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.",
           "code": [
             {
               "module": "variable",
@@ -206,7 +206,7 @@
         },
         {
           "index": 1,
-          "text": "if %error.StatusCode% \u003E= 500, call Runtime",
+          "text": "if %error.StatusCode% >= 500, call Runtime",
           "lineNumber": 12,
           "code": [
             {
@@ -282,7 +282,7 @@
       "step": [
         {
           "index": 0,
-          "text": "set %template% = \u0022/system/error/500.txt\u0022",
+          "text": "set %template% = \"/system/error/500.txt\"",
           "lineNumber": 15,
           "code": [
             {

@@ -33,6 +33,26 @@ public class PrEnvelopeTests : System.IAsyncDisposable
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // A .pr is the text of a file: characters as themselves (a file on disk is not a page) and a
+    // trailing new line — a `'`, a `—` and a `>=` survive as written.
+    [Test]
+    public async Task APr_KeepsItsCharactersAsWritten_AndEndsWithANewLine()
+    {
+        var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal",
+            global::PLang.Tests.Shared.Make.Step("if %n% >= 5 — write out 'big'",
+                global::PLang.Tests.Shared.Make.Action("output", "write", ("Data", "it's big — n >= 5"))));
+        var serializer = (global::app.channel.serializer.plang.@this)
+            _app.User.Channel.Serializers.GetOrDefault("application/plang");
+
+        var text = await serializer.Text(goal);
+
+        await Assert.That(text).Contains("\"if %n% >= 5 — write out 'big'\"");
+        await Assert.That(text).Contains("it's big — n >= 5");
+        await Assert.That(text).DoesNotContain("\\u");
+        await Assert.That(text.EndsWith("}\n")).IsTrue();
+        await Assert.That((await RealGoalLoad.Read(_app, text)).Step[0].Text).IsEqualTo("if %n% >= 5 — write out 'big'");
+    }
+
     private async Task<string> Write(global::app.goal.@this goal)
     {
         var serializer = (global::app.channel.serializer.plang.@this)

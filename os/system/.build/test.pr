@@ -3,9 +3,9 @@
   "step": [
     {
       "index": 0,
-      "text": "set default %path% = \u0027.\u0027",
+      "text": "set default %path% = '.'",
       "lineNumber": 4,
-      "comment": "Replacement for the iteration-based runner \u2014 uses C# test.discover/run/report.\nThe C# test.run loop ensures one test\u0027s failure can\u0027t silent-skip the rest.",
+      "comment": "Replacement for the iteration-based runner — uses C# test.discover/run/report.\nThe C# test.run loop ensures one test's failure can't silent-skip the rest.",
       "code": [
         {
           "module": "variable",

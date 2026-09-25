@@ -222,14 +222,12 @@ public class Default : IBuilder
         // preferable to saving a half-built artifact the runtime can't execute.
         if (await goal.Validate(context) is { } invalid) return context.Error(invalid);
 
-        // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,
-        // structural (no @schema — a param is a Data by its List<Data> position). Symmetric with the
-        // goal reader's bare read. Replaces STJ + PrWrite + the WireLocal/Normalize write track.
+        // The goal writes its OWN .pr through Output (the value-owns-serialization path), as the text
+        // of a file: Store view, characters as themselves, a trailing new line. Symmetric with the goal
+        // reader's bare read.
         var serializer = (global::app.channel.serializer.plang.@this)
             context.Actor.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
-        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        var json = await serializer.Text(goal);
 
         var saveAction = new file.Save(context)
         {

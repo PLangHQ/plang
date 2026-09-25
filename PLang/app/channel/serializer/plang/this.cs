@@ -122,6 +122,29 @@ public sealed class @this : ITransport
     }
 
     /// <summary>
+    /// The item as the text of a file (a <c>.pr</c>, <c>app.pr</c>): its Store view, indented, every
+    /// character as itself — a file on disk is not a page, so nothing is HTML-escaped (a <c>'</c> stays
+    /// <c>'</c>, a <c>—</c> stays <c>—</c>) — and ending with a new line. The stream members keep the
+    /// escaping encoder for what can end up in a page (a template's <c>| store</c>, the wire).
+    /// </summary>
+    public async Task<string> Text(global::app.type.item.@this item, CancellationToken cancellationToken = default)
+    {
+        using var ms = new MemoryStream();
+        await using (var utf8 = new Utf8JsonWriter(ms, new JsonWriterOptions
+                     {
+                         Indented = true,
+                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                     }))
+        {
+            var writer = new global::app.channel.serializer.json.Writer(
+                utf8, global::app.View.Store, _context.App.Type.Renderer, emitsSchema: true);
+            await item.Output(writer, global::app.View.Store, _context);
+            await utf8.FlushAsync(cancellationToken);
+        }
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray()) + "\n";
+    }
+
+    /// <summary>
     /// Write a bare SEQUENCE of items as a Store array — the array counterpart to
     /// <see cref="SerializeItemAsync"/>. A template that embeds a collection reaches the filter
     /// AFTER the template engine has flattened the container to its elements (the container

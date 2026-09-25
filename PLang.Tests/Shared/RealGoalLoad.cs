@@ -29,9 +29,7 @@ public static class RealGoalLoad
         // so the test exercises the actual write path, not the soon-to-be-deleted PrWrite.
         var serializer = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using var outMs = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(outMs, goal, global::app.View.Store);
-        return await Read(app, System.Text.Encoding.UTF8.GetString(outMs.ToArray()));
+        return await Read(app, await serializer.Text(goal));
     }
 
     /// <summary>A .pr's text read the way the runtime reads one off I/O: a stream channel, mime
