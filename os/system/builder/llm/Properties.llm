@@ -129,7 +129,43 @@ condition in the step's own list. After a condition, the step's own list holds n
 branch of the same chain: an `elseif` or an `else`, each with its own `child` — the if's body in
 the if's `child`, the else's body in the else's `child`, never one branch's body in another's. A
 `write to %x%` inside a branch is part of that branch: it goes in that branch's `child`. An action the step
-does BEFORE it tests stays in the step's own list, ahead of the `if`. Given:
+does BEFORE it tests stays in the step's own list, ahead of the `if`.
+
+Only a step marked `(its body is step N, indented below — …)` is left without a `child`: its body is
+the steps below it, and the builder places them. Answer it with only what its own words name — a step
+that is only a condition is just that condition — and answer each step of its body as its own entry.
+Given:
+
+  step 3: if %order.paid% is true
+     (its body is steps 4, 5, indented below — the builder places it; give this step no child)
+     menu:
+       condition.if
+          (as below)
+  step 4: call ShipOrder
+     menu:
+       goal.call
+          Name (text, required)
+  step 5: write out "shipped"
+     menu:
+       output.write
+          Data (item, required)
+
+the entries are:
+
+  {"index": 3, "action": [
+    {"module": "condition", "name": "if",
+     "property": [{"name": "Left", "type": {"name": "item"}, "value": "%order.paid%"},
+                  {"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": "=="},
+                  {"name": "Right", "type": {"name": "bool"}, "value": true}]}]},
+  {"index": 4, "action": [
+    {"module": "goal", "name": "call",
+     "property": [{"name": "Name", "type": {"name": "text"}, "value": "ShipOrder"}]}]},
+  {"index": 5, "action": [
+    {"module": "output", "name": "write",
+     "property": [{"name": "Data", "type": {"name": "text"}, "value": "shipped"}]}]}
+
+A body written in the step's own words always goes in the condition's `child` — the unmarked steps
+below are the usual case. Given:
 
   step 1: if %n% is less than 5, return
      menu:
@@ -179,38 +215,6 @@ the step's entry is:
          "property": [{"name": "Name", "type": {"name": "text"}, "value": "Minor"}]}]}]}
   ]}
 
-A step marked `(its body is step N, indented below — …)` gets no `child`. Answer it with only what
-its own words name — a step that is only a condition is just that condition — and answer each step
-of its body as its own entry, as usual; the builder places them. Given:
-
-  step 3: if %order.paid% is true
-     (its body is steps 4, 5, indented below — the builder places it; give this step no child)
-     menu:
-       condition.if
-          (as above)
-  step 4: call ShipOrder
-     menu:
-       goal.call
-          Name (text, required)
-  step 5: write out "shipped"
-     menu:
-       output.write
-          Data (item, required)
-
-the entries are:
-
-  {"index": 3, "action": [
-    {"module": "condition", "name": "if",
-     "property": [{"name": "Left", "type": {"name": "item"}, "value": "%order.paid%"},
-                  {"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": "=="},
-                  {"name": "Right", "type": {"name": "bool"}, "value": true}]}]},
-  {"index": 4, "action": [
-    {"module": "goal", "name": "call",
-     "property": [{"name": "Name", "type": {"name": "text"}, "value": "ShipOrder"}]}]},
-  {"index": 5, "action": [
-    {"module": "output", "name": "write",
-     "property": [{"name": "Data", "type": {"name": "text"}, "value": "shipped"}]}]}
-
 Filling a property:
 - An action has only the properties listed under it on the menu. Never add one that is not listed.
 - A value the step writes goes in as written — a quoted text as that text, a %variable% with its
@@ -218,6 +222,9 @@ Filling a property:
 - A required property the step does not write is yours to work out from what the step means.
 - Leave an optional property out unless the step's text names it. A value you had to invent means
   the property should be left out. Never put in a placeholder and never repeat a default.
+- A property the menu shows with `default X` is left out unless the step's words ask for a different
+  value: writing the default itself (`Overflow: "Promote"` where the menu says `default Promote`) is a
+  repeat. An empty list or empty text is a placeholder too — leave the property out instead.
 - A `variable` property is a variable name with its % signs.
 - Every property row names its `type` — PLang is strongly typed and nothing guesses it later.
   Copy the type the menu writes for that property (`Path (path, …)` → `{"name": "path"}`; a kind rides
