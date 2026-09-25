@@ -183,6 +183,14 @@ def menu_for(goal, cat, folder=None):
         menu[i] = entries
     return menu, probs
 
+def notes_block(module, action):
+    """The action's notes (os/system/modules/<module>/<action>.notes.md) as the template prints them:
+    under `notes:`, stripped, split on newlines (Liquid's split drops the blank lines), each indented."""
+    path = f'{ROOT}/os/system/modules/{module}/{action}.notes.md'
+    if not os.path.exists(path): return ''
+    lines = [l for l in open(path, encoding='utf-8').read().strip().split('\n') if l != '']
+    return '\n        notes:' + ''.join(f'\n          {l}' for l in lines)
+
 def user_message(goal, menu):
     """The stage-3 user message, byte for byte what os/system/builder/llm/templates/propertiesUser.template
     renders — except menu order: the template walks the module catalog (hash order), this walks the menu."""
@@ -195,6 +203,7 @@ def user_message(goal, menu):
             out += f'\n     {choice}'
             for name, p in props.items():
                 out += f'\n        {menu_row(name, p)}'
+            out += notes_block(module, action)
         out += '\n'
     return out + '\n'
 

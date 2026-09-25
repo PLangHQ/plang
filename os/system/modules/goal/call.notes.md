@@ -9,9 +9,9 @@
 
 `foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
 ```json
-{"module":"goal","name":"call","parameter":[
-  {"name":"Name","value":"X"},
-  {"name":"Parameter","value":[{"name":"section","value":"%item%"}]}]}
+{"module":"goal","name":"call","property":[
+  {"name":"Name","type":{"name":"text"},"value":"X"},
+  {"name":"Parameter","type":{"name":"list"},"value":[{"name":"section","type":{"name":"item"},"value":"%item%"}]}]}
 ```
 
 **`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.

@@ -10,6 +10,7 @@ Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, 
 | `is null` / `is not null` | == / != | null | — |
 | `equals %b%` / `does not equal %b%` | == / != | %b% | — |
 | `contains 'foo'` / `does not contain 'foo'` | contains | 'foo' | — / true |
+| `is a number` / `is text` / `is not a list` | is | the type name: number / text / list | — / — / true |
 
 `Negate=true` inverts ANY operator — the only way to negate ones with no inverse (`isempty`, etc.).
 
