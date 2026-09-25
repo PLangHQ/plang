@@ -101,7 +101,12 @@ def declared(module, action, held_actions=True):
     for i, line in enumerate(lines):
         m = PROP.search(line)
         if not m: continue
-        d = next((DEFAULT.search(l) for l in reversed(lines[max(0, i - 3):i]) if DEFAULT.search(l)), None)
+        # this property's own [Default]: look back over its attributes and doc comment only, stopping
+        # at the previous member so a neighbour's attribute is never taken
+        d = None
+        for l in reversed(lines[max(0, i - 6):i]):
+            if PROP.search(l) or re.search(r'\b(public|private|internal)\b', l): break
+            if (d := DEFAULT.search(l)): break
         t = plang_type(m.group('type'))
         if t in NOT_ON_MENU and not (held_actions and t in ('action', 'goal')): continue
         options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
