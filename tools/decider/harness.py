@@ -204,7 +204,8 @@ STRUCTURE = '''How plang is structured:
 - A step that REGISTERS something to happen later — an event handler, a callback, a scheduled goal — does not do that work now. Naming a goal to be run later is not calling it; the step uses the module that does the registering.
 - Steps are listed in order and may be indented. An indented step is the body of the step above it, and belongs to that step; each step is still asked about on its own, for what its own sentence does.'''
 
-def step_no(s): return s['index'] + 1
+# Steps are numbered as the .pr numbers them, from 0: step N is index N everywhere.
+def step_no(s): return s['index']
 
 def state_for(goal, cat, modules=None):
     """Stage 1 sees MODULE-level docs only (what each module is for) — it decides modules.
@@ -217,7 +218,7 @@ def state_for(goal, cat, modules=None):
         return {'guidance': GUIDANCE, 'goal': goal['name'],
                 'steps': [{'index': s['index'], 'text': s['text']} for s in goal['steps']], 'modules': shown}
 
-    lines = [STRUCTURE, '', f'This is a plang goal called {goal["name"]}. Its steps are numbered.', '']
+    lines = [STRUCTURE, '', f'This is a plang goal called {goal["name"]}. Its steps are numbered from 0.', '']
     # Indentation is structure: an indented step is the body of the step above it.
     for s in goal['steps']:
         lines.append(f'step {step_no(s)}: ' + '    ' * s.get('indent', 0) + s['text'])
@@ -230,6 +231,11 @@ def state_for(goal, cat, modules=None):
             for an, av in v['actions'].items():
                 lines.append(f'  action {m}.{an}: {av["description"]}')
                 if av.get('examples'): lines.append(f'    examples: {av["examples"]}')
+    if modules is None:   # stage 1 also asks these actions by name: described once, here
+        lines += ['', 'These actions are asked about by name:']
+        for a in COMMON:
+            m, an = a.split('.', 1)
+            lines.append(f'- {a}: {cat[m]["actions"][an]["description"]}')
     return '\n'.join(lines)
 
 def windows(steps):
@@ -244,37 +250,43 @@ COMMON = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'conditio
 NEAR_CERTAIN = 0.9   # a common action scored at or above this is picked; its module skips stage 2
 
 def stage1(goal, cat):
-    """noul per (step, module) and per (step, common action), one request per window. Every score is
-    kept: probs[i] holds module names and `module.action` names alike."""
+    """v0.1's shape (origin/main PLang/Building/StepBuilder.cs PrefetchModules) plus the common actions:
+    per step ONE choice — which module does the main work — whose options are the bare module names
+    (their descriptions and example steps are in the shared state, once), and a noul per common action.
+    Every score is kept: probs[i] holds each module's probability from the choice and each common
+    action's noul."""
     state = state_for(goal, cat)
+    options = {m: None for m in cat}
     probs = collections.defaultdict(dict); secs = nbytes = nq = 0; usage = collections.Counter()
     for win in windows(goal['steps']):
-        qs = {f's{s["index"]}_{m}': {'type': 'noul', 'instructions':
-                  f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. Does step {step_no(s)} — its own work, or '
-                  f'anything it guards behind a condition, repeats in a loop, or hands to an error handler — need an '
-                  f'action from the plang module `{m}`?'}
-              for s in win for m in cat}
+        qs = {}
         for s in win:
+            text = s['text'].strip()
+            qs[f's{s["index"]}_@module'] = {'type': 'choice', 'criteria': options, 'instructions':
+                f'Step {step_no(s)} of this goal is `{text}`. Which plang module does the main work of step {step_no(s)}?'}
             for a in COMMON:
-                m, an = a.split('.', 1)
                 qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
-                    f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. Does step {step_no(s)} — its own work, or '
-                    f'anything it guards behind a condition, repeats in a loop, or hands to an error handler — use the '
-                    f'action `{a}`: {cat[m]["actions"][an]["description"]}?'}
+                    f'Step {step_no(s)} is `{text}`. Does step {step_no(s)} use `{a}`?'}
         resp, t, b = ask(state, qs)
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():
             i, m = k[1:].split('_', 1)
-            probs[int(i)][m] = a.get('noul')
+            if m == '@module': probs[int(i)].update(a.get('probabilities') or {a.get('choice'): a.get('confidence')})
+            else: probs[int(i)][m] = a.get('noul')
     return probs, secs, nbytes, nq, dict(usage)
 
+def main_module(probs_i, cat):
+    """The module the step's choice named: the most probable one."""
+    scored = {m: p for m, p in probs_i.items() if m in cat and p is not None}
+    return max(scored, key=scored.get) if scored else None
+
 def picks(probs_i, cat, threshold=0.5):
-    """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must still ask).
-    A module is skipped in stage 2 when one of its common actions is near-certain: that action is its answer."""
+    """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must ask): the
+    main module, unless one of its common actions is near-certain — then that action is its answer."""
     common = {a: probs_i.get(a) for a in COMMON if probs_i.get(a) is not None}
     settled = {a.split('.', 1)[0] for a, p in common.items() if p >= NEAR_CERTAIN}
-    ask2 = [m for m, p in probs_i.items() if m in cat and p is not None and p >= threshold and m not in settled]
-    return common, ask2
+    main = main_module(probs_i, cat)
+    return common, [main] if main and main not in settled else []
 
 def stage2(goal, cat, chosen):   # chosen: {step_index: [modules]}
     used = {m for ms in chosen.values() for m in ms}

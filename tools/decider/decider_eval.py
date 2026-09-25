@@ -2,12 +2,14 @@
 step, with their scores, against the actions the golden expects (its menu: every action the step uses,
 its conditions' bodies and modifiers included).
 
-    stage 1  noul per (step, module) + noul per (step, common action)   harness.stage1
-    stage 2  choice per (step, module), for a module stage 1 picked that no near-certain common
-             action already answers                                    harness.picks, harness.stage2
+    stage 1  per step one choice (which module does the main work) + noul per common action
+                                                                        harness.stage1
+    stage 2  per step one choice (which action of the main module), unless a near-certain common
+             action of that module already answers it                  harness.picks, harness.stage2
 
-A pick's score: a common action's own noul (when stage 2 also names it, its module noul and the choice's
-confidence are kept beside it); any other action's module noul, with the choice's confidence. Scored at two cuts — 0.9 (pre-filled) and 0.5 (pre-filled + possible). Every request
+A pick's score: a common action's own noul (when stage 2 also names it, its module's probability and the
+choice's confidence are kept beside it); the main module's action scores the module's probability, with
+the choice's confidence. Scored at two cuts — 0.9 (pre-filled) and 0.5 (pre-filled + possible). Every request
 and response is written under /shared/coder/llm/plang/builder-formal/decider/<goal>/.
 
     python3 decider_eval.py
@@ -16,7 +18,7 @@ import json, os, time, collections, concurrent.futures as cf
 import harness as h
 import child_eval as e
 
-DUMP = '/shared/coder/llm/plang/builder-formal/decider'
+DUMP = os.environ.get('DUMP', '/shared/coder/llm/plang/builder-formal/decider-v2')
 OUT = os.path.join(h.OUT, 'decider_eval_' + time.strftime('%Y%m%d_%H%M%S') + '.json')
 
 def dump_to(folder, label):
@@ -41,12 +43,12 @@ def one(case, cat):
     readable(folder, '1.decider')
     split = {i: h.picks(probs[i], cat) for i in probs}
     chosen = {i: ask2 for i, (_, ask2) in split.items()}
-    # A stage-2 question not asked: a module stage 1 picked (≥ 0.5) with more than one action, settled
-    # by a near-certain common action instead.
+    # A stage-2 question not asked: the step's main module has more than one action, but a near-certain
+    # common action of that module already answered it.
     skipped = []
     for i in probs:
-        settled = {a.split('.', 1)[0] for a, p in split[i][0].items() if p >= h.NEAR_CERTAIN}
-        skipped += [(i, m) for m in settled if (probs[i].get(m) or 0) >= 0.5 and len(cat[m]['actions']) > 1]
+        main = h.main_module(probs[i], cat)
+        if main and not split[i][1] and len(cat[main]['actions']) > 1: skipped.append((i, main))
     dump_to(folder, '2.decider')
     acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen)
     if q2: readable(folder, '2.decider')
@@ -64,6 +66,7 @@ def one(case, cat):
             if name in pick: pick[name].update(also='stage 2', module=probs[i][m], confidence=confidence); continue
             pick[name] = {'score': probs[i][m], 'from': 'stage 2', 'confidence': confidence}
         steps.append({'index': i, 'text': s['text'], 'expected': case['menu'][str(i)],
+                      'main': h.main_module(probs[i], cat),
                       'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick})
     return {'goal': case['id'], 'steps': steps, 'skipped': skipped,
             'stage1': {'secs': s1, 'bytes': b1, 'questions': q1, 'usage': u1},
@@ -89,6 +92,6 @@ if __name__ == '__main__':
                 n['exact'] += not miss and not extra; n['steps'] += 1
         print(f'cut {cut}: steps exact {n["exact"]}/{n["steps"]}; actions hit {n["hit"]}, missed {n["miss"]}, extra {n["extra"]}')
     for r in results:
-        print(f'{r["goal"]:<14} stage 1: {r["stage1"]["questions"]} questions {r["stage1"]["secs"]:.1f}s {r["stage1"]["usage"]} | '
-              f'stage 2: {r["stage2"]["questions"]} questions {r["stage2"]["secs"]:.1f}s {r["stage2"]["usage"]} | skipped {len(r["skipped"])}')
+        print(f'{r["goal"]:<14} stage 1: {r["stage1"]["questions"]} questions {r["stage1"]["bytes"] / 1024:.0f} KB {r["stage1"]["secs"]:.1f}s {r["stage1"]["usage"]} | '
+              f'stage 2: {r["stage2"]["questions"]} questions {r["stage2"]["bytes"] / 1024:.0f} KB {r["stage2"]["secs"]:.1f}s {r["stage2"]["usage"]} | skipped {len(r["skipped"])}')
     print('wrote', OUT)
