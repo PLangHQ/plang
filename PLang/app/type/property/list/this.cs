@@ -76,10 +76,10 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
 
             var property = new Property(prop, types);
 
-            // Properties the LLM must never author: host properties lower to `clr` (naming one leaks
-            // the C# type); the graph-infra items (goal/step/action/modifier) are STRUCTURE the
-            // compiler injects, never LLM vocabulary. Drop both by the property's own type name.
-            if (property.Type.Name is "clr" or "goal" or "step" or "action" or "modifier") continue;
+            // A host property lowers to `clr` — naming one leaks the C# type, so it is never shown. Every
+            // other property is the step's to write: an action held as a value (channel.set's Goal, a
+            // callback), the goal build.fold works on (Goal=%goal%) — written in formal, typed by this row.
+            if (property.Type.Name is "clr") continue;
 
             _rows.Add(property);
         }

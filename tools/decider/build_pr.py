@@ -83,16 +83,17 @@ def default_text(literal):
     if re.fullmatch(r'-?\d+(\.\d+)?[dDfFmM]?', v): return v.rstrip('dDfFmM')
     return v.split('.')[-1]
 
-# The catalog never shows these: host values, and the graph items the compiler injects itself.
+# What the catalog hid before builder-formal: host values and the graph items. Now only a host value
+# (`clr`) is hidden (app/type/property/list/this.cs Reflect); held_actions=False gives the old catalog,
+# the one prompt A was rendered with.
 NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'modifier'}
 
 _decl = {}
 def declared(module, action, held_actions=True):
     """(properties, is_modifier) as the handler declares them — the rows the plang catalog reflects
     (app/type/property/list/this.cs Reflect), an IChannel action's synthetic `channel` row added last.
-    Host (`clr`) and graph-structure slots stay hidden. The `action`- and `goal`-typed slots — a
-    callback's action (channel.set Goal), the goal build.fold works on — are the LLM's to write, so
-    they are shown; held_actions=False gives the catalog as the C# filter still has it (stage 4)."""
+    Only a host (`clr`) slot is hidden: an action held as a value (channel.set Goal), the goal
+    build.fold works on, a step build.validate judges — each is the step's to write."""
     key = (module, action, held_actions)
     if key in _decl: return _decl[key]
     src = handler_source(module, action) or ''
@@ -108,7 +109,7 @@ def declared(module, action, held_actions=True):
             if PROP.search(l) or re.search(r'\b(public|private|internal)\b', l): break
             if (d := DEFAULT.search(l)): break
         t = plang_type(m.group('type'))
-        if t in NOT_ON_MENU and not (held_actions and t in ('action', 'goal')): continue
+        if t == 'clr' or (t in NOT_ON_MENU and not held_actions): continue
         options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
         props[m.group('name')] = {'type': t, 'options': options, 'nullable': bool(m.group('opt')),
                                   'default': default_text(d.group('value')) if d else None}
