@@ -26,8 +26,7 @@
               },
               "value": "/system/error/%error.StatusCode%.txt"
             }
-          ],
-          "modifier": []
+          ]
         }
       ],
       "waitForExecution": true
@@ -95,7 +94,6 @@
                   "value": "GoalFirst"
                 }
               ],
-              "modifier": [],
               "recovery": [
                 {
                   "module": "goal",
@@ -108,8 +106,7 @@
                       },
                       "value": "Fallback"
                     }
-                  ],
-                  "modifier": []
+                  ]
                 }
               ]
             }
@@ -133,8 +130,7 @@
               },
               "value": "%!data%"
             }
-          ],
-          "modifier": []
+          ]
         }
       ],
       "waitForExecution": true
@@ -163,8 +159,7 @@
               },
               "value": "error"
             }
-          ],
-          "modifier": []
+          ]
         }
       ],
       "waitForExecution": true
@@ -198,8 +193,7 @@
                   },
                   "value": "/system/error/400.txt"
                 }
-              ],
-              "modifier": []
+              ]
             }
           ],
           "waitForExecution": true
@@ -237,7 +231,6 @@
                   "value": 500
                 }
               ],
-              "modifier": [],
               "child": [
                 {
                   "index": 0,
@@ -255,8 +248,7 @@
                           },
                           "value": "Runtime"
                         }
-                      ],
-                      "modifier": []
+                      ]
                     }
                   ],
                   "waitForExecution": true
@@ -303,8 +295,7 @@
                   },
                   "value": "/system/error/500.txt"
                 }
-              ],
-              "modifier": []
+              ]
             }
           ],
           "waitForExecution": true

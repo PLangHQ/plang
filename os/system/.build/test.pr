@@ -32,8 +32,7 @@
               },
               "value": true
             }
-          ],
-          "modifier": []
+          ]
         }
       ],
       "waitForExecution": true
@@ -62,8 +61,7 @@
               },
               "value": true
             }
-          ],
-          "modifier": []
+          ]
         },
         {
           "module": "variable",
@@ -83,8 +81,7 @@
               },
               "value": "%!data%"
             }
-          ],
-          "modifier": []
+          ]
         }
       ],
       "waitForExecution": true
@@ -106,8 +103,7 @@
               },
               "value": "%tests%"
             }
-          ],
-          "modifier": []
+          ]
         }
       ],
       "waitForExecution": true
@@ -120,8 +116,7 @@
         {
           "module": "test",
           "name": "report",
-          "property": [],
-          "modifier": []
+          "property": []
         }
       ],
       "waitForExecution": true

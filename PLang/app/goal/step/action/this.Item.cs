@@ -61,10 +61,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             writer.Name("default");
             await Default.Output(writer, mode, context);
         }
-        writer.Name("modifier");
-        writer.BeginArray(Modifier.Count);
-        foreach (var m in Modifier) await m.Output(writer, mode, context);
-        writer.EndArray();
+        // The modifiers wrapping the action — omitted when there are none, like child and recovery.
+        if (Modifier.Count > 0)
+        {
+            writer.Name("modifier");
+            writer.BeginArray(Modifier.Count);
+            foreach (var m in Modifier) await m.Output(writer, mode, context);
+            writer.EndArray();
+        }
         // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
         // Each child step writes itself; the tree serializes recursively.
         if (Child.Count > 0)
