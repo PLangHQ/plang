@@ -1,0 +1,34 @@
+{
+  "branch": "builder-formal",
+  "sessions": [
+    {
+      "id": "6a5d9446-76bb-4d0a-b892-82d3711e7756",
+      "bot": "architect",
+      "timestamp_start": "2026-09-25T16:13:22",
+      "timestamp_end": "2026-09-25T16:13:22",
+      "intent": "Open builder-formal and plan Ingi's direction: decider picks with scores, stage 3 answers in a formal notation, double validation",
+      "before": {
+        "assumptions": "Prompt B and the 5-goal golden set on get-builder-running are the baseline; python eval first",
+        "risk": "formal grammar nesting (child, modifiers) and decider misses the LLM cannot repair"
+      },
+      "plan": ".bot/builder-formal/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/builder-formal/architect/plan.md",
+            ".bot/builder-formal/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Plan drafted for Ingi's read; coder holding"
+        }
+      ],
+      "after": {
+        "status": "plan awaiting Ingi's read",
+        "health": "no code changed",
+        "notes": "5 open questions in plan.md"
+      }
+    }
+  ]
+}
