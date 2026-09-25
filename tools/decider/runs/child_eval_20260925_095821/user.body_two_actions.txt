@@ -1,0 +1,17 @@
+
+RequireUser
+
+step 0: if %user% == null, write out "no user" and return
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     output.write
+        Data (item, required)
+        channel (text, optional)
+     goal.return
+        Data (item, optional)
+        Depth (number, optional, default 1)
+

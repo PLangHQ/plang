@@ -1,0 +1,23 @@
+
+Page
+
+step 0: count %items%, write to %n%, if %n% > 10, call Paginate
+   menu:
+     list.count
+        ListName (variable, required)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+

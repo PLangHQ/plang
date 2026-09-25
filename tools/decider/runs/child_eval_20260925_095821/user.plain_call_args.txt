@@ -1,0 +1,11 @@
+
+Notify
+
+step 0: call SendMail to=%email%, subject="Welcome"
+   menu:
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+

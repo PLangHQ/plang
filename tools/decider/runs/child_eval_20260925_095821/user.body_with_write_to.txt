@@ -1,0 +1,21 @@
+
+Discount
+
+step 0: if %price% > 100, multiply %price% by 0.9, write to %price%
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     math.multiply
+        A (item, required)
+        B (item, required)
+        Overflow (choice<overflow>: one of Promote, Throw, optional, default Promote)
+        Precision (choice<precision>: one of Error, Double, Decimal, optional, default Error)
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+

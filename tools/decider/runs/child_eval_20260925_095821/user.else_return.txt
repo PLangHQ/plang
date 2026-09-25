@@ -1,0 +1,20 @@
+
+Proceed
+
+step 0: if %ok% == true, call Continue, else return
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     condition.else
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+     goal.return
+        Data (item, optional)
+        Depth (number, optional, default 1)
+

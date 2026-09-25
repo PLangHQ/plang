@@ -1,0 +1,10 @@
+
+Collect
+
+step 0: add %item% to %items%
+   menu:
+     list.add
+        ListName (variable, required)
+        Value (item, required)
+        AtIndex (number, optional, default -1)
+

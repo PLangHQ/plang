@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERwzFCsKvFkRT3emtphAEdWxODNID",
+ "object": "chat.completion",
+ "created": 1790330309,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%price%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \">\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 100\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"multiply %price% by 0.9, write to %price%\",\n              \"action\": [\n                {\n                  \"module\": \"math\",\n                  \"name\": \"multiply\",\n                  \"property\": [\n                    {\n                      \"name\": \"A\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": \"%price%\"\n                    },\n                    {\n                      \"name\": \"B\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": 0.9\n                    }\n                  ]\n                },\n                {\n                  \"module\": \"variable\",\n                  \"name\": \"set\",\n                  \"property\": [\n                    {\n                      \"name\": \"Name\",\n                      \"type\": {\n                        \"name\": \"variable\"\n                      },\n                      \"value\": \"%price%\"\n                    },\n                    {\n                      \"name\": \"Value\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": \"%!data%\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 2632,
+  "completion_tokens": 376,
+  "total_tokens": 3008,
+  "prompt_tokens_details": {
+   "cached_tokens": 1792,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

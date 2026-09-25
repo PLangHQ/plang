@@ -1,0 +1,27 @@
+
+OneOrOther
+
+step 0: if %x% == 1
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+
+step 1: write out "one"
+   menu:
+     output.write
+        Data (item, required)
+        channel (text, optional)
+
+step 2: else
+   menu:
+     condition.else
+
+step 3: write out "other"
+   menu:
+     output.write
+        Data (item, required)
+        channel (text, optional)
+

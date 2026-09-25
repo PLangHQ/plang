@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERwzBrwmMNnL22KWn0Oici1A2lbFy",
+ "object": "chat.completion",
+ "created": 1790330305,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%ok%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \"==\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": true\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"call Continue\",\n              \"action\": [\n                {\n                  \"module\": \"goal\",\n                  \"name\": \"call\",\n                  \"property\": [\n                    {\n                      \"name\": \"Name\",\n                      \"type\": {\n                        \"name\": \"text\"\n                      },\n                      \"value\": \"Continue\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        },\n        {\n          \"module\": \"condition\",\n          \"name\": \"else\",\n          \"child\": [\n            {\n              \"text\": \"return\",\n              \"action\": [\n                {\n                  \"module\": \"goal\",\n                  \"name\": \"return\"\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 2600,
+  "completion_tokens": 301,
+  "total_tokens": 2901,
+  "prompt_tokens_details": {
+   "cached_tokens": 1792,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

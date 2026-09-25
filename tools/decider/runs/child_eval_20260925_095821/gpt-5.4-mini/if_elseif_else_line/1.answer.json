@@ -1,0 +1,129 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%score%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 90
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"A\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "item"
+           },
+           "value": "A"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "module": "condition",
+     "name": "elseif",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%score%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 70
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"B\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "item"
+           },
+           "value": "B"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "module": "condition",
+     "name": "else",
+     "child": [
+      {
+       "text": "write out \"C\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "item"
+           },
+           "value": "C"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

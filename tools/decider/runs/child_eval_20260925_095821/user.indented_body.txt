@@ -1,0 +1,25 @@
+
+MaybeProcess
+
+step 0: if %count% > 0
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+
+step 1: call ProcessItems
+   menu:
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+
+step 2: write out "done"
+   menu:
+     output.write
+        Data (item, required)
+        channel (text, optional)
+

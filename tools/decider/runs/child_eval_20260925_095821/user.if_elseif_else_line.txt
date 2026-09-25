@@ -1,0 +1,20 @@
+
+Grade
+
+step 0: if %score% > 90, write out "A", else if %score% > 70, write out "B", else write out "C"
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     condition.elseif
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     condition.else
+     output.write
+        Data (item, required)
+        channel (text, optional)
+

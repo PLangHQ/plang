@@ -1,0 +1,14 @@
+
+Kind
+
+step 0: if %value% is a number, write out "numeric"
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     output.write
+        Data (item, required)
+        channel (text, optional)
+

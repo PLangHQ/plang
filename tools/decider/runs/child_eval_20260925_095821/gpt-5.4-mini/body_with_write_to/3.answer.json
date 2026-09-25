@@ -1,0 +1,64 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%price%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 100
+      }
+     ],
+     "child": [
+      {
+       "text": "multiply %price% by 0.9, write to %price%",
+       "action": [
+        {
+         "module": "math",
+         "name": "multiply",
+         "property": [
+          {
+           "name": "A",
+           "type": {
+            "name": "item"
+           },
+           "value": "%price%"
+          },
+          {
+           "name": "B",
+           "type": {
+            "name": "number"
+           },
+           "value": 0.9
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

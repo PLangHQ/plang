@@ -1,0 +1,46 @@
+
+MenuModule
+
+step 0: set %key% = "s%step.Index%_%module.Name%"
+   menu:
+     variable.set
+        Name (variable, required)
+        Value (item, required)
+        Type (item, optional)
+        AsDefault (bool, optional, default false)
+
+step 1: if %moduleAnswer[key].noul% is less than %threshold%, return
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     goal.return
+        Data (item, optional)
+        Depth (number, optional, default 1)
+
+step 2: if %module.Action.Count% is 1, add "%module.Name%.%module.Action[0].Name%" to %choices%
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     list.add
+        ListName (variable, required)
+        Value (item, required)
+        AtIndex (number, optional, default -1)
+
+step 3: if %module.Action.Count% is more than 1, add "%module.Name%.%actionAnswer[key].choice%" to %choices%
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     list.add
+        ListName (variable, required)
+        Value (item, required)
+        AtIndex (number, optional, default -1)
+

@@ -1,0 +1,19 @@
+
+Greet
+
+step 0: if %lang% == "is", write out "Halló", else if %lang% == "en", write out "Hello"
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     condition.elseif
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+     output.write
+        Data (item, required)
+        channel (text, optional)
+
