@@ -195,6 +195,7 @@ def user_message(goal, menu):
     """The stage-3 user message, byte for byte what os/system/builder/llm/templates/propertiesUser.template
     renders — except menu order: the template walks the module catalog (hash order), this walks the menu."""
     out = '\n' + goal['name'] + '\n'
+    printed = set()   # an action's notes are printed once, under the first step that lists it
     for s in goal['steps']:
         out += f'\nstep {s["index"]}: {s["text"]}\n   menu:'
         for choice in menu.get(s['index'], []):
@@ -203,7 +204,9 @@ def user_message(goal, menu):
             out += f'\n     {choice}'
             for name, p in props.items():
                 out += f'\n        {menu_row(name, p)}'
-            out += notes_block(module, action)
+            if choice not in printed:
+                out += notes_block(module, action)
+                printed.add(choice)
         out += '\n'
     return out + '\n'
 

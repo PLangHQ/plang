@@ -5,8 +5,9 @@ steps refer to one another (`%!data%` is the action before it), and a model show
 isolation cannot see that.
 
 The menu is walked off the module catalogue and filtered by what the decider chose, so every
-property row comes from the action's own declaration — nothing here restates it.
-{% endcomment %}
+property row comes from the action's own declaration — nothing here restates it. An action's notes
+are printed once, under the first step that lists it.
+{% endcomment %}{% assign printed = "|" %}
 {{ goal.Name }}
 {% for s in goal.Step %}
 step {{ s.Index }}: {{ s.Text }}
@@ -19,13 +20,15 @@ step {{ s.Index }}: {{ s.Text }}
 {%- for p in a.Property %}
         {{ p.Name }} ({{ p.Type.Name }}{% if p.Type.Kind %}<{{ p.Type.Kind.Name }}>{% endif %}{% if p.Type.Values %}: one of {{ p.Type.Values | join: ", " }}{% endif %}{% if p.Required %}, required{% else %}, optional{% endif %}{% if p.HasDefault %}, default {{ p.Default }}{% endif %})
 {%- endfor -%}
-{%- if a.Notes %}
+{%- assign mark = "|" | append: choice | append: "|" -%}
+{%- if a.Notes -%}{%- unless printed contains mark %}
         notes:
 {%- assign noteLines = a.Notes | strip | split: "\n" -%}
 {%- for line in noteLines %}
           {{ line }}
 {%- endfor -%}
-{%- endif -%}
+{%- assign printed = printed | append: choice | append: "|" -%}
+{%- endunless -%}{%- endif -%}
 {%- endif -%}
 {%- endfor -%}
 {%- endfor %}
