@@ -52,6 +52,10 @@ modifier= action | error.handle(RetryCount=2, Order="GoalFirst") { recovery acti
 - **The parser is ours** — a small strict grammar for our notation, not the programmer's language, so it doesn't break "no syntax" (harness README rule 2). A parse failure goes back to the LLM with the position, loudly.
 - **Old precedent:** old `.pr` files carried a `formal` field in exactly this spirit (`os/system/builder/.build/build.pr:16`: `"formal": "variable.set(Name=%path%, Value=\"/\", AsDefault=true, Type=string)"`).
 
+## The story behind it
+
+[vision.md](vision.md) — how a goal becomes a program, told with Ingi. It adds to the stages below: modifiers on the next line in formal; the action writes itself in formal and the `.pr` carries both the JSON and the formal line; a `.goal` step written in formal is parsed directly (no decider, no LLM); an unsure step is built with a warning, a certain contradiction fails loudly; the LLM never names types.
+
 ## Stages
 
 1. **Decider with common actions and scores** (python). Stage 1 asks modules + the common actions; stage 2 only where needed. Measure the decider alone on the 5 goals: picks vs the golden's expected actions per step (hits, misses, extras, with scores), requests, seconds, cost. Which actions are "common" is counted, not guessed: frequency across the 5 goals, the builder's own goals and `tools/decider/labels/`.
