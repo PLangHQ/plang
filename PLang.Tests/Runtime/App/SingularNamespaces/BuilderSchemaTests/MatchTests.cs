@@ -125,6 +125,59 @@ public class MatchTests
         await Assert.That(result.Error!.Message).Contains("entry 1 is extra: the goal has 1 steps");
     }
 
+    // gpt-5.4-nano's real answer for a lone `- if %count% > 0` with two steps indented under it (child
+    // eval run 2, indented_body run 3): step 0 got a child copied from step 1, and step 1 is also its own
+    // entry — the body written twice.
+    private const string NanoChildOverIndentAnswer = """
+        {"step": [
+          {"index": 0, "action": [{"module": "condition", "name": "if", "property": [{"name": "Left", "type": {"name": "item"}, "value": "%count%"}, {"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": ">"}, {"name": "Right", "type": {"name": "item"}, "value": 0}], "child": [{"text": "call ProcessItems", "action": [{"module": "goal", "name": "call", "property": [{"name": "Name", "type": {"name": "text"}, "value": "ProcessItems"}]}]}]}]},
+          {"index": 1, "action": [{"module": "goal", "name": "call", "property": [{"name": "Name", "type": {"name": "text"}, "value": "ProcessItems"}]}]},
+          {"index": 2, "action": [{"module": "output", "name": "write", "property": [{"name": "Data", "type": {"name": "text"}, "value": "done"}]}]}
+        ]}
+        """;
+
+    private static Goal MaybeProcess() => Make.Goal("MaybeProcess",
+        Make.Step("if %count% > 0"),
+        Make.Step("call ProcessItems", 1),
+        Make.Step("write out \"done\"", 1));
+
+    [Test]
+    public async Task Match_ChildOnAStepWithIndentedSteps_Refused()
+    {
+        await using var app = TestApp.Create("/test");
+        var result = await Match(MaybeProcess(), NanoChildOverIndentAnswer, app.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message)
+            .Contains("step 0's body is the indented steps below it (step 1, step 2); leave its child empty");
+    }
+
+    [Test]
+    public async Task Match_StepWithIndentedSteps_NoChild_Passes()
+    {
+        await using var app = TestApp.Create("/test");
+        var answer = NanoChildOverIndentAnswer.Replace(
+            """, "child": [{"text": "call ProcessItems", "action": [{"module": "goal", "name": "call", "property": [{"name": "Name", "type": {"name": "text"}, "value": "ProcessItems"}]}]}]}]},""",
+            """}]},""");
+        var result = await Match(MaybeProcess(), answer, app.System.Context);
+        await result.IsSuccess();
+    }
+
+    [Test]
+    public async Task Body_IsTheConsecutiveDeeperSteps()
+    {
+        var goal = Make.Goal("G",
+            Make.Step("if %a% > 0"),
+            Make.Step("if %b% > 0", 1),
+            Make.Step("call Both", 2),
+            Make.Step("write out \"a\"", 1),
+            Make.Step("write out \"after\""));
+
+        await Assert.That(goal.Step.Body(0).Items().Select(s => s.Index).ToList()).IsEquivalentTo(new[] { 1, 2, 3 });
+        await Assert.That(goal.Step.Body(1).Items().Select(s => s.Index).ToList()).IsEquivalentTo(new[] { 2 });
+        await Assert.That(goal.Step.Body(4).CountRaw).IsEqualTo(0);
+    }
+
     // The builder's own step — `build.match Goal=%goal%, Answer=%properties%, on error call FixProperties,
     // then retry 2 times` — as the action graph: the refusal runs FixProperties with the message in
     // %!error.Message%; the fixer replaces %properties%, and the retry matches.

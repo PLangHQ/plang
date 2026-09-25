@@ -195,8 +195,18 @@ def user_message(goal, menu):
     """The stage-3 user message, byte for byte what os/system/builder/llm/templates/propertiesUser.template
     renders — except menu order: the template walks the module catalog (hash order), this walks the menu."""
     out = '\n' + goal['name'] + '\n'
-    for s in goal['steps']:
-        out += f'\nstep {s["index"]}: {s["text"]}\n   menu:'
+    steps = goal['steps']
+    for n, s in enumerate(steps):
+        out += f'\nstep {s["index"]}: {s["text"]}'
+        # The steps indented under it (goal.step.list Body): consecutive followers written deeper.
+        body = []
+        for b in steps[n + 1:]:
+            if b.get('indent', 0) <= s.get('indent', 0): break
+            body.append(str(b['index']))
+        if body:
+            out += (f'\n   (its body is step{"s" if len(body) > 1 else ""} {", ".join(body)}, indented below'
+                    ' — the builder places it; give this step no child)')
+        out += '\n   menu:'
         for choice in menu.get(s['index'], []):
             module, action = choice.split('.', 1)
             props, _ = declared(module, action)
@@ -322,7 +332,17 @@ def match(goal, answer):
         if not isinstance(e, dict): problems.append(f'entry {i} is not an object'); continue
         if e.get('index') is None: problems.append(f'entry {i} has no index')
         elif e['index'] != i: problems.append(f'entry {i} is labelled index {e["index"]}')
-        if not (e.get('action') or e.get('actions')): problems.append(f'step {i} ("{steps[i]["text"]}") has no actions')
+        actions = e.get('action') or e.get('actions')
+        if not actions: problems.append(f'step {i} ("{steps[i]["text"]}") has no actions'); continue
+        # A step with steps indented under it gets its body from that layout (build.fold); a child
+        # the answer wrote for it is the body written twice.
+        body = []
+        for b in steps[i + 1:]:
+            if b.get('indent', 0) <= steps[i].get('indent', 0): break
+            body.append(b['index'])
+        if body and any(isinstance(a, dict) and a.get('child') for a in actions):
+            problems.append(f"step {i}'s body is the indented steps below it "
+                            f"({', '.join(f'step {n}' for n in body)}); leave its child empty")
     return problems
 
 # ---------------------------------------------------------------- run

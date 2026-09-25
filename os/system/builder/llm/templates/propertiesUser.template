@@ -10,6 +10,9 @@ property row comes from the action's own declaration — nothing here restates i
 {{ goal.Name }}
 {% for s in goal.Step %}
 step {{ s.Index }}: {{ s.Text }}
+{%- if s.Body.size > 0 %}
+   (its body is step{% if s.Body.size > 1 %}s{% endif %} {% for b in s.Body %}{{ b.Index }}{% unless forloop.last %}, {% endunless %}{% endfor %}, indented below — the builder places it; give this step no child)
+{%- endif %}
    menu:
 {%- for m in modules -%}
 {%- for a in m.Action -%}

@@ -525,6 +525,7 @@ public sealed partial class @this
             {
                 currentStep = new Step
                 {
+                    Goal = currentStep.Goal,
                     Index = currentStep.Index,
                     Text = currentStep.Text + "\n" + trimmed,
                     LineNumber = currentStep.LineNumber,
@@ -539,6 +540,7 @@ public sealed partial class @this
                 var escapedText = trimmed[1..]; // strip the leading backslash
                 currentStep = new Step
                 {
+                    Goal = currentStep.Goal,
                     Index = currentStep.Index,
                     Text = currentStep.Text + "\n" + escapedText,
                     LineNumber = currentStep.LineNumber,

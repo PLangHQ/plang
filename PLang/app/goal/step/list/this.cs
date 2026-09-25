@@ -38,6 +38,18 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         return result;
     }
 
+    /// <summary>The steps indented under the step at <paramref name="index"/> — the consecutive steps
+    /// after it written deeper than it: its body as the author laid it out (the parser records each
+    /// step's indent). Empty when nothing is indented under it.</summary>
+    public @this Body(int index)
+    {
+        var body = new @this();
+        if (index < 0 || index >= CountRaw) return body;
+        var indent = this[index].Indent;
+        for (int j = index + 1; j < CountRaw && this[j].Indent > indent; j++) body.Add(this[j]);
+        return body;
+    }
+
     /// <summary>Judges a stage-3 answer's entries against these steps, before any step takes its
     /// actions: exactly one entry per step, in order, entry i labelled <c>"index": i</c>, none without
     /// actions — so the .pr matches the .goal line for line. Null when it matches; otherwise one error
@@ -63,7 +75,21 @@ public sealed class @this : global::app.type.item.list.@this<Step>
 
             var actions = entry.Get("action", context) is { } held
                 ? await held.Value<global::app.type.item.list.@this>() : null;
-            if (actions == null || actions.CountRaw == 0) problems.Add($"step {i} (\"{this[i].Text}\") has no actions");
+            if (actions == null || actions.CountRaw == 0) { problems.Add($"step {i} (\"{this[i].Text}\") has no actions"); continue; }
+
+            // A step with steps indented under it has its body placed from that layout by the
+            // builder; a child the answer wrote for it is the body written twice.
+            var body = Body(i);
+            if (body.CountRaw == 0) continue;
+            foreach (var row in actions.Items(context))
+            {
+                if (await row.Value<global::app.type.item.dict.@this>() is not { } answered
+                    || answered.Get("child", context) is not { } child
+                    || await child.Value<global::app.type.item.list.@this>() is not { CountRaw: > 0 }) continue;
+                problems.Add($"step {i}'s body is the indented steps below it " +
+                    $"({string.Join(", ", body.Items().Select(b => $"step {b.Index}"))}); leave its child empty");
+                break;
+            }
         }
         if (problems.Count == 0) return null;
         return new global::app.error.Error(

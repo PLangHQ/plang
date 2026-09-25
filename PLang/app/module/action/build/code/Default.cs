@@ -171,14 +171,11 @@ public class Default : IBuilder
         while (i < flat.Count)
         {
             var step = flat[i];
-            int j = i + 1;
-            while (j < flat.Count && flat[j].Indent > step.Indent) j++;   // gather the deeper block
+            var block = flat.Body(i);   // the steps indented under it — the list answers
+            int j = i + 1 + block.CountRaw;
 
-            if (j > i + 1)
+            if (block.CountRaw > 0)
             {
-                var block = new global::app.goal.step.list.@this();
-                for (int k = i + 1; k < j; k++) block.Add(flat[k]);
-
                 global::app.goal.step.action.@this? gate = null;
                 for (int k = 0; k < step.Action.Count && gate == null; k++)
                     if (step.Action[k].IsCondition) gate = step.Action[k];
