@@ -142,8 +142,11 @@ def disagreements(i, rows, picks_i, text=''):
             if any(same(x, a) for x in m.get('recovery') or []):
                 refused.append(f'step {i}: the Recovery of {m["module"]}.{m["name"]} runs {a["module"]}.{a["name"]}, the action it wraps — '
                                'Recovery holds what the step runs on error')
+    # unsure = built from a possible pick; a pick the known-value rule placed (write to → variable.set)
+    # is not a guess, so it carries no warning
+    known = {'variable.set'} if WRITE_TO.search(text) else set()
     unsure = [f'step {i} uses {a}, which the decider was not sure of ({shown[a]:.2f})'
-              for a in dict.fromkeys(used) if a in shown and shown[a] < CERTAIN]
+              for a in dict.fromkeys(used) if a in shown and shown[a] < CERTAIN and a not in known]
     return refused, unsure
 
 def fold(goal, parsed):
