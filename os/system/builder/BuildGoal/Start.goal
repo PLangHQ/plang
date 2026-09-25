@@ -30,6 +30,9 @@ Compile
 - call Decide
 - foreach %goal.Step%, call Menu step=%item%
 - call Properties
+/ The answer must line up with the goal before any step takes its actions: one entry per step, in
+/ order, each labelled with its own index — so the .pr reads like the .goal, line for line.
+- build.match Goal=%goal%, Answer=%properties%, on error call FixProperties, then retry 2 times
 - foreach %goal.Step%, call Settle step=%item%
 
 
@@ -59,9 +62,10 @@ Apply
 
 
 FixProperties
-/ The graft or the judge rejected this step's actions. Continue the properties conversation with
-/ its complaint — it is the correction prompt; the retry runs Apply again.
-- call /system/builder/EmitBuildEvent kind="step-validation-error", step=%step%, errorMessage=%!error.Message%
+/ The answer was refused — it did not match the goal's steps, or a step's graft or judge rejected
+/ its actions. Continue the properties conversation with the complaint (it names the step) — it is
+/ the correction prompt; the retry runs the refused step again.
+- call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
 - set %fixMessages% = [{"Role":"user", "Content":"Your answer was rejected by the validator: %!error.Message%\n\nReturn the corrected answer in the same shape."}]
 - llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %properties%
 

@@ -285,6 +285,22 @@ public class Default : IBuilder
         return context.Ok(true);
     }
 
+    // --- Match ---
+
+    public async Task<data.@this> Match(match action)
+    {
+        var context = action.Context;
+        var goal = (await action.Goal.Value())!;
+        var answer = (await action.Answer.Value())!;
+        var entries = answer.Get("step", context) is { } held
+            ? await held.Value<global::app.type.item.list.@this>() : null;
+
+        // The goal's steps judge the answer; the builder only reacts.
+        if (await goal.Step.Match(entries ?? new global::app.type.item.list.@this(), context) is { } refusal)
+            return context.Error(refusal);
+        return context.Ok(true);
+    }
+
     // --- Merge ---
 
     public async Task<data.@this> Merge(merge action)

@@ -7,7 +7,7 @@
 {% when "goalError" %}  Build error in {{ goal.Name }}: {{ errorMessage }}
 {% when "planner-validation-failed" %}  Planner validation failed: {{ errorMessage }} — retrying...
 {% when "step-missing-actions" %}  Step {{ step.Index }} missing-actions — expanding set
-{% when "step-validation-error" %}  Step {{ step.Index }} validation error — retrying: {{ errorMessage }}
+{% when "properties-rejected" %}  Properties rejected — retrying: {{ errorMessage }}
 {% when "step-build-error" %}  Step {{ step.Index }} build error: {{ errorMessage }}
 {% when "step-cached" %}  [≡] {{ step.Text }}
 {% when "step-fresh" %}  [✓] {{ step.Text }}

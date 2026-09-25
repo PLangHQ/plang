@@ -16,6 +16,7 @@ public interface IBuilder : ICode
     Task<data.@this> GoalsSave(goalsSave action);
     Task<data.@this> Fold(fold action);   // async in Default — materializes Goal via .Value()
     Task<data.@this> Validate(validate action);
+    Task<data.@this> Match(match action);
     Task<data.@this> Merge(merge action);
     Task<data.@this> Load(load action);
     Task<data.@this> AppSave(appSave action);

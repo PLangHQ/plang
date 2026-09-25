@@ -38,6 +38,40 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         return result;
     }
 
+    /// <summary>Judges a stage-3 answer's entries against these steps, before any step takes its
+    /// actions: exactly one entry per step, in order, entry i labelled <c>"index": i</c>, none without
+    /// actions — so the .pr matches the .goal line for line. Null when it matches; otherwise one error
+    /// naming every mismatch, so the correction prompt sees all of them at once.</summary>
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Match(
+        global::app.type.item.list.@this entries, actor.context.@this context)
+    {
+        var rows = entries.Items(context).ToList();
+        var steps = CountRaw;
+        var problems = new List<string>();
+        for (int i = 0; i < System.Math.Max(steps, rows.Count); i++)
+        {
+            if (i >= rows.Count) { problems.Add($"step {i} (\"{this[i].Text}\") has no entry"); continue; }
+            if (i >= steps) { problems.Add($"entry {i} is extra: the goal has {steps} steps"); continue; }
+
+            var entry = await rows[i].Value<global::app.type.item.dict.@this>();
+            if (entry == null) { problems.Add($"entry {i} is not an object"); continue; }
+
+            var index = entry.Get("index", context) is { } label
+                ? await label.Value<global::app.type.item.number.@this>() : null;
+            if (index == null) problems.Add($"entry {i} has no index");
+            else if (index.ToInt64() != i) problems.Add($"entry {i} is labelled index {index.ToInt64()}");
+
+            var actions = entry.Get("action", context) is { } held
+                ? await held.Value<global::app.type.item.list.@this>() : null;
+            if (actions == null || actions.CountRaw == 0) problems.Add($"step {i} (\"{this[i].Text}\") has no actions");
+        }
+        if (problems.Count == 0) return null;
+        return new global::app.error.Error(
+            $"The answer does not match the goal's {steps} steps: {string.Join("; ", problems)}. " +
+            "Answer exactly one entry per step, in order — entry i with \"index\": i — each with its actions.",
+            "AnswerMismatch", 400);
+    }
+
     /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
     /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
