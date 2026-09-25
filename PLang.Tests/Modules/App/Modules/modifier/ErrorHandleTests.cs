@@ -400,6 +400,56 @@ public class ErrorHandleTests
         await Assert.That(callCount).IsEqualTo(2);   // the failing run, then the retry after the fix
     }
 
+    // `on error key "FileNotFound" call A, on error call B` — the clauses of one step are one try/catch,
+    // asked in the order written: the first whose filter matches handles, the other never sees it.
+    private PrAction ThrowCaughtByAThenB(string key)
+    {
+        RegisterGoal("A", "variable", "set", ("name", "%ranA%"), ("value", "yes"));
+        RegisterGoal("B", "variable", "set", ("name", "%ranB%"), ("value", "yes"));
+        return Throw("boom", key: key, modifiers: new List<global::app.goal.step.action.modifier.@this>
+        {
+            ErrorHandlerCalling("A", ("key", "FileNotFound")),
+            ErrorHandlerCalling("B")
+        });
+    }
+
+    [Test]
+    public async Task OnErrorClauses_KeyedError_GoesToTheFirstMatchOnly()
+    {
+        var result = await ThrowCaughtByAThenB("FileNotFound").Run(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await Ctx.Variable.Get("ranA")).IsInitialized).IsTrue();
+        await Assert.That((await Ctx.Variable.Get("ranB")).IsInitialized).IsFalse();
+    }
+
+    [Test]
+    public async Task OnErrorClauses_OtherError_SkipsTheKeyedClause_GoesToTheNext()
+    {
+        var result = await ThrowCaughtByAThenB("SomethingElse").Run(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await Ctx.Variable.Get("ranA")).IsInitialized).IsFalse();
+        await Assert.That((await Ctx.Variable.Get("ranB")).IsInitialized).IsTrue();
+    }
+
+    [Test]
+    public async Task OnErrorClauses_ThrowFromTheMatchingHandler_EscapesTheOthers()
+    {
+        RegisterGoal("A", "error", "throw", ("message", "thrown by A"), ("key", "FromA"));
+        RegisterGoal("B", "variable", "set", ("name", "%ranB%"), ("value", "yes"));
+        var action = Throw("boom", key: "FileNotFound", modifiers: new List<global::app.goal.step.action.modifier.@this>
+        {
+            ErrorHandlerCalling("A", ("key", "FileNotFound")),
+            ErrorHandlerCalling("B")
+        });
+
+        var result = await action.Run(Ctx);
+
+        await result.IsFailure();
+        await Assert.That((await Ctx.Variable.Get("ranB")).IsInitialized).IsFalse();
+    }
+
     [Test]
     public async Task Handle_GoalFirst_GoalFails_ErrorChains()
     {

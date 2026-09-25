@@ -16,7 +16,7 @@ namespace app.module.action.error;
 // any other error.
 [Action("handle", Cacheable = false)]
 [Modifier(Order = 1)]
-public partial class Handle : IContext, IModifier, IAction
+public partial class Handle : IContext, ICatch, IAction
 {
     public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
@@ -30,74 +30,87 @@ public partial class Handle : IContext, IModifier, IAction
     public Task<global::app.data.@this> Run() => Task.FromResult(Context.Ok());
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
-    {
-        return async () =>
+        => async () =>
         {
             var result = await next();
-            if (result.Success) return result;
-            if (!await MatchesError(result.Error)) return result;
+            return result.Success ? result : await Catch(result, next, context) ?? result;
+        };
 
-            // The failing Call is LIVE and it is the current one: an action owns one frame for
-            // its whole run, and this modifier is wrapped inside that frame, so the frame that
-            // recorded the error is still the frame we are standing in. Marking it Handled is
-            // what takes the error out of play for %!error%.
-            var erroredCall = context.CallStack.Current;
+    /// <summary>This clause's handling of a failed result: null when its filters (StatusCode / Key /
+    /// Message) don't match, so the next clause gets its turn; otherwise the outcome — ordered by
+    /// Order — of its retry, its recovery, its ignore, or the error as it stands.</summary>
+    public async Task<global::app.data.@this?> Catch(
+        global::app.data.@this result, Func<Task<global::app.data.@this>> next, actor.context.@this context)
+    {
+        if (!await MatchesError(result.Error)) return null;
 
-            var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
-            bool hasRecovery = Action.Recovery.Count > 0;
+        // The failing Call is LIVE and it is the current one: an action owns one frame for
+        // its whole run, and this modifier is wrapped inside that frame, so the frame that
+        // recorded the error is still the frame we are standing in. Marking it Handled is
+        // what takes the error out of play for %!error%.
+        var erroredCall = context.CallStack.Current;
 
-            if (order == ErrorOrder.GoalFirst)
+        var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
+        bool hasRecovery = Action.Recovery.Count > 0;
+
+        if (order == ErrorOrder.GoalFirst)
+        {
+            // Fix, then retry: the handler goal runs first, then the step retries (RetryCount
+            // times) and gets the retry's result. With no retry configured the handler's result
+            // stands. A handler that fails still lets the retry run — the failure may not have
+            // needed its fix (a transient one) — and its error joins the list.
+            global::app.data.@this? recoveryResult = null;
+            if (hasRecovery)
             {
-                // Fix, then retry: the handler goal runs first, then the step retries (RetryCount
-                // times) and gets the retry's result. With no retry configured the handler's result
-                // stands. A handler that fails still lets the retry run — the failure may not have
-                // needed its fix (a transient one) — and its error joins the list.
-                global::app.data.@this? recoveryResult = null;
-                if (hasRecovery)
-                {
-                    recoveryResult = await Recover(context);
-                    if (!recoveryResult.Success) result.Error!.list.Add(recoveryResult.Error!);
-                }
-                var retryResult = await Retry(next, context);
-                if (retryResult != null)
-                {
-                    if (retryResult.Success && erroredCall != null) erroredCall.Handled = true;
-                    return retryResult;
-                }
-                if (recoveryResult is { Success: true })
+                recoveryResult = await Recover(context);
+                if (!recoveryResult.Success) Chain(result.Error!, recoveryResult.Error!);
+            }
+            var retryResult = await Retry(next, context);
+            if (retryResult != null)
+            {
+                if (retryResult.Success && erroredCall != null) erroredCall.Handled = true;
+                return retryResult;
+            }
+            if (recoveryResult is { Success: true })
+            {
+                if (erroredCall != null) erroredCall.Handled = true;
+                return recoveryResult;
+            }
+        }
+        else
+        {
+            var retryResult = await Retry(next, context);
+            if (retryResult?.Success == true) return retryResult;
+            if (hasRecovery)
+            {
+                var recoveryResult = await Recover(context);
+                if (recoveryResult.Success)
                 {
                     if (erroredCall != null) erroredCall.Handled = true;
                     return recoveryResult;
                 }
+                Chain(result.Error!, recoveryResult.Error!);
             }
-            else
-            {
-                var retryResult = await Retry(next, context);
-                if (retryResult?.Success == true) return retryResult;
-                if (hasRecovery)
-                {
-                    var recoveryResult = await Recover(context);
-                    if (recoveryResult.Success)
-                    {
-                        if (erroredCall != null) erroredCall.Handled = true;
-                        return recoveryResult;
-                    }
-                    result.Error!.list.Add(recoveryResult.Error!);
-                }
-            }
+        }
 
-            // IgnoreError is the final fallback — after retry and recovery are exhausted. The error
-            // stays in the audit; the frame is marked handled, and the ignore is visible under --debug.
-            if (await IgnoreError.ToBooleanAsync())
-            {
-                if (erroredCall != null) erroredCall.Handled = true;
-                await (context.App.Debug?.Write(
-                    $"error.handle: ignored error {result.Error?.Key}: {result.Error?.Message}") ?? Task.CompletedTask);
-                return context.Ok();
-            }
+        // IgnoreError is the final fallback — after retry and recovery are exhausted. The error
+        // stays in the audit; the frame is marked handled, and the ignore is visible under --debug.
+        if (await IgnoreError.ToBooleanAsync())
+        {
+            if (erroredCall != null) erroredCall.Handled = true;
+            await (context.App.Debug?.Write(
+                $"error.handle: ignored error {result.Error?.Key}: {result.Error?.Message}") ?? Task.CompletedTask);
+            return context.Ok();
+        }
 
-            return result;
-        };
+        return result;
+    }
+
+    /// <summary>The recovery's failure joins the original error's list — unless the recovery re-raised
+    /// that same error (<c>throw %!error%</c>), which is the error itself, not a cause of it.</summary>
+    private void Chain(global::app.error.Error original, global::app.error.Error recovery)
+    {
+        if (!ReferenceEquals(original, recovery)) original.list.Add(recovery);
     }
 
     /// <summary>

@@ -95,8 +95,14 @@ public sealed partial class @this
             }
         }
 
+        // Outermost wrapper (lowest Position) first. Stable: modifiers of equal Position keep the order
+        // written — the `on error` clauses are asked in that order.
         foreach (var a in node.Items())
-            a.Modifier.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
+        {
+            var ordered = a.Modifier.OrderBy(m => m.Position).ToList();
+            a.Modifier.Clear();
+            a.Modifier.AddRange(ordered);
+        }
 
         _action = node;
     }

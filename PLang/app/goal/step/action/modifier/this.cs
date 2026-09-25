@@ -30,6 +30,33 @@ public class @this : global::app.goal.step.action.@this
         System.Func<System.Threading.Tasks.Task<global::app.data.@this>> inner,
         global::app.actor.context.@this context)
     {
+        var (mod, error) = await Handler(context);
+        if (error != null) return (null, error);
+
+        // The modifier's own verdict — a timeout, a cache failure — is produced inside the delegate
+        // the handler returned, after the inner action's own result was already recorded. Nothing
+        // else sees it, so the node records whatever failure leaves its layer. Recording on the
+        // ACTION's frame, not one of its own: a child frame pops before the layers outside it read
+        // the result, and the error walk never descends into closed children, so a verdict on a
+        // modifier's own frame would be invisible to an enclosing `on error`.
+        var wrapped = mod!.Wrap(inner, context);
+        return (async () =>
+        {
+            var result = await wrapped();
+            if (!result.Success) Recorded(result.Error!, context);
+            return result;
+        }, null);
+    }
+
+    /// <summary>This modifier is an on-error clause: its handler catches (<see cref="global::app.module.ICatch"/>).
+    /// Read off the module's registered handler type — no instance is made to ask.</summary>
+    public bool Catches => typeof(global::app.module.ICatch).IsAssignableFrom(Module.Handler(Name));
+
+    /// <summary>The handler this modifier runs through, its parameter slots wired — or a recorded,
+    /// keyed error when the named action isn't a modifier at all.</summary>
+    internal async System.Threading.Tasks.Task<(global::app.module.IModifier? Handler, global::app.error.Error? Error)> Handler(
+        global::app.actor.context.@this context)
+    {
         var (instance, error) = Instance(context);
         if (error != null) return (null, Recorded(error, context));
         // Resolve wires the handler's parameter slots; the values lift later, on the typed ask.
@@ -52,26 +79,13 @@ public class @this : global::app.goal.step.action.@this
                 $"Move it out as a peer action in the step's top-level actions array.{loc}",
                 "ModifierError", 400), context));
         }
-
-        // The modifier's own verdict — a timeout, a cache failure — is produced inside the delegate
-        // the handler returned, after the inner action's own result was already recorded. Nothing
-        // else sees it, so the node records whatever failure leaves its layer. Recording on the
-        // ACTION's frame, not one of its own: a child frame pops before the layers outside it read
-        // the result, and the error walk never descends into closed children, so a verdict on a
-        // modifier's own frame would be invisible to an enclosing `on error`.
-        var wrapped = mod.Wrap(inner, context);
-        return (async () =>
-        {
-            var result = await wrapped();
-            if (!result.Success) Recorded(result.Error!, context);
-            return result;
-        }, null);
+        return (mod, null);
     }
 
     /// <summary>The error, recorded on the frame this modifier is running inside — the action's own,
     /// because the fold runs after the action pushed it. The frame keeps each error once, so a layer
     /// passing one through adds nothing and a retry's fresh error is kept.</summary>
-    private global::app.error.Error Recorded(
+    internal global::app.error.Error Recorded(
         global::app.error.Error error, global::app.actor.context.@this context)
     {
         var frame = context.CallStack.Current

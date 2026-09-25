@@ -199,9 +199,18 @@ public partial class @this
             Func<Task<global::app.data.@this>> execute = () => DispatchAsync(context, call);
             for (int i = Modifier.Count - 1; i >= 0; i--)
             {
-                var (wrapped, wrapError) = await Modifier[i].Wrap(execute, context);
+                // `on error` clauses written one after another are ONE try/catch: they wrap once,
+                // together, and are asked in the order written.
+                int first = i;
+                if (Modifier[i].Catches)
+                    while (first > 0 && Modifier[first - 1].Catches) first--;
+
+                var (wrapped, wrapError) = Modifier[i].Catches
+                    ? await Catch(Modifier.GetRange(first, i - first + 1), execute, context)
+                    : await Modifier[i].Wrap(execute, context);
                 if (wrapError != null) return context.Error(wrapError);
                 execute = wrapped!;
+                i = first;
             }
             data = await execute();
             foreach (var modifier in Modifier)
@@ -220,6 +229,34 @@ public partial class @this
         if (!afterResult.Success) return afterResult;
 
         return data;
+    }
+
+    /// <summary>The <c>on error</c> clauses written one after another on this action, around
+    /// <paramref name="inner"/> as ONE try/catch: a failure is offered to each clause in the order written;
+    /// the first whose filters match handles it and the others never see it — what it returns (a retry's
+    /// result, its recovery's, a throw from that recovery) leaves the step.</summary>
+    private async Task<(Func<Task<global::app.data.@this>>? Wrapped, global::app.error.Error? Error)> Catch(
+        List<modifier.@this> clauses, Func<Task<global::app.data.@this>> inner, actor.context.@this context)
+    {
+        var handlers = new List<(modifier.@this Clause, global::app.module.ICatch Handler)>();
+        foreach (var clause in clauses)
+        {
+            var (handler, error) = await clause.Handler(context);
+            if (error != null) return (null, error);
+            handlers.Add((clause, (global::app.module.ICatch)handler!));
+        }
+        return (async () =>
+        {
+            var result = await inner();
+            if (result.Success) return result;
+            foreach (var (clause, handler) in handlers)
+            {
+                if (await handler.Catch(result, inner, context) is not { } handled) continue;
+                if (!handled.Success) clause.Recorded(handled.Error!, context);
+                return handled;
+            }
+            return result;
+        }, null);
     }
 
     /// <summary>
