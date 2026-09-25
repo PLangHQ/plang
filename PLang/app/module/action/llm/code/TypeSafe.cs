@@ -71,8 +71,11 @@ public sealed class TypeSafe : IDecider
     private static async Task<string?> Config(
         global::app.module.action.setting.IStore settings, string key, string? envVar, string? fallback)
     {
+        // A missing key returns the null citizen, not C# null — test IsNull, or the endpoint reads
+        // as the literal string "null".
         var stored = await settings.Get<global::app.type.item.@this>("DeciderConfig", key);
-        if (stored?.ToString() is { Length: > 0 } s) return s;
+        if (stored.Success && stored.Peek() is { IsNull: false }
+            && (await stored.Value())?.ToString() is { Length: > 0 } s) return s;
         if (envVar != null && System.Environment.GetEnvironmentVariable(envVar) is { Length: > 0 } e) return e;
         return fallback;
     }

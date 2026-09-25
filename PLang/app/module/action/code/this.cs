@@ -234,6 +234,7 @@ public sealed partial class @this : IAsyncDisposable
             // [Code]-partial provider; FilePath holds the verb impls directly.
             "template" or "itemplateprovider" => typeof(ITemplate),
             "llm" or "illmprovider" => typeof(global::app.module.action.llm.code.ILlm),
+            "decider" or "ideciderprovider" => typeof(global::app.module.action.llm.code.IDecider),
             "builder" or "ibuilderprovider" => typeof(global::app.module.action.build.code.IBuilder),
             null or "" => typeof(ISigning),
             _ => null
@@ -261,6 +262,7 @@ public sealed partial class @this : IAsyncDisposable
         // global::app.module.action.file.code.IFile registration removed in Stage 3.
         RegisterBuiltIn<ITemplate>(new global::app.module.action.ui.code.Fluid());
         RegisterBuiltIn<global::app.module.action.llm.code.ILlm>(new global::app.module.action.llm.code.OpenAi());
+        RegisterBuiltIn<global::app.module.action.llm.code.IDecider>(new global::app.module.action.llm.code.TypeSafe());
         RegisterBuiltIn<global::app.module.action.build.code.IBuilder>(new global::app.module.action.build.code.Default());
         RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
     }
