@@ -309,6 +309,22 @@ def pr_goal(goal, answer, rel):
                                  for a in by_index.get(s['index'], [])]}
                      for s in goal['steps']]}
 
+def match(goal, answer):
+    """What keeps the answer from lining up with the goal's steps — the same rule as the plang
+    builder's build.match (goal.step.list Match): exactly one entry per step, in order, entry i
+    labelled "index": i, none without actions. Empty when it matches."""
+    entries = answer.get('step', answer.get('steps', [])) if isinstance(answer, dict) else []
+    steps, problems = goal['steps'], []
+    for i in range(max(len(steps), len(entries))):
+        if i >= len(entries): problems.append(f'step {i} ("{steps[i]["text"]}") has no entry'); continue
+        if i >= len(steps): problems.append(f'entry {i} is extra: the goal has {len(steps)} steps'); continue
+        e = entries[i]
+        if not isinstance(e, dict): problems.append(f'entry {i} is not an object'); continue
+        if e.get('index') is None: problems.append(f'entry {i} has no index')
+        elif e['index'] != i: problems.append(f'entry {i} is labelled index {e["index"]}')
+        if not (e.get('action') or e.get('actions')): problems.append(f'step {i} ("{steps[i]["text"]}") has no actions')
+    return problems
+
 # ---------------------------------------------------------------- run
 def build_goal(g, rel, cat):
     """One goal: decider menu, then stage 3. Goals are independent, so these run in parallel."""
@@ -321,8 +337,11 @@ def build_goal(g, rel, cat):
     t1 = time.time()
     answer = properties(g, menu, folder)
     t2 = time.time()
-    return (pr_goal(g, answer, rel), {'menu': menu, 'answer': answer},
-            f'{g["name"]:<24} {len(g["steps"]):>3} steps  {t2 - t0:5.1f}s   decider {t1 - t0:4.1f}s  llm {t2 - t1:4.1f}s')
+    timing = f'{g["name"]:<24} {len(g["steps"]):>3} steps  {t2 - t0:5.1f}s   decider {t1 - t0:4.1f}s  llm {t2 - t1:4.1f}s'
+    # A mismatched answer would hand one step another step's actions: reported, never written.
+    if problems := match(g, answer):
+        return None, {'menu': menu, 'answer': answer}, f'{timing}\n    ANSWER DOES NOT MATCH THE GOAL: ' + '; '.join(problems)
+    return pr_goal(g, answer, rel), {'menu': menu, 'answer': answer}, timing
 
 def write(rel, results):
     """A file's goals, in file order, as one .pr: the first goal is the root, the rest its children."""
@@ -352,6 +371,9 @@ if __name__ == '__main__':
             try:
                 results = [fu.result() for fu in futures]
                 for r in results: print('  ' + r[2])
+                if any(r[0] is None for r in results):
+                    print('  -> NOT WRITTEN: an answer does not match its goal (see above)')
+                    continue
                 print('  ->', os.path.relpath(write(rel, results), ROOT))
             except Exception as e: print('  FAILED:', type(e).__name__, e)
     print(f'\nwall clock: {time.time() - t0:.1f}s')
