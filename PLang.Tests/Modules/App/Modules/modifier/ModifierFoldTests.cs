@@ -78,7 +78,7 @@ public class ModifierFoldTests
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "wrapped", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new global::app.goal.step.action.modifier.list.@this
             {
                 new global::app.goal.step.action.modifier.@this
                 {
@@ -107,7 +107,7 @@ public class ModifierFoldTests
             {
                 new("name", "%z%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "nested", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new global::app.goal.step.action.modifier.list.@this
             {
                 new global::app.goal.step.action.modifier.@this
                 {
@@ -140,7 +140,7 @@ public class ModifierFoldTests
             {
                 new("name", "%q%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "full", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new global::app.goal.step.action.modifier.list.@this
             {
                 new global::app.goal.step.action.modifier.@this
                 {
@@ -182,7 +182,7 @@ public class ModifierFoldTests
             {
                 new("name", "%nope%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "x", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new global::app.goal.step.action.modifier.list.@this
             {
                 // variable.set as a modifier is invalid
                 new global::app.goal.step.action.modifier.@this

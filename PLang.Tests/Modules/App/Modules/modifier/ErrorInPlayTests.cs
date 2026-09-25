@@ -22,13 +22,13 @@ public class ErrorInPlayTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     private static PrAction Throw(string message,
-        List<global::app.goal.step.action.modifier.@this>? modifiers = null) =>
+        global::app.goal.step.action.modifier.list.@this? modifiers = null) =>
         new()
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                 { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) }),
-            Modifier = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
+            Modifier = modifiers ?? new global::app.goal.step.action.modifier.list.@this()
         };
 
     private static global::app.goal.step.action.modifier.@this ErrorHandler(
@@ -178,7 +178,7 @@ public class ErrorInPlayTests
         RegisterGoal("Recover", CaptureError("seen"));
 
         var action = Throw("the original failure",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandlerCalling("Recover", ("order", "GoalFirst"))
             });

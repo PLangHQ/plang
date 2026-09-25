@@ -38,7 +38,7 @@ public class TimeoutAfterTests
             {
                 new("name", "%fast%", new global::app.type.@this("variable"), context: Ctx), new("value", "done", context: Ctx)
             }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
+            Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(5000) }
         };
 
         var result = await action.Run(Ctx);
@@ -55,7 +55,7 @@ public class TimeoutAfterTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(50) }
+            Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(50) }
         };
 
         var result = await action.Run(Ctx);
@@ -74,7 +74,7 @@ public class TimeoutAfterTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(30) }
+            Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(30) }
         };
 
         var start = DateTimeOffset.UtcNow;
@@ -99,7 +99,7 @@ public class TimeoutAfterTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
+            Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(5000) }
         };
 
         await Assert.That(async () => await action.Run(Ctx))
@@ -116,7 +116,7 @@ public class TimeoutAfterTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1000, context: Ctx) }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(0) }
+            Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(0) }
         };
 
         var result = await action.Run(Ctx);
@@ -130,7 +130,7 @@ public class TimeoutAfterTests
     {
         // Triggers the catch(OperationCanceledException) fallback path (after.cs:45-51).
         // Inner func throws OCE directly instead of returning a failed Data result.
-        var modifiers = new List<global::app.goal.step.action.modifier.@this>
+        var modifiers = new global::app.goal.step.action.modifier.list.@this
         {
             new global::app.goal.step.action.modifier.@this
             {
@@ -165,7 +165,7 @@ public class TimeoutAfterTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new global::app.goal.step.action.modifier.list.@this
             {
                 new global::app.goal.step.action.modifier.@this
                 {

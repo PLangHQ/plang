@@ -1,16 +1,16 @@
 namespace app.module;
 
 /// <summary>
-/// Marks a handler class as an action modifier. The builder groups modifier actions
-/// onto their preceding executable action and sorts by Order before writing the .pr file.
-/// Lower Order = outermost wrapper in the runtime fold.
+/// Marks a handler class as an action modifier — it wraps the action it is written around.
+/// The runtime composes an action's modifiers in their written order (outermost first);
+/// Order is the nesting the builder teaches and gives a flat answer.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class ModifierAttribute : Attribute
 {
     /// <summary>
-    /// Nesting order within a fold. Lower values wrap outer; higher values wrap closer to the action.
-    /// Current assignments: timeout=1, cache=2, error=3.
+    /// The nesting a flat answer is given. Lower values wrap outer; higher values wrap closer to the action.
+    /// Current assignments: error.handle=1, cache.wrap=2, timeout.after=3.
     /// </summary>
     public int Order { get; init; }
 }

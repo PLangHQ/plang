@@ -19,7 +19,7 @@ public class ErrorHandleTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     private static PrAction Throw(string message, int? statusCode = null, string? key = null,
-        List<global::app.goal.step.action.modifier.@this>? modifiers = null)
+        global::app.goal.step.action.modifier.list.@this? modifiers = null)
     {
         var parameters = new List<global::app.data.@this> { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) };
         if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value, context: global::PLang.Tests.TestApp.SharedContext));
@@ -28,7 +28,7 @@ public class ErrorHandleTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters),
-            Modifier = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
+            Modifier = modifiers ?? new global::app.goal.step.action.modifier.list.@this()
         };
     }
 
@@ -73,7 +73,7 @@ public class ErrorHandleTests
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) }
+            Modifier = new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) }
         };
 
         var result = await action.Run(Ctx);
@@ -86,7 +86,7 @@ public class ErrorHandleTests
     public async Task Handle_IgnoreError_SwallowsErrorReturnsOk()
     {
         var action = Throw("boom",
-            modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
+            modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
         var result = await action.Run(Ctx);
 
@@ -112,7 +112,7 @@ public class ErrorHandleTests
         var capture = CaptureDebug();
         _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
         var action = Throw("boom", key: "Oops",
-            modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
+            modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
         var result = await action.Run(Ctx);
 
@@ -128,7 +128,7 @@ public class ErrorHandleTests
     {
         var capture = CaptureDebug();
         var action = Throw("boom", key: "Oops",
-            modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
+            modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
         var result = await action.Run(Ctx);
 
@@ -141,7 +141,7 @@ public class ErrorHandleTests
     public async Task Handle_FilterByStatusCode_MatchHandles()
     {
         var action = Throw("not found", statusCode: 404,
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandler(("statusCode", 404), ("ignoreError", true))
             });
@@ -155,7 +155,7 @@ public class ErrorHandleTests
     public async Task Handle_FilterByStatusCode_NoMatchPropagates()
     {
         var action = Throw("server error", statusCode: 500,
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandler(("statusCode", 404), ("ignoreError", true))
             });
@@ -170,7 +170,7 @@ public class ErrorHandleTests
     public async Task Handle_FilterByKey_CaseInsensitiveMatch()
     {
         var action = Throw("broken", key: "NotFound",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandler(("key", "notfound"), ("ignoreError", true))
             });
@@ -184,7 +184,7 @@ public class ErrorHandleTests
     public async Task Handle_FilterByMessage_SubstringMatch()
     {
         var action = Throw("connection refused on port 443",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandler(("message", "connection"), ("ignoreError", true))
             });
@@ -198,7 +198,7 @@ public class ErrorHandleTests
     public async Task Handle_FilterByKey_Mismatch_PropagatesError()
     {
         var action = Throw("broken", key: "Timeout",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandler(("key", "NotFound"), ("ignoreError", true))
             });
@@ -213,7 +213,7 @@ public class ErrorHandleTests
     public async Task Handle_FilterByMessage_Mismatch_PropagatesError()
     {
         var action = Throw("disk full",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandler(("message", "connection"), ("ignoreError", true))
             });
@@ -228,7 +228,7 @@ public class ErrorHandleTests
     public async Task Handle_NoFilter_MatchesAllErrors()
     {
         var action = Throw("anything", statusCode: 418,
-            modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
+            modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
         var result = await action.Run(Ctx);
 
@@ -248,7 +248,7 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("persistent failure", "TransientError", 503)));
         };
 
-        var modifiers = new List<global::app.goal.step.action.modifier.@this>
+        var modifiers = new global::app.goal.step.action.modifier.list.@this
         {
             ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
         };
@@ -274,7 +274,7 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("failure", "TransientError", 503)));
         };
 
-        var modifiers = new List<global::app.goal.step.action.modifier.@this>
+        var modifiers = new global::app.goal.step.action.modifier.list.@this
         {
             ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
         };
@@ -299,7 +299,7 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("always fails", "TransientError", 503)));
         };
 
-        var modifiers = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("retryCount", 3)) };
+        var modifiers = new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("retryCount", 3)) };
 
         await using var frame = TestFrame.Live(Ctx);
         var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
@@ -324,7 +324,7 @@ public class ErrorHandleTests
             return Task.FromResult(global::app.data.@this.Ok());
         };
 
-        var modifiers = new List<global::app.goal.step.action.modifier.@this>
+        var modifiers = new global::app.goal.step.action.modifier.list.@this
         {
             ErrorHandler(("retryCount", 3))
         };
@@ -365,7 +365,7 @@ public class ErrorHandleTests
         RegisterGoal("SuccessGoal", "variable", "set", ("name", "%marker%"), ("value", "handled"));
 
         var action = Throw("boom",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandlerCalling("SuccessGoal", ("order", "GoalFirst"))
             });
@@ -406,7 +406,7 @@ public class ErrorHandleTests
     {
         RegisterGoal("A", "variable", "set", ("name", "%ranA%"), ("value", "yes"));
         RegisterGoal("B", "variable", "set", ("name", "%ranB%"), ("value", "yes"));
-        return Throw("boom", key: key, modifiers: new List<global::app.goal.step.action.modifier.@this>
+        return Throw("boom", key: key, modifiers: new global::app.goal.step.action.modifier.list.@this
         {
             ErrorHandlerCalling("A", ("key", "FileNotFound")),
             ErrorHandlerCalling("B")
@@ -438,7 +438,7 @@ public class ErrorHandleTests
     {
         RegisterGoal("A", "error", "throw", ("message", "thrown by A"), ("key", "FromA"));
         RegisterGoal("B", "variable", "set", ("name", "%ranB%"), ("value", "yes"));
-        var action = Throw("boom", key: "FileNotFound", modifiers: new List<global::app.goal.step.action.modifier.@this>
+        var action = Throw("boom", key: "FileNotFound", modifiers: new global::app.goal.step.action.modifier.list.@this
         {
             ErrorHandlerCalling("A", ("key", "FileNotFound")),
             ErrorHandlerCalling("B")
@@ -456,7 +456,7 @@ public class ErrorHandleTests
         RegisterGoal("FailGoal", "error", "throw", ("message", "goal failed"));
 
         var action = Throw("original error",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandlerCalling("FailGoal", ("order", "GoalFirst"))
             });
@@ -474,7 +474,7 @@ public class ErrorHandleTests
         RegisterGoal("SuccessGoal2", "variable", "set", ("name", "%marker2%"), ("value", "ok"));
 
         var action = Throw("persistent",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandlerCalling("SuccessGoal2", ("order", "RetryFirst"))
             });
@@ -490,7 +490,7 @@ public class ErrorHandleTests
         RegisterGoal("FailGoal2", "error", "throw", ("message", "goal also failed"));
 
         var action = Throw("persistent",
-            modifiers: new List<global::app.goal.step.action.modifier.@this>
+            modifiers: new global::app.goal.step.action.modifier.list.@this
             {
                 ErrorHandlerCalling("FailGoal2", ("order", "RetryFirst"))
             });

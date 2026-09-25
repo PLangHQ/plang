@@ -95,13 +95,14 @@ public sealed partial class @this
             }
         }
 
-        // Outermost wrapper (lowest Position) first. Stable: modifiers of equal Position keep the order
-        // written — the `on error` clauses are asked in that order.
+        // A flat answer carries no nesting, so it is ordered here: outermost wrapper (lowest Position)
+        // first. Stable: modifiers of equal Position keep the order written — the `on error` clauses are
+        // asked in that order. (A formal answer writes its nesting, and this ordering goes with Nest.)
         foreach (var a in node.Items())
         {
             var ordered = a.Modifier.OrderBy(m => m.Position).ToList();
             a.Modifier.Clear();
-            a.Modifier.AddRange(ordered);
+            foreach (var m in ordered) a.Modifier.Add(m);
         }
 
         _action = node;

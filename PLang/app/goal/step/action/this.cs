@@ -45,11 +45,10 @@ public partial class @this
     [JsonIgnore]
     public global::app.type.property.list.@this Default { get; init; } = new();
 
-    /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after) — an
-    /// internal typed list; the action owns their right-to-left wrap fold (see RunAsync) and their
-    /// sort (actions.Nest). Position within the slot carries the nesting order at runtime.</summary>
+    /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after), outermost
+    /// first — the written order. The list owns how they compose around the action (<c>Modifier.Wrap</c>).</summary>
     [Store, Debug, Default]
-    public List<modifier.@this> Modifier { get; init; } = new();
+    public modifier.list.@this Modifier { get; init; } = new();
 
     /// <summary>The branch body of a control-flow action (the steps that run when this condition fires).
     /// Empty on every non-control-flow action — the fire gate is <c>Child.Count &gt; 0 &amp;&amp; truthy</c>.
@@ -192,27 +191,12 @@ public partial class @this
             data = await DispatchAsync(context, call);
         else
         {
-            // The action composes its modifiers around its own dispatch — right-to-left, lowest
-            // Position outermost (the slot is pre-sorted by Nest). Each modifier wraps the inner in
-            // ITSELF (modifier.Wrap); then AfterAction fires once per modifier so coverage tracks
-            // presence (a modifier wraps, it never runs the standalone path).
-            Func<Task<global::app.data.@this>> execute = () => DispatchAsync(context, call);
-            for (int i = Modifier.Count - 1; i >= 0; i--)
-            {
-                // `on error` clauses written one after another are ONE try/catch: they wrap once,
-                // together, and are asked in the order written.
-                int first = i;
-                if (Modifier[i].Catches)
-                    while (first > 0 && Modifier[first - 1].Catches) first--;
-
-                var (wrapped, wrapError) = Modifier[i].Catches
-                    ? await Catch(Modifier.GetRange(first, i - first + 1), execute, context)
-                    : await Modifier[i].Wrap(execute, context);
-                if (wrapError != null) return context.Error(wrapError);
-                execute = wrapped!;
-                i = first;
-            }
-            data = await execute();
+            // The modifiers wrap the action's own dispatch — the list composes them (outermost first,
+            // `on error` clauses written together as one try/catch); then AfterAction fires once per
+            // modifier so coverage tracks presence (a modifier wraps, it never runs the standalone path).
+            var (execute, wrapError) = await Modifier.Wrap(() => DispatchAsync(context, call), context);
+            if (wrapError != null) return context.Error(wrapError);
+            data = await execute!();
             foreach (var modifier in Modifier)
                 await context.LifecycleFor(modifier).After.Run(
                     context, new app.@event.moment.@this(app.@event.Trigger.AfterAction, modifier, data));
@@ -229,34 +213,6 @@ public partial class @this
         if (!afterResult.Success) return afterResult;
 
         return data;
-    }
-
-    /// <summary>The <c>on error</c> clauses written one after another on this action, around
-    /// <paramref name="inner"/> as ONE try/catch: a failure is offered to each clause in the order written;
-    /// the first whose filters match handles it and the others never see it — what it returns (a retry's
-    /// result, its recovery's, a throw from that recovery) leaves the step.</summary>
-    private async Task<(Func<Task<global::app.data.@this>>? Wrapped, global::app.error.Error? Error)> Catch(
-        List<modifier.@this> clauses, Func<Task<global::app.data.@this>> inner, actor.context.@this context)
-    {
-        var handlers = new List<(modifier.@this Clause, global::app.module.ICatch Handler)>();
-        foreach (var clause in clauses)
-        {
-            var (handler, error) = await clause.Handler(context);
-            if (error != null) return (null, error);
-            handlers.Add((clause, (global::app.module.ICatch)handler!));
-        }
-        return (async () =>
-        {
-            var result = await inner();
-            if (result.Success) return result;
-            foreach (var (clause, handler) in handlers)
-            {
-                if (await handler.Catch(result, inner, context) is not { } handled) continue;
-                if (!handled.Success) clause.Recorded(handled.Error!, context);
-                return handled;
-            }
-            return result;
-        }, null);
     }
 
     /// <summary>
