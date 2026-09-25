@@ -1,0 +1,94 @@
+[
+ {
+  "input": "file.read(Path=\"x\"); variable.set(Name=%y% Value=%!data%)",
+  "message": "line 1, column 44: expected `,`"
+ },
+ {
+  "input": "file.read(Path=\"x\")\n    variable.set(Name=%y%, Value=%!data%)",
+  "message": "line 2, column 5: separate a step's actions with `;`"
+ },
+ {
+  "input": "file.read(Pth=\"x\")",
+  "message": "line 1, column 11: `file.read` has no property `Pth` (it has Path, ResolveVariables)"
+ },
+ {
+  "input": "file.read(Path: text = \"x\")",
+  "message": "line 1, column 17: `Path` is path, not text"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=\"less\", Right=5)",
+  "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `less` is not"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator=less, Right=5)",
+  "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `less` is not"
+ },
+ {
+  "input": "condition.if(Left=%n%, Operator==\"<\", Right=5)",
+  "message": "line 1, column 32: one `=` gives a value: Operator=\"==\""
+ },
+ {
+  "input": "variable.set(Name=5, Value=1)",
+  "message": "line 1, column 19: `Name` names a variable: write it with its % signs"
+ },
+ {
+  "input": "goal.call(Name=\"X\")\n    error.handle() { goal.call(Name=\"Y\") }",
+  "message": "line 2, column 5: `error.handle` wraps the action it modifies: error.handle(…) { action }"
+ },
+ {
+  "input": "error.handle(Recovery=[goal.call(Name=\"Y\")])",
+  "message": "line 1, column 1: `error.handle` is a modifier: it wraps an action — error.handle(…) { action }"
+ },
+ {
+  "input": "error.handle() { goal.call(Name=\"X\"); goal.call(Name=\"Y\") }",
+  "message": "line 1, column 16: `error.handle` wraps one action; to wrap it in more modifiers, nest them"
+ },
+ {
+  "input": "error.handle(Recovery=\"Y\") { goal.call(Name=\"X\") }",
+  "message": "line 1, column 14: `Recovery` is a list of actions: [goal.call(Name=\"X\")]"
+ },
+ {
+  "input": "goal.call(Name=\"X\") { output.write(Data=\"y\") }",
+  "message": "line 1, column 21: `goal.call` contains no actions: only a condition (its body) and a modifier (the action it wraps) take { }; write the actions one after the other: goal.call(…); next.action(…)"
+ },
+ {
+  "input": "condition.if(Left=%a%, Operator=isempty) { output.write(Data=\"x\") }; condition.else() { }",
+  "message": "line 1, column 89: `{ }` holds at least one action; a condition whose body is indented below it has no `{ }`"
+ },
+ {
+  "input": "file.read(Path=\"x\"",
+  "message": "line 1, column 19: `file.read(` is not closed: expected `)`"
+ },
+ {
+  "input": "nope.nothing()",
+  "message": "line 1, column 1: `nope.nothing` is not an action"
+ },
+ {
+  "input": "goal.call(Name=\"X\", Parameter=[kind=\"a\"])",
+  "message": "line 1, column 31: arguments are written as one dict: Parameter={name: \"value\", other: %x%}"
+ },
+ {
+  "input": "output.write(Data=hello)",
+  "message": "line 1, column 19: a text is quoted: \"hello\""
+ },
+ {
+  "input": "file.read(Path=%?)",
+  "message": "line 1, column 16: a `?` is still there: fill it with the value the step gives"
+ },
+ {
+  "input": "file.read(Path=\"x\") · output.write(Data=\"y\")",
+  "message": "line 1, column 21: separate a step's actions with `;`, not `·`"
+ },
+ {
+  "input": "error.handle(Recovery=[goal.call(…)]) { goal.call(Name=\"X\") }",
+  "message": "line 1, column 34: a `…` is still there: fill in goal.call's properties, as the step gives them"
+ },
+ {
+  "input": "variable.set(Name=%d%, Value={name: text = \"a\"})",
+  "message": "line 1, column 30: `Value` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments"
+ },
+ {
+  "input": "",
+  "message": "line 1, column 1: a step holds at least one action"
+ }
+]
