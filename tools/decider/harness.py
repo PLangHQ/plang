@@ -289,6 +289,7 @@ def main_module(probs_i, cat):
     return max(scored, key=scored.get) if scored else None
 
 RUNNER_UP = 0.2   # the choice's second module at or above this is asked in stage 2 as well
+MAIN_YESNO = os.environ.get('MAIN_YESNO', '1') != '0'
 
 def picks(probs_i, cat, threshold=0.5):
     """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must ask,
@@ -301,7 +302,10 @@ def picks(probs_i, cat, threshold=0.5):
     ranked = sorted(((m, p) for m, p in probs_i.items() if m in cat and p is not None), key=lambda mp: -mp[1])
     runner = [m for m, p in ranked[1:2] if p >= RUNNER_UP and m not in settled]
     main = [m for m, _ in ranked[:1] if m not in settled]
-    return common, main + runner, runner
+    # The main module has the same flaw: its share of the "main work" choice is not whether it is used.
+    # Below NEAR_CERTAIN it is asked the yes/no too (MAIN_YESNO=0 gives v4, which asked the runner-up only).
+    unsure_main = [m for m, p in ranked[:1] if m in main and p < NEAR_CERTAIN and MAIN_YESNO]
+    return common, main + runner, unsure_main + runner
 
 # The branches that can follow an if in the same step. Stage 2 is one choice per module, so it can
 # never give two actions of the condition module; a picked condition.if asks these by name.
@@ -310,8 +314,9 @@ BRANCHES = ['condition.elseif', 'condition.else']
 def stage2(goal, cat, chosen, conditions=(), runners=None):
     """chosen: {step_index: [modules]} — one choice per (step, module) for its action. conditions: the
     steps with condition.if picked — each also asked noul for every BRANCHES action, answered as
-    out[(i, 'condition.else')] = (None, noul). runners: {step_index: [module]} — the runner-up module,
-    asked noul "does the step also use it", answered as out[(i, '@also.<module>')] = (None, noul)."""
+    out[(i, 'condition.else')] = (None, noul). runners: {step_index: [module]} — the modules asked
+    noul "does the step use it" (the runner-up, and a main module under NEAR_CERTAIN), answered as
+    out[(i, '@also.<module>')] = (None, noul)."""
     runners = runners or {}
     used = {m for ms in chosen.values() for m in ms} | ({'condition'} if conditions else set())
     state = state_for(goal, cat, modules=used)
@@ -325,8 +330,10 @@ def stage2(goal, cat, chosen, conditions=(), runners=None):
                         f'Step {step_no(s)} is `{s["text"].strip()}`. It tests a condition. Does step {step_no(s)} also have `{a}` — '
                         f'{cat["condition"]["actions"][a.split(".", 1)[1]]["description"]}?'}
             for m in runners.get(s['index'], []):
+                # the main module (the step's first) is asked "use", the runner-up "also use"
+                also = '' if chosen.get(s['index'], [None])[0] == m else ' also'
                 qs[f's{s["index"]}_@also.{m}'] = {'type': 'noul', 'instructions':
-                    f'Step {step_no(s)} is `{s["text"].strip()}`. Does step {step_no(s)} also use the plang module `{m}`?'}
+                    f'Step {step_no(s)} is `{s["text"].strip()}`. Does step {step_no(s)}{also} use the plang module `{m}`?'}
             for m in chosen.get(s['index'], []):
                 acts = cat[m]['actions']
                 if len(acts) == 1:

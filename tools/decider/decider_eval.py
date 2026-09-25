@@ -71,7 +71,7 @@ def one(case, cat):
             # A common action keeps its own stage-1 score — the one the 0.9 rule reads; stage 2
             # naming it too is recorded beside it.
             if name in pick: pick[name].update(also='stage 2', module=score, confidence=confidence); continue
-            pick[name] = {'score': score, 'from': 'stage 2' + (' runner-up' if m in runners.get(i, []) else ''), 'confidence': confidence}
+            pick[name] = {'score': score, 'from': 'stage 2' + (' yes/no' if m in runners.get(i, []) else ''), 'confidence': confidence}
         for a in h.BRANCHES:   # asked by name when condition.if was picked
             if (i, a) in acts: pick[a] = {'score': acts[(i, a)][1], 'from': 'branch'}
         steps.append({'index': i, 'text': s['text'], 'expected': case['menu'][str(i)],
