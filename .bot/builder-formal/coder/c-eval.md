@@ -212,3 +212,52 @@ Asked on **1 step per run**: start 0, unsure because of the goal.call drop above
 Also seen in round 5's b-v1 runs: foreach with `Item=%item%` spelled out, which is exactly the default binding. Declaring `[Default("item")]` on loop.foreach's Item would make it a default that the builder leaves out.
 
 **Where C + nano is:** 95% first attempt and 170/174 after the retry over 3 runs, with no loud failures. The one silent miss that repeats (weekly 11) has a one-line fix. The bar (100% on every run) isn't met yet: 4 silent in 174.
+
+---
+
+# Round 6 — C + nano, 3 runs: literal coverage, the channel common step, the empty-{ } message, goal.call's criteria, foreach's default + S1
+
+Commits:
+- `bd44cc7f5`: literal coverage and the channel common step.
+- `9fd335bf7`: the empty `{ }` message and prompt rule.
+- `c732bf0a7`: goal.call's criteria.
+- `b5388e447`: `[Default("item")]` on loop.foreach Item, plus build_pr's `[Default]` look-back fix. The six suites show no new failures.
+- `4f0c3a2a2`: S1, the 2.0 layout, `readable.txt`, and the example-line guard.
+
+**Round 6 ran on exactly the code these commits hold.** The hook blocked my first commit attempt (python in the message beside a `.cs` path), and I only noticed after the runs, then committed that same code.
+
+Raw: `tools/decider/runs/c_eval_round6_20260925_2222{52}/`, `…_222301/`, `…_222308/`. Requests: `/shared/coder/2.0/<goal>/` (run 3) and `/shared/coder/2.0/rounds/round6-run{1,2,3}/`.
+
+| run | first-attempt right | caught | silent | after retry right | silent | loud | warnings | disagreements | seconds | cost |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 46/58 | 12 | 0 | **58/58** | **0** | 0 | 20 | 15 | 17.8 | $0.0062 |
+| 2 | 56/58 | 2 | 0 | **58/58** | **0** | 0 | 4 | 0 | 12.9 | $0.0056 |
+| 3 | 51/58 | 7 | 0 | **58/58** | **0** | 0 | 8 | 3 | 16.6 | $0.0068 |
+| **total** | **153/174 (88%)** | 21 | **0** | **174/174** | **0** | **0** | 32 | 18 | | |
+| round 5 total | 166/174 | 4 | 4 | 170/174 | 4 | 0 | 16 | | | |
+
+**Every step of every run ends right, with no silent miss and no loud failure. That's the bar after the retry, three runs in a row.** The first attempt is lower than round 5 (153 vs 166). Every first-attempt miss is now caught, none silent, and each has a cause below.
+
+## Every first-attempt miss, prompt-first
+
+| runs | step | what | cause | proposal |
+|---|---|---|---|---|
+| 1, 2, 3 | start 3, 13 (`… , on error call HandleBuildFailure`) | caught: runs 2 and 3 left the pre-filled `Recovery=[goal.call(Name=?)]` unfilled; run 1 wrote `Name=HandleBuildFailure` unquoted (and `Name=BuildSubGoal` on step 6) | prompt: a `?` nested inside `Recovery=[…]` is the one the model skips, and the unquoted goal name is nano's habit (the error says "a text is quoted", and the retry fixes it) | pre-fill the recovery without its own `?`: `Recovery=[goal.call(…)]`, one level less to fill |
+| 1, 3 | weekly_report 3–7 | caught, whole answer: the model put steps 4–5 (indented under step 3) inside step 3's `{ }`, dropped their own lines, and renumbered the rest | prompt: the indented body shows in "the goal as written" and the model folds it itself. Rule 6 says the body is the indented steps, but nano still nests them | measure a one-line hint under a step with indented steps ("steps 4–5 are its body: the builder places them; answer them on their own lines"). Ingi's earlier rule kept indentation away from the LLM, so this is your call |
+| — | checkout 2 (the extra `output.write` before the if) | **did not recur** (0 of 3 runs) | — | nothing |
+
+## Warnings and the decider
+
+- **goal.call with the fixed criteria:** 0.80–0.89 on build 4/7, start 0 and decide 9 (round 5: 0.63–0.78; round 4 without criteria: 0.88–0.96). Better, still just under 0.9, so each is a warning on a right step.
+- **error.throw:** 0.83–0.88 on checkout 3.
+- **The popular-action choice was never asked** (no step under 0.8).
+- **All 15 disagreements in run 1, and the "settled on retry" warnings, are weekly_report's renumbered answer:** the model placed actions on the wrong entries. The retry fixed it.
+- **S1** (defaults dropped) removed nothing wrong; no step's expected answer holds a default.
+
+## The example-shift report
+
+It didn't reproduce. 85 decider state files are checked by `harness.misplaced_examples`:
+- the 80 written this session;
+- the 5 copies in `/shared/coder/2.0`.
+
+Every `e.g.` line comes from its own entry. The write-to lines (`get 'https://…', write to %rates%` …) at line 140 of checkout's state are the **variable** module's own (from `variable/set.examples.md`). They sit under `- variable:`, the module above `- variable.set:` in the asked-by-name list. The guard now runs on every state written, so a real shift would fail the run.

@@ -1,0 +1,3 @@
+[3] error.handle(Recovery=[goal.call(Name="HandleBuildFailure")]) { goal.call(Name="Compile") }
+[6] loop.foreach(Collection=%parentGoal.Child%); goal.call(Name="BuildSubGoal", Parameter={subGoal: %item%})
+[13] error.handle(Recovery=[goal.call(Name="HandleBuildFailure")]) { build.fold(Goal=%goal%) }

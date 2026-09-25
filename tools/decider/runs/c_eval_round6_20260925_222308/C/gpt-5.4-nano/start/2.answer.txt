@@ -1,0 +1,2 @@
+[3] error.handle(Recovery=[goal.call(Name="HandleBuildFailure")]) { goal.call(Name="Compile") }
+[13] error.handle(Recovery=[goal.call(Name="HandleBuildFailure")]) { build.fold(Goal=%goal%) }
