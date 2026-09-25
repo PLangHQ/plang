@@ -1,9 +1,9 @@
 {
- "about": "Stage-3 golden set: five whole goals, one request each, scored per step. The menu per step is the right one (the decider is not under test). Expected answers written by hand. The earlier 32 one-step cases are in git history (0da24055e). A value {\"$oneOf\": [...]} accepts any of its alternatives; an expected value with \"module\" is an action (an action-typed property).",
+ "about": "Stage-3 golden set: five whole goals, one request each, scored per step. The menu per step is the right one (the decider is not under test): the step's OWN actions — an action held as a value (channel.set's Goal) or as a modifier's recovery is not on it. Expected answers written by hand. The earlier 32 one-step cases are in git history (0da24055e). A value {\"$oneOf\": [...]} accepts any of its alternatives; an expected value with \"module\" is an action (an action-typed property).",
  "cases": [
   {
    "id": "build",
-   "covers": "the builder's entry goal (os/system/builder/Build.goal): set default, a channel with a callback goal, calls with arguments, write to, foreach + call, file save, actions with no properties",
+   "covers": "the builder's entry goal (os/system/builder/Build.goal): set default, a channel with a callback goal (the goal.call is the value of Goal, not a pick of its own), calls with arguments, write to, foreach + call, file save, actions with no properties",
    "goal": "Build",
    "steps": [
     {"text": "set default %path% = \"/\"", "indent": 0,
@@ -21,7 +21,7 @@
    ],
    "menu": {
     "0": ["variable.set"], "1": ["variable.set"], "2": ["variable.set"],
-    "3": ["channel.set", "goal.call"],
+    "3": ["channel.set"],
     "4": ["goal.call"],
     "5": ["build.load", "variable.set"],
     "6": ["build.goals", "variable.set"],
@@ -52,7 +52,7 @@
   },
   {
    "id": "start",
-   "covers": "the builder's per-file goal (os/system/builder/BuildGoal/Start.goal, Start): on error call X (a modifier with recovery), a dict literal, foreach + call with an argument, math with named arguments + write to, file save, list add, properties the catalogue does not list (Goal=%goal%)",
+   "covers": "the builder's per-file goal (os/system/builder/BuildGoal/Start.goal, Start): on error call X (a modifier with recovery), a dict literal, foreach + call with an argument, math with named arguments + write to, file save, list add, a goal-typed property (Goal=%goal%), a goal.call held only as a recovery (not a pick of its own)",
    "goal": "Start",
    "steps": [
     {"text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%", "indent": 0,
@@ -84,7 +84,7 @@
     "10": ["variable.set"],
     "11": ["file.save"],
     "12": ["list.add"],
-    "13": ["build.fold", "error.handle", "goal.call"],
+    "13": ["build.fold", "error.handle"],
     "14": ["build.goalsSave"]
    },
    "expect": {
@@ -109,10 +109,10 @@
     "10": [{"module": "variable", "name": "set", "property": {"Name": "%trace.durationMs%", "Value": "%elapsedMs%"}}],
     "11": [{"module": "file", "name": "save", "property": {"Path": "/.build/traces/%!trace.id%/%goal.Name%.json", "Value": "%trace%"}}],
     "12": [{"module": "list", "name": "add", "property": {"ListName": "%traceGoals%", "Value": "%goal.Name%"}}],
-    "13": [{"module": "build", "name": "fold",
+    "13": [{"module": "build", "name": "fold", "property": {"Goal": "%goal%"},
             "modifier": [{"module": "error", "name": "handle",
                           "recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}]}],
-    "14": [{"module": "build", "name": "goalsSave"}]
+    "14": [{"module": "build", "name": "goalsSave", "property": {"Goal": "%goal%"}}]
    }
   },
   {

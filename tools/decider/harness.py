@@ -231,11 +231,12 @@ def state_for(goal, cat, modules=None):
             for an, av in v['actions'].items():
                 lines.append(f'  action {m}.{an}: {av["description"]}')
                 if av.get('examples'): lines.append(f'    examples: {av["examples"]}')
-    if modules is None:   # stage 1 also asks these actions by name: described once, here
+    if modules is None:   # stage 1 also asks these actions by name: described once, here, with their own example steps
         lines += ['', 'These actions are asked about by name:']
         for a in COMMON:
             m, an = a.split('.', 1)
             lines.append(f'- {a}: {cat[m]["actions"][an]["description"]}')
+            for ex in example_steps(f'{ROOT}/os/system/modules/{m}/{an}.examples.md'): lines.append(f'  e.g. `{ex}`')
     return '\n'.join(lines)
 
 def windows(steps):
@@ -290,23 +291,28 @@ def main_module(probs_i, cat):
 RUNNER_UP = 0.2   # the choice's second module at or above this is asked in stage 2 as well
 
 def picks(probs_i, cat, threshold=0.5):
-    """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must ask): the
-    main module, and the runner-up when its probability is at least RUNNER_UP — a step whose work two
-    modules share — each unless one of its common actions is near-certain, which is then its answer."""
+    """One step's stage-1 answer as (common-action picks {action: score}, modules stage 2 must ask,
+    the runner-up among them). The main module, and the runner-up when its probability is at least
+    RUNNER_UP — a step whose work two modules share — each unless one of its common actions is
+    near-certain, which is then its answer. The choice asks which module is the MAIN one, so a
+    runner-up's share says nothing about whether it is used: stage 2 asks that of it by name."""
     common = {a: probs_i.get(a) for a in COMMON if probs_i.get(a) is not None}
     settled = {a.split('.', 1)[0] for a, p in common.items() if p >= NEAR_CERTAIN}
     ranked = sorted(((m, p) for m, p in probs_i.items() if m in cat and p is not None), key=lambda mp: -mp[1])
-    asked = ranked[:1] + [(m, p) for m, p in ranked[1:2] if p >= RUNNER_UP]
-    return common, [m for m, _ in asked if m not in settled]
+    runner = [m for m, p in ranked[1:2] if p >= RUNNER_UP and m not in settled]
+    main = [m for m, _ in ranked[:1] if m not in settled]
+    return common, main + runner, runner
 
 # The branches that can follow an if in the same step. Stage 2 is one choice per module, so it can
 # never give two actions of the condition module; a picked condition.if asks these by name.
 BRANCHES = ['condition.elseif', 'condition.else']
 
-def stage2(goal, cat, chosen, conditions=()):
+def stage2(goal, cat, chosen, conditions=(), runners=None):
     """chosen: {step_index: [modules]} — one choice per (step, module) for its action. conditions: the
     steps with condition.if picked — each also asked noul for every BRANCHES action, answered as
-    out[(i, 'condition.else')] = (None, noul)."""
+    out[(i, 'condition.else')] = (None, noul). runners: {step_index: [module]} — the runner-up module,
+    asked noul "does the step also use it", answered as out[(i, '@also.<module>')] = (None, noul)."""
+    runners = runners or {}
     used = {m for ms in chosen.values() for m in ms} | ({'condition'} if conditions else set())
     state = state_for(goal, cat, modules=used)
     out = {}; secs = nbytes = nq = 0; usage = collections.Counter()
@@ -318,6 +324,9 @@ def stage2(goal, cat, chosen, conditions=()):
                     qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
                         f'Step {step_no(s)} is `{s["text"].strip()}`. It tests a condition. Does step {step_no(s)} also have `{a}` — '
                         f'{cat["condition"]["actions"][a.split(".", 1)[1]]["description"]}?'}
+            for m in runners.get(s['index'], []):
+                qs[f's{s["index"]}_@also.{m}'] = {'type': 'noul', 'instructions':
+                    f'Step {step_no(s)} is `{s["text"].strip()}`. Does step {step_no(s)} also use the plang module `{m}`?'}
             for m in chosen.get(s['index'], []):
                 acts = cat[m]['actions']
                 if len(acts) == 1:
@@ -331,7 +340,8 @@ def stage2(goal, cat, chosen, conditions=()):
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():
             i, m = k[1:].split('_', 1)
-            out[(int(i), m)] = (None, a.get('noul')) if m in BRANCHES else (a.get('choice'), a.get('confidence'))
+            noul = m in BRANCHES or m.startswith('@also.')
+            out[(int(i), m)] = (None, a.get('noul')) if noul else (a.get('choice'), a.get('confidence'))
     return out, secs, nbytes, nq, dict(usage)
 
 # ---------------------------------------------------------------- run

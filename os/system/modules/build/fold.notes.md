@@ -1,1 +1,1 @@
-No properties to write: a `Goal=…` in the step is the builder's, not a property.
+Goal — the goal whose indented steps are placed into their conditions: `Goal=%goal%` as the step writes it.

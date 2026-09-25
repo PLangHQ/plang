@@ -20,7 +20,7 @@ import json, os, time, collections, concurrent.futures as cf
 import harness as h
 import child_eval as e
 
-DUMP = os.environ.get('DUMP', '/shared/coder/llm/plang/builder-formal/decider-v3')
+DUMP = os.environ.get('DUMP', '/shared/coder/llm/plang/builder-formal/decider-v4')
 OUT = os.path.join(h.OUT, 'decider_eval_' + time.strftime('%Y%m%d_%H%M%S') + '.json')
 
 def dump_to(folder, label):
@@ -44,7 +44,8 @@ def one(case, cat):
     probs, s1, b1, q1, u1 = h.stage1(goal, cat)
     readable(folder, '1.decider')
     split = {i: h.picks(probs[i], cat) for i in probs}
-    chosen = {i: ask2 for i, (_, ask2) in split.items()}
+    chosen = {i: ask2 for i, (_, ask2, _) in split.items()}
+    runners = {i: runner for i, (_, _, runner) in split.items() if runner}
     # A stage-2 question not asked: the step's main module has more than one action, but a near-certain
     # common action of that module already answered it.
     skipped = []
@@ -52,22 +53,25 @@ def one(case, cat):
         main = h.main_module(probs[i], cat)
         if main and main not in split[i][1] and len(cat[main]['actions']) > 1: skipped.append((i, main))
     dump_to(folder, '2.decider')
-    conditions = {i for i, (common, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
-    acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen, conditions)
+    conditions = {i for i, (common, _, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
+    acts, s2, b2, q2, u2 = h.stage2(goal, cat, chosen, conditions, runners)
     if q2: readable(folder, '2.decider')
     h._local.dump = None
     steps = []
     for s in goal['steps']:
         i = s['index']
-        pick = {a: {'score': p, 'from': 'stage 1'} for a, p in split.get(i, ({}, []))[0].items()}
+        pick = {a: {'score': p, 'from': 'stage 1'} for a, p in split.get(i, ({}, [], []))[0].items()}
         for m in chosen.get(i, []):
             if (i, m) not in acts: continue
             action, confidence = acts[(i, m)]
             name = f'{m}.{action}'
+            # The main module's action scores the module's probability; the runner-up's scores its own
+            # "does the step also use it" answer.
+            score = acts.get((i, f'@also.{m}'), (None, None))[1] if m in runners.get(i, []) else probs[i][m]
             # A common action keeps its own stage-1 score — the one the 0.9 rule reads; stage 2
             # naming it too is recorded beside it.
-            if name in pick: pick[name].update(also='stage 2', module=probs[i][m], confidence=confidence); continue
-            pick[name] = {'score': probs[i][m], 'from': 'stage 2', 'confidence': confidence}
+            if name in pick: pick[name].update(also='stage 2', module=score, confidence=confidence); continue
+            pick[name] = {'score': score, 'from': 'stage 2' + (' runner-up' if m in runners.get(i, []) else ''), 'confidence': confidence}
         for a in h.BRANCHES:   # asked by name when condition.if was picked
             if (i, a) in acts: pick[a] = {'score': acts[(i, a)][1], 'from': 'branch'}
         steps.append({'index': i, 'text': s['text'], 'expected': case['menu'][str(i)],

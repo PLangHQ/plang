@@ -87,11 +87,12 @@ def default_text(literal):
 NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'modifier'}
 
 _decl = {}
-def declared(module, action, held_actions=False):
-    """(properties, is_modifier) as the handler declares them — the same rows the plang catalog
-    reflects (app/type/property/list/this.cs Reflect): infra-typed slots dropped, an IChannel
-    action's synthetic `channel` row added last. held_actions keeps the `action`-typed slots (a
-    callback's goal, channel.set Goal) that the catalog drops — the formal parser reads those."""
+def declared(module, action, held_actions=True):
+    """(properties, is_modifier) as the handler declares them — the rows the plang catalog reflects
+    (app/type/property/list/this.cs Reflect), an IChannel action's synthetic `channel` row added last.
+    Host (`clr`) and graph-structure slots stay hidden. The `action`- and `goal`-typed slots — a
+    callback's action (channel.set Goal), the goal build.fold works on — are the LLM's to write, so
+    they are shown; held_actions=False gives the catalog as the C# filter still has it (stage 4)."""
     key = (module, action, held_actions)
     if key in _decl: return _decl[key]
     src = handler_source(module, action) or ''
@@ -102,7 +103,7 @@ def declared(module, action, held_actions=False):
         if not m: continue
         d = next((DEFAULT.search(l) for l in reversed(lines[max(0, i - 3):i]) if DEFAULT.search(l)), None)
         t = plang_type(m.group('type'))
-        if t in NOT_ON_MENU and not (held_actions and t == 'action'): continue
+        if t in NOT_ON_MENU and not (held_actions and t in ('action', 'goal')): continue
         options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
         props[m.group('name')] = {'type': t, 'options': options, 'nullable': bool(m.group('opt')),
                                   'default': default_text(d.group('value')) if d else None}
@@ -173,16 +174,20 @@ def menu_for(goal, cat, folder=None):
     # The common actions are asked by name in stage 1: one scored at or above 0.5 is on the menu, and
     # a near-certain one settles its module, which then skips stage 2.
     split = {i: h.picks(probs[i], cat) for i in probs}
-    chosen = {i: ask2 for i, (_, ask2) in split.items()}
-    conditions = {i for i, (common, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
-    acts, *_ = h.stage2(goal, cat, chosen, conditions)
+    chosen = {i: ask2 for i, (_, ask2, _) in split.items()}
+    runners = {i: runner for i, (_, _, runner) in split.items() if runner}
+    conditions = {i for i, (common, _, _) in split.items() if (common.get('condition.if') or 0) >= 0.5}
+    acts, *_ = h.stage2(goal, cat, chosen, conditions, runners)
     if folder: readable(folder, '2.decider'); h._local.dump = None
     menu = {}
     for s in goal['steps']:
         i = s['index']
-        common = [a for a, p in split.get(i, ({}, []))[0].items() if p >= 0.5]
+        common = [a for a, p in split.get(i, ({}, [], []))[0].items() if p >= 0.5]
         branches = [a for a in h.BRANCHES if (acts.get((i, a), (None, 0))[1] or 0) >= 0.5]
-        entries = common + branches + [f'{m}.{acts[(i, m)][0]}' for m in chosen.get(i, []) if (i, m) in acts]
+        # A runner-up module's action is on the menu only when the step also uses that module.
+        used = [m for m in chosen.get(i, []) if (i, m) in acts
+                and (m not in runners.get(i, []) or (acts.get((i, f'@also.{m}'), (None, 0))[1] or 0) >= 0.5)]
+        entries = common + branches + [f'{m}.{acts[(i, m)][0]}' for m in used]
         menu[i] = list(dict.fromkeys(entries))
     return menu, probs
 

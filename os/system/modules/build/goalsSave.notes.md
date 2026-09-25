@@ -1,1 +1,1 @@
-No properties to write: a `Goal=…` in the step is the builder's, not a property.
+Goal — the built goal whose .pr is saved: `Goal=%goal%` as the step writes it.

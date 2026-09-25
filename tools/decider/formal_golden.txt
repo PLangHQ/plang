@@ -26,9 +26,9 @@
 [10] variable.set(Name=%trace.durationMs%, Value=%elapsedMs%)
 [11] file.save(Path="/.build/traces/%!trace.id%/%goal.Name%.json", Value=%trace%)
 [12] list.add(ListName=%traceGoals%, Value=%goal.Name%)
-[13] build.fold()
+[13] build.fold(Goal=%goal%)
     error.handle() { goal.call(Name="HandleBuildFailure") }
-[14] build.goalsSave()
+[14] build.goalsSave(Goal=%goal%)
 
 # decide
 [0] variable.set(Name=%threshold%, Value=0.5)
