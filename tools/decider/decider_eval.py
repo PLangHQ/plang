@@ -28,14 +28,39 @@ def dump_to(folder, label):
     h._local.dump = (folder, label)
 
 def readable(folder, label):
-    """Beside the raw request/response: the state as plain text, the questions and the answers as JSON."""
+    """Beside the raw request/response: the state as plain text, the questions and the answers as JSON,
+    and readable.txt — each question with its criteria and its answer. A state with an example line
+    under the wrong entry fails loudly (harness.misplaced_examples)."""
     req = json.load(open(os.path.join(folder, f'{label}.request.json'), encoding='utf-8'))
+    if wrong := h.misplaced_examples(req['state']):
+        raise RuntimeError(f'{folder}/{label}: example lines under the wrong entry: ' + '; '.join(wrong[:5]))
     open(os.path.join(folder, f'{label}.state.txt'), 'w', encoding='utf-8').write(req['state'])
     json.dump(req['questions'], open(os.path.join(folder, f'{label}.questions.json'), 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
     resp = os.path.join(folder, f'{label}.response.json')
+    answers = json.load(open(resp, encoding='utf-8')).get('answers') if os.path.exists(resp) else {}
     if os.path.exists(resp):
-        json.dump(json.load(open(resp, encoding='utf-8')).get('answers'),
-                  open(os.path.join(folder, f'{label}.answers.json'), 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
+        json.dump(answers, open(os.path.join(folder, f'{label}.answers.json'), 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
+    stage = label.split('.')[0]
+    out = [f'Stage {stage} — {len(req["questions"])} questions (asked against {label}.state.txt)', '']
+    for key, q in req['questions'].items():
+        kind = 'choice' if q['type'] == 'choice' else 'yes/no'
+        out.append(f'[{key}] {kind}: {q["instructions"]}')
+        crit = q.get('criteria') or {}
+        if q['type'] == 'choice':
+            named = [k for k, v in crit.items() if v is None]
+            out.append(f'    options: {len(named)} names' if len(named) == len(crit) else
+                       '    options: ' + '; '.join(f'{k} = {v}' for k, v in crit.items()))
+        elif crit:
+            out.append(f'    criteria: true = {crit.get("true")} | false = {crit.get("false")}')
+        a = answers.get(key) or {}
+        if q['type'] == 'choice':
+            top = sorted((a.get('probabilities') or {}).items(), key=lambda kv: -(kv[1] or 0))[:3]
+            out.append(f'    answer:  {a.get("choice")} (confidence {a.get("confidence")})'
+                       + (' — top: ' + ', '.join(f'{k} {v:.2f}' for k, v in top) if top else ''))
+        else:
+            out.append(f'    answer:  {a.get("noul")}')
+        out.append('')
+    open(os.path.join(folder, f'{label}.readable.txt'), 'w', encoding='utf-8').write('\n'.join(out))
 
 def one(case, cat, folder=None):
     """folder: where this goal's decider requests and responses go (default DUMP/<goal>)."""

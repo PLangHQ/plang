@@ -35,6 +35,22 @@ DESCRIPTION_FIX = {
 }
 
 
+def misplaced_examples(state):
+    """The `e.g.` lines of a decider state that don't come from the entry printed above them — a
+    module's from its own actions' examples, a common action's from its own <action>.examples.md.
+    Empty when every line is where it belongs."""
+    def own(entry):
+        if '.' in entry:
+            m, a = entry.split('.', 1)
+            return set(example_steps(f'{ROOT}/os/system/modules/{m}/{a}.examples.md'))
+        return {t for p in glob.glob(f'{ROOT}/os/system/modules/{entry}/*.examples.md') for t in example_steps(p)}
+    entry, wrong = None, []
+    for n, line in enumerate(state.split('\n'), 1):
+        if m := re.match(r'- ([\w.]+): ', line): entry = m.group(1); continue
+        if (e := re.match(r'\s+e\.g\. `(.*)`\s*$', line)) and entry and e.group(1) not in own(entry):
+            wrong.append(f'line {n}: `{e.group(1)}` under {entry}')
+    return wrong
+
 def whole(p):
     return open(p, encoding='utf-8').read().strip() if os.path.exists(p) else None
 

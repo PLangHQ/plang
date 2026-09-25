@@ -24,12 +24,14 @@ import child_eval as e
 import decider_eval as d
 import prompt_c as c
 import formal as f
+import formal_check as fc
+import shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROUND = os.environ.get('ROUND', '1')
 MODELS = os.environ.get('MODELS', 'gpt-5.4-nano,gpt-5.4-mini').split(',')
 PROMPTS = os.environ.get('PROMPTS', 'B,C').split(',')
-SHARED = '/shared/coder/llm/plang/builder-formal'
+SHARED = '/shared/coder/2.0'   # the only place for rendered requests (Ingi); older rounds stay in /shared/coder/llm/plang/builder-formal/
 OUT = os.path.join(HERE, 'runs', f'c_eval_round{ROUND}_' + time.strftime('%Y%m%d_%H%M%S'))
 
 # ---------------------------------------------------------------- the calls
@@ -186,19 +188,54 @@ def outcomes(rec, case):
         out[i] = (o1, o2, fm if fm else lm)
     return out
 
+def readme(which, run_dir):
+    """/shared/coder/2.0/README.md — kept true: which round is in the folders, and what each file is."""
+    open(os.path.join(SHARED, 'README.md'), 'w', encoding='utf-8').write(f'''# Prompt C and the decider — the whole request chain per goal (branch `builder-formal`)
+
+The folders hold **{which}** (C + {MODELS[0]}); raw results in `tools/decider/{os.path.relpath(run_dir, HERE)}/`.
+This is the only place for rendered requests (Ingi). Each run is also kept under `rounds/round<N>-run<M>/<goal>/`;
+rounds before 6 are in `/shared/coder/llm/plang/builder-formal/` as history.
+
+Per goal folder (`build`, `checkout`, `decide`, `start`, `weekly_report`), in the order the builder sends them:
+
+**1. The decider (typesafe), stages 1 and 2.** It has no system/user: one context text (the *state*) and a list of
+questions, each answered with a score.
+- `decider/1.decider.state.txt`: stage 1's context — how plang is structured, the goal's steps (numbered from 0),
+  the modules with their descriptions and example steps, the 6 common actions with theirs. Every example line is
+  checked to come from the entry it is printed under.
+- `decider/1.decider.readable.txt`: stage 1's questions with their criteria and answers — per step one choice
+  ("which module does the main work?") and a yes/no for each common action.
+- `decider/2.decider.state.txt`, `decider/2.decider.readable.txt`: stage 2 — which action of the main module, the
+  runner-up / main-module yes/no, else/elseif by name, and on an unsure step (best score < 0.8) which popular action.
+- `decider/*.questions.json` / `*.answers.json`: the same, raw.
+
+**2. The LLM, stage 3, prompt C.**
+- `system.txt`: how a formal answer is written, the common steps, then the rules.
+- `user.txt`: the goal as written; under each step the decider's picks with scores and the pre-filled formal line;
+  the types; each action once.
+
+**3. What came back, and what should have.**
+- `answer.txt`: the model's answer; `answer.retry.txt` when a step or the answer was refused and asked again.
+- `expected.answer.txt`: the expected answer as the model writes it (no types).
+- `expected.typed.txt`: the expected result as the `.pr` holds it, types written.
+
+The notation and decisions: `.bot/builder-formal/architect/vision.md` §4 / §4b and the decisions log in
+`.bot/builder-formal/architect/summary.md`. The measurements: `.bot/builder-formal/coder/c-eval.md`.
+''')
+
 PRICES = e.PRICES
 def cost(model, usage): return e.cost(model, usage)
 
 if __name__ == '__main__':
     cat = h.catalogue()
-    # the rendered requests of a round, and its decider requests beside them: <dir>/<goal>/{system,user}.txt, <goal>/decider/
-    run = os.environ.get('RUN', '')
-    reqdir = lambda prompt: os.path.join(SHARED, f'prompt-{prompt.lower()}-round{ROUND}' + (f'-run{run}' if run not in ('', '1') else ''))
+    # Rendered requests go to /shared/coder/2.0/ only (Ingi): the current round in <goal>/, each run
+    # copied to rounds/round<N>-run<M>/<goal>/ afterwards.
+    run = os.environ.get('RUN', '') or '1'
     os.makedirs(OUT, exist_ok=True)
-    print(f'round {ROUND} run {run or 1}: decider v5 on {len(e.GOLDEN)} goals', flush=True)
+    print(f'round {ROUND} run {run}: decider v5 on {len(e.GOLDEN)} goals', flush=True)
     with cf.ThreadPoolExecutor(5) as ex:
         decided = dict(zip([c_['id'] for c_ in e.GOLDEN],
-                           ex.map(lambda case: d.one(case, cat, os.path.join(reqdir(PROMPTS[-1]), case['id'], 'decider')), e.GOLDEN)))
+                           ex.map(lambda case: d.one(case, cat, os.path.join(SHARED, case['id'], 'decider')), e.GOLDEN)))
     # a step's picks; an unsure step also carries '@popular': the top 3 of the decider's popular-action choice
     picks = {cid: {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
                                 **({'@popular': s['popular']} if s.get('popular') else {})} for s in r['steps']}
@@ -206,14 +243,16 @@ if __name__ == '__main__':
     json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
                'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},
               open(os.path.join(OUT, 'decider.json'), 'w'), indent=1)
-    # the rendered requests, for reading
-    for prompt in PROMPTS:
-        for case in e.GOLDEN:
-            system, user = request(prompt, case, picks[case['id']])
-            folder = os.path.join(reqdir(prompt), case['id'])
-            os.makedirs(folder, exist_ok=True)
-            open(os.path.join(folder, 'system.txt'), 'w', encoding='utf-8').write(system)
-            open(os.path.join(folder, 'user.txt'), 'w', encoding='utf-8').write(user)
+    # the rendered prompt-C requests and the expected results, for reading
+    for case in e.GOLDEN:
+        folder = os.path.join(SHARED, case['id'])
+        os.makedirs(folder, exist_ok=True)
+        system, user = request('C', case, picks[case['id']])
+        open(os.path.join(folder, 'system.txt'), 'w', encoding='utf-8').write(system)
+        open(os.path.join(folder, 'user.txt'), 'w', encoding='utf-8').write(user)
+        expected = {int(k): [fc.rows_of(a) for a in acts] for k, acts in case['expect'].items()}
+        open(os.path.join(folder, 'expected.typed.txt'), 'w', encoding='utf-8').write(f.write_answer(expected) + '\n')
+        open(os.path.join(folder, 'expected.answer.txt'), 'w', encoding='utf-8').write(f.write_answer(expected, types=False) + '\n')
     jobs = [(p, m, case) for p in PROMPTS for m in MODELS for case in e.GOLDEN]
     with cf.ThreadPoolExecutor(10) as ex:
         records = list(ex.map(lambda j: one(j[0], j[1], j[2], picks[j[2]['id']]), jobs))
@@ -237,4 +276,13 @@ if __name__ == '__main__':
                   f' | final: right {n2["right"]}, silent {n2["silent"]}, failed {n2["failed"]}'
                   f' | retries {sum(len(r["calls"]) > 1 for r in rows)}, disagreements {sum(len(r["disagreements"]) for r in rows)}, warnings {sum(len(r["warnings"]) for r in rows)}'
                   f' | {sum(secs):.1f}s (max goal {max(secs):.1f}), tokens {tin:,}/{tout:,}, ${sum(r["cost"] for r in rows):.4f}')
+    # what came back (C + the first model): beside the request, and the whole run into rounds/ as history
+    for case in e.GOLDEN:
+        src = os.path.join(OUT, 'C', MODELS[0], case['id'])
+        folder = os.path.join(SHARED, case['id'])
+        for name, dest in (('1.answer.txt', 'answer.txt'), ('2.answer.txt', 'answer.retry.txt')):
+            if os.path.exists(os.path.join(src, name)): shutil.copy(os.path.join(src, name), os.path.join(folder, dest))
+            elif os.path.exists(os.path.join(folder, dest)): os.remove(os.path.join(folder, dest))
+        shutil.copytree(folder, os.path.join(SHARED, 'rounds', f'round{ROUND}-run{run}', case['id']), dirs_exist_ok=True)
+    readme(f'round {ROUND}, run {run}', OUT)
     print('wrote', OUT)

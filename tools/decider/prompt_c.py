@@ -12,7 +12,7 @@ The check — the LLM and the decider must agree:
               (goal.call held as a value or a recovery is allowed: it is not the step's own action)
     warning   the step was built from a possible pick (0.5–0.9), or a disagreement was settled on retry
 """
-import collections, os, re
+import collections, copy, os, re
 import build_pr as b
 import formal as f
 
@@ -207,6 +207,33 @@ def drop_nulls(rows):
         drop_nulls(a.get('modifier') or [])
         for m in a.get('modifier') or []: drop_nulls(m.get('recovery') or [])
 
+def is_default(value, default, declared):
+    """Does the value equal the property's declared default (as the catalogue prints it)?"""
+    if default is None: return False
+    if isinstance(value, bool): return str(value).lower() == default.lower()
+    if isinstance(value, (int, float)):
+        try: return float(value) == float(default)
+        except ValueError: return False
+    if isinstance(value, str):
+        if declared == 'variable': return value.strip('%') == default.strip('%')
+        return value == default
+    return False
+
+def drop_defaults(rows):
+    """S1: a property whose value equals its declared default is dropped — the default applies, the same
+    behaviour — so a spelled-out default (Item=%item%, Overflow="Promote") is no longer a difference."""
+    for a in rows:
+        props, _ = b.declared(a['module'], a['name'])
+        a['property'] = [r for r in a.get('property') or []
+                         if not (r['name'] in props and is_default(r['value'], props[r['name']]['default'], props[r['name']]['type']))]
+        for r in a['property']:
+            v = r['value']
+            for x in (v if isinstance(v, list) else [v]):
+                if isinstance(x, dict) and x.get('module'): drop_defaults([x])
+        for c in a.get('child') or []: drop_defaults(c.get('action') or [])
+        drop_defaults(a.get('modifier') or [])
+        for m in a.get('modifier') or []: drop_defaults(m.get('recovery') or [])
+
 def uncovered(text, rows):
     """The %variables% the step's text writes that its answer doesn't hold anywhere — a value, a Name,
     inside a quoted text. %x% is plang's own marker, so this reads no human language."""
@@ -249,7 +276,8 @@ def check(goal, picks, parsed):
     no actions, the chain rule, a body over indented steps that isn't a copy (fold), the agreement
     with the decider, a %variable% of the step's text missing from its answer. Nulls on optional
     properties are dropped first."""
-    for rows in parsed.values(): drop_nulls(rows)
+    written = copy.deepcopy(parsed)   # coverage reads the answer as written, before normalization
+    for rows in parsed.values(): drop_nulls(rows); drop_defaults(rows)
     per_step = fold(goal, parsed)
     steps = goal['steps']
     whole = [f'step {i} ("{steps[i]["text"]}") has no entry' for i in range(len(steps)) if i not in parsed]
@@ -262,6 +290,6 @@ def check(goal, picks, parsed):
         elif broken := b.chain(rows, bool(b.body_of(steps, i))): problems.append(f'step {i} ("{steps[i]["text"]}") — {broken}')
         r, w = disagreements(i, rows, picks.get(i, {}), steps[i]['text'])
         problems += r; warnings += w
-        problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], rows)]
-        problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], rows)]
+        problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], written[i])]
+        problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], written[i])]
     return whole, {i: p for i, p in per_step.items() if p}, warnings
