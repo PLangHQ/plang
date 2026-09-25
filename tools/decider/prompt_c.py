@@ -271,6 +271,32 @@ def uncovered_literals(text, rows):
     lits = [m.group(1) if m.group(1) is not None else m.group(2) for m in LITERAL.finditer(text)]
     return [l for l in dict.fromkeys(lits) if l and not any(l in v for v in held)]
 
+NUMBER = re.compile(r'(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])')
+
+def numbers_of(rows):
+    """Every number the answer writes as a value — however deep (arguments, held actions, modifiers)."""
+    out = []
+    def walk(v):
+        if isinstance(v, bool): return
+        if isinstance(v, (int, float)): out.append(v)
+        elif isinstance(v, dict):
+            for x in v.values(): walk(x)
+        elif isinstance(v, list):
+            for x in v: walk(x)
+    for a in rows:
+        for r in a.get('property') or []: walk(r['value'])
+        for c in a.get('child') or []: out += numbers_of(c.get('action') or [])
+        out += numbers_of(a.get('modifier') or [])
+        for m in a.get('modifier') or []: out += numbers_of(m.get('recovery') or [])
+    return out
+
+def invented_numbers(text, rows):
+    """The numbers the answer writes that the step's text doesn't — an invented value (RetryCount=1 on a
+    step that retries nothing). A number is plang's own literal, like a quoted text; read after S1, so a
+    dropped default doesn't count."""
+    written = {float(n) for n in NUMBER.findall(text)}
+    return [n for n in dict.fromkeys(numbers_of(rows)) if float(n) not in written]
+
 WHOLE = ('has no entry', 'is extra', 'is labelled', 'has no index', 'is not an object')
 
 def check(goal, picks, parsed):
@@ -295,4 +321,6 @@ def check(goal, picks, parsed):
         problems += r; warnings += w
         problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], written[i])]
         problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], written[i])]
+        problems += [f'step {i}: your answer writes {n}, which the step doesn\'t — leave out what the step doesn\'t give'
+                     for n in invented_numbers(steps[i]['text'], rows)]
     return whole, {i: p for i, p in per_step.items() if p}, warnings
