@@ -151,14 +151,30 @@ def one(model, case, run):
     user = b.user_message(goal_of(case), menu_of(case))
     folder = os.path.join(OUT, model, case['id'])
     os.makedirs(folder, exist_ok=True)
+    started = time.time()
     try:
         raw = ask(model, user)
+        seconds = time.time() - started   # wall-clock of the call, retries included
         json.dump(raw, open(os.path.join(folder, f'{run}.raw.json'), 'w'), indent=1, ensure_ascii=False)
         answer, notes = answer_of(raw)
     except Exception as ex:
-        return model, case['id'], run, None, {-1: ([f'call/parse failed: {type(ex).__name__}: {ex}'], [])}, []
+        return model, case['id'], run, None, {-1: ([f'call/parse failed: {type(ex).__name__}: {ex}'], [])}, [], None, {}
     json.dump(answer, open(os.path.join(folder, f'{run}.answer.json'), 'w'), indent=1, ensure_ascii=False)
-    return model, case['id'], run, answer, score(case, answer), notes
+    return model, case['id'], run, answer, score(case, answer), notes, seconds, raw.get('usage') or {}
+
+# USD per 1M tokens (input, cached input, output) — the table OpenAi.cs prices a call with.
+PRICES = {'gpt-5.4-nano': (0.20, 0.02, 1.25), 'gpt-5.4-mini': (0.75, 0.075, 4.50), 'gpt-5.4': (2.50, 0.25, 15.00)}
+
+def cost(model, usage):
+    """One call's cost in USD, the way OpenAi.cs computes it: cached input at the cached rate."""
+    price_in, price_cached, price_out = PRICES[model]
+    prompt = usage.get('prompt_tokens', 0)
+    cached = (usage.get('prompt_tokens_details') or {}).get('cached_tokens', 0)
+    return ((prompt - cached) * price_in + cached * price_cached + usage.get('completion_tokens', 0) * price_out) / 1e6
+
+def percentile(values, p):
+    ordered = sorted(values)
+    return ordered[min(len(ordered) - 1, int(round(p * (len(ordered) - 1))))] if ordered else 0
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
@@ -170,7 +186,7 @@ if __name__ == '__main__':
     with cf.ThreadPoolExecutor(int(os.environ.get('WORKERS', 12))) as ex:
         for res in ex.map(lambda j: one(*j), jobs):
             results.append(res)
-            model, cid, run, _, sc, _ = res
+            model, cid, run, _, sc, _, _, _ = res
             ok = all(not m for m, _ in sc.values())
             print(f'{model:<14} {cid:<22} run {run}: {"YES" if ok else "NO"}', flush=True)
     # What the builder's checks would do with each answer: build.match + the action list's chain rule
@@ -180,7 +196,7 @@ if __name__ == '__main__':
     # body) is FIXED — the .pr comes out right with no retry.
     by_id = {c['id']: c for c in GOLDEN}
     summary = []
-    for m, c, r, a, sc, n in results:
+    for m, c, r, a, sc, n, seconds, usage in results:
         caught = b.match(goal_of(by_id[c]), a) if a is not None else ['no answer']
         normalized = score(by_id[c], b.normalize(goal_of(by_id[c]), copy.deepcopy(a))) if a is not None and not caught else {}
         steps = {}
@@ -188,11 +204,20 @@ if __name__ == '__main__':
             outcome = 'right' if not ms else 'caught' if caught else \
                       'fixed' if i in normalized and not normalized[i][0] else 'silent'
             steps[str(i)] = {'misses': ms, 'got': [short(x) for x in got], 'outcome': outcome}
-        summary.append({'model': m, 'case': c, 'run': r, 'notes': n, 'caught': caught, 'steps': steps})
+        summary.append({'model': m, 'case': c, 'run': r, 'notes': n, 'caught': caught, 'steps': steps,
+                        'seconds': seconds, 'usage': usage, 'cost': cost(m, usage) if usage else None})
     json.dump(summary, open(os.path.join(OUT, 'summary.json'), 'w'), indent=1, ensure_ascii=False)
     for model in MODELS:
-        count = collections.Counter(v['outcome'] for s in summary if s['model'] == model for v in s['steps'].values())
+        rows = [s for s in summary if s['model'] == model]
+        count = collections.Counter(v['outcome'] for s in rows for v in s['steps'].values())
         total = sum(count.values())
+        seconds = [s['seconds'] for s in rows if s['seconds'] is not None]
+        prompt = [s['usage'].get('prompt_tokens', 0) for s in rows if s['usage']]
+        answer = [s['usage'].get('completion_tokens', 0) for s in rows if s['usage']]
+        costs = [s['cost'] for s in rows if s['cost'] is not None]
         print(f'{model}: first-attempt {count["right"]}/{total} steps; caught (→ retry) {count["caught"]}; '
               f'fixed by the builder {count["fixed"]}; SILENT {count["silent"]}')
+        print(f'    latency s: median {percentile(seconds, .5):.1f}, p90 {percentile(seconds, .9):.1f}, max {max(seconds, default=0):.1f}'
+              f' | tokens: prompt median {percentile(prompt, .5)}, answer median {percentile(answer, .5)} (max {max(answer, default=0)})'
+              f' | cost per goal: median ${percentile(costs, .5):.5f}, total ${sum(costs):.4f}')
     print('wrote', OUT)
