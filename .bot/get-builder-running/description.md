@@ -1,10 +1,65 @@
 # get-builder-running — restore `plang build` end-to-end
 
-**Branch off:** `module-discovery` (carries the two fixes already landed). **Merge back into:** `module-discovery` when `plang build` completes a real build.
+**Branch off:** `module-discovery`. **Merge back into:** `module-discovery` when `plang build` completes a real build. The whole stack above runtime2 is linear (nothing moved after each child branched), so from there every level up to `runtime2` is a fast-forward:
+
+```
+runtime2 → scalars-flip-wip → scalars-as-native → compare-redesign-signature-wip → ireader-read-path
+  → settings-config-unification → cli-app-property-override → module-discovery → get-builder-running
+```
 
 ## Goal
 
-`plang build` is broken in a **chain** of pre-existing failures — each fix unmasks the next. Get it running end-to-end so the module-discovery Stage-4 work (the `.goal`→`.pr` rewire, 4e deletions, parity/sanity) can be validated live. This is build-infrastructure, **not** Stage-4 feature work — hence its own branch.
+`plang build` is broken in a **chain** of failures — each fix unmasks the next. Get it running end-to-end so the module-discovery Stage-4 work (the `.goal`→`.pr` rewire, 4e deletions, parity/sanity) can be validated live. This is build-infrastructure, **not** Stage-4 feature work — hence its own branch.
+
+## 2026-09-25 — `goal-graph-singular` merged in (fast-forward)
+
+The child branch `goal-graph-singular` (about 540 commits, 2026-07-17 → 2026-09-25) is merged in. It was opened to solve layer 4 and did far more: everything singular (graph, wire keys, handler parameters, `os/` goals); goal/step/action/modifier are items; items store no context; the program holds no Data (`action.Property` / `action.Default`); one name → one class in the type registry; the error model (`Error` is the one type, errors shown by `os/system/error/Show.goal` + templates); a loud `plang --test`. Its full record: `.bot/goal-graph-singular/architect/summary.md` and `.bot/goal-graph-singular/coder/open-items.md`.
+
+**The test baseline at the merge: `coder/baseline.md`** — every failing test by name, why, and which item owns it.
+
+## Start here
+
+**0. The builder's own `.pr` files are in an old format, so `plang build` cannot load itself.** The readers refuse old keys loudly (`PrFormatOutdated`), never load them empty. `os/system/builder/.build/build.pr:22` still says `"parameter"`. Bring the builder bootstrap set to the current format — by hand-editing (Ingi allowed it for these files in July) or by regenerating through the python pipeline (`tools/decider`). The set today: `os/system/builder/.build/{app,build,builderchannel,buildgoal,emitbuildevent}.pr` and `os/system/builder/BuildGoal/.build/start.pr` (the July list also named `BuildGoal/{llmfixer,plan,validate}` and `BuildStep/{start,validate}`, which no longer exist — verify by what boot actually loads).
+
+The current `.pr` keys (the readers: `goal/serializer/Reader.cs`, `goal/step/serializer/Reader.cs`, `goal/step/action/serializer/Reader.cs`):
+
+| level | current key | refused old key |
+|---|---|---|
+| goal | `step`, `child`, `tag` | `steps` |
+| step | `action` | `actions` |
+| action | `name` (not `action`), `property`, `default`, `modifier`, `recovery`, `child` | `parameter`, `parameters` |
+
+A condition's body is its **child** list (`action.Child`); the actions after it in the same step are the else-chain. When hand-building `if X, call Y`, the call goes in the if's `child`, not beside it (a sibling runs when the condition is FALSE).
+
+**Then the chain** (below), from layer 3.
+
+## The chain — state
+
+| # | Layer | State |
+|---|---|---|
+| 1 | CLI settings bind | ✅ FIXED on module-discovery (`c13532536`). Also: any `list<T>` setting now binds from the CLI (`43cfb6046`, e.g. `--test={"include":[…]}`, `--debug={"variables":[…]}`). |
+| 2 | Bootstrap NRE | ✅ FIXED on module-discovery (`a1908911f`) |
+| 3 | `Channel '"builder"' not found` — the generated channel lookup read `param.Peek()` (the quoted wire slice) | 🟡 FIX LANDED, NOT VERIFIED LIVE: the generator now reads the parsed value (`PLang.Generators/Emission/Action/this.cs:308-323`, `await __channelParam.Value()`). Verify once step 0 lets the builder load. |
+| 4 | `item.Create ⇄ type.Create` bounce | ✅ SOLVED by `goal-graph-singular` — the collection classes are gone; goal/step/action/modifier are items |
+| 5 | `error.Handle.Actions.Clr<actions.@this>()` | ✅ GONE — `error.handle` runs `Action.Recovery` (`module/action/error/handle.cs`) |
+| 6+ | unknown | each fix unmasks the next |
+
+## Open items that came with the merge
+
+From `.bot/goal-graph-singular/coder/open-items.md`:
+- **#12** — the builder has never built itself on the child branch; every builder `.pr` change there was a hand-edit.
+- **#21 (rest)** — every `Tests/` `.pr` is old format, so `plang --test` exits 1 ("N tests could not load … rebuild it") until the builder rebuilds them.
+- **#22** — the builder-flow change (action descriptions into stage 2, the menu holding actions, notes/examples in stage 3). With Ingi.
+- **#5b** — stale hashes in the builder's `.pr` files.
+- `os/system/modules/condition/if.examples.md` says "the call is its own action", which reads as a sibling — check it against the child rule above when the builder is revisited.
+
+Parked by Ingi (don't work on them): #18 snapshot (its six SnapshotWire reds), #23 security.
+
+## Discipline (do NOT skip)
+
+- **Baseline = revert + `dev.sh build` + run N×.** `git stash` on a clean/committed tree stashes NOTHING; the test-runner's incremental build may not propagate a production-source revert. One run each side is not a baseline. (See `memory/feedback_baseline_rebuild_discipline.md`.)
+- **Clean-rebuild before any `plang --test`/`plang build`** (stale-binary trap).
+- Fix at the CAUSE, in C# where possible (runtime takes effect immediately; `.goal` edits need a `.pr` rebuild that this very chain blocks).
 
 ## Repro
 
@@ -15,91 +70,6 @@ BIN=../PlangConsole/bin/Debug/net10.0/plang
 # rm -rf ../PlangConsole/bin ../PlangConsole/obj ../PLang/bin ../PLang/obj ... ; dotnet build ../PlangConsole
 $BIN build '--build={"files":["BuilderSanity/AddItem.goal"],"cache":false}'
 ```
-The `.pr` the runtime runs lives at `os/system/builder/.build/*.pr` (OsDirectory-redirected from `/system/builder/…`). Templates render live from disk; `.goal` edits need a rebuild to reach the `.pr` — which is exactly why this bootstrap chain matters.
-
-## The chain — state
-
-| # | Layer | Symptom | State |
-|---|---|---|---|
-| 1 | **CLI settings bind** | `--build={"files":[...]}` → `String cannot lower to this` at `setting/this.cs` | ✅ FIXED (`c13532536` on module-discovery) — `Build.Files` is now a plang `list<path>`; the walk stores it lazily, the consumer lifts each row via `row.Value<path>()` |
-| 2 | **Bootstrap NRE** | `NullReferenceException` at `this.cs:566` (`goalResult.Value() as clr<Goal>`!) | ✅ FIXED (`a1908911f` on module-discovery) — `GoalCall.LoadFromFile` (the PrPath path) now rides back as `clr<goal>`, matching the in-memory `Found()`; the kind-redesign (`4cb19476b`) had updated the dispatcher + memory path but not this one |
-| 3 | **`builder` channel not found** | `Channel 'builder' not found` at `EmitBuildEvent.goal:12` (`write out %msg% channel: "builder"`) | ❌ **NEXT — start here** |
-| 4 | **item.Create ⇄ type.Create bounce** | StackOverflow — NOT a Fluid-door bug; `item.Create` can't build a generic-only `IList<>` collection (`app.goal.steps.@this`) that `ContainerFamily` claims → infinite bounce | 🔎 ROOT-CAUSED (see below) — ruling requested from architect (`coder/to-architect.md`) |
-| 5 | **`error.Handle.Actions.Clr<actions.@this>()`** | `InvalidCastException: List\`1 cannot lower to this` at `error/handle.cs:100` — native list can't `.Clr` down to infra `actions.@this` | ❌ NEXT (unmasked when layer 4's bounce is cut) |
-| 6+ | unknown | — | each fix unmasks the next |
-
-### Layer 4 — ROOT-CAUSED (2026-07-17): `item.Create ⇄ type.Create` bounce, NOT a Fluid-door bug
-
-The door is only the *trigger*; the loop is in the type-system apex. Confirmed with a thread-static
-depth probe on `item.@this.Create` (FailFast at depth 60) → `raw = app.goal.steps.this`.
-
-**Trace** (`{% for step in goal.steps %}` over a `goal` that rides as a clr host):
-```
-PlangDoorAccessor.GetAsync(goalHost,"steps")  Fluid.cs:235
-→ clr.@this.Get → kind.@this.Get (* reflection) → kind.@this.Data(name, goal.Steps, …)
-→ new data.@this(…, steps.@this, …)  →  item.@this.Create(steps.@this)   ← bounce
-```
-`app.goal.steps.@this` (`goal/steps/this.cs:8`) is `IList<Step>, IContext` — **generic-only** `IList<Step>`,
-no non-generic `System.Collections.IList`. So `item.Create` (`type/item/this.cs:41`) skips its
-narrowing rungs (61–72 check non-generic `IDictionary`/`IList` + a few exact generics), falls to line 85
-`App.Type[steps.@this]`, which via `ContainerFamily` (`type/list/this.cs:332`, finds `IList<>`) returns a
-**synthetic** `type.@this("list","step")` — `ClrType` null → not `Creatable`. That entity's
-`type.Create` (`type/this.cs:316`) declines and re-calls the apex → **infinite bounce.** The asymmetry
-(*ContainerFamily claims it, the apex can't build it*) is the bug; it hits every gap collection
-(`HashSet<>`, `List<string>`, `IReadOnlyList<>`, …), not just `steps`.
-
-**Fix options + recommendation (A) written up for architect ruling:** `coder/to-architect.md`.
-Design question: does an infra `IList<X>+IContext` collection ride as a native plang `list` (narrow —
-option A/B) or a clr host (navigate — option C)?
-
-## Layer 3 — findings so far (the current front)
-
-`Build.goal:9` sets the channel up **before** `EmitBuildEvent` runs:
-```
-- set channel "builder" call BuilderChannel        # Build.goal:9
-- call EmitBuildEvent kind="build-path", …          # Build.goal:11  ← reached (trace confirms)
-```
-- The `.pr` is CORRECT — `build.pr` has `channel.set(Name="builder", Goal={name:"BuilderChannel", prPath:"/system/builder/.build/builderchannel.pr"})`. Not a stale-`.pr` problem.
-- `channel.set` (Build.goal:9) **runs** (the build reaches `Build.goal:11`, past `:9` — so `:9` didn't error).
-- Yet `EmitBuildEvent`'s `write out … channel:"builder"` → `ChannelNotFound`. `output.write` for a named channel uses `Channels.Resolve(name)` (returns null on miss → `ChannelNotFound`), NOT the no-op `Channel(name)` fallback.
-
-**Hypotheses to check (unverified):**
-1. `channel.set` (`app/module/action/channel/set.cs`) registers on a **different actor/context** than `EmitBuildEvent` reads. Build runs under `User.Context` (`build/this.cs:111`); check where `channel.set` registers vs where `output.write` resolves.
-2. The registered `builder` channel is a **goal channel that's `IsExecuting`** — `Resolve` (`channel/list/this.cs:110`) returns `null` for a goal channel with `IsExecuting == true`. A goal-backed channel writing to itself / re-entrancy could trip this.
-3. `BuilderChannel.pr` fails to load (another stale/missing system `.pr`), so `channel.set`'s goal binding is empty — but `:9` didn't error, so probably not.
-
-### ROOT-CAUSED (2026-07-17): channel name resolves to the UNPARSED raw `"builder"` (quotes included)
-
-The exact error is `Channel '"builder"' not found` — the lookup name carries the JSON quotes.
-Not IsExecuting, not a wrong actor, not stale `.pr`:
-- `.pr` param is clean: `emitbuildevent.pr` step[1] action[0] param[1] = `{name:"channel", type:{name:"text"}, value:"builder"}`.
-- `channel.set` registers `builder` (clean — `Name.Value().Clr<string>()`).
-- BUT the generated IChannel resolution (`app.module.action.output.Write.Action.g.cs:57`, emitted from
-  `PLang.Generators/Emission/Action/this.cs:287`) reads the name via **`param.Peek()?.ToString()`**.
-  `Peek()` returns the lazy source's RAW form — the wire slice `"builder"` WITH quotes, never parsed —
-  so `Channel.Resolve("\"builder\"")` (line 58) misses the registered `builder` → ChannelNotFound.
-
-**Candidate fix:** the generated `Resolve(...)` is **async** (`Task<(ICodeGenerated?, IError?)>`), so read the
-PARSED value: `(await param.Value())?.ToString()` instead of `.Peek()?.ToString()`. VERIFY first that
-`text.Value()` on this source yields clean `builder` (strips the wire quotes) — write a focused test that
-loads `emitbuildevent.pr` and inspects the channel param's `Peek()` vs `await Value()`. If `Value()` is
-clean, change the generator emission (netstandard2.0 — regenerate) at
-`PLang.Generators/Emission/Action/this.cs:287`. Then rebuild + re-run the repro.
-
-**Why it regressed:** the `Peek()` (raw, sync) approach assumed the param's raw IS the clean string; the
-born-native/lazy-source wire model makes `Peek()` the unparsed JSON slice. A general IChannel-named-write
-concern (any `write out %x% channel: "foo"`), not build-specific — check whether named-channel writes pass
-anywhere in the suite to gauge blast radius.
-
-(Earlier hypotheses — different actor, goal-channel IsExecuting, BuilderChannel.pr load — all traced and
-RULED OUT: registration is on the same User actor, the first write can't be IsExecuting, and channel.set
-reached `Build.goal:11` without erroring.)
-
-## Discipline (do NOT skip)
-
-- **Baseline = revert + `dev.sh build` + run N×.** `git stash` on a clean/committed tree stashes NOTHING; the test-runner's incremental build may not propagate a production-source revert. One run each side is not a baseline. (See `memory/feedback_baseline_rebuild_discipline.md`.)
-- **Clean-rebuild before any `plang --test`/`plang build`** (stale-binary trap).
-- Fix at the CAUSE, in C# where possible (runtime takes effect immediately; `.goal` edits need a `.pr` rebuild that this very chain blocks).
 
 ## Done =
 
