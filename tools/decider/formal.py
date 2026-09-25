@@ -1,88 +1,105 @@
 """Formal — a step's actions written as calls, and the two directions between it and the .pr rows.
 
-    [0] file.read(Path="orders/%orderId%.json"); variable.set(Name=%order%, Value=%!data%)
-    [3] goal.call(Name="Compile")
-        error.handle(RetryCount=2, Order="GoalFirst") { goal.call(Name="FixProperties") }
+    [0] file.read(Path: path = "orders/%orderId%.json"); variable.set(Name: variable = %order%, Value: item = %!data%)
+    [3] error.handle(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: text = "FixProperties")]) {
+            goal.call(Name: text = "Compile")
+        }
 
-Grammar (ours, strict — the programmer's language has no syntax, this notation does):
+Grammar (ours, strict — the programmer's language has no syntax, this notation does). Whitespace,
+new lines included, may sit between any two tokens.
 
-    step      = ["[" index "]"] line { NEWLINE indent line }
-    line      = action { ";" action }
-                  a line holding a modifier wraps the action written before it (its host);
-                  any other line continues the step's actions
-    action    = module "." name "(" [ prop { "," prop } ] ")" [ body ]
-    body      = "{" [ action { ";" action } ] "}"
-                  a condition's body is its child; a modifier's body is its recovery
-    prop      = Name "=" value
+    step      = ["[" index "]"] action { ";" action }
+    action    = module "." name "(" [ prop { "," prop } ] ")" [ "{" actions "}" ]
+    actions   = action { ";" action }
+    prop      = Name [ ":" type ] ( "=" | "?=" ) value         ?= : a frozen default
+    type      = name [ "<" kind ">" ]
     value     = "text" | number | true | false | null | %variable% | list | dict | action
     list      = "[" [ value { "," value } ] "]"
     dict      = "{" [ key ":" value { "," key ":" value } ] "}"      key = name | "text"
 
-A value's TYPE never comes from the answer: it is the property's declared type, or — where that is
-`item`, the open slot — the literal's own (a quoted text is text, 5 a number, a %variable% item). A
-dict given to a `list` property is its rows (goal.call's Parameter={to: %x%} → one row per key).
+`{ }` holds the actions an action contains: a condition's body (its child), or the one action a
+modifier wraps. A modifier's recovery is its `Recovery` property. Nesting gives the wrap order —
+`error.handle(…) { cache.wrap(…) { file.read(…) } }` — and the rows keep it outermost first in the
+wrapped action's `modifier` list.
+
+A value's TYPE never comes from the model. Written or not, it is the property's declared type, or —
+where that is `item`, the open slot — the written type if any, else the literal's own (a quoted text is
+text, 5 a number, a %variable% item). A type written against a declared one must equal it. A dict
+given to a `list` property is its rows (goal.call's Parameter={to: %x%} → one row per key); those rows
+carry no written types — a row's type is always its literal's.
 
     parse(text) -> [action rows]         one step
-    parse_answer(text) -> {index: rows}  a whole answer, one `[i]` line per step
-    write(rows) -> text                  the .pr rows back to formal — the .pr's formal line
+    parse_answer(text) -> {index: rows}  a whole answer, one `[i]` per step
+    write(rows) -> text                  the .pr rows back to formal, types always written
     is_formal(text) -> bool              a .goal step written in formal (parsed directly)
 """
 import json, re
 import build_pr as b
 
 CONDITIONS = {('condition', 'if'), ('condition', 'elseif'), ('condition', 'else')}
+RECOVERY = 'Recovery'   # a modifier's property holding the actions it runs when the wrapped action fails
+VARIABLE = re.compile(r'%[^%\s]+%')
 
 class FormalError(Exception):
     """Where the formal stops making sense: line and column (1-based) and what was expected."""
     def __init__(self, message, text, pos):
         self.line = text.count('\n', 0, pos) + 1
         self.col = pos - (text.rfind('\n', 0, pos) + 1) + 1
+        self.reason = message
         super().__init__(f'line {self.line}, column {self.col}: {message}')
 
 # ---------------------------------------------------------------- the catalogue
 def properties(module, name):
-    """{Name: type} the action declares — the catalogue's rows plus the actions it holds as values."""
-    props, _ = b.declared(module, name, held_actions=True)
-    return {n: p for n, p in props.items()}
+    """{Name: {type, options, …}} the action declares — the catalogue's rows, action- and goal-typed included."""
+    return dict(b.declared(module, name)[0])
 
 def is_modifier(module, name):
     return b.declared(module, name)[1]
 
+def takes_recovery(module, name):
+    return (module, name) == ('error', 'handle')
+
 def known(module, name):
     return b.handler_source(module, name) is not None
 
-def typed(declared, value):
-    """The row's type: the declared one, or for an open (`item`) slot the literal's own."""
-    if declared and declared != 'item':
-        m = re.fullmatch(r'(\w+)<(\w+)>', declared)
-        return {'name': m.group(1), 'kind': m.group(2)} if m else {'name': declared}
+def face(t):
+    """A row's type as formal writes it: `name` or `name<kind>`."""
+    return f'{t["name"]}<{t["kind"]}>' if t.get('kind') else t['name']
+
+def typed(declared, value, written=None):
+    """The row's type: the declared one; in an open (`item`) slot the written one, else the literal's."""
+    if declared and declared != 'item': return _split(declared)
+    if written: return _split(written)
     if isinstance(value, bool): return {'name': 'bool'}
     if isinstance(value, (int, float)): return {'name': 'number'}
     if isinstance(value, list): return {'name': 'list'}
-    if isinstance(value, dict): return {'name': 'dict'}
+    if isinstance(value, dict): return {'name': 'action'} if value.get('module') else {'name': 'dict'}
     if value is None: return {'name': 'item'}
     return {'name': 'item'} if VARIABLE.fullmatch(value) else {'name': 'text'}
 
-VARIABLE = re.compile(r'%[^%\s]+%')
+def _split(t):
+    m = re.fullmatch(r'(\w+)<(\w+)>', t)
+    return {'name': m.group(1), 'kind': m.group(2)} if m else {'name': t}
 
 # ---------------------------------------------------------------- reading
 class _Reader:
     def __init__(self, text):
         self.text, self.pos = text, 0
 
-    def fail(self, message):
+    def fail(self, message, at=None):
+        if at is not None: self.pos = at
         raise FormalError(message, self.text, self.pos)
 
-    def space(self, newlines=False):
-        while self.pos < len(self.text) and (self.text[self.pos] in ' \t\r' or (newlines and self.text[self.pos] == '\n')):
+    def space(self):
+        while self.pos < len(self.text) and self.text[self.pos] in ' \t\r\n':
             self.pos += 1
 
     def peek(self, s):
         self.space()
         return self.text.startswith(s, self.pos)
 
-    def take(self, s, newlines=False):
-        self.space(newlines)
+    def take(self, s):
+        self.space()
         if not self.text.startswith(s, self.pos): self.fail(f'expected `{s}`')
         self.pos += len(s)
 
@@ -97,67 +114,110 @@ class _Reader:
         self.space()
         return re.compile(r'[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(').match(self.text, self.pos) is not None
 
-    # action = module "." name "(" props ")" [ body ]
+    def at_end(self):
+        self.space()
+        return self.pos >= len(self.text)
+
+    def actions(self, closing=None):
+        """action { ";" action } — up to `closing` or the end."""
+        out = [self.action()]
+        while not (self.peek(closing) if closing else self.at_end()):
+            m = re.compile(r'([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*\(').match(self.text, self.pos)
+            if m and known(*m.groups()) and is_modifier(*m.groups()):
+                self.fail(f'`{m.group(1)}.{m.group(2)}` wraps the action it modifies: {m.group(1)}.{m.group(2)}(…) {{ action }}')
+            if not self.peek(';'):
+                self.fail(f'expected `;`{" or `" + closing + "`" if closing else ""}' + ('' if closing else ' or the end of the step'))
+            self.take(';')
+            out.append(self.action())
+        return out
+
+    # action = module "." name "(" props ")" [ "{" actions "}" ]
     def action(self):
+        self.space()
         start = self.pos
         module = self.ident(); self.take('.'); name = self.ident()
-        if not known(module, name):
-            self.pos = start; self.fail(f'`{module}.{name}` is not an action')
+        if not known(module, name): self.fail(f'`{module}.{name}` is not an action', start)
         declared = properties(module, name)
+        modifier = is_modifier(module, name)
         self.take('(')
-        rows = []
+        rows, recovery = [], None
         while not self.peek(')'):
-            self.space(True)
-            if self.pos >= len(self.text): self.fail(f'`{module}.{name}(` is not closed: expected `)`')
-            if rows: self.take(',', newlines=True)
-            self.space(True)
+            if self.at_end(): self.fail(f'`{module}.{name}(` is not closed: expected `)`')
+            if rows or recovery is not None: self.take(',')
+            self.space()
             at = self.pos
             prop = self.ident()
+            if prop == RECOVERY and takes_recovery(module, name):
+                if recovery is not None: self.fail(f'`{prop}` is given twice', at)
+                self.written_type(prop, 'list<action>')
+                self.take('=')
+                recovery = self.value()
+                if not (isinstance(recovery, list) and recovery and all(isinstance(x, dict) and x.get('module') for x in recovery)):
+                    self.fail(f'`{prop}` is a list of actions: [goal.call(Name="X")]', at)
+                continue
             if prop not in declared:
-                self.pos = at
-                self.fail(f'`{module}.{name}` has no property `{prop}` (it has {", ".join(declared) or "none"})')
-            if any(r['name'] == prop for r in rows):
-                self.pos = at; self.fail(f'`{prop}` is given twice')
-            self.take('=')
+                have = list(declared) + ([RECOVERY] if takes_recovery(module, name) else [])
+                self.fail(f'`{module}.{name}` has no property `{prop}` (it has {", ".join(have) or "none"})', at)
+            if any(r['name'] == prop for r in rows): self.fail(f'`{prop}` is given twice', at)
             rows.append(self.row(prop, declared[prop]))
-            self.space(True)
         self.take(')')
         act = {'module': module, 'name': name, 'property': rows, 'modifier': []}
+        if recovery is not None: act['recovery'] = recovery
+        brace = self.pos
         if self.peek('{'):
-            if not (is_modifier(module, name) or (module, name) in CONDITIONS):
-                self.fail(f'`{module}.{name}` takes no body: only a condition (its child) and a modifier (its recovery) do')
-            body = self.body()
-            if is_modifier(module, name): act['recovery'] = body
-            else: act['child'] = [{'text': write_actions(body), 'action': body}]
+            self.space(); brace = self.pos
+            if not (modifier or (module, name) in CONDITIONS):
+                self.fail(f'`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}')
+            self.take('{')
+            body = self.actions('}')
+            self.take('}')
+            if modifier:
+                if len(body) != 1:
+                    self.fail(f'`{module}.{name}` wraps one action; to wrap it in more modifiers, nest them', brace)
+                wrapped = body[0]
+                wrapped['modifier'] = [act] + wrapped.get('modifier', [])
+                return wrapped
+            # formal has no place for the body's words: the child's text is the body in formal
+            act['child'] = [{'text': write_actions(body, types=False), 'action': body}]
+        elif modifier:
+            self.fail(f'`{module}.{name}` is a modifier: it wraps an action — {module}.{name}(…) {{ action }}', start)
         return act
+
+    def written_type(self, prop, declared):
+        """An optional `: type` after the name. Against a declared type it must be that type."""
+        if not self.peek(':'): return None
+        self.take(':')
+        self.space()
+        at = self.pos
+        m = re.compile(r'\w+(<\w+>)?').match(self.text, self.pos)
+        if not m: self.fail('expected a type after `:`')
+        self.pos = m.end()
+        if declared and declared != 'item' and m.group() != declared:
+            self.fail(f'`{prop}` is {declared}, not {m.group()}', at)
+        return m.group()
 
     def row(self, prop, spec):
         declared = spec['type']
+        written = self.written_type(prop, declared)
+        self.space()
+        frozen = self.text.startswith('?=', self.pos)
+        self.take('?=' if frozen else '=')
+        self.space()
         at = self.pos
-        value = self.value(declared)
+        value = self.value()
         if spec.get('options') and value not in spec['options']:
-            self.pos = at
-            self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{value}` is not')
+            self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{value}` is not', at)
         if declared == 'variable' and not (isinstance(value, str) and VARIABLE.fullmatch(value)):
-            self.pos = at; self.fail(f'`{prop}` names a variable: write it with its % signs')
+            self.fail(f'`{prop}` names a variable: write it with its % signs', at)
         # A dict handed to a list property is its rows: Parameter={to: %x%} → [{name: to, …}].
         if declared.startswith('list') and isinstance(value, dict) and not value.get('module'):
             value = [{'name': k, 'type': typed('item', v), 'value': v} for k, v in value.items()]
-        return {'name': prop, 'type': typed(declared, value), 'value': value}
+        out = {'name': prop, 'type': typed(declared, value, written), 'value': value}
+        if frozen: out['frozen'] = True
+        return out
 
-    def body(self):
-        self.take('{')
-        actions = []
-        while not self.peek('}'):
-            if actions: self.take(';', newlines=True)
-            self.space(True)
-            actions.append(self.action())
-            self.space(True)
-        self.take('}')
-        return actions
-
-    def value(self, declared=None):
-        self.space(True)
+    def value(self):
+        self.space()
         t, p = self.text, self.pos
         if p >= len(t): self.fail('expected a value')
         c = t[p]
@@ -174,20 +234,20 @@ class _Reader:
         if c == '[':
             self.pos += 1; items = []
             while not self.peek(']'):
-                if items: self.take(',', newlines=True)
+                if self.at_end(): self.fail('a list is not closed: expected `]`')
+                if items: self.take(',')
                 items.append(self.value())
-                self.space(True)
             self.take(']')
             return items
         if c == '{':
             self.pos += 1; d = {}
             while not self.peek('}'):
-                if d: self.take(',', newlines=True)
-                self.space(True)
+                if self.at_end(): self.fail('a dict is not closed: expected `}`')
+                if d: self.take(',')
+                self.space()
                 key = self.value() if self.text.startswith('"', self.pos) else self.ident()
                 self.take(':')
                 d[key] = self.value()
-                self.space(True)
             self.take('}')
             return d
         m = re.compile(r'-?\d+(\.\d+)?(?![\w.])').match(t, p)
@@ -199,49 +259,21 @@ class _Reader:
         if self.at_action(): return self.action()
         self.fail('expected a value: "text", a number, true, false, null, %variable%, [list], {dict} or an action')
 
-def _host(actions):
-    """The action a modifier line wraps: the last action written before it."""
-    return actions[-1] if actions else None
-
 def parse(text):
     """One step's formal (without its [i]) → its action rows, in the .pr's own shape."""
     r = _Reader(text)
-    actions = []
-    first = True
-    while True:
-        r.space(True)
-        if r.pos >= len(r.text): break
-        line_start = r.text.rfind('\n', 0, r.pos) + 1
-        new_line = first or r.text[line_start:r.pos].strip() == ''
-        if not new_line:
-            r.take(';')
-            r.space(True)
-        first = False
-        r.space()
-        at = r.pos
-        act = r.action()
-        if is_modifier(act['module'], act['name']):
-            # A modifier is written on its own line, under the action it wraps.
-            if not new_line or r.text[line_start:at].strip() or line_start == 0 or _host(actions) is None:
-                r.pos = at; r.fail(f'`{act["module"]}.{act["name"]}` is a modifier: write it on the next line, under the action it wraps')
-            _host(actions)['modifier'].append(act)
-        else:
-            actions.append(act)
-        r.space()
-        if r.pos < len(r.text) and r.text[r.pos] not in ';\n':
-            r.fail('expected `;`, a new line or the end of the step')
-    if not actions: r.fail('a step holds at least one action')
-    return actions
+    if r.at_end(): r.fail('a step holds at least one action')
+    return r.actions()
 
 STEP = re.compile(r'^\[(\d+)\][ \t]*', re.M)
 
 def parse_answer(text):
-    """A whole answer: `[i] …` lines, each step's continuation lines indented under it → {i: rows}."""
+    """A whole answer: `[i] …` per step, its continuation lines under it → {i: rows}."""
     heads = list(STEP.finditer(text))
     if not heads:
         raise FormalError('expected `[i]` at the start of a step', text, 0)
-    lead = text[:heads[0].start()].strip()
-    if lead: raise FormalError('text before the first `[i]` step', text, 0)
+    if text[:heads[0].start()].strip():
+        raise FormalError('text before the first `[i]` step', text, 0)
     out = {}
     for n, h in enumerate(heads):
         end = heads[n + 1].start() if n + 1 < len(heads) else len(text)
@@ -250,8 +282,8 @@ def parse_answer(text):
         try:
             out[i] = parse(text[h.end():end].rstrip())
         except FormalError as e:
-            # Report the position in the whole answer, not in the step.
-            raise FormalError(str(e).split(': ', 1)[1], text, h.end() + _offset(text[h.end():end], e)) from None
+            # the position in the whole answer, not in the step
+            raise FormalError(e.reason, text, h.end() + _offset(text[h.end():end], e)) from None
     return out
 
 def _offset(text, e):
@@ -268,8 +300,7 @@ def is_formal(text):
         return False
 
 # ---------------------------------------------------------------- writing
-def write_value(v, t=None):
-    if isinstance(v, dict) and v.get('module'): return write_action(v)
+def _literal(v, t=None):
     if isinstance(v, bool): return 'true' if v else 'false'
     if v is None: return 'null'
     if isinstance(v, (int, float)): return repr(v)
@@ -279,39 +310,50 @@ def write_value(v, t=None):
         return json.dumps(v, ensure_ascii=False)
     if isinstance(v, list):
         if v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not r.get('module') for r in v):
-            return '{' + ', '.join(f'{_key(r["name"])}: {write_value(r["value"], r.get("type"))}' for r in v) + '}'
-        return '[' + ', '.join(write_value(x) for x in v) + ']'
+            return '{' + ', '.join(f'{_key(r["name"])}: {_literal(r["value"], r.get("type"))}' for r in v) + '}'
+        return '[' + ', '.join(_literal(x) for x in v) + ']'
     if isinstance(v, dict):
-        return '{' + ', '.join(f'{_key(k)}: {write_value(x)}' for k, x in v.items()) + '}'
+        return '{' + ', '.join(f'{_key(k)}: {_literal(x)}' for k, x in v.items()) + '}'
     raise TypeError(f'no formal for {v!r}')
 
 def _key(k):
     return k if re.fullmatch(r'[A-Za-z_]\w*', k) else json.dumps(k)
 
-def write_action(a):
-    props = ', '.join(f'{r["name"]}={write_value(r["value"], r.get("type"))}' for r in a.get('property') or [])
-    s = f'{a["module"]}.{a["name"]}({props})'
-    if a.get('child'):
-        s += ' { ' + '; '.join(write_action(x) for c in a['child'] for x in c.get('action') or []) + ' }'
+def write_value(v, t=None, types=True):
+    if isinstance(v, dict) and v.get('module'): return write_action(v, types)
+    if isinstance(v, list) and v and all(isinstance(x, dict) and x.get('module') for x in v):
+        return '[' + ', '.join(write_action(x, types) for x in v) + ']'
+    return _literal(v, t)
+
+def _head(a, types=True):
+    """module.name(Name: type = value, …) — every row with its type (types=False: the form the LLM
+    and a .goal step write, which the parser types)."""
+    def prop(name, t, op, value):
+        return f'{name}: {t} {op} {value}' if types else f'{name}{" ?=" if op == "?=" else "="}{value}'
+    props = [prop(r['name'], face(r['type']), '?=' if r.get('frozen') else '=', write_value(r['value'], r.get('type'), types))
+             for r in a.get('property') or []]
     if a.get('recovery'):
-        s += ' { ' + '; '.join(write_action(x) for x in a['recovery']) + ' }'
+        props.append(prop(RECOVERY, 'list<action>', '=', write_value(a['recovery'], None, types)))
+    return f'{a["module"]}.{a["name"]}({", ".join(props)})'
+
+def write_action(a, types=True):
+    """One action; a condition's body inline in { }, and each modifier wrapping it, outermost first,
+    the wrapped action on its own indented line."""
+    s = _head(a, types)
+    if a.get('child'):
+        s += ' { ' + '; '.join(write_action(x, types) for c in a['child'] for x in c.get('action') or []) + ' }'
+    for m in reversed(a.get('modifier') or []):
+        s = f'{_head(m, types)} {{\n    ' + s.replace('\n', '\n    ') + '\n}'
     return s
 
-def write_actions(actions):
-    return '; '.join(write_action(a) for a in actions)
+def write_actions(actions, types=True):
+    return '; '.join(write_action(a, types) for a in actions)
 
-def write(actions, indent='    '):
-    """One step's .pr rows → formal. An action that carries modifiers ends its line; each modifier
-    follows on its own line, indented under it; the actions after it continue on the next line."""
-    lines, current = [], []
-    for a in actions:
-        current.append(write_action(a))
-        if a.get('modifier'):
-            lines.append('; '.join(current)); current = []
-            lines += [write_action(m) for m in a['modifier']]
-    if current: lines.append('; '.join(current))
-    return ('\n' + indent).join(lines)
+def write(actions, types=True):
+    """One step's .pr rows → formal. The writer always writes types; types=False writes what the LLM
+    answers and what a programmer may write in a .goal, which the parser types on reading."""
+    return write_actions(actions, types)
 
-def write_answer(steps):
-    """{index: rows} → one `[i]` block per step, its continuation lines indented under it."""
-    return '\n'.join(f'[{i}] ' + write(rows) for i, rows in sorted(steps.items()))
+def write_answer(steps, indent='    ', types=True):
+    """{index: rows} → one `[i]` per step, its continuation lines indented under it."""
+    return '\n'.join(f'[{i}] ' + write(rows, types).replace('\n', '\n' + indent) for i, rows in sorted(steps.items()))

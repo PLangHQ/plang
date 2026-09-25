@@ -1,71 +1,74 @@
 # build
-[0] variable.set(Name=%path%, Value="/", AsDefault=true)
-[1] variable.set(Name=%!build.cache%, Value=true, AsDefault=true)
-[2] variable.set(Name=%!build.summary%, Value=true, AsDefault=true)
-[3] channel.set(Name="builder", Goal=goal.call(Name="BuilderChannel"))
-[4] goal.call(Name="EmitBuildEvent", Parameter={kind: "build-path", path: %path%})
-[5] build.load(); variable.set(Name=%app%, Value=%!data%)
-[6] build.goals(Path=%path%); variable.set(Name=%goals%, Value=%!data%)
-[7] goal.call(Name="EmitBuildEvent", Parameter={kind: "goals-found", goals: %goals%})
-[8] loop.foreach(Collection=%goals%); goal.call(Name="BuildGoal", Parameter={goal: %item%})
-[9] file.save(Path="/.build/traces/%!trace.id%/manifest.json", Value=%traceGoals%)
+[0] variable.set(Name: variable = %path%, Value: text = "/", AsDefault: bool = true)
+[1] variable.set(Name: variable = %!build.cache%, Value: bool = true, AsDefault: bool = true)
+[2] variable.set(Name: variable = %!build.summary%, Value: bool = true, AsDefault: bool = true)
+[3] channel.set(Name: text = "builder", Goal: action = goal.call(Name: text = "BuilderChannel"))
+[4] goal.call(Name: text = "EmitBuildEvent", Parameter: list = {kind: "build-path", path: %path%})
+[5] build.load(); variable.set(Name: variable = %app%, Value: item = %!data%)
+[6] build.goals(Path: path = %path%); variable.set(Name: variable = %goals%, Value: item = %!data%)
+[7] goal.call(Name: text = "EmitBuildEvent", Parameter: list = {kind: "goals-found", goals: %goals%})
+[8] loop.foreach(Collection: item = %goals%); goal.call(Name: text = "BuildGoal", Parameter: list = {goal: %item%})
+[9] file.save(Path: path = "/.build/traces/%!trace.id%/manifest.json", Value: item = %traceGoals%)
 [10] build.appSave()
 
 # start
-[0] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goalHeader", goal: %goal%})
-[1] variable.set(Name=%buildStart%, Value=%Now.Ticks%)
-[2] variable.set(Name=%trace%, Value="{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}")
-[3] goal.call(Name="Compile")
-    error.handle() { goal.call(Name="HandleBuildFailure") }
-[4] variable.set(Name=%trace.menu%, Value=%menu%)
-[5] variable.set(Name=%parentGoal%, Value=%goal%)
-[6] loop.foreach(Collection=%parentGoal.Child%); goal.call(Name="BuildSubGoal", Parameter={subGoal: %item%})
-[7] variable.set(Name=%goal%, Value=%parentGoal%)
-[8] math.subtract(A=%Now.Ticks%, B=%buildStart%); variable.set(Name=%elapsedTicks%, Value=%!data%)
-[9] math.divide(A=%elapsedTicks%, B=10000); variable.set(Name=%elapsedMs%, Value=%!data%)
-[10] variable.set(Name=%trace.durationMs%, Value=%elapsedMs%)
-[11] file.save(Path="/.build/traces/%!trace.id%/%goal.Name%.json", Value=%trace%)
-[12] list.add(ListName=%traceGoals%, Value=%goal.Name%)
-[13] build.fold(Goal=%goal%)
-    error.handle() { goal.call(Name="HandleBuildFailure") }
-[14] build.goalsSave(Goal=%goal%)
+[0] goal.call(Name: text = "/system/builder/EmitBuildEvent", Parameter: list = {kind: "goalHeader", goal: %goal%})
+[1] variable.set(Name: variable = %buildStart%, Value: item = %Now.Ticks%)
+[2] variable.set(Name: variable = %trace%, Value: text = "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}")
+[3] error.handle(Recovery: list<action> = [goal.call(Name: text = "HandleBuildFailure")]) {
+        goal.call(Name: text = "Compile")
+    }
+[4] variable.set(Name: variable = %trace.menu%, Value: item = %menu%)
+[5] variable.set(Name: variable = %parentGoal%, Value: item = %goal%)
+[6] loop.foreach(Collection: item = %parentGoal.Child%); goal.call(Name: text = "BuildSubGoal", Parameter: list = {subGoal: %item%})
+[7] variable.set(Name: variable = %goal%, Value: item = %parentGoal%)
+[8] math.subtract(A: item = %Now.Ticks%, B: item = %buildStart%); variable.set(Name: variable = %elapsedTicks%, Value: item = %!data%)
+[9] math.divide(A: item = %elapsedTicks%, B: number = 10000); variable.set(Name: variable = %elapsedMs%, Value: item = %!data%)
+[10] variable.set(Name: variable = %trace.durationMs%, Value: item = %elapsedMs%)
+[11] file.save(Path: path = "/.build/traces/%!trace.id%/%goal.Name%.json", Value: item = %trace%)
+[12] list.add(ListName: variable = %traceGoals%, Value: item = %goal.Name%)
+[13] error.handle(Recovery: list<action> = [goal.call(Name: text = "HandleBuildFailure")]) {
+        build.fold(Goal: goal = %goal%)
+    }
+[14] build.goalsSave(Goal: goal = %goal%)
 
 # decide
-[0] variable.set(Name=%threshold%, Value=0.5)
-[1] variable.set(Name=%modules%, Value=%!app.module.list%)
-[2] variable.set(Name=%state.goal%, Value=%goal.Name%)
-[3] loop.foreach(Collection=%goal.Step%); goal.call(Name="AddStepToState", Parameter={item: %step%})
-[4] loop.foreach(Collection=%modules%); goal.call(Name="AddModuleToState", Parameter={item: %module%})
-[5] ui.render(Template="/system/builder/llm/templates/deciderModuleQuestions.template"); variable.set(Name=%moduleQuestions%, Value=%!data%)
-[6] llm.decider(State=%state%, Question=%moduleQuestions%); variable.set(Name=%moduleAnswer%, Value=%!data%)
-[7] ui.render(Template="/system/builder/llm/templates/deciderActionQuestions.template"); variable.set(Name=%actionQuestions%, Value=%!data%)
-[8] llm.decider(State=%state%, Question=%actionQuestions%); variable.set(Name=%actionAnswer%, Value=%!data%)
-[9] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goal-decided", goal: %goal%})
+[0] variable.set(Name: variable = %threshold%, Value: number = 0.5)
+[1] variable.set(Name: variable = %modules%, Value: item = %!app.module.list%)
+[2] variable.set(Name: variable = %state.goal%, Value: item = %goal.Name%)
+[3] loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = "AddStepToState", Parameter: list = {item: %step%})
+[4] loop.foreach(Collection: item = %modules%); goal.call(Name: text = "AddModuleToState", Parameter: list = {item: %module%})
+[5] ui.render(Template: text = "/system/builder/llm/templates/deciderModuleQuestions.template"); variable.set(Name: variable = %moduleQuestions%, Value: item = %!data%)
+[6] llm.decider(State: dict = %state%, Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)
+[7] ui.render(Template: text = "/system/builder/llm/templates/deciderActionQuestions.template"); variable.set(Name: variable = %actionQuestions%, Value: item = %!data%)
+[8] llm.decider(State: dict = %state%, Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)
+[9] goal.call(Name: text = "/system/builder/EmitBuildEvent", Parameter: list = {kind: "goal-decided", goal: %goal%})
 
 # checkout
-[0] file.read(Path="orders/%orderId%.json"); variable.set(Name=%order%, Value=%!data%)
-[1] list.count(ListName=%order.items%); variable.set(Name=%itemCount%, Value=%!data%)
-[2] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }; condition.elseif(Left=%itemCount%, Operator="==", Right=1) { output.write(Data="One item") }; condition.else() { output.write(Data="%itemCount% items") }
-[3] condition.if(Left=%order.email%, Operator="notcontains", Right="@") { error.throw(Message="Invalid email address") }
-[4] condition.if(Left=%order.coupon%, Operator="isnotempty") { goal.call(Name="ApplyCoupon", Parameter={code: %order.coupon%, order: %order%}) }
-[5] condition.if(Left=%order.total%, Operator="isnot", Right="number") { error.throw(Message="The total must be a number") }
-[6] condition.if(Left=%order.country%, Operator="==", Right="IS") { variable.set(Name=%vat%, Value=0.24) }; condition.else() { variable.set(Name=%vat%, Value=0.25) }
-[7] math.multiply(A=%order.total%, B=%vat%); variable.set(Name=%vatAmount%, Value=%!data%)
-[8] condition.if(Left=%order.note%, Operator="notstartswith", Right="#") { list.add(ListName=%notes%, Value=%order.note%) }
-[9] output.write(Data="Total: %order.total%, VAT: %vatAmount%")
+[0] file.read(Path: path = "orders/%orderId%.json"); variable.set(Name: variable = %order%, Value: item = %!data%)
+[1] list.count(ListName: variable = %order.items%); variable.set(Name: variable = %itemCount%, Value: item = %!data%)
+[2] condition.if(Left: item = %itemCount%, Operator: choice<operator> = "==", Right: number = 0) { output.write(Data: text = "Your cart is empty") }; condition.elseif(Left: item = %itemCount%, Operator: choice<operator> = "==", Right: number = 1) { output.write(Data: text = "One item") }; condition.else() { output.write(Data: text = "%itemCount% items") }
+[3] condition.if(Left: item = %order.email%, Operator: choice<operator> = "notcontains", Right: text = "@") { error.throw(Message: text = "Invalid email address") }
+[4] condition.if(Left: item = %order.coupon%, Operator: choice<operator> = "isnotempty") { goal.call(Name: text = "ApplyCoupon", Parameter: list = {code: %order.coupon%, order: %order%}) }
+[5] condition.if(Left: item = %order.total%, Operator: choice<operator> = "isnot", Right: text = "number") { error.throw(Message: text = "The total must be a number") }
+[6] condition.if(Left: item = %order.country%, Operator: choice<operator> = "==", Right: text = "IS") { variable.set(Name: variable = %vat%, Value: number = 0.24) }; condition.else() { variable.set(Name: variable = %vat%, Value: number = 0.25) }
+[7] math.multiply(A: item = %order.total%, B: item = %vat%); variable.set(Name: variable = %vatAmount%, Value: item = %!data%)
+[8] condition.if(Left: item = %order.note%, Operator: choice<operator> = "notstartswith", Right: text = "#") { list.add(ListName: variable = %notes%, Value: item = %order.note%) }
+[9] output.write(Data: text = "Total: %order.total%, VAT: %vatAmount%")
 
 # weekly_report
-[0] file.list(Path="/logs", Pattern="*.log"); variable.set(Name=%files%, Value=%!data%)
-[1] variable.set(Name=%errors%, Value=[])
-[2] loop.foreach(Collection=%files%); goal.call(Name="ScanFile", Parameter={file: %item%})
-[3] condition.if(Left=%errors%, Operator="isempty")
-[4] output.write(Data="No errors this week")
+[0] file.list(Path: path = "/logs", Pattern: text = "*.log"); variable.set(Name: variable = %files%, Value: item = %!data%)
+[1] variable.set(Name: variable = %errors%, Value: list = [])
+[2] loop.foreach(Collection: item = %files%); goal.call(Name: text = "ScanFile", Parameter: list = {file: %item%})
+[3] condition.if(Left: item = %errors%, Operator: choice<operator> = "isempty")
+[4] output.write(Data: text = "No errors this week")
 [5] goal.return()
-[6] condition.if(Left=%files%, Operator="is", Right="list")
-[7] output.write(Data="Scanned the log files")
-[8] ui.render(Template="report.html", Parameter={errors: %errors%}); variable.set(Name=%html%, Value=%!data%)
-[9] file.save(Path="/reports/week.html", Value=%html%)
-[10] goal.call(Name="SendReport", Parameter={to: "ops@example.com", subject: "Weekly report"})
-    error.handle() { goal.call(Name="LogFailure") }
-[11] output.write(Data="Report sent", channel="log")
+[6] condition.if(Left: item = %files%, Operator: choice<operator> = "is", Right: text = "list")
+[7] output.write(Data: text = "Scanned the log files")
+[8] ui.render(Template: text = "report.html", Parameter: list = {errors: %errors%}); variable.set(Name: variable = %html%, Value: item = %!data%)
+[9] file.save(Path: path = "/reports/week.html", Value: item = %html%)
+[10] error.handle(Recovery: list<action> = [goal.call(Name: text = "LogFailure")]) {
+        goal.call(Name: text = "SendReport", Parameter: list = {to: "ops@example.com", subject: "Weekly report"})
+    }
+[11] output.write(Data: text = "Report sent", channel: text = "log")
 

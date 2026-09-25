@@ -2,7 +2,55 @@
 
 Branch `builder-formal`, python, no LLM calls. Code: `tools/decider/formal.py`. Check: `tools/decider/formal_check.py`. All 58 golden steps written in formal: `tools/decider/formal_golden.txt` (also at `/shared/coder/llm/plang/builder-formal/formal/formal_golden.txt`).
 
-## The notation
+## 2b — the notation revised (vision.md §4) — current
+
+**Types in the formal.** `Name: type = value`, the same shape as the signatures:
+- The writer always writes them.
+- They're optional in the LLM's answer and in a `.goal` step; the parser adds them.
+- A written type must equal a declared one (`file.read(Path: text = "x")` → "`Path` is path, not text").
+- In an open `item` slot, a written type wins (`Value: date = "2026-01-01"`); otherwise the literal's own applies.
+- A frozen default is `Name: type ?= value`, a `frozen: true` flag on the row.
+
+**A modifier wraps its action.** `{ }` always holds the actions an action contains: a condition's body, or the one action a modifier wraps. error.handle's recovery is its `Recovery` property. Nesting is the wrap order, kept outermost first in the wrapped action's `modifier` list:
+
+```
+[3] error.handle(Recovery: list<action> = [goal.call(Name: text = "HandleBuildFailure")]) {
+        goal.call(Name: text = "Compile")
+    }
+error.handle(Key="A", Recovery=[goal.call(Name="RA")]) { error.handle(Key="B", Recovery=[goal.call(Name="RB")]) { goal.call(Name="X") } }
+    → goal.call(X), modifier [A, B]
+```
+
+The next-line form is retired. Writing it now fails with the fix: "line 2, column 5: `error.handle` wraps the action it modifies: error.handle(…) { action }".
+
+**Grammar now:**
+
+```
+step      = ["[" index "]"] action { ";" action }          whitespace, new lines included, between any tokens
+action    = module "." name "(" [ prop { "," prop } ] ")" [ "{" action { ";" action } "}" ]
+prop      = Name [ ":" type ] ( "=" | "?=" ) value         type = name [ "<" kind ">" ]
+value     = "text" | number | true | false | null | %variable% | [list] | {dict} | action
+```
+
+**Results (`python3 formal_check.py`):**
+
+| check | result |
+|---|---|
+| round trip, **typed** (the writer's form) | **58/58** |
+| round trip, **untyped** (the LLM's / a programmer's form; the parser adds the types) | **58/58** |
+| a `.goal` step in untyped formal is recognised and parses to the LLM path's rows | **58/58** |
+| no natural step text read as formal | **0 of 58** |
+| the prompt-C mock `/shared/coder/2.0/checkout/expected.txt` | **10/10** |
+| `goal.return(Depth: number ?= 1)` → frozen → written back identical | same |
+| two nested error.handles → modifier order [A, B] → written back | same |
+
+**One choice of mine:** goal.call's argument rows (`Parameter: list = {kind: "goalHeader", goal: %goal%}`) carry no written types inside the dict. A row's type there is always its literal's (the slot is open), so it can't differ from what the parser derives, and `{k: v}` has no place for a type without a new mini-syntax. Tell me if you want `{kind: text = "goalHeader"}`.
+
+A condition's child text is its body's untyped formal (the open point from stage 2; no ruling yet, so it stands).
+
+The earlier stage-2 sections below describe the first notation (next-line modifiers, untyped writer). They are kept for the record.
+
+## The notation (stage 2, superseded by 2b)
 
 ```
 [3] goal.call(Name="Compile")

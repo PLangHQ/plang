@@ -80,19 +80,23 @@ def main():
         for k, expected in sorted(c['expect'].items(), key=lambda kv: int(kv[0])):
             total += 1
             rows = [rows_of(a) for a in expected]
-            text = f.write(rows)
-            answers[c['id']][int(k)] = text
-            try:
-                back = f.parse(text)
-            except f.FormalError as e:
-                failures.append(f'{c["id"]}[{k}] does not parse back: {e}\n      {text}'); continue
-            if d := diff(without_child_text(rows), without_child_text(back)):
-                failures.append(f'{c["id"]}[{k}] round trip differs at {d}\n      {text}')
-            for a, a2 in zip(rows, back):
-                for ch, ch2 in zip(a.get('child') or [], a2.get('child') or []):
-                    child_texts.append((f'{c["id"]}[{k}]', ch['text'], ch2['text']))
-            # 2. the step as a .goal line in formal, and the LLM path over the same answer as JSON
-            goal_line = text
+            # 1. both forms round-trip: the writer's (types written) and the untyped one the LLM
+            #    answers and a programmer may write — the parser adds the types.
+            for form, text in (('typed', f.write(rows)), ('untyped', f.write(rows, types=False))):
+                if form == 'typed': answers[c['id']][int(k)] = text
+                try:
+                    back = f.parse(text)
+                except f.FormalError as e:
+                    failures.append(f'{c["id"]}[{k}] {form} does not parse back: {e}\n      {text}'); continue
+                if d := diff(without_child_text(rows), without_child_text(back)):
+                    failures.append(f'{c["id"]}[{k}] {form} round trip differs at {d}\n      {text}')
+                if form == 'typed':
+                    for a, a2 in zip(rows, back):
+                        for ch, ch2 in zip(a.get('child') or [], a2.get('child') or []):
+                            child_texts.append((f'{c["id"]}[{k}]', ch['text'], ch2['text']))
+            # 2. the step as a .goal line in formal (untyped, as a programmer writes it), against the
+            #    LLM path over the same answer as JSON
+            goal_line = f.write(rows, types=False)
             if not f.is_formal(goal_line):
                 failures.append(f'{c["id"]}[{k}] written in formal is not recognised as formal')
             llm = [b.pr_action(json.loads(json.dumps(a))) for a in rows]
@@ -117,13 +121,31 @@ def main():
         except f.FormalError as e:
             mock = [('parse', str(e))]
 
+    # 3b. the notation's own cases, not in the golden: a frozen default, nested modifiers (outermost
+    #     first in the wrapped action's modifier list), an explicit type in an open slot
+    own = {}
+    for text in ['goal.return(Depth: number ?= 1)',
+                 'error.handle(Key="A", Recovery=[goal.call(Name="RA")]) { error.handle(Key="B", Recovery=[goal.call(Name="RB")]) { goal.call(Name="X") } }',
+                 'variable.set(Name=%d%, Value: date = "2026-01-01")']:
+        try:
+            rows = f.parse(text)
+            again = f.parse(f.write(rows))
+            own[text] = ('same' if not diff(rows, again) else 'DIFFERS: ' + diff(rows, again)), f.write(rows), rows
+        except f.FormalError as e:
+            own[text] = ('ERROR ' + str(e), '', None)
+
     # 4. errors name the line and column
     errors = {}
-    for bad in ['file.read(Path="x")\n    variable.set(Name=%y% Value=%!data%)',
+    for bad in ['file.read(Path="x"); variable.set(Name=%y% Value=%!data%)',
+                'file.read(Path="x")\n    variable.set(Name=%y%, Value=%!data%)',
                 'file.read(Pth="x")',
+                'file.read(Path: text = "x")',
                 'condition.if(Left=%n%, Operator="less", Right=5)',
                 'variable.set(Name="y", Value=1)',
-                'error.handle() { goal.call(Name="X") }',
+                'goal.call(Name="X")\n    error.handle() { goal.call(Name="Y") }',
+                'error.handle(Recovery=[goal.call(Name="Y")])',
+                'error.handle() { goal.call(Name="X"); goal.call(Name="Y") }',
+                'error.handle(Recovery="Y") { goal.call(Name="X") }',
                 'goal.call(Name="X") { output.write(Data="y") }',
                 'file.read(Path="x"',
                 'nope.nothing()']:
@@ -140,6 +162,13 @@ def main():
         bad = [(k, d) for k, d in mock if d]
         print(f'\nmock answer {MOCK}: {len(mock) - len(bad)}/{len(mock)} steps equal the golden rows')
         for k, d in bad: print(f'   step {k}: {d}')
+    print('\nthe notation\'s own cases:')
+    for text, (verdict, written, rows) in own.items():
+        print(f'   {text}\n      -> {verdict}; written back: {written!r}')
+        if rows and 'error.handle' in text:
+            print(f'      wrapped: {rows[0]["module"]}.{rows[0]["name"]}, modifier keys in order: '
+                  + ', '.join(next(r["value"] for r in m["property"] if r["name"] == "Key") for m in rows[0]["modifier"]))
+        if rows and 'frozen' in json.dumps(rows): print('      frozen:', [r for r in rows[0]['property'] if r.get('frozen')])
     print('\nparse errors:')
     for t, e in errors.items(): print(f'   {t!r}\n      -> {e}')
     out = os.path.join(HERE, 'formal_golden.txt')
