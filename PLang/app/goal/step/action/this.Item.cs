@@ -46,6 +46,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await new global::app.type.item.kind.reflection.@this(context).Output(this, writer, mode, context);
             return;
         }
+        if (writer is global::app.channel.serializer.formal.Writer formal)
+        {
+            await Formal(formal, mode, context);
+            return;
+        }
         writer.BeginObject();
         writer.Name("module"); writer.String(Module.Name);
         writer.Name("name"); writer.String(Name);
@@ -74,5 +79,45 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await Recovery.Output(writer, mode, context);   // action.list writes its own bare array
         }
         writer.EndObject();
+    }
+
+    /// <summary>The action in formal. Each modifier wraps it, outermost first — its call, then the
+    /// wrapped action on its own line one level in; then the action's own call; a condition's body inline
+    /// after it (<c>{ a; b }</c>).</summary>
+    private async System.Threading.Tasks.ValueTask Formal(global::app.channel.serializer.formal.Writer writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        foreach (var m in Modifier)
+        {
+            await m.Call(writer, mode, context);
+            writer.BeginWrap();
+        }
+        await Call(writer, mode, context);
+        if (Child.Count > 0)
+        {
+            writer.BeginBody();
+            foreach (var step in Child.Items())
+                foreach (var action in step.Action.Items()) await action.Output(writer, mode, context);
+            writer.EndBody();
+        }
+        for (var i = 0; i < Modifier.Count; i++) writer.EndWrap();
+    }
+
+    /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties, its frozen defaults
+    /// (<c>?=</c>), and a modifier's Recovery (<c>Recovery: list&lt;action&gt; = [a, b]</c>).</summary>
+    private async System.Threading.Tasks.ValueTask Call(global::app.channel.serializer.formal.Writer writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        writer.BeginCall(Module.Name, Name);
+        foreach (var p in Property) await p.Row(writer, frozen: false, mode, context);
+        foreach (var p in Default) await p.Row(writer, frozen: true, mode, context);
+        if (Recovery.Count > 0)
+        {
+            writer.Row("Recovery", "list<action>");
+            writer.BeginArray((int)Recovery.Count);
+            foreach (var action in Recovery.Items()) await action.Output(writer, mode, context);
+            writer.EndArray();
+        }
+        writer.EndCall();
     }
 }

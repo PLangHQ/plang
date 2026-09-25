@@ -79,6 +79,11 @@ public sealed class @this
     public async System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
+        if (writer is global::app.channel.serializer.formal.Writer formal)
+        {
+            await Row(formal, frozen: false, mode, context);
+            return;
+        }
         writer.BeginObject();
         writer.Name("name");
         writer.String(Name);
@@ -101,6 +106,16 @@ public sealed class @this
             writer.EndObject();
         }
         writer.EndObject();
+    }
+
+    /// <summary>The property's formal row — <c>Name: type = value</c>, or <c>Name: type ?= value</c> when
+    /// it is a frozen default (an action's <c>Default</c> row). The type is written whole, its kind in
+    /// angle brackets; the value writes itself.</summary>
+    public async System.Threading.Tasks.ValueTask Row(global::app.channel.serializer.formal.Writer writer,
+        bool frozen, global::app.View mode, global::app.actor.context.@this? context)
+    {
+        writer.Row(Name, Type.Kind is { } kind ? $"{Type.Name}<{kind.Name}>" : Type.Name, frozen);
+        await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
     }
 
     /// <summary>The run's own Data over this property — born with the run's context, the bag its own copy.</summary>

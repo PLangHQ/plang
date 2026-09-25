@@ -203,7 +203,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // registry), keyed by format. Only formats that DIVERGE from the default token form are
     // listed; text is here because a list has no plain-text form (renders as json).
     private static readonly System.Collections.Generic.Dictionary<string, global::app.channel.serializer.IOutput> _formats
-        = new() { ["text"] = new format.text() };
+        = new() { ["text"] = new format.text(), [global::app.channel.serializer.formal.Writer.Token] = new format.formal() };
 
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,

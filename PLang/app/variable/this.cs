@@ -259,5 +259,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Bare wire form: the raw reference as emitted, so a re-read
     /// reconstructs the same Name and WasPercentWrapped via <see cref="Convert"/>.</summary>
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(RawValue);
+    public override void Write(global::app.channel.serializer.IWriter w)
+    {
+        // In formal a variable is written bare, always with its % signs: `Name: variable = %content%`.
+        if (w.Format == global::app.channel.serializer.formal.Writer.Token) { w.Raw($"%{Name}%"); return; }
+        w.String(RawValue);
+    }
 }

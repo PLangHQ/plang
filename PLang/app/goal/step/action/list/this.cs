@@ -154,6 +154,14 @@ public sealed class @this : global::app.type.item.list.@this<Action>
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
+        // In formal a step's actions are one line: `a; b`.
+        if (writer is global::app.channel.serializer.formal.Writer formal)
+        {
+            formal.BeginActions();
+            for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
+            formal.EndActions();
+            return;
+        }
         writer.BeginArray((int)Count);
         for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
         writer.EndArray();

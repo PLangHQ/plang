@@ -1,0 +1,2512 @@
+[
+ {
+  "goal": "build",
+  "index": 0,
+  "text": "set default %path% = \"/\"",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%path%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "text"
+      },
+      "value": "/"
+     },
+     {
+      "name": "AsDefault",
+      "type": {
+       "name": "bool"
+      },
+      "value": true
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %path%, Value: text = \"/\", AsDefault: bool = true)",
+  "untyped": "variable.set(Name=%path%, Value=\"/\", AsDefault=true)"
+ },
+ {
+  "goal": "build",
+  "index": 1,
+  "text": "set default %!build.cache% = true",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%!build.cache%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "bool"
+      },
+      "value": true
+     },
+     {
+      "name": "AsDefault",
+      "type": {
+       "name": "bool"
+      },
+      "value": true
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %!build.cache%, Value: bool = true, AsDefault: bool = true)",
+  "untyped": "variable.set(Name=%!build.cache%, Value=true, AsDefault=true)"
+ },
+ {
+  "goal": "build",
+  "index": 2,
+  "text": "set default %!build.summary% = true",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%!build.summary%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "bool"
+      },
+      "value": true
+     },
+     {
+      "name": "AsDefault",
+      "type": {
+       "name": "bool"
+      },
+      "value": true
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %!build.summary%, Value: bool = true, AsDefault: bool = true)",
+  "untyped": "variable.set(Name=%!build.summary%, Value=true, AsDefault=true)"
+ },
+ {
+  "goal": "build",
+  "index": 3,
+  "text": "set channel \"builder\" call BuilderChannel",
+  "pr": [
+   {
+    "module": "channel",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "builder"
+     },
+     {
+      "name": "Goal",
+      "type": {
+       "name": "action"
+      },
+      "value": {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuilderChannel"
+        }
+       ],
+       "modifier": []
+      }
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "channel.set(Name: text = \"builder\", Goal: action = goal.call(Name: text = \"BuilderChannel\"))",
+  "untyped": "channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))"
+ },
+ {
+  "goal": "build",
+  "index": 4,
+  "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "EmitBuildEvent"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "kind",
+        "type": {
+         "name": "text"
+        },
+        "value": "build-path"
+       },
+       {
+        "name": "path",
+        "type": {
+         "name": "item"
+        },
+        "value": "%path%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "goal.call(Name: text = \"EmitBuildEvent\", Parameter: list = {kind: text = \"build-path\", path: item = %path%})",
+  "untyped": "goal.call(Name=\"EmitBuildEvent\", Parameter={kind: \"build-path\", path: %path%})"
+ },
+ {
+  "goal": "build",
+  "index": 5,
+  "text": "build.load, write to %app%",
+  "pr": [
+   {
+    "module": "build",
+    "name": "load",
+    "property": [],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%app%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "build.load(); variable.set(Name: variable = %app%, Value: item = %!data%)",
+  "untyped": "build.load(); variable.set(Name=%app%, Value=%!data%)"
+ },
+ {
+  "goal": "build",
+  "index": 6,
+  "text": "build.goals path=%path%, write to %goals%",
+  "pr": [
+   {
+    "module": "build",
+    "name": "goals",
+    "property": [
+     {
+      "name": "Path",
+      "type": {
+       "name": "path"
+      },
+      "value": "%path%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%goals%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "build.goals(Path: path = %path%); variable.set(Name: variable = %goals%, Value: item = %!data%)",
+  "untyped": "build.goals(Path=%path%); variable.set(Name=%goals%, Value=%!data%)"
+ },
+ {
+  "goal": "build",
+  "index": 7,
+  "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "EmitBuildEvent"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "kind",
+        "type": {
+         "name": "text"
+        },
+        "value": "goals-found"
+       },
+       {
+        "name": "goals",
+        "type": {
+         "name": "item"
+        },
+        "value": "%goals%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "goal.call(Name: text = \"EmitBuildEvent\", Parameter: list = {kind: text = \"goals-found\", goals: item = %goals%})",
+  "untyped": "goal.call(Name=\"EmitBuildEvent\", Parameter={kind: \"goals-found\", goals: %goals%})"
+ },
+ {
+  "goal": "build",
+  "index": 8,
+  "text": "foreach %goals%, call BuildGoal goal=%item%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item"
+      },
+      "value": "%goals%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "BuildGoal"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "goal",
+        "type": {
+         "name": "item"
+        },
+        "value": "%item%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %goals%); goal.call(Name: text = \"BuildGoal\", Parameter: list = {goal: item = %item%})",
+  "untyped": "loop.foreach(Collection=%goals%); goal.call(Name=\"BuildGoal\", Parameter={goal: %item%})"
+ },
+ {
+  "goal": "build",
+  "index": 9,
+  "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+  "pr": [
+   {
+    "module": "file",
+    "name": "save",
+    "property": [
+     {
+      "name": "Path",
+      "type": {
+       "name": "path"
+      },
+      "value": "/.build/traces/%!trace.id%/manifest.json"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%traceGoals%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "file.save(Path: path = \"/.build/traces/%!trace.id%/manifest.json\", Value: item = %traceGoals%)",
+  "untyped": "file.save(Path=\"/.build/traces/%!trace.id%/manifest.json\", Value=%traceGoals%)"
+ },
+ {
+  "goal": "build",
+  "index": 10,
+  "text": "build.appSave",
+  "pr": [
+   {
+    "module": "build",
+    "name": "appSave",
+    "property": [],
+    "modifier": []
+   }
+  ],
+  "formal": "build.appSave()",
+  "untyped": "build.appSave()"
+ },
+ {
+  "goal": "start",
+  "index": 0,
+  "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "/system/builder/EmitBuildEvent"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "kind",
+        "type": {
+         "name": "text"
+        },
+        "value": "goalHeader"
+       },
+       {
+        "name": "goal",
+        "type": {
+         "name": "item"
+        },
+        "value": "%goal%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "goal.call(Name: text = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goalHeader\", goal: item = %goal%})",
+  "untyped": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalHeader\", goal: %goal%})"
+ },
+ {
+  "goal": "start",
+  "index": 1,
+  "text": "set %buildStart% = %Now.Ticks%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%buildStart%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%Now.Ticks%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %buildStart%, Value: item = %Now.Ticks%)",
+  "untyped": "variable.set(Name=%buildStart%, Value=%Now.Ticks%)"
+ },
+ {
+  "goal": "start",
+  "index": 2,
+  "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%trace%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "text"
+      },
+      "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %trace%, Value: text = \"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": %goal%, \\\"menu\\\": null, \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")",
+  "untyped": "variable.set(Name=%trace%, Value=\"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": %goal%, \\\"menu\\\": null, \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")"
+ },
+ {
+  "goal": "start",
+  "index": 3,
+  "text": "call Compile, on error call HandleBuildFailure",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "Compile"
+     }
+    ],
+    "modifier": [
+     {
+      "module": "error",
+      "name": "handle",
+      "property": [],
+      "modifier": [],
+      "recovery": [
+       {
+        "module": "goal",
+        "name": "call",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "text"
+          },
+          "value": "HandleBuildFailure"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "error.handle(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")]) {\n    goal.call(Name: text = \"Compile\")\n}",
+  "untyped": "error.handle(Recovery=[goal.call(Name=\"HandleBuildFailure\")]) {\n    goal.call(Name=\"Compile\")\n}"
+ },
+ {
+  "goal": "start",
+  "index": 4,
+  "text": "set %trace.menu% = %menu%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%trace.menu%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%menu%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %trace.menu%, Value: item = %menu%)",
+  "untyped": "variable.set(Name=%trace.menu%, Value=%menu%)"
+ },
+ {
+  "goal": "start",
+  "index": 5,
+  "text": "set %parentGoal% = %goal%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%parentGoal%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%goal%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %parentGoal%, Value: item = %goal%)",
+  "untyped": "variable.set(Name=%parentGoal%, Value=%goal%)"
+ },
+ {
+  "goal": "start",
+  "index": 6,
+  "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item"
+      },
+      "value": "%parentGoal.Child%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "BuildSubGoal"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "subGoal",
+        "type": {
+         "name": "item"
+        },
+        "value": "%item%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %parentGoal.Child%); goal.call(Name: text = \"BuildSubGoal\", Parameter: list = {subGoal: item = %item%})",
+  "untyped": "loop.foreach(Collection=%parentGoal.Child%); goal.call(Name=\"BuildSubGoal\", Parameter={subGoal: %item%})"
+ },
+ {
+  "goal": "start",
+  "index": 7,
+  "text": "set %goal% = %parentGoal%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%goal%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%parentGoal%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %goal%, Value: item = %parentGoal%)",
+  "untyped": "variable.set(Name=%goal%, Value=%parentGoal%)"
+ },
+ {
+  "goal": "start",
+  "index": 8,
+  "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
+  "pr": [
+   {
+    "module": "math",
+    "name": "subtract",
+    "property": [
+     {
+      "name": "A",
+      "type": {
+       "name": "item"
+      },
+      "value": "%Now.Ticks%"
+     },
+     {
+      "name": "B",
+      "type": {
+       "name": "item"
+      },
+      "value": "%buildStart%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%elapsedTicks%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "math.subtract(A: item = %Now.Ticks%, B: item = %buildStart%); variable.set(Name: variable = %elapsedTicks%, Value: item = %!data%)",
+  "untyped": "math.subtract(A=%Now.Ticks%, B=%buildStart%); variable.set(Name=%elapsedTicks%, Value=%!data%)"
+ },
+ {
+  "goal": "start",
+  "index": 9,
+  "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
+  "pr": [
+   {
+    "module": "math",
+    "name": "divide",
+    "property": [
+     {
+      "name": "A",
+      "type": {
+       "name": "item"
+      },
+      "value": "%elapsedTicks%"
+     },
+     {
+      "name": "B",
+      "type": {
+       "name": "number"
+      },
+      "value": 10000
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%elapsedMs%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "math.divide(A: item = %elapsedTicks%, B: number = 10000); variable.set(Name: variable = %elapsedMs%, Value: item = %!data%)",
+  "untyped": "math.divide(A=%elapsedTicks%, B=10000); variable.set(Name=%elapsedMs%, Value=%!data%)"
+ },
+ {
+  "goal": "start",
+  "index": 10,
+  "text": "set %trace.durationMs% = %elapsedMs%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%trace.durationMs%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%elapsedMs%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %trace.durationMs%, Value: item = %elapsedMs%)",
+  "untyped": "variable.set(Name=%trace.durationMs%, Value=%elapsedMs%)"
+ },
+ {
+  "goal": "start",
+  "index": 11,
+  "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+  "pr": [
+   {
+    "module": "file",
+    "name": "save",
+    "property": [
+     {
+      "name": "Path",
+      "type": {
+       "name": "path"
+      },
+      "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%trace%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "file.save(Path: path = \"/.build/traces/%!trace.id%/%goal.Name%.json\", Value: item = %trace%)",
+  "untyped": "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\", Value=%trace%)"
+ },
+ {
+  "goal": "start",
+  "index": 12,
+  "text": "add %goal.Name% to %traceGoals%",
+  "pr": [
+   {
+    "module": "list",
+    "name": "add",
+    "property": [
+     {
+      "name": "ListName",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%traceGoals%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%goal.Name%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "list.add(ListName: variable = %traceGoals%, Value: item = %goal.Name%)",
+  "untyped": "list.add(ListName=%traceGoals%, Value=%goal.Name%)"
+ },
+ {
+  "goal": "start",
+  "index": 13,
+  "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
+  "pr": [
+   {
+    "module": "build",
+    "name": "fold",
+    "property": [
+     {
+      "name": "Goal",
+      "type": {
+       "name": "goal"
+      },
+      "value": "%goal%"
+     }
+    ],
+    "modifier": [
+     {
+      "module": "error",
+      "name": "handle",
+      "property": [],
+      "modifier": [],
+      "recovery": [
+       {
+        "module": "goal",
+        "name": "call",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "text"
+          },
+          "value": "HandleBuildFailure"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "error.handle(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")]) {\n    build.fold(Goal: goal = %goal%)\n}",
+  "untyped": "error.handle(Recovery=[goal.call(Name=\"HandleBuildFailure\")]) {\n    build.fold(Goal=%goal%)\n}"
+ },
+ {
+  "goal": "start",
+  "index": 14,
+  "text": "build.goalsSave Goal=%goal%",
+  "pr": [
+   {
+    "module": "build",
+    "name": "goalsSave",
+    "property": [
+     {
+      "name": "Goal",
+      "type": {
+       "name": "goal"
+      },
+      "value": "%goal%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "build.goalsSave(Goal: goal = %goal%)",
+  "untyped": "build.goalsSave(Goal=%goal%)"
+ },
+ {
+  "goal": "decide",
+  "index": 0,
+  "text": "set %threshold% = 0.5",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%threshold%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "number"
+      },
+      "value": 0.5
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %threshold%, Value: number = 0.5)",
+  "untyped": "variable.set(Name=%threshold%, Value=0.5)"
+ },
+ {
+  "goal": "decide",
+  "index": 1,
+  "text": "set %modules% = %!app.module.list%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%modules%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!app.module.list%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %modules%, Value: item = %!app.module.list%)",
+  "untyped": "variable.set(Name=%modules%, Value=%!app.module.list%)"
+ },
+ {
+  "goal": "decide",
+  "index": 2,
+  "text": "set %state.goal% = %goal.Name%",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%state.goal%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%goal.Name%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %state.goal%, Value: item = %goal.Name%)",
+  "untyped": "variable.set(Name=%state.goal%, Value=%goal.Name%)"
+ },
+ {
+  "goal": "decide",
+  "index": 3,
+  "text": "foreach %goal.Step%, call AddStepToState item=%step%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item"
+      },
+      "value": "%goal.Step%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "AddStepToState"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "item",
+        "type": {
+         "name": "item"
+        },
+        "value": "%step%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = \"AddStepToState\", Parameter: list = {item: item = %step%})",
+  "untyped": "loop.foreach(Collection=%goal.Step%); goal.call(Name=\"AddStepToState\", Parameter={item: %step%})"
+ },
+ {
+  "goal": "decide",
+  "index": 4,
+  "text": "foreach %modules%, call AddModuleToState item=%module%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item"
+      },
+      "value": "%modules%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "AddModuleToState"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "item",
+        "type": {
+         "name": "item"
+        },
+        "value": "%module%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %modules%); goal.call(Name: text = \"AddModuleToState\", Parameter: list = {item: item = %module%})",
+  "untyped": "loop.foreach(Collection=%modules%); goal.call(Name=\"AddModuleToState\", Parameter={item: %module%})"
+ },
+ {
+  "goal": "decide",
+  "index": 5,
+  "text": "render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%",
+  "pr": [
+   {
+    "module": "ui",
+    "name": "render",
+    "property": [
+     {
+      "name": "Template",
+      "type": {
+       "name": "text"
+      },
+      "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%moduleQuestions%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "ui.render(Template: text = \"/system/builder/llm/templates/deciderModuleQuestions.template\"); variable.set(Name: variable = %moduleQuestions%, Value: item = %!data%)",
+  "untyped": "ui.render(Template=\"/system/builder/llm/templates/deciderModuleQuestions.template\"); variable.set(Name=%moduleQuestions%, Value=%!data%)"
+ },
+ {
+  "goal": "decide",
+  "index": 6,
+  "text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%",
+  "pr": [
+   {
+    "module": "llm",
+    "name": "decider",
+    "property": [
+     {
+      "name": "State",
+      "type": {
+       "name": "dict"
+      },
+      "value": "%state%"
+     },
+     {
+      "name": "Question",
+      "type": {
+       "name": "dict"
+      },
+      "value": "%moduleQuestions%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%moduleAnswer%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "llm.decider(State: dict = %state%, Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)",
+  "untyped": "llm.decider(State=%state%, Question=%moduleQuestions%); variable.set(Name=%moduleAnswer%, Value=%!data%)"
+ },
+ {
+  "goal": "decide",
+  "index": 7,
+  "text": "render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%",
+  "pr": [
+   {
+    "module": "ui",
+    "name": "render",
+    "property": [
+     {
+      "name": "Template",
+      "type": {
+       "name": "text"
+      },
+      "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%actionQuestions%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "ui.render(Template: text = \"/system/builder/llm/templates/deciderActionQuestions.template\"); variable.set(Name: variable = %actionQuestions%, Value: item = %!data%)",
+  "untyped": "ui.render(Template=\"/system/builder/llm/templates/deciderActionQuestions.template\"); variable.set(Name=%actionQuestions%, Value=%!data%)"
+ },
+ {
+  "goal": "decide",
+  "index": 8,
+  "text": "llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%",
+  "pr": [
+   {
+    "module": "llm",
+    "name": "decider",
+    "property": [
+     {
+      "name": "State",
+      "type": {
+       "name": "dict"
+      },
+      "value": "%state%"
+     },
+     {
+      "name": "Question",
+      "type": {
+       "name": "dict"
+      },
+      "value": "%actionQuestions%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%actionAnswer%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "llm.decider(State: dict = %state%, Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)",
+  "untyped": "llm.decider(State=%state%, Question=%actionQuestions%); variable.set(Name=%actionAnswer%, Value=%!data%)"
+ },
+ {
+  "goal": "decide",
+  "index": 9,
+  "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "/system/builder/EmitBuildEvent"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "kind",
+        "type": {
+         "name": "text"
+        },
+        "value": "goal-decided"
+       },
+       {
+        "name": "goal",
+        "type": {
+         "name": "item"
+        },
+        "value": "%goal%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "goal.call(Name: text = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goal-decided\", goal: item = %goal%})",
+  "untyped": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goal-decided\", goal: %goal%})"
+ },
+ {
+  "goal": "checkout",
+  "index": 0,
+  "text": "read 'orders/%orderId%.json', write to %order%",
+  "pr": [
+   {
+    "module": "file",
+    "name": "read",
+    "property": [
+     {
+      "name": "Path",
+      "type": {
+       "name": "path"
+      },
+      "value": "orders/%orderId%.json"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%order%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "file.read(Path: path = \"orders/%orderId%.json\"); variable.set(Name: variable = %order%, Value: item = %!data%)",
+  "untyped": "file.read(Path=\"orders/%orderId%.json\"); variable.set(Name=%order%, Value=%!data%)"
+ },
+ {
+  "goal": "checkout",
+  "index": 1,
+  "text": "count %order.items%, write to %itemCount%",
+  "pr": [
+   {
+    "module": "list",
+    "name": "count",
+    "property": [
+     {
+      "name": "ListName",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%order.items%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%itemCount%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "list.count(ListName: variable = %order.items%); variable.set(Name: variable = %itemCount%, Value: item = %!data%)",
+  "untyped": "list.count(ListName=%order.items%); variable.set(Name=%itemCount%, Value=%!data%)"
+ },
+ {
+  "goal": "checkout",
+  "index": 2,
+  "text": "if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%itemCount%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "=="
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "number"
+      },
+      "value": 0
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "write out \"Your cart is empty\"",
+      "action": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "Your cart is empty"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "condition",
+    "name": "elseif",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%itemCount%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "=="
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "number"
+      },
+      "value": 1
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "write out \"One item\"",
+      "action": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "One item"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "condition",
+    "name": "else",
+    "property": [],
+    "modifier": [],
+    "child": [
+     {
+      "text": "write out \"%itemCount% items\"",
+      "action": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "%itemCount% items"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %itemCount%, Operator: choice<operator> = \"==\", Right: number = 0) { output.write(Data: text = \"Your cart is empty\") }; condition.elseif(Left: item = %itemCount%, Operator: choice<operator> = \"==\", Right: number = 1) { output.write(Data: text = \"One item\") }; condition.else() { output.write(Data: text = \"%itemCount% items\") }",
+  "untyped": "condition.if(Left=%itemCount%, Operator=\"==\", Right=0) { output.write(Data=\"Your cart is empty\") }; condition.elseif(Left=%itemCount%, Operator=\"==\", Right=1) { output.write(Data=\"One item\") }; condition.else() { output.write(Data=\"%itemCount% items\") }"
+ },
+ {
+  "goal": "checkout",
+  "index": 3,
+  "text": "if %order.email% does not contain \"@\", throw \"Invalid email address\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%order.email%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "notcontains"
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "@"
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "throw \"Invalid email address\"",
+      "action": [
+       {
+        "module": "error",
+        "name": "throw",
+        "property": [
+         {
+          "name": "Message",
+          "type": {
+           "name": "text"
+          },
+          "value": "Invalid email address"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %order.email%, Operator: choice<operator> = \"notcontains\", Right: text = \"@\") { error.throw(Message: text = \"Invalid email address\") }",
+  "untyped": "condition.if(Left=%order.email%, Operator=\"notcontains\", Right=\"@\") { error.throw(Message=\"Invalid email address\") }"
+ },
+ {
+  "goal": "checkout",
+  "index": 4,
+  "text": "if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%order.coupon%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "isnotempty"
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "call ApplyCoupon code=%order.coupon%, order=%order%",
+      "action": [
+       {
+        "module": "goal",
+        "name": "call",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "text"
+          },
+          "value": "ApplyCoupon"
+         },
+         {
+          "name": "Parameter",
+          "type": {
+           "name": "list"
+          },
+          "value": [
+           {
+            "name": "code",
+            "type": {
+             "name": "item"
+            },
+            "value": "%order.coupon%"
+           },
+           {
+            "name": "order",
+            "type": {
+             "name": "item"
+            },
+            "value": "%order%"
+           }
+          ]
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %order.coupon%, Operator: choice<operator> = \"isnotempty\") { goal.call(Name: text = \"ApplyCoupon\", Parameter: list = {code: item = %order.coupon%, order: item = %order%}) }",
+  "untyped": "condition.if(Left=%order.coupon%, Operator=\"isnotempty\") { goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%}) }"
+ },
+ {
+  "goal": "checkout",
+  "index": 5,
+  "text": "if %order.total% is not a number, throw \"The total must be a number\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%order.total%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "isnot"
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "number"
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "throw \"The total must be a number\"",
+      "action": [
+       {
+        "module": "error",
+        "name": "throw",
+        "property": [
+         {
+          "name": "Message",
+          "type": {
+           "name": "text"
+          },
+          "value": "The total must be a number"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %order.total%, Operator: choice<operator> = \"isnot\", Right: text = \"number\") { error.throw(Message: text = \"The total must be a number\") }",
+  "untyped": "condition.if(Left=%order.total%, Operator=\"isnot\", Right=\"number\") { error.throw(Message=\"The total must be a number\") }"
+ },
+ {
+  "goal": "checkout",
+  "index": 6,
+  "text": "if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%order.country%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "=="
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "IS"
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "set %vat% = 0.24",
+      "action": [
+       {
+        "module": "variable",
+        "name": "set",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "variable"
+          },
+          "value": "%vat%"
+         },
+         {
+          "name": "Value",
+          "type": {
+           "name": "number"
+          },
+          "value": 0.24
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "condition",
+    "name": "else",
+    "property": [],
+    "modifier": [],
+    "child": [
+     {
+      "text": "set %vat% = 0.25",
+      "action": [
+       {
+        "module": "variable",
+        "name": "set",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "variable"
+          },
+          "value": "%vat%"
+         },
+         {
+          "name": "Value",
+          "type": {
+           "name": "number"
+          },
+          "value": 0.25
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %order.country%, Operator: choice<operator> = \"==\", Right: text = \"IS\") { variable.set(Name: variable = %vat%, Value: number = 0.24) }; condition.else() { variable.set(Name: variable = %vat%, Value: number = 0.25) }",
+  "untyped": "condition.if(Left=%order.country%, Operator=\"==\", Right=\"IS\") { variable.set(Name=%vat%, Value=0.24) }; condition.else() { variable.set(Name=%vat%, Value=0.25) }"
+ },
+ {
+  "goal": "checkout",
+  "index": 7,
+  "text": "math.multiply A=%order.total%, B=%vat%, write to %vatAmount%",
+  "pr": [
+   {
+    "module": "math",
+    "name": "multiply",
+    "property": [
+     {
+      "name": "A",
+      "type": {
+       "name": "item"
+      },
+      "value": "%order.total%"
+     },
+     {
+      "name": "B",
+      "type": {
+       "name": "item"
+      },
+      "value": "%vat%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%vatAmount%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "math.multiply(A: item = %order.total%, B: item = %vat%); variable.set(Name: variable = %vatAmount%, Value: item = %!data%)",
+  "untyped": "math.multiply(A=%order.total%, B=%vat%); variable.set(Name=%vatAmount%, Value=%!data%)"
+ },
+ {
+  "goal": "checkout",
+  "index": 8,
+  "text": "if %order.note% does not start with \"#\", add %order.note% to %notes%",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%order.note%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "notstartswith"
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "#"
+     }
+    ],
+    "modifier": [],
+    "child": [
+     {
+      "text": "add %order.note% to %notes%",
+      "action": [
+       {
+        "module": "list",
+        "name": "add",
+        "property": [
+         {
+          "name": "ListName",
+          "type": {
+           "name": "variable"
+          },
+          "value": "%notes%"
+         },
+         {
+          "name": "Value",
+          "type": {
+           "name": "item"
+          },
+          "value": "%order.note%"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %order.note%, Operator: choice<operator> = \"notstartswith\", Right: text = \"#\") { list.add(ListName: variable = %notes%, Value: item = %order.note%) }",
+  "untyped": "condition.if(Left=%order.note%, Operator=\"notstartswith\", Right=\"#\") { list.add(ListName=%notes%, Value=%order.note%) }"
+ },
+ {
+  "goal": "checkout",
+  "index": 9,
+  "text": "write out \"Total: %order.total%, VAT: %vatAmount%\"",
+  "pr": [
+   {
+    "module": "output",
+    "name": "write",
+    "property": [
+     {
+      "name": "Data",
+      "type": {
+       "name": "text"
+      },
+      "value": "Total: %order.total%, VAT: %vatAmount%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "output.write(Data: text = \"Total: %order.total%, VAT: %vatAmount%\")",
+  "untyped": "output.write(Data=\"Total: %order.total%, VAT: %vatAmount%\")"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 0,
+  "text": "list files in '/logs', pattern \"*.log\", write to %files%",
+  "pr": [
+   {
+    "module": "file",
+    "name": "list",
+    "property": [
+     {
+      "name": "Path",
+      "type": {
+       "name": "path"
+      },
+      "value": "/logs"
+     },
+     {
+      "name": "Pattern",
+      "type": {
+       "name": "text"
+      },
+      "value": "*.log"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%files%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "file.list(Path: path = \"/logs\", Pattern: text = \"*.log\"); variable.set(Name: variable = %files%, Value: item = %!data%)",
+  "untyped": "file.list(Path=\"/logs\", Pattern=\"*.log\"); variable.set(Name=%files%, Value=%!data%)"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 1,
+  "text": "set %errors% = []",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%errors%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "list"
+      },
+      "value": []
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "variable.set(Name: variable = %errors%, Value: list = [])",
+  "untyped": "variable.set(Name=%errors%, Value=[])"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 2,
+  "text": "foreach %files%, call ScanFile file=%item%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item"
+      },
+      "value": "%files%"
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "ScanFile"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "file",
+        "type": {
+         "name": "item"
+        },
+        "value": "%item%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %files%); goal.call(Name: text = \"ScanFile\", Parameter: list = {file: item = %item%})",
+  "untyped": "loop.foreach(Collection=%files%); goal.call(Name=\"ScanFile\", Parameter={file: %item%})"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 3,
+  "text": "if %errors% is empty",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%errors%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "isempty"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "condition.if(Left: item = %errors%, Operator: choice<operator> = \"isempty\")",
+  "untyped": "condition.if(Left=%errors%, Operator=\"isempty\")"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 4,
+  "text": "write out \"No errors this week\"",
+  "pr": [
+   {
+    "module": "output",
+    "name": "write",
+    "property": [
+     {
+      "name": "Data",
+      "type": {
+       "name": "text"
+      },
+      "value": "No errors this week"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "output.write(Data: text = \"No errors this week\")",
+  "untyped": "output.write(Data=\"No errors this week\")"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 5,
+  "text": "return",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "return",
+    "property": [],
+    "modifier": []
+   }
+  ],
+  "formal": "goal.return()",
+  "untyped": "goal.return()"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 6,
+  "text": "if %files% is a list",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item"
+      },
+      "value": "%files%"
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "is"
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "list"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "condition.if(Left: item = %files%, Operator: choice<operator> = \"is\", Right: text = \"list\")",
+  "untyped": "condition.if(Left=%files%, Operator=\"is\", Right=\"list\")"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 7,
+  "text": "write out \"Scanned the log files\"",
+  "pr": [
+   {
+    "module": "output",
+    "name": "write",
+    "property": [
+     {
+      "name": "Data",
+      "type": {
+       "name": "text"
+      },
+      "value": "Scanned the log files"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "output.write(Data: text = \"Scanned the log files\")",
+  "untyped": "output.write(Data=\"Scanned the log files\")"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 8,
+  "text": "render template \"report.html\", errors=%errors%, write to %html%",
+  "pr": [
+   {
+    "module": "ui",
+    "name": "render",
+    "property": [
+     {
+      "name": "Template",
+      "type": {
+       "name": "text"
+      },
+      "value": "report.html"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "errors",
+        "type": {
+         "name": "item"
+        },
+        "value": "%errors%"
+       }
+      ]
+     }
+    ],
+    "modifier": []
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%html%"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%!data%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "ui.render(Template: text = \"report.html\", Parameter: list = {errors: item = %errors%}); variable.set(Name: variable = %html%, Value: item = %!data%)",
+  "untyped": "ui.render(Template=\"report.html\", Parameter={errors: %errors%}); variable.set(Name=%html%, Value=%!data%)"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 9,
+  "text": "save %html% to file '/reports/week.html'",
+  "pr": [
+   {
+    "module": "file",
+    "name": "save",
+    "property": [
+     {
+      "name": "Path",
+      "type": {
+       "name": "path"
+      },
+      "value": "/reports/week.html"
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item"
+      },
+      "value": "%html%"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "file.save(Path: path = \"/reports/week.html\", Value: item = %html%)",
+  "untyped": "file.save(Path=\"/reports/week.html\", Value=%html%)"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 10,
+  "text": "call SendReport to=\"ops@example.com\", subject=\"Weekly report\", on error call LogFailure",
+  "pr": [
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "text"
+      },
+      "value": "SendReport"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "to",
+        "type": {
+         "name": "text"
+        },
+        "value": "ops@example.com"
+       },
+       {
+        "name": "subject",
+        "type": {
+         "name": "text"
+        },
+        "value": "Weekly report"
+       }
+      ]
+     }
+    ],
+    "modifier": [
+     {
+      "module": "error",
+      "name": "handle",
+      "property": [],
+      "modifier": [],
+      "recovery": [
+       {
+        "module": "goal",
+        "name": "call",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "text"
+          },
+          "value": "LogFailure"
+         }
+        ],
+        "modifier": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "error.handle(Recovery: list<action> = [goal.call(Name: text = \"LogFailure\")]) {\n    goal.call(Name: text = \"SendReport\", Parameter: list = {to: text = \"ops@example.com\", subject: text = \"Weekly report\"})\n}",
+  "untyped": "error.handle(Recovery=[goal.call(Name=\"LogFailure\")]) {\n    goal.call(Name=\"SendReport\", Parameter={to: \"ops@example.com\", subject: \"Weekly report\"})\n}"
+ },
+ {
+  "goal": "weekly_report",
+  "index": 11,
+  "text": "write out \"Report sent\" to \"log\" channel",
+  "pr": [
+   {
+    "module": "output",
+    "name": "write",
+    "property": [
+     {
+      "name": "Data",
+      "type": {
+       "name": "text"
+      },
+      "value": "Report sent"
+     },
+     {
+      "name": "channel",
+      "type": {
+       "name": "text"
+      },
+      "value": "log"
+     }
+    ],
+    "modifier": []
+   }
+  ],
+  "formal": "output.write(Data: text = \"Report sent\", channel: text = \"log\")",
+  "untyped": "output.write(Data=\"Report sent\", channel=\"log\")"
+ }
+]

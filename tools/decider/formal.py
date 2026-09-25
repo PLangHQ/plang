@@ -375,6 +375,8 @@ def is_formal(text):
 def _literal(v, t=None):
     if isinstance(v, bool): return 'true' if v else 'false'
     if v is None: return 'null'
+    # a number in its shortest form, as JSON writes it: an integral float is bare (10000, not 10000.0)
+    if isinstance(v, float) and v.is_integer(): return str(int(v))
     if isinstance(v, (int, float)): return repr(v)
     if isinstance(v, str):
         # A %variable% into a slot that is not text is the variable itself; anything else is a text.
