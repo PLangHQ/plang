@@ -1,0 +1,102 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%retries%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 3
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"giving up\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "item"
+           },
+           "value": "giving up"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "action": [
+    {
+     "module": "output",
+     "name": "write",
+     "property": [
+      {
+       "name": "Data",
+       "type": {
+        "name": "item"
+       },
+       "value": "giving up"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "action": [
+    {
+     "module": "goal",
+     "name": "return"
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "action": [
+    {
+     "module": "output",
+     "name": "write",
+     "property": [
+      {
+       "name": "Data",
+       "type": {
+        "name": "item"
+       },
+       "value": "trying again"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

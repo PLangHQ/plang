@@ -1,0 +1,51 @@
+
+Nested
+
+step 0: if %a% > 0, if %b% > 0, call BothPositive
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or, required)
+        Right (item, optional)
+        notes:
+          ## Operators — runtime-supported only
+          Valid `Operator` values: `==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or` (`is` asks the type: `%x% is number`). Every question has its negative as its own operator — a negation is always written in the operator, never anywhere else. There is NO `istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
+          | phrasing | Operator | Right |
+          |---|---|---|
+          | `is empty` / `is not empty`, `not blank` | isempty / isnotempty | omit |
+          | `is true` / `is false` | == | true / false |
+          | `is null` / `is not null` | == / != | null |
+          | `equals %b%` / `does not equal %b%` | == / != | %b% |
+          | `contains 'foo'` / `does not contain 'foo'` | contains / notcontains | 'foo' |
+          | `starts with 'x'` / `does not start with 'x'` | startswith / notstartswith | 'x' |
+          | `ends with 'x'` / `does not end with 'x'` | endswith / notendswith | 'x' |
+          | `is in [..]` / `is not in [..]` | in / notin | the list |
+          | `is a number` / `is not a list` | is / isnot | the type name: number / list |
+          ## Omit `Right` when not applicable
+          `Right` is for binary operators only — omit it for unary `isempty` / `isnotempty` (never `Right=%!data%` or `Right=false`).
+          - `if %content% is not empty` → `condition.if(Left=%content%, Operator="isnotempty")` (no Right)
+          - `if %name% does not contain "admin"` → `condition.if(Left=%name%, Operator="notcontains", Right="admin")`
+          ## Compound `and`/`or`
+          Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, with the body in its `child`. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
+          `if %a% > 1 and %b% < 10, call DoThing`:
+          `condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%, child=[{text: "call DoThing", action: [goal.call(Name="DoThing")]}])`
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+        notes:
+          `call X, param=value` (standalone or inside `foreach`) → `Name` is the goal, and each named argument is one row in `Parameter` — `{"name": <argument>, "value": <value>}`. The arguments belong to the CALLEE; they never become properties of `goal.call` itself.
+          `goal.call` has:
+          - `Name` (required) — the goal identifier.
+          - `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
+          - `Actor` (optional, almost always omitted) — explicit cross-actor delegation only: the actor's name, `system` or `user`.
+          **`Actor`: omit unless the step text NAMES an actor** (`call X on actor "system"`, `call X as user`, `actor=%who%` where `%who%` holds the name). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
+          `foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
+          ```json
+          {"module":"goal","name":"call","property":[
+            {"name":"Name","type":{"name":"text"},"value":"X"},
+            {"name":"Parameter","type":{"name":"list"},"value":[{"name":"section","type":{"name":"item"},"value":"%item%"}]}]}
+          ```
+          **`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.
+

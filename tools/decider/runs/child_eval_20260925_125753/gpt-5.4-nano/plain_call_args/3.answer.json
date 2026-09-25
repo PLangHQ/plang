@@ -1,0 +1,44 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "text"
+       },
+       "value": "SendMail"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        {
+         "name": "to",
+         "type": {
+          "name": "item"
+         },
+         "value": "%email%"
+        },
+        {
+         "name": "subject",
+         "type": {
+          "name": "text"
+         },
+         "value": "Welcome"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

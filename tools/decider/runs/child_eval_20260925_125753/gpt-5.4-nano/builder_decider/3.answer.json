@@ -1,0 +1,56 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "llm",
+     "name": "decider",
+     "property": [
+      {
+       "name": "State",
+       "type": {
+        "name": "dict"
+       },
+       "value": "%state%"
+      },
+      {
+       "name": "Question",
+       "type": {
+        "name": "dict"
+       },
+       "value": "%moduleQuestions%"
+      }
+     ],
+     "child": [
+      {
+       "text": "write to %moduleAnswer%",
+       "action": [
+        {
+         "module": "variable",
+         "name": "set",
+         "property": [
+          {
+           "name": "Name",
+           "type": {
+            "name": "variable"
+           },
+           "value": "%moduleAnswer%"
+          },
+          {
+           "name": "Value",
+           "type": {
+            "name": "item"
+           },
+           "value": "%!data%"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

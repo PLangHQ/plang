@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERznHQn3H3LDFv7Z7WNSldPB4sSP0",
+ "object": "chat.completion",
+ "created": 1790341099,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"list\",\n          \"name\": \"add\",\n          \"property\": [\n            {\n              \"name\": \"ListName\",\n              \"type\": {\n                \"name\": \"variable\"\n              },\n              \"value\": \"%traceGoals%\"\n            },\n            {\n              \"name\": \"Value\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%goal.Name%\"\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 3093,
+  "completion_tokens": 122,
+  "total_tokens": 3215,
+  "prompt_tokens_details": {
+   "cached_tokens": 1792,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

@@ -1,0 +1,95 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%n%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "item"
+       },
+       "value": 5
+      }
+     ],
+     "child": [
+      {
+       "text": "call Big",
+       "action": [
+        {
+         "module": "goal",
+         "name": "call",
+         "property": [
+          {
+           "name": "Name",
+           "type": {
+            "name": "text"
+           },
+           "value": "Big"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "action": [
+    {
+     "module": "list",
+     "name": "count",
+     "property": [
+      {
+       "name": "ListName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%items%"
+      }
+     ]
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%n%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

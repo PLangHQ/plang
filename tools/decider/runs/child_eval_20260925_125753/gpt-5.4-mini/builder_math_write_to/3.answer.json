@@ -1,0 +1,49 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "math",
+     "name": "subtract",
+     "property": [
+      {
+       "name": "A",
+       "type": {
+        "name": "item"
+       },
+       "value": "%Now.Ticks%"
+      },
+      {
+       "name": "B",
+       "type": {
+        "name": "item"
+       },
+       "value": "%buildStart%"
+      }
+     ]
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%elapsedTicks%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

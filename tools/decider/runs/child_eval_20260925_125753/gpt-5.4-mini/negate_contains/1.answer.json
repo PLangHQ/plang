@@ -1,0 +1,57 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%name%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "notcontains"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "text"
+       },
+       "value": "admin"
+      }
+     ],
+     "child": [
+      {
+       "text": "call Deny",
+       "action": [
+        {
+         "module": "goal",
+         "name": "call",
+         "property": [
+          {
+           "name": "Name",
+           "type": {
+            "name": "text"
+           },
+           "value": "Deny"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

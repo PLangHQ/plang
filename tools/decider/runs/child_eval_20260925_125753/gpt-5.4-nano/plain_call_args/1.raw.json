@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERznML6zOTbfXJNNWUwalGAvFwAur",
+ "object": "chat.completion",
+ "created": 1790341104,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"goal\",\n          \"name\": \"call\",\n          \"property\": [\n            {\n              \"name\": \"Name\",\n              \"type\": {\n                \"name\": \"text\"\n              },\n              \"value\": \"SendMail\"\n            },\n            {\n              \"name\": \"Parameter\",\n              \"type\": {\n                \"name\": \"list\"\n              },\n              \"value\": [\n                {\n                  \"name\": \"to\",\n                  \"type\": {\n                    \"name\": \"item\"\n                  },\n                  \"value\": \"%email%\"\n                },\n                {\n                  \"name\": \"subject\",\n                  \"type\": {\n                    \"name\": \"text\"\n                  },\n                  \"value\": \"Welcome\"\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 3318,
+  "completion_tokens": 184,
+  "total_tokens": 3502,
+  "prompt_tokens_details": {
+   "cached_tokens": 1792,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

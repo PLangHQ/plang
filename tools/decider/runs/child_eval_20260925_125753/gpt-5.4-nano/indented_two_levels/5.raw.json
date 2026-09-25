@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERznIK65Eb2gRDk1NAaFt2hk7aiea",
+ "object": "chat.completion",
+ "created": 1790341100,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%a%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \">\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 0\n            }\n          ],\n          \"child\": []\n        }\n      ]\n    },\n    {\n      \"index\": 1,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%b%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \">\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 0\n            }\n          ],\n          \"child\": []\n        }\n      ]\n    },\n    {\n      \"index\": 2,\n      \"action\": [\n        {\n          \"module\": \"goal\",\n          \"name\": \"call\",\n          \"property\": [\n            {\n              \"name\": \"Name\",\n              \"type\": {\n                \"name\": \"text\"\n              },\n              \"value\": \"BothPositive\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"index\": 3,\n      \"action\": [\n        {\n          \"module\": \"output\",\n          \"name\": \"write\",\n          \"property\": [\n            {\n              \"name\": \"Data\",\n              \"type\": {\n                \"name\": \"text\"\n              },\n              \"value\": \"checked\"\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 4689,
+  "completion_tokens": 463,
+  "total_tokens": 5152,
+  "prompt_tokens_details": {
+   "cached_tokens": 3840,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

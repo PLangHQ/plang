@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERzn7rUpMM5JI9AjkeggFhz5LLGyg",
+ "object": "chat.completion",
+ "created": 1790341089,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"variable\",\n          \"name\": \"set\",\n          \"property\": [\n            {\n              \"name\": \"Name\",\n              \"type\": {\n                \"name\": \"variable\"\n              },\n              \"value\": \"%key%\"\n            },\n            {\n              \"name\": \"Value\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"s%step.Index%_%module.Name%\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"index\": 1,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%moduleAnswer[key].noul%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \"<\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%threshold%\"\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"return\",\n              \"action\": [\n                {\n                  \"module\": \"goal\",\n                  \"name\": \"return\"\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"index\": 2,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%module.Action.Count%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \"==\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 1\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"add \\\"%module.Name%.%module.Action[0].Name%\\\" to %choices%\",\n              \"action\": [\n                {\n                  \"module\": \"list\",\n                  \"name\": \"add\",\n                  \"property\": [\n                    {\n                      \"name\": \"ListName\",\n                      \"type\": {\n                        \"name\": \"variable\"\n                      },\n                      \"value\": \"%choices%\"\n                    },\n                    {\n                      \"name\": \"Value\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": \"%module.Name%.%module.Action[0].Name%\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"index\": 3,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%module.Action.Count%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \">\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 1\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"add \\\"%module.Name%.%actionAnswer[key].choice%\\\" to %choices%\",\n              \"action\": [\n                {\n                  \"module\": \"list\",\n                  \"name\": \"add\",\n                  \"property\": [\n                    {\n                      \"name\": \"ListName\",\n                      \"type\": {\n                        \"name\": \"variable\"\n                      },\n                      \"value\": \"%choices%\"\n                    },\n                    {\n                      \"name\": \"Value\",\n                      \"type\": {\n                        \"name\": \"item\"\n                      },\n                      \"value\": \"%module.Name%.%actionAnswer[key].choice%\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 4645,
+  "completion_tokens": 892,
+  "total_tokens": 5537,
+  "prompt_tokens_details": {
+   "cached_tokens": 3840,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

@@ -1,0 +1,9 @@
+
+Start
+
+step 0: save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+   menu:
+     file.save
+        Path (path, required)
+        Value (item, optional)
+

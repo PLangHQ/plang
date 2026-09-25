@@ -1,0 +1,193 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%key%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "text"
+       },
+       "value": "s%step.Index%_%module.Name%"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%moduleAnswer[key].noul%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "<"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "item"
+       },
+       "value": "%threshold%"
+      }
+     ],
+     "child": [
+      {
+       "text": "return",
+       "action": [
+        {
+         "module": "goal",
+         "name": "return"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%module.Action.Count%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "is"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "item"
+       },
+       "value": "1"
+      }
+     ],
+     "child": [
+      {
+       "text": "add \"%module.Name%.%module.Action[0].Name%\" to %choices%",
+       "action": [
+        {
+         "module": "list",
+         "name": "add",
+         "property": [
+          {
+           "name": "ListName",
+           "type": {
+            "name": "variable"
+           },
+           "value": "%choices%"
+          },
+          {
+           "name": "Value",
+           "type": {
+            "name": "text"
+           },
+           "value": "%module.Name%.%module.Action[0].Name%"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%module.Action.Count%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": ">"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "item"
+       },
+       "value": "1"
+      }
+     ],
+     "child": [
+      {
+       "text": "add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%",
+       "action": [
+        {
+         "module": "list",
+         "name": "add",
+         "property": [
+          {
+           "name": "ListName",
+           "type": {
+            "name": "variable"
+           },
+           "value": "%choices%"
+          },
+          {
+           "name": "Value",
+           "type": {
+            "name": "text"
+           },
+           "value": "%module.Name%.%actionAnswer[key].choice%"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

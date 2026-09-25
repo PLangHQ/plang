@@ -1,0 +1,72 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%path%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "startswith"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "text"
+       },
+       "value": "/api"
+      }
+     ],
+     "child": [
+      {
+       "text": "call HandleApi path=%path%",
+       "action": [
+        {
+         "module": "goal",
+         "name": "call",
+         "property": [
+          {
+           "name": "Name",
+           "type": {
+            "name": "text"
+           },
+           "value": "HandleApi"
+          },
+          {
+           "name": "Parameter",
+           "type": {
+            "name": "list"
+           },
+           "value": [
+            {
+             "name": "path",
+             "type": {
+              "name": "item"
+             },
+             "value": "%path%"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
