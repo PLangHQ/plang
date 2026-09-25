@@ -1,0 +1,1 @@
+[4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) ; condition.else() { goal.call(Name="ApplyCoupon", Parameter={code: %order.coupon%, order: %order%}) }

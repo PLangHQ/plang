@@ -1067,7 +1067,7 @@
  {
   "goal": "decide",
   "index": 3,
-  "text": "foreach %goal.Step%, call AddStepToState item=%step%",
+  "text": "foreach %goal.Step%, call AddStepToState step=%item%",
   "pr": [
    {
     "module": "loop",
@@ -1101,11 +1101,11 @@
       },
       "value": [
        {
-        "name": "item",
+        "name": "step",
         "type": {
          "name": "item"
         },
-        "value": "%step%"
+        "value": "%item%"
        }
       ]
      }
@@ -1113,13 +1113,13 @@
     "modifier": []
    }
   ],
-  "formal": "loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = \"AddStepToState\", Parameter: list = {item: item = %step%})",
-  "untyped": "loop.foreach(Collection=%goal.Step%); goal.call(Name=\"AddStepToState\", Parameter={item: %step%})"
+  "formal": "loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = \"AddStepToState\", Parameter: list = {step: item = %item%})",
+  "untyped": "loop.foreach(Collection=%goal.Step%); goal.call(Name=\"AddStepToState\", Parameter={step: %item%})"
  },
  {
   "goal": "decide",
   "index": 4,
-  "text": "foreach %modules%, call AddModuleToState item=%module%",
+  "text": "foreach %modules%, call AddModuleToState module=%item%",
   "pr": [
    {
     "module": "loop",
@@ -1153,11 +1153,11 @@
       },
       "value": [
        {
-        "name": "item",
+        "name": "module",
         "type": {
          "name": "item"
         },
-        "value": "%module%"
+        "value": "%item%"
        }
       ]
      }
@@ -1165,8 +1165,8 @@
     "modifier": []
    }
   ],
-  "formal": "loop.foreach(Collection: item = %modules%); goal.call(Name: text = \"AddModuleToState\", Parameter: list = {item: item = %module%})",
-  "untyped": "loop.foreach(Collection=%modules%); goal.call(Name=\"AddModuleToState\", Parameter={item: %module%})"
+  "formal": "loop.foreach(Collection: item = %modules%); goal.call(Name: text = \"AddModuleToState\", Parameter: list = {module: item = %item%})",
+  "untyped": "loop.foreach(Collection=%modules%); goal.call(Name=\"AddModuleToState\", Parameter={module: %item%})"
  },
  {
   "goal": "decide",

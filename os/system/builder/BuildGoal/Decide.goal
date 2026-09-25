@@ -19,8 +19,8 @@ Decide
 - set %modules% = %!app.module.list%
 
 - set %state.goal% = %goal.Name%
-- foreach %goal.Step%, call AddStepToState item=%step%
-- foreach %modules%, call AddModuleToState item=%module%
+- foreach %goal.Step%, call AddStepToState step=%item%
+- foreach %modules%, call AddModuleToState module=%item%
 
 - render template "/system/builder/llm/templates/deciderModuleQuestions.template", write to %moduleQuestions%
 - llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%

@@ -1,0 +1,7291 @@
+[
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "build",
+  "first": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%path%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "text"
+         },
+         "value": "/"
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%!build.summary%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "channel",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "builder"
+        },
+        {
+         "name": "Goal",
+         "type": {
+          "name": "action"
+         },
+         "value": {
+          "module": "goal",
+          "name": "call",
+          "property": [
+           {
+            "name": "Name",
+            "type": {
+             "name": "text"
+            },
+            "value": "BuilderChannel"
+           }
+          ],
+          "modifier": []
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "build-path"
+          },
+          {
+           "name": "path",
+           "type": {
+            "name": "item"
+           },
+           "value": "%path%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "build",
+       "name": "load",
+       "property": [],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%app%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "build",
+       "name": "goals",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "%path%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goals%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goals-found"
+          },
+          {
+           "name": "goals",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goals%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goals%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/.build/traces/%!trace.id%/manifest.json"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%traceGoals%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "build",
+       "name": "appSave",
+       "property": [],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%path%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "text"
+         },
+         "value": "/"
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%!build.summary%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "channel",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "builder"
+        },
+        {
+         "name": "Goal",
+         "type": {
+          "name": "action"
+         },
+         "value": {
+          "module": "goal",
+          "name": "call",
+          "property": [
+           {
+            "name": "Name",
+            "type": {
+             "name": "text"
+            },
+            "value": "BuilderChannel"
+           }
+          ],
+          "modifier": []
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "build-path"
+          },
+          {
+           "name": "path",
+           "type": {
+            "name": "item"
+           },
+           "value": "%path%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "build",
+       "name": "load",
+       "property": [],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%app%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "build",
+       "name": "goals",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "%path%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goals%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goals-found"
+          },
+          {
+           "name": "goals",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goals%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goals%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/.build/traces/%!trace.id%/manifest.json"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%traceGoals%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "build",
+       "name": "appSave",
+       "property": [],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [],
+  "caught": [],
+  "final": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%path%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "text"
+         },
+         "value": "/"
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%!build.summary%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        },
+        {
+         "name": "AsDefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": true
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "channel",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "builder"
+        },
+        {
+         "name": "Goal",
+         "type": {
+          "name": "action"
+         },
+         "value": {
+          "module": "goal",
+          "name": "call",
+          "property": [
+           {
+            "name": "Name",
+            "type": {
+             "name": "text"
+            },
+            "value": "BuilderChannel"
+           }
+          ],
+          "modifier": []
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "build-path"
+          },
+          {
+           "name": "path",
+           "type": {
+            "name": "item"
+           },
+           "value": "%path%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "build",
+       "name": "load",
+       "property": [],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%app%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "build",
+       "name": "goals",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "%path%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goals%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goals-found"
+          },
+          {
+           "name": "goals",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goals%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goals%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/.build/traces/%!trace.id%/manifest.json"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%traceGoals%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "build",
+       "name": "appSave",
+       "property": [],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [],
+  "warnings": [
+   "step 4 uses goal.call, which the decider was not sure of (0.86)",
+   "step 7 uses goal.call, which the decider was not sure of (0.88)"
+  ],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 1.9079442024230957,
+    "usage": {
+     "prompt_tokens": 3203,
+     "completion_tokens": 218,
+     "total_tokens": 3421,
+     "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "1": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "4": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "5": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "10": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   }
+  },
+  "cost": 0.0009131
+ },
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "start",
+  "first": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goalHeader"
+          },
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStart%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%Now.Ticks%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "dict"
+         },
+         "value": {
+          "id": "%!trace.id%",
+          "timestamp": "%Now%",
+          "goal": "%goal%",
+          "menu": null,
+          "subGoals": [],
+          "durationMs": 0
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.menu%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%menu%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%parentGoal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%parentGoal.Child%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildSubGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "subGoal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%parentGoal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "math",
+       "name": "subtract",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%Now.Ticks%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%buildStart%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "math",
+       "name": "divide",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "number"
+         },
+         "value": 10000
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedMs%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.durationMs%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%elapsedMs%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%trace%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%traceGoals%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "action": [
+      {
+       "module": "build",
+       "name": "fold",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "action": [
+      {
+       "module": "build",
+       "name": "goalsSave",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goalHeader"
+          },
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStart%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%Now.Ticks%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "dict"
+         },
+         "value": {
+          "id": "%!trace.id%",
+          "timestamp": "%Now%",
+          "goal": "%goal%",
+          "menu": null,
+          "subGoals": [],
+          "durationMs": 0
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.menu%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%menu%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%parentGoal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%parentGoal.Child%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildSubGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "subGoal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%parentGoal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "math",
+       "name": "subtract",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%Now.Ticks%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%buildStart%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "math",
+       "name": "divide",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "number"
+         },
+         "value": 10000
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedMs%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.durationMs%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%elapsedMs%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%trace%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%traceGoals%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "action": [
+      {
+       "module": "build",
+       "name": "fold",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "action": [
+      {
+       "module": "build",
+       "name": "goalsSave",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [],
+  "caught": [],
+  "final": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goalHeader"
+          },
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStart%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%Now.Ticks%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "dict"
+         },
+         "value": {
+          "id": "%!trace.id%",
+          "timestamp": "%Now%",
+          "goal": "%goal%",
+          "menu": null,
+          "subGoals": [],
+          "durationMs": 0
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.menu%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%menu%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%parentGoal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%parentGoal.Child%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildSubGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "subGoal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%parentGoal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "math",
+       "name": "subtract",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%Now.Ticks%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%buildStart%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "math",
+       "name": "divide",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%elapsedTicks%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "number"
+         },
+         "value": 10000
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedMs%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.durationMs%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%elapsedMs%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%trace%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%traceGoals%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "action": [
+      {
+       "module": "build",
+       "name": "fold",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "action": [
+      {
+       "module": "build",
+       "name": "goalsSave",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal"
+         },
+         "value": "%goal%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [],
+  "warnings": [
+   "step 0 uses goal.call, which the decider was not sure of (0.82)"
+  ],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 2.6639633178710938,
+    "usage": {
+     "prompt_tokens": 3977,
+     "completion_tokens": 338,
+     "total_tokens": 4315,
+     "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "1": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "4": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "5": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "10": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "11": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "12": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "13": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "14": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   }
+  },
+  "cost": 0.0012179
+ },
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "decide",
+  "first": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%threshold%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "number"
+         },
+         "value": 0.5
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%modules%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!app.module.list%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.goal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Step%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "AddStepToState"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "step",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%modules%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "AddModuleToState"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "module",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%moduleQuestions%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "llm",
+       "name": "decider",
+       "property": [
+        {
+         "name": "State",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%state%"
+        },
+        {
+         "name": "Question",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%moduleQuestions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%moduleAnswer%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionQuestions%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "llm",
+       "name": "decider",
+       "property": [
+        {
+         "name": "State",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%state%"
+        },
+        {
+         "name": "Question",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%actionQuestions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionAnswer%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goal-decided"
+          },
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%threshold%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "number"
+         },
+         "value": 0.5
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%modules%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!app.module.list%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.goal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Step%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "AddStepToState"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "step",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%modules%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "AddModuleToState"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "module",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%moduleQuestions%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "llm",
+       "name": "decider",
+       "property": [
+        {
+         "name": "State",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%state%"
+        },
+        {
+         "name": "Question",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%moduleQuestions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%moduleAnswer%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionQuestions%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "llm",
+       "name": "decider",
+       "property": [
+        {
+         "name": "State",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%state%"
+        },
+        {
+         "name": "Question",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%actionQuestions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionAnswer%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goal-decided"
+          },
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [],
+  "caught": [],
+  "final": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%threshold%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "number"
+         },
+         "value": 0.5
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%modules%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!app.module.list%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%state.goal%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Name%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%goal.Step%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "AddStepToState"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "step",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%modules%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "AddModuleToState"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "module",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%moduleQuestions%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "llm",
+       "name": "decider",
+       "property": [
+        {
+         "name": "State",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%state%"
+        },
+        {
+         "name": "Question",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%moduleQuestions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%moduleAnswer%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionQuestions%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "llm",
+       "name": "decider",
+       "property": [
+        {
+         "name": "State",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%state%"
+        },
+        {
+         "name": "Question",
+         "type": {
+          "name": "dict"
+         },
+         "value": "%actionQuestions%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%actionAnswer%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "/system/builder/EmitBuildEvent"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "kind",
+           "type": {
+            "name": "text"
+           },
+           "value": "goal-decided"
+          },
+          {
+           "name": "goal",
+           "type": {
+            "name": "item"
+           },
+           "value": "%goal%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [],
+  "warnings": [
+   "step 9 uses goal.call, which the decider was not sure of (0.85)"
+  ],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 2.4380033016204834,
+    "usage": {
+     "prompt_tokens": 3109,
+     "completion_tokens": 260,
+     "total_tokens": 3369,
+     "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "1": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "4": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "5": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   }
+  },
+  "cost": 0.0009468
+ },
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "checkout",
+  "first": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "read",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "orders/%orderId%.json"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "list",
+       "name": "count",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order.items%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"Your cart is empty\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "Your cart is empty"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "elseif",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"One item\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "One item"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"%itemCount% items\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "%itemCount% items"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.email%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notcontains"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "@"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"Invalid email address\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Invalid email address"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnot"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "number"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"The total must be a number\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "The total must be a number"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.country%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "IS"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.24)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.24
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.25)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.25
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "math",
+       "name": "multiply",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%vat%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%vatAmount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.note%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notstartswith"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "#"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "list.add(ListName=%notes%, Value=%order.note%)",
+         "action": [
+          {
+           "module": "list",
+           "name": "add",
+           "property": [
+            {
+             "name": "ListName",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%notes%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%order.note%"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Total: %order.total%, VAT: %vatAmount%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "read",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "orders/%orderId%.json"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "list",
+       "name": "count",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order.items%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"Your cart is empty\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "Your cart is empty"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "elseif",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"One item\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "One item"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"%itemCount% items\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "%itemCount% items"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.email%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notcontains"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "@"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"Invalid email address\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Invalid email address"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnot"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "number"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"The total must be a number\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "The total must be a number"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.country%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "IS"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.24)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.24
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.25)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.25
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "math",
+       "name": "multiply",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%vat%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%vatAmount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.note%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notstartswith"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "#"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "list.add(ListName=%notes%, Value=%order.note%)",
+         "action": [
+          {
+           "module": "list",
+           "name": "add",
+           "property": [
+            {
+             "name": "ListName",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%notes%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%order.note%"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Total: %order.total%, VAT: %vatAmount%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [
+   "step 4 does not parse: `{ }` holds at least one action; a condition whose body is indented below it has no `{ }` — in: [4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) { } ; condition.else() { goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%}) }"
+  ],
+  "caught": [
+   4
+  ],
+  "final": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "read",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "orders/%orderId%.json"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "list",
+       "name": "count",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order.items%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"Your cart is empty\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "Your cart is empty"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "elseif",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"One item\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "One item"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"%itemCount% items\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "%itemCount% items"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.email%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notcontains"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "@"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"Invalid email address\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Invalid email address"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.coupon%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isempty"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "item"
+         },
+         "value": null
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%})",
+         "action": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "ApplyCoupon"
+            },
+            {
+             "name": "Parameter",
+             "type": {
+              "name": "list"
+             },
+             "value": [
+              {
+               "name": "code",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order.coupon%"
+              },
+              {
+               "name": "order",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order%"
+              }
+             ]
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnot"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "number"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"The total must be a number\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "The total must be a number"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.country%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "IS"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.24)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.24
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.25)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.25
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "math",
+       "name": "multiply",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%vat%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%vatAmount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.note%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notstartswith"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "#"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "list.add(ListName=%notes%, Value=%order.note%)",
+         "action": [
+          {
+           "module": "list",
+           "name": "add",
+           "property": [
+            {
+             "name": "ListName",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%notes%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%order.note%"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Total: %order.total%, VAT: %vatAmount%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [
+   "step 4 (\"if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%\") — BodyMissing: the if has no body — what the step does when it holds goes in its child",
+   "step 4 uses condition.else, which the decider did not list for it"
+  ],
+  "warnings": [
+   "step 3 uses error.throw, which the decider was not sure of (0.88)"
+  ],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 2.972285509109497,
+    "usage": {
+     "prompt_tokens": 4050,
+     "completion_tokens": 365,
+     "total_tokens": 4415,
+     "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   },
+   {
+    "seconds": 0.9532694816589355,
+    "usage": {
+     "prompt_tokens": 4530,
+     "completion_tokens": 51,
+     "total_tokens": 4581,
+     "prompt_tokens_details": {
+      "cached_tokens": 3840,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "1": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "4": {
+    "first": "caught",
+    "final": "failed",
+    "misses": [
+     "step 4: not in the answer"
+    ]
+   },
+   "5": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   }
+  },
+  "cost": 0.0015448
+ },
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "weekly_report",
+  "first": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "list",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/logs"
+        },
+        {
+         "name": "Pattern",
+         "type": {
+          "name": "text"
+         },
+         "value": "*.log"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%files%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%errors%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "list"
+         },
+         "value": []
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%files%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "ScanFile"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "file",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%errors%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isempty"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "No errors this week"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "goal",
+       "name": "return",
+       "property": [],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%files%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "is"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "list"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Scanned the log files"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "report.html"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "errors",
+           "type": {
+            "name": "item"
+           },
+           "value": "%errors%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%html%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/reports/week.html"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%html%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "SendReport"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "to",
+           "type": {
+            "name": "text"
+           },
+           "value": "ops@example.com"
+          },
+          {
+           "name": "subject",
+           "type": {
+            "name": "text"
+           },
+           "value": "Weekly report"
+          }
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "LogFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Report sent"
+        },
+        {
+         "name": "channel",
+         "type": {
+          "name": "text"
+         },
+         "value": "log"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "list",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/logs"
+        },
+        {
+         "name": "Pattern",
+         "type": {
+          "name": "text"
+         },
+         "value": "*.log"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%files%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%errors%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "list"
+         },
+         "value": []
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%files%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "ScanFile"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "file",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%errors%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isempty"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "No errors this week"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "goal",
+       "name": "return",
+       "property": [],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%files%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "is"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "list"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Scanned the log files"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "report.html"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "errors",
+           "type": {
+            "name": "item"
+           },
+           "value": "%errors%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%html%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/reports/week.html"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%html%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "SendReport"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "to",
+           "type": {
+            "name": "text"
+           },
+           "value": "ops@example.com"
+          },
+          {
+           "name": "subject",
+           "type": {
+            "name": "text"
+           },
+           "value": "Weekly report"
+          }
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "LogFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Report sent"
+        },
+        {
+         "name": "channel",
+         "type": {
+          "name": "text"
+         },
+         "value": "log"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [],
+  "caught": [],
+  "final": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "list",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/logs"
+        },
+        {
+         "name": "Pattern",
+         "type": {
+          "name": "text"
+         },
+         "value": "*.log"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%files%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%errors%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "list"
+         },
+         "value": []
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item"
+         },
+         "value": "%files%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "ScanFile"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "file",
+           "type": {
+            "name": "item"
+           },
+           "value": "%item%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%errors%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isempty"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "No errors this week"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "goal",
+       "name": "return",
+       "property": [],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%files%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "is"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "list"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Scanned the log files"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "ui",
+       "name": "render",
+       "property": [
+        {
+         "name": "Template",
+         "type": {
+          "name": "text"
+         },
+         "value": "report.html"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "errors",
+           "type": {
+            "name": "item"
+           },
+           "value": "%errors%"
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%html%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "/reports/week.html"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%html%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "SendReport"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "to",
+           "type": {
+            "name": "text"
+           },
+           "value": "ops@example.com"
+          },
+          {
+           "name": "subject",
+           "type": {
+            "name": "text"
+           },
+           "value": "Weekly report"
+          }
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "error",
+         "name": "handle",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "LogFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Report sent"
+        },
+        {
+         "name": "channel",
+         "type": {
+          "name": "text"
+         },
+         "value": "log"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [],
+  "warnings": [],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 2.122706413269043,
+    "usage": {
+     "prompt_tokens": 4102,
+     "completion_tokens": 227,
+     "total_tokens": 4329,
+     "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "1": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "4": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "5": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "10": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "11": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   }
+  },
+  "cost": 0.0011041500000000001
+ }
+]

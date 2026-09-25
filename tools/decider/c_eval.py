@@ -29,8 +29,9 @@ import shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROUND = os.environ.get('ROUND', '1')
-MODELS = os.environ.get('MODELS', 'gpt-5.4-nano,gpt-5.4-mini').split(',')
-PROMPTS = os.environ.get('PROMPTS', 'B,C').split(',')
+# C + nano by default; B or mini only when asked (MODELS=… PROMPTS=…)
+MODELS = os.environ.get('MODELS', 'gpt-5.4-nano').split(',')
+PROMPTS = os.environ.get('PROMPTS', 'C').split(',')
 SHARED = '/shared/coder/2.0'   # the only place for rendered requests (Ingi); older rounds stay in /shared/coder/llm/plang/builder-formal/
 OUT = os.path.join(HERE, 'runs', f'c_eval_round{ROUND}_' + time.strftime('%Y%m%d_%H%M%S'))
 

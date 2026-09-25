@@ -1,0 +1,1 @@
+[5] condition.if(Left=%order.total%, Operator="isnot", Right="number") { error.throw(Message="The total must be a number") }
