@@ -152,9 +152,9 @@ def disagreements(i, rows, picks_i, text=''):
 def fold(goal, parsed):
     """A step with steps indented under it gets its body from that layout (build.fold). A child the
     answer wrote over it whose actions all come from the indented steps — all of them, or some — is a
-    copy: dropped. A child holding anything else is invented: refused. Returns the refusals; the
+    copy: dropped. A child holding anything else is invented: refused. Returns {i: refusal}; the
     copies are removed in place."""
-    refused = []
+    refused = {}
     steps = goal['steps']
     for i, rows in parsed.items():
         body = b.body_of(steps, i) if i < len(steps) else []
@@ -164,21 +164,58 @@ def fold(goal, parsed):
             if not a.get('child'): continue
             inside = collections.Counter(x for c in a['child'] for x in own_actions(c.get('action') or []))
             if not inside - below: a.pop('child')
-            else: refused.append(f'step {i}\'s body is the steps indented under it ({", ".join(str(n) for n in body)}); '
-                                 f'the builder places them — write step {i} without {{ }} and each indented step on its own line')
+            else: refused.setdefault(i, []).append(
+                f'step {i}\'s body is the steps indented under it ({", ".join(str(n) for n in body)}); '
+                f'the builder places them — write step {i} without {{ }} and each indented step on its own line')
     return refused
 
+# A condition operand is a value to compare: `Right=null` asks "== null", an absent Right asks nothing.
+NULL_IS_A_VALUE = {('condition', 'if', 'Right'), ('condition', 'elseif', 'Right'), ('condition', 'compare', 'Right'),
+                   ('condition', 'if', 'Left'), ('condition', 'elseif', 'Left'), ('condition', 'compare', 'Left')}
+
+def drop_nulls(rows):
+    """An explicit null on an optional property means absent: the row is dropped (its default applies,
+    the same behaviour). A null that is a real value — a condition's operand — stays."""
+    for a in rows:
+        props, _ = b.declared(a['module'], a['name'])
+        a['property'] = [r for r in a.get('property') or []
+                         if not (r['value'] is None and r['name'] in props
+                                 and (props[r['name']]['nullable'] or props[r['name']]['default'] is not None)
+                                 and (a['module'], a['name'], r['name']) not in NULL_IS_A_VALUE)]
+        for r in a['property']:
+            v = r['value']
+            for x in (v if isinstance(v, list) else [v]):
+                if isinstance(x, dict) and x.get('module'): drop_nulls([x])
+        for c in a.get('child') or []: drop_nulls(c.get('action') or [])
+        drop_nulls(a.get('modifier') or [])
+        for m in a.get('modifier') or []: drop_nulls(m.get('recovery') or [])
+
+def uncovered(text, rows):
+    """The %variables% the step's text writes that its answer doesn't hold anywhere — a value, a Name,
+    inside a quoted text. %x% is plang's own marker, so this reads no human language."""
+    written = f.write_actions(rows, types=False)
+    return [v for v in dict.fromkeys(f.VARIABLE.findall(text)) if v not in written]
+
+WHOLE = ('has no entry', 'is extra', 'is labelled', 'has no index', 'is not an object')
+
 def check(goal, picks, parsed):
-    """(refusals, warnings) of a parsed formal answer {i: rows}: a body copied over indented steps is
-    dropped (fold), then the step match and chain rule (build_pr.match), then the agreement with the
-    decider."""
-    refused = fold(goal, parsed)
-    answer = {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}
-    # build_pr.match compares a child's words with the indented steps; fold has already judged those
-    refused += [p for p in b.match(goal, answer) if 'its own words don' not in p]
+    """(whole-answer refusals, {step: refusals}, warnings) of a parsed formal answer {i: rows}.
+    Whole: the answer doesn't line up with the goal (a step missing, extra, renumbered). Per step:
+    no actions, the chain rule, a body over indented steps that isn't a copy (fold), the agreement
+    with the decider, a %variable% of the step's text missing from its answer. Nulls on optional
+    properties are dropped first."""
+    for rows in parsed.values(): drop_nulls(rows)
+    per_step = fold(goal, parsed)
+    steps = goal['steps']
+    whole = [f'step {i} ("{steps[i]["text"]}") has no entry' for i in range(len(steps)) if i not in parsed]
+    whole += [f'entry {i} is extra: the goal has {len(steps)} steps' for i in parsed if i >= len(steps)]
     warnings = []
     for i, rows in parsed.items():
-        text = goal['steps'][i]['text'] if i < len(goal['steps']) else ''
-        r, w = disagreements(i, rows, picks.get(i, {}), text)
-        refused += r; warnings += w
-    return refused, warnings
+        if i >= len(steps): continue
+        problems = per_step.setdefault(i, [])
+        if not rows: problems.append(f'step {i} ("{steps[i]["text"]}") has no actions')
+        elif broken := b.chain(rows, bool(b.body_of(steps, i))): problems.append(f'step {i} ("{steps[i]["text"]}") — {broken}')
+        r, w = disagreements(i, rows, picks.get(i, {}), steps[i]['text'])
+        problems += r; warnings += w
+        problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], rows)]
+    return whole, {i: p for i, p in per_step.items() if p}, warnings

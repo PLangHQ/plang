@@ -8,7 +8,9 @@ Per round: the decider runs once per goal; its picks feed both prompts, on each 
        formal); the answer in formal, parsed by formal.parse_answer; checked by prompt_c.check (fold, the
        match, and the agreement with the decider)
 
-A refused answer is told why and answered again, once (FixProperties' conversation). Per step:
+A refused answer is told why and answered again, once (FixProperties' conversation). C is judged per
+step: a refused step is asked again alone and the rest of the answer stands; only a whole-answer
+problem (a step missing, extra, renumbered) asks the whole answer again. Per step:
     first attempt  right / fixed (right once fold drops a copied body) / caught (wrong, refused) / silent (wrong, passed)
     final          right / silent (wrong, built) / failed (still refused after the retry: the goal fails loudly)
 C also counts the disagreements its check flagged and the warnings it would put on the steps.
@@ -61,7 +63,7 @@ def request(prompt, case, picks):
     return c.SYSTEM_C, c.user_message_c(goal, picks)
 
 def judge(prompt, case, picks, text):
-    """(answer as .pr-shaped JSON for scoring, refusals, warnings, disagreements, answer before fold)."""
+    """B: (answer as .pr-shaped JSON for scoring, refusals, warnings, disagreements, answer before fold)."""
     goal = e.goal_of(case)
     if prompt == 'B':
         try:
@@ -71,20 +73,67 @@ def judge(prompt, case, picks, text):
         refused = b.match(goal, answer)
         before = copy.deepcopy(answer)
         return (b.normalize(goal, answer) if not refused else answer), refused, [], [], before
-    try:
-        parsed = f.parse_answer(text)
-    except f.FormalError as ex:
-        line = text.split('\n')[ex.line - 1] if ex.line - 1 < len(text.split('\n')) else ''
-        return None, [f'the formal does not parse, {ex} — in the line: {line.strip()}'], [], [], None
+    raise ValueError('C is judged per step: judge_c')
+
+def judge_c(case, picks, parsed, errors, whole):
+    """C, per step: (answer for scoring, whole-answer refusals, {step: refusals}, warnings, agreement).
+    A line that doesn't parse refuses its own step, naming the line; the rest of the answer stands."""
+    goal = e.goal_of(case)
+    w, per_step, warnings = c.check(goal, picks, parsed)
+    whole = whole + [x for x in w if not any(x.startswith(f'step {i} ') for i in errors)]
+    for i, ex in errors.items():
+        per_step.setdefault(i, []).append(f'step {i} does not parse: {ex.reason} — in: {ex.text.strip()}')
+    agreement = [r for p in per_step.values() for r in p if 'decider' in r]
+    return {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}, whole, per_step, warnings, agreement
+
+def one_c(model, case, picks):
+    """C with the per-step retry: a refused step is asked again alone; a whole-answer refusal (a step
+    missing, extra, renumbered) asks the whole answer again."""
+    system, user = request('C', case, picks)
+    messages = [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}]
+    folder = os.path.join(OUT, 'C', model, case['id'])
+    os.makedirs(folder, exist_ok=True)
+    calls = []
+    raw, secs = chat(model, messages)
+    calls.append({'seconds': secs, 'usage': raw.get('usage') or {}})
+    text1 = content(raw)
+    open(os.path.join(folder, '1.answer.txt'), 'w', encoding='utf-8').write(text1)
+    parsed, errors, whole = f.parse_steps(text1)
     before = {'step': [{'index': i, 'action': copy.deepcopy(parsed[i])} for i in sorted(parsed)]}
-    refused, warnings = c.check(goal, picks, parsed)
-    agreement = [r for r in refused if 'decider' in r]
-    return {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}, refused, warnings, agreement, before
+    first, whole1, steps1, warn1, agree1 = judge_c(case, picks, parsed, errors, whole)
+    caught = set(range(len(case['steps']))) if whole1 else set(steps1)
+    final, whole2, steps2, warn2, agree2 = first, whole1, steps1, warn1, agree1
+    if whole1 or steps1:
+        if whole1:
+            ask = RETRY['C'].format(why='; '.join(whole1 + [r for p in steps1.values() for r in p]))
+        else:
+            ask = (f'Steps {", ".join(str(i) for i in sorted(steps1))} were refused: '
+                   + '; '.join(r for i in sorted(steps1) for r in steps1[i])
+                   + '\n\nAnswer again only these steps, one line each, starting with its [i], in formal.')
+        messages += [{'role': 'assistant', 'content': text1}, {'role': 'user', 'content': ask}]
+        raw2, secs2 = chat(model, messages)
+        calls.append({'seconds': secs2, 'usage': raw2.get('usage') or {}})
+        text2 = content(raw2)
+        open(os.path.join(folder, '2.answer.txt'), 'w', encoding='utf-8').write(text2)
+        parsed2, errors2, whole2 = f.parse_steps(text2)
+        if not whole1:   # only the refused steps were asked: they replace theirs; the rest stands
+            merged = {i: r for i, r in parsed.items() if i not in steps1}
+            merged.update({i: r for i, r in parsed2.items() if i in steps1})
+            errors2 = {i: x for i, x in errors2.items() if i in steps1}
+            whole2 = [x for x in whole2 if not x.endswith('answered twice')]
+            parsed2 = merged
+        final, whole2, steps2, warn2, agree2 = judge_c(case, picks, parsed2, errors2, whole2)
+        if agree1 and not agree2: warn2 = warn2 + [f'settled on retry: {x}' for x in agree1]
+    return {'prompt': 'C', 'model': model, 'case': case['id'], 'first': first, 'before': before,
+            'refused1': whole1 + [r for p in steps1.values() for r in p], 'caught': sorted(caught),
+            'final': final, 'refused2': (whole2 + [r for p in steps2.values() for r in p]) if (whole1 or steps1) else [],
+            'warnings': warn2, 'disagreements': agree1, 'calls': calls}
 
 RETRY = {'B': 'Your answer was rejected by the validator: {why}\n\nReturn the corrected answer in the same shape.',
          'C': 'Your answer was refused: {why}\n\nAnswer again: the whole goal, one line per step, in formal.'}
 
 def one(prompt, model, case, picks):
+    if prompt == 'C': return one_c(model, case, picks)
     system, user = request(prompt, case, picks)
     messages = [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}]
     folder = os.path.join(OUT, prompt, model, case['id'])
@@ -124,7 +173,9 @@ def outcomes(rec, case):
     for k in case['expect']:
         i = int(k)
         fm = first.get(i, (['missing'], []))[0]
-        o1 = 'right' if not fm else 'caught' if rec['refused1'] else \
+        # C is judged per step: a step counts caught when ITS line was refused (or the whole answer was)
+        refused = (i in rec['caught']) if 'caught' in rec else bool(rec['refused1'])
+        o1 = 'right' if not fm else 'caught' if refused else \
              'fixed' if not folded.get(i, (['x'], []))[0] else 'silent'
         lm = final.get(i, (['missing'], []))[0]
         o2 = 'failed' if rec['refused2'] else 'right' if not lm else 'silent'
