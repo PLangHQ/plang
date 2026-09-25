@@ -1,0 +1,403 @@
+{
+  "step": [
+    {
+      "index": 0,
+      "action": [
+        {
+          "module": "file",
+          "name": "list",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/logs"
+            },
+            {
+              "name": "Pattern",
+              "type": {
+                "name": "text",
+                "kind": "log"
+              },
+              "value": "*.log"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%files%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%errors%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "action": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item"
+              },
+              "value": "%files%"
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "ScanFile"
+              }
+          ],
+          "property": [
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "file",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%item%"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "action": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item"
+              },
+              "value": "%errors%"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice<operator>",
+                "kind": "isempty"
+              },
+              "value": "isempty"
+            }
+          ],
+          "child": [
+            {
+              "text": "if %errors% is empty",
+              "action": [
+                {
+                  "module": "output",
+                  "name": "write",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "No errors this week"
+                    }
+                  ]
+                },
+                {
+                  "module": "goal",
+                  "name": "return"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "action": []
+    },
+    {
+      "index": 5,
+      "action": []
+    },
+    {
+      "index": 6,
+      "action": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item"
+              },
+              "value": "%files%"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice<operator>",
+                "kind": "is"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "list"
+            }
+          ],
+          "child": [
+            {
+              "text": "if %files% is a list",
+              "action": [
+                {
+                  "module": "output",
+                  "name": "write",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "Scanned the log files"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "action": []
+    },
+    {
+      "index": 8,
+      "action": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text",
+                "kind": "html"
+              },
+              "value": "report.html"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "errors",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%errors%"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%html%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "action": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/reports/week.html"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%html%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "action": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "SendReport"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "to",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "ops@example.com"
+                },
+                {
+                  "name": "subject",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "Weekly report"
+                }
+              ]
+            }
+          ],
+          "modifier": [
+            {
+              "module": "error",
+              "name": "handle",
+              "recovery": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "LogFailure"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "action": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "Report sent"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "log"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[0] file.read(Path=%?, ResolveVariables=false) · variable.set(Name=%order%, Value=%!data%)  
+[1] list.count(ListName=%?) · variable.set(Name=%itemCount%, Value=%!data%)  
+[2] condition.if(Left=%itemCount%, Operator=%?, Right=0) { output.write(Data=%?) } ; condition.elseif(Left=%itemCount%, Operator=%?, Right=1) { output.write(Data=%?) } ; condition.else() { output.write(Data=%?) }  
+[3] condition.if(Left=%order.email%, Operator=%?, Right=%?) { error.throw(Message=%?) }  
+[4] condition.if(Left=%order.coupon%, Operator=%?, Right=%?) { goal.call(Name=%?) }  
+[5] condition.if(Left=%order.total%, Operator=%?, Right=%?) { error.throw(Message=%?) }  
+[6] condition.if(Left=%order.country%, Operator=%?, Right=%?) { variable.set(Name=%vat%, Value=%?) } ; condition.else() { variable.set(Name=%vat%, Value=%?) }  
+[7] math.multiply(A=%order.total%, B=%vat%) · variable.set(Name=%vatAmount%, Value=%!data%)  
+[8] condition.if(Left=%order.note%, Operator=%?, Right=%?) { list.add(ListName=%notes%, Value=%order.note%) }  
+[9] output.write(Data=%?)

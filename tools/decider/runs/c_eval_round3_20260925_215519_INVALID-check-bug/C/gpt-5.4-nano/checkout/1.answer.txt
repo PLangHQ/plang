@@ -1,0 +1,10 @@
+[0] file.read(Path="orders/%orderId%.json"); variable.set(Name=%order%, Value=%!data%)
+[1] list.count(ListName=%order.items%); variable.set(Name=%itemCount%, Value=%!data%)
+[2] condition.if(Operator=="==", Left=%itemCount%, Right=0) { output.write(Data="Your cart is empty") }; condition.elseif(Operator=="==", Left=%itemCount%, Right=1) { output.write(Data="One item") }; condition.else() { output.write(Data="%itemCount% items") }
+[3] condition.if(Operator="notcontains", Left=%order.email%, Right="@") { error.throw(Message="Invalid email address") }
+[4] condition.if(Operator="isnotempty", Left=%order.coupon%) { goal.call(Name="ApplyCoupon", Parameter={code: %order.coupon%, order: %order%}) }
+[5] condition.if(Operator="isnot", Left=%order.total%, Right="number") { error.throw(Message="The total must be a number") }
+[6] condition.if(Operator=="==", Left=%order.country%, Right="IS") { variable.set(Name=%vat%, Value=0.24) }; condition.else() { variable.set(Name=%vat%, Value=0.25) }
+[7] math.multiply(A=%order.total%, B=%vat%); variable.set(Name=%vatAmount%, Value=%!data%)
+[8] condition.if(Operator="notstartswith", Left=%order.note%, Right="#") { list.add(ListName=%notes%, Value=%order.note%) }
+[9] output.write(Data="Total: %order.total%, VAT: %vatAmount%")

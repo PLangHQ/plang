@@ -1,0 +1,490 @@
+{
+  "step": [
+    {
+      "index": 0,
+      "action": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/EmitBuildEvent"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "kind",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "goalHeader"
+                },
+                {
+                  "name": "goal",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%goal%"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%buildStart%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": "%Now.Ticks%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%trace%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {
+                "id": "%!trace.id%",
+                "timestamp": "%Now%",
+                "goal": "%goal%",
+                "menu": null,
+                "subGoals": [],
+                "durationMs": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "action": [
+        {
+          "module": "goal",
+          "name": "call",
+          "modifier": [
+            {
+              "module": "error",
+              "name": "handle",
+              "recovery": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "HandleBuildFailure"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "Compile"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%trace.menu%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%menu%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%parentGoal%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%goal%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "action": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item"
+              },
+              "value": "%parentGoal.Child%"
+            },
+            {
+              "name": "Item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%"
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "BuildSubGoal"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "subGoal",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%item%"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goal%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%parentGoal%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "action": [
+        {
+          "module": "math",
+          "name": "subtract",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item"
+              },
+              "value": "%Now.Ticks%"
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "item"
+              },
+              "value": "%buildStart%"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%elapsedTicks%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "action": [
+        {
+          "module": "math",
+          "name": "divide",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item"
+              },
+              "value": "%elapsedTicks%"
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 10000
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%elapsedMs%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%trace.durationMs%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%elapsedMs%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "action": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%trace%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "action": [
+        {
+          "module": "list",
+          "name": "add",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%traceGoals%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%goal.Name%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "action": [
+        {
+          "module": "build",
+          "name": "fold",
+          "property": [
+            {
+              "name": "Goal",
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goal%"
+            }
+          ],
+          "modifier": [
+            {
+              "module": "error",
+              "name": "handle",
+              "recovery": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "HandleBuildFailure"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "action": [
+        {
+          "module": "build",
+          "name": "goalsSave",
+          "property": [
+            {
+              "name": "Goal",
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goal%"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

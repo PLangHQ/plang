@@ -1,0 +1,629 @@
+{
+ "picks": {
+  "build": {
+   "0": {
+    "variable.set": 0.98,
+    "goal.call": 0.03,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "1": {
+    "variable.set": 0.98,
+    "goal.call": 0.03,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "2": {
+    "variable.set": 0.97,
+    "goal.call": 0.03,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "3": {
+    "variable.set": 0.07,
+    "goal.call": 0.37,
+    "output.write": 0.08,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "channel.set": 1.0
+   },
+   "4": {
+    "variable.set": 0.12,
+    "goal.call": 0.97,
+    "output.write": 0.33,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "5": {
+    "variable.set": 0.72,
+    "goal.call": 0.05,
+    "output.write": 0.34,
+    "error.handle": 0.04,
+    "condition.if": 0.02,
+    "file.read": 0.11,
+    "build.load": 1.0
+   },
+   "6": {
+    "variable.set": 0.76,
+    "goal.call": 0.05,
+    "output.write": 0.13,
+    "error.handle": 0.04,
+    "condition.if": 0.03,
+    "file.read": 0.08,
+    "build.goals": 1.0
+   },
+   "7": {
+    "variable.set": 0.08,
+    "goal.call": 0.97,
+    "output.write": 0.39,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "8": {
+    "variable.set": 0.08,
+    "goal.call": 0.98,
+    "output.write": 0.04,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.03,
+    "loop.foreach": 0.98
+   },
+   "9": {
+    "variable.set": 0.07,
+    "goal.call": 0.06,
+    "output.write": 0.07,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "file.save": 0.95
+   },
+   "10": {
+    "variable.set": 0.05,
+    "goal.call": 0.05,
+    "output.write": 0.08,
+    "error.handle": 0.04,
+    "condition.if": 0.02,
+    "file.read": 0.03,
+    "build.appSave": 1.0
+   }
+  },
+  "start": {
+   "0": {
+    "variable.set": 0.06,
+    "goal.call": 0.96,
+    "output.write": 0.15,
+    "error.handle": 0.02,
+    "condition.if": 0.01,
+    "file.read": 0.02,
+    "build.actions": 0.2
+   },
+   "1": {
+    "variable.set": 0.98,
+    "goal.call": 0.02,
+    "output.write": 0.02,
+    "error.handle": 0.02,
+    "condition.if": 0.01,
+    "file.read": 0.01
+   },
+   "2": {
+    "variable.set": 0.97,
+    "goal.call": 0.09,
+    "output.write": 0.03,
+    "error.handle": 0.01,
+    "condition.if": 0.01,
+    "file.read": 0.01
+   },
+   "3": {
+    "variable.set": 0.04,
+    "goal.call": 0.95,
+    "output.write": 0.04,
+    "error.handle": 0.97,
+    "condition.if": 0.03,
+    "file.read": 0.04,
+    "build.validate": 0.17
+   },
+   "4": {
+    "variable.set": 0.98,
+    "goal.call": 0.03,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "5": {
+    "variable.set": 0.98,
+    "goal.call": 0.04,
+    "output.write": 0.02,
+    "error.handle": 0.01,
+    "condition.if": 0.01,
+    "file.read": 0.02
+   },
+   "6": {
+    "variable.set": 0.13,
+    "goal.call": 0.96,
+    "output.write": 0.02,
+    "error.handle": 0.04,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "loop.foreach": 0.98
+   },
+   "7": {
+    "variable.set": 0.98,
+    "goal.call": 0.03,
+    "output.write": 0.02,
+    "error.handle": 0.02,
+    "condition.if": 0.01,
+    "file.read": 0.01
+   },
+   "8": {
+    "variable.set": 0.57,
+    "goal.call": 0.03,
+    "output.write": 0.06,
+    "error.handle": 0.02,
+    "condition.if": 0.01,
+    "file.read": 0.01,
+    "math.subtract": 1.0
+   },
+   "9": {
+    "variable.set": 0.7,
+    "goal.call": 0.03,
+    "output.write": 0.06,
+    "error.handle": 0.03,
+    "condition.if": 0.01,
+    "file.read": 0.01,
+    "math.divide": 1.0
+   },
+   "10": {
+    "variable.set": 0.98,
+    "goal.call": 0.02,
+    "output.write": 0.02,
+    "error.handle": 0.02,
+    "condition.if": 0.01,
+    "file.read": 0.02
+   },
+   "11": {
+    "variable.set": 0.14,
+    "goal.call": 0.05,
+    "output.write": 0.05,
+    "error.handle": 0.04,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "file.save": 1.0
+   },
+   "12": {
+    "variable.set": 0.17,
+    "goal.call": 0.04,
+    "output.write": 0.02,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "list.add": 1.0
+   },
+   "13": {
+    "variable.set": 0.06,
+    "goal.call": 0.2,
+    "output.write": 0.04,
+    "error.handle": 0.97,
+    "condition.if": 0.03,
+    "file.read": 0.03,
+    "build.fold": 1.0
+   },
+   "14": {
+    "variable.set": 0.06,
+    "goal.call": 0.04,
+    "output.write": 0.04,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "build.goalsSave": 1.0
+   }
+  },
+  "decide": {
+   "0": {
+    "variable.set": 0.98,
+    "goal.call": 0.02,
+    "output.write": 0.02,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.01
+   },
+   "1": {
+    "variable.set": 0.95,
+    "goal.call": 0.08,
+    "output.write": 0.05,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.04
+   },
+   "2": {
+    "variable.set": 0.96,
+    "goal.call": 0.06,
+    "output.write": 0.03,
+    "error.handle": 0.01,
+    "condition.if": 0.02,
+    "file.read": 0.01
+   },
+   "3": {
+    "variable.set": 0.09,
+    "goal.call": 0.94,
+    "output.write": 0.03,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "loop.foreach": 0.98
+   },
+   "4": {
+    "variable.set": 0.09,
+    "goal.call": 0.95,
+    "output.write": 0.04,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "loop.foreach": 0.98
+   },
+   "5": {
+    "variable.set": 0.71,
+    "goal.call": 0.04,
+    "output.write": 0.1,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.22,
+    "ui.render": 1.0
+   },
+   "6": {
+    "variable.set": 0.48,
+    "goal.call": 0.05,
+    "output.write": 0.07,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.03,
+    "llm.decider": 1.0
+   },
+   "7": {
+    "variable.set": 0.66,
+    "goal.call": 0.04,
+    "output.write": 0.08,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.15,
+    "ui.render": 1.0
+   },
+   "8": {
+    "variable.set": 0.55,
+    "goal.call": 0.05,
+    "output.write": 0.06,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.03,
+    "llm.decider": 1.0
+   },
+   "9": {
+    "variable.set": 0.05,
+    "goal.call": 0.95,
+    "output.write": 0.07,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "event.on": 0.16
+   }
+  },
+  "checkout": {
+   "0": {
+    "variable.set": 0.82,
+    "goal.call": 0.03,
+    "output.write": 0.06,
+    "error.handle": 0.05,
+    "condition.if": 0.01,
+    "file.read": 0.98
+   },
+   "1": {
+    "variable.set": 0.75,
+    "goal.call": 0.04,
+    "output.write": 0.07,
+    "error.handle": 0.04,
+    "condition.if": 0.02,
+    "file.read": 0.04,
+    "list.count": 0.97
+   },
+   "2": {
+    "variable.set": 0.06,
+    "goal.call": 0.03,
+    "output.write": 0.96,
+    "error.handle": 0.02,
+    "condition.if": 0.98,
+    "file.read": 0.02,
+    "condition.elseif": 0.98,
+    "condition.else": 0.95
+   },
+   "3": {
+    "variable.set": 0.04,
+    "goal.call": 0.04,
+    "output.write": 0.04,
+    "error.handle": 0.4,
+    "condition.if": 0.97,
+    "file.read": 0.02,
+    "error.throw": 0.87,
+    "condition.elseif": 0.03,
+    "condition.else": 0.06
+   },
+   "4": {
+    "variable.set": 0.08,
+    "goal.call": 0.94,
+    "output.write": 0.04,
+    "error.handle": 0.04,
+    "condition.if": 0.98,
+    "file.read": 0.04,
+    "condition.elseif": 0.03,
+    "condition.else": 0.07
+   },
+   "5": {
+    "variable.set": 0.05,
+    "goal.call": 0.05,
+    "output.write": 0.05,
+    "error.handle": 0.28,
+    "condition.if": 0.97,
+    "file.read": 0.03,
+    "error.throw": 0.91,
+    "condition.elseif": 0.03,
+    "condition.else": 0.1
+   },
+   "6": {
+    "variable.set": 0.97,
+    "goal.call": 0.04,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.98,
+    "file.read": 0.02,
+    "condition.elseif": 0.24,
+    "condition.else": 0.94
+   },
+   "7": {
+    "variable.set": 0.65,
+    "goal.call": 0.03,
+    "output.write": 0.04,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02,
+    "math.multiply": 1.0
+   },
+   "8": {
+    "variable.set": 0.13,
+    "goal.call": 0.03,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.98,
+    "file.read": 0.02,
+    "list.add": 0.95,
+    "condition.elseif": 0.03,
+    "condition.else": 0.06
+   },
+   "9": {
+    "variable.set": 0.07,
+    "goal.call": 0.03,
+    "output.write": 0.99,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   }
+  },
+  "weekly_report": {
+   "0": {
+    "variable.set": 0.81,
+    "goal.call": 0.03,
+    "output.write": 0.06,
+    "error.handle": 0.04,
+    "condition.if": 0.02,
+    "file.read": 0.04,
+    "file.list": 1.0
+   },
+   "1": {
+    "variable.set": 0.97,
+    "goal.call": 0.02,
+    "output.write": 0.02,
+    "error.handle": 0.02,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   },
+   "2": {
+    "variable.set": 0.16,
+    "goal.call": 0.95,
+    "output.write": 0.04,
+    "error.handle": 0.05,
+    "condition.if": 0.03,
+    "file.read": 0.19,
+    "loop.foreach": 0.91
+   },
+   "3": {
+    "variable.set": 0.04,
+    "goal.call": 0.04,
+    "output.write": 0.04,
+    "error.handle": 0.03,
+    "condition.if": 0.97,
+    "file.read": 0.02,
+    "condition.elseif": 0.04,
+    "condition.else": 0.1
+   },
+   "4": {
+    "variable.set": 0.03,
+    "goal.call": 0.03,
+    "output.write": 0.98,
+    "error.handle": 0.02,
+    "condition.if": 0.1,
+    "file.read": 0.02
+   },
+   "5": {
+    "variable.set": 0.04,
+    "goal.call": 0.4,
+    "output.write": 0.03,
+    "error.handle": 0.02,
+    "condition.if": 0.09,
+    "file.read": 0.02,
+    "goal.return": 1.0
+   },
+   "6": {
+    "variable.set": 0.03,
+    "goal.call": 0.05,
+    "output.write": 0.04,
+    "error.handle": 0.02,
+    "condition.if": 0.97,
+    "file.read": 0.02,
+    "condition.elseif": 0.04,
+    "condition.else": 0.13
+   },
+   "7": {
+    "variable.set": 0.03,
+    "goal.call": 0.04,
+    "output.write": 0.97,
+    "error.handle": 0.03,
+    "condition.if": 0.15,
+    "file.read": 0.03
+   },
+   "8": {
+    "variable.set": 0.64,
+    "goal.call": 0.05,
+    "output.write": 0.13,
+    "error.handle": 0.04,
+    "condition.if": 0.06,
+    "file.read": 0.1,
+    "ui.render": 1.0
+   },
+   "9": {
+    "variable.set": 0.3,
+    "goal.call": 0.03,
+    "output.write": 0.04,
+    "error.handle": 0.05,
+    "condition.if": 0.02,
+    "file.read": 0.03,
+    "file.save": 1.0
+   },
+   "10": {
+    "variable.set": 0.06,
+    "goal.call": 0.9,
+    "output.write": 0.15,
+    "error.handle": 0.97,
+    "condition.if": 0.04,
+    "file.read": 0.03,
+    "http.request": 0.17
+   },
+   "11": {
+    "variable.set": 0.03,
+    "goal.call": 0.03,
+    "output.write": 0.97,
+    "error.handle": 0.03,
+    "condition.if": 0.02,
+    "file.read": 0.02
+   }
+  }
+ },
+ "decider": {
+  "build": {
+   "stage1": {
+    "secs": 1.0874223709106445,
+    "bytes": 30695,
+    "questions": 77,
+    "usage": {
+     "input_tokens": 9164,
+     "output_tokens": 3872
+    }
+   },
+   "stage2": {
+    "secs": 1.0633375644683838,
+    "bytes": 14937,
+    "questions": 6,
+    "usage": {
+     "input_tokens": 4136,
+     "output_tokens": 507
+    }
+   }
+  },
+  "start": {
+   "stage1": {
+    "secs": 0.9210207462310791,
+    "bytes": 38323,
+    "questions": 105,
+    "usage": {
+     "input_tokens": 11722,
+     "output_tokens": 5304
+    }
+   },
+   "stage2": {
+    "secs": 0.8590056896209717,
+    "bytes": 25653,
+    "questions": 11,
+    "usage": {
+     "input_tokens": 7297,
+     "output_tokens": 1048
+    }
+   }
+  },
+  "decide": {
+   "stage1": {
+    "secs": 0.8983120918273926,
+    "bytes": 31035,
+    "questions": 70,
+    "usage": {
+     "input_tokens": 9231,
+     "output_tokens": 3516
+    }
+   },
+   "stage2": {
+    "secs": 0.8518145084381104,
+    "bytes": 12435,
+    "questions": 6,
+    "usage": {
+     "input_tokens": 3517,
+     "output_tokens": 171
+    }
+   }
+  },
+  "checkout": {
+   "stage1": {
+    "secs": 0.9008162021636963,
+    "bytes": 31589,
+    "questions": 70,
+    "usage": {
+     "input_tokens": 9471,
+     "output_tokens": 3514
+    }
+   },
+   "stage2": {
+    "secs": 1.0960667133331299,
+    "bytes": 24800,
+    "questions": 19,
+    "usage": {
+     "input_tokens": 6889,
+     "output_tokens": 775
+    }
+   }
+  },
+  "weekly_report": {
+   "stage1": {
+    "secs": 0.9294281005859375,
+    "bytes": 32263,
+    "questions": 84,
+    "usage": {
+     "input_tokens": 9485,
+     "output_tokens": 4230
+    }
+   },
+   "stage2": {
+    "secs": 0.8611156940460205,
+    "bytes": 16016,
+    "questions": 9,
+    "usage": {
+     "input_tokens": 4406,
+     "output_tokens": 313
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,9 @@
+[0] file.list(Path="/logs", Pattern="*.log"); variable.set(Name=%files%, Value=%!data%)
+[1] variable.set(Name=%errors%, Value=[])
+[2] loop.foreach(Collection=%files%); goal.call(Name="ScanFile", Parameter={file: %item%})
+[3] condition.if(Operator="isempty") { output.write(Data="No errors this week"); goal.return() }
+[4] output.write(Data="Scanned the log files")
+[5] ui.render(Template="report.html", Parameter={errors: %errors%}); variable.set(Name=%html%, Value=%!data%)
+[6] file.save(Path="/reports/week.html")
+[7] error.handle(Recovery=[goal.call(Name="LogFailure")]) { goal.call(Name="SendReport", Parameter={to: "ops@example.com", subject: "Weekly report"}) }
+[8] output.write(Data="Report sent", channel="log")

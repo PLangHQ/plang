@@ -132,6 +132,10 @@ def compare_modifiers(expected, got, where):
             misses += compare_actions(e.get('recovery') or [], g.get('recovery') or [], f'{where}[{i}] recovery')
     return misses
 
+# A child's text is compared with the golden's words — except for an answer in formal, where a child's
+# text is its body's formal (formal has no place for the body's words), so the actions alone are scored.
+CHILD_TEXT = True
+
 def compare_child(expected, got, where, loose_split):
     if not expected:
         return [f'{where}: invented ({json.dumps(got)[:120]})'] if got else []
@@ -140,7 +144,7 @@ def compare_child(expected, got, where, loose_split):
     misses = []
     if len(got) == len(expected):
         for i, (e, g) in enumerate(zip(expected, got)):
-            if words(e['text']) != words(g.get('text', '')):
+            if CHILD_TEXT and words(e['text']) != words(g.get('text', '')):
                 misses.append(f'{where}[{i}] text {g.get("text")!r}, expected {e["text"]!r}')
             misses += compare_actions(e['action'], g.get('action') or [], f'{where}[{i}]')
     elif loose_split and len(expected) == 1:

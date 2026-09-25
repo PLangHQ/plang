@@ -1,0 +1,395 @@
+{
+  "step": [
+    {
+      "index": 0,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%threshold%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%modules%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!app.module.list%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "action": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%state.goal%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%goal.Name%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "action": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item"
+              },
+              "value": "%goal.Step%"
+            }
+          ],
+          "child": [
+            {
+              "text": "call AddStepToState item=%step%",
+              "action": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "AddStepToState"
+                    },
+                    {
+                      "name": "Parameter",
+                      "type": {
+                        "name": "list"
+                      },
+                      "value": [
+                        {
+                          "name": "item",
+                          "type": {
+                            "name": "item"
+                          },
+                          "value": "%step%"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "action": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item"
+              },
+              "value": "%modules%"
+            }
+          ],
+          "child": [
+            {
+              "text": "call AddModuleToState item=%module%",
+              "action": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "AddModuleToState"
+                    },
+                    {
+                      "name": "Parameter",
+                      "type": {
+                        "name": "list"
+                      },
+                      "value": [
+                        {
+                          "name": "item",
+                          "type": {
+                            "name": "item"
+                          },
+                          "value": "%module%"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "action": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%moduleQuestions%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "action": [
+        {
+          "module": "llm",
+          "name": "decider",
+          "property": [
+            {
+              "name": "State",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%state%"
+            },
+            {
+              "name": "Question",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%moduleQuestions%"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%moduleAnswer%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "action": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/deciderActionQuestions.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%actionQuestions%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "action": [
+        {
+          "module": "llm",
+          "name": "decider",
+          "property": [
+            {
+              "name": "State",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%state%"
+            },
+            {
+              "name": "Question",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%actionQuestions%"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%actionAnswer%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "action": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/EmitBuildEvent"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "kind",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "goal-decided"
+                },
+                {
+                  "name": "goal",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%goal%"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "build",
+          "name": "actions"
+        }
+      ]
+    }
+  ]
+}

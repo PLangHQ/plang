@@ -133,6 +133,8 @@ class _Reader:
             if m and known(*m.groups()) and is_modifier(*m.groups()):
                 self.fail(f'`{m.group(1)}.{m.group(2)}` wraps the action it modifies: {m.group(1)}.{m.group(2)}(…) {{ action }}')
             if not self.peek(';'):
+                if self.peek('·'): self.fail('separate a step\'s actions with `;`, not `·`')
+                if self.at_action(): self.fail('separate a step\'s actions with `;`')
                 self.fail(f'expected `;`{" or `" + closing + "`" if closing else ""}' + ('' if closing else ' or the end of the step'))
             self.take(';')
             out.append(self.action())
@@ -174,7 +176,8 @@ class _Reader:
         if self.peek('{'):
             self.space(); brace = self.pos
             if not (modifier or (module, name) in CONDITIONS):
-                self.fail(f'`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}')
+                self.fail(f'`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}; '
+                          f'write the actions one after the other: {module}.{name}(…); next.action(…)')
             self.take('{')
             body = self.actions('}')
             self.take('}')
@@ -208,6 +211,8 @@ class _Reader:
         written = self.written_type(prop, declared)
         self.space()
         frozen = self.text.startswith('?=', self.pos)
+        if self.text.startswith('==', self.pos):
+            self.fail(f'one `=` gives a value: {prop}="=="')
         self.take('?=' if frozen else '=')
         self.space()
         at = self.pos
@@ -240,9 +245,12 @@ class _Reader:
             return json.loads(m.group())
         if c == '%':
             m = VARIABLE.match(t, p)
+            if not m and t.startswith('%?', p): self.fail('a `?` is still there: fill it with the value the step gives')
             if not m: self.fail('a %variable% is not closed')
             self.pos = m.end()
             return m.group()
+        if c == '[' and re.compile(r'\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]').match(t, p):
+            self.fail('arguments are written as one dict: Parameter={name: "value", other: %x%}')
         if c == '[':
             self.pos += 1; items = []
             while not self.peek(']'):
@@ -276,6 +284,9 @@ class _Reader:
         for word, v in (('true', True), ('false', False), ('null', None)):
             if re.compile(rf'{word}\b').match(t, p): self.pos = p + len(word); return v
         if self.at_action(): return self.action()
+        if (m := re.compile(r'[A-Za-z_][\w./-]*').match(t, p)):
+            self.fail(f'a text is quoted: "{m.group()}"')
+        if t[p] == '?': self.fail('a `?` is still there: fill it with the value the step gives')
         self.fail('expected a value: "text", a number, true, false, null, %variable%, [list], {dict} or an action')
 
 def parse(text):
@@ -289,10 +300,8 @@ STEP = re.compile(r'^\[(\d+)\][ \t]*', re.M)
 def parse_answer(text):
     """A whole answer: `[i] …` per step, its continuation lines under it → {i: rows}."""
     heads = list(STEP.finditer(text))
-    if not heads:
-        raise FormalError('expected `[i]` at the start of a step', text, 0)
-    if text[:heads[0].start()].strip():
-        raise FormalError('text before the first `[i]` step', text, 0)
+    if not heads or text[:heads[0].start()].strip():
+        raise FormalError('each step\'s line starts with its index: [0] action; action', text, 0)
     out = {}
     for n, h in enumerate(heads):
         end = heads[n + 1].start() if n + 1 < len(heads) else len(text)
