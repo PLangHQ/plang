@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERyCEbVp3NaiNtUB905tfYke1YBVV",
+ "object": "chat.completion",
+ "created": 1790334958,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%count%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \"<\"\n            },\n            {\n              \"name\": \"Right\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": 3\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"return\",\n              \"action\": [\n                {\n                  \"module\": \"goal\",\n                  \"name\": \"return\"\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 3972,
+  "completion_tokens": 200,
+  "total_tokens": 4172,
+  "prompt_tokens_details": {
+   "cached_tokens": 3840,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

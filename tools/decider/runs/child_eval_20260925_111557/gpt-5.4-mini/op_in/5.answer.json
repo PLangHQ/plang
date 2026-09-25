@@ -1,0 +1,53 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%role%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "in"
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "list"
+       },
+       "value": [
+        "admin",
+        "owner"
+       ]
+      }
+     ]
+    },
+    {
+     "module": "goal",
+     "name": "call",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "text"
+       },
+       "value": "GrantAccess"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

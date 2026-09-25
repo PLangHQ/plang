@@ -1,0 +1,36 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%path%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "/"
+      },
+      {
+       "name": "AsDefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

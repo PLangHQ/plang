@@ -1,0 +1,56 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "property": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/templates/propertiesUser.template"
+      },
+      {
+       "name": "Parameter",
+       "type": {
+        "name": "list"
+       },
+       "value": []
+      },
+      {
+       "name": "IsFile",
+       "type": {
+        "name": "bool"
+       },
+       "value": true
+      }
+     ]
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "property": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%propertiesUserMsg%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%!data%"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "list",
+     "name": "add",
+     "property": [
+      {
+       "name": "ListName",
+       "type": {
+        "name": "variable"
+       },
+       "value": "%items%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%item%"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

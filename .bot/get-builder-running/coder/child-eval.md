@@ -419,3 +419,303 @@ Plang has no standalone `- else` step. Else is written inline in the if step (`-
 - With the standalone-else construct gone, **nano measures ahead of mini** on this set.
 
 N2 (a renumbered or merged answer silently grafting one step's actions onto another) is now caught by `build.match` before any step takes its actions (the commit after this recompute).
+
+
+---
+
+# Run 3: the 100% bar (5 runs per case, 32 cases / 45 steps)
+
+- **Prompt:** frozen at `455fe7fca`. The changes since run 2:
+  - the standalone-else teaching;
+  - the Order teaching;
+  - PF5 plus the parser's `(its body is step N, indented below …)` marker on a step with a body;
+  - the step-matching and child-over-indent refusals in `build.match` (not exercised here: stage 3 only).
+- **Golden set:** widened with 9 real builder lines and 3 layouts.
+- **Raw:** `tools/decider/runs/child_eval_20260925_111557/`. 320 calls, all answered.
+- **The bar (Ingi):** 100% on every run. The model is chosen only among those at 100%.
+
+| | gpt-5.4-nano | gpt-5.4-mini |
+|---|---|---|
+| steps right | **214/225** (95.1%) | 195/225 (86.7%) |
+| cases right on all 5 runs | **29/32** | 22/32 |
+| **meets the bar** | **no** | **no** |
+
+**Neither model is at 100%.** Every miss is below, judged prompt-first, with a proposed fix. No fix is applied yet (the prompt stayed frozen for this run).
+
+## Cases not at 5/5
+
+| case | nano | mini |
+|---|---|---|
+| builder_render_template | 0/5 | 5/5 |
+| builder_math_write_to | 3/5 | 5/5 |
+| indented_two_levels | 4/5 | 5/5 |
+| if_call_else_call | 5/5 | 0/5 |
+| else_return | 5/5 | 0/5 |
+| op_startswith | 5/5 | 0/5 |
+| inline_if_then_step | 5/5 | 0/5 |
+| body_with_write_to | 5/5 | 2/5 |
+| if_return | 5/5 | 3/5 |
+| setup_before_if | 5/5 | 3/5 |
+| if_elseif_else_line / negate_isempty / op_in | 5/5 | 4/5 |
+
+## Every miss, judged prompt-first
+
+| Class | Model / step-runs | What happened | Cause | Proposed fix |
+|---|---|---|---|---|
+| **R1: inline body left beside the condition** | mini, 30 step-runs over 11 cases (nano 0) | `if %n% > 5, call Big` → `[if, goal.call]` flat; for if/else: `if` without child, `else{…}` with one. mini got these right in run 2, so this is a **regression**. | **Prompt, most likely.** PF5 ("A step marked … gets no `child`…") is now the LAST worked example before "Filling a property", and mini generalises "no child" to every condition. It only fails on inline cases, and it gets the marked cases right. | **P1:** move PF5 up, so the Conditions section ends on an inline example, and scope it in words: "Only a step marked `(its body is …)` is left without a child; a body written in the step's own words always goes in the child." |
+| **R2: placeholders on ui.render** | nano 5/5 on `builder_render_template` | `Parameter: []` and `IsFile: true` added | **Prompt/teaching.** `ui.render` has no notes. `Parameter: []` breaks "never put in a placeholder". `IsFile: true` is behaviour-neutral: IsFile is nullable, and null = auto-detect finds the file. But the step doesn't name it. | **P2:** `os/system/modules/ui/render.notes.md`: "`Parameter` only when the step passes values — never an empty list. `IsFile` is left out: render finds the file itself; write it only when the step says inline / as text." |
+| **R3: defaults repeated** | nano 2/5 on `builder_math_write_to` | `math.subtract` with `Overflow: "Promote"`, `Precision: "Error"`, both the defaults | **Model**, against a rule the prompt states ("never repeat a default"). The same pattern appeared in run 1 (math.multiply). | **P3:** make the rule concrete in "Filling a property": "A property the menu shows with a default is left out unless the step's words ask for another value". Plus F2, so plang shows the default's name, not `0`. |
+| **R4: nest everything, drop the rest** | nano 1/5 on `indented_two_levels` (4 step-runs) | step 0 got `child: [if %b% > 0 {call, write}]`, and steps 1-3 were dropped | **Model**, despite both markers. **Caught at build:** `build.match` refuses it ("step 1 has no entry…"), and FixProperties retries. Loud, not silent. | — (the check handles it) |
+
+## What the builder already catches, and what it doesn't
+
+| Class | build.match (in the retry) | Silent wrong program if it reached the .pr? |
+|---|---|---|
+| R4: dropped or renumbered steps, child over indent | **caught** | — |
+| R1: body beside the condition | **not caught** | **yes.** `[if, call]` runs the call when the condition is FALSE (the else-chain rule) |
+| R2/R3: extra optional properties | not caught | no: same behaviour here (IsFile auto-detect; a repeated default is the default) |
+
+**P4 (builder check), proposed.** The action list refuses an ordinary action written after a condition in the same list. After a condition, only `elseif`/`else` may follow; anything else is the branch's body put beside it. This is the twin of `ElseWithoutIf`, but it's the LLM's error, not the programmer's, so it goes back through FixProperties: "step 0: `goal.call` is after the if — a branch's body goes in its child". That turns R1 from silent into a retry.
+
+## Proposal
+
+Apply P1 (prompt), P2 (render notes), P3 (defaults rule) and P4 (the check), then re-measure 5 runs on both models. nano is the closer of the two: its remaining misses are R2 (5, a teaching gap), R3 (2) and R4 (1, already caught).
+
+## Run 3: table and every miss
+
+STEP TOTALS: gpt-5.4-nano 214/225, gpt-5.4-mini 195/225
+
+| case | step | expected | gpt-5.4-nano got ×5 | gpt-5.4-nano | gpt-5.4-mini got ×5 | gpt-5.4-mini |
+|---|---|---|---|---|---|---|
+| if_return | 0 | `condition.if(Left="%count%",Operator="<",Right=3){"return": goal.return()}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✗ `condition.if(Left="%count%",Operator="<",Right=3) ; goal.return()`<br>2: ✓<br>3: ✗ `condition.if(Left="%count%",Operator="<",Right=3) ; goal.return()`<br>4: ✓<br>5: ✓ | NO (3/5) |
+| if_call_else_call | 0 | `condition.if(Left="%status%",Operator="==",Right="active"){"call Activate": goal.call(Name="Activate")} ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✗ `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`<br>2: ✗ `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`<br>3: ✗ `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`<br>4: ✗ `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`<br>5: ✗ `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}` | NO (0/5) |
+| if_elseif_else_line | 0 | `condition.if(Left="%score%",Operator=">",Right=90){"write out "A"": output.write(Data="A")} ; condition.elseif(Left="%score%",Operator=">",Right=70){"write out "B"": output.write(Data="B")} ; condition.else(){"write out "C"": output.write(Data="C")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✗ `condition.if(Left="%score%",Operator=">",Right=90) ; condition.elseif(Left="%score%",Operator=">",Right=70) ; condition.else(){"write out "C"": output.write(Data="C")}`<br>4: ✓<br>5: ✓ | NO (4/5) |
+| if_elseif_no_else | 0 | `condition.if(Left="%lang%",Operator="==",Right="is"){"write out "Halló"": output.write(Data="Halló")} ; condition.elseif(Left="%lang%",Operator="==",Right="en"){"write out "Hello"": output.write(Data="Hello")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| else_return | 0 | `condition.if(Left="%ok%",Operator="==",Right=true){"call Continue": goal.call(Name="Continue")} ; condition.else(){"return": goal.return()}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✗ `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`<br>2: ✗ `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`<br>3: ✗ `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`<br>4: ✗ `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`<br>5: ✗ `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}` | NO (0/5) |
+| negate_contains | 0 | `condition.if(Left="%name%",Operator="contains",Right="admin",Negate=true){"call Deny": goal.call(Name="Deny")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| negate_isempty | 0 | `condition.if(Left="%items%",Operator="isempty",Negate=true){"call ProcessItems": goal.call(Name="ProcessItems")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✗ `condition.if(Left="%items%",Operator="isempty",Negate=true) ; goal.call(Name="ProcessItems")` | NO (4/5) |
+| setup_before_if | 0 | `list.count(ListName="%items%") ; variable.set(Name="%n%",Value="%!data%") ; condition.if(Left="%n%",Operator=">",Right=10){"call Paginate": goal.call(Name="Paginate")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✗ `list.count(ListName="%items%") ; variable.set(Name="%n%",Value="%!data%") ; condition.if(Left="%n%",Operator=">",Right=10) ; goal.call(Name="Paginate")`<br>3: ✗ `list.count(ListName="%items%") ; variable.set(Name="%n%",Value="%!data%") ; condition.if(Left="%n%",Operator=">",Right=10) ; goal.call(Name="Paginate")`<br>4: ✓<br>5: ✓ | NO (3/5) |
+| body_with_write_to | 0 | `condition.if(Left="%price%",Operator=">",Right=100){"multiply %price% by 0.9, write to %price%": math.multiply(A="%price%",B=0.9); variable.set(Name="%price%",Value="%!data%")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✗ `condition.if(Left="%price%",Operator=">",Right=100) ; math.multiply(A="%price%",B=0.9)`<br>2: ✓<br>3: ✗ `condition.if(Left="%price%",Operator=">",Right=100) ; math.multiply(A="%price%",B=0.9) ; variable.set(Name="%price%",Value="%!data%")`<br>4: ✗ `condition.if(Left="%price%",Operator=">",Right=100) ; math.multiply(A="%price%",B=0.9)`<br>5: ✓ | NO (2/5) |
+| body_two_actions | 0 | `condition.if(Left="%user%",Operator="==",Right=null){"write out "no user" and return": output.write(Data="no user"); goal.return()}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| op_in | 0 | `condition.if(Left="%role%",Operator="in",Right=["admin", "owner"]){"call GrantAccess": goal.call(Name="GrantAccess")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✗ `condition.if(Left="%role%",Operator="in",Right=["admin", "owner"]) ; goal.call(Name="GrantAccess")` | NO (4/5) |
+| op_startswith | 0 | `condition.if(Left="%path%",Operator="startswith",Right="/api"){"call HandleApi path=%path%": goal.call(Name="HandleApi",Parameter=[{"name": "path", "value": "%path%"}])}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✗ `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`<br>2: ✗ `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`<br>3: ✗ `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`<br>4: ✗ `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`<br>5: ✗ `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])` | NO (0/5) |
+| op_is_type | 0 | `condition.if(Left="%value%",Operator="is",Right="number"){"write out "numeric"": output.write(Data="numeric")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| menumodule | 0 | `variable.set(Name="%key%",Value="s%step.Index%_%module.Name%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| menumodule | 1 | `condition.if(Left="%moduleAnswer[key].noul%",Operator="<",Right="%threshold%"){"return": goal.return()}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| menumodule | 2 | `condition.if(Left="%module.Action.Count%",Operator="==",Right=1){"add "%module.Name%.%module.Action[0].Name%" to %choices%": list.add(ListName="%choices%",Value="%module.Name%.%module.Action[0].Name%")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| menumodule | 3 | `condition.if(Left="%module.Action.Count%",Operator=">",Right=1){"add "%module.Name%.%actionAnswer[key].choice%" to %choices%": list.add(ListName="%choices%",Value="%module.Name%.%actionAnswer[key].choice%")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| complementary_steps | 0 | `condition.if(Left="%n%",Operator="==",Right=0){"write out "none"": output.write(Data="none")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| complementary_steps | 1 | `condition.if(Left="%n%",Operator=">",Right=0){"write out "some"": output.write(Data="some")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_set_default | 0 | `variable.set(Name="%path%",Value="/",AsDefault=true)` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_set_number | 0 | `variable.set(Name="%threshold%",Value=0.5)` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_set_empty_list | 0 | `variable.set(Name="%choices%",Value=[])` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_set_indexed | 0 | `variable.set(Name="%menu[step.Index]%",Value="%choices%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_math_write_to | 0 | `math.subtract(A="%Now.Ticks%",B="%buildStart%") ; variable.set(Name="%elapsedTicks%",Value="%!data%")` | 1: ✓<br>2: ✗ `math.subtract(A="%Now.Ticks%",B="%buildStart%",Overflow="Promote",Precision="Error") ; variable.set(Name="%elapsedTicks%",Value="%!data%")`<br>3: ✓<br>4: ✓<br>5: ✗ `math.subtract(A="%Now.Ticks%",B="%buildStart%",Overflow="Promote",Precision="Error") ; variable.set(Name="%elapsedTicks%",Value="%!data%")` | NO (3/5) | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_render_template | 0 | `ui.render(Template="/system/builder/llm/templates/propertiesUser.template") ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")` | 1: ✗ `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`<br>2: ✗ `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`<br>3: ✗ `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[]) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`<br>4: ✗ `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`<br>5: ✗ `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")` | NO (0/5) | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_decider | 0 | `llm.decider(State="%state%",Question="%moduleQuestions%") ; variable.set(Name="%moduleAnswer%",Value="%!data%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_save_file | 0 | `file.save(Path="/.build/traces/%!trace.id%/%goal.Name%.json",Value="%trace%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| builder_add_to_list | 0 | `list.add(ListName="%traceGoals%",Value="%goal.Name%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_two_levels | 0 | `condition.if(Left="%a%",Operator=">",Right=0)` | 1: ✓<br>2: ✓<br>3: ✗ `condition.if(Left="%a%",Operator=">",Right=0){"if %b% > 0": condition.if(Left="%b%",Operator=">",Right=0){"call BothPositive": goal.call(Name="BothPositive") \| "write out "checked"": output.write(Data="checked")}}`<br>4: ✓<br>5: ✓ | NO (4/5) | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_two_levels | 1 | `condition.if(Left="%b%",Operator=">",Right=0)` | 1: ✓<br>2: ✓<br>3: ✗ `(missing)`<br>4: ✓<br>5: ✓ | NO (4/5) | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_two_levels | 2 | `goal.call(Name="BothPositive")` | 1: ✓<br>2: ✓<br>3: ✗ `(missing)`<br>4: ✓<br>5: ✓ | NO (4/5) | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_two_levels | 3 | `output.write(Data="checked")` | 1: ✓<br>2: ✓<br>3: ✗ `(missing)`<br>4: ✓<br>5: ✓ | NO (4/5) | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_then_outdented | 0 | `condition.if(Left="%retries%",Operator=">",Right=3)` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_then_outdented | 1 | `output.write(Data="giving up")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_then_outdented | 2 | `goal.return()` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_then_outdented | 3 | `output.write(Data="trying again")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| inline_if_then_step | 0 | `condition.if(Left="%n%",Operator=">",Right=5){"call Big": goal.call(Name="Big")}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✗ `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`<br>2: ✗ `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`<br>3: ✗ `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`<br>4: ✗ `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`<br>5: ✗ `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")` | NO (0/5) |
+| inline_if_then_step | 1 | `list.count(ListName="%items%") ; variable.set(Name="%n%",Value="%!data%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| plain_write | 0 | `output.write(Data="hello")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| plain_call_args | 0 | `goal.call(Name="SendMail",Parameter=[{"name": "to", "value": "%email%"}, {"name": "subject", "value": "Welcome"}])` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| plain_add | 0 | `list.add(ListName="%items%",Value="%item%")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_body | 0 | `condition.if(Left="%count%",Operator=">",Right=0)` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_body | 1 | `goal.call(Name="ProcessItems")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| indented_body | 2 | `output.write(Data="done")` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+| nested_inline | 0 | `condition.if(Left="%a%",Operator=">",Right=0){"if %b% > 0, call BothPositive": condition.if(Left="%b%",Operator=">",Right=0){"call BothPositive": goal.call(Name="BothPositive")}}` | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES | 1: ✓<br>2: ✓<br>3: ✓<br>4: ✓<br>5: ✓ | YES |
+
+## Every miss, in full
+
+**body_with_write_to — gpt-5.4-mini run 1**
+- step 0: 2 actions, expected 1 (condition.if(Left="%price%",Operator=">",Right=100), math.multiply(A="%price%",B=0.9))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%price%",Operator=">",Right=100) ; math.multiply(A="%price%",B=0.9)`
+
+**body_with_write_to — gpt-5.4-mini run 3**
+- step 0: 3 actions, expected 1 (condition.if(Left="%price%",Operator=">",Right=100), math.multiply(A="%price%",B=0.9), variable.set(Name="%price%",Value="%!data%"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%price%",Operator=">",Right=100) ; math.multiply(A="%price%",B=0.9) ; variable.set(Name="%price%",Value="%!data%")`
+
+**body_with_write_to — gpt-5.4-mini run 4**
+- step 0: 2 actions, expected 1 (condition.if(Left="%price%",Operator=">",Right=100), math.multiply(A="%price%",B=0.9))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%price%",Operator=">",Right=100) ; math.multiply(A="%price%",B=0.9)`
+
+**builder_math_write_to — gpt-5.4-nano run 2**
+- step 0[0] math.subtract: extra Overflow = 'Promote'
+- step 0[0] math.subtract: extra Precision = 'Error'
+- got step 0: `math.subtract(A="%Now.Ticks%",B="%buildStart%",Overflow="Promote",Precision="Error") ; variable.set(Name="%elapsedTicks%",Value="%!data%")`
+
+**builder_math_write_to — gpt-5.4-nano run 5**
+- step 0[0] math.subtract: extra Overflow = 'Promote'
+- step 0[0] math.subtract: extra Precision = 'Error'
+- got step 0: `math.subtract(A="%Now.Ticks%",B="%buildStart%",Overflow="Promote",Precision="Error") ; variable.set(Name="%elapsedTicks%",Value="%!data%")`
+
+**builder_render_template — gpt-5.4-nano run 1**
+- step 0[0] ui.render: extra Parameter = []
+- step 0[0] ui.render: extra IsFile = True
+- got step 0: `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`
+
+**builder_render_template — gpt-5.4-nano run 2**
+- step 0[0] ui.render: extra Parameter = []
+- step 0[0] ui.render: extra IsFile = True
+- got step 0: `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`
+
+**builder_render_template — gpt-5.4-nano run 3**
+- step 0[0] ui.render: extra Parameter = []
+- got step 0: `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[]) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`
+
+**builder_render_template — gpt-5.4-nano run 4**
+- step 0[0] ui.render: extra Parameter = []
+- step 0[0] ui.render: extra IsFile = True
+- got step 0: `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`
+
+**builder_render_template — gpt-5.4-nano run 5**
+- step 0[0] ui.render: extra Parameter = []
+- step 0[0] ui.render: extra IsFile = True
+- got step 0: `ui.render(Template="/system/builder/llm/templates/propertiesUser.template",Parameter=[],IsFile=true) ; variable.set(Name="%propertiesUserMsg%",Value="%!data%")`
+
+**else_return — gpt-5.4-mini run 1**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`
+
+**else_return — gpt-5.4-mini run 2**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`
+
+**else_return — gpt-5.4-mini run 3**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`
+
+**else_return — gpt-5.4-mini run 4**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`
+
+**else_return — gpt-5.4-mini run 5**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%ok%",Operator="==",Right=true) ; condition.else(){"return": goal.return()}`
+
+**if_call_else_call — gpt-5.4-mini run 1**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`
+
+**if_call_else_call — gpt-5.4-mini run 2**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`
+
+**if_call_else_call — gpt-5.4-mini run 3**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`
+
+**if_call_else_call — gpt-5.4-mini run 4**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`
+
+**if_call_else_call — gpt-5.4-mini run 5**
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%status%",Operator="==",Right="active") ; condition.else(){"call Deactivate": goal.call(Name="Deactivate")}`
+
+**if_elseif_else_line — gpt-5.4-mini run 3**
+- step 0[0] child: missing — the body is not in child
+- step 0[1] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%score%",Operator=">",Right=90) ; condition.elseif(Left="%score%",Operator=">",Right=70) ; condition.else(){"write out "C"": output.write(Data="C")}`
+
+**if_return — gpt-5.4-mini run 1**
+- step 0: 2 actions, expected 1 (condition.if(Left="%count%",Operator="<",Right=3), goal.return())
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%count%",Operator="<",Right=3) ; goal.return()`
+
+**if_return — gpt-5.4-mini run 3**
+- step 0: 2 actions, expected 1 (condition.if(Left="%count%",Operator="<",Right=3), goal.return())
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%count%",Operator="<",Right=3) ; goal.return()`
+
+**indented_two_levels — gpt-5.4-nano run 3**
+- step 0[0] child: invented ([{"text": "if %b% > 0", "action": [{"module": "condition", "name": "if", "property": [{"name": "Left", "type": {"name": )
+- got step 0: `condition.if(Left="%a%",Operator=">",Right=0){"if %b% > 0": condition.if(Left="%b%",Operator=">",Right=0){"call BothPositive": goal.call(Name="BothPositive") \| "write out "checked"": output.write(Data="checked")}}`
+- step 1: not in the answer
+- got step 1: `(missing)`
+- step 2: not in the answer
+- got step 2: `(missing)`
+- step 3: not in the answer
+- got step 3: `(missing)`
+
+**inline_if_then_step — gpt-5.4-mini run 1**
+- step 0: 2 actions, expected 1 (condition.if(Left="%n%",Operator=">",Right=5), goal.call(Name="Big"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`
+
+**inline_if_then_step — gpt-5.4-mini run 2**
+- step 0: 2 actions, expected 1 (condition.if(Left="%n%",Operator=">",Right=5), goal.call(Name="Big"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`
+
+**inline_if_then_step — gpt-5.4-mini run 3**
+- step 0: 2 actions, expected 1 (condition.if(Left="%n%",Operator=">",Right=5), goal.call(Name="Big"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`
+
+**inline_if_then_step — gpt-5.4-mini run 4**
+- step 0: 2 actions, expected 1 (condition.if(Left="%n%",Operator=">",Right=5), goal.call(Name="Big"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`
+
+**inline_if_then_step — gpt-5.4-mini run 5**
+- step 0: 2 actions, expected 1 (condition.if(Left="%n%",Operator=">",Right=5), goal.call(Name="Big"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%n%",Operator=">",Right=5) ; goal.call(Name="Big")`
+
+**negate_isempty — gpt-5.4-mini run 5**
+- step 0: 2 actions, expected 1 (condition.if(Left="%items%",Operator="isempty",Negate=true), goal.call(Name="ProcessItems"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%items%",Operator="isempty",Negate=true) ; goal.call(Name="ProcessItems")`
+
+**op_in — gpt-5.4-mini run 5**
+- step 0: 2 actions, expected 1 (condition.if(Left="%role%",Operator="in",Right=["admin", "owner"]), goal.call(Name="GrantAccess"))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%role%",Operator="in",Right=["admin", "owner"]) ; goal.call(Name="GrantAccess")`
+
+**op_startswith — gpt-5.4-mini run 1**
+- step 0: 2 actions, expected 1 (condition.if(Left="%path%",Operator="startswith",Right="/api"), goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}]))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`
+
+**op_startswith — gpt-5.4-mini run 2**
+- step 0: 2 actions, expected 1 (condition.if(Left="%path%",Operator="startswith",Right="/api"), goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}]))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`
+
+**op_startswith — gpt-5.4-mini run 3**
+- step 0: 2 actions, expected 1 (condition.if(Left="%path%",Operator="startswith",Right="/api"), goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}]))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`
+
+**op_startswith — gpt-5.4-mini run 4**
+- step 0: 2 actions, expected 1 (condition.if(Left="%path%",Operator="startswith",Right="/api"), goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}]))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`
+
+**op_startswith — gpt-5.4-mini run 5**
+- step 0: 2 actions, expected 1 (condition.if(Left="%path%",Operator="startswith",Right="/api"), goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}]))
+- step 0[0] child: missing — the body is not in child
+- got step 0: `condition.if(Left="%path%",Operator="startswith",Right="/api") ; goal.call(Name="HandleApi",Parameter=[{"name": "path", "type": {"name": "item"}, "value": "%path%"}])`
+
+**setup_before_if — gpt-5.4-mini run 2**
+- step 0: 4 actions, expected 3 (list.count(ListName="%items%"), variable.set(Name="%n%",Value="%!data%"), condition.if(Left="%n%",Operator=">",Right=10), goal.call(Name="Paginate"))
+- step 0[2] child: missing — the body is not in child
+- got step 0: `list.count(ListName="%items%") ; variable.set(Name="%n%",Value="%!data%") ; condition.if(Left="%n%",Operator=">",Right=10) ; goal.call(Name="Paginate")`
+
+**setup_before_if — gpt-5.4-mini run 3**
+- step 0: 4 actions, expected 3 (list.count(ListName="%items%"), variable.set(Name="%n%",Value="%!data%"), condition.if(Left="%n%",Operator=">",Right=10), goal.call(Name="Paginate"))
+- step 0[2] child: missing — the body is not in child
+- got step 0: `list.count(ListName="%items%") ; variable.set(Name="%n%",Value="%!data%") ; condition.if(Left="%n%",Operator=">",Right=10) ; goal.call(Name="Paginate")`
+

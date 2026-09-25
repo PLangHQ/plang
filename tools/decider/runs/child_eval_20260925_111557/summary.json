@@ -1,0 +1,5494 @@
+[
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_return",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_return",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_return",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_return",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_return",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_call_else_call",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\"){\"call Activate\": goal.call(Name=\"Activate\")}",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_call_else_call",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\"){\"call Activate\": goal.call(Name=\"Activate\")}",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_call_else_call",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\"){\"call Activate\": goal.call(Name=\"Activate\")}",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_call_else_call",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\"){\"call Activate\": goal.call(Name=\"Activate\")}",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_call_else_call",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\"){\"call Activate\": goal.call(Name=\"Activate\")}",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_else_line",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_else_line",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_else_line",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_else_line",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_else_line",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_no_else",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_no_else",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_no_else",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_no_else",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "if_elseif_no_else",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "else_return",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true){\"call Continue\": goal.call(Name=\"Continue\")}",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "else_return",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true){\"call Continue\": goal.call(Name=\"Continue\")}",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "else_return",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true){\"call Continue\": goal.call(Name=\"Continue\")}",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "else_return",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true){\"call Continue\": goal.call(Name=\"Continue\")}",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "else_return",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true){\"call Continue\": goal.call(Name=\"Continue\")}",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_contains",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_contains",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_contains",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_contains",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_contains",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_isempty",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_isempty",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_isempty",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_isempty",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "negate_isempty",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "setup_before_if",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "setup_before_if",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "setup_before_if",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "setup_before_if",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "setup_before_if",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_with_write_to",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_with_write_to",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_with_write_to",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_with_write_to",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_with_write_to",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_two_actions",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_two_actions",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_two_actions",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_two_actions",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "body_two_actions",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_in",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_in",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_in",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_in",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_in",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_startswith",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"){\"call HandleApi path=%path%\": goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_startswith",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"){\"call HandleApi path=%path%\": goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_startswith",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"){\"call HandleApi path=%path%\": goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_startswith",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"){\"call HandleApi path=%path%\": goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_startswith",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"){\"call HandleApi path=%path%\": goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_is_type",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_is_type",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_is_type",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_is_type",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "op_is_type",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "menumodule",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "menumodule",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "menumodule",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "menumodule",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "menumodule",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_default",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_default",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_default",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_default",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_default",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_number",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_number",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_number",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_number",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_number",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_empty_list",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_empty_list",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_empty_list",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_empty_list",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_empty_list",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_indexed",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_indexed",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_indexed",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_indexed",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_set_indexed",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_math_write_to",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_math_write_to",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] math.subtract: extra Overflow = 'Promote'",
+     "step 0[0] math.subtract: extra Precision = 'Error'"
+    ],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\",Overflow=\"Promote\",Precision=\"Error\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_math_write_to",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_math_write_to",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_math_write_to",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] math.subtract: extra Overflow = 'Promote'",
+     "step 0[0] math.subtract: extra Precision = 'Error'"
+    ],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\",Overflow=\"Promote\",Precision=\"Error\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_render_template",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] ui.render: extra Parameter = []",
+     "step 0[0] ui.render: extra IsFile = True"
+    ],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\",Parameter=[],IsFile=true)",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_render_template",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] ui.render: extra Parameter = []",
+     "step 0[0] ui.render: extra IsFile = True"
+    ],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\",Parameter=[],IsFile=true)",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_render_template",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] ui.render: extra Parameter = []"
+    ],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\",Parameter=[])",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_render_template",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] ui.render: extra Parameter = []",
+     "step 0[0] ui.render: extra IsFile = True"
+    ],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\",Parameter=[],IsFile=true)",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_render_template",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] ui.render: extra Parameter = []",
+     "step 0[0] ui.render: extra IsFile = True"
+    ],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\",Parameter=[],IsFile=true)",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_decider",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_decider",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_decider",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_decider",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_decider",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_save_file",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_save_file",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_save_file",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_save_file",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_save_file",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_add_to_list",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_add_to_list",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_add_to_list",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_add_to_list",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "builder_add_to_list",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_two_levels",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_two_levels",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_two_levels",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: invented ([{\"text\": \"if %b% > 0\", \"action\": [{\"module\": \"condition\", \"name\": \"if\", \"property\": [{\"name\": \"Left\", \"type\": {\"name\": )"
+    ],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\") | \"write out \"checked\"\": output.write(Data=\"checked\")}}"
+    ]
+   },
+   "1": {
+    "misses": [
+     "step 1: not in the answer"
+    ],
+    "got": []
+   },
+   "2": {
+    "misses": [
+     "step 2: not in the answer"
+    ],
+    "got": []
+   },
+   "3": {
+    "misses": [
+     "step 3: not in the answer"
+    ],
+    "got": []
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_two_levels",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_two_levels",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_then_outdented",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_then_outdented",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_then_outdented",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_then_outdented",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_then_outdented",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "inline_if_then_step",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5){\"call Big\": goal.call(Name=\"Big\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "inline_if_then_step",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5){\"call Big\": goal.call(Name=\"Big\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "inline_if_then_step",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5){\"call Big\": goal.call(Name=\"Big\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "inline_if_then_step",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5){\"call Big\": goal.call(Name=\"Big\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "inline_if_then_step",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5){\"call Big\": goal.call(Name=\"Big\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_write",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_write",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_write",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_write",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_write",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_call_args",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_call_args",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_call_args",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_call_args",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_call_args",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_add",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_add",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_add",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_add",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "plain_add",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_body",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_body",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_body",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_body",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "indented_body",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "nested_inline",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "nested_inline",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "nested_inline",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "nested_inline",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "nested_inline",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_return",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%count%\",Operator=\"<\",Right=3), goal.return())",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3)",
+     "goal.return()"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_return",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_return",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%count%\",Operator=\"<\",Right=3), goal.return())",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3)",
+     "goal.return()"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_return",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_return",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\"<\",Right=3){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_call_else_call",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\")",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_call_else_call",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\")",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_call_else_call",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\")",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_call_else_call",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\")",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_call_else_call",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%status%\",Operator=\"==\",Right=\"active\")",
+     "condition.else(){\"call Deactivate\": goal.call(Name=\"Deactivate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_else_line",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_else_line",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_else_line",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child",
+     "step 0[1] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90)",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70)",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_else_line",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_else_line",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%score%\",Operator=\">\",Right=90){\"write out \"A\"\": output.write(Data=\"A\")}",
+     "condition.elseif(Left=\"%score%\",Operator=\">\",Right=70){\"write out \"B\"\": output.write(Data=\"B\")}",
+     "condition.else(){\"write out \"C\"\": output.write(Data=\"C\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_no_else",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_no_else",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_no_else",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_no_else",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "if_elseif_no_else",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%lang%\",Operator=\"==\",Right=\"is\"){\"write out \"Halló\"\": output.write(Data=\"Halló\")}",
+     "condition.elseif(Left=\"%lang%\",Operator=\"==\",Right=\"en\"){\"write out \"Hello\"\": output.write(Data=\"Hello\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "else_return",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true)",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "else_return",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true)",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "else_return",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true)",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "else_return",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true)",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "else_return",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%ok%\",Operator=\"==\",Right=true)",
+     "condition.else(){\"return\": goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_contains",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_contains",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_contains",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_contains",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_contains",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%name%\",Operator=\"contains\",Right=\"admin\",Negate=true){\"call Deny\": goal.call(Name=\"Deny\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_isempty",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_isempty",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_isempty",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_isempty",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true){\"call ProcessItems\": goal.call(Name=\"ProcessItems\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "negate_isempty",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true), goal.call(Name=\"ProcessItems\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%items%\",Operator=\"isempty\",Negate=true)",
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "setup_before_if",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "setup_before_if",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 4 actions, expected 3 (list.count(ListName=\"%items%\"), variable.set(Name=\"%n%\",Value=\"%!data%\"), condition.if(Left=\"%n%\",Operator=\">\",Right=10), goal.call(Name=\"Paginate\"))",
+     "step 0[2] child: missing — the body is not in child"
+    ],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10)",
+     "goal.call(Name=\"Paginate\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "setup_before_if",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 4 actions, expected 3 (list.count(ListName=\"%items%\"), variable.set(Name=\"%n%\",Value=\"%!data%\"), condition.if(Left=\"%n%\",Operator=\">\",Right=10), goal.call(Name=\"Paginate\"))",
+     "step 0[2] child: missing — the body is not in child"
+    ],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10)",
+     "goal.call(Name=\"Paginate\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "setup_before_if",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "setup_before_if",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")",
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=10){\"call Paginate\": goal.call(Name=\"Paginate\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_with_write_to",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%price%\",Operator=\">\",Right=100), math.multiply(A=\"%price%\",B=0.9))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100)",
+     "math.multiply(A=\"%price%\",B=0.9)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_with_write_to",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_with_write_to",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 3 actions, expected 1 (condition.if(Left=\"%price%\",Operator=\">\",Right=100), math.multiply(A=\"%price%\",B=0.9), variable.set(Name=\"%price%\",Value=\"%!data%\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100)",
+     "math.multiply(A=\"%price%\",B=0.9)",
+     "variable.set(Name=\"%price%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_with_write_to",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%price%\",Operator=\">\",Right=100), math.multiply(A=\"%price%\",B=0.9))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100)",
+     "math.multiply(A=\"%price%\",B=0.9)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_with_write_to",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%price%\",Operator=\">\",Right=100){\"multiply %price% by 0.9, write to %price%\": math.multiply(A=\"%price%\",B=0.9); variable.set(Name=\"%price%\",Value=\"%!data%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_two_actions",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_two_actions",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_two_actions",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_two_actions",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "body_two_actions",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%user%\",Operator=\"==\",Right=null){\"write out \"no user\" and return\": output.write(Data=\"no user\"); goal.return()}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_in",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_in",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_in",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_in",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]){\"call GrantAccess\": goal.call(Name=\"GrantAccess\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_in",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"]), goal.call(Name=\"GrantAccess\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%role%\",Operator=\"in\",Right=[\"admin\", \"owner\"])",
+     "goal.call(Name=\"GrantAccess\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_startswith",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"), goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}]))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\")",
+     "goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_startswith",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"), goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}]))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\")",
+     "goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_startswith",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"), goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}]))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\")",
+     "goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_startswith",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"), goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}]))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\")",
+     "goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_startswith",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\"), goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}]))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%path%\",Operator=\"startswith\",Right=\"/api\")",
+     "goal.call(Name=\"HandleApi\",Parameter=[{\"name\": \"path\", \"type\": {\"name\": \"item\"}, \"value\": \"%path%\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_is_type",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_is_type",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_is_type",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_is_type",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "op_is_type",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%value%\",Operator=\"is\",Right=\"number\"){\"write out \"numeric\"\": output.write(Data=\"numeric\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "menumodule",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "menumodule",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "menumodule",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "menumodule",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "menumodule",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%key%\",Value=\"s%step.Index%_%module.Name%\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%moduleAnswer[key].noul%\",Operator=\"<\",Right=\"%threshold%\"){\"return\": goal.return()}"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\"==\",Right=1){\"add \"%module.Name%.%module.Action[0].Name%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%module.Action[0].Name%\")}"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%module.Action.Count%\",Operator=\">\",Right=1){\"add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%\": list.add(ListName=\"%choices%\",Value=\"%module.Name%.%actionAnswer[key].choice%\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_default",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_default",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_default",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_default",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_default",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%path%\",Value=\"/\",AsDefault=true)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_number",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_number",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_number",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_number",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_number",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%threshold%\",Value=0.5)"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_empty_list",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_empty_list",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_empty_list",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_empty_list",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_empty_list",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%choices%\",Value=[])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_indexed",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_indexed",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_indexed",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_indexed",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_set_indexed",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "variable.set(Name=\"%menu[step.Index]%\",Value=\"%choices%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_math_write_to",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_math_write_to",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_math_write_to",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_math_write_to",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_math_write_to",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "math.subtract(A=\"%Now.Ticks%\",B=\"%buildStart%\")",
+     "variable.set(Name=\"%elapsedTicks%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_render_template",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\")",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_render_template",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\")",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_render_template",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\")",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_render_template",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\")",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_render_template",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "ui.render(Template=\"/system/builder/llm/templates/propertiesUser.template\")",
+     "variable.set(Name=\"%propertiesUserMsg%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_decider",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_decider",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_decider",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_decider",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_decider",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "llm.decider(State=\"%state%\",Question=\"%moduleQuestions%\")",
+     "variable.set(Name=\"%moduleAnswer%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_save_file",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_save_file",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_save_file",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_save_file",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_save_file",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\",Value=\"%trace%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_add_to_list",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_add_to_list",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_add_to_list",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_add_to_list",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "builder_add_to_list",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%traceGoals%\",Value=\"%goal.Name%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_two_levels",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_two_levels",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_two_levels",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_two_levels",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_two_levels",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%b%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"BothPositive\")"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"checked\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_then_outdented",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_then_outdented",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_then_outdented",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_then_outdented",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_then_outdented",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%retries%\",Operator=\">\",Right=3)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"giving up\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "goal.return()"
+    ]
+   },
+   "3": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"trying again\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "inline_if_then_step",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%n%\",Operator=\">\",Right=5), goal.call(Name=\"Big\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5)",
+     "goal.call(Name=\"Big\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "inline_if_then_step",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%n%\",Operator=\">\",Right=5), goal.call(Name=\"Big\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5)",
+     "goal.call(Name=\"Big\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "inline_if_then_step",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%n%\",Operator=\">\",Right=5), goal.call(Name=\"Big\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5)",
+     "goal.call(Name=\"Big\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "inline_if_then_step",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%n%\",Operator=\">\",Right=5), goal.call(Name=\"Big\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5)",
+     "goal.call(Name=\"Big\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "inline_if_then_step",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [
+     "step 0: 2 actions, expected 1 (condition.if(Left=\"%n%\",Operator=\">\",Right=5), goal.call(Name=\"Big\"))",
+     "step 0[0] child: missing — the body is not in child"
+    ],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=5)",
+     "goal.call(Name=\"Big\")"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "list.count(ListName=\"%items%\")",
+     "variable.set(Name=\"%n%\",Value=\"%!data%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_write",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_write",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_write",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_write",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_write",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"hello\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_call_args",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_call_args",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_call_args",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_call_args",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_call_args",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"SendMail\",Parameter=[{\"name\": \"to\", \"type\": {\"name\": \"item\"}, \"value\": \"%email%\"}, {\"name\": \"subject\", \"type\": {\"name\": \"text\"}, \"value\": \"Welcome\"}])"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_add",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_add",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_add",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_add",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "plain_add",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "list.add(ListName=\"%items%\",Value=\"%item%\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_body",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_body",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_body",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_body",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "indented_body",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%count%\",Operator=\">\",Right=0)"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "goal.call(Name=\"ProcessItems\")"
+    ]
+   },
+   "2": {
+    "misses": [],
+    "got": [
+     "output.write(Data=\"done\")"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "nested_inline",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "nested_inline",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "nested_inline",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "nested_inline",
+  "run": 4,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "nested_inline",
+  "run": 5,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%a%\",Operator=\">\",Right=0){\"if %b% > 0, call BothPositive\": condition.if(Left=\"%b%\",Operator=\">\",Right=0){\"call BothPositive\": goal.call(Name=\"BothPositive\")}}"
+    ]
+   }
+  }
+ }
+]

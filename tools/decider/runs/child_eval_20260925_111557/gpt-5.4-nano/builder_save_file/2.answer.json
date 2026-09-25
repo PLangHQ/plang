@@ -1,0 +1,29 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "file",
+     "name": "save",
+     "property": [
+      {
+       "name": "Path",
+       "type": {
+        "name": "path"
+       },
+       "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "item"
+       },
+       "value": "%trace%"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

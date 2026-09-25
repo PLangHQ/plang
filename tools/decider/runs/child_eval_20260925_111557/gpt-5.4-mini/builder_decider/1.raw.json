@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERyCtMGvF1yLT4QVOJEFqJzqbPRKk",
+ "object": "chat.completion",
+ "created": 1790334999,
+ "model": "gpt-5.4-mini-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\"step\":[{\"index\":0,\"action\":[{\"module\":\"llm\",\"name\":\"decider\",\"property\":[{\"name\":\"State\",\"type\":{\"name\":\"dict\"},\"value\":\"%state%\"},{\"name\":\"Question\",\"type\":{\"name\":\"dict\"},\"value\":\"%moduleQuestions%\"}]},{\"module\":\"variable\",\"name\":\"set\",\"property\":[{\"name\":\"Name\",\"type\":{\"name\":\"variable\"},\"value\":\"%moduleAnswer%\"},{\"name\":\"Value\",\"type\":{\"name\":\"item\"},\"value\":\"%!data%\"}]}]}]}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 3521,
+  "completion_tokens": 113,
+  "total_tokens": 3634,
+  "prompt_tokens_details": {
+   "cached_tokens": 3328,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}
