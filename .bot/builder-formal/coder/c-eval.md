@@ -125,3 +125,39 @@ Stage 4 (the plang builder) waits for your plan. Ready for your call:
 - proposals 1–3;
 - the warning noise;
 - nano or mini.
+
+---
+
+# Round 4 — C + gpt-5.4-nano only, after fixes 1–4 (architect)
+
+Commits:
+- `c1e78c076`: condition.if/elseif `Left` and file.save `Value` are required in C#; the six suites show no new failures against the baseline.
+- `a306dec8d`: a bare choice option parses (`Operator=isempty`).
+- `fdf746089`: fold drops a partial copy of an indented body.
+- `23c70d5c2`: no warning on a write-to variable.set.
+
+The pre-fill now shows `condition.if(Left=?, Operator=?)` and `file.save(Path=?, Value=?)`.
+
+Raw: `tools/decider/runs/c_eval_round4_20260925_220431/`. Requests: `/shared/coder/llm/plang/builder-formal/prompt-c-round4/`, `decider-round4/`.
+
+| | first-attempt right | caught | silent | after retry right | silent | failed (loud) | warnings | seconds (sum; slowest) | tokens in / out | cost |
+|---|---|---|---|---|---|---|---|---|---|---|
+| round 4, C nano | **46/58** | 11 | 1 | **57/58** | **1** | **0** | 0 | 14.7; 4.1 | 19,379 / 1,608 | $0.0054 |
+| rounds 1–3, C nano (per round) | 45 / 34 / 30 | 12 / 23 / 26 | 1 / 1 / 2 | 57 / 45 / 44 | 1 / 1 / 2 | 0 / 12 / 12 | 14 / 14 / 14 | — | — | — |
+
+**weekly_report no longer fails whole.** Both of its causes are gone: the bare `Operator=isempty` now parses, and a partial body copy is dropped. Warnings fell from 14 to 0.
+
+## Every miss, prompt-first
+
+1. **build, first attempt: caught, whole goal (11 steps), for one line.** `[0] variable.set(Name="path", Value="/", AsDefault=true)`: the name quoted without its % signs. It is right after the retry.
+   - Two points:
+     - (a) **One bad line refuses the whole answer**, so "first attempt" counts 11 steps caught when 10 were right. Parsing and judging per step would refuse only step 0 and retry only it, giving 56/58 right on the first attempt in this round.
+     - (b) **`Name="path"` for a `variable` property is not ambiguous.** The runtime already reads both `"%x%"` and a bare `"x"` as the variable x (`Variable.Resolve`, CLAUDE.md: "both collapse to Variable { Name = "x" }"). The parser could do the same for a variable-typed property.
+   - **Proposal:** both, (a) and (b).
+2. **weekly 8, silent: `render template "report.html", errors=%errors%, write to %html%`.** It answered `ui.render(Template="report.html"); variable.set(Name=%html%, Value=%!data%, Type=null)`: Parameter missing, and an invented `Type=null`.
+   - Cause (prompt): the pre-fill adds `Parameter={?}` only for a `call` with arguments (`prompt_c.ARGUMENTS`), so ui.render's arguments get no slot.
+   - **Proposal:**
+     - pre-fill `Parameter={?}` for any action that takes arguments (goal.call, ui.render) when the step writes `name=value`;
+     - make the check refuse an explicit `null` for an optional property ("leave it out: its default applies"). That's the placeholder class.
+
+With (1a) and (2), this round would read 57–58/58 on the first attempt, with no silent misses. It's one run: the bar needs repeats before it counts.
