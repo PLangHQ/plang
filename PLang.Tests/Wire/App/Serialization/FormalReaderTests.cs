@@ -86,6 +86,22 @@ public class FormalReaderTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // An empty `{ }` is syntax that reads; the rule it breaks is the chain check's, which says where
+    // the body goes for this step (nothing is indented below it: inside the if's `{ }`).
+    [Test]
+    public async Task AnEmptyBody_Reads_AndTheChainCheckRefusesIt_SayingWhereTheBodyGoes()
+    {
+        var read = Read("condition.if(Left=%a%, Operator=\"isempty\") { }; condition.else() { output.write(Data=\"x\") }", out var step);
+        await read.IsSuccess();
+        foreach (var a in ((global::app.goal.step.action.list.@this)read.Peek()!).Items()) step.Code.Add(a);
+
+        var invalid = await step.Code.Validate(global::PLang.Tests.TestApp.SharedContext);
+
+        var body = invalid!.list?.FirstOrDefault(e => e.Key == "BodyMissing") ?? invalid;
+        await Assert.That(body.Key).IsEqualTo("BodyMissing");
+        await Assert.That(body.Message).Contains("the step has nothing indented below it, so what the step does when the condition holds goes inside the if's `{ }`");
+    }
+
     [Test]
     public async Task AnError_IsReturned_KeyedFormalInvalid_WithTheFix()
     {

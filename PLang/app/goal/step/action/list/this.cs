@@ -101,9 +101,13 @@ public sealed class @this : global::app.type.item.list.@this<Action>
 
             if (action.IsCondition)
             {
-                if (missing == null && action.Child.Count == 0 && !HasBodyBelow(action))
-                    missing = Broken(action,
-                        $"the {action.Name} has no body — what the step does when it holds goes in its child.",
+                // `{ }` written empty is a child of no actions; no `{ }` at all is no child
+                var empty = action.Child.Count > 0 && action.Child.Items().All(c => c.Code.Count == 0);
+                var below = HasBodyBelow(action);
+                if (missing == null && (empty || (action.Child.Count == 0 && !below)))
+                    missing = Broken(action, below
+                        ? "`{ }` holds at least one action; a condition whose body is indented below it has no `{ }`."
+                        : $"the step has nothing indented below it, so what the step does when the condition holds goes inside the {action.Name}'s `{{ }}`.",
                         "BodyMissing");
                 condition = action;
                 continue;

@@ -154,6 +154,19 @@ def main():
         except f.FormalError as e:
             errors[bad] = str(e)
 
+    # 5. A refused step reports every problem at once — checkout[4]'s first answer in round 9 run 2 (an
+    # inverted if with an empty `{ }`, then a condition.else the step never had): one refusal, both lines.
+    import c_eval as ce, child_eval as e
+    run = os.path.join(HERE, 'runs', 'c_eval_round9_20260925_231637')
+    picks = {int(k): v for k, v in json.load(open(os.path.join(run, 'decider.json')))['picks']['checkout'].items()}
+    case = next(c for c in e.GOLDEN if c['id'] == 'checkout')
+    parsed, errs, whole = f.parse_steps(open(os.path.join(run, 'C', 'gpt-5.4-nano', 'checkout', '1.answer.txt')).read())
+    refusal = ce.judge_c(case, picks, parsed, errs, whole)[2].get(4, [])
+    expected = ["the step has nothing indented below it, so what the step does when the condition holds goes inside the if's `{ }`",
+                "condition.else isn't one of step 4's actions (condition.if, goal.call)"]
+    if errs or not all(any(x in r for r in refusal) for x in expected):
+        failures.append(f'checkout[4]: one refusal with every problem expected, got parse errors {errs} and {refusal}')
+
     print(f'round trip + formal step vs LLM path: {total} steps, {len(failures)} failures')
     for x in failures: print('  ', x)
     print(f'\nchild text: {len(child_texts)} bodies; formal keeps the body\'s actions, not its words:')

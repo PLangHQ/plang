@@ -189,7 +189,13 @@ class _Reader:
                           f'write the actions one after the other: {module}.{name}(…); next.action(…)')
             self.take('{')
             if self.peek('}'):
-                self.fail('`{ }` holds at least one action; a condition whose body is indented below it has no `{ }`')
+                if modifier:
+                    self.fail(f'`{module}.{name}` wraps one action: {module}.{name}(…) {{ action }}', brace)
+                # an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
+                # with the step's other problems, saying where the body goes for that step
+                self.take('}')
+                act['child'] = []
+                return act
             body = self.actions('}')
             self.take('}')
             if modifier:

@@ -460,8 +460,14 @@ def chain(actions, body_below):
             if not is_cond(before) or before['name'] == 'else':
                 return f'ElseWithoutIf: an {a["name"]} must be in the same step as its if'
         if is_cond(a):
-            if not missing and not a.get('child') and not body_below:
-                missing = f'BodyMissing: the {a["name"]} has no body — what the step does when it holds goes in its child'
+            # `{ }` written empty is a child of no actions; no `{ }` at all is no child
+            empty = 'child' in a and not any(c.get('action') for c in a['child'])
+            bodyless = empty or (not a.get('child') and not body_below)
+            if not missing and bodyless:
+                missing = ('BodyMissing: `{ }` holds at least one action; a condition whose body is indented below it has no `{ }`'
+                           if body_below else
+                           'BodyMissing: the step has nothing indented below it, so what the step does when '
+                           f'the condition holds goes inside the {a["name"]}\'s `{{ }}`')
             condition = a
             continue
         if condition is not None:

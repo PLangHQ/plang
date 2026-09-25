@@ -23,6 +23,14 @@ public class ValidateActionsTests
         return new validate(_app.User.Context) { Step = new("", step) };
     }
 
+    // A condition's body: a child step that does something (an empty one is refused as BodyMissing).
+    private static Step Body()
+    {
+        var body = new Step { Text = "the if's body" };
+        body.Code.Add(global::PLang.Tests.Shared.Make.Action("goal", "return"));
+        return body;
+    }
+
     [Before(Test)]
     public void Setup()
     {
@@ -205,7 +213,7 @@ public class ValidateActionsTests
             }
         };
 
-        actions[0].Child.Add(new Step { Text = "the if's body" });   // a whole if: it has its body
+        actions[0].Child.Add(Body());   // a whole if: it has its body
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
@@ -237,7 +245,7 @@ public class ValidateActionsTests
             }
         };
 
-        actions[0].Child.Add(new Step { Text = "the if's body" });   // a whole if: it has its body
+        actions[0].Child.Add(Body());   // a whole if: it has its body
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);
 
@@ -269,7 +277,7 @@ public class ValidateActionsTests
 
         // The .pr reader stamps a %ref% row a template of its type — author it the same way.
         global::PLang.Tests.TemplateStamp.Apply(actions[0]);
-        actions[0].Child.Add(new Step { Text = "the if's body" });   // a whole if: it has its body
+        actions[0].Child.Add(Body());   // a whole if: it has its body
 
         var action = For(actions);
         var result = await _app.Run(action, _app.User.Context);

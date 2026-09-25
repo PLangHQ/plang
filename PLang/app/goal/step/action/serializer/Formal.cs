@@ -210,7 +210,15 @@ public sealed class Formal
                     Fail($"`{module}.{name}` contains no actions: only a condition (its body) and a modifier (the action it wraps) take {{ }}; " +
                          $"write the actions one after the other: {module}.{name}(…); next.action(…)");
                 Take("{");
-                if (Peek("}")) Fail("`{ }` holds at least one action; a condition whose body is indented below it has no `{ }`");
+                if (Peek("}"))
+                {
+                    if (isModifier) Fail($"`{module}.{name}` wraps one action: {module}.{name}(…) {{ action }}", brace);
+                    // an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
+                    // with the step's other problems, saying where the body goes for that step
+                    Take("}");
+                    action.Child.Add(new global::app.goal.step.@this { Goal = _step.Goal });
+                    return action;
+                }
                 var bodyStart = _pos;
                 if (isModifier)
                 {
