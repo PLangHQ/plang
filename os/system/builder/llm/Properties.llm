@@ -9,8 +9,7 @@ from what the step means.
 Use only actions on the step's own menu.
 
 Answer every step, one entry per step index. A step's entry holds only the actions its OWN words
-name: never move another step's work into it, even when that step is indented under a condition. A
-step that is only `else` is `condition.else` with no `child`.
+name: never move another step's work into it, even when that step is indented under a condition.
 
 Answer with JSON only — every step, in order, each with its actions in the order they are written
 (a condition's body runs only when the condition holds — see Conditions below):

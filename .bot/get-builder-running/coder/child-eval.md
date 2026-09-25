@@ -400,3 +400,22 @@ STEP TOTALS: gpt-5.4-nano 73/84, gpt-5.4-mini 78/84
 - step 0[0] child: missing — the body is not in child
 - got step 0: `condition.if(Left="%a%",Operator=">",Right=0) ; condition.if(Left="%b%",Operator=">",Right=0){"call BothPositive": goal.call(Name="BothPositive")}`
 
+
+---
+
+# Recomputed without `indented_if_else` (no new LLM calls)
+
+Plang has no standalone `- else` step. Else is written inline in the if step (`- if %x% then call A, else B`). So `indented_if_else` tested a construct plang doesn't have, and it is dropped from `tools/decider/child_golden.json`. The sentence teaching a lone `else` step is removed from `Properties.llm`. `indented_body` (a lone `- if X` with indented steps below) is valid plang and stays. Totals recomputed from the same raw answers:
+
+| | run 1 (prompt 4df7f8075) | run 2 (prompt b5bfe3b3a) |
+|---|---|---|
+| gpt-5.4-nano, steps | 59/72 | **71/72** (98.6%) |
+| gpt-5.4-nano, cases right 3/3 | 13/19 | **18/19** |
+| gpt-5.4-mini, steps | 63/72 | **66/72** (91.7%) |
+| gpt-5.4-mini, cases right 3/3 | 15/19 | **16/19** |
+
+- **nano's one remaining miss:** `indented_body` run 3. The lone `if %count% > 0` got a child copied from the next step; the next step still has its own entry. The wording PF5 addresses (not applied).
+- **mini's six** are unchanged (N3-N5 above): MenuModule steps merged (2 runs), an if lost its body, a nest came back flat. All are the model's own.
+- With the standalone-else construct gone, **nano measures ahead of mini** on this set.
+
+N2 (a renumbered or merged answer silently grafting one step's actions onto another) is now caught by `build.match` before any step takes its actions (the commit after this recompute).

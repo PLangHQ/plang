@@ -184,20 +184,6 @@
      "1": [{"module": "goal", "name": "call", "property": {"Name": "ProcessItems"}}],
      "2": [{"module": "output", "name": "write", "property": {"Data": "done"}}]}},
 
-  {"id": "indented_if_else", "covers": "indented bodies under an if and an else line",
-   "goal": "OneOrOther",
-   "steps": [
-     {"text": "if %x% == 1", "indent": 0},
-     {"text": "write out \"one\"", "indent": 1},
-     {"text": "else", "indent": 0},
-     {"text": "write out \"other\"", "indent": 1}],
-   "menu": {"0": ["condition.if"], "1": ["output.write"], "2": ["condition.else"], "3": ["output.write"]},
-   "expect": {
-     "0": [{"module": "condition", "name": "if", "property": {"Left": "%x%", "Operator": "==", "Right": 1}}],
-     "1": [{"module": "output", "name": "write", "property": {"Data": "one"}}],
-     "2": [{"module": "condition", "name": "else"}],
-     "3": [{"module": "output", "name": "write", "property": {"Data": "other"}}]}},
-
   {"id": "nested_inline", "covers": "two levels in one line (the schema's depth)",
    "goal": "Nested",
    "steps": [{"text": "if %a% > 0, if %b% > 0, call BothPositive", "indent": 0}],
