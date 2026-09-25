@@ -409,6 +409,118 @@ def stage2(goal, cat, chosen, conditions=(), runners=None, unsure_steps=()):
             else: out[(int(i), m)] = (None, a.get('noul')) if noul else (a.get('choice'), a.get('confidence'))
     return out, secs, nbytes, nq, dict(usage)
 
+# ---------------------------------------------------------------- v6 (Ingi's design)
+# One choice per step over the modules and the popular actions as options of their own (a module option
+# means "another action of this module"); the descriptions ride in each option's structured criteria
+# (docs.typesafe.ai/primitives/choice), the state holds only the goal and the task. Every option with a
+# share of CANDIDATE or more is a candidate, and each candidate gets a score question (primitives/score):
+# how does the step use it. Level ≥ 2 is a pick; level 1 is an action held as a value (not a pick).
+# Stage 3 asks the action of a picked module option, and else/elseif by name where condition.if is picked.
+CANDIDATE = 0.15
+USE_LEVELS = ['not used by this step',
+              'only named, to run later: a callback, the goal behind a channel or an event, a registered handler, '
+              'or what an on-error clause runs',
+              'run inside a condition, a loop or an error handler of this step',
+              'done by the step itself: its own work']
+NOT_FOR = {
+    'output.write': '`…, write to %x%` — that keeps a value in a variable, it is not output',
+    'variable.set': 'reading a variable, or keeping nothing',
+    'goal.call': 'a goal named to run later (the goal behind a channel or an event) — that is not calling it',
+    'error.handle': 'throwing an error (`throw "…"`) — that is error.throw',
+    'error.throw': 'handling an error (`on error …`) — that is error.handle',
+    'file.read': 'saving, listing or deleting a file',
+    'condition.if': 'a step that tests nothing',
+}
+V6_TASK = ('Each question is one step of this goal, written as it is in the goal. Answer which of the options '
+           'the step uses.')
+
+def v6_state(goal):
+    lines = [STRUCTURE, '', f'This is a plang goal called {goal["name"]}. Its steps are numbered from 0.', '']
+    for s in goal['steps']:
+        lines.append(f'step {step_no(s)}: ' + '    ' * s.get('indent', 0) + s['text'])
+    return '\n'.join(lines + ['', V6_TASK])
+
+def v6_options(cat):
+    """{option: structured criteria} — each popular action, and each module as 'another action of it'."""
+    options = {}
+    for a in POPULAR:
+        m, an = a.split('.', 1)
+        entry = {'what': cat[m]['actions'][an]['description'],
+                 'examples': example_steps(f'{ROOT}/os/system/modules/{m}/{an}.examples.md')}
+        if a in NOT_FOR: entry['not_for'] = NOT_FOR[a]
+        options[a] = entry
+    for m, v in cat.items():
+        own = [a for a in POPULAR if a.startswith(m + '.')]
+        others = [an for an in v['actions'] if f'{m}.{an}' not in own]
+        if not others: continue
+        entry = {'what': f'an action of the {m} module' + (f' other than {", ".join(own)}' if own else '') + f': {v["description"]}',
+                 'examples': [t for an in others for t in example_steps(f'{ROOT}/os/system/modules/{m}/{an}.examples.md')]}
+        if own: entry['not_for'] = ', '.join(own) + ' — each is an option of its own'
+        options[m] = entry
+    return options
+
+def v6(goal, cat, dump=None):
+    """(probs {step: {option: share}}, uses {step: {option: (level, P(level ≥ 2), probabilities)}},
+    acts {(step, module): (action, confidence)} and {(step, branch): (None, noul)}, stats). dump: a folder
+    for each stage's raw request/response ({1,2,3}.decider.*)."""
+    state = v6_state(goal)
+    options = v6_options(cat)
+    stats = collections.Counter()
+    probs, uses, acts = collections.defaultdict(dict), collections.defaultdict(dict), {}
+    def asked(label, qs, st=state):
+        if dump: os.makedirs(dump, exist_ok=True); _local.dump = (dump, f'{label}.decider')
+        resp, t, b_ = ask(st, qs)
+        _local.dump = None
+        stats[f'{label}.secs'] += t; stats[f'{label}.bytes'] += b_; stats[f'{label}.questions'] += len(qs)
+        for k, v in (resp.get('usage') or {}).items(): stats[f'{label}.{k}'] += v
+        return resp['answers']
+    # 1. which option — one choice per step
+    for win in windows(goal['steps']):
+        qs = {f's{s["index"]}_@option': {'type': 'choice', 'instructions': f'- {s["text"].strip()}', 'criteria': options}
+              for s in win}
+        for k, a in asked('1', qs).items():
+            probs[int(k[1:].split('_', 1)[0])].update(a.get('probabilities') or {})
+    # 2. how each candidate is used — a score per (step, candidate)
+    for win in windows(goal['steps']):
+        qs = {}
+        for s in win:
+            for o, p in probs[s['index']].items():
+                if p is None or p < CANDIDATE: continue
+                what = f'`{o}`' if '.' in o else f'an action of the plang module `{o}`'
+                qs[f's{s["index"]}_{o}'] = {'type': 'score', 'criteria': USE_LEVELS, 'instructions':
+                    f'Step {step_no(s)} is `{s["text"].strip()}`. How does step {step_no(s)} use {what}?'}
+        if not qs: continue
+        for k, a in asked('2', qs).items():
+            i, o = k[1:].split('_', 1)
+            pr = a.get('probabilities') or {}
+            uses[int(i)][o] = (a.get('score'), sum(v for lv, v in pr.items() if int(lv) >= 2), pr)
+    # 3. the action of a picked module option; else/elseif where condition.if is picked
+    picked_modules = {(i, o) for i, u in uses.items() for o, (lv, p2, _) in u.items() if '.' not in o and p2 >= 0.5}
+    conditions = {i for i, u in uses.items() if (u.get('condition.if', (0, 0, {}))[1]) >= 0.5}
+    st3 = state_for(goal, cat, modules={m for _, m in picked_modules} | ({'condition'} if conditions else set()))
+    for win in windows(goal['steps']):
+        qs = {}
+        for s in win:
+            i = s['index']
+            for (j, m) in sorted(picked_modules):
+                if j != i: continue
+                own = [a for a in POPULAR if a.startswith(m + '.')]
+                crit = {an: {'what': av['description'], 'examples': example_steps(f'{ROOT}/os/system/modules/{m}/{an}.examples.md')}
+                        for an, av in cat[m]['actions'].items() if f'{m}.{an}' not in own}
+                if len(crit) == 1: acts[(i, m)] = (next(iter(crit)), 1.0); continue
+                qs[f's{i}_{m}'] = {'type': 'choice', 'criteria': crit, 'instructions':
+                    f'Step {step_no(s)} is `{s["text"].strip()}`. It uses an action of the plang module `{m}`. Which one?'}
+            if i in conditions:
+                for a in BRANCHES:
+                    qs[f's{i}_{a}'] = {'type': 'noul', 'instructions':
+                        f'Step {step_no(s)} is `{s["text"].strip()}`. It tests a condition. Does step {step_no(s)} also have `{a}` — '
+                        f'{cat["condition"]["actions"][a.split(".", 1)[1]]["description"]}?'}
+        if not qs: continue
+        for k, a in asked('3', qs, st3).items():
+            i, m = k[1:].split('_', 1)
+            acts[(int(i), m)] = (None, a.get('noul')) if m in BRANCHES else (a.get('choice'), a.get('confidence'))
+    return probs, uses, acts, dict(stats)
+
 # ---------------------------------------------------------------- run
 def run(name, limit, seed, threshold=0.5, workers=4):
     cat = catalogue()

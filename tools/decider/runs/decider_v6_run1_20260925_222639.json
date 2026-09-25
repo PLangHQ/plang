@@ -1,0 +1,1367 @@
+[
+ {
+  "goal": "build",
+  "steps": [
+   {
+    "index": 0,
+    "text": "set default %path% = \"/\"",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 1.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "score",
+      "level": 2.9
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set default %!build.cache% = true",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 1.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.93
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set default %!build.summary% = true",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 1.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.92
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "set channel \"builder\" call BuilderChannel",
+    "expected": [
+     "channel.set"
+    ],
+    "held": [],
+    "options": {
+     "channel": 0.93,
+     "goal.call": 0.07
+    },
+    "pick": {
+     "channel.set": {
+      "score": 0.97,
+      "from": "score + stage 3",
+      "level": 2.93,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
+    "expected": [
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "goal.call": 0.83,
+     "event": 0.16
+    },
+    "pick": {
+     "goal.call": {
+      "score": 0.82,
+      "from": "score",
+      "level": 2.49
+     },
+     "event.on": {
+      "score": 0.97,
+      "from": "score + stage 3",
+      "level": 2.92,
+      "confidence": 0.94
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "build.load, write to %app%",
+    "expected": [
+     "build.load",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "build": 0.99
+    },
+    "pick": {
+     "build.load": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 3.0,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "build.goals path=%path%, write to %goals%",
+    "expected": [
+     "build.goals",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "build": 0.98
+    },
+    "pick": {
+     "build.goals": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 2.99,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
+    "expected": [
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "goal.call": 0.83,
+     "event": 0.15000000000000002
+    },
+    "pick": {
+     "goal.call": {
+      "score": 0.37,
+      "from": "score",
+      "level": 1.15
+     },
+     "event.on": {
+      "score": 0.96,
+      "from": "score + stage 3",
+      "level": 2.9,
+      "confidence": 0.92
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "foreach %goals%, call BuildGoal goal=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "loop.foreach": 0.78,
+     "goal.call": 0.22
+    },
+    "pick": {
+     "goal.call": {
+      "score": 0.9800000000000001,
+      "from": "score",
+      "level": 2.13
+     },
+     "loop.foreach": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.81
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+    "expected": [
+     "file.save"
+    ],
+    "held": [],
+    "options": {
+     "file.save": 0.98
+    },
+    "pick": {
+     "file.save": {
+      "score": 0.97,
+      "from": "score",
+      "level": 2.9
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "build.appSave",
+    "expected": [
+     "build.appSave"
+    ],
+    "held": [],
+    "options": {
+     "build": 1.0
+    },
+    "pick": {
+     "build.appSave": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 2.99,
+      "confidence": 1.0
+     }
+    }
+   }
+  ],
+  "stats": {
+   "1.secs": 0.6665351390838623,
+   "1.bytes": 139446,
+   "1.questions": 11,
+   "1.input_tokens": 43148,
+   "1.output_tokens": 3641,
+   "2.secs": 0.32115793228149414,
+   "2.bytes": 8761,
+   "2.questions": 14,
+   "2.input_tokens": 2638,
+   "2.output_tokens": 223,
+   "3.secs": 0.2940998077392578,
+   "3.bytes": 18874,
+   "3.questions": 6,
+   "3.input_tokens": 5550,
+   "3.output_tokens": 499
+  }
+ },
+ {
+  "goal": "start",
+  "steps": [
+   {
+    "index": 0,
+    "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
+    "expected": [
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "goal.call": 0.83,
+     "build": 0.1
+    },
+    "pick": {
+     "goal.call": {
+      "score": 0.26,
+      "from": "score",
+      "level": 0.84
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %buildStart% = %Now.Ticks%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.99
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.96
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.99
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "score",
+      "level": 2.91
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "call Compile, on error call HandleBuildFailure",
+    "expected": [
+     "goal.call",
+     "error.handle"
+    ],
+    "held": [],
+    "options": {
+     "error.handle": 0.62,
+     "goal.call": 0.3,
+     "build": 0.07
+    },
+    "pick": {
+     "error.handle": {
+      "score": 0.62,
+      "from": "score",
+      "level": 1.78
+     },
+     "goal.call": {
+      "score": 0.62,
+      "from": "score",
+      "level": 1.72
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "set %trace.menu% = %menu%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.98
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.94
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "set %parentGoal% = %goal%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.99
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.97
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "loop.foreach": 0.8,
+     "goal.call": 0.2
+    },
+    "pick": {
+     "loop.foreach": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.83
+     },
+     "goal.call": {
+      "score": 0.5900000000000001,
+      "from": "score",
+      "level": 1.39
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "set %goal% = %parentGoal%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 1.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.96
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
+    "expected": [
+     "math.subtract",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "math": 0.99
+    },
+    "pick": {
+     "math.subtract": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 3.0,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
+    "expected": [
+     "math.divide",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "math": 0.98
+    },
+    "pick": {
+     "math.divide": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 3.0,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "set %trace.durationMs% = %elapsedMs%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.99
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.96
+     }
+    }
+   },
+   {
+    "index": 11,
+    "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+    "expected": [
+     "file.save"
+    ],
+    "held": [],
+    "options": {
+     "file.save": 1.0
+    },
+    "pick": {
+     "file.save": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.94
+     }
+    }
+   },
+   {
+    "index": 12,
+    "text": "add %goal.Name% to %traceGoals%",
+    "expected": [
+     "list.add"
+    ],
+    "held": [],
+    "options": {
+     "list": 1.0
+    },
+    "pick": {
+     "list.add": {
+      "score": 0.99,
+      "from": "score + stage 3",
+      "level": 2.95,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 13,
+    "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
+    "expected": [
+     "build.fold",
+     "error.handle"
+    ],
+    "held": [
+     "error.handle"
+    ],
+    "options": {
+     "build": 0.78,
+     "error.handle": 0.2
+    },
+    "pick": {
+     "error.handle": {
+      "score": 0.45,
+      "from": "score",
+      "level": 1.56
+     },
+     "build.fold": {
+      "score": 0.94,
+      "from": "score + stage 3",
+      "level": 2.8,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 14,
+    "text": "build.goalsSave Goal=%goal%",
+    "expected": [
+     "build.goalsSave"
+    ],
+    "held": [],
+    "options": {
+     "build": 0.99
+    },
+    "pick": {
+     "build.goalsSave": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 2.99,
+      "confidence": 1.0
+     }
+    }
+   }
+  ],
+  "stats": {
+   "1.secs": 1.1996276378631592,
+   "1.bytes": 189720,
+   "1.questions": 15,
+   "1.input_tokens": 58740,
+   "1.output_tokens": 4968,
+   "2.secs": 0.2767953872680664,
+   "2.bytes": 11004,
+   "2.questions": 18,
+   "2.input_tokens": 3354,
+   "2.output_tokens": 293,
+   "3.secs": 0.3172433376312256,
+   "3.bytes": 19731,
+   "3.questions": 5,
+   "3.input_tokens": 6146,
+   "3.output_tokens": 642
+  }
+ },
+ {
+  "goal": "decide",
+  "steps": [
+   {
+    "index": 0,
+    "text": "set %threshold% = 0.5",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 1.0
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.95
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %modules% = %!app.module.list%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.87,
+     "module": 0.08
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.97,
+      "from": "score",
+      "level": 2.89
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "set %state.goal% = %goal.Name%",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.98
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.93
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "foreach %goal.Step%, call AddStepToState item=%step%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "loop.foreach": 0.83,
+     "goal.call": 0.16
+    },
+    "pick": {
+     "loop.foreach": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.83
+     },
+     "goal.call": {
+      "score": 0.63,
+      "from": "score",
+      "level": 1.58
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "foreach %modules%, call AddModuleToState item=%module%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "loop.foreach": 0.9,
+     "goal.call": 0.09999999999999999
+    },
+    "pick": {
+     "loop.foreach": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.79
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "ui": 0.98
+    },
+    "pick": {}
+   },
+   {
+    "index": 6,
+    "text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%",
+    "expected": [
+     "llm.decider",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "llm": 0.98
+    },
+    "pick": {
+     "llm.decider": {
+      "score": 0.99,
+      "from": "score + stage 3",
+      "level": 2.98,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "ui": 0.98
+    },
+    "pick": {}
+   },
+   {
+    "index": 8,
+    "text": "llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%",
+    "expected": [
+     "llm.decider",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "llm": 0.98
+    },
+    "pick": {
+     "llm.decider": {
+      "score": 0.99,
+      "from": "score + stage 3",
+      "level": 2.98,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
+    "expected": [
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "goal.call": 0.61,
+     "event": 0.27,
+     "build": 0.11
+    },
+    "pick": {
+     "event.on": {
+      "score": 0.77,
+      "from": "score + stage 3",
+      "level": 2.48,
+      "confidence": 0.89
+     },
+     "goal.call": {
+      "score": 0.59,
+      "from": "score",
+      "level": 1.86
+     }
+    }
+   }
+  ],
+  "stats": {
+   "1.secs": 0.6230800151824951,
+   "1.bytes": 127440,
+   "1.questions": 10,
+   "1.input_tokens": 39424,
+   "1.output_tokens": 3311,
+   "2.secs": 0.2951796054840088,
+   "2.bytes": 8316,
+   "2.questions": 12,
+   "2.input_tokens": 2509,
+   "2.output_tokens": 193,
+   "3.secs": 0.26357340812683105,
+   "3.bytes": 10781,
+   "3.questions": 3,
+   "3.input_tokens": 3157,
+   "3.output_tokens": 108
+  }
+ },
+ {
+  "goal": "checkout",
+  "steps": [
+   {
+    "index": 0,
+    "text": "read 'orders/%orderId%.json', write to %order%",
+    "expected": [
+     "file.read",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "file.read": 0.96
+    },
+    "pick": {
+     "file.read": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.96
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "count %order.items%, write to %itemCount%",
+    "expected": [
+     "list.count",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "list.count": 0.96
+    },
+    "pick": {
+     "list.count": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.98
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"",
+    "expected": [
+     "condition.if",
+     "condition.elseif",
+     "condition.else",
+     "output.write"
+    ],
+    "held": [],
+    "options": {
+     "condition.if": 0.72,
+     "condition": 0.23,
+     "output.write": 0.05
+    },
+    "pick": {
+     "condition.elseif": {
+      "score": 0.97,
+      "from": "branch"
+     },
+     "condition.if": {
+      "score": 1.0,
+      "from": "score",
+      "level": 2.76
+     },
+     "condition.else": {
+      "score": 0.95,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "if %order.email% does not contain \"@\", throw \"Invalid email address\"",
+    "expected": [
+     "condition.if",
+     "error.throw"
+    ],
+    "held": [],
+    "options": {
+     "condition.if": 0.56,
+     "condition": 0.29,
+     "error.throw": 0.15
+    },
+    "pick": {
+     "condition.compare": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 2.69,
+      "confidence": 0.99
+     },
+     "condition.if": {
+      "score": 1.0,
+      "from": "score",
+      "level": 2.73
+     },
+     "error.throw": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.14
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.07,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%",
+    "expected": [
+     "condition.if",
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "goal.call": 0.76,
+     "condition.if": 0.19
+    },
+    "pick": {
+     "condition.if": {
+      "score": 1.0,
+      "from": "score",
+      "level": 2.57
+     },
+     "goal.call": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.12
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.06,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "if %order.total% is not a number, throw \"The total must be a number\"",
+    "expected": [
+     "condition.if",
+     "error.throw"
+    ],
+    "held": [],
+    "options": {
+     "error.throw": 0.49,
+     "condition.if": 0.34,
+     "condition": 0.16
+    },
+    "pick": {
+     "condition.compare": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 2.8,
+      "confidence": 0.99
+     },
+     "condition.if": {
+      "score": 1.0,
+      "from": "score",
+      "level": 2.83
+     },
+     "error.throw": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.07
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.12,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25",
+    "expected": [
+     "condition.if",
+     "condition.else",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "condition.if": 0.73,
+     "condition": 0.16,
+     "variable.set": 0.11
+    },
+    "pick": {
+     "condition.else": {
+      "score": 0.94,
+      "from": "branch"
+     },
+     "condition.if": {
+      "score": 1.0,
+      "from": "score",
+      "level": 2.75
+     },
+     "condition.elseif": {
+      "score": 0.3,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "math.multiply A=%order.total%, B=%vat%, write to %vatAmount%",
+    "expected": [
+     "math.multiply",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "math": 1.0
+    },
+    "pick": {
+     "math.multiply": {
+      "score": 1.0,
+      "from": "score + stage 3",
+      "level": 3.0,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "if %order.note% does not start with \"#\", add %order.note% to %notes%",
+    "expected": [
+     "condition.if",
+     "list.add"
+    ],
+    "held": [],
+    "options": {
+     "condition.if": 0.52,
+     "list": 0.34,
+     "condition": 0.14
+    },
+    "pick": {
+     "condition.if": {
+      "score": 1.0,
+      "from": "score",
+      "level": 2.51
+     },
+     "list.add": {
+      "score": 0.96,
+      "from": "score + stage 3",
+      "level": 2.04,
+      "confidence": 1.0
+     },
+     "condition.elseif": {
+      "score": 0.03,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.08,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 9,
+    "text": "write out \"Total: %order.total%, VAT: %vatAmount%\"",
+    "expected": [
+     "output.write"
+    ],
+    "held": [],
+    "options": {
+     "output.write": 0.98
+    },
+    "pick": {
+     "output.write": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.98
+     }
+    }
+   }
+  ],
+  "stats": {
+   "1.secs": 0.5861518383026123,
+   "1.bytes": 127580,
+   "1.questions": 10,
+   "1.input_tokens": 39484,
+   "1.output_tokens": 3312,
+   "2.secs": 0.2618842124938965,
+   "2.bytes": 11365,
+   "2.questions": 18,
+   "2.input_tokens": 3377,
+   "2.output_tokens": 286,
+   "3.secs": 0.29840564727783203,
+   "3.bytes": 22642,
+   "3.questions": 18,
+   "3.input_tokens": 6639,
+   "3.output_tokens": 658
+  }
+ },
+ {
+  "goal": "weekly_report",
+  "steps": [
+   {
+    "index": 0,
+    "text": "list files in '/logs', pattern \"*.log\", write to %files%",
+    "expected": [
+     "file.list",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "file": 0.99
+    },
+    "pick": {
+     "file.list": {
+      "score": 0.99,
+      "from": "score + stage 3",
+      "level": 2.96,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 1,
+    "text": "set %errors% = []",
+    "expected": [
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "variable.set": 0.99
+    },
+    "pick": {
+     "variable.set": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.98
+     }
+    }
+   },
+   {
+    "index": 2,
+    "text": "foreach %files%, call ScanFile file=%item%",
+    "expected": [
+     "loop.foreach",
+     "goal.call"
+    ],
+    "held": [],
+    "options": {
+     "loop.foreach": 0.88,
+     "goal.call": 0.12
+    },
+    "pick": {
+     "loop.foreach": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.85
+     }
+    }
+   },
+   {
+    "index": 3,
+    "text": "if %errors% is empty",
+    "expected": [
+     "condition.if"
+    ],
+    "held": [],
+    "options": {
+     "condition.if": 0.9,
+     "condition": 0.1
+    },
+    "pick": {
+     "condition.if": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.88
+     },
+     "condition.elseif": {
+      "score": 0.04,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.12,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 4,
+    "text": "write out \"No errors this week\"",
+    "expected": [
+     "output.write"
+    ],
+    "held": [],
+    "options": {
+     "output.write": 1.0
+    },
+    "pick": {
+     "output.write": {
+      "score": 0.99,
+      "from": "score",
+      "level": 2.88
+     }
+    }
+   },
+   {
+    "index": 5,
+    "text": "return",
+    "expected": [
+     "goal.return"
+    ],
+    "held": [],
+    "options": {
+     "goal": 0.99
+    },
+    "pick": {
+     "goal.return": {
+      "score": 0.5,
+      "from": "score + stage 3",
+      "level": 1.48,
+      "confidence": 1.0
+     }
+    }
+   },
+   {
+    "index": 6,
+    "text": "if %files% is a list",
+    "expected": [
+     "condition.if"
+    ],
+    "held": [],
+    "options": {
+     "condition.if": 0.73,
+     "condition": 0.26
+    },
+    "pick": {
+     "condition.if": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.89
+     },
+     "condition.compare": {
+      "score": 0.98,
+      "from": "score + stage 3",
+      "level": 2.89,
+      "confidence": 0.98
+     },
+     "condition.elseif": {
+      "score": 0.05,
+      "from": "branch"
+     },
+     "condition.else": {
+      "score": 0.09,
+      "from": "branch"
+     }
+    }
+   },
+   {
+    "index": 7,
+    "text": "write out \"Scanned the log files\"",
+    "expected": [
+     "output.write"
+    ],
+    "held": [],
+    "options": {
+     "output.write": 0.99
+    },
+    "pick": {
+     "output.write": {
+      "score": 0.97,
+      "from": "score",
+      "level": 2.91
+     }
+    }
+   },
+   {
+    "index": 8,
+    "text": "render template \"report.html\", errors=%errors%, write to %html%",
+    "expected": [
+     "ui.render",
+     "variable.set"
+    ],
+    "held": [],
+    "options": {
+     "ui": 0.98
+    },
+    "pick": {}
+   },
+   {
+    "index": 9,
+    "text": "save %html% to file '/reports/week.html'",
+    "expected": [
+     "file.save"
+    ],
+    "held": [],
+    "options": {
+     "file.save": 0.99
+    },
+    "pick": {
+     "file.save": {
+      "score": 0.98,
+      "from": "score",
+      "level": 2.95
+     }
+    }
+   },
+   {
+    "index": 10,
+    "text": "call SendReport to=\"ops@example.com\", subject=\"Weekly report\", on error call LogFailure",
+    "expected": [
+     "goal.call",
+     "error.handle"
+    ],
+    "held": [
+     "error.handle"
+    ],
+    "options": {
+     "error.handle": 0.59,
+     "goal.call": 0.26,
+     "http": 0.13
+    },
+    "pick": {
+     "error.handle": {
+      "score": 0.51,
+      "from": "score",
+      "level": 1.61
+     },
+     "goal.call": {
+      "score": 0.77,
+      "from": "score",
+      "level": 2.4
+     }
+    }
+   },
+   {
+    "index": 11,
+    "text": "write out \"Report sent\" to \"log\" channel",
+    "expected": [
+     "output.write"
+    ],
+    "held": [],
+    "options": {
+     "output.write": 0.99
+    },
+    "pick": {
+     "output.write": {
+      "score": 0.97,
+      "from": "score",
+      "level": 2.92
+     }
+    }
+   }
+  ],
+  "stats": {
+   "1.secs": 0.664029598236084,
+   "1.bytes": 151944,
+   "1.questions": 12,
+   "1.input_tokens": 46972,
+   "1.output_tokens": 3974,
+   "2.secs": 0.35038328170776367,
+   "2.bytes": 8804,
+   "2.questions": 14,
+   "2.input_tokens": 2607,
+   "2.output_tokens": 227,
+   "3.secs": 0.2695767879486084,
+   "3.bytes": 12713,
+   "3.questions": 7,
+   "3.input_tokens": 3608,
+   "3.output_tokens": 198
+  }
+ }
+]

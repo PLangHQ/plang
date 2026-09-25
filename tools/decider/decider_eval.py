@@ -43,17 +43,25 @@ def readable(folder, label):
     stage = label.split('.')[0]
     out = [f'Stage {stage} — {len(req["questions"])} questions (asked against {label}.state.txt)', '']
     for key, q in req['questions'].items():
-        kind = 'choice' if q['type'] == 'choice' else 'yes/no'
+        kind = {'choice': 'choice', 'score': 'score'}.get(q['type'], 'yes/no')
         out.append(f'[{key}] {kind}: {q["instructions"]}')
         crit = q.get('criteria') or {}
-        if q['type'] == 'choice':
+        if q['type'] == 'score':
+            out.append('    levels: ' + ' | '.join(f'{n} {c}' for n, c in enumerate(crit)))
+        elif q['type'] == 'choice':
             named = [k for k, v in crit.items() if v is None]
-            out.append(f'    options: {len(named)} names' if len(named) == len(crit) else
-                       '    options: ' + '; '.join(f'{k} = {v}' for k, v in crit.items()))
+            if len(named) == len(crit): out.append(f'    options: {len(named)} names')
+            elif all(isinstance(v, dict) for v in crit.values()):
+                out.append(f'    options: {len(crit)}, each with structured criteria (what / not_for / examples): ' + ', '.join(crit))
+            else: out.append('    options: ' + '; '.join(f'{k} = {v}' for k, v in crit.items()))
         elif crit:
             out.append(f'    criteria: true = {crit.get("true")} | false = {crit.get("false")}')
         a = answers.get(key) or {}
-        if q['type'] == 'choice':
+        if q['type'] == 'score':
+            pr = a.get('probabilities') or {}
+            out.append(f'    answer:  level {a.get("score")} (confidence {a.get("confidence")}) — '
+                       + ', '.join(f'{lv}: {p:.2f}' for lv, p in sorted(pr.items())))
+        elif q['type'] == 'choice':
             top = sorted((a.get('probabilities') or {}).items(), key=lambda kv: -(kv[1] or 0))[:3]
             out.append(f'    answer:  {a.get("choice")} (confidence {a.get("confidence")})'
                        + (' — top: ' + ', '.join(f'{k} {v:.2f}' for k, v in top) if top else ''))
