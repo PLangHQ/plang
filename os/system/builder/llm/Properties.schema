@@ -1,0 +1,8 @@
+property = {name: string, type: {name: string, kind?: string}, value?: object}
+modifier = {module: string, name: string, property?: list<property>,
+            recovery?: list<{module: string, name: string, property?: list<property>}>}
+action   = {module: string, name: string, property?: list<property>,
+            modifier?: list<modifier>, child?: list<{text: string, action: list<action>}>}
+            (child nests at most two levels deep: an action inside a child may have its own child, one more level)
+
+{step: list<{index: int, action: list<action>}>}

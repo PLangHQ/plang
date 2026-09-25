@@ -56,7 +56,15 @@ def plang_type(cs):
     if 'goal.step.action.@this' in outer: return 'action'
     if 'variable' in outer.lower(): return 'variable'
     m = re.search(r'app\.type\.item\.@?(\w+)', outer)
-    return m.group(1) if m else 'item'
+    name = m.group(1) if m else None
+    if name is None:
+        # A global alias (`path`, `Goal`, `Step`) or a folder's @this (`app.goal.@this`): the plang
+        # name is the alias itself, or the folder that owns the @this — lowercase, as the catalog names it.
+        parts = [p for p in outer.replace('global::', '').split('.') if p]
+        name = (parts[-2] if len(parts) > 1 and parts[-1] == '@this' else parts[-1]).lstrip('@').lower()
+    if name == 'list' and '<' in cs:
+        return f'list<{plang_type(cs.split("<", 1)[1].rsplit(">", 1)[0])}>'
+    return name
 
 def handler_source(module, action):
     for p in glob.glob(f'{ROOT}/PLang/app/module/action/{module}/*.cs'):
@@ -64,9 +72,25 @@ def handler_source(module, action):
         if re.search(rf'\[Action\("{re.escape(action)}"', src, re.I): return src
     return None
 
+DEFAULT = re.compile(r'\[Default\((?P<value>.+?)\)\]')
+
+def default_text(literal):
+    """A [Default(…)] literal as the template prints it: a bool lowercase, a number as written, a
+    text without its quotes, an enum member by its name."""
+    v = literal.strip()
+    if v in ('true', 'false'): return v
+    if v.startswith('"') and v.endswith('"'): return v[1:-1]
+    if re.fullmatch(r'-?\d+(\.\d+)?[dDfFmM]?', v): return v.rstrip('dDfFmM')
+    return v.split('.')[-1]
+
+# The catalog never shows these: host values, and the graph items the compiler injects itself.
+NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'modifier'}
+
 _decl = {}
 def declared(module, action):
-    """(properties, is_modifier) as the handler declares them."""
+    """(properties, is_modifier) as the handler declares them — the same rows the plang catalog
+    reflects (app/type/property/list/this.cs Reflect): infra-typed slots dropped, an IChannel
+    action's synthetic `channel` row added last."""
     key = (module, action)
     if key in _decl: return _decl[key]
     src = handler_source(module, action) or ''
@@ -75,13 +99,23 @@ def declared(module, action):
     for i, line in enumerate(lines):
         m = PROP.search(line)
         if not m: continue
-        has_default = any('[Default' in l for l in lines[max(0, i - 3):i])
+        d = next((DEFAULT.search(l) for l in reversed(lines[max(0, i - 3):i]) if DEFAULT.search(l)), None)
         t = plang_type(m.group('type'))
+        if t in NOT_ON_MENU: continue
         options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
-        props[m.group('name')] = {'type': t, 'options': options,
-                                  'optional': bool(m.group('opt')) or has_default}
+        props[m.group('name')] = {'type': t, 'options': options, 'nullable': bool(m.group('opt')),
+                                  'default': default_text(d.group('value')) if d else None}
+    if re.search(r'class\s+\w+\s*:[^{]*\bIChannel\b', src):
+        props['channel'] = {'type': 'text', 'options': None, 'nullable': True, 'default': None}
     _decl[key] = (props, '[Modifier(' in src)
     return _decl[key]
+
+def menu_row(name, p):
+    """One property row exactly as propertiesUser.template writes it."""
+    options = f': one of {", ".join(p["options"])}' if p.get('options') else ''
+    required = not p['nullable'] and p['default'] is None
+    default = f', default {p["default"]}' if p['default'] is not None else ''
+    return f'{name} ({p["type"]}{options}, {"required" if required else "optional"}{default})'
 
 # ---------------------------------------------------------------- .goal text -> goals
 def parse(path):
@@ -149,33 +183,35 @@ def menu_for(goal, cat, folder=None):
         menu[i] = entries
     return menu, probs
 
-# A type whose value is not a scalar shows its shape on the menu line, where the model reads it.
-SHAPES = {'action': '{"module": "goal", "name": "call", "property": [{"name": "Name", "value": <goal>}, '
-                     '{"name": "Parameter", "value": [{"name": <argument>, "value": <value>}, ...]}]}'}
-
 def user_message(goal, menu):
-    out = [goal['name'], '']
+    """The stage-3 user message, byte for byte what os/system/builder/llm/templates/propertiesUser.template
+    renders — except menu order: the template walks the module catalog (hash order), this walks the menu."""
+    out = '\n' + goal['name'] + '\n'
     for s in goal['steps']:
-        out.append(f'step {s["index"]}: {s["text"]}')
-        out.append('   menu:')
+        out += f'\nstep {s["index"]}: {s["text"]}\n   menu:'
         for choice in menu.get(s['index'], []):
             module, action = choice.split('.', 1)
-            props, is_mod = declared(module, action)
-            out.append(f'     {choice}' + ('  [modifier]' if is_mod else ''))
+            props, _ = declared(module, action)
+            out += f'\n     {choice}'
             for name, p in props.items():
-                shape = f' = {SHAPES[p["type"]]}' if p['type'] in SHAPES else ''
-                options = f': {", ".join(p["options"])}' if p.get('options') else ''
-                out.append(f'        {name} ({p["type"]}{options}, {"optional" if p["optional"] else "required"}){shape}')
-        out.append('')
-    return '\n'.join(out)
+                out += f'\n        {menu_row(name, p)}'
+        out += '\n'
+    return out + '\n'
+
+# The stage-3 answer shape — the file BuildGoal/Properties.goal passes as Schema, so python sends
+# what plang sends. OpenAi.cs appends it to the system message; there is no response_format.
+SCHEMA = open(f'{ROOT}/os/system/builder/llm/Properties.schema', encoding='utf-8').read()
+SYSTEM_SENT = SYSTEM + '\n' + f'You MUST respond in JSON, schema: {SCHEMA}'
 
 def properties(goal, menu, folder=None):
     user = user_message(goal, menu)
     if folder:
-        open(os.path.join(folder, '3.llm.system.txt'), 'w').write(SYSTEM)
+        open(os.path.join(folder, '3.llm.system.txt'), 'w').write(SYSTEM_SENT)
         open(os.path.join(folder, '3.llm.user.txt'), 'w').write(user)
-    body = json.dumps({'model': MODEL, 'response_format': {'type': 'json_object'},
-                       'messages': [{'role': 'system', 'content': SYSTEM},
+    # The same request OpenAi.cs builds: temperature 0, max_completion_tokens 16000, the schema in the
+    # system message.
+    body = json.dumps({'model': MODEL, 'temperature': 0.0, 'max_completion_tokens': 16000,
+                       'messages': [{'role': 'system', 'content': SYSTEM_SENT},
                                     {'role': 'user', 'content': user}]}).encode()
     req = urllib.request.Request('https://api.openai.com/v1/chat/completions', data=body,
                                  headers={'Authorization': f'Bearer {OPENAI_KEY}',
@@ -242,6 +278,10 @@ def pr_action(a, where=''):
     out = {'module': module, 'name': name, 'property': params,
            'modifier': [pr_action(m, where) for m in a.get('modifier') or []]}
     if a.get('recovery'): out['recovery'] = [pr_action(r, where) for r in a['recovery']]
+    # A condition's body: steps of its own, each {text, action}.
+    if a.get('child'):
+        out['child'] = [{'text': c.get('text', ''), 'action': [pr_action(x, f'{where} child') for x in c.get('action') or []]}
+                        for c in a['child']]
     return out
 
 def pr_goal(goal, answer, rel):

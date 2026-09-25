@@ -31,12 +31,12 @@ public partial class @this
         }
         else
         {
-            // The program action's properties against its catalog twin's rules. A property is
-            // required when it is non-nullable and carries no [Default] — the LLM omitting one is
-            // build-breaking. A property the class does not declare is a name the LLM made up.
+            // The program action's properties against its catalog twin's rules. The LLM omitting a
+            // required property is build-breaking. A property the class does not declare is a name
+            // the LLM made up.
             foreach (var declared in element.Property)
             {
-                if (declared.Nullable || declared.Default != null) continue;
+                if (!declared.Required) continue;
                 if (Property[declared.Name] == null)
                     causes.Add(new global::app.error.Error(
                         $"{Module}.{Name}: required property '{declared.Name}' is missing. " +

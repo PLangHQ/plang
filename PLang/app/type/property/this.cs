@@ -55,6 +55,13 @@ public sealed class @this
     /// <summary>The class's <c>[Default]</c> value, or null when the property is required / has no default.</summary>
     public object? Default { get; init; }
 
+    /// <summary>The class declares a default. Asked of the property, not of <see cref="Default"/>: a
+    /// template cannot tell a <c>false</c> default from none.</summary>
+    public bool HasDefault => Default != null;
+
+    /// <summary>A step must write this property: it accepts no null and has no default to fall back on.</summary>
+    public bool Required => !Nullable && !HasDefault;
+
     /// <summary>The value a program action holds, raw as loaded — a lazy wire/source, or the
     /// eagerly read action/goal.call. Never loaded here; the run's Data does that.</summary>
     public global::app.type.item.@this? Value { get; init; }

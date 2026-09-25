@@ -17,7 +17,7 @@ step {{ s.Index }}: {{ s.Text }}
 {%- if menu[s.Index] contains choice %}
      {{ choice }}
 {%- for p in a.Property %}
-        {{ p.Name }} ({{ p.Type.Name }}{% if p.Type.Kind %}<{{ p.Type.Kind.Name }}>{% endif %}{% if p.Type.Values %}: one of {{ p.Type.Values | join: ", " }}{% endif %}{% if p.Nullable %}, optional{% else %}, required{% endif %}{% if p.Default %}, default {{ p.Default }}{% endif %})
+        {{ p.Name }} ({{ p.Type.Name }}{% if p.Type.Kind %}<{{ p.Type.Kind.Name }}>{% endif %}{% if p.Type.Values %}: one of {{ p.Type.Values | join: ", " }}{% endif %}{% if p.Required %}, required{% else %}, optional{% endif %}{% if p.HasDefault %}, default {{ p.Default }}{% endif %})
 {%- endfor -%}
 {%- endif -%}
 {%- endfor -%}

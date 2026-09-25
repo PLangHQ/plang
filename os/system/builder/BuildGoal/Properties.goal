@@ -11,8 +11,9 @@ Properties
 
 - render template "/system/builder/llm/templates/propertiesUser.template", write to %propertiesUserMsg%
 - render template "/system/builder/llm/Properties.llm", write to %propertiesSystemMsg%
+- render template "/system/builder/llm/Properties.schema", write to %propertiesSchema%
 - set %messages% = [{"Role":"system", "Content":"%propertiesSystemMsg%"}, {"Role":"user", "Content":"%propertiesUserMsg%"}]
 
-- llm.query Message=%messages%, Model="gpt-5.4-nano", Schema={step: list<{index: int, action: list<{module: string, name: string, property?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, modifier?: list<{module: string, name: string, property?: list<{name: string, type: {name: string, kind?: string}, value?: object}>, recovery?: list<{module: string, name: string, property?: list<{name: string, type: {name: string, kind?: string}, value?: object}>}>}>}>}>}, cache=%!build.cache%, write to %properties%
+- llm.query Message=%messages%, Model="gpt-5.4-nano", Schema=%propertiesSchema%, cache=%!build.cache%, write to %properties%
 
 - call /system/builder/EmitBuildEvent kind="goal-properties", goal=%goal%

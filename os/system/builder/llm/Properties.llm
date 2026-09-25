@@ -8,7 +8,8 @@ from what the step means.
 
 Use only actions on the step's own menu.
 
-Answer with JSON only — every step, in order, each with its actions in the order they run:
+Answer with JSON only — every step, in order, each with its actions in the order they are written
+(a condition's body runs only when the condition holds — see Conditions below):
 
   {"step": [
     {"index": 0, "action": [
@@ -110,6 +111,63 @@ the step's entry is:
                        "property": [{"name": "Name", "type": {"name": "text"}, "value": "Logger"}]}}]}
   ]}
 
+Conditions. `condition.if`, `condition.elseif` and `condition.else` guard a body: the actions that run
+only when the condition holds. The body goes in the condition's `child` — a list of steps, each
+{"text": <the words of the step that body does, as written>, "action": [...]} — never beside the
+condition in the step's own list. After a condition, the step's own list holds nothing but the next
+branch of the same chain: an `elseif` or an `else`, each with its own `child`. An action the step
+does BEFORE it tests stays in the step's own list, ahead of the `if`. A condition whose step names
+nothing to do gets no `child`: its body is written as indented steps below it, and those are placed
+for you. Given:
+
+  step 1: if %n% is less than 5, return
+     menu:
+       condition.if
+          Left (item, optional)
+          Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+          Right (item, optional)
+          Negate (bool, optional, default false)
+       goal.return
+          Data (item, optional)
+          Depth (number, optional, default 1)
+
+the step's entry is:
+
+  {"index": 1, "action": [
+    {"module": "condition", "name": "if",
+     "property": [{"name": "Left", "type": {"name": "item"}, "value": "%n%"},
+                  {"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": "<"},
+                  {"name": "Right", "type": {"name": "number"}, "value": 5}],
+     "child": [{"text": "return", "action": [{"module": "goal", "name": "return"}]}]}
+  ]}
+
+And with an else, given:
+
+  step 2: if %age% >= 18 call Adult, else call Minor
+     menu:
+       condition.if
+          (as above)
+       condition.else
+       goal.call
+          Name (text, required)
+          Parameter (list, optional)
+
+the step's entry is:
+
+  {"index": 2, "action": [
+    {"module": "condition", "name": "if",
+     "property": [{"name": "Left", "type": {"name": "item"}, "value": "%age%"},
+                  {"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": ">="},
+                  {"name": "Right", "type": {"name": "number"}, "value": 18}],
+     "child": [{"text": "call Adult", "action": [
+        {"module": "goal", "name": "call",
+         "property": [{"name": "Name", "type": {"name": "text"}, "value": "Adult"}]}]}]},
+    {"module": "condition", "name": "else",
+     "child": [{"text": "call Minor", "action": [
+        {"module": "goal", "name": "call",
+         "property": [{"name": "Name", "type": {"name": "text"}, "value": "Minor"}]}]}]}
+  ]}
+
 Filling a property:
 - An action has only the properties listed under it on the menu. Never add one that is not listed.
 - A value the step writes goes in as written — a quoted text as that text, a %variable% with its
@@ -120,7 +178,7 @@ Filling a property:
 - A `variable` property is a variable name with its % signs.
 - Every property row names its `type` — PLang is strongly typed and nothing guesses it later.
   Copy the type the menu writes for that property (`Path (path, …)` → `{"name": "path"}`; a kind rides
-  in angle brackets: `Operator (choice<operator>: ==, <, …)` → `{"name": "choice", "kind": "operator"}`,
+  in angle brackets: `Operator (choice<operator>: one of ==, <, …)` → `{"name": "choice", "kind": "operator"}`,
   and the value is one of the listed options, written exactly as listed). Where the
   menu says `item` the slot is open: name the value's own type when you know it (`as text`, a quoted
   text, a number), otherwise `item`. A step that forces a type (`as text`, `(json)`) wins.

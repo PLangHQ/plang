@@ -66,6 +66,39 @@ public class RenderTests : IDisposable
         await Assert.That(menu).Contains("Actor (choice<actor>: one of system, user");
     }
 
+    private async Task<string> BuilderMenuFor(string module, string actionName)
+    {
+        var context = _app.User.Context;
+        var element = _app.Module[module].Action.Items(global::PLang.Tests.TestApp.SharedContext)
+            .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == actionName);
+        await context.Variable.Set("a", element);
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)PropertyLoopFromBuilderTemplate(), IsFile = (global::app.type.item.@bool.@this)false };
+        var result = await _provider.Render(action);
+        await result.IsSuccess();
+        return (await result.Value())!.ToString()!;
+    }
+
+    [Test]
+    public async Task BuilderMenu_DefaultSlot_IsOptional_AndShowsAFalseDefault()
+    {
+        var menu = await BuilderMenuFor("condition", "if");
+        await Assert.That(menu).Contains("Negate (bool, optional, default false)");
+    }
+
+    [Test]
+    public async Task BuilderMenu_NumberDefault_IsShown()
+    {
+        var menu = await BuilderMenuFor("goal", "return");
+        await Assert.That(menu).Contains("Depth (number, optional, default 1)");
+    }
+
+    [Test]
+    public async Task BuilderMenu_NoNullNoDefault_IsRequired()
+    {
+        var menu = await BuilderMenuFor("goal", "call");
+        await Assert.That(menu).Contains("Name (text, required)");
+    }
+
     // --- Batch 1: Core Render Behavior ---
 
     [Test]

@@ -1,6 +1,6 @@
 ## Operators — runtime-supported only
 
-Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, and, or`. There is NO `isnotempty`/`istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
+Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or` (`is` asks the type: `%x% is number`). There is NO `isnotempty`/`istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
 
 | phrasing | Operator | Right | Negate |
 |---|---|---|---|
@@ -22,7 +22,7 @@ Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, 
 
 ## Compound `and`/`or`
 
-Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, then the body. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
+Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, with the body in its `child`. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
 
 `if %a% > 1 and %b% < 10, call DoThing`:
-`condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%), goal.call(GoalName={name:"DoThing"})`
+`condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%, child=[{text: "call DoThing", action: [goal.call(Name="DoThing")]}])`

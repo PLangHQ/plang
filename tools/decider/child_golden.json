@@ -1,0 +1,199 @@
+{
+ "about": "Golden set for the inline-condition eval (stage 3 only). Each case is a goal: its steps, the menu a correct decider gives each step, and the expected actions per step, written by hand. Expected actions: module, name, the property values that matter (name -> value), and child (list of {text, action}). Scoring: per step — the action tree must match in module/name/order, child placement and depth; listed property values must match (numbers as numbers, operator symbol exact); a property not listed must be absent unless the case says 'extra ok'; child text must be the words of the step for that branch (whitespace/quote-insensitive). None of these steps is a worked example in Properties.llm.",
+ "cases": [
+  {"id": "if_return", "covers": "if X, return",
+   "goal": "Guard",
+   "steps": [{"text": "if %count% is less than 3, return", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.return"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%count%", "Operator": "<", "Right": 3},
+      "child": [{"text": "return", "action": [{"module": "goal", "name": "return"}]}]}]}},
+
+  {"id": "if_call_else_call", "covers": "if X call A, else call B",
+   "goal": "Switch",
+   "steps": [{"text": "if %status% == \"active\" call Activate, else call Deactivate", "indent": 0}],
+   "menu": {"0": ["condition.if", "condition.else", "goal.call"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%status%", "Operator": "==", "Right": "active"},
+      "child": [{"text": "call Activate", "action": [{"module": "goal", "name": "call", "property": {"Name": "Activate"}}]}]},
+     {"module": "condition", "name": "else",
+      "child": [{"text": "call Deactivate", "action": [{"module": "goal", "name": "call", "property": {"Name": "Deactivate"}}]}]}]}},
+
+  {"id": "if_elseif_else_line", "covers": "if/elseif/else in one line",
+   "goal": "Grade",
+   "steps": [{"text": "if %score% > 90, write out \"A\", else if %score% > 70, write out \"B\", else write out \"C\"", "indent": 0}],
+   "menu": {"0": ["condition.if", "condition.elseif", "condition.else", "output.write"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%score%", "Operator": ">", "Right": 90},
+      "child": [{"text": "write out \"A\"", "action": [{"module": "output", "name": "write", "property": {"Data": "A"}}]}]},
+     {"module": "condition", "name": "elseif", "property": {"Left": "%score%", "Operator": ">", "Right": 70},
+      "child": [{"text": "write out \"B\"", "action": [{"module": "output", "name": "write", "property": {"Data": "B"}}]}]},
+     {"module": "condition", "name": "else",
+      "child": [{"text": "write out \"C\"", "action": [{"module": "output", "name": "write", "property": {"Data": "C"}}]}]}]}},
+
+  {"id": "if_elseif_no_else", "covers": "if/elseif without else",
+   "goal": "Greet",
+   "steps": [{"text": "if %lang% == \"is\", write out \"Halló\", else if %lang% == \"en\", write out \"Hello\"", "indent": 0}],
+   "menu": {"0": ["condition.if", "condition.elseif", "output.write"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%lang%", "Operator": "==", "Right": "is"},
+      "child": [{"text": "write out \"Halló\"", "action": [{"module": "output", "name": "write", "property": {"Data": "Halló"}}]}]},
+     {"module": "condition", "name": "elseif", "property": {"Left": "%lang%", "Operator": "==", "Right": "en"},
+      "child": [{"text": "write out \"Hello\"", "action": [{"module": "output", "name": "write", "property": {"Data": "Hello"}}]}]}]}},
+
+  {"id": "else_return", "covers": "else branch is a return",
+   "goal": "Proceed",
+   "steps": [{"text": "if %ok% == true, call Continue, else return", "indent": 0}],
+   "menu": {"0": ["condition.if", "condition.else", "goal.call", "goal.return"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%ok%", "Operator": "==", "Right": true},
+      "child": [{"text": "call Continue", "action": [{"module": "goal", "name": "call", "property": {"Name": "Continue"}}]}]},
+     {"module": "condition", "name": "else",
+      "child": [{"text": "return", "action": [{"module": "goal", "name": "return"}]}]}]}},
+
+  {"id": "negate_contains", "covers": "negation (does not contain)",
+   "goal": "Access",
+   "steps": [{"text": "if %name% does not contain \"admin\", call Deny", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.call"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "contains", "Right": "admin", "Negate": true},
+      "child": [{"text": "call Deny", "action": [{"module": "goal", "name": "call", "property": {"Name": "Deny"}}]}]}]}},
+
+  {"id": "negate_isempty", "covers": "negation (is not empty, unary operator)",
+   "goal": "Work",
+   "steps": [{"text": "if %items% is not empty, call ProcessItems", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.call"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%items%", "Operator": "isempty", "Negate": true},
+      "child": [{"text": "call ProcessItems", "action": [{"module": "goal", "name": "call", "property": {"Name": "ProcessItems"}}]}]}]}},
+
+  {"id": "setup_before_if", "covers": "a setup action before the if",
+   "goal": "Page",
+   "steps": [{"text": "count %items%, write to %n%, if %n% > 10, call Paginate", "indent": 0}],
+   "menu": {"0": ["list.count", "variable.set", "condition.if", "goal.call"]},
+   "expect": {"0": [
+     {"module": "list", "name": "count", "property": {"ListName": "%items%"}},
+     {"module": "variable", "name": "set", "property": {"Name": "%n%", "Value": "%!data%"}},
+     {"module": "condition", "name": "if", "property": {"Left": "%n%", "Operator": ">", "Right": 10},
+      "child": [{"text": "call Paginate", "action": [{"module": "goal", "name": "call", "property": {"Name": "Paginate"}}]}]}]}},
+
+  {"id": "body_with_write_to", "covers": "the branch keeps its result: write to %x% belongs in the child",
+   "goal": "Discount",
+   "steps": [{"text": "if %price% > 100, multiply %price% by 0.9, write to %price%", "indent": 0}],
+   "menu": {"0": ["condition.if", "math.multiply", "variable.set"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%price%", "Operator": ">", "Right": 100},
+      "child": [{"text": "multiply %price% by 0.9, write to %price%", "action": [
+        {"module": "math", "name": "multiply", "property": {"A": "%price%", "B": 0.9}},
+        {"module": "variable", "name": "set", "property": {"Name": "%price%", "Value": "%!data%"}}]}]}]}},
+
+  {"id": "body_two_actions", "covers": "one branch doing two things",
+   "goal": "RequireUser",
+   "steps": [{"text": "if %user% == null, write out \"no user\" and return", "indent": 0}],
+   "menu": {"0": ["condition.if", "output.write", "goal.return"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%user%", "Operator": "==", "Right": null},
+      "child": [{"text": "write out \"no user\" and return", "action": [
+        {"module": "output", "name": "write", "property": {"Data": "no user"}},
+        {"module": "goal", "name": "return"}]}], "note": "one child step with both actions, or one child step per action — either is accepted; the flattened action order is scored"}]}},
+
+  {"id": "op_in", "covers": "the in operator",
+   "goal": "Grant",
+   "steps": [{"text": "if %role% is in [\"admin\", \"owner\"], call GrantAccess", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.call"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%role%", "Operator": "in", "Right": ["admin", "owner"]},
+      "child": [{"text": "call GrantAccess", "action": [{"module": "goal", "name": "call", "property": {"Name": "GrantAccess"}}]}]}]}},
+
+  {"id": "op_startswith", "covers": "startswith",
+   "goal": "Route",
+   "steps": [{"text": "if %path% starts with \"/api\", call HandleApi path=%path%", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.call"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%path%", "Operator": "startswith", "Right": "/api"},
+      "child": [{"text": "call HandleApi path=%path%", "action": [{"module": "goal", "name": "call",
+        "property": {"Name": "HandleApi", "Parameter": [{"name": "path", "value": "%path%"}]}}]}]}]}},
+
+  {"id": "op_is_type", "covers": "the is (type) operator",
+   "goal": "Kind",
+   "steps": [{"text": "if %value% is a number, write out \"numeric\"", "indent": 0}],
+   "menu": {"0": ["condition.if", "output.write"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%value%", "Operator": "is", "Right": "number"},
+      "child": [{"text": "write out \"numeric\"", "action": [{"module": "output", "name": "write", "property": {"Data": "numeric"}}]}]}]}},
+
+  {"id": "menumodule", "covers": "MenuModule's three lines (BuildGoal/Start.goal:42-45) plus its no-condition first step",
+   "goal": "MenuModule",
+   "steps": [
+     {"text": "set %key% = \"s%step.Index%_%module.Name%\"", "indent": 0},
+     {"text": "if %moduleAnswer[key].noul% is less than %threshold%, return", "indent": 0},
+     {"text": "if %module.Action.Count% is 1, add \"%module.Name%.%module.Action[0].Name%\" to %choices%", "indent": 0},
+     {"text": "if %module.Action.Count% is more than 1, add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%", "indent": 0}],
+   "menu": {"0": ["variable.set"], "1": ["condition.if", "goal.return"], "2": ["condition.if", "list.add"], "3": ["condition.if", "list.add"]},
+   "expect": {
+     "0": [{"module": "variable", "name": "set", "property": {"Name": "%key%", "Value": "s%step.Index%_%module.Name%"}}],
+     "1": [{"module": "condition", "name": "if", "property": {"Left": "%moduleAnswer[key].noul%", "Operator": "<", "Right": "%threshold%"},
+            "child": [{"text": "return", "action": [{"module": "goal", "name": "return"}]}]}],
+     "2": [{"module": "condition", "name": "if", "property": {"Left": "%module.Action.Count%", "Operator": "==", "Right": 1},
+            "child": [{"text": "add \"%module.Name%.%module.Action[0].Name%\" to %choices%", "action": [
+              {"module": "list", "name": "add", "property": {"ListName": "%choices%", "Value": "%module.Name%.%module.Action[0].Name%"}}]}]}],
+     "3": [{"module": "condition", "name": "if", "property": {"Left": "%module.Action.Count%", "Operator": ">", "Right": 1},
+            "child": [{"text": "add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%", "action": [
+              {"module": "list", "name": "add", "property": {"ListName": "%choices%", "Value": "%module.Name%.%actionAnswer[key].choice%"}}]}]}]}},
+
+  {"id": "plain_write", "covers": "no condition: no invented child",
+   "goal": "Hello",
+   "steps": [{"text": "write out \"hello\"", "indent": 0}],
+   "menu": {"0": ["output.write"]},
+   "expect": {"0": [{"module": "output", "name": "write", "property": {"Data": "hello"}}]}},
+
+  {"id": "plain_call_args", "covers": "no condition, a call with arguments",
+   "goal": "Notify",
+   "steps": [{"text": "call SendMail to=%email%, subject=\"Welcome\"", "indent": 0}],
+   "menu": {"0": ["goal.call"]},
+   "expect": {"0": [{"module": "goal", "name": "call", "property": {"Name": "SendMail",
+      "Parameter": [{"name": "to", "value": "%email%"}, {"name": "subject", "value": "Welcome"}]}}]}},
+
+  {"id": "plain_add", "covers": "no condition, list.add",
+   "goal": "Collect",
+   "steps": [{"text": "add %item% to %items%", "indent": 0}],
+   "menu": {"0": ["list.add"]},
+   "expect": {"0": [{"module": "list", "name": "add", "property": {"ListName": "%items%", "Value": "%item%"}}]}},
+
+  {"id": "indented_body", "covers": "indented body under an if: the LLM must NOT nest it (fold does)",
+   "goal": "MaybeProcess",
+   "steps": [
+     {"text": "if %count% > 0", "indent": 0},
+     {"text": "call ProcessItems", "indent": 1},
+     {"text": "write out \"done\"", "indent": 1}],
+   "menu": {"0": ["condition.if"], "1": ["goal.call"], "2": ["output.write"]},
+   "expect": {
+     "0": [{"module": "condition", "name": "if", "property": {"Left": "%count%", "Operator": ">", "Right": 0}}],
+     "1": [{"module": "goal", "name": "call", "property": {"Name": "ProcessItems"}}],
+     "2": [{"module": "output", "name": "write", "property": {"Data": "done"}}]}},
+
+  {"id": "indented_if_else", "covers": "indented bodies under an if and an else line",
+   "goal": "OneOrOther",
+   "steps": [
+     {"text": "if %x% == 1", "indent": 0},
+     {"text": "write out \"one\"", "indent": 1},
+     {"text": "else", "indent": 0},
+     {"text": "write out \"other\"", "indent": 1}],
+   "menu": {"0": ["condition.if"], "1": ["output.write"], "2": ["condition.else"], "3": ["output.write"]},
+   "expect": {
+     "0": [{"module": "condition", "name": "if", "property": {"Left": "%x%", "Operator": "==", "Right": 1}}],
+     "1": [{"module": "output", "name": "write", "property": {"Data": "one"}}],
+     "2": [{"module": "condition", "name": "else"}],
+     "3": [{"module": "output", "name": "write", "property": {"Data": "other"}}]}},
+
+  {"id": "nested_inline", "covers": "two levels in one line (the schema's depth)",
+   "goal": "Nested",
+   "steps": [{"text": "if %a% > 0, if %b% > 0, call BothPositive", "indent": 0}],
+   "menu": {"0": ["condition.if", "goal.call"]},
+   "expect": {"0": [
+     {"module": "condition", "name": "if", "property": {"Left": "%a%", "Operator": ">", "Right": 0},
+      "child": [{"text": "if %b% > 0, call BothPositive", "action": [
+        {"module": "condition", "name": "if", "property": {"Left": "%b%", "Operator": ">", "Right": 0},
+         "child": [{"text": "call BothPositive", "action": [{"module": "goal", "name": "call", "property": {"Name": "BothPositive"}}]}]}]}]}]}}
+ ]
+}
