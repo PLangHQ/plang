@@ -256,8 +256,8 @@ CRITERIA = os.environ.get('CRITERIA', '1') != '0'
 COMMON_CRITERIA = {
     'variable.set': {'true': 'the step sets a variable or keeps a result in one: `set %x% = 5`, `set default %x% = …`, `…, write to %x%`',
                      'false': 'the step keeps no value in a variable'},
-    'goal.call': {'true': 'the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`',
-                  'false': 'the step calls no goal now; a goal named to run later — `…, on error call X`, the goal behind a channel or an event — is not called by the step'},
+    'goal.call': {'true': 'the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)',
+                  'false': 'the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step'},
     'output.write': {'true': 'the step shows or writes something out, to the user or to a named channel: `write out "Hello"`, `show %message%`, `write %x% to "log" channel`',
                      'false': 'the step shows nothing; `…, write to %x%` keeps a value in a variable, it is not output'},
     'error.handle': {'true': 'the step says what happens when it fails: `…, on error call X`, `…, on error retry 3 times`',
