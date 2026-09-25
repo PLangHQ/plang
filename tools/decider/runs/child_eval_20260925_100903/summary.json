@@ -1,0 +1,122 @@
+[
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-nano",
+  "case": "complementary_steps",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 1,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 2,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ },
+ {
+  "model": "gpt-5.4-mini",
+  "case": "complementary_steps",
+  "run": 3,
+  "notes": [],
+  "steps": {
+   "0": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\"==\",Right=0){\"write out \"none\"\": output.write(Data=\"none\")}"
+    ]
+   },
+   "1": {
+    "misses": [],
+    "got": [
+     "condition.if(Left=\"%n%\",Operator=\">\",Right=0){\"write out \"some\"\": output.write(Data=\"some\")}"
+    ]
+   }
+  }
+ }
+]

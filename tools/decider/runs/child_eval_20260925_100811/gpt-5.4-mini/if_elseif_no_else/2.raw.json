@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERx8rnX1lFXD6xYfcgQGlrsMiVkD5",
+ "object": "chat.completion",
+ "created": 1790330905,
+ "model": "gpt-5.4-mini-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\"step\":[{\"index\":0,\"action\":[{\"module\":\"condition\",\"name\":\"if\",\"property\":[{\"name\":\"Left\",\"type\":{\"name\":\"item\"},\"value\":\"%lang%\"},{\"name\":\"Operator\",\"type\":{\"name\":\"choice\",\"kind\":\"operator\"},\"value\":\"==\"},{\"name\":\"Right\",\"type\":{\"name\":\"text\"},\"value\":\"is\"}],\"child\":[{\"text\":\"write out \\\"Halló\\\"\",\"action\":[{\"module\":\"output\",\"name\":\"write\",\"property\":[{\"name\":\"Data\",\"type\":{\"name\":\"text\"},\"value\":\"Halló\"}]}]}]},{\"module\":\"condition\",\"name\":\"elseif\",\"property\":[{\"name\":\"Left\",\"type\":{\"name\":\"item\"},\"value\":\"%lang%\"},{\"name\":\"Operator\",\"type\":{\"name\":\"choice\",\"kind\":\"operator\"},\"value\":\"==\"},{\"name\":\"Right\",\"type\":{\"name\":\"text\"},\"value\":\"en\"}],\"child\":[{\"text\":\"write out \\\"Hello\\\"\",\"action\":[{\"module\":\"output\",\"name\":\"write\",\"property\":[{\"name\":\"Data\",\"type\":{\"name\":\"text\"},\"value\":\"Hello\"}]}]}]}]}]}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 3881,
+  "completion_tokens": 231,
+  "total_tokens": 4112,
+  "prompt_tokens_details": {
+   "cached_tokens": 3328,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

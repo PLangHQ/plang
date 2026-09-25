@@ -13,6 +13,8 @@ import build_pr as b
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 GOLDEN = json.load(open(os.path.join(HERE, 'child_golden.json'), encoding='utf-8'))['cases']
+if os.environ.get('CASES'):
+    GOLDEN = [c for c in GOLDEN if c['id'] in os.environ['CASES'].split(',')]
 MODELS = os.environ.get('MODELS', 'gpt-5.4-nano,gpt-5.4-mini').split(',')
 RUNS = int(os.environ.get('RUNS', 3))
 OUT = os.path.join(HERE, 'runs', 'child_eval_' + time.strftime('%Y%m%d_%H%M%S'))

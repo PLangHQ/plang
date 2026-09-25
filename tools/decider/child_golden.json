@@ -141,6 +141,18 @@
             "child": [{"text": "add \"%module.Name%.%actionAnswer[key].choice%\" to %choices%", "action": [
               {"module": "list", "name": "add", "property": {"ListName": "%choices%", "Value": "%module.Name%.%actionAnswer[key].choice%"}}]}]}]}},
 
+  {"id": "complementary_steps", "covers": "two separate if steps whose conditions happen to be complementary: they stay two entries, never merged into one if/else (added after run 2: mini merged MenuModule steps 2-3)",
+   "goal": "Count",
+   "steps": [
+     {"text": "if %n% == 0, write out \"none\"", "indent": 0},
+     {"text": "if %n% > 0, write out \"some\"", "indent": 0}],
+   "menu": {"0": ["condition.if", "output.write"], "1": ["condition.if", "output.write"]},
+   "expect": {
+     "0": [{"module": "condition", "name": "if", "property": {"Left": "%n%", "Operator": "==", "Right": 0},
+            "child": [{"text": "write out \"none\"", "action": [{"module": "output", "name": "write", "property": {"Data": "none"}}]}]}],
+     "1": [{"module": "condition", "name": "if", "property": {"Left": "%n%", "Operator": ">", "Right": 0},
+            "child": [{"text": "write out \"some\"", "action": [{"module": "output", "name": "write", "property": {"Data": "some"}}]}]}]}},
+
   {"id": "plain_write", "covers": "no condition: no invented child",
    "goal": "Hello",
    "steps": [{"text": "write out \"hello\"", "indent": 0}],

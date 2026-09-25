@@ -1,0 +1,35 @@
+{
+ "id": "chatcmpl-ERx8hnpCdpPPU4Jg8Q7O3CjQCVQ99",
+ "object": "chat.completion",
+ "created": 1790330895,
+ "model": "gpt-5.4-nano-2026-03-17",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"step\": [\n    {\n      \"index\": 0,\n      \"action\": [\n        {\n          \"module\": \"condition\",\n          \"name\": \"if\",\n          \"property\": [\n            {\n              \"name\": \"Left\",\n              \"type\": {\n                \"name\": \"item\"\n              },\n              \"value\": \"%items%\"\n            },\n            {\n              \"name\": \"Operator\",\n              \"type\": {\n                \"name\": \"choice\",\n                \"kind\": \"operator\"\n              },\n              \"value\": \"isempty\"\n            },\n            {\n              \"name\": \"Negate\",\n              \"type\": {\n                \"name\": \"bool\"\n              },\n              \"value\": true\n            }\n          ],\n          \"child\": [\n            {\n              \"text\": \"call ProcessItems\",\n              \"action\": [\n                {\n                  \"module\": \"goal\",\n                  \"name\": \"call\",\n                  \"property\": [\n                    {\n                      \"name\": \"Name\",\n                      \"type\": {\n                        \"name\": \"text\"\n                      },\n                      \"value\": \"ProcessItems\"\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 3861,
+  "completion_tokens": 243,
+  "total_tokens": 4104,
+  "prompt_tokens_details": {
+   "cached_tokens": 2816,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "service_tier": "default",
+ "system_fingerprint": null
+}

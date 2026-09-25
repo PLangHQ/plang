@@ -1,0 +1,89 @@
+{
+ "step": [
+  {
+   "index": 0,
+   "action": [
+    {
+     "module": "condition",
+     "name": "if",
+     "property": [
+      {
+       "name": "Left",
+       "type": {
+        "name": "item"
+       },
+       "value": "%x%"
+      },
+      {
+       "name": "Operator",
+       "type": {
+        "name": "choice",
+        "kind": "operator"
+       },
+       "value": "=="
+      },
+      {
+       "name": "Right",
+       "type": {
+        "name": "number"
+       },
+       "value": 1
+      }
+     ],
+     "child": [
+      {
+       "text": "write out \"one\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "one"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "module": "condition",
+     "name": "else",
+     "child": [
+      {
+       "text": "write out \"other\"",
+       "action": [
+        {
+         "module": "output",
+         "name": "write",
+         "property": [
+          {
+           "name": "Data",
+           "type": {
+            "name": "text"
+           },
+           "value": "other"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "action": []
+  },
+  {
+   "index": 2,
+   "action": []
+  }
+ ]
+}

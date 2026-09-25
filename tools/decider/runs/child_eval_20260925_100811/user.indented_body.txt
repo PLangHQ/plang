@@ -1,0 +1,77 @@
+
+MaybeProcess
+
+step 0: if %count% > 0
+   menu:
+     condition.if
+        Left (item, optional)
+        Operator (choice<operator>: one of ==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or, required)
+        Right (item, optional)
+        Negate (bool, optional, default false)
+        notes:
+          ## Operators — runtime-supported only
+          Valid `Operator` values: `==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, is, and, or` (`is` asks the type: `%x% is number`). There is NO `isnotempty`/`istrue`/`isfalse`/`isnull`/`isnotnull` — emitting one throws at runtime. Map predicates:
+          | phrasing | Operator | Right | Negate |
+          |---|---|---|---|
+          | `is empty` | isempty | omit | omit |
+          | `is not empty` / `not blank` | isempty | omit | true |
+          | `is true` / `is false` | == | true / false | — |
+          | `is null` / `is not null` | == / != | null | — |
+          | `equals %b%` / `does not equal %b%` | == / != | %b% | — |
+          | `contains 'foo'` / `does not contain 'foo'` | contains | 'foo' | — / true |
+          | `is a number` / `is text` / `is not a list` | is | the type name: number / text / list | — / — / true |
+          `Negate=true` inverts ANY operator — the only way to negate ones with no inverse (`isempty`, etc.).
+          ## Omit `Right`/`Negate` when not applicable
+          `Right` is for binary operators only — omit it for unary `isempty` (never `Right=%!data%` or `Right=false`). `Negate` defaults false — omit when not negating.
+          - `if %content% is not empty` → `condition.if(Left=%content%, Operator="isempty", Negate=true)` (no Right)
+          - `if %flag% is true` → `condition.if(Left=%flag%, Operator="==", Right=true)` (no Negate)
+          ## Compound `and`/`or`
+          Multiple top-level `condition.if` in ONE step do NOT compound — the runtime treats them as an if/elseif/else chain (first match wins). For `if A and B, call X`: evaluate each side with `condition.compare`, capture each `%!data%` into a var, then ONE `condition.if` with `Operator="and"` (or `"or"`) over those vars, with the body in its `child`. `and`/`or` are truthy checks on the pre-computed booleans, not inline expressions. 3+ operands: stage into `%v1%`, `%v2%`, … and nest.
+          `if %a% > 1 and %b% < 10, call DoThing`:
+          `condition.compare(Left=%a%, Operator=">", Right=1), variable.set(Name=%andL%, Value=%!data%), condition.compare(Left=%b%, Operator="<", Right=10), variable.set(Name=%andR%, Value=%!data%), condition.if(Left=%andL%, Operator="and", Right=%andR%, child=[{text: "call DoThing", action: [goal.call(Name="DoThing")]}])`
+
+step 1: call ProcessItems
+   menu:
+     goal.call
+        Name (text, required)
+        Parameter (list, optional)
+        Actor (choice<actor>: one of system, user, optional)
+        Parallel (bool, optional, default false)
+        notes:
+          `call X, param=value` (standalone or inside `foreach`) → `Name` is the goal, and each named argument is one row in `Parameter` — `{"name": <argument>, "value": <value>}`. The arguments belong to the CALLEE; they never become properties of `goal.call` itself.
+          `goal.call` has:
+          - `Name` (required) — the goal identifier.
+          - `Parameter` (optional) — the arguments, one row each; omit when the step passes none.
+          - `Actor` (optional, almost always omitted) — explicit cross-actor delegation only: the actor's name, `system` or `user`.
+          **`Actor`: omit unless the step text NAMES an actor** (`call X on actor "system"`, `call X as user`, `actor=%who%` where `%who%` holds the name). Otherwise the slot does not exist — never invent it: no `null`/`"system"`/`%!actor%`/`%goal%`, and not because the call is in `/system/...`, a sub-goal, a recovery, or a foreach (none of those name an actor).
+          `foreach %list%, call X, section=%item%` → the step is `loop.foreach` + `goal.call`; `section=%item%` is an argument of the call:
+          ```json
+          {"module":"goal","name":"call","property":[
+            {"name":"Name","type":{"name":"text"},"value":"X"},
+            {"name":"Parameter","type":{"name":"list"},"value":[{"name":"section","type":{"name":"item"},"value":"%item%"}]}]}
+          ```
+          **`Name` = the goal identifier VERBATIM from the step text** — copy the path exactly (`Goal`, `Folder/Goal`, `../X`, `/root/Y`); dropping/rewriting a segment → runtime GoalNotFound. Never put a type token there (`"goal.call"` is not a goal name). Any dotted identifier here is wrong.
+
+step 2: write out "done"
+   menu:
+     output.write
+        Data (item, required)
+        channel (text, optional)
+        notes:
+          `output.write` has a `channel` parameter for routing to a non-default channel. The channel clause names an EXISTING registered channel — it is routing, not registration.
+          **Only emit `channel` when the step text expresses intent to send output to a named channel** (any phrasing: `channel=X`, `to X channel`, `on X channel`, `via X`, etc.). When the step text has no channel clause, OMIT `channel` entirely. Do NOT fill it with `%!data%` or any placeholder — `%!data%` is the prior action's result for chaining into intended slots, never a fallback for unnamed optional slots.
+          Correct (`write out %message%`, no channel named):
+          ```json
+          {"module":"output","name":"write","property":[{"name":"Data","value":"%message%","type":{"name":"item"}}]}
+          ```
+          Correct (`write out "hi" to logger channel`):
+          ```json
+          {"module":"output","name":"write","property":[
+            {"name":"Data","value":"hi","type":{"name":"text"}},
+            {"name":"channel","value":"logger","type":{"name":"text"}}
+          ]}
+          ```
+          **DO NOT** emit a peer `channel.set` action when the user names a routing channel — `channel.set` is for *registering* a channel handler, never for routing on `output.write`.
+          ## `Data` type for `output.write`
+          `write out "Hello %name%"` → ONE `output.write`, `Data` is `text` (the template interpolates at runtime): `{"name":"Data","type":{"name":"text"},"value":"Hello %name%"}`. A plain literal string (no `%var%`) is also `text`. A bare `%var%` reference uses `{"name":"item"}` (runtime resolves the actual type).
+
