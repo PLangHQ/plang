@@ -12,7 +12,7 @@ Reading a value today turns ANY string holding `%x%` into a template when its ro
 
 - **A value renders `%var%` only when its type carries `template`.** No marker means the text is plain, whatever it contains.
 - **The marker is born in one place:** at BUILD, when the formal reader types the programmer's literal (content decides there, because it's the programmer's own text). Nowhere else.
-- **An explicit request is a marker too:** `file.read … ResolveVariables=true` is the programmer asking; the content is born a template instead of being rendered by a side door.
+- **An explicit request renders once, where it's asked:** `file.read … ResolveVariables=true` fills the file's variables (never `%!x%`) and returns plain text. That's the step's own request, not a marker.
 
 ## The sweep (file:line, read on 2026-09-26)
 
@@ -23,7 +23,7 @@ Reading a value today turns ANY string holding `%x%` into a template when its ro
 | `PLang/app/module/action/file/read.cs:105` (Build) | `raw.Contains('%')` → "can't judge at build" | Ask the marker: `Path.HasVariableReference` (`data/this.cs:132`). |
 | `PLang/app/module/action/http/HttpBuildHelpers.cs:17` | `raw.Contains('%')` | The same: the marker. |
 | `PLang/app/module/action/llm/query.cs:123`, `:127` | `HasVariable(st.ToString())`, `format.Contains('%')` | The same: the marker. |
-| `PLang/app/module/action/file/read.cs:68-78` (ResolveVariables) | calls `Context.Variable.Resolve(content, skipInfrastructure: true)` directly | The content is born `new text(content, "plang")` (keeping the skip-infrastructure guard) and renders through text's own door: one render path. |
+| `PLang/app/module/action/file/read.cs:68-78` (ResolveVariables) | calls `Context.Variable.Resolve(content, skipInfrastructure: true)` directly | **Stays.** The step asked explicitly; file.read owns "fill this file's variables, never infrastructure". Its result is plain, already-rendered text with no marker. (Routing it through text's door would need a second template mode just to carry the `%!x%` guard: a new concept to save one call.) |
 
 **Stays (checked):**
 - `json.cs:68-71` StringSlot and `:190-197` TextLeaf: gated on `ctx.Template`, which comes only from a type's marker (`wire/this.cs:25`, `source.cs:196`). Inside a marked container, stamping only the slots that hold `%x%` keeps literal slots canonical.
@@ -47,7 +47,6 @@ Gate on the ROW's marker, then list what still fails. A fixture row holding `%x%
 
 - The string-arm and container-arm guesses in `type/this.cs` (both deleted).
 - `content.Contains('%')` / `HasVariable(raw)` as a render or skip decision anywhere outside `text`'s own constructor and the json container slots.
-- `file.read`'s direct `Variable.Resolve` call.
 
 ## OBP validation
 
@@ -55,6 +54,6 @@ Gate on the ROW's marker, then list what still fails. A fixture row holding `%x%
 |---|---|---|
 | the template marker | one owner of "is this a template" | the type's `Template`, born at build |
 | `HasVariableReference` | reuse, no new member | exists (`data/this.cs:132`) |
-| file.read ResolveVariables | one render path | text's door, not a side call |
+| file.read ResolveVariables | no new concept | stays a direct, guarded render on explicit request; no second template mode |
 
 Then: update `Documentation/v0.2/wire-serialization.md`'s section to this rule (replace the "authored wire" proposal). Six suites vs baseline; commit and push.
