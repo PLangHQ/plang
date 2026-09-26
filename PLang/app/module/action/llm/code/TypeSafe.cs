@@ -22,6 +22,12 @@ public sealed class TypeSafe : IDecider
     {
         var context = action.Context;
         var app = context.App;
+
+        // nothing asked (every step kept) — nothing to send: the answer is empty
+        var questions = await action.Question.Value();
+        if (questions == null || questions.CountRaw == 0)
+            return context.Ok(new global::app.type.item.dict.@this());
+
         var settings = await app.SettingsStore;
 
         var endpoint = await Config(settings, "decider.endpoint", "TYPESAFE_ENDPOINT",
@@ -31,7 +37,7 @@ public sealed class TypeSafe : IDecider
         var body = new Dictionary<string, object?>
         {
             ["state"] = await action.State.Value(),
-            ["questions"] = await action.Question.Value(),
+            ["questions"] = questions,
             ["model"] = (await action.Model.Value()).ToString(),
         };
 
