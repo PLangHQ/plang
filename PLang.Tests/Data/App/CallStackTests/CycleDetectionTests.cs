@@ -63,16 +63,47 @@ public class CycleDetectionTests
     }
 
     [Test]
-    public async Task Push_IndirectGoalCycle_Throws()
+    public async Task EnteringAGoalAlreadyOnTheChain_IsACycle_AtItsEntry()
     {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        // A → B → A: A's action and B's are on the live chain; entering A again is the cycle.
+        await using var a = context.CallStack.Push(MakeAction("A"));
+        await using var b = context.CallStack.Push(MakeAction("B"));
+        var goalA = Make.Goal("A", "/A.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
+
+        var entered = await goalA.Run(context);
+
+        await entered.IsFailure();
+        await Assert.That(entered.Error!.Key).IsEqualTo("CallStackOverflow");
+    }
+
+    [Test]
+    public async Task EnteringASubGoalOfTheSameFile_IsNoCycle()
+    {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        // Start calls Compile: the file's sub-goals share its .pr — a goal is its .pr and its name
+        await using var start = context.CallStack.Push(MakeAction("Start"));
+        var compile = Make.Goal("Compile", "/Start.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
+
+        var entered = await compile.Run(context);
+
+        await Assert.That(entered.Error?.Key).IsNotEqualTo("CallStackOverflow");
+    }
+
+    [Test]
+    public async Task AHeldActionWrittenInAGoalOnTheChain_Runs()
+    {
+        // Build → EmitBuildEvent → the builder channel's call, which was written in Build: running it
+        // does not enter Build (only a goal's entry does), so it is no cycle.
         var stack = new CallStack();
-        await using var a = stack.Push(MakeAction("A"));
-        await using var b = stack.Push(MakeAction("B"));
-        // A → B → A: pushing A again is a cycle in the live caller chain.
-        await Assert.ThrowsAsync<CallStackOverflowException>(async () =>
-        {
-            await Task.Run(() => stack.Push(MakeAction("A")));
-        });
+        await using var build = stack.Push(MakeAction("Build"));
+        await using var emit = stack.Push(MakeAction("EmitBuildEvent"));
+
+        await using var held = stack.Push(MakeAction("Build"));
+
+        await Assert.That(held).IsNotNull();
     }
 
     [Test]

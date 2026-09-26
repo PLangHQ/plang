@@ -67,7 +67,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? value, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this();
+        var text = ((value as global::app.type.item.@this)?.Clr<object>() ?? value) as string;
+        if (text != null && string.IsNullOrWhiteSpace(text)) return new @this();
+        // A text holding a json object (a rendered template, an LLM's answer) is that object, read
+        // through the same DOM narrower; any other text is not a dict.
+        if (text != null)
+        {
+            try
+            {
+                using var document = System.Text.Json.JsonDocument.Parse(text);
+                return document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                    ? new global::app.type.item.serializer.json(data.Context).Parse(document.RootElement.Clone()) as @this
+                    : null;
+            }
+            catch (System.Text.Json.JsonException) { return null; }
+        }
         // The dict converts a json source (a clr(json) object) into ITSELF — the same DOM narrower
         // the dict kind's Convert uses. Never route a dict.@this through reflection (no parameterless
         // ctor); the item owns its own conversion. Other sources re-tag via Clr.

@@ -88,7 +88,8 @@ public sealed partial class @this
 
     /// <summary>
     /// Pushes a new <see cref="call.@this"/>, sets it as the AsyncLocal Current, appends to
-    /// <c>Caller.Children</c>, and enforces cycle detection (MaxDepth + ContainsGoal).
+    /// <c>Caller.Children</c>, and enforces the depth limit (MaxDepth); a goal cycle is goal.Run's to
+    /// catch, at the goal's entry (ContainsGoal).
     /// The returned Call IS <see cref="IAsyncDisposable"/> — use <c>await using</c> for
     /// automatic Pop.
     /// </summary>
@@ -108,19 +109,10 @@ public sealed partial class @this
                 throw new CallStackOverflowException(MaxDepth);
         }
 
-        // Goal-boundary cycle: only enforce when this Push *crosses* into a different goal
-        // than the caller. Two actions inside the same goal share an identity — that's
-        // not a cycle, that's just sequencing (the orchestrator dispatching elseif, retry
-        // dispatching same action, foreach body, etc.). A real cycle is goal A → goal B →
-        // goal A, where the new entry's goal is already on the stack via a prior boundary.
-        // PrPath is the identity (goal Name can collide across an app's goal tree).
-        var goalPath = action.Step?.Goal?.PrPath;
-        var callerGoalPath = caller?.Action.Step?.Goal?.PrPath;
-        if (goalPath != null
-            && !goalPath.Equals(callerGoalPath)
-            && ContainsGoal(goalPath))
-            throw new CallStackOverflowException(MaxDepth);
-
+        // A goal cycle (A → B → A) is caught where a goal is ENTERED (goal.Run asks ContainsGoal before
+        // it pushes its enter frame), not here: an action is pushed where it runs, and one held
+        // elsewhere — a channel's call, a callback, a recovery — runs far from the goal it was written
+        // in without entering it.
         var call = new call.@this(action, caller, this, caller, variables ?? Variables);
 
         // Children owns its own lock + FIFO eviction policy.
@@ -145,18 +137,18 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// True if any Call in the synchronous Caller chain belongs to a goal with the given
-    /// <paramref name="prPath"/>. Case-insensitive. PrPath is the goal's stable identity —
-    /// goal Name alone can collide across an app's goal tree. Used by Push to enforce
-    /// indirect goal-cycle detection.
+    /// True if any Call in the synchronous Caller chain belongs to <paramref name="goal"/> — the same
+    /// .pr and the same name: a file's sub-goals share its .pr, and a name alone can collide across an
+    /// app's goal tree. goal.Run asks it at a goal's entry: entering a goal already on the chain is a
+    /// cycle.
     /// </summary>
-    public bool ContainsGoal(global::app.type.item.path.@this prPath)
+    public bool ContainsGoal(global::app.goal.@this goal)
     {
         var node = _current.Value;
         while (node != null)
         {
-            var path = node.Action.Step?.Goal?.PrPath;
-            if (path != null && path.Equals(prPath))
+            if (node.Action.Step?.Goal is { } on && on.PrPath is { } path && path.Equals(goal.PrPath)
+                && string.Equals(on.Name, goal.Name, StringComparison.OrdinalIgnoreCase))
                 return true;
             node = node.Caller;
         }

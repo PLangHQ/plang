@@ -314,9 +314,9 @@ public sealed partial class @this
         // Goal-level Call frame. Step actions push under this; the goal frame outlives
         // any single action's pop, so things like `debug.tag` can attach metadata to a
         // scope that subsequent steps can still read (they navigate up via Current.Caller).
-        // Cycle detection (ContainsGoal by PrPath) lives here too — entering a goal
-        // already on the chain trips the overflow guard at this Push, before any step
-        // action runs. Push lives INSIDE the try so a CallStackOverflowException becomes
+        // Cycle detection (ContainsGoal by PrPath) lives here, at the goal's entry — entering
+        // a goal already on the chain trips the overflow guard before this Push, before any
+        // step action runs. Both live INSIDE the try so a CallStackOverflowException becomes
         // Data.FromError instead of a raw CLR exception escaping RunAsync.
         //
         // Action.Step is pinned to Step[0] solely to give ContainsGoal a Step→Goal anchor
@@ -333,6 +333,9 @@ public sealed partial class @this
 
         try
         {
+            // entering a goal already on the chain is a cycle: A → B → A
+            if (PrPath != null && context.CallStack.ContainsGoal(this))
+                throw new global::app.error.CallStackOverflowException(context.CallStack.MaxDepth);
             await using var goalCall = context.CallStack.Push(goalEntryAction);
 
             var result = await Step.Run(context);

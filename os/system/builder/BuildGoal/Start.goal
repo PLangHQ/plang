@@ -29,7 +29,7 @@ Compile
 / alone; an else written apart from its if is the programmer's to fix, not the LLM's.
 - call Decide
 - call Properties
-- build.match Goal=%goal%, Answer=%answer%, on error key "ElseWithoutIf" call SourceError, on error call FixSteps, then retry 1 times
+- build.match Goal=%goal%, Answer=%answer%, on error key "ElseWithoutIf" call SourceError, on error call FixSteps first, then retry 1 times
 
 
 FixSteps
