@@ -44,6 +44,7 @@ public override async ValueTask<item.@this> Value(data.@this data)
 1. Is `item|action<math>|action<file>` a **restriction** (only the listed modules' actions are accepted) or **teaching** (rule 6 stands, any action runs, and the signature shows nano the likely ones)? Rule 1 said "nothing new is declared in C#"; a union is a new declaration.
 2. How does a variable come to HOLD an action for `run %action%`? variable.set's Value isn't declared `action`, so by rule 1 an action given to it RUNS and stores the result. Holding needs its own door (a goal parameter typed action? `set %a% as action = …`?).
 3. Names: the module and action for `run` (e.g. `action.run`, the partner of `goal.call`).
+4. **Ingi: "I would like him call it from a goal".** The runtime runs each action by calling a plang goal (e.g. `/system/action/Run.goal`: `- run %action%`), so action execution is plang. It needs a base case: `run` itself dispatches straight to its handler, or it calls the goal forever. The cost: about 4 frames per action instead of 1. It overlaps with the BeforeAction/AfterAction events (`action/this.cs:189`, `:213`; mock.intercept and event.skipAction live there). The deciding question: what can the goal do that an event can't? If it's replacing how actions run, that's a reason; if it's observing or wrapping, events already do that.
 
 ## Open
 
