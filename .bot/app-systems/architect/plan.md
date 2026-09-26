@@ -17,8 +17,22 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 ## The shape
 
 **A system.** `X/this.cs` is the X system, reached at `app.X`; `X/X/this.cs` is one X.
-- Members: `.list` (all of them), `.current` (the one in play, each system's own answer, read from the context: `app.actor.current => context.Actor`), `["name"]` (the door to one, the same door as C#'s indexer), `.name` (shorthand for `["name"]`; the system's own members win, so a type named `list` needs `["list"]`).
+- Members: `.list` (the ones loaded so far; see below), `.current` (the one in play, each system's own answer, read from the context: `app.actor.current => context.Actor`), `["name"]` (the door to one, the same door as C#'s indexer), `.name` (shorthand for `["name"]`; the system's own members win, so a type named `list` needs `["list"]`).
 - **The system is an item.** It writes its face through `Output` (facts, any writer), a formatter (a template) presents them, and it answers its own navigation (`Get(parent, key)`: a member first, else the element with that name, else NotFound). Like every item, it stores no context: the caller passes it.
+
+**`list` is a real object (Ingi).** Each system's `list` is its `X.list` type (`app/goal/list/this.cs`), which inherits from the plang list: it prints, enumerates, counts and indexes like any list, and carries its own members.
+- `%!app.goal.list%` is the goals loaded so far (goals load when they're called, `goal/list/this.cs:128-176`).
+- **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 10) uses it.
+- **Every list has `all`, for consistency.** Where everything is already present (the types are registered at startup), `all` answers the list itself, so nobody needs to know which systems load lazily.
+- A list is navigated by index, so `list.all` never clashes with an element's name; one element by name stays on the system (`%!app.goal.Start%`).
+
+```csharp
+// sketch: app/goal/list/this.cs
+public sealed class @this : app.type.item.list.@this<goal.goal.@this>
+{
+    public list.@this<goal.goal.@this> all { get; }     // every goal in the app, each loads when touched
+}
+```
 
 **One element.** It owns its facts, its `on` (events about it) and its `current` (the instance in play).
 
@@ -118,6 +132,8 @@ public item Create(…, context)
 
 A system's face is a summary (names only); detail comes by navigating to one element. `current` shows where something is in play. The facts are the start set; a system may add a fact that's worth showing.
 
+**Docs entry is `start.md` (Ingi):** inside plang apps (`os/**` and every app a programmer writes), a folder's docs are `start.md`, as `Start.goal` is its entry. The four `readme.md` under `os/system/ui/templates/{uikit,default}/` and `os/system/modules/ui/Builder/templates/{uikit,default}/` are renamed in stage 5. The C# repo's own `README.md` files are open (GitHub shows the root one).
+
 **Honest facts come with the faces (stage 5).** Today only text and base64 declare a description; text's example is a filename (`readme.md`, `text/this.cs:33`); archive, binary and signature have placeholder examples (`(archive)`, `(bytes)`, `(signature)`). Each type gets a real description and a real example. Internal item classes under `type/item/` (`wire`, `source`, `clr`, `computed`) declare that they're not plang types and stay out of the face. `channel` and `serializers` carry `[PlangType]` but are collections, not choices; they're placed properly.
 
 | face | shows |
@@ -125,8 +141,8 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | `%!app.type%` | `list` (type names), `kind`, `scheme`, `choice` |
 | `%!app.type.text%` | `name`, `description`, `example`, `kind`; a choice type adds `values` |
 | `%!app.type.text.kind.md%` | `name`, `extension`, `mime` |
-| `%!app.goal%` | `list` (goal names), `current` |
-| `%!app.goal.Start%` | `name`, `path`, `description`, its steps (index and text), `on` |
+| `%!app.goal%` | `list` (names of the goals loaded so far), `current` |
+| `%!app.goal.Start%` | `name`, `path`, `description`, its steps (index and text), `child` (its sub-goals), `on` |
 | `%!app.actor%` | `list` (system, user), `current` |
 | `%!app.actor.user%` | `name` |
 | `%!app.module%` | `list` (module names) |
@@ -177,4 +193,7 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 
 ## Open for the next round
 
-Round 1 closed: every open point settled. Next: round 2, a full pass over the plan.
+1. Is a goal's description the comment lines under its name? (Show's header sits as a comment on step 0 today, and `goal.Description`, `goal/this.cs:42`, is empty.)
+2. The C# repo's own `README.md` files: leave them, or rename them to `start.md` too?
+
+Then round 2: a full pass over the plan.
