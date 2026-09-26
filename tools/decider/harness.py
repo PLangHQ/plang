@@ -360,6 +360,32 @@ def picks(probs_i, cat, threshold=0.5):
 # never give two actions of the condition module; a picked condition.if asks these by name.
 BRANCHES = ['condition.elseif', 'condition.else']
 
+def stage2_questions(s, cat, chosen, conditions=(), runners=None, unsure_steps=()):
+    """Stage 2's questions of one step, keyed by id (the C# pick.list's twin asks the same)."""
+    runners = runners or {}
+    qs = {}
+    if s['index'] in unsure_steps:
+        qs[f's{s["index"]}_@popular'] = {'type': 'choice', 'criteria': {a: None for a in POPULAR}, 'instructions':
+            f'Step {step_no(s)} is `{s["text"].strip()}`. Which of these actions does step {step_no(s)} use?'}
+    if s['index'] in conditions:
+        for a in BRANCHES:
+            qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
+                f'Step {step_no(s)} is `{s["text"].strip()}`. It tests a condition. Does step {step_no(s)} also have `{a}` — '
+                f'{cat["condition"]["actions"][a.split(".", 1)[1]]["description"]}?'}
+    for m in runners.get(s['index'], []):
+        # the main module (the step's first) is asked "use", the runner-up "also use"
+        also = '' if chosen.get(s['index'], [None])[0] == m else ' also'
+        qs[f's{s["index"]}_@also.{m}'] = {'type': 'noul', 'instructions':
+            f'Step {step_no(s)} is `{s["text"].strip()}`. Does step {step_no(s)}{also} use the plang module `{m}`?'}
+    for m in chosen.get(s['index'], []):
+        acts = cat[m]['actions']
+        if len(acts) == 1: continue
+        qs[f's{s["index"]}_{m}'] = {
+            'type': 'choice',
+            'instructions': f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. It uses the plang module `{m}`. Which action of `{m}` does step {step_no(s)} call?',
+            'criteria': {an: av['description'] for an, av in acts.items()}}
+    return qs
+
 def stage2(goal, cat, chosen, conditions=(), runners=None, unsure_steps=()):
     """chosen: {step_index: [modules]} — one choice per (step, module) for its action. conditions: the
     steps with condition.if picked — each also asked noul for every BRANCHES action, answered as
@@ -378,27 +404,10 @@ def stage2(goal, cat, chosen, conditions=(), runners=None, unsure_steps=()):
     for win in windows(goal['steps']):
         qs = {}
         for s in win:
-            if s['index'] in unsure_steps:
-                qs[f's{s["index"]}_@popular'] = {'type': 'choice', 'criteria': {a: None for a in POPULAR}, 'instructions':
-                    f'Step {step_no(s)} is `{s["text"].strip()}`. Which of these actions does step {step_no(s)} use?'}
-            if s['index'] in conditions:
-                for a in BRANCHES:
-                    qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
-                        f'Step {step_no(s)} is `{s["text"].strip()}`. It tests a condition. Does step {step_no(s)} also have `{a}` — '
-                        f'{cat["condition"]["actions"][a.split(".", 1)[1]]["description"]}?'}
-            for m in runners.get(s['index'], []):
-                # the main module (the step's first) is asked "use", the runner-up "also use"
-                also = '' if chosen.get(s['index'], [None])[0] == m else ' also'
-                qs[f's{s["index"]}_@also.{m}'] = {'type': 'noul', 'instructions':
-                    f'Step {step_no(s)} is `{s["text"].strip()}`. Does step {step_no(s)}{also} use the plang module `{m}`?'}
+            qs.update(stage2_questions(s, cat, chosen, conditions, runners, unsure_steps))
+            # a module with one action is not asked: its action is a fact of the module
             for m in chosen.get(s['index'], []):
-                acts = cat[m]['actions']
-                if len(acts) == 1:
-                    out[(s['index'], m)] = (next(iter(acts)), 1.0); continue
-                qs[f's{s["index"]}_{m}'] = {
-                    'type': 'choice',
-                    'instructions': f'Step {step_no(s)} of this goal is `{s["text"].strip()}`. It uses the plang module `{m}`. Which action of `{m}` does step {step_no(s)} call?',
-                    'criteria': {an: av['description'] for an, av in acts.items()}}
+                if len(cat[m]['actions']) == 1: out[(s['index'], m)] = (next(iter(cat[m]['actions'])), 1.0)
         if not qs: continue
         resp, t, b = ask(state, qs)
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))

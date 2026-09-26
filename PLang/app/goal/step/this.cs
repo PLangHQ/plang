@@ -109,6 +109,12 @@ public sealed partial class @this
         _code = node;
     }
 
+    private global::app.goal.step.pick.list.@this? _pick;
+    /// <summary>The decider's reading of this step — its answers and the picks they mean. Build-time
+    /// only: not stored in the .pr.</summary>
+    [JsonIgnore]
+    public global::app.goal.step.pick.list.@this Pick => _pick ??= new(this);
+
     /// <summary>
     /// Computed hash of the step text. Used by Setup for idempotency tracking.
     /// </summary>

@@ -296,6 +296,18 @@ public class Default : IBuilder
         return context.Ok(true);
     }
 
+    // --- Pick ---
+
+    public async Task<data.@this> Pick(pick action)
+    {
+        var context = action.Context;
+        var goal = (await action.Goal.Value())!;
+        var answer = (await action.Answer.Value())!;
+        // Each step takes the answers under its own ids; the builder only hands the answer over.
+        foreach (var step in goal.Step.Items()) await step.Pick.Take(answer, context);
+        return context.Ok(true);
+    }
+
     // --- Merge ---
 
     public async Task<data.@this> Merge(merge action)
