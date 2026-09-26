@@ -134,6 +134,12 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 
 **Docs entry is `start.md` (Ingi):** inside plang apps (`os/**` and every app a programmer writes), a folder's docs are `start.md`, as `Start.goal` is its entry. The four `readme.md` under `os/system/ui/templates/{uikit,default}/` and `os/system/modules/ui/Builder/templates/{uikit,default}/` are renamed in stage 5. The C# repo's own `README.md` files are open (GitHub shows the root one).
 
+**A comment says what the next code line does (Ingi).** A goal's description goes above its name, and a step's comment above the step. The parser already follows this (`goal/this.cs:584-599`: lines above the name are the goal's `Comment`, lines above a step are that step's). The `.goal` files don't: 356 of 594 in `os/` and `Tests/` describe the goal under its name, so the text lands on step 0. In stage 5:
+1. Those files are fixed: the lines move above the goal's name (Edit tool; split across helpers as needed).
+2. One member: `goal.Comment` is the description; `goal.Description` (never set by the parser, only read from a `.pr` key nothing writes, and "Goal not found" at `:402`) goes. The goal face shows `comment`.
+3. The goal's hash covers the source as written, comments included, so a comment-only change re-saves the `.pr` (every step still cached, no decider or LLM).
+4. The rule goes into the plang docs, and a CLAUDE.md proposal covers bots writing `.goal` files.
+
 **Honest facts come with the faces (stage 5).** Today only text and base64 declare a description; text's example is a filename (`readme.md`, `text/this.cs:33`); archive, binary and signature have placeholder examples (`(archive)`, `(bytes)`, `(signature)`). Each type gets a real description and a real example. Internal item classes under `type/item/` (`wire`, `source`, `clr`, `computed`) declare that they're not plang types and stay out of the face. `channel` and `serializers` carry `[PlangType]` but are collections, not choices; they're placed properly.
 
 | face | shows |
@@ -142,7 +148,7 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | `%!app.type.text%` | `name`, `description`, `example`, `kind`; a choice type adds `values` |
 | `%!app.type.text.kind.md%` | `name`, `extension`, `mime` |
 | `%!app.goal%` | `list` (names of the goals loaded so far), `current` |
-| `%!app.goal.Start%` | `name`, `path`, `description`, its steps (index and text), `child` (its sub-goals), `on` |
+| `%!app.goal.Start%` | `name`, `path`, `comment`, its steps (index and text), `child` (its sub-goals), `on` |
 | `%!app.actor%` | `list` (system, user), `current` |
 | `%!app.actor.user%` | `name` |
 | `%!app.module%` | `list` (module names) |
@@ -193,7 +199,6 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 
 ## Open for the next round
 
-1. Is a goal's description the comment lines under its name? (Show's header sits as a comment on step 0 today, and `goal.Description`, `goal/this.cs:42`, is empty.)
-2. The C# repo's own `README.md` files: leave them, or rename them to `start.md` too?
+1. The C# repo's own `README.md` files: leave them, or rename them to `start.md` too?
 
 Then round 2: a full pass over the plan.
