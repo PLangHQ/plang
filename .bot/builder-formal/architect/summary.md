@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 morning — Ingi: build 10 tests with the new builder and run them
+
+Chosen (Tests/): Simple/Start, ScalarsAsNative/Stage5/IfBoolTruthy, Stage2/TextForEachDoesNotIterateChars, Math/IntDivSevenByTwoIsThree, Errors/ThrowAttachesData, Errors/GoalFirstReturnsRecoveryValue, Channels/WriteToCustomChannel (+Logger), Serialization/VariableRendersValueOnly, Cleanups/DurationRoundTrip, ScalarsAsNative/Stage6/MissingVarIsNotNullValue. They cover set/templates, if bodies, foreach + sub-goal, math, throw/on error, channels, properties, typed set and null. Coder builds them, runs `plang --test` on them, and reports a table (built / passed / time / which layer failed).
+
 ## 2026-09-26 morning — for Ingi: the plang builder builds
 
 **Read first:** `.bot/builder-formal/coder/stage-4d.md` (short: what works, what fails loudly, speed, every commit).
