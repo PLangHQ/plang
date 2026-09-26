@@ -2,6 +2,12 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — the marker sweep and file.read landed; the %…% owner waits on Ingi
+
+- `5f36d1d83`: the template-marker sweep (read-time guesses gone; the 3 reds were a fixture gap; wire-serialization.md states the rule).
+- `48a30e041`: file.read born with the marker, the file's text a template at use (lazy, tested); `variable.list.Resolve` and `Unreachable` deleted (the render is text's own); mock.intercept's unawaited `Resolve` compare fixed.
+- The rename is held. Path answers HasVariable itself (ruled). Coder proposes `text.Holes` (the template parses its own `%…%` once) to replace the static; that goes to Ingi together with the reference-grammar question.
+
 ## 2026-09-26 — HasVariable is the item's own answer; one owner of %…% (open)
 
 - **Ingi:** `data.HasVariable => _item?.HasVariable ?? false`, the same shape as `data.IsVariable` (data/this.cs:116), not `_item?.Type.Template != null`. Item gets `virtual bool HasVariable => false`; text/dict/list/source answer their marker, and a variable reference answers true. Sent to coder. The static `text.HasVariable(string)` clashes (CS0102), so its owner waits on the next point.
