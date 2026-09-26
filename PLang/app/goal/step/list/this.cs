@@ -144,6 +144,9 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 key ??= invalid.Key == "ElseWithoutIf" ? invalid.Key : null;
                 foreach (var cause in invalid.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
             }
+            // the answer holds what the step's words say — checked on the answer as written, before the
+            // handlers' Build may change it
+            foreach (var uncovered in await step.Cover(context)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
             if (await actions.Build(context) is { } failed)
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
             var (disagree, warnings) = step.Pick.Agree(actions);

@@ -5,17 +5,17 @@ namespace app.goal.step;
 // say.
 public sealed partial class @this
 {
-    /// <summary>What is wrong with this step, or null when nothing is. The verdict keeps its cause's
-    /// key — an `on error key "ElseWithoutIf"` sees what went wrong, not only that a step did.</summary>
+    /// <summary>What is wrong with this step's code, or null when nothing is. The verdict keeps its
+    /// cause's key — an `on error key "ElseWithoutIf"` sees what went wrong, not only that a step did.
+    /// Whether an answer holds what the step's words say is the answer's check (<see cref="Cover"/>,
+    /// asked where the answer is read): a build may change the code after that (goal.call drops a
+    /// redundant `x=%x%`), and the code still holds.</summary>
     public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
         global::app.actor.context.@this context)
     {
         var invalid = await Code.Validate(context);
-        var uncovered = await Cover(context);
-        if (invalid == null && uncovered.Count == 0) return null;
-        var causes = new List<global::app.error.Error>();
-        if (invalid != null) causes.Add(invalid);
-        causes.AddRange(uncovered.Select(u => new global::app.error.Error(u, "Uncovered", 400)));
+        if (invalid == null) return null;
+        var causes = new List<global::app.error.Error> { invalid };
         var first = causes[0];
         return new global::app.error.StepError(
             $"step {Index} '{Text}': {string.Join("; ", causes.Select(c => c.Message))}", this, first.Key, first.StatusCode) { list = causes };
