@@ -1543,3 +1543,6 @@ Found making cached builds instant (builder-formal): ui.render opens every varia
 
 ## 2026-09-26 — builder check: an unquoted word the step relies on
 Found building GoalChannelRecursion's EchoBack.goal (builder-formal): `write %message% to echo` was built as output.write(Data=%message%) with NO channel, and no check caught the dropped `to echo`. Coverage covers %vars%, quoted/text literals and numbers, not unquoted words like a channel name. A general word rule would misfire. Options: the action checks its own step words (output.write knows its `to X` / `on X channel` phrasing), or the author writes the step in formal (the escape hatch). The test stays unbuilt until then.
+
+## 2026-09-26 — navigation reaches any public property (security, with #23)
+Found while settling the template rule (builder-formal): variable navigation descends into ANY public property by reflection (`type/item/kind/reflection/this.cs:17-25`, `Descend`), not only the `[Out]` face. `[Sensitive]` is stripped only when a whole host is serialized, so `%!app.….PrivateKey%` navigated to its leaf prints the key, from a plain step as much as from a template. Fix idea: navigation into a host honours its declared face (`[Out]`/`[LlmBuilder]`), and a `[Sensitive]` leaf answers masked or refuses. Belongs with the parked security work (#23).
