@@ -4,10 +4,11 @@ Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's h
 
 ## 2026-09-26 — Ingi: "the cached goal should be instant"
 
-Traced from the .goal files: an unchanged goal still runs the whole builder. Build.goal:13 calls BuildGoal for every goal; Decide renders its state twice; **Properties calls nano with every step `=> kept`**; every sub-goal Compiles again; the identical .pr is rewritten. That's 0.8–3.3 s per unchanged goal. **Ruling:**
-- `goal.IsKept` (every step kept, nothing reopened, sub-goals too) → build.goals leaves the goal out;
-- Start.goal compiles only goals and sub-goals that have an open step (the edit is rebuilt by the builder itself, a dogfood test of kept steps);
-- a timing run before and after.
+Traced from the .goal files: an unchanged goal still runs the whole builder. Build.goal:13 calls BuildGoal for every goal; Decide renders its state twice; **Properties calls nano with every step `=> kept`**; every sub-goal Compiles again; the identical .pr is rewritten. That's 0.8–3.3 s per unchanged goal. **Revised by Ingi:** "goal.build should start with if goal.cached return goal.cache". The shortcut is in plang, and build.goals doesn't filter.
+- Each node answers for itself, with one word: `step.IsCached` (renamed from IsKept), `goal.step.list.IsCached`, and `goal.IsCached` (steps plus sub-goals). The prompt marker becomes `=> cached`.
+- Start.goal's first step: `- if %goal.IsCached%, return %goal%`. Compile's first step: `- if %goal.Step.IsCached%, return`.
+- The builder rebuilds itself after the edit (dogfood).
+- A timing run before and after.
 
 ## 2026-09-26 — Ingi: `- run %action%`
 
