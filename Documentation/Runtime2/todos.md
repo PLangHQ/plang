@@ -1533,3 +1533,7 @@ Found in the builder-formal bootstrap: `set %fixMessages% = [{"Role":"user", "Co
 
 ## 2026-09-26 — builder check: goal-name coverage
 Found in the builder-formal bootstrap: a re-ask of Start.goal's Compile step dropped the whole `on error call FixSteps, then retry` clause and still passed every check. Coverage checks %variables%, quoted literals and numbers, but not an unquoted goal name (`call FixSteps`). Deterministic fix: the builder knows the app's goal names. Every goal name the step's words name must appear as a goal.call Name somewhere in the step's code (including a Recovery), or the step is refused.
+
+## 2026-09-26 — builder checker gaps and a question (builder-formal 4d)
+- **A %variable% inside a quoted text counts as covered.** A bootstrap answer put a literal text containing "%fixMessages%" where the step meant the variable, and it passed. It can't simply be refused: `write out "hello %name%"` is correct with the variable inside the text. Needs a sharper rule, e.g. a step that passes `%x%` alone as a value must get it as a value.
+- **Question for Ingi: goal.call's Build drops "redundant" arguments** that pass a variable to itself (`path=%path%`, `goal=%goal%`), because the callee reads the caller's variable anyway, and announces it in debug. The .pr then no longer says what the programmer wrote, and it depends on callee scope staying shared. Keep it, or keep every written argument?
