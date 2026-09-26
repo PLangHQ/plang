@@ -111,7 +111,8 @@ def one(case, cat, folder=None):
             if (i, a) in acts: pick[a] = {'score': acts[(i, a)][1], 'from': 'branch'}
         # an unsure step: which one of the popular actions — the top 3 of that choice, with their probabilities
         popular = sorted((acts.get((i, '@popular'), (None, {}))[1] or {}).items(), key=lambda ap: -(ap[1] or 0))[:3]
-        steps.append({'index': i, 'text': s['text'], 'expected': case['menu'][str(i)],
+        # a goal being built (bootstrap) has no expected menu: nothing to score against
+        steps.append({'index': i, 'text': s['text'], 'expected': case.get('menu', {}).get(str(i), []),
                       'popular': dict(popular) if (i, '@popular') in acts else None,
                       'main': h.main_module(probs[i], cat),
                       'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick})

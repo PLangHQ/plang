@@ -51,6 +51,7 @@ public static class @this
         EmitDataAndErrorHelpers(sb, info);
         EmitResolve(sb, info);
         EmitAttach(sb, info);
+        EmitLive(sb, info);
         EmitParse(sb, info);
         EmitCheck(sb, info);
         EmitExecute(sb);
@@ -324,6 +325,36 @@ public static class @this
                 : info.Namespace;
             sb.AppendLine($"        Static = context.GetModuleStatic(\"{moduleName}\");");
         }
+
+        // [Code] providers — the app's, registered when it starts
+        foreach (var prop in info.Properties.OfType<CodeProperty>())
+            prop.EmitAttach(sb);
+
+        sb.Append("""
+                    await System.Threading.Tasks.Task.CompletedTask;
+                    return null;
+                }
+
+            """);
+    }
+
+    /// <summary>
+    /// What the handler finds only when it runs — the channel it writes to, which a step may register
+    /// while the app runs. Bind, which the build uses, looks it up not; <c>Execute</c> does it first, and
+    /// a missing one fails the run as it always did.
+    /// </summary>
+    private static void EmitLive(StringBuilder sb, ActionClassInfo info)
+    {
+        sb.Append("""
+                private async System.Threading.Tasks.Task<global::app.error.Error?> __Live()
+                {
+                    var context = Context;
+                    var action = __action;
+                    var app = context.App!;
+                    var __step = action?.Step;
+                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+
+            """);
         if (info.ImplementsIChannel)
         {
             sb.Append("""
@@ -344,10 +375,6 @@ public static class @this
                 """);
         }
 
-        // [Code] providers
-        foreach (var prop in info.Properties.OfType<CodeProperty>())
-            prop.EmitAttach(sb);
-
         sb.Append("""
                     await System.Threading.Tasks.Task.CompletedTask;
                     return null;
@@ -361,6 +388,8 @@ public static class @this
         sb.Append("""
                 public async System.Threading.Tasks.Task<global::app.data.@this> Execute()
                 {
+                    // what exists only at run — the channel — is found now
+                    if (await __Live() is { } __missing) return global::app.data.@this.FromError(__missing);
                     try { return await Run(); }
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {

@@ -63,7 +63,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// (formal), it drops what it didn't need to write, a body it wrote over the steps indented under it
     /// is a copy (dropped) or invented (refused), its chain is whole, its actions and properties judge
     /// themselves, it agrees with the decider's picks, and it holds what its words say. A step that
-    /// passes takes its code (and the warnings it builds with); a step already holding code keeps it —
+    /// passes takes its code (the warnings it builds with, its unset defaults frozen); a step already
+    /// holding code keeps it —
     /// a retry answers only the refused steps. Null when every step has code; otherwise one error
     /// holding each refused step's problems, every one at once, and the steps under Details["steps"].
     /// </summary>
@@ -149,7 +150,12 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             foreach (var why in disagree) Refuse(i, why);
             foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
             if (refused.ContainsKey(i)) step.Code = new global::app.goal.step.action.list.@this();   // open again
-            else foreach (var warning in warnings) step.Warning.Add(warning);
+            else
+            {
+                // the step takes its code: with its warnings, and its defaults frozen
+                foreach (var warning in warnings) step.Warning.Add(warning);
+                foreach (var action in actions.Items()) action.Freeze(context);
+            }
         }
 
         if (whole.Count == 0 && refused.Count == 0) return null;

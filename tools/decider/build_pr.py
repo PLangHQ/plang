@@ -122,9 +122,10 @@ def declared(module, action, held_actions=True):
         if t == 'clr' or (t in NOT_ON_MENU and not held_actions): continue
         options = closed_set(m.group('type').split('<')[-1].rstrip('>'))[1] if t.startswith('choice<') else None
         props[m.group('name')] = {'type': t, 'options': options, 'nullable': bool(m.group('opt')),
-                                  'default': default_text(d.group('value')) if d else None}
+                                  'default': default_text(d.group('value')) if d else None,
+                                  'literal': d.group('value').strip() if d else None}
     if re.search(r'class\s+\w+\s*:[^{]*\bIChannel\b', src):
-        props['channel'] = {'type': 'text', 'options': None, 'nullable': True, 'default': None}
+        props['channel'] = {'type': 'text', 'options': None, 'nullable': True, 'default': None, 'literal': None}
     _decl[key] = (props, '[Modifier(' in src)
     return _decl[key]
 

@@ -1,0 +1,5 @@
+[0] ui.render(Template="/system/builder/llm/templates/properties.template"); variable.set(Name=%propertiesUserMsg%, Value=%!data%)
+[1] ui.render(Template="/system/builder/llm/Properties.llm"); variable.set(Name=%propertiesSystemMsg%, Value=%!data%)
+[2] variable.set(Name=%messages%, Value=[{Role:"system", Content:%propertiesSystemMsg%}, {Role:"user", Content:%propertiesUserMsg%}])
+[3] llm.query(Message=%messages%, Model="gpt-5.4-nano", Cache=%!build.cache%); variable.set(Name=%answer%, Value=%!data%)
+[4] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind:"goal-properties", goal:%goal%})

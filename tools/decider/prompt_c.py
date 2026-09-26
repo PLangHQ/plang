@@ -12,7 +12,7 @@ The check — the LLM and the decider must agree:
               (goal.call held as a value or a recovery is allowed: it is not the step's own action)
     warning   the step was built from a possible pick (0.5–0.9), or a disagreement was settled on retry
 """
-import collections, copy, os, re
+import collections, copy, json, os, re
 import build_pr as b
 import formal as f
 import harness as h
@@ -347,7 +347,13 @@ def uncovered_literals(text, rows):
     """The quoted literals of the step's text that no value of its answer holds."""
     held = values_of(rows)
     lits = [m.group(1) if m.group(1) is not None else m.group(2) for m in LITERAL.finditer(text)]
-    return [l for l in dict.fromkeys(lits) if l and not any(l in v for v in held)]
+    return [l for l in dict.fromkeys(lits) if l and not any(l in written(v) for v in held)]
+
+def written(value):
+    """A value as formal writes it, escapes and all — what the step's words are compared with (C#'s
+    Cover reads the formal writer's text): the step's `\\n` is a new line, written `\\n`; a value that
+    holds a backslash and an n is written `\\\\n` and is not it."""
+    return json.dumps(value, ensure_ascii=False)[1:-1] if isinstance(value, str) else str(value)
 
 NUMBER = re.compile(r'(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])')
 

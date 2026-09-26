@@ -133,7 +133,7 @@ public class ElseWithoutIfTests
 
     // Settle catches by key what build.validate returns: the key must survive the step's verdict.
     [Test]
-    public async Task BuildValidate_KeepsTheChainsKey_ForSettleToRouteBy()
+    public async Task StepValidate_KeepsTheChainsKey_ForTheBuilderToRouteBy()
     {
         await using var app = TestApp.Create("/test");
         var ctx = app.System.Context;
@@ -150,13 +150,11 @@ public class ElseWithoutIfTests
             a.Step = ifStep;
             ifStep.Code.Add(a);
         }
-        var builder = new global::app.module.action.build.code.Default();
+        var elseVerdict = await elseStep.Validate(ctx);
+        var besideVerdict = await ifStep.Validate(ctx);
 
-        var elseVerdict = await builder.Validate(new global::app.module.action.build.validate(ctx) { Step = ctx.Ok<Step>(elseStep) });
-        var besideVerdict = await builder.Validate(new global::app.module.action.build.validate(ctx) { Step = ctx.Ok<Step>(ifStep) });
-
-        await Assert.That(elseVerdict.Error!.Key).IsEqualTo("ElseWithoutIf");
-        await Assert.That(besideVerdict.Error!.Key).IsEqualTo("BodyBesideCondition");
+        await Assert.That(elseVerdict!.Key).IsEqualTo("ElseWithoutIf");
+        await Assert.That(besideVerdict!.Key).IsEqualTo("BodyBesideCondition");
     }
 
     [Test]

@@ -1,0 +1,1 @@
+[2] variable.set(Name=%messages%, Value=[{Role:"system", Content:%propertiesSystemMsg%}, {Role:"user", Content:%propertiesUserMsg%}])

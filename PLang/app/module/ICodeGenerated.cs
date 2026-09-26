@@ -11,10 +11,12 @@ namespace app.module;
 ///   Resolve — validate + decode the .pr parameters and construct a fresh, fully
 ///     populated handler instance (params bound via the object initializer). Called on
 ///     a throwaway registry-created shell; returns the real ready instance (or an error).
-///   Attach  — set runtime markers (Context / Action / Step / Static / Channel / [Code]
-///     provider) on THIS instance. Called by Resolve, and directly on prebound
-///     (inline C#-composed) handlers whose params are already set.
-///   Execute — run the handler's typed Run(), wrapping bare exceptions with the action's
+///   Attach  — set the markers on THIS instance (Context / Action / Step / Static / [Code]
+///     provider, the app's from its start). Called by Resolve, and directly on prebound (inline
+///     C#-composed) handlers whose params are already set. The build binds through it, so it looks
+///     up nothing a step registers while the app runs.
+///   Execute — find what exists only at run (the Channel; a missing one fails the run), then run
+///     the handler's typed Run(), wrapping bare exceptions with the action's
 ///     module.action context.
 ///
 /// All handlers must implement this interface — App requires it (no fallback path).

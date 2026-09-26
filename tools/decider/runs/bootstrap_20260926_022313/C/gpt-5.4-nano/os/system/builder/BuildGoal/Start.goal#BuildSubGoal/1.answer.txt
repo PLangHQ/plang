@@ -1,0 +1,8 @@
+[0] variable.set(Name=%goal%, Value=%subGoal%)
+[1] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "subGoalHeader", goal: %goal%})
+[2] variable.set(Name=%subgoalStart%, Value=%Now.Ticks%)
+[3] goal.call(Name="Compile"); on.error(Recovery=[goal.call(Name="HandleBuildFailure")])
+[4] list.add(ListName=%trace.subGoals%, Value={goal: %goal%})
+[5] math.subtract(A=%Now.Ticks%, B=%subgoalStart%); variable.set(Name=%elapsedTicks%, Value=%!data%)
+[6] math.divide(A=%elapsedTicks%, B=10000); variable.set(Name=%subgoalMs%, Value=%!data%)
+[7] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "subGoalDone", goal: %goal%, subgoalMs: %subgoalMs%})

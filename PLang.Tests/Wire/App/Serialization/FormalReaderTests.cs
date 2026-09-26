@@ -106,7 +106,8 @@ public class FormalReaderTests
     }
 
     // A choice's symbol option written bare (Operator=>=) reads as that option, as python reads it
-    // (formal_bare.json); a symbol that is not an option is in formal_errors.json.
+    // (formal_bare.json) — and an open slot's list of dicts with bare keys reads as that list; a symbol
+    // that is not an option is in formal_errors.json.
     [Test]
     public async Task EveryBareSymbolOption_ReadsAsTheOption_AsPythonReadsIt()
     {
@@ -123,7 +124,7 @@ public class FormalReaderTests
             var written = read.Success ? await Written(read) : read.Error!.Message;
             if (written != c.GetProperty("formal").GetString()) differ.Add($"{input}\n  python: {c.GetProperty("formal").GetString()}\n  c#:     {written}");
         }
-        await Assert.That(cases.Count).IsEqualTo(6);
+        await Assert.That(cases.Count).IsEqualTo(7);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 

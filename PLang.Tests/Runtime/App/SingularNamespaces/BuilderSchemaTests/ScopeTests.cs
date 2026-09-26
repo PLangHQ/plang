@@ -113,6 +113,66 @@ public class ScopeTests
     }
 
     [Test]
+    public async Task AnLlmAnswerWithoutSchema_IsNotTypedJson()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("Properties",
+            Make.Step("llm.query Message=%messages%, Model=\"gpt-5.4-nano\", write to %answer%"));
+        await Picked(goal, app.System.Context, (0, "llm.query"), (0, "variable.set"));
+
+        var result = await Match(goal, """
+            [0] llm.query(Message=%messages%, Model="gpt-5.4-nano"); variable.set(Name=%answer%, Value=%!data%)
+            """, app.System.Context);
+
+        // no Schema: llm.query's Build answers no type, so the write-to adopts none — the formal text
+        // answer reaches build.match as the text it is
+        await result.IsSuccess();
+        var set = goal.Step[0].Code.Items().Single(a => a.Name == "set");
+        await Assert.That(set["Type"]).IsNull();
+    }
+
+    [Test]
+    public async Task AStepTakingItsCode_FreezesItsDefaults_AsTheSlotsType()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("Build",
+            Make.Step("set %goals% = \"a\""),
+            Make.Step("foreach %goals%, call BuildGoal"));
+        await Picked(goal, app.System.Context, (0, "variable.set"), (1, "loop.foreach"), (1, "goal.call"));
+
+        var result = await Match(goal, """
+            [0] variable.set(Name=%goals%, Value="a")
+            [1] loop.foreach(Collection=%goals%); goal.call(Name="BuildGoal")
+            """, app.System.Context);
+
+        await result.IsSuccess();
+        var loop = goal.Step[1].Code.Items().First();
+        var item = loop.Default["item"];
+        await Assert.That(item).IsNotNull();
+        await Assert.That(item!.Type.Name).IsEqualTo("variable");
+        await Assert.That(loop.Default["asdefault"]).IsNull();
+        await Assert.That(goal.Step[0].Code.Items().Single().Default["asdefault"]?.Type.Name).IsEqualTo("bool");
+    }
+
+    [Test]
+    public async Task AWriteToAChannelTheAppRegistersLater_Builds_AndFailsAtRunOnlyIfNeverRegistered()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("Emit", Make.Step("write out \"hi\" channel: \"later\""));
+        await Picked(goal, app.System.Context, (0, "output.write"));
+
+        var built = await Match(goal, """
+            [0] output.write(Data="hi", Channel="later")
+            """, app.System.Context);
+
+        // the build looks up nothing live: the channel is the app's to register while it runs
+        await built.IsSuccess();
+        var ran = await goal.Run(app.User.Context);
+        await ran.IsFailure();
+        await Assert.That(ran.Error!.Key).IsEqualTo("ChannelNotFound");
+    }
+
+    [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {
         await using var app = TestApp.Create("/test");

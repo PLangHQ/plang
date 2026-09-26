@@ -1,0 +1,1069 @@
+{
+ "goal": "Start",
+ "answer1": {
+  "s0_@module": {
+   "type": "choice",
+   "choice": "goal",
+   "confidence": 0.77,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.79,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "error": 0.0,
+    "http": 0.0,
+    "module": 0.0,
+    "loop": 0.0,
+    "snapshot": 0.0,
+    "build": 0.14,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.01,
+    "on": 0.0,
+    "mock": 0.0,
+    "timer": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timeout": 0.0,
+    "channel": 0.0,
+    "event": 0.06,
+    "assert": 0.0
+   }
+  },
+  "s0_variable.set": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "s0_goal.call": {
+   "type": "noul",
+   "noul": 0.79
+  },
+  "s0_output.write": {
+   "type": "noul",
+   "noul": 0.11
+  },
+  "s0_on.error": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s0_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s0_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_@module": {
+   "type": "choice",
+   "choice": "variable",
+   "confidence": 0.99,
+   "probabilities": {
+    "setting": 0.0,
+    "ui": 0.0,
+    "llm": 0.0,
+    "crypto": 0.0,
+    "signing": 0.0,
+    "goal": 0.0,
+    "code": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 1.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "callback": 0.0,
+    "debug": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s1_variable.set": {
+   "type": "noul",
+   "noul": 0.99
+  },
+  "s1_goal.call": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s1_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_on.error": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s1_condition.if": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s1_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s2_@module": {
+   "type": "choice",
+   "choice": "variable",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "ui": 0.0,
+    "llm": 0.0,
+    "crypto": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 1.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "callback": 0.0,
+    "debug": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s2_variable.set": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s2_goal.call": {
+   "type": "noul",
+   "noul": 0.11
+  },
+  "s2_output.write": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s2_on.error": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s2_condition.if": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s2_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s3_@module": {
+   "type": "choice",
+   "choice": "goal",
+   "confidence": 0.72,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.74,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "error": 0.01,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.23,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.02,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s3_variable.set": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "s3_goal.call": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s3_output.write": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s3_on.error": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s3_condition.if": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s3_file.read": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s4_@module": {
+   "type": "choice",
+   "choice": "variable",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "goal": 0.0,
+    "code": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 1.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s4_variable.set": {
+   "type": "noul",
+   "noul": 0.99
+  },
+  "s4_goal.call": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "s4_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s4_on.error": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s4_condition.if": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s4_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s5_@module": {
+   "type": "choice",
+   "choice": "loop",
+   "confidence": 0.73,
+   "probabilities": {
+    "setting": 0.0,
+    "ui": 0.0,
+    "llm": 0.0,
+    "crypto": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.26,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "error": 0.0,
+    "http": 0.0,
+    "module": 0.0,
+    "loop": 0.74,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s5_variable.set": {
+   "type": "noul",
+   "noul": 0.13
+  },
+  "s5_goal.call": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s5_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s5_on.error": {
+   "type": "noul",
+   "noul": 0.07
+  },
+  "s5_condition.if": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s5_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s6_@module": {
+   "type": "choice",
+   "choice": "variable",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "ui": 0.0,
+    "llm": 0.0,
+    "crypto": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.0,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 1.0,
+    "error": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "callback": 0.0,
+    "debug": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timer": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timeout": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s6_variable.set": {
+   "type": "noul",
+   "noul": 0.99
+  },
+  "s6_goal.call": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "s6_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s6_on.error": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s6_condition.if": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s6_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s7_@module": {
+   "type": "choice",
+   "choice": "math",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 1.0,
+    "list": 0.0,
+    "callback": 0.0,
+    "debug": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timer": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timeout": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s7_variable.set": {
+   "type": "noul",
+   "noul": 0.89
+  },
+  "s7_goal.call": {
+   "type": "noul",
+   "noul": 0.07
+  },
+  "s7_output.write": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s7_on.error": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s7_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s7_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s8_@module": {
+   "type": "choice",
+   "choice": "math",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.0,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "error": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 1.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timer": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timeout": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s8_variable.set": {
+   "type": "noul",
+   "noul": 0.87
+  },
+  "s8_goal.call": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "s8_output.write": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s8_on.error": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s8_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s8_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s9_@module": {
+   "type": "choice",
+   "choice": "variable",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "goal": 0.0,
+    "code": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 1.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "callback": 0.0,
+    "debug": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s9_variable.set": {
+   "type": "noul",
+   "noul": 0.95
+  },
+  "s9_goal.call": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s9_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s9_on.error": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s9_condition.if": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s9_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s10_@module": {
+   "type": "choice",
+   "choice": "file",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "goal": 0.0,
+    "code": 0.0,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "error": 0.0,
+    "http": 0.0,
+    "module": 0.0,
+    "loop": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 1.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s10_variable.set": {
+   "type": "noul",
+   "noul": 0.1
+  },
+  "s10_goal.call": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "s10_output.write": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s10_on.error": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s10_condition.if": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s10_file.read": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s11_@module": {
+   "type": "choice",
+   "choice": "list",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "goal": 0.0,
+    "code": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 0.0,
+    "math": 0.0,
+    "list": 1.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s11_variable.set": {
+   "type": "noul",
+   "noul": 0.13
+  },
+  "s11_goal.call": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "s11_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s11_on.error": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s11_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s11_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s12_@module": {
+   "type": "choice",
+   "choice": "build",
+   "confidence": 0.99,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.0,
+    "error": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "cache": 0.0,
+    "http": 0.0,
+    "loop": 0.0,
+    "module": 0.0,
+    "snapshot": 0.0,
+    "build": 1.0,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s12_variable.set": {
+   "type": "noul",
+   "noul": 0.1
+  },
+  "s12_goal.call": {
+   "type": "noul",
+   "noul": 0.29
+  },
+  "s12_output.write": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s12_on.error": {
+   "type": "noul",
+   "noul": 0.99
+  },
+  "s12_condition.if": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s12_file.read": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s13_@module": {
+   "type": "choice",
+   "choice": "build",
+   "confidence": 1.0,
+   "probabilities": {
+    "setting": 0.0,
+    "crypto": 0.0,
+    "llm": 0.0,
+    "ui": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "goal": 0.0,
+    "cache": 0.0,
+    "condition": 0.0,
+    "variable": 0.0,
+    "error": 0.0,
+    "http": 0.0,
+    "module": 0.0,
+    "loop": 0.0,
+    "snapshot": 0.0,
+    "build": 1.0,
+    "math": 0.0,
+    "list": 0.0,
+    "debug": 0.0,
+    "callback": 0.0,
+    "environment": 0.0,
+    "test": 0.0,
+    "output": 0.0,
+    "on": 0.0,
+    "mock": 0.0,
+    "timeout": 0.0,
+    "identity": 0.0,
+    "file": 0.0,
+    "timer": 0.0,
+    "channel": 0.0,
+    "event": 0.0,
+    "assert": 0.0
+   }
+  },
+  "s13_variable.set": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "s13_goal.call": {
+   "type": "noul",
+   "noul": 0.1
+  },
+  "s13_output.write": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s13_on.error": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s13_condition.if": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s13_file.read": {
+   "type": "noul",
+   "noul": 0.05
+  }
+ },
+ "answer2": {
+  "s0_@popular": {
+   "type": "choice",
+   "choice": "goal.call",
+   "confidence": 0.99,
+   "probabilities": {
+    "signing.sign": 0.0,
+    "list.count": 0.0,
+    "error.throw": 0.0,
+    "file.read": 0.0,
+    "on.error": 0.0,
+    "file.save": 0.0,
+    "variable.set": 0.0,
+    "signing.verify": 0.0,
+    "goal.call": 1.0,
+    "output.write": 0.0,
+    "condition.if": 0.0,
+    "cache.wrap": 0.0,
+    "file.delete": 0.0,
+    "math.add": 0.0,
+    "loop.foreach": 0.0
+   }
+  },
+  "s0_@also.goal": {
+   "type": "noul",
+   "noul": 0.97
+  },
+  "s0_goal": {
+   "type": "choice",
+   "choice": "call",
+   "confidence": 1.0,
+   "probabilities": {
+    "return": 0.0,
+    "call": 1.0
+   }
+  },
+  "s3_@also.build": {
+   "type": "noul",
+   "noul": 0.11
+  },
+  "s3_build": {
+   "type": "choice",
+   "choice": "validate",
+   "confidence": 0.64,
+   "probabilities": {
+    "appSave": 0.01,
+    "load": 0.05,
+    "goalsSave": 0.01,
+    "pick": 0.01,
+    "fold": 0.02,
+    "validate": 0.6799999999999999,
+    "match": 0.19,
+    "goals": 0.03
+   }
+  },
+  "s5_@also.loop": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s7_math": {
+   "type": "choice",
+   "choice": "subtract",
+   "confidence": 1.0,
+   "probabilities": {
+    "intdiv": 0.0,
+    "floor": 0.0,
+    "divide": 0.0,
+    "abs": 0.0,
+    "max": 0.0,
+    "multiply": 0.0,
+    "round": 0.0,
+    "modulo": 0.0,
+    "power": 0.0,
+    "subtract": 1.0,
+    "add": 0.0,
+    "sqrt": 0.0,
+    "ceiling": 0.0,
+    "random": 0.0,
+    "min": 0.0
+   }
+  },
+  "s8_math": {
+   "type": "choice",
+   "choice": "divide",
+   "confidence": 1.0,
+   "probabilities": {
+    "intdiv": 0.0,
+    "floor": 0.0,
+    "divide": 1.0,
+    "abs": 0.0,
+    "max": 0.0,
+    "multiply": 0.0,
+    "round": 0.0,
+    "modulo": 0.0,
+    "power": 0.0,
+    "subtract": 0.0,
+    "add": 0.0,
+    "sqrt": 0.0,
+    "ceiling": 0.0,
+    "random": 0.0,
+    "min": 0.0
+   }
+  },
+  "s10_file": {
+   "type": "choice",
+   "choice": "save",
+   "confidence": 1.0,
+   "probabilities": {
+    "delete": 0.0,
+    "list": 0.0,
+    "move": 0.0,
+    "exists": 0.0,
+    "read": 0.0,
+    "save": 1.0,
+    "copy": 0.0
+   }
+  },
+  "s11_list": {
+   "type": "choice",
+   "choice": "add",
+   "confidence": 1.0,
+   "probabilities": {
+    "split": 0.0,
+    "get": 0.0,
+    "first": 0.0,
+    "join": 0.0,
+    "unique": 0.0,
+    "where": 0.0,
+    "contains": 0.0,
+    "range": 0.0,
+    "any": 0.0,
+    "flatten": 0.0,
+    "indexof": 0.0,
+    "last": 0.0,
+    "add": 1.0,
+    "count": 0.0,
+    "set": 0.0,
+    "reverse": 0.0,
+    "group": 0.0,
+    "remove": 0.0,
+    "sort": 0.0
+   }
+  },
+  "s12_build": {
+   "type": "choice",
+   "choice": "fold",
+   "confidence": 1.0,
+   "probabilities": {
+    "match": 0.0,
+    "load": 0.0,
+    "goalsSave": 0.0,
+    "pick": 0.0,
+    "fold": 1.0,
+    "validate": 0.0,
+    "appSave": 0.0,
+    "goals": 0.0
+   }
+  },
+  "s13_build": {
+   "type": "choice",
+   "choice": "goalsSave",
+   "confidence": 1.0,
+   "probabilities": {
+    "appSave": 0.0,
+    "load": 0.0,
+    "fold": 0.0,
+    "pick": 0.0,
+    "goalsSave": 1.0,
+    "validate": 0.0,
+    "match": 0.0,
+    "goals": 0.0
+   }
+  }
+ },
+ "answer": "[0] goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalHeader\", goal: %goal%})\n[1] variable.set(Name=%buildStart%, Value=%Now.Ticks%)\n[2] variable.set(Name=%trace%, Value={id: \"%!trace.id%\", timestamp: \"%Now%\", goal: %goal%, subGoals: [], durationMs: 0})\n[3] goal.call(Name=\"Compile\"); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])\n[4] variable.set(Name=%parentGoal%, Value=%goal%)\n[5] loop.foreach(Collection=%parentGoal.Child%); goal.call(Name=\"BuildSubGoal\", Parameter={subGoal: %item%})\n[6] variable.set(Name=%goal%, Value=%parentGoal%)\n[7] math.subtract(A=%Now.Ticks%, B=%buildStart%); variable.set(Name=%elapsedTicks%, Value=%!data%)\n[8] math.divide(A=%elapsedTicks%, B=10000); variable.set(Name=%elapsedMs%, Value=%!data%)\n[9] variable.set(Name=%trace.durationMs%, Value=%elapsedMs%)\n[10] file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\", Value=%trace%)\n[11] list.add(ListName=%traceGoals%, Value=%goal.Name%)\n[12] build.fold(Goal=%goal%); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])\n[13] build.goalsSave(Goal=%goal%)",
+ "retry": null,
+ "caught": [],
+ "refused": [],
+ "warnings": [
+  "step 0 uses goal.call, which the decider was not sure of (0.79)"
+ ],
+ "seconds": 6.8
+}

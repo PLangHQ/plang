@@ -1,0 +1,294 @@
+{
+ "goal": "HandleBuildFailure",
+ "answer1": {
+  "s0_@module": {
+   "type": "choice",
+   "choice": "goal",
+   "confidence": 0.78,
+   "probabilities": {
+    "mock": 0.0,
+    "callback": 0.0,
+    "event": 0.05,
+    "math": 0.0,
+    "llm": 0.0,
+    "environment": 0.0,
+    "variable": 0.0,
+    "timer": 0.0,
+    "assert": 0.0,
+    "module": 0.0,
+    "condition": 0.0,
+    "setting": 0.0,
+    "file": 0.0,
+    "output": 0.01,
+    "signing": 0.0,
+    "debug": 0.0,
+    "channel": 0.0,
+    "error": 0.0,
+    "list": 0.0,
+    "http": 0.0,
+    "on": 0.0,
+    "build": 0.14,
+    "cache": 0.0,
+    "identity": 0.0,
+    "ui": 0.0,
+    "snapshot": 0.0,
+    "loop": 0.0,
+    "goal": 0.79,
+    "timeout": 0.0,
+    "code": 0.0,
+    "test": 0.0,
+    "crypto": 0.0
+   }
+  },
+  "s0_variable.set": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "s0_goal.call": {
+   "type": "noul",
+   "noul": 0.88
+  },
+  "s0_output.write": {
+   "type": "noul",
+   "noul": 0.14
+  },
+  "s0_on.error": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s0_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s0_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s1_@module": {
+   "type": "choice",
+   "choice": "variable",
+   "confidence": 1.0,
+   "probabilities": {
+    "mock": 0.0,
+    "event": 0.0,
+    "callback": 0.0,
+    "math": 0.0,
+    "llm": 0.0,
+    "environment": 0.0,
+    "timer": 0.0,
+    "assert": 0.0,
+    "variable": 1.0,
+    "module": 0.0,
+    "condition": 0.0,
+    "setting": 0.0,
+    "file": 0.0,
+    "output": 0.0,
+    "signing": 0.0,
+    "debug": 0.0,
+    "channel": 0.0,
+    "error": 0.0,
+    "on": 0.0,
+    "http": 0.0,
+    "list": 0.0,
+    "build": 0.0,
+    "identity": 0.0,
+    "cache": 0.0,
+    "ui": 0.0,
+    "snapshot": 0.0,
+    "loop": 0.0,
+    "goal": 0.0,
+    "timeout": 0.0,
+    "code": 0.0,
+    "test": 0.0,
+    "crypto": 0.0
+   }
+  },
+  "s1_variable.set": {
+   "type": "noul",
+   "noul": 0.99
+  },
+  "s1_goal.call": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "s1_output.write": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_on.error": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  },
+  "s2_@module": {
+   "type": "choice",
+   "choice": "file",
+   "confidence": 1.0,
+   "probabilities": {
+    "mock": 0.0,
+    "event": 0.0,
+    "callback": 0.0,
+    "math": 0.0,
+    "llm": 0.0,
+    "assert": 0.0,
+    "variable": 0.0,
+    "environment": 0.0,
+    "timer": 0.0,
+    "module": 0.0,
+    "condition": 0.0,
+    "setting": 0.0,
+    "file": 1.0,
+    "output": 0.0,
+    "signing": 0.0,
+    "debug": 0.0,
+    "channel": 0.0,
+    "error": 0.0,
+    "on": 0.0,
+    "http": 0.0,
+    "list": 0.0,
+    "build": 0.0,
+    "identity": 0.0,
+    "cache": 0.0,
+    "ui": 0.0,
+    "snapshot": 0.0,
+    "loop": 0.0,
+    "goal": 0.0,
+    "timeout": 0.0,
+    "code": 0.0,
+    "test": 0.0,
+    "crypto": 0.0
+   }
+  },
+  "s2_variable.set": {
+   "type": "noul",
+   "noul": 0.12
+  },
+  "s2_goal.call": {
+   "type": "noul",
+   "noul": 0.1
+  },
+  "s2_output.write": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s2_on.error": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s2_condition.if": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s2_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s3_@module": {
+   "type": "choice",
+   "choice": "error",
+   "confidence": 1.0,
+   "probabilities": {
+    "mock": 0.0,
+    "callback": 0.0,
+    "event": 0.0,
+    "math": 0.0,
+    "llm": 0.0,
+    "assert": 0.0,
+    "variable": 0.0,
+    "environment": 0.0,
+    "timer": 0.0,
+    "module": 0.0,
+    "condition": 0.0,
+    "setting": 0.0,
+    "file": 0.0,
+    "output": 0.0,
+    "signing": 0.0,
+    "debug": 0.0,
+    "channel": 0.0,
+    "error": 1.0,
+    "on": 0.0,
+    "http": 0.0,
+    "list": 0.0,
+    "build": 0.0,
+    "cache": 0.0,
+    "identity": 0.0,
+    "ui": 0.0,
+    "snapshot": 0.0,
+    "loop": 0.0,
+    "goal": 0.0,
+    "timeout": 0.0,
+    "code": 0.0,
+    "test": 0.0,
+    "crypto": 0.0
+   }
+  },
+  "s3_variable.set": {
+   "type": "noul",
+   "noul": 0.07
+  },
+  "s3_goal.call": {
+   "type": "noul",
+   "noul": 0.07
+  },
+  "s3_output.write": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s3_on.error": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s3_condition.if": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s3_file.read": {
+   "type": "noul",
+   "noul": 0.03
+  }
+ },
+ "answer2": {
+  "s0_@also.goal": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s0_goal": {
+   "type": "choice",
+   "choice": "call",
+   "confidence": 1.0,
+   "probabilities": {
+    "call": 1.0,
+    "return": 0.0
+   }
+  },
+  "s2_file": {
+   "type": "choice",
+   "choice": "save",
+   "confidence": 1.0,
+   "probabilities": {
+    "delete": 0.0,
+    "read": 0.0,
+    "copy": 0.0,
+    "save": 1.0,
+    "list": 0.0,
+    "move": 0.0,
+    "exists": 0.0
+   }
+  }
+ },
+ "answer": "[0] goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalError\", goal: %goal%, errorMessage: %!error.Message%, fix: %!error.FixSuggestion%})\n[1] variable.set(Name=%trace.buildError%, Value={key: \"%!error.Key%\", message: \"%!error.Message%\", goal: \"%goal.Name%\"})\n[2] file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\", Value=%trace%)\n[3] error.throw(Data=%!error%)",
+ "retry": null,
+ "caught": [],
+ "refused": [],
+ "warnings": [
+  "step 0 uses goal.call, which the decider was not sure of (0.88)"
+ ],
+ "seconds": 2.1
+}

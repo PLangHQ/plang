@@ -1,0 +1,2 @@
+[1] variable.set(Name=%fixMessages%, Value=[{"Role":"user","Content":"Steps 1 were refused: step 1: \"Steps %!error.Details.steps% were refused: %!error.Message%\\n\\nAnswer again only these steps, one line each, starting with its [i], in formal.\" is in the step but not in your answer\n\nAnswer again only these steps, one line each, starting with its [i], in formal."}])
+[2] llm.query(Message=%fixMessages%, Model="gpt-5.4-nano", Cache=%!build.cache%, ContinuePreviousConversation=true); variable.set(Name=%answer%, Value=%!data%)

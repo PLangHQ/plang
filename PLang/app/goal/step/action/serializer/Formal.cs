@@ -402,7 +402,10 @@ public sealed class Formal
             }
             if (c == '[')
             {
-                if (Match(@"\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]") != null) Fail("arguments are written as one dict: Parameter={name: \"value\", other: %x%}");
+                // argument rows written as a list — only where the slot takes rows (a list slot); in an
+                // open slot `[{Role: "user", …}]` is a list of dicts
+                if (declared == "list" && Match(@"\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]") != null)
+                    Fail("arguments are written as one dict: Parameter={name: \"value\", other: %x%}");
                 _pos++;
                 var items = new List<Literal>();
                 while (!Peek("]"))

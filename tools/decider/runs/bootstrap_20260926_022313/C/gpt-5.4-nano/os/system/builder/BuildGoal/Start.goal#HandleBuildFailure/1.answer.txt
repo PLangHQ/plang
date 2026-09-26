@@ -1,0 +1,4 @@
+[0] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goalError", goal: %goal%, errorMessage: %!error.Message%, fix: %!error.FixSuggestion%})
+[1] variable.set(Name=%trace.buildError%, Value={key: "%!error.Key%", message: "%!error.Message%", goal: "%goal.Name%"})
+[2] file.save(Path="/.build/traces/%!trace.id%/%goal.Name%.json", Value=%trace%)
+[3] error.throw(Data=%!error%)

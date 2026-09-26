@@ -37,7 +37,7 @@ FixSteps
 / Continue the conversation with them; only those steps are answered again, and the others keep the
 / code they took.
 - call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
-- set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%\n\nAnswer again only these steps, one line each, starting with its [i], in formal."}]
+- set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
 - llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%
 
 

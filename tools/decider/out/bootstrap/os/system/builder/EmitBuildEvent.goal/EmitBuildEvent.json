@@ -1,0 +1,138 @@
+{
+ "goal": "EmitBuildEvent",
+ "answer1": {
+  "s0_@module": {
+   "type": "choice",
+   "choice": "ui",
+   "confidence": 1.0,
+   "probabilities": {
+    "ui": 1.0,
+    "module": 0.0,
+    "timeout": 0.0,
+    "build": 0.0,
+    "identity": 0.0,
+    "setting": 0.0,
+    "goal": 0.0,
+    "debug": 0.0,
+    "channel": 0.0,
+    "variable": 0.0,
+    "timer": 0.0,
+    "signing": 0.0,
+    "code": 0.0,
+    "math": 0.0,
+    "llm": 0.0,
+    "http": 0.0,
+    "event": 0.0,
+    "environment": 0.0,
+    "condition": 0.0,
+    "output": 0.0,
+    "test": 0.0,
+    "crypto": 0.0,
+    "cache": 0.0,
+    "loop": 0.0,
+    "snapshot": 0.0,
+    "file": 0.0,
+    "assert": 0.0,
+    "mock": 0.0,
+    "list": 0.0,
+    "callback": 0.0,
+    "error": 0.0,
+    "on": 0.0
+   }
+  },
+  "s0_variable.set": {
+   "type": "noul",
+   "noul": 0.95
+  },
+  "s0_goal.call": {
+   "type": "noul",
+   "noul": 0.06
+  },
+  "s0_output.write": {
+   "type": "noul",
+   "noul": 0.08
+  },
+  "s0_on.error": {
+   "type": "noul",
+   "noul": 0.05
+  },
+  "s0_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s0_file.read": {
+   "type": "noul",
+   "noul": 0.32
+  },
+  "s1_@module": {
+   "type": "choice",
+   "choice": "output",
+   "confidence": 1.0,
+   "probabilities": {
+    "module": 0.0,
+    "ui": 0.0,
+    "timeout": 0.0,
+    "build": 0.0,
+    "identity": 0.0,
+    "setting": 0.0,
+    "goal": 0.0,
+    "debug": 0.0,
+    "channel": 0.0,
+    "code": 0.0,
+    "timer": 0.0,
+    "signing": 0.0,
+    "variable": 0.0,
+    "math": 0.0,
+    "llm": 0.0,
+    "http": 0.0,
+    "event": 0.0,
+    "environment": 0.0,
+    "condition": 0.0,
+    "output": 1.0,
+    "test": 0.0,
+    "crypto": 0.0,
+    "cache": 0.0,
+    "loop": 0.0,
+    "snapshot": 0.0,
+    "file": 0.0,
+    "callback": 0.0,
+    "mock": 0.0,
+    "list": 0.0,
+    "assert": 0.0,
+    "error": 0.0,
+    "on": 0.0
+   }
+  },
+  "s1_variable.set": {
+   "type": "noul",
+   "noul": 0.09
+  },
+  "s1_goal.call": {
+   "type": "noul",
+   "noul": 0.07
+  },
+  "s1_output.write": {
+   "type": "noul",
+   "noul": 0.98
+  },
+  "s1_on.error": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_condition.if": {
+   "type": "noul",
+   "noul": 0.04
+  },
+  "s1_file.read": {
+   "type": "noul",
+   "noul": 0.04
+  }
+ },
+ "answer2": {},
+ "answer": "[0] ui.render(Template=\"/system/builder/templates/output/build-output.template\"); variable.set(Name=%msg%, Value=%!data%)\n[1] output.write(Data=%msg%, channel=\"builder\")",
+ "retry": null,
+ "caught": [],
+ "refused": [],
+ "warnings": [],
+ "seconds": 1.2
+}

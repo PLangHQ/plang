@@ -64,9 +64,11 @@ BAD = [
 
 # A choice's symbol option written bare reads as the option — the C# reader must read each the same.
 BARE = [f'condition.if(Left=%n%, Operator={op}, Right=5) {{ goal.return() }}' for op in ('==', '!=', '>', '<', '>=', '<=')]
+# In an open (item) slot a list of dicts with bare keys is a list of dicts, not misplaced argument rows.
+BARE += ['variable.set(Name=%messages%, Value=[{Role:"system", Content:%system%}, {Role:"user", Content:%user%}])']
 bare = [{'input': text, 'formal': f.write(f.parse(text))} for text in BARE]
 json.dump(bare, open(OUT.replace('formal_golden.json', 'formal_bare.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
-print(len(bare), 'bare choice cases:', '; '.join(b['formal'].split('Operator: ')[1].split(',')[0] for b in bare))
+print(len(bare), 'bare cases:', '; '.join(b['formal'].split('Operator: ')[1].split(',')[0] if 'Operator: ' in b['formal'] else b['formal'][:40] for b in bare))
 errors = []
 for bad in BAD:
     try:

@@ -267,6 +267,10 @@ class _Reader:
             self.pos = word.end()
             value = word.group()
         else:
+            # argument rows written as a list — only where the slot takes rows (a list slot); in an
+            # open slot `[{Role: "user", …}]` is a list of dicts (Formal.cs Value)
+            if _split(declared)['name'] == 'list' and re.compile(r'\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]').match(self.text, self.pos):
+                self.fail('arguments are written as one dict: Parameter={name: "value", other: %x%}')
             value = self.value()
         if spec.get('options') and value not in spec['options']:
             self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{value}` is not', at)
@@ -304,8 +308,6 @@ class _Reader:
             if not m: self.fail('a %variable% is not closed')
             self.pos = m.end()
             return m.group()
-        if c == '[' and re.compile(r'\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]').match(t, p):
-            self.fail('arguments are written as one dict: Parameter={name: "value", other: %x%}')
         if c == '[':
             self.pos += 1; items = []
             while not self.peek(']'):
@@ -407,7 +409,7 @@ def is_formal(text):
         return False
 
 # ---------------------------------------------------------------- writing
-def _literal(v, t=None):
+def _literal(v, t=None, in_list=False):
     if isinstance(v, bool): return 'true' if v else 'false'
     if v is None: return 'null'
     # a number in its shortest form, as JSON writes it: an integral float is bare (10000, not 10000.0)
@@ -420,9 +422,11 @@ def _literal(v, t=None):
     if isinstance(v, list):
         if v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not is_action(r) for r in v):
             return '{' + ', '.join(f'{_key(r["name"])}: {_literal(r["value"], r.get("type"))}' for r in v) + '}'
-        return '[' + ', '.join(_literal(x) for x in v) + ']'
+        return '[' + ', '.join(_literal(x, in_list=True) for x in v) + ']'
     if isinstance(v, dict):   # a dict literal: keys quoted, so it never reads as argument rows
-        return '{' + ', '.join(f'{json.dumps(k, ensure_ascii=False)}: {_literal(x)}' for k, x in v.items()) + '}'
+        # a dict inside a list holds its entries as texts (the C# list reader's): a whole %x% is "%x%"
+        entry = {'name': 'text'} if in_list else None
+        return '{' + ', '.join(f'{json.dumps(k, ensure_ascii=False)}: {_literal(x, entry)}' for k, x in v.items()) + '}'
     raise TypeError(f'no formal for {v!r}')
 
 def _key(k):

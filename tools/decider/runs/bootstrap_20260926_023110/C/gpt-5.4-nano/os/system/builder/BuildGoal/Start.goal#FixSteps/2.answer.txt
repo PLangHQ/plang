@@ -1,0 +1,1 @@
+[1] variable.set(Name=%fixMessages%, Value=[{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%\\n\\nAnswer again only these steps, one line each, starting with its [i], in formal."}])

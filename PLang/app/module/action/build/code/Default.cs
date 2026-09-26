@@ -239,42 +239,6 @@ public class Default : IBuilder
         return saveResult.Success ? context.Ok(true) : saveResult;
     }
 
-    // --- Validate ---
-
-    public async Task<data.@this> Validate(validate action)
-    {
-
-        var context = action.Context;
-
-        var step = (await action.Step.Value())!;
-
-        // Freeze the class's [Default] for every property the step did not set — a built app runs
-        // the same on a later runtime that changes a default. The defaults are the catalog twin's.
-        for (int i = 0; i < step.Code.Count; i++)
-        {
-            var a = step.Code[i];
-            if (a.Module[a.Name] is not { } catalog) continue;
-            foreach (var declared in catalog.Property)
-            {
-                if (declared.Default == null || a[declared.Name] != null || a.Default[declared.Name] != null) continue;
-                var frozen = new data.@this(declared.Name.ToLowerInvariant(), declared.Default, context: context);
-                a.Default.Add(new global::app.type.property.@this
-                    { Name = frozen.Name, Type = frozen.Type, Value = frozen.Peek() });
-            }
-        }
-
-        // Construction is done; the step judges itself and the builder only reacts. The verdict stays
-        // whole — it names the step, which the re-prompt needs.
-        if (await step.Validate(context) is { } verdict)
-            return context.Error(verdict);
-
-        // The chain finishes itself — each action binds its handler, runs its Validate()/Build()
-        // hooks and walks what it holds (modifiers, recovery, branch body). The builder reacts.
-        if (await step.Code.Build(context) is { } failed) return context.Error(failed);
-
-        return context.Ok(true);
-    }
-
     // --- Match ---
 
     public async Task<data.@this> Match(match action)

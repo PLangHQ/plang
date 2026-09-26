@@ -67,6 +67,36 @@ public partial class @this
         };
     }
 
+    /// <summary>Freezes the class's <c>[Default]</c> of every property this action does not set — and
+    /// of every action it holds (a property's action, its modifiers, their recovery, its branch body) —
+    /// into its <c>Default</c> rows, so a built app runs the same on a later runtime that changes a
+    /// default. Each value is born as the property's declared type (the slot's, as the formal reader
+    /// types a value), not as the CLR value the attribute happens to hold.</summary>
+    public void Freeze(global::app.actor.context.@this context)
+    {
+        if (Module[Name] is { } catalog)
+            foreach (var declared in catalog.Property)
+            {
+                if (declared.Default == null || this[declared.Name] != null || Default[declared.Name] != null) continue;
+                Default.Add(new global::app.type.property.@this
+                {
+                    Name = declared.Name.ToLowerInvariant(),
+                    Type = declared.Type,
+                    Value = declared.Type.Create(declared.Default, context),
+                });
+            }
+        foreach (var property in Property)
+            if (property.Value is @this held) held.Freeze(context);
+        foreach (var modifier in Modifier)
+        {
+            modifier.Freeze(context);
+            foreach (var recovered in modifier.Recovery.Items()) recovered.Freeze(context);
+        }
+        foreach (var recovered in Recovery.Items()) recovered.Freeze(context);
+        for (int i = 0; i < Child.Count; i++)
+            foreach (var action in Child[i].Code.Items()) action.Freeze(context);
+    }
+
     // The same action with the same values.
     private bool Same(@this other) =>
         other.Module == Module && other.Name == Name

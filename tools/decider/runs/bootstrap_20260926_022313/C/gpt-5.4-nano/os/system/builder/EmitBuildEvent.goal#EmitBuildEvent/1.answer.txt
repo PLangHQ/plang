@@ -1,0 +1,2 @@
+[0] ui.render(Template="/system/builder/templates/output/build-output.template"); variable.set(Name=%msg%, Value=%!data%)
+[1] output.write(Data=%msg%, channel="builder")

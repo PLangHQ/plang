@@ -22,5 +22,9 @@
  {
   "input": "condition.if(Left=%n%, Operator=<=, Right=5) { goal.return() }",
   "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<=\", Right: number = 5) { goal.return() }"
+ },
+ {
+  "input": "variable.set(Name=%messages%, Value=[{Role:\"system\", Content:%system%}, {Role:\"user\", Content:%user%}])",
+  "formal": "variable.set(Name: variable = %messages%, Value: list = [{\"Role\": \"system\", \"Content\": \"%system%\"}, {\"Role\": \"user\", \"Content\": \"%user%\"}])"
  }
 ]
