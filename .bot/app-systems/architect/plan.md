@@ -118,6 +118,8 @@ public item Create(…, context)
 
 A system's face is a summary (names only); detail comes by navigating to one element. `current` shows where something is in play. The facts are the start set; a system may add a fact that's worth showing.
 
+**Honest facts come with the faces (stage 5).** Today only text and base64 declare a description; text's example is a filename (`readme.md`, `text/this.cs:33`); archive, binary and signature have placeholder examples (`(archive)`, `(bytes)`, `(signature)`). Each type gets a real description and a real example. Internal item classes under `type/item/` (`wire`, `source`, `clr`, `computed`) declare that they're not plang types and stay out of the face. `channel` and `serializers` carry `[PlangType]` but are collections, not choices; they're placed properly.
+
 | face | shows |
 |---|---|
 | `%!app.type%` | `list` (type names), `kind`, `scheme`, `choice` |
