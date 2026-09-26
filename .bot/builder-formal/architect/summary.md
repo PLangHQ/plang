@@ -2,6 +2,29 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 morning — for Ingi: the plang builder builds
+
+**Read first:** `.bot/builder-formal/coder/stage-4d.md` (short: what works, what fails loudly, speed, every commit).
+
+- **Works:** the builder's own 7 .pr are installed, written by C#. A new goal was built by the plang builder (real decider + nano) and then run: "hello, the total is 5" / "that is big". An in-place `plang build` of the builder keeps every step. A from-scratch self-rebuild matches in 26 of 27 steps (the 27th found a goal-name bug, now fixed).
+- **Fails loudly (not silently):** AddItem's `set %total% = %total% + %item%` (arithmetic in a set; waits for the action-as-value design) and two long multi-clause steps in Start.goal's scratch rebuild.
+- **Speed:** 1–3.5 s per goal from scratch, about $0.001 per goal.
+- **Your calls when you're back:**
+  1. prompt D (typed multi-line formal), held since "stop doing nano";
+  2. the action-as-value design (`item|action<math>|…`);
+  3. goal.call dropping `x=%x%` arguments: keep or not;
+  4. the %var%-inside-a-text checker gap.
+  
+  Everything else is in the log below and in `Documentation/Runtime2/todos.md`.
+
+Stage status:
+| Stage | File | Status |
+|---|---|---|
+| 4a formal reader/writer | [stage-4](stage-4-plang-builder.md) | complete |
+| 4b the .pr (`code` per step) | [stage-4](stage-4-plang-builder.md) | complete |
+| 4c builder goals on the new pipeline | [stage-4](stage-4-plang-builder.md) | complete |
+| 4d bootstrap + self-build | [stage-4](stage-4-plang-builder.md) | complete (AddItem arithmetic open) |
+
 ## 2026-09-25 (evening) — Ingi AFK: the architect is in charge ("you can answer everything, your are in charge")
 
 **Decisions log while Ingi is away. Read this first when he's back.**

@@ -39,6 +39,46 @@
         "health": "no production C# changed on this branch yet",
         "notes": "decisions log at top of summary.md"
       }
+    },
+    {
+      "id": "b1f7c2e4-3a9d-4e2b-9c61-5d8a0f47e210",
+      "bot": "architect",
+      "timestamp_start": "2026-09-25T21:45:00",
+      "timestamp_end": "2026-09-26T03:30:00",
+      "intent": "Steer stage 4 (C# formal, the .pr, the builder goals, the bootstrap) to a working plang builder, deciding while Ingi was away",
+      "before": {
+        "assumptions": "The python pipeline (decider v5 + prompt C) is the proven shape; stage 4 moves it into plang",
+        "risk": "the builder's own old-format .pr can't load; the bootstrap needs a builder to build the builder"
+      },
+      "plan": ".bot/builder-formal/architect/stage-4-plang-builder.md",
+      "actions": [
+        {
+          "paths": [".bot/builder-formal/architect/summary.md", ".bot/builder-formal/architect/vision.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi: the .pr holds each step's code as JSON (formal not stored); modifier after its action; error.handle -> on.error; modifier Order 0/50/100; line object; variable types walk; kept steps; recursion allowed. Architect rulings: unknown .pr keys refused, one goal.Load door, pick.list owns selection, freeze on the action, build binds nothing live, python decides / C# writes"
+        },
+        {
+          "paths": [".bot/builder-formal/coder/stage-4d.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "4a-4d reviewed piece by piece; the installed builder builds and runs a demo goal, rebuilds itself 26/27 identical, keeps every step in place; silent-miss classes closed (held action, write target, goal names)"
+        },
+        {
+          "paths": ["Documentation/Runtime2/todos.md", "/shared/research/kyc-proofs/README.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "todos: sync-over-async review, Fluid include preload, argument rows as a type, nano \\n escaping, goal-name coverage, checker gaps, events -> on.*; KYC/proofs idea seeded for the research bot"
+        }
+      ],
+      "after": {
+        "status": "4a-4d done; open items listed for Ingi at the top of summary.md",
+        "health": "six C# suites at baseline after every commit; no merges",
+        "notes": "prompt D and action-as-value wait for Ingi"
+      }
     }
   ]
 }
