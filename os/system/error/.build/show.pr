@@ -130,7 +130,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%!data%"
             }

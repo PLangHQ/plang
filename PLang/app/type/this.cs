@@ -290,9 +290,10 @@ public sealed class @this : item.@this
         => new item.wire.@this(slice, this, reader);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
-    /// <c>{name, type, value}</c> row's value, a Data's or an action property's. A type whose values
-    /// are STRUCTURE (an action, a goal.call) is read eagerly through its own reader; a string holding
-    /// a <c>%var%</c> is born a template of this type; a variable name or a template takes the
+    /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
+    /// its row's declared type: a value is a template only when that type carries the marker (born at
+    /// build), never because of what it holds. A type whose values are STRUCTURE (an action, a
+    /// goal.call) is read eagerly through its own reader; a variable name or a template takes the
     /// content door; every other slot is a lazy wire over its verbatim bytes.</summary>
     public item.@this Read(ref global::app.channel.serializer.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
@@ -309,30 +310,19 @@ public sealed class @this : item.@this
         if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
         {
             var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
-            // plang's own %var% syntax, parsed — never a guessed type: a string carrying a
-            // variable reference is born a template of this type.
-            var type = this;
-            if (Template == null && global::app.type.item.text.@this.HasVariable(slice))
-                type = ctx.Context.App.Type[new @this(Name, Kind?.Name, Strict, "plang")];
-            // A SEMANTIC string — a %ref%/template (the IsVariable birth gate needs the decoded
-            // content) or a variable NAME (type.Create resolves it to its binding) — takes the
+            // A SEMANTIC string — a template (its row's marker; the IsVariable birth gate needs the
+            // decoded content) or a variable NAME (type.Create resolves it to its binding) — takes the
             // content door; the kind-parse stays lazy on the content source. A literal string under
             // any other type rides the wire (strict, byte-identical).
-            return type.Template != null
-                    || ctx.Context.App.Type[type.Name]?.ClrType == typeof(global::app.variable.@this)
-                ? type.Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
-                : type.Create(slice, transport);
+            return Template != null
+                    || ctx.Context.App.Type[Name]?.ClrType == typeof(global::app.variable.@this)
+                ? Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
+                : Create(slice, transport);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
-        // Authored content (a .pr) carrying plang's %var% syntax inside — a list or dict of rows with
-        // variables, `[{"Content": "%msg%"}]` — is born a template of this type, as a string is: it
-        // renders its variables when read.
-        var raw = System.Text.Encoding.UTF8.GetString(reader.Slice());
-        var declared = ctx.Template != null && Template == null && global::app.type.item.text.@this.HasVariable(raw)
-            ? ctx.Context.App.Type[new @this(Name, Kind?.Name, Strict, ctx.Template)]
-            : this;
-        return declared.Create(raw, transport);
+        // A container is a template only by its own row's marker.
+        return Create(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport);
     }
 
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared

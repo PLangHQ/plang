@@ -1,9 +1,9 @@
 namespace PLang.Tests.App.TypedReturnsTests;
 
 /// <summary>
-/// A %ref% is detected where a row is READ: the data reader gives a string row carrying a variable
-/// reference its row's type with template="plang" — plang's own syntax, parsed, never a guessed type —
-/// and leaves a literal unflagged. A row with no type is refused loudly: every parameter carries its
+/// A row read is exactly its row's type: it is a template only when the row carries the marker
+/// (template="plang", born at build), never because of what its value holds — a text holding %x%
+/// with no marker is plain text. A row with no type is refused loudly: every parameter carries its
 /// type. This is the one place the build's graft and a .pr load both pass through.
 /// </summary>
 public class BuildTemplateStampTests
@@ -13,11 +13,21 @@ public class BuildTemplateStampTests
             new global::app.type.reader.ReadContext(app.User.Context));
 
     [Test]
-    public async Task RefParam_ReadsAsTemplatePlang()
+    public async Task MarkedRow_ReadsAsTemplatePlang()
+    {
+        var app = global::PLang.Tests.TestApp.Create("/t");
+        var row = Row(app, """{"name":"Message","type":{"name":"text","template":"plang"},"value":"hello %name%"}""");
+        await Assert.That(row.Type?.Template).IsEqualTo("plang");
+    }
+
+    // A value holding %name% with no marker is text — no guess from its content.
+    [Test]
+    public async Task UnmarkedRowHoldingAVariable_StaysText()
     {
         var app = global::PLang.Tests.TestApp.Create("/t");
         var row = Row(app, """{"name":"Message","type":{"name":"text"},"value":"hello %name%"}""");
-        await Assert.That(row.Type?.Template).IsEqualTo("plang");
+        await Assert.That(row.Type?.Template).IsNull();
+        await Assert.That((await row.Value())?.ToString()).IsEqualTo("hello %name%");
     }
 
     [Test]
@@ -29,10 +39,10 @@ public class BuildTemplateStampTests
     }
 
     [Test]
-    public async Task EmbeddedRef_ReadsAsTemplatePlang()
+    public async Task MarkedEmbeddedRef_ReadsAsTemplatePlang()
     {
         var app = global::PLang.Tests.TestApp.Create("/t");
-        var row = Row(app, """{"name":"Message","type":{"name":"text"},"value":"count is %n% today"}""");
+        var row = Row(app, """{"name":"Message","type":{"name":"text","template":"plang"},"value":"count is %n% today"}""");
         await Assert.That(row.Type?.Template).IsEqualTo("plang");
     }
 

@@ -39,11 +39,15 @@ public static class TemplateStamp
                 continue;
             }
             // Container: rebuild it as a template-flagged container with flagged %ref% leaves —
-            // the shape a %ref%-bearing container has on the wire.
+            // the shape a %ref%-bearing container has on the wire — and mark its row, as the
+            // builder does: the row's marker is what a read trusts.
             var stamped = StampItem(item, context);
             if (stamped != null && !ReferenceEquals(stamped, item))
                 properties.Set(new global::app.type.property.@this
-                    { Name = p.Name, Type = p.Type, Properties = p.Properties, Value = stamped });
+                {
+                    Name = p.Name, Properties = p.Properties, Value = stamped,
+                    Type = new global::app.type.@this(p.Type.Name, p.Type.Kind?.Name, p.Type.Strict, "plang"),
+                });
         }
     }
 

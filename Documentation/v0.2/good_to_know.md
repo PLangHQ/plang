@@ -88,8 +88,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - `@schema:"data"` marker — Data self-identifies on the wire → `wire-serialization.md`
 - OBP Naming Principle / Smell Checklist / Variant Design → `obp-smells.md`
 - `Wire.Read` auto-verifies `@schema:signature` layers — fail-closed on context-less transport; trust-on-read for at-rest Store → `wire-serialization.md`
-- Template-stamping at read — authored Wire (`Template="plang"`) vs literal Wire; the type owns the holes-decision → `wire-serialization.md`
-- Data from outside is never a template — an LLM answer (cached or fresh), http body, file content, store read-back is text; only authored content is a template (a template-injection guard). The string arm's drift is open → `wire-serialization.md`
+- Templates — only what is marked renders: a value renders `%var%` only when its type carries `template`; the marker is born at build (the formal reader), never guessed from content at read; "holds a variable?" is asked of the marker → `wire-serialization.md`
 - Born-typed variable decline — `Variable.Create` fails if input is not already a `variable.@this` → `variables.md`
 - `datetime` navigable members — `.Date`, `.TimeOfDay`, `.Offset`, `.Ticks`, `.DayOfYear`, `.DayOfWeek` navigate to typed PLang values → `type-system.md`
 - `Data.Clr<T>(fallback)` — async typed CLR extraction with a default for absent/null slots → `type-system.md`

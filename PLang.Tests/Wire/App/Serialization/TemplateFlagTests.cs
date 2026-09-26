@@ -45,7 +45,7 @@ public class TemplateFlagTests
         var goal = Make.Goal("G", "/g.goal",
             Make.Step("s",
                 Make.Action("output", "write",
-                    Make.Param("Data", "%answer%", new global::app.type.@this("item", template: "plang")))));
+                    Make.Template("Data", "%answer%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         var relay = loaded.Step[0].Code[0].Property["Data"]!.Data(context);
 
@@ -64,7 +64,7 @@ public class TemplateFlagTests
         var goal = Make.Goal("G", "/g.goal",
             Make.Step("set %answer% = %reply%",
                 Make.Action("variable", "set", Make.Param("Name", "answer", "variable"),
-                    Make.Param("Value", "%reply%", new global::app.type.@this("item", template: "plang")))));
+                    Make.Template("Value", "%reply%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         await (await loaded.Run(context)).IsSuccess();
 
@@ -86,7 +86,7 @@ public class TemplateFlagTests
         var goal = Make.Goal("G", "/g.goal",
             Make.Step("set %answer% = %reply%",
                 Make.Action("variable", "set", Make.Param("Name", "answer", "variable"),
-                    Make.Param("Value", "%reply%", new global::app.type.@this("item", template: "plang")))));
+                    Make.Template("Value", "%reply%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         await (await loaded.Run(context)).IsSuccess();
 

@@ -27,10 +27,14 @@ def rows_of(a):
     for name, v in (a.get('property') or {}).items():
         if isinstance(v, dict) and '$oneOf' in v: v = v['$oneOf'][0]
         spec = declared.get(name, {'type': 'item'})
+        arguments = False
         if f.is_action(v): v = rows_of(v)
         elif spec['type'].startswith('list') and isinstance(v, list) and v and isinstance(v[0], dict) and 'name' in v[0]:
-            v = [{'name': r['name'], 'type': f.typed('item', r['value']), 'value': r['value']} for r in v]
-        props.append({'name': name, 'type': f.typed(spec['type'], v), 'value': v})
+            # argument rows: each marked on its own row (a %variable% in its value); the list is not
+            v = [{'name': r['name'], 'type': f.marked(f.typed('item', r['value']), r['value']), 'value': r['value']} for r in v]
+            arguments = True
+        typed = f.typed(spec['type'], v)
+        props.append({'name': name, 'type': typed if arguments else f.marked(typed, v), 'value': v})
     out = {'module': a['module'], 'name': a['name'], 'property': props,
            'modifier': [rows_of(m) for m in a.get('modifier') or []]}
     if a.get('recovery'): out['recovery'] = [rows_of(r) for r in a['recovery']]

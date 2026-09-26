@@ -338,7 +338,7 @@
               "type": {
                 "name": "variable"
               },
-              "value": "item"
+              "value": "%item%"
             }
           ]
         },
@@ -358,7 +358,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"subGoal","type":{"name":"item"},"value":"%item%"}]
+              "value": [{"name":"subGoal","type":{"name":"item","template":"plang"},"value":"%item%"}]
             }
           ],
           "default": [
@@ -1159,7 +1159,7 @@
                   "type": {
                     "name": "list"
                   },
-                  "value": [{"name":"kind","type":{"name":"text"},"value":"properties-rejected"},{"name":"errorMessage","type":{"name":"item"},"value":"%!error.Message%"}]
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"properties-rejected"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%"}]
                 }
               ],
               "default": [
@@ -2095,31 +2095,7 @@
                   "type": {
                     "name": "list"
                   },
-                  "value": [
-                    {
-                      "name": "kind",
-                      "type": {
-                        "name": "text"
-                      },
-                      "value": "goalError"
-                    },
-                    {
-                      "name": "errorMessage",
-                      "type": {
-                        "name": "item",
-                        "template": "plang"
-                      },
-                      "value": "%!error.Message%"
-                    },
-                    {
-                      "name": "fix",
-                      "type": {
-                        "name": "item",
-                        "template": "plang"
-                      },
-                      "value": "%!error.FixSuggestion%"
-                    }
-                  ]
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"goalError"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%"},{"name":"fix","type":{"name":"item","template":"plang"},"value":"%!error.FixSuggestion%"}]
                 }
               ],
               "default": [

@@ -253,40 +253,32 @@ A sender that produces non-canonical bytes (third-party, non-STJ writer, permute
 
 This replaced the earlier posture ("Wire.Read does not auto-verify — verification is the consumer's explicit step") that was correct before the signature-as-layer integration (`commit 50963ed18`). The regression test is `Deserialize_SignatureLayer_NoActorContext_FailsClosed` in `PLang.Tests/Wire/App/Serialization/WireConverterSigningTests.cs`.
 
-## Template-stamping at read — the authored Wire mode
+## Templates — only what is marked renders (Ingi, 2026-09-26)
 
-**The problem.** A `.pr` goal file contains literal strings like `"Hello %name%"`. At runtime, those strings must be resolved as templates (variable references substituted). A runtime-ingest HTTP body with the same bytes is **not** a template — the `%name%` is literal user content. Prior to this branch, template-stamping was done by a post-parse `Authored()` walk that touched every value regardless of origin. This was both wrong (http bodies got stamped) and wasteful.
+**The rule.** A value renders `%var%` only when its TYPE carries `template` (`"plang"`). No marker means
+plain text, whatever it contains. In a `.pr` the marker is on the row:
+`{"name":"Value","type":{"name":"text","template":"plang"},"value":"/system/error/%error.StatusCode%.txt"}`
+renders; the same row without `"template"` is the literal text.
 
-**The fix: mode rides the Wire, not the bytes.** `Wire` gains an optional `template` constructor parameter (a string naming the template mode, e.g. `"plang"`). Goal deserialization routes through a dedicated **authored Wire** (`Template = "plang"`), constructed once by the plang channel serializer. All other Wire instances — `_inbound` for runtime messages, the default `Wire()` for general serialization — have `template = null` and produce literal values.
+**The marker is born in one place: at build**, when the formal reader types the programmer's own
+literal (`Formal.Born`; an argument row in `Formal.Arguments`). Content decides only there, because it
+is the programmer's text. Nothing else adds it: not the reader (`type.Read` makes a slot exactly its
+row's declared type — its string and container guesses are gone), not a store read-back, the LLM cache,
+http, a file's content or the settings. A text from outside holding `%x%` stays text — the
+template-injection path and the cached-answer crash are closed by the rule, not by each reader.
 
-**Types own the holes-decision.** `Wire.Read` passes the template mode down via `ReadContext.Template`. `text.@this` receives it and stamps only when `HasHoles` (i.e., the string actually contains `%ref%` patterns). A holeless string drops the stamp regardless of mode — `HasVariableReference => Template != null` stays the invariant. Container slots (`ReadSlot`) propagate the mode so nested string values inside a goal's action slots are also stamped.
+**"Does this hold a variable?" is asked of the marker** (`data.HasVariableReference`, the row's
+`Type.Template`), never of the content (`Contains('%')`). That includes build checks (`file.read`,
+`http`, `llm.query`).
 
-**Trust boundary.** Goal deserialization is the only authored-read path:
-- `goal.list` — `Deserialize<goal>` routes to the authored Wire.
-- `GoalCall` — `file.read → source.Value → goal reader → App.Type.Convert(text, goal)` — also terminates at the authored Wire.
+**Kept:** inside a marked container, json's StringSlot/TextLeaf stamp only the slots holding `%x%`
+(gated on `ReadContext.Template`, which comes only from the type's marker), and text's constructor
+narrows a given mark (a literal without `%x%` drops it) — it never adds one. The renderers (text.Value,
+text.Output, source.Output) render only when `Template != null`.
 
-Runtime channels (`_inbound`) share the Wire instance but have `template = null`; a `%ref%` arriving in an HTTP body is born a literal `text`, never a template. The mode is set once at construction and never inferred from the bytes themselves.
-
-### Data from outside is never a template (2026-09-26)
-
-**The rule.** Only authored content — a `.goal` literal, its `.pr` rows — is born a template. Data from
-outside is plain text whatever it holds: an LLM's answer (fresh, or read back from the LLM cache), an
-http body, a file's content, a store read-back. It is also a **template-injection guard**: an LLM
-answer or a web page holding `%secret%` must never render against the scope that reads it.
-
-**The drift (open).** The code no longer matches the section above. The plang serializer builds two
-wires, `_inboundWire` and `_storeWire`, both `template = null` — there is no authored wire — and
-`type.Read`'s string arm stamps a `%var%` string a template **regardless of** `ReadContext.Template`
-(`app/type/this.cs`, the `reader.Peek() == String` branch; the container branch below it does honour
-the mode). `.pr` goals and the settings store both read through `_storeWire`, so the ungated stamp is
-what makes `.pr` strings templates today — and what made a cached LLM answer one. Gating the string arm
-on `ctx.Template` alone breaks every `.pr` read (16 tests): the fix is to give goal reads an authored
-wire again (`Template="plang"`) and then gate the string arm.
-
-**Closed at the owner meanwhile.** `OpenAi.RestoreFromCache` takes the stored raw response as its raw
-text (never opened through a door that renders it) and re-parses it as the live path does, so a
-cached answer comes back the same plain text a fresh one is (`QueryCacheTests.Query_CachedAnswerHoldingAVariable_StaysText`).
-Before, a cached answer holding `%name%` crashed the build's event render ("Variable %name% is not set").
+**Fixtures.** A `.pr` or test row holding `%x%` without the marker is written in a shape the builder
+no longer produces: regenerate it through the writer (the goal reader + `plang.Text`), never restore
+the guess. Test helpers mark as the builder does (`Make.Action`, `TemplateStamp`).
 
 ## Multi-segment serializer extension matching
 

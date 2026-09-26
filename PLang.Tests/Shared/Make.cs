@@ -55,9 +55,13 @@ public static class Make
             // ride as literal text and never resolve at eval).
             action.Property.Add(Property(value is global::app.data.@this typed
                 ? typed
-                : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
+                : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
                     ? new global::app.data.@this(name, s, new global::app.type.@this("text", template: "plang"), context: global::PLang.Tests.TestApp.SharedContext)
-                    : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext)));
+                    // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
+                    : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
+                            System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
+                        ? TemplateStamp.Container(name, value, global::PLang.Tests.TestApp.SharedContext)
+                        : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext)));
         return action;
     }
 

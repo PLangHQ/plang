@@ -336,14 +336,18 @@ public sealed class Formal
         }
 
         // Each value born through the type's own door — the one a .pr row's value reads through.
-        // Authored content: a value holding %variables% is born a template ("plang").
+        // The marker is born HERE, at build, and nowhere else: the programmer's own literal holding
+        // %variables% is typed a template ("plang"); its row carries the mark from then on.
         private global::app.type.item.@this Born(global::app.type.@this type, string json, string? template = "plang")
         {
+            var marked = template != null && type.Template == null && global::app.type.item.text.@this.HasVariable(json)
+                ? _context.App.Type[new global::app.type.@this(type.Name, type.Kind?.Name, type.Strict, template)]
+                : type;
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
             utf8.Read();
             var reader = new global::app.channel.serializer.json.Reader(utf8, bytes);
-            return type.Read(ref reader, new global::app.type.reader.ReadContext(_context, template));
+            return marked.Read(ref reader, new global::app.type.reader.ReadContext(_context, marked.Template));
         }
 
         private static string LiteralType(Literal v)
@@ -363,13 +367,19 @@ public sealed class Formal
 
         // A dict handed to a list property is its argument rows, each typed like a property: the written
         // type, else the literal's own.
+        // Each argument is its own row; one the programmer wrote with a %variable% is marked a template
+        // on its row, as a top-level row is (Born) — the mark is born here, at build.
         private string Arguments(Literal v)
         {
             var rows = v.Entries!.Select(e =>
-                "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
-                + ",\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(e.Type ?? LiteralType(e.Value)))
-                + (TypeKind(e.Type ?? LiteralType(e.Value)) is { } k ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(k) : "")
-                + "},\"value\":" + Json(e.Value) + "}");
+            {
+                var json = Json(e.Value);
+                return "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
+                    + ",\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(e.Type ?? LiteralType(e.Value)))
+                    + (TypeKind(e.Type ?? LiteralType(e.Value)) is { } k ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(k) : "")
+                    + (global::app.type.item.text.@this.HasVariable(json) ? ",\"template\":\"plang\"" : "")
+                    + "},\"value\":" + json + "}";
+            });
             return "[" + string.Join(",", rows) + "]";
         }
 

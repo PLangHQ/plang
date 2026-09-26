@@ -13,8 +13,11 @@ internal static class HttpBuildHelpers
         global::app.@this? app,
         string paramName)
     {
-        var raw = action?[paramName]?.Value?.ToString();
-        if (string.IsNullOrEmpty(raw) || raw.Contains('%'))
+        // A url marked a template holds a variable with no binding at build — the row's marker says
+        // so, never the characters in it.
+        var row = action?[paramName];
+        var raw = row?.Value?.ToString();
+        if (string.IsNullOrEmpty(raw) || row!.Type?.Template != null)
             return Task.FromResult(data.@this.Ok());
 
         // Trim query / fragment so they don't leak into the extension scan.

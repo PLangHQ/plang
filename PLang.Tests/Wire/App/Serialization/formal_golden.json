@@ -185,7 +185,8 @@
        {
         "name": "path",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%path%"
        }
@@ -223,7 +224,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -246,7 +248,8 @@
      {
       "name": "Path",
       "type": {
-       "name": "path"
+       "name": "path",
+       "template": "plang"
       },
       "value": "%path%"
      }
@@ -267,7 +270,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -310,7 +314,8 @@
        {
         "name": "goals",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%goals%"
        }
@@ -335,7 +340,8 @@
      {
       "name": "Collection",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%goals%"
      }
@@ -362,7 +368,8 @@
        {
         "name": "goal",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%item%"
        }
@@ -387,14 +394,16 @@
      {
       "name": "Path",
       "type": {
-       "name": "path"
+       "name": "path",
+       "template": "plang"
       },
       "value": "/.build/traces/%!trace.id%/manifest.json"
      },
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%traceGoals%"
      }
@@ -452,7 +461,8 @@
        {
         "name": "goal",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%goal%"
        }
@@ -484,7 +494,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%Now.Ticks%"
      }
@@ -514,7 +525,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "text"
+       "name": "text",
+       "template": "plang"
       },
       "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}"
      }
@@ -590,7 +602,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%menu%"
      }
@@ -620,7 +633,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%goal%"
      }
@@ -643,7 +657,8 @@
      {
       "name": "Collection",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%parentGoal.Child%"
      }
@@ -670,7 +685,8 @@
        {
         "name": "subGoal",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%item%"
        }
@@ -702,7 +718,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%parentGoal%"
      }
@@ -725,14 +742,16 @@
      {
       "name": "A",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%Now.Ticks%"
      },
      {
       "name": "B",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%buildStart%"
      }
@@ -753,7 +772,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -776,7 +796,8 @@
      {
       "name": "A",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%elapsedTicks%"
      },
@@ -804,7 +825,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -834,7 +856,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%elapsedMs%"
      }
@@ -857,14 +880,16 @@
      {
       "name": "Path",
       "type": {
-       "name": "path"
+       "name": "path",
+       "template": "plang"
       },
       "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
      },
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%trace%"
      }
@@ -894,7 +919,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%goal.Name%"
      }
@@ -917,7 +943,8 @@
      {
       "name": "Goal",
       "type": {
-       "name": "goal"
+       "name": "goal",
+       "template": "plang"
       },
       "value": "%goal%"
      }
@@ -963,7 +990,8 @@
      {
       "name": "Goal",
       "type": {
-       "name": "goal"
+       "name": "goal",
+       "template": "plang"
       },
       "value": "%goal%"
      }
@@ -1023,7 +1051,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!app.module.list%"
      }
@@ -1053,7 +1082,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%goal.Name%"
      }
@@ -1076,7 +1106,8 @@
      {
       "name": "Collection",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%goal.Step%"
      }
@@ -1103,7 +1134,8 @@
        {
         "name": "step",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%item%"
        }
@@ -1128,7 +1160,8 @@
      {
       "name": "Collection",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%modules%"
      }
@@ -1155,7 +1188,8 @@
        {
         "name": "module",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%item%"
        }
@@ -1201,7 +1235,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1224,14 +1259,16 @@
      {
       "name": "State",
       "type": {
-       "name": "text"
+       "name": "text",
+       "template": "plang"
       },
       "value": "%state%"
      },
      {
       "name": "Question",
       "type": {
-       "name": "dict"
+       "name": "dict",
+       "template": "plang"
       },
       "value": "%moduleQuestions%"
      }
@@ -1252,7 +1289,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1296,7 +1334,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1319,14 +1358,16 @@
      {
       "name": "State",
       "type": {
-       "name": "text"
+       "name": "text",
+       "template": "plang"
       },
       "value": "%state%"
      },
      {
       "name": "Question",
       "type": {
-       "name": "dict"
+       "name": "dict",
+       "template": "plang"
       },
       "value": "%actionQuestions%"
      }
@@ -1347,7 +1388,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1390,7 +1432,8 @@
        {
         "name": "goal",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%goal%"
        }
@@ -1415,7 +1458,8 @@
      {
       "name": "Path",
       "type": {
-       "name": "path"
+       "name": "path",
+       "template": "plang"
       },
       "value": "orders/%orderId%.json"
      }
@@ -1436,7 +1480,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1480,7 +1525,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1503,7 +1549,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%itemCount%"
      },
@@ -1553,7 +1600,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%itemCount%"
      },
@@ -1612,7 +1660,8 @@
          {
           "name": "Data",
           "type": {
-           "name": "text"
+           "name": "text",
+           "template": "plang"
           },
           "value": "%itemCount% items"
          }
@@ -1639,7 +1688,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%order.email%"
      },
@@ -1698,7 +1748,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%order.coupon%"
      },
@@ -1736,14 +1787,16 @@
            {
             "name": "code",
             "type": {
-             "name": "item"
+             "name": "item",
+             "template": "plang"
             },
             "value": "%order.coupon%"
            },
            {
             "name": "order",
             "type": {
-             "name": "item"
+             "name": "item",
+             "template": "plang"
             },
             "value": "%order%"
            }
@@ -1772,7 +1825,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%order.total%"
      },
@@ -1831,7 +1885,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%order.country%"
      },
@@ -1931,14 +1986,16 @@
      {
       "name": "A",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%order.total%"
      },
      {
       "name": "B",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%vat%"
      }
@@ -1959,7 +2016,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -1982,7 +2040,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%order.note%"
      },
@@ -2021,7 +2080,8 @@
          {
           "name": "Value",
           "type": {
-           "name": "item"
+           "name": "item",
+           "template": "plang"
           },
           "value": "%order.note%"
          }
@@ -2048,7 +2108,8 @@
      {
       "name": "Data",
       "type": {
-       "name": "text"
+       "name": "text",
+       "template": "plang"
       },
       "value": "Total: %order.total%, VAT: %vatAmount%"
      }
@@ -2099,7 +2160,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -2152,7 +2214,8 @@
      {
       "name": "Collection",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%files%"
      }
@@ -2179,7 +2242,8 @@
        {
         "name": "file",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%item%"
        }
@@ -2204,7 +2268,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%errors%"
      },
@@ -2273,7 +2338,8 @@
      {
       "name": "Left",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%files%"
      },
@@ -2347,7 +2413,8 @@
        {
         "name": "errors",
         "type": {
-         "name": "item"
+         "name": "item",
+         "template": "plang"
         },
         "value": "%errors%"
        }
@@ -2370,7 +2437,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%!data%"
      }
@@ -2400,7 +2468,8 @@
      {
       "name": "Value",
       "type": {
-       "name": "item"
+       "name": "item",
+       "template": "plang"
       },
       "value": "%html%"
      }

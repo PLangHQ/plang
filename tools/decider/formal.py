@@ -96,6 +96,18 @@ def typed(declared, value, written=None):
     if value is None: return {'name': 'item'}
     return {'name': 'item'} if VARIABLE.fullmatch(value) else {'name': 'text'}
 
+# text.HasVariable's detector — a value the programmer wrote holding a %variable%
+HOLE = re.compile(r'%[^%]+%')
+
+def marked(t, value):
+    """The row's type marked a template ("plang") when the programmer's literal holds a %variable%
+    (Formal.Born, Formal.Arguments): the marker is born at build, and only here. A variable-name slot
+    names a variable, and a held action is an action — neither is a template."""
+    if t.get('name') == 'variable' or isinstance(value, dict) and is_action(value): return t
+    if isinstance(value, list) and any(isinstance(x, dict) and is_action(x) for x in value): return t
+    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+    return {**t, 'template': 'plang'} if HOLE.search(text) else t
+
 class Args(dict):
     """A `{ }` value as read: its entries, and the types written on any of them (`kind: text = "x"`)."""
     def __init__(self):
@@ -284,11 +296,13 @@ class _Reader:
         # typed like any row — the written type, else the literal's (the slot is open).
         if declared.startswith('list') and isinstance(value, dict) and not is_action(value):
             types = getattr(value, 'types', {})
-            value = [{'name': k, 'type': typed('item', v, types.get(k)), 'value': v} for k, v in value.items()]
+            value = [{'name': k, 'type': marked(typed('item', v, types.get(k)), v), 'value': v} for k, v in value.items()]
         elif getattr(value, 'types', None):
             self.fail(f'`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments', at)
         if isinstance(value, Args): value = dict(value)
-        out = {'name': prop, 'type': typed(declared, value, written), 'value': value}
+        rows = isinstance(value, list) and declared.startswith('list') and all(isinstance(r, dict) and 'name' in r and 'type' in r for r in value)
+        # argument rows are each marked on their own row; the list holding them is not
+        out = {'name': prop, 'type': typed(declared, value, written) if rows else marked(typed(declared, value, written), value), 'value': value}
         if frozen: out['frozen'] = True
         return out
 

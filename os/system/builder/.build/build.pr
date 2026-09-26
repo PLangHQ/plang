@@ -430,7 +430,7 @@
               "type": {
                 "name": "variable"
               },
-              "value": "item"
+              "value": "%item%"
             }
           ]
         },
@@ -450,7 +450,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"goal","type":{"name":"item"},"value":"%item%"}]
+              "value": [{"name":"goal","type":{"name":"item","template":"plang"},"value":"%item%"}]
             }
           ],
           "default": [

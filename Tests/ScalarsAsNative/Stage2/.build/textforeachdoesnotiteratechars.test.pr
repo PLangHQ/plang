@@ -106,7 +106,7 @@
               "type": {
                 "name": "variable"
               },
-              "value": "item"
+              "value": "%item%"
             }
           ]
         },
@@ -126,7 +126,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"item","type":{"name":"item"},"value":"%word%"}]
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%word%"}]
             }
           ],
           "default": [

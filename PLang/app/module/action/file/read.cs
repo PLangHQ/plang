@@ -99,10 +99,10 @@ public partial class Read : IContext
     /// </summary>
     public async Task<data.@this> Build()
     {
-        // Peek the raw .pr value first — Path.Value would trigger resolution on
-        // a "%var%" reference that has no binding yet at build time.
+        // A path marked a template holds a variable that has no binding yet at build time — the
+        // marker says so, never the characters in it.
         var raw = __action?["Path"]?.Value?.ToString();
-        if (string.IsNullOrEmpty(raw) || raw.Contains('%')) return Context.Ok();
+        if (string.IsNullOrEmpty(raw) || Path.HasVariableReference) return Context.Ok();
 
         var p = await Path.Value();
         if (p == null || string.IsNullOrEmpty(p.Extension)) return Context.Ok();

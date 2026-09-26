@@ -117,14 +117,18 @@ public partial class query : IContext
     /// </summary>
     public Task<data.@this> Build()
     {
-        var schema = __action?["Schema"]?.Value;
+        // A row marked a template holds a variable with no binding at build — the marker says so,
+        // never the characters in it.
+        var schemaRow = __action?["Schema"];
+        var schema = schemaRow?.Value;
         if (schema is not (null or global::app.type.item.@null.@this)
-            && !(schema is global::app.type.item.text.@this st
-                 && (st.Clr<string>() is "" or null || global::app.type.item.text.@this.HasVariable(st.ToString()))))
+            && schemaRow!.Type?.Template == null
+            && !(schema is global::app.type.item.text.@this st && st.Clr<string>() is "" or null))
             return Task.FromResult(Context.Ok("json"));
 
-        var format = __action?["Format"]?.Value?.ToString();
-        if (!string.IsNullOrEmpty(format) && !format.Contains('%'))
+        var formatRow = __action?["Format"];
+        var format = formatRow?.Value?.ToString();
+        if (!string.IsNullOrEmpty(format) && formatRow!.Type?.Template == null)
             return Task.FromResult(Context.Ok(format));
 
         return Task.FromResult(Context.Ok());

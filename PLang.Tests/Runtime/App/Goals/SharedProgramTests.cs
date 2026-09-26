@@ -206,7 +206,8 @@ public class SharedProgramTests
                 ("Value", "%place%"))));
         _app.Goal.Add(callee);
         var call = await ActionFromPr("goal", "call", ("Name", "Weather"), ("Actor", "system"),
-            ("Parameter", new List<object?> { new Data("place", "%city%", context: _app.User.Context) }));
+            // an argument row the programmer wrote with a %variable% is marked on its row, as the builder writes it
+            ("Parameter", new List<object?> { new Data("place", "%city%", new global::app.type.@this("text", template: "plang"), context: _app.User.Context) }));
         var property = call["Parameter"]!;
         var held = property.Value;
 
