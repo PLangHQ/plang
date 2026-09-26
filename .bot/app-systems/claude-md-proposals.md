@@ -14,3 +14,4 @@
 ```
 **plang vocabulary is lowercase in members too.** Everything plang can reach is a lowercase member (`app.type`, `app.goal`, `app.variable`, their `list`, `current`, `all`, `on`, and the facts a face shows), so `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/type/this.cs`. C# plumbing plang never navigates stays PascalCase; a C# keyword keeps its `@` (`app.@event`); an item's own `Type` (its type entity) stays.
 ```
+Addendum (same day): **nodes lowercase, verbs PascalCase.** Lowercase covers what plang navigates (properties: systems, `list`, `current`, `all`, `on`, facts). Methods stay PascalCase (`Start()`, `Value()`, `Add()`): plang never calls a verb through a path, so the uppercase marks the line where C# executes (Ingi).

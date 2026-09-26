@@ -41,6 +41,8 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 
 **plang vocabulary is lowercase in C# too (Ingi).** Everything plang can reach is a lowercase member: `app.type`, `app.goal`, `app.variable`, `app.module`, `app.actor`, `app.test`, and their `list`, `current`, `all`, `on`, and the facts a face shows. C# plumbing plang never navigates stays PascalCase; a C# keyword keeps its `@` (`app.@event`); an item's own `Type` (its type entity) stays. So the three paths match letter for letter: `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/type/this.cs`. Each system's property on `app` is renamed in the stage that moves it (type: stage 2; the others: stage 7). This replaces CLAUDE.md's "Property names on `app.@this` stay PascalCase" (proposal filed).
 
+**Nodes lowercase, verbs PascalCase (Ingi: "the line where C# executes, and in C# starts uppercase").** Lowercase is what plang navigates (`app.type`, `list`, `current`, `on.before.create`, the facts). PascalCase is what C# calls: `Start()`, `Value()`, `Add()`, `Load()`. plang never calls a verb through a path (what runs, runs in a module; `%…%` only reads), so a verb is C#'s alone and sits with C# library methods (`ToString`, `DisposeAsync`). A read inside `%…%` (`%now.tostring("dd.")%`) works either way, since plang's navigation ignores case.
+
 **What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on/after.cs` → `app.type.text.on.after.create(LoadText)`.
 
 | plang | C# | file |
