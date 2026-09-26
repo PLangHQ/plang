@@ -28,12 +28,6 @@ def example_steps(p):
     if not os.path.exists(p): return []
     return re.findall(r'Step text:\s*`([^`]+)`', open(p, encoding='utf-8').read())
 
-# Descriptions on disk that describe ONE action instead of the module. Overridden here so the
-# harness measures the decider, not the typo; each is a fix to propose for the .md.
-DESCRIPTION_FIX = {
-    'goal': 'Call another goal (`call X`), return from the current goal, and goal introspection',
-}
-
 
 def misplaced_examples(state):
     """The `e.g.` lines of a decider state that don't come from the entry printed above them — a
@@ -70,7 +64,7 @@ def catalogue():
                 t = whole(os.path.join(d, f'{an}.{facet}.md'))
                 if t: entry[facet] = t
             acts[an] = entry
-        mod = {'description': DESCRIPTION_FIX.get(name) or whole(os.path.join(d, 'module.description.md'))}
+        mod = {'description': whole(os.path.join(d, 'module.description.md'))}
         notes = whole(os.path.join(d, 'module.notes.md'))
         if notes: mod['notes'] = notes
         # The module's example steps, lifted from its actions' examples.md — the on-disk teaching,
@@ -279,6 +273,17 @@ CRITERIA = os.environ.get('CRITERIA', '1') != '0'
 CLAUSE = (' — its own work, or anything it guards behind a condition, repeats in a loop, or hands to an '
           'error handler —') if os.environ.get('CLAUSE', '0') == '1' else ''
 
+def stage1_questions(s, cat):
+    """Stage 1's questions of one step, keyed by id (decider1.template writes the same)."""
+    text = s['text'].strip()
+    qs = {f's{s["index"]}_@module': {'type': 'choice', 'criteria': {m: None for m in cat}, 'instructions':
+        f'Step {step_no(s)} of this goal is `{text}`. Which plang module does the main work of step {step_no(s)}?'}}
+    for a in COMMON:
+        qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
+            f'Step {step_no(s)} is `{text}`. Does step {step_no(s)}{CLAUSE} use `{a}`?'}
+        if CRITERIA and a in COMMON_CRITERIA: qs[f's{s["index"]}_{a}']['criteria'] = COMMON_CRITERIA[a]
+    return qs
+
 def stage1(goal, cat):
     """v0.1's shape (origin/main PLang/Building/StepBuilder.cs PrefetchModules) plus the common actions:
     per step ONE choice — which module does the main work — whose options are the bare module names
@@ -286,18 +291,10 @@ def stage1(goal, cat):
     Every score is kept: probs[i] holds each module's probability from the choice and each common
     action's noul."""
     state = state_for(goal, cat)
-    options = {m: None for m in cat}
     probs = collections.defaultdict(dict); secs = nbytes = nq = 0; usage = collections.Counter()
     for win in windows(goal['steps']):
         qs = {}
-        for s in win:
-            text = s['text'].strip()
-            qs[f's{s["index"]}_@module'] = {'type': 'choice', 'criteria': options, 'instructions':
-                f'Step {step_no(s)} of this goal is `{text}`. Which plang module does the main work of step {step_no(s)}?'}
-            for a in COMMON:
-                qs[f's{s["index"]}_{a}'] = {'type': 'noul', 'instructions':
-                    f'Step {step_no(s)} is `{text}`. Does step {step_no(s)}{CLAUSE} use `{a}`?'}
-                if CRITERIA and a in COMMON_CRITERIA: qs[f's{s["index"]}_{a}']['criteria'] = COMMON_CRITERIA[a]
+        for s in win: qs.update(stage1_questions(s, cat))
         resp, t, b = ask(state, qs)
         secs += t; nbytes += b; nq += len(qs); usage.update(resp.get('usage', {}))
         for k, a in resp['answers'].items():

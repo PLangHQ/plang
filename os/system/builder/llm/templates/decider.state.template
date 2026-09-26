@@ -1,0 +1,94 @@
+{% comment %}
+The decider's state — how plang is structured and the goal's steps, then:
+- stage 1: every module with what it is for (description, notes, the example steps of its actions),
+  and the common actions asked by name;
+- stage 2: only the modules stage 2 is about (each step's Pick.Module, and condition where an if was
+  picked), each with its actions in full, and the popular actions when a step was unsure.
+The eval's shape (tools/decider/harness.py state_for); a twin test holds the two equal.
+Needs: stage (1 or 2), goal, modules (%!app.module.list%), decider (decider.json).
+{% endcomment %}
+{%- capture nl %}
+{% endcapture -%}
+How plang is structured:
+- A goal is a list of steps. Each step is a sentence saying what to do, written in any human language. There is no syntax and no reserved words; only the intent matters.
+- A step is carried out by one or more actions. Every action belongs to exactly one module.
+- Within a step the actions form a chain: the result of one action can feed the next one.
+- A step may keep its result for later use by naming a variable (a name between % signs). That is the variable module's job, in addition to whatever module did the work.
+- A step may guard part of its work behind a condition (condition module), repeat part of it for each item of a collection (loop module), or attach error handling to it (error module). Each of those is an action of its own, and whatever runs INSIDE the guard, the loop or the error handler is also an action of its own — so calling a goal inside an if, a loop or an error handler uses the goal module as well.
+- So one step often uses several modules: the one doing the main work; condition/loop/error for a surrounding clause; goal when a goal is called anywhere in it; variable when the result is kept.
+- A module counts as used by a step whenever the step's sentence names work that module does, EVEN IF that work only runs in some cases — the body of a condition, of a loop, or of an error handler is named by the step and counts, regardless of whether it happens to run.
+- A step that REGISTERS something to happen later — an event handler, a callback, a scheduled goal — does not do that work now. Naming a goal to be run later is not calling it; the step uses the module that does the registering.
+- Steps are listed in order and may be indented. An indented step is the body of the step above it, and belongs to that step; each step is still asked about on its own, for what its own sentence does.
+
+This is a plang goal called {{ goal.Name }}. Its steps are numbered from 0.
+{{ nl }}
+{%- for s in goal.Step -%}
+step {{ s.Index }}: {% if s.Indent > 0 %}{% for i in (1..s.Indent) %}    {% endfor %}{% endif %}{{ s.Text }}{{ nl }}
+{%- endfor -%}
+{{ nl }}These are the plang modules you may choose from:
+{%- if stage == 2 -%}
+{%- assign used = "" -%}
+{%- assign unsure = false -%}
+{%- for s in goal.Step -%}
+{%- for m in s.Pick.Module -%}{%- assign used = used | append: m.Name | append: "," -%}{%- endfor -%}
+{%- if s.Pick.IsCondition -%}{%- assign used = used | append: "condition," -%}{%- endif -%}
+{%- if s.Pick.IsUnsure -%}{%- assign unsure = true -%}{%- endif -%}
+{%- endfor -%}
+{%- assign names = used | split: "," | uniq | sort -%}
+{%- else -%}
+{%- assign names = modules | map: "Name" | sort -%}
+{%- endif -%}
+{%- for n in names -%}
+{%- if n == "" -%}{%- continue -%}{%- endif -%}
+{%- assign m = modules | where: "Name", n | first -%}
+{%- assign about = m.Description | strip -%}
+{{ nl }}- {{ n }}: {{ about }}
+{%- if m.Notes -%}{%- assign notes = m.Notes | strip -%}{{ nl }}  notes: {{ notes }}{%- endif -%}
+{%- assign acts = m.Action | concat: m.Modifier | sort: "Name" -%}
+{%- for a in acts -%}
+{%- if a.Examples -%}
+{%- assign parts = "|" | append: a.Examples | split: "Step text: `" -%}
+{%- for p in parts offset: 1 -%}
+{%- assign ex = p | split: "`" | first -%}
+{{ nl }}  e.g. `{{ ex }}`
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+{%- if stage == 2 -%}
+{%- for a in acts -%}
+{%- assign about = a.Description | strip -%}
+{{ nl }}  action {{ n }}.{{ a.Name }}: {{ about }}
+{%- if a.Examples -%}{%- assign examples = a.Examples | strip -%}{{ nl }}    examples: {{ examples }}{%- endif -%}
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+{%- if stage == 2 -%}
+{%- if unsure -%}
+{{ nl }}{{ nl }}These actions are offered by name:
+{%- for p in decider.popular -%}
+{%- assign mn = p | split: "." | first -%}
+{%- assign an = p | split: "." | last -%}
+{%- assign m = modules | where: "Name", mn | first -%}
+{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- assign about = a.Description | strip -%}
+{{ nl }}- {{ p }}: {{ about }}
+{%- endfor -%}
+{%- endif -%}
+{%- else -%}
+{{ nl }}{{ nl }}These actions are asked about by name:
+{%- for c in decider.common -%}
+{%- assign mn = c[0] | split: "." | first -%}
+{%- assign an = c[0] | split: "." | last -%}
+{%- assign m = modules | where: "Name", mn | first -%}
+{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- assign about = a.Description | strip -%}
+{{ nl }}- {{ c[0] }}: {{ about }}
+{%- if a.Examples -%}
+{%- assign parts = "|" | append: a.Examples | split: "Step text: `" -%}
+{%- for p in parts offset: 1 -%}
+{%- assign ex = p | split: "`" | first -%}
+{{ nl }}  e.g. `{{ ex }}`
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endif -%}

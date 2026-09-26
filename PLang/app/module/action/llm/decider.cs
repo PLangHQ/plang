@@ -17,10 +17,11 @@ namespace app.module.action.llm;
 [RequiresCapability("llm")]
 public partial class decider : IContext
 {
-    /// <summary>The shared context every question is asked against — for the builder, the goal and
-    /// its steps plus the module catalogue. Handed over once.</summary>
+    /// <summary>The shared context every question is asked against — for the builder, a text: how
+    /// plang is structured, the goal and its steps, and the modules (decider.state.template). Handed
+    /// over once.</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.item.dict.@this> State { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> State { get; init; }
 
     /// <summary>The questions, keyed by an id the caller chooses so it can match answers back.
     /// Each is <c>{type, instructions}</c> — a <c>choice</c> adds <c>criteria</c>, the closed set it

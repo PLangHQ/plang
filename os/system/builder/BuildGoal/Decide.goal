@@ -1,41 +1,29 @@
 Decide
-/ Decide which module and which action every step of this goal uses — the whole goal in two
-/ exchanges, not one LLM call per step.
+/ Decide which actions every step of this goal uses — the whole goal in two exchanges with the
+/ decider, not one LLM call per step.
 /
 / The decider is generic: it takes a state and typed questions and answers them. It knows nothing
-/ about goals or steps. Everything goal-shaped is composed HERE.
+/ about goals or steps. Everything goal-shaped is composed HERE: the state and the questions are
+/ templates (the words), and each step's Pick reads the answers (the numbers).
 /
-/ The state is built as a plang value, not rendered as JSON text: it carries step text and module
-/ prose, and prose contains quotes. A value serializes itself; text pasted into a JSON template
-/ does not. The questions are rendered, because they only hold module names, action names and step
-/ numbers, and they point at the state by path rather than repeating it.
-/
-/ Stage 1 asks a yes/no of every (step, module) pair at once. Independent answers mean a step that
-/ uses three modules gets three yeses, instead of the model ranking them against each other and
-/ dropping two. Stage 2 then asks a closed choice — which action — only of the modules that said
-/ yes, and only where the module has more than one action to choose between.
+/ Stage 1 asks, per step, one choice — which module does the main work — and a yes/no per common
+/ action (decider.json). Stage 2 asks only what stage 1 left open, which each step's Pick decides:
+/ the main module's action, a runner-up module, whether the step uses a module it scored under
+/ certain, an if's branches, and on a step stage 1 was unsure of, which popular action it uses.
 
-- set %threshold% = 0.5
 - set %modules% = %!app.module.list%
+- read "/system/builder/llm/decider.json", write to %decider%
 
-- set %state.goal% = %goal.Name%
-- foreach %goal.Step%, call AddStepToState step=%item%
-- foreach %modules%, call AddModuleToState module=%item%
+- set %stage% = 1
+- render template "/system/builder/llm/templates/decider.state.template", write to %state%
+- render template "/system/builder/llm/templates/decider1.template", write to %questions%
+- llm.decider State=%state%, Question=%questions%, write to %answer%
+- build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%
 
-- render template "/system/builder/llm/templates/deciderModuleQuestions.template", write to %moduleQuestions%
-- llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%
-
-- render template "/system/builder/llm/templates/deciderActionQuestions.template", write to %actionQuestions%
-- llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%
+- set %stage% = 2
+- render template "/system/builder/llm/templates/decider.state.template", write to %state%
+- render template "/system/builder/llm/templates/decider2.template", write to %questions%
+- llm.decider State=%state%, Question=%questions%, write to %answer%
+- build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%
 
 - call /system/builder/EmitBuildEvent kind="goal-decided", goal=%goal%
-
-
-AddStepToState
-/ The decider sees a step as its position and its words — nothing it has been compiled into yet.
-- add {"index": %step.Index%, "text": %step.Text%} to %state.step%
-
-
-AddModuleToState
-/ What each module is for, in its own words: the description the module ships with.
-- set %state.modules% key %module.Name% to %module.Description%

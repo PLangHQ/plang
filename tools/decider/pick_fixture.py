@@ -51,6 +51,15 @@ for case in e.GOLDEN:
     unsure = {i for i in probs if h.unsure(probs[i], cat)}
     questions = {}
     for s in goal['steps']: questions.update(h.stage2_questions(s, cat, chosen, conditions, runners, unsure))
+    question1 = {}
+    for s in goal['steps']: question1.update(h.stage1_questions(s, cat))
+    # the states, as stage1 and stage2 build them
+    state1 = h.state_for(goal, cat)
+    used = {m for ms in chosen.values() for m in ms} | ({'condition'} if conditions else set())
+    state2 = h.state_for(goal, cat, modules=used)
+    if unsure:
+        state2 += '\n\nThese actions are offered by name:\n' + '\n'.join(
+            f'- {a}: {cat[a.split(".", 1)[0]]["actions"][a.split(".", 1)[1]]["description"]}' for a in h.POPULAR)
     # the picks, as decider_eval.one scores them — single-action modules answered by the module itself
     acts = stage2_acts(answer2)
     for i, ms in chosen.items():
@@ -70,9 +79,10 @@ for case in e.GOLDEN:
         if (i, '@popular') in acts:
             pick['@popular'] = dict(sorted((acts[(i, '@popular')][1] or {}).items(), key=lambda ap: -(ap[1] or 0))[:3])
         picks[str(i)] = pick
-    entries.append({'goal': case['id'],
-                    'step': [{'index': s['index'], 'text': s['text']} for s in goal['steps']],
-                    'answer1': answer1, 'answer2': answer2, 'question2': questions, 'picks': picks})
+    entries.append({'goal': case['id'], 'name': goal['name'],
+                    'step': [{'index': s['index'], 'text': s['text'], 'indent': s.get('indent', 0)} for s in goal['steps']],
+                    'answer1': answer1, 'answer2': answer2, 'state1': state1, 'question1': question1,
+                    'state2': state2, 'question2': questions, 'picks': picks})
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump(entries, open(OUT, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
 print(len(entries), 'goals ->', os.path.relpath(OUT, os.path.join(HERE, '..', '..')))

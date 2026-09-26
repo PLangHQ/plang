@@ -35,9 +35,9 @@
 [3] loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = "AddStepToState", Parameter: list = {step: item = %item%})
 [4] loop.foreach(Collection: item = %modules%); goal.call(Name: text = "AddModuleToState", Parameter: list = {module: item = %item%})
 [5] ui.render(Template: text = "/system/builder/llm/templates/deciderModuleQuestions.template"); variable.set(Name: variable = %moduleQuestions%, Value: item = %!data%)
-[6] llm.decider(State: dict = %state%, Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)
+[6] llm.decider(State: text = "%state%", Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)
 [7] ui.render(Template: text = "/system/builder/llm/templates/deciderActionQuestions.template"); variable.set(Name: variable = %actionQuestions%, Value: item = %!data%)
-[8] llm.decider(State: dict = %state%, Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)
+[8] llm.decider(State: text = "%state%", Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)
 [9] goal.call(Name: text = "/system/builder/EmitBuildEvent", Parameter: list = {kind: text = "goal-decided", goal: item = %goal%})
 
 # checkout

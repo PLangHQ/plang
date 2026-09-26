@@ -31,8 +31,8 @@ public class PickListTests
         => Make.Dict((System.Collections.IDictionary)Raw(e)!, context);
 
     private static global::app.goal.@this Goal(System.Text.Json.JsonElement entry)
-        => Make.Goal(entry.GetProperty("goal").GetString()!, "/" + entry.GetProperty("goal").GetString() + ".goal",
-            entry.GetProperty("step").EnumerateArray().Select(s => Make.Step(s.GetProperty("text").GetString()!)).ToArray());
+        => Make.Goal(entry.GetProperty("name").GetString()!, "/" + entry.GetProperty("name").GetString() + ".goal",
+            entry.GetProperty("step").EnumerateArray().Select(s => Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32())).ToArray());
 
     private static string RepoRoot()
     {
@@ -47,18 +47,82 @@ public class PickListTests
         System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "decider.json")))
             .RootElement.GetProperty("popular").EnumerateArray().Select(p => p.GetString()!).ToList();
 
-    // decider2.template rendered for the goal, as Decide renders it.
-    private static async Task<string> Rendered(global::app.goal.@this goal, global::app.actor.context.@this context)
+    // A decider template rendered for the goal, with the variables Decide sets: goal, modules, decider
+    // (decider.json) and stage.
+    private static async Task<string> Rendered(string template, global::app.goal.@this goal, global::app.actor.context.@this context, int stage = 0)
     {
         context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
+        context.Variable.Set(new global::app.data.@this("modules", context.App.Module.list, context: context));
+        var decider = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
+            System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "decider.json"))).RootElement;
+        context.Variable.Set(new global::app.data.@this("decider", Answer(decider, context), context: context));
+        context.Variable.Set(new global::app.data.@this("stage", stage, context: context));
         var render = new global::app.module.action.ui.Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
-                System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "templates", "decider2.template")),
+                System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "templates", template)),
             IsFile = (global::app.type.item.@bool.@this)false,
         };
         var result = await new global::app.module.action.ui.code.Fluid().Render(render);
         return result.Success ? (await result.Value())!.ToString() : $"render failed: {result.Error!.Message}";
+    }
+
+    // Two JSON question sets, key by key in order: the differences, or none.
+    private static IEnumerable<string> Differ(string at, string rendered, System.Text.Json.JsonElement python)
+    {
+        System.Text.Json.Nodes.JsonObject ours;
+        try { ours = System.Text.Json.Nodes.JsonNode.Parse(rendered)!.AsObject(); }
+        catch (System.Text.Json.JsonException ex) { return [$"{at}: not JSON ({ex.Message})\n{rendered}"]; }
+        var differ = new List<string>();
+        var theirs = python.EnumerateObject().ToList();
+        if (!ours.Select(q => q.Key).SequenceEqual(theirs.Select(q => q.Name)))
+            differ.Add($"{at} asks [{string.Join(", ", ours.Select(q => q.Key))}], python [{string.Join(", ", theirs.Select(q => q.Name))}]");
+        foreach (var q in theirs)
+            if (ours[q.Name] is { } mine && !System.Text.Json.Nodes.JsonNode.DeepEquals(mine, System.Text.Json.Nodes.JsonNode.Parse(q.Value.GetRawText())))
+                differ.Add($"{at} {q.Name}\n  ours:   {mine.ToJsonString()}\n  python: {q.Value.GetRawText()}");
+        return differ;
+    }
+
+    // Two state texts, line by line: the first line that differs, or none.
+    private static IEnumerable<string> Differ(string at, string ours, string python)
+    {
+        if (ours == python) return [];
+        var a = ours.Split('\n'); var b = python.Split('\n');
+        var n = Enumerable.Range(0, Math.Min(a.Length, b.Length)).FirstOrDefault(i => a[i] != b[i], Math.Min(a.Length, b.Length));
+        return [$"{at} state differs at line {n + 1} (ours {a.Length} lines, python {b.Length})\n  ours:   {(n < a.Length ? a[n] : "<end>")}\n  python: {(n < b.Length ? b[n] : "<end>")}"];
+    }
+
+    [Test]
+    public async Task TheStageOneRequest_IsTheOnePythonSends()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+        var differ = new List<string>();
+        foreach (var entry in Golden())
+        {
+            var goal = Goal(entry);
+            var at = entry.GetProperty("goal").GetString()!;
+            differ.AddRange(Differ(at, await Rendered("decider1.template", goal, context), entry.GetProperty("question1")));
+            differ.AddRange(Differ(at, await Rendered("decider.state.template", goal, context, stage: 1), entry.GetProperty("state1").GetString()!));
+        }
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
+    [Test]
+    public async Task TheStageTwoState_IsTheOnePythonSends()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+        var differ = new List<string>();
+        foreach (var entry in Golden())
+        {
+            var goal = Goal(entry);
+            var first = Answer(entry.GetProperty("answer1"), context);
+            foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
+                await Rendered("decider.state.template", goal, context, stage: 2), entry.GetProperty("state2").GetString()!));
+        }
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
     // The words are the template's: the app is rooted at the repo's os/ folder, where each action's
@@ -74,17 +138,8 @@ public class PickListTests
             var goal = Goal(entry);
             var first = Answer(entry.GetProperty("answer1"), context);
             foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
-            var rendered = await Rendered(goal, context);
-            var at = entry.GetProperty("goal").GetString();
-            System.Text.Json.Nodes.JsonObject ours;
-            try { ours = System.Text.Json.Nodes.JsonNode.Parse(rendered)!.AsObject(); }
-            catch (System.Text.Json.JsonException ex) { differ.Add($"{at}: not JSON ({ex.Message})\n{rendered}"); continue; }
-            var theirs = entry.GetProperty("question2").EnumerateObject().ToList();
-            if (!ours.Select(q => q.Key).SequenceEqual(theirs.Select(q => q.Name)))
-                differ.Add($"{at} asks [{string.Join(", ", ours.Select(q => q.Key))}], python [{string.Join(", ", theirs.Select(q => q.Name))}]");
-            foreach (var q in theirs)
-                if (ours[q.Name] is { } mine && !System.Text.Json.Nodes.JsonNode.DeepEquals(mine, System.Text.Json.Nodes.JsonNode.Parse(q.Value.GetRawText())))
-                    differ.Add($"{at} {q.Name}\n  ours:   {mine.ToJsonString()}\n  python: {q.Value.GetRawText()}");
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
+                await Rendered("decider2.template", goal, context), entry.GetProperty("question2")));
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }

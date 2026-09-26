@@ -53,6 +53,18 @@ public sealed class @this
     /// <summary>What stage 2 asks of this step — the questions stage 1 leaves open, by subject.</summary>
     public IReadOnlyList<question.@this> Question => _question;
 
+    /// <summary>The modules stage 2 is about for this step: the main one and a runner-up (unless a
+    /// near-certain common action answers them) — its state shows them in full.</summary>
+    public IReadOnlyList<global::app.module.@this> Module => _moduleAsked;
+
+    /// <summary>The step tests a condition: an if was picked, so its branches are asked by name.</summary>
+    public bool IsCondition { get; private set; }
+
+    /// <summary>Stage 1 was unsure of the step: it is offered the popular actions.</summary>
+    public bool IsUnsure { get; private set; }
+
+    private List<global::app.module.@this> _moduleAsked = new();
+
     /// <summary>The top three of the popular choice (when the step was asked it), most probable first.</summary>
     public IReadOnlyList<(string Name, number? Score)> Top =>
         _popular == null ? [] : _popular.OrderByDescending(p => p.Value ?? (number)0.0).Take(3).Select(p => (p.Key, p.Value)).ToList();
@@ -79,6 +91,9 @@ public sealed class @this
         }
         _items = Picks(context);
         _question = Questions(popular, context);
+        _moduleAsked = Asked(context).Select(m => context.App.Module[m]).ToList();
+        IsCondition = Tests;
+        IsUnsure = Unsure(context);
     }
 
     // A choice's answer as each option's share: its probabilities, or its pick at its confidence.

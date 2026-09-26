@@ -1224,7 +1224,7 @@
      {
       "name": "State",
       "type": {
-       "name": "dict"
+       "name": "text"
       },
       "value": "%state%"
      },
@@ -1260,8 +1260,8 @@
     "modifier": []
    }
   ],
-  "formal": "llm.decider(State: dict = %state%, Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)",
-  "untyped": "llm.decider(State=%state%, Question=%moduleQuestions%); variable.set(Name=%moduleAnswer%, Value=%!data%)"
+  "formal": "llm.decider(State: text = \"%state%\", Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)",
+  "untyped": "llm.decider(State=\"%state%\", Question=%moduleQuestions%); variable.set(Name=%moduleAnswer%, Value=%!data%)"
  },
  {
   "goal": "decide",
@@ -1319,7 +1319,7 @@
      {
       "name": "State",
       "type": {
-       "name": "dict"
+       "name": "text"
       },
       "value": "%state%"
      },
@@ -1355,8 +1355,8 @@
     "modifier": []
    }
   ],
-  "formal": "llm.decider(State: dict = %state%, Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)",
-  "untyped": "llm.decider(State=%state%, Question=%actionQuestions%); variable.set(Name=%actionAnswer%, Value=%!data%)"
+  "formal": "llm.decider(State: text = \"%state%\", Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)",
+  "untyped": "llm.decider(State=\"%state%\", Question=%actionQuestions%); variable.set(Name=%actionAnswer%, Value=%!data%)"
  },
  {
   "goal": "decide",

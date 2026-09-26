@@ -61,7 +61,7 @@ public class DeciderProviderTests
 
         var action = new decider(Ctx)
         {
-            State = DictData(new() { ["goal"] = "Start" }),
+            State = new global::app.data.@this<global::app.type.item.text.@this>("", "This is a plang goal called Start."),
             Question = DictData(new()
             {
                 ["s0_file"] = new Dictionary<string, object?>
