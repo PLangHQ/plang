@@ -174,7 +174,7 @@ public partial class @this
         try { call = context.CallStack.Push(this, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
-            // Depth limit or ContainsGoal cycle — trips at Push, before the frame is on the
+            // The depth limit — trips at Push, before the frame is on the
             // stack, so the contract (returns Data, never throws) is held here.
             var caller = context.CallStack.Current;
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();

@@ -37,12 +37,8 @@ public class CycleDetectionTests
     [Test]
     public async Task Push_DirectGoalRecursion_TerminatesAtMaxDepth()
     {
-        // Direct PLang recursion (goal A's only action is goal.call A) doesn't cross a
-        // goal boundary — every frame's Step.Goal.PrPath is the same. ContainsGoal can't
-        // distinguish "next action in goal A" from "re-entry into goal A," so direct
-        // recursion is caught by MaxDepth, not ContainsGoal. Indirect cycles (A→B→A) DO
-        // cross boundaries and are caught by ContainsGoal at Push time — see
-        // Push_IndirectGoalCycle_Throws for that path.
+        // Recursion is allowed — a goal that calls itself forever (directly or A → B → A) is
+        // stopped by the depth limit alone: each call is born one deeper than its caller.
         var stack = new CallStack { MaxDepth = 5 };
         var calls = new List<global::app.callstack.call.@this>();
         CallStackOverflowException? caught = null;
@@ -63,19 +59,18 @@ public class CycleDetectionTests
     }
 
     [Test]
-    public async Task EnteringAGoalAlreadyOnTheChain_IsACycle_AtItsEntry()
+    public async Task EnteringAGoalAlreadyOnTheChain_Runs_RecursionIsAllowed()
     {
         await using var app = TestApp.Create("/test");
         var context = app.User.Context;
-        // A → B → A: A's action and B's are on the live chain; entering A again is the cycle.
+        // A → B → A: a goal may call itself through others; only the depth limit stops it
         await using var a = context.CallStack.Push(MakeAction("A"));
         await using var b = context.CallStack.Push(MakeAction("B"));
         var goalA = Make.Goal("A", "/A.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
 
         var entered = await goalA.Run(context);
 
-        await entered.IsFailure();
-        await Assert.That(entered.Error!.Key).IsEqualTo("CallStackOverflow");
+        await Assert.That(entered.Error?.Key).IsNotEqualTo("CallStackOverflow");
     }
 
     [Test]

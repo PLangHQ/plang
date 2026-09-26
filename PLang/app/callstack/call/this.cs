@@ -116,6 +116,7 @@ public sealed partial class @this : IAsyncDisposable
         Id = Guid.NewGuid().ToString("N")[..8];
         Action = action;
         Caller = caller;
+        Depth = (caller?.Depth ?? 0) + 1;
         Synthetic = action.Synthetic;
         _stack = stack;
         _previousCurrent = previousCurrent;
@@ -205,19 +206,10 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Length of the synchronous Caller chain rooted at this Call. <c>Root.Depth == 1</c>
-    /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. Derived — walks Caller.
-    /// PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
+    /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. A birth fact: one more than its
+    /// caller's. PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
     /// </summary>
-    public int Depth
-    {
-        get
-        {
-            int count = 0;
-            var node = this;
-            while (node != null) { count++; node = node.Caller; }
-            return count;
-        }
-    }
+    public int Depth { get; }
 
     /// <summary>
     /// Executes the resolved handler under this Call frame. Wraps:

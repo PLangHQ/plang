@@ -314,16 +314,15 @@ public sealed partial class @this
         // Goal-level Call frame. Step actions push under this; the goal frame outlives
         // any single action's pop, so things like `debug.tag` can attach metadata to a
         // scope that subsequent steps can still read (they navigate up via Current.Caller).
-        // Cycle detection (ContainsGoal by PrPath) lives here, at the goal's entry — entering
-        // a goal already on the chain trips the overflow guard before this Push, before any
-        // step action runs. Both live INSIDE the try so a CallStackOverflowException becomes
-        // Data.FromError instead of a raw CLR exception escaping RunAsync.
+        // A goal may call itself: the only limit is the depth guard, which trips at this Push —
+        // INSIDE the try, so a CallStackOverflowException becomes Data.FromError instead of a
+        // raw CLR exception escaping RunAsync.
         //
-        // Action.Step is pinned to Step[0] solely to give ContainsGoal a Step→Goal anchor
-        // for the cycle check (it reads action.Step?.Goal?.PrPath). This is the goal-entry
-        // frame, not "step 0 running" — observers reading goalCall.Action.Step should treat
-        // it as the goal anchor, not the currently-executing step (which is whatever the
-        // child stepCall.Action.Step points at).
+        // Action.Step is pinned to Step[0] as the frame's Step→Goal anchor (the debug call stack
+        // and the overflow error name the goal through it). This is the goal-entry frame, not
+        // "step 0 running" — observers reading goalCall.Action.Step should treat it as the goal
+        // anchor, not the currently-executing step (which is whatever the child stepCall.Action.Step
+        // points at).
         var goalEntryAction = new global::app.goal.step.action.@this
         {
             Module = context.App.Module["goal"],
@@ -333,9 +332,6 @@ public sealed partial class @this
 
         try
         {
-            // entering a goal already on the chain is a cycle: A → B → A
-            if (PrPath != null && context.CallStack.ContainsGoal(this))
-                throw new global::app.error.CallStackOverflowException(context.CallStack.MaxDepth);
             await using var goalCall = context.CallStack.Push(goalEntryAction);
 
             var result = await Step.Run(context);
@@ -356,8 +352,8 @@ public sealed partial class @this
         }
         catch (global::app.error.CallStackOverflowException ex)
         {
-            // Cycle detection (depth limit or ContainsGoal) trips at Push, before the
-            // goal frame is on the stack. Convert to ServiceError so Goal.RunAsync's
+            // The depth limit trips at Push, before the goal frame is on the stack.
+            // Convert to ServiceError so Goal.RunAsync's
             // contract (returns Data, never throws) holds — outer Step.RunAsync's broad
             // catch would otherwise produce a ServiceError without goal/step context.
             var stack = context.CallStack;

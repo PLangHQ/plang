@@ -88,8 +88,8 @@ public sealed partial class @this
 
     /// <summary>
     /// Pushes a new <see cref="call.@this"/>, sets it as the AsyncLocal Current, appends to
-    /// <c>Caller.Children</c>, and enforces the depth limit (MaxDepth); a goal cycle is goal.Run's to
-    /// catch, at the goal's entry (ContainsGoal).
+    /// <c>Caller.Children</c>, and enforces the depth limit (MaxDepth) — the only limit: a goal may
+    /// call itself, directly or through others.
     /// The returned Call IS <see cref="IAsyncDisposable"/> — use <c>await using</c> for
     /// automatic Pop.
     /// </summary>
@@ -99,20 +99,10 @@ public sealed partial class @this
     {
         var caller = _current.Value;
 
-        // Cycle detection — depth and goal-cycle both trip CallStackOverflowException.
-        if (caller != null)
-        {
-            int depth = 0;
-            var node = caller;
-            while (node != null) { depth++; node = node.Caller; }
-            if (depth >= MaxDepth)
-                throw new CallStackOverflowException(MaxDepth);
-        }
+        // the caller's depth is its own fact: one more frame past MaxDepth is the overflow
+        if (caller != null && caller.Depth >= MaxDepth)
+            throw new CallStackOverflowException(MaxDepth);
 
-        // A goal cycle (A → B → A) is caught where a goal is ENTERED (goal.Run asks ContainsGoal before
-        // it pushes its enter frame), not here: an action is pushed where it runs, and one held
-        // elsewhere — a channel's call, a callback, a recovery — runs far from the goal it was written
-        // in without entering it.
         var call = new call.@this(action, caller, this, caller, variables ?? Variables);
 
         // Children owns its own lock + FIFO eviction policy.
@@ -136,22 +126,4 @@ public sealed partial class @this
             _current.Value = previous;
     }
 
-    /// <summary>
-    /// True if any Call in the synchronous Caller chain belongs to <paramref name="goal"/> — the same
-    /// .pr and the same name: a file's sub-goals share its .pr, and a name alone can collide across an
-    /// app's goal tree. goal.Run asks it at a goal's entry: entering a goal already on the chain is a
-    /// cycle.
-    /// </summary>
-    public bool ContainsGoal(global::app.goal.@this goal)
-    {
-        var node = _current.Value;
-        while (node != null)
-        {
-            if (node.Action.Step?.Goal is { } on && on.PrPath is { } path && path.Equals(goal.PrPath)
-                && string.Equals(on.Name, goal.Name, StringComparison.OrdinalIgnoreCase))
-                return true;
-            node = node.Caller;
-        }
-        return false;
-    }
 }
