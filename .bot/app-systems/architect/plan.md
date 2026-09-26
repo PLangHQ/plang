@@ -8,7 +8,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 
 1. **The three paths disagree.** The type system is reached at `app.type` (plang `%!app.type%`, C# `App.Type`) but lives at `type/list/this.cs` as `type.list.@this`; "list" names both the system and the types in it. OBP's alignment test (`Documentation/v0.2/object_pattern_formal.md`, "The three paths agree") says that's a wrong shape. The same holds for goal, actor, module, test and variable.
 2. **The type system has several ways in and several copies of its knowledge.** `Register` (`type/list/this.cs:390`), `RegisterRuntime` (`Registry.cs:100`) and the static `Loader.Register` (`Loader.cs:87`) all add types; five maps (`Registry.cs:24-36`) plus `_catalogByName` (`:111`) and `_full` (`:216`) look them up; `Get(string)` and `Clr(string)` answer one question twice (`:90`, `:93`).
-3. **Systems can't describe themselves.** `write out %!app.type%` throws `NoWireContract`, because the class declares no face.
+3. **Systems can't describe themselves, and the facts they'd show are thin or wrong.** `write out %!app.type%` throws `NoWireContract`, because the class declares no face. Only 2 of ~21 types declare a description, text's example is a filename (`readme.md`), and 356 of 594 `.goal` files put the goal's description under its name, where it becomes step 0's comment.
 4. **A reference (`%x%`) has six parsers and four definitions** (`data.TryFullVarMatch`, `text.HasVariable`, the coverage/types-walk/pick regexes, the old store render), plus two identical `CleanName`s and a hand-written name scan in `variable.@this.Convert`. `"save 50% now and 20% later"` parses differently depending on who reads it. Reading a variable re-parses its name and walks it through a switch (`data/this.Navigation.cs:51-89`).
 5. **Events live beside the objects, not on them.** `event.on(Trigger=…)` is one module over an enum (`app/event/Trigger.cs`). The thing an event is about doesn't own it.
 6. **The entry verb differs from plang's.** plang's entry point is `Start` (`Start.goal`, and `App.Start()` at `app/this.cs:480`), but everything else is entered through `Run` (goal, step, action, the lists, 126 action handlers).
@@ -24,6 +24,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 - `%!app.goal.list%` is the goals loaded so far (goals load when they're called, `goal/list/this.cs:128-176`).
 - **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 10) uses it.
 - **Every list has `all`, for consistency.** Where everything is already present (the types are registered at startup), `all` answers the list itself, so nobody needs to know which systems load lazily.
+- **`all` takes settings (Ingi):** a method with named, optional parameters; `.all` without parentheses runs it with the defaults (one door). For goals: `show` = `public` (default) | `private` | `all`, and `os` = whether os/system goals are included (default false: the app's own goals). `%!app.goal.list.all(show: "all", os: true)%`. The default lists each `.pr`'s main goal without reading the files; `private`/`all` read them for their sub-goals.
 - A list is navigated by index, so `list.all` never clashes with an element's name; one element by name stays on the system (`%!app.goal.Start%`).
 
 ```csharp
@@ -37,6 +38,8 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 **One element.** It owns its facts, its `on` (events about it) and its `current` (the instance in play).
 
 **`Start` is the entry point of everything that runs (Ingi).** As `Start.goal` is plang's entry: `app.Start()`, `goal.Start(context)`, `step.Start`, `action.Start`, each handler's `Start()`, a list's `Start`, a code's `Start`. It's virtual, so an owner can change what starting it means. **A value keeps `Value()`** (Ingi); anything that has code also has `Start`, for consistency. A variable is both: `variable.Value()` → `variable.Start(context)` → `Code.Start(context)`.
+
+**plang vocabulary is lowercase in C# too (Ingi).** Everything plang can reach is a lowercase member: `app.type`, `app.goal`, `app.variable`, `app.module`, `app.actor`, `app.test`, and their `list`, `current`, `all`, `on`, and the facts a face shows. C# plumbing plang never navigates stays PascalCase; a C# keyword keeps its `@` (`app.@event`); an item's own `Type` (its type entity) stays. So the three paths match letter for letter: `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/type/this.cs`. Each system's property on `app` is renamed in the stage that moves it (type: stage 2; the others: stage 7). This replaces CLAUDE.md's "Property names on `app.@this` stay PascalCase" (proposal filed).
 
 **What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on/after.cs` → `app.type.text.on.after.create(LoadText)`.
 
@@ -58,7 +61,7 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 | 2 | **Move type:** `type/list/this.cs` → `type/this.cs` (the system); `type/this.cs` → `type/type/this.cs` (one type). References by full name: `app.type.@this` 257. No behaviour change | no |
 | 3 | **One set of types:** the maps become one set, each type owning its name, aliases, C# class and facts. `Add` is the one way in; `Load` is the startup scan; `Get`/`Clr` become the one door | no |
 | 4 | **The type system is an item:** its stored context goes (`internal Context`, `list/this.cs:30`); `Output` writes its face; it answers its own navigation | no |
-| 5 | **Faces:** system (`list` names, `kind`, `scheme`, `choice`); a type (`name`, `description`, `example`, `kind`); a choice type adds `values`; a kind (`name`, `extension`, `mime`). Prompt C's Types section renders from these facts (`properties.template:82` already reads type facts). `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die | yes: twins byte-equal, or one eval run |
+| 5 | **Faces and honest facts** (details in "Faces" below): the type faces (system, type, choice `values`, kind); each type's real description and example; internal item classes stay out; prompt C's Types section renders from these facts (`properties.template:82` already reads type facts); `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die. Also: the 356 `.goal` files get their description above the goal's name; `goal.Comment` is the one description member; the hash covers comments; `start.md` docs | yes: twins byte-equal, or one eval run |
 | 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is `text` + `code`; `Value()` → `Start(context)` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value | yes: `"variable"` in the .pr; twins + one eval run |
 | 7 | **Every system in the same shape:** goal (93 references), actor (15), module (11), test (87), variable (the system at `app/variable/this.cs`, freed by stage 6). Each: `X/this.cs` system + `X/X/this.cs` element, `.list`, `["name"]`, `.name`, `.current` where it means something, a face | no |
 | 8 | **`on` and `current` on every object** (details below): events move from `event.on(Trigger=…)` to the object, as `on.before.<verb>` / `on.after.<verb>` for every public verb, plus outcomes (`on.error`, `on.hit`, `on.miss`). The `on` module's actions are one-line doors (`on.before`, `on.after`, the outcome actions; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- after file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
@@ -174,7 +177,7 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | `type.list.@this` as the system's class name; `type/list/` as its folder | 2 |
 | `Registry.cs`'s five maps, `_catalogByName`, `_full`; `Register`, `RegisterRuntime`; the static `Loader` (`Register`, `SealedNames`, `ReservedCore`, `ReservedShadow`); `Get(string)`/`Clr(string)` as two doors | 3 |
 | the type system's stored `Context` | 4 |
-| `type/list/view/` (whole folder) and `BuildTypeEntries` | 5 |
+| `type/list/view/` (whole folder) and `BuildTypeEntries`; `goal.Description`; the goal hash that ignores comments; the four `os/` `readme.md` (→ `start.md`) | 5 |
 | `app/variable/path/` (`Parse`, `Segment` and its kinds, `Segment.Index.Key`'s string re-parse, `Segment.Call.Args`); the walker's switch and clr special case (`data/this.Navigation.cs:33-94`); `data.TryFullVarMatch`; static `text.HasVariable(string)`; `CleanName` ×2 (`data/this.cs:647`, `variable/list/this.cs:617`); `variable.@this.Convert`'s hand scan; the regexes in `step/this.Validate.cs:26`, `step/this.Scope.cs:9`, `pick/list/this.cs:90,96`; `data.HasVariableReference` | 6 |
 | the per-concept `X.list.@this` as the class reached at `app.X` (goal, actor, module, test) | 7 |
 | `event.on`, `Trigger` as a list of moments beside the objects | 8 |
@@ -195,7 +198,9 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | variable system | `%!app.variable%` | `app.variable` | `app/variable/this.cs` | the memory of the actor in play |
 | an object's events | `%!app.type.text.on%` (read) | `x.On` | each element's folder | registered by a step through the `on` module |
 | starting an action from C# | — | `app.module["file"]["read"].Start(…)` | `module/module/…` | through `action.Start`; nothing test-only |
-| names | — | — | — | no verb+noun; `Start`, `Add`, `Load`, `Variable`, `Code`, `On`, `current`, `list`: one word each |
+| every goal | `%!app.goal.list.all%` | `app.goal.list.all(show, os)` | `app/goal/list/this.cs` | a method with optional parameters; `.all` = the defaults |
+| a goal's description | `%!app.goal.Show.comment%` | `goal.Comment` | `app/goal/goal/this.cs` | the lines above the goal's name; the only description member |
+| names | — | — | — | no verb+noun; `Start`, `Add`, `Load`, `Variable`, `Code`, `On`, `current`, `list`, `all`: one word each; plang vocabulary lowercase |
 
 ## Open for the next round
 
