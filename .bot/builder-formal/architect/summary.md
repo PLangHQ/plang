@@ -2,6 +2,16 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — the app.type restructure: architecture talk with Ingi
+
+Next branch (after builder-formal closes): the parked app-systems draft (`.bot/goal-graph-singular/architect/app-systems-draft.md`).
+- `type/this.cs` is the type SYSTEM at `app.type` (its face lists `list`, `kind`, `scheme`, `choice`; type has no `.current`), and `type/type/this.cs` is one type.
+- **Settled:** `%!app.type["text"]%` is the door to one type, `%!app.type.text%` is shorthand; members win, so the `list`/`choice`/`type` types need the brackets. The system answers its own navigation.
+- **New OBP rule (Ingi): "the three paths agree"** (plang path, C# namespace/class, file path), added to object_pattern_formal.md and to memory.
+- The one-definition-of-`%x%` work joins that branch: the reference moves to `app.type.item.variable` with its path parser; `item.Variable` is a read-only list of references (null when none); `HasVariable => Variable?.Count > 0`.
+
+**Open:** merge builder-formal up the stack first, or branch from it (my lean: merge up first).
+
 ## 2026-09-26 — the marker sweep and file.read landed; the %…% owner waits on Ingi
 
 - `5f36d1d83`: the template-marker sweep (read-time guesses gone; the 3 reds were a fixture gap; wire-serialization.md states the rule).

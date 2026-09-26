@@ -105,6 +105,15 @@ The type system keeps a context (infrastructure, not an item): it's used for its
 
 Also coming into the type system (ruled 2026-09-24, queued for coder): `app.Type.Mime(mime)`, `app.Type.Extension(ext)` and a kind's family through `app.Type.Kind[…]`, moved off the format registry.
 
+## Settled with Ingi 2026-09-26: reaching one type
+
+- **`%!app.type["text"]%` is the door to one type,** by name, for every type: the same selection as C#'s `App.Type["text"]`.
+- **`%!app.type.text%` is shorthand** for it, working whenever the name isn't one of the system's own members.
+- **The system's members win:** `%!app.type.list%` is all the types. The type named `list` (also `choice`, `type`) is reached only as `%!app.type["list"]%`. There is no `%!app.type.type.X%`.
+- How: the system is an item and answers its own navigation (`Get(parent, key)`, as text does at `text/this.cs:170`): a member first, else the type with that name, else NotFound. Reflection alone can't: it only finds C# properties.
+- The same holds for every system: `%!app.goal["Start"]%`, with `%!app.goal.Start%` as shorthand, and `%!app.goal.list%` / `%!app.goal.current%` as members.
+- **The OBP test this comes from:** the plang path, the C# path and the file path agree (`Documentation/v0.2/object_pattern_formal.md`, "The three paths agree").
+
 ## Open
 
 1. ~~The system class's name and place~~: settled above.
