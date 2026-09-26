@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: a cached goal returns its cache
+
+"it should be return goal.cache.goal, not the goal coming in, or actually cache.pr". `goal.Cache` is the goal as its .pr holds it, kept by Merge instead of dropped; `goal.IsCached` compares against it; Start's first step is `- if %goal.IsCached%, return %goal.Cache%`; the .pr file is `%goal.Cache.PrPath%`. Folded into the Start.goal bootstrap and its pin test.
+
 ## 2026-09-26 — the bare if landed (uncommitted at the time); a bootstrap blocker in the builder's own retry
 
 Operator is optional: a bare `if %x%` is Left's own truth, and operands are judged at build (OperandMissing/OperandExtra). action.Validate asks the handler's Validate so Reopen sees it. The cached Start step reopened for real, and nano answered with a bare if. **Blocker:** the installed Compile step was built with `Order=RetryFirst`, so FixSteps' corrected answer was never matched (earlier it went unseen because refused steps kept their old code). **Ruling:** option 1, a throwaway C# install of Start.goal from recorded answers (Merge + Reopen + Read + retry + fold + Text). Plus a C# test pinning the builder's critical steps (Compile's on.error: FixSteps, GoalFirst, RetryCount 1, the ElseWithoutIf → SourceError clause; Start's bare `if %goal.IsCached%`).
