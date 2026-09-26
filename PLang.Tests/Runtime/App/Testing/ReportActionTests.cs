@@ -108,6 +108,25 @@ public class ReportActionTests
         await Assert.That(System.IO.File.Exists(junitPath)).IsFalse();
     }
 
+    // A result names its goal — name, path, hash — and never writes the program: the goal's %variables%
+    // would render in the runner's context, where they are not set.
+    [Test]
+    public async Task Report_NamesTheGoal_WithoutWritingItsProgram()
+    {
+        var test = NewTest("X", global::app.test.Status.Pass);
+        var steps = new global::app.goal.step.list.@this();
+        steps.Add(new global::app.goal.step.@this { Goal = test.Goal, Text = "write out %response%" });
+        test.Goal.Step = steps;
+        _app.Test.Add(test);
+
+        await Report();
+
+        var json = await System.IO.File.ReadAllTextAsync(System.IO.Path.Combine(_tempDir, ".test", "results.json"));
+        await Assert.That(json).Contains("\"name\": \"X\"");
+        await Assert.That(json).Contains("deadbeef");
+        await Assert.That(json).DoesNotContain("%response%");
+    }
+
     // --test={"format":"junit"}: .test/junit.xml is written, .test/results.json is NOT.
     // Single-select format — each file artifact is either-or per run.
     [Test]

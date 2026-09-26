@@ -3,5 +3,5 @@ MissingVarIsNotNullValue
 / NOT the same as a never-set variable (which resolves to not-found). Here we pin the value side:
 / assigning null yields a present null-typed value that reads back as null.
 - set %x% = null
-- assert %x.Type.Name% equals "null"
+- assert %x!type% equals "null"
 - assert %x% is null

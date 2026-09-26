@@ -108,6 +108,15 @@ public sealed class @this
                 try
                 {
                     var built = global::app.type.item.@this.Create(kvp.Value, _context);
+                    // a plang-typed slot the born value doesn't fit (a choice from its text) is made by
+                    // the slot's own type, through its own Create
+                    if (typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
+                        && !prop.PropertyType.IsInstanceOfType(built)
+                        && prop.PropertyType.GetMethod("Create", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                               [typeof(object), typeof(data.@this)]) is { } create
+                        && create.Invoke(null, [kvp.Value, new data.@this(kvp.Key, context: _context)]) is global::app.type.item.@this made
+                        && prop.PropertyType.IsInstanceOfType(made))
+                        built = made;
                     val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
                           && prop.PropertyType.IsInstanceOfType(built)
                         ? built

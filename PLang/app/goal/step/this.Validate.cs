@@ -40,6 +40,10 @@ public sealed partial class @this
         var problems = new List<string>();
         foreach (var v in Marker.Matches(Text).Select(m => m.Value).Distinct())
             if (!written.Contains(v)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
+        // and the other way: a variable the answer names that the step's words don't is invented — a
+        // system variable (%!data%, %!error%) excepted
+        foreach (var v in Marker.Matches(written).Select(m => m.Value).Distinct())
+            if (!v.StartsWith("%!") && !Text.Contains(v)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
             if (l.Length > 0 && !written.Contains(l)) problems.Add($"step {Index}: \"{l}\" is in the step but not in your answer");
         var said = Number.Matches(Text).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();

@@ -109,6 +109,16 @@ public class TestingClassTests
         await _app.Test.Verbose.IsTrue();
     }
 
+    // A choice setting given as CLI text (--test={"format":"junit"}) is made by the choice itself.
+    [Test]
+    public async Task Configure_AChoiceFromItsText()
+    {
+        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["format"] = "junit" });
+
+        await result.IsSuccess();
+        await Assert.That(_app.Test.Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
+    }
+
     // Include/Exclude are replace-semantics — the walk sets a fresh list<text>, so a second
     // --test= call wipes the prior contents rather than accumulating tags.
     [Test]

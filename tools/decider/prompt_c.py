@@ -448,6 +448,10 @@ def check(goal, picks, parsed):
         r, w = disagreements(i, rows, picks.get(i, {}), steps[i]['text'])
         problems += r; warnings += w
         problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], written[i])]
+        # and the other way: a variable the answer names that the step's words don't is invented (step.Cover)
+        problems += [f'step {i}: {v} isn\'t in the step — use only the step\'s variables'
+                     for v in dict.fromkeys(re.findall(r'%[^%\s]+%', f.write(written[i], types=False)))
+                     if not v.startswith('%!') and v not in steps[i]['text']]
         problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], written[i])]
         problems += [f'step {i}: your answer writes {n}, which the step doesn\'t — leave out what the step doesn\'t give'
                      for n in invented_numbers(steps[i]['text'], rows)]

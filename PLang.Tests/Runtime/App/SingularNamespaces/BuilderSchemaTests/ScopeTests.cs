@@ -247,6 +247,31 @@ public class ScopeTests
     }
 
     [Test]
+    public async Task AVariableTheStepDoesNotName_IsRefused_ATypedSetIsItsType()
+    {
+        await using var app = TestApp.Create("/test");
+        var invented = Make.Goal("Start", Make.Step("set %iso%(duration) = \"PT5M\""));
+        await Picked(invented, app.System.Context, (0, "variable.set"));
+
+        var refused = await Match(invented, """
+            [0] variable.set(Name=%iso%, Value="PT5M", Type=%duration%)
+            """, app.System.Context);
+
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Message).Contains("%duration% isn't in the step");
+
+        var typed = Make.Goal("Start", Make.Step("set %iso%(duration) = \"PT5M\""));
+        await Picked(typed, app.System.Context, (0, "variable.set"));
+        var accepted = await Match(typed, """
+            [0] variable.set(Name=%iso%, Value="PT5M", Type="duration")
+            """, app.System.Context);
+
+        await accepted.IsSuccess();
+        await (await typed.Run(app.User.Context)).IsSuccess();
+        await Assert.That((await app.User.Context.Variable.Get("iso")).Type.Name).IsEqualTo("duration");
+    }
+
+    [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {
         await using var app = TestApp.Create("/test");

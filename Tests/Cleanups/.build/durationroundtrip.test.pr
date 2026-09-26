@@ -30,10 +30,9 @@
             {
               "name": "Type",
               "type": {
-                "name": "item",
-                "template": "plang"
+                "name": "text"
               },
-              "value": "%duration%"
+              "value": "duration"
             }
           ],
           "default": [
@@ -77,10 +76,9 @@
             {
               "name": "Type",
               "type": {
-                "name": "item",
-                "template": "plang"
+                "name": "text"
               },
-              "value": "%duration%"
+              "value": "duration"
             }
           ],
           "default": [

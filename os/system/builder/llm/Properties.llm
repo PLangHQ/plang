@@ -52,6 +52,7 @@ Common steps, and their formal:
   write out "Done" to "log" channel               output.write(Data="Done", channel="log")
   set %count% = 0                                 variable.set(Name=%count%, Value=0)
   set %total% = %a% + %b%                         math.add(A=%a%, B=%b%); variable.set(Name=%total%, Value=%!data%)
+  set %d%(duration) = "PT5M"                      variable.set(Name=%d%, Value="PT5M", Type="duration")
   call SendMail to=%email%, subject="Hi"          goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
   foreach %orders%, call Ship order=%item%        loop.foreach(Collection=%orders%); goal.call(Name="Ship", Parameter={order: %item%})
   save %report% to file 'report.txt'              file.save(Path="report.txt", Value=%report%)

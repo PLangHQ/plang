@@ -26,8 +26,19 @@ public sealed class @this : global::app.type.item.@this
     // --- Discovery (populated by test.discover) ---
 
     /// <summary>The discovered goal. Always populated — built from the .pr
-    /// when available, otherwise parsed from the .goal source itself.</summary>
-    [Out] public required global::app.goal.@this Goal { get; init; }
+    /// when available, otherwise parsed from the .goal source itself. A report names it
+    /// (<see cref="Name"/>, <see cref="Path"/>, <see cref="Hash"/>): the program lives in its .pr, and
+    /// writing it out would render its %variables% in the runner's context.</summary>
+    public required global::app.goal.@this Goal { get; init; }
+
+    /// <summary>The test's goal, by name — the report's reference to it.</summary>
+    [Out] public string Name => Goal.Name;
+
+    /// <summary>The test's goal file.</summary>
+    [Out] public global::app.type.item.path.@this? Path => Goal.Path;
+
+    /// <summary>The hash of the goal text its .pr was built from — correlates a result with a build.</summary>
+    [Out] public string? Hash => Goal.Hash;
 
     /// <summary>Lifecycle status: Ready/Stale/Skipped after discovery,
     /// Pass/Fail/Timeout after execution. A closed set — stays a C# enum, rides
