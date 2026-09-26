@@ -104,12 +104,15 @@ public sealed class @this
                 return kv.Value;
         }
 
-        // Slash-qualified — match a sub-goal of the qualified parent path.
+        // Slash-qualified — the folder is part of the name: only a goal whose path ends with that
+        // folder and name answers (BuildGoal/Start is Start in a BuildGoal folder, never any Start).
         if (name.Contains('/') || name.Contains('\\'))
         {
-            var qualLeaf = name.Replace('\\', '/');
-            var leafName = qualLeaf[(qualLeaf.LastIndexOf('/') + 1)..];
-            if (_byName.TryGetValue(leafName, out goal) && !goal.IsSetup)
+            var qualified = "/" + name.TrimStart('/', '\\').Replace('\\', '/');
+            var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
+            if (_byName.TryGetValue(leafName, out goal) && !goal.IsSetup
+                && goal.Address?.Replace('\\', '/') is { } address
+                && address.EndsWith(qualified, StringComparison.OrdinalIgnoreCase))
                 return goal;
         }
 

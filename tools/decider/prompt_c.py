@@ -71,6 +71,7 @@ FIRST = re.compile(r'%[A-Za-z_][\w.]*%')
 AS = re.compile(r'\bas\s+%?([A-Za-z_]\w*)%?', re.I)
 ASSIGNED = re.compile(r'(%[A-Za-z_]\w*%)\s*=\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$')
 MARKED = re.compile(r'%([A-Za-z_]\w*)%')
+TARGET = re.compile(r'(%[A-Za-z_]\w*%)\s*=(?!=)')   # the variable an assignment writes (pick.list Target)
 
 def known_code(certain, text):
     """The code a step's certain picks already know, as (action, binds): the build's walk reads it
@@ -239,6 +240,17 @@ def disagreements(i, rows, picks_i, text=''):
             if any(same(x, a) for x in m.get('recovery') or []):
                 refused.append(f'step {i}: the Recovery of {m["module"]}.{m["name"]} runs {a["module"]}.{a["name"]}, the action it wraps — '
                                'Recovery holds what the step runs on error')
+    # the variable the step's words write (write to %x%, or %x% = … on a step that tests no condition —
+    # there `=` compares) is written by a variable.set of the step's own code (pick.list Writes)
+    tests = (picks_i.get('condition.if') or 0) >= POSSIBLE
+    target = WRITE_TO.search(text) or (not tests and TARGET.search(text))
+    if target:
+        name = target.group(1).strip('%').lower()
+        if not any(a['module'] == 'variable' and a['name'] == 'set' and any(
+                r['name'] == 'Name' and str(r['value']).strip('%"').lower() == name for r in a.get('property') or [])
+                for a in rows):
+            refused.append(f'step {i} says it writes {target.group(1)}, but no action writes it: '
+                           f'end the step with variable.set(Name={target.group(1)}, Value=%!data%)')
     # unsure = built from a possible pick; a pick the known-value rule placed (write to → variable.set)
     # is not a guess, so it carries no warning
     known = {'variable.set'} if WRITE_TO.search(text) else set()

@@ -213,6 +213,22 @@ public class ScopeTests
     }
 
     [Test]
+    public async Task AStepThatSetsAVariable_MustWriteIt()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("AddItem", Make.Step("set %total% = %total% + %item%"));
+        await Picked(goal, app.System.Context, (0, "math.add"));
+
+        var result = await Match(goal, """
+            [0] math.add(A=%total%, B=%item%)
+            """, app.System.Context);
+
+        // the sum would be computed and never kept
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("step 0 says it writes %total%, but no action writes it");
+    }
+
+    [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {
         await using var app = TestApp.Create("/test");

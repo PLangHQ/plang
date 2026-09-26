@@ -92,6 +92,16 @@ public sealed class @this
         new(@"\bas\s+%?([A-Za-z_]\w*)%?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     private static readonly System.Text.RegularExpressions.Regex Assigned =
         new(@"(%[A-Za-z_]\w*%)\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$");
+    // the variable an assignment writes: `%x% = …` (not `==`), whatever it is set to
+    private static readonly System.Text.RegularExpressions.Regex Target = new(@"(%[A-Za-z_]\w*%)\s*=(?!=)");
+
+    /// <summary>The variable the step's words say it writes — a <c>write to %x%</c>, or the <c>%x%</c> of a
+    /// <c>%x% = …</c> on a step that tests no condition (there `=` compares). Null when the words say none.</summary>
+    private string? Writes()
+    {
+        if (WriteTo.Match(_step.Text) is { Success: true } known) return known.Groups[1].Value;
+        return !Tests && Target.Match(_step.Text) is { Success: true } target ? target.Groups[1].Value : null;
+    }
 
     // The step's words that fill a value the decider can't: `write to %x%` is a known variable.set, `on
     // error … call` names what a recovery runs, `call X name=value` passes arguments.
@@ -153,6 +163,10 @@ public sealed class @this
         refused.AddRange(Unlisted(used));
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
+        // the variable the step's words write is written by a variable.set of the step's own code
+        if (Writes() is { } written && !code.Items().Any(a => a.Module.Name == "variable" && a.Name == "set"
+                && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), written.Trim('%'), StringComparison.OrdinalIgnoreCase)))
+            refused.Add($"step {i} says it writes {written}, but no action writes it: end the step with variable.set(Name={written}, Value=%!data%)");
         var warnings = new List<global::app.warning.@this>();
         foreach (var l in _listed.Where(l => used.Contains(l.Name)))
             if (l.Mark == listed.Mark.Possible)

@@ -86,6 +86,24 @@ public class GoalCallResolutionTests
     }
 
     [Test]
+    public async Task SlashName_IsTheFolderAndTheName_NeverAnyGoalOfThatName()
+    {
+        // BuildGoal calls BuildGoal/Start: a Start elsewhere is not it, and neither is BuildGoal itself
+        var ctx = _app.User.Context;
+        var caller = new PLangGoal { Name = "BuildGoal", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal.goal", ctx) };
+        _app.Goal.Add(caller);
+        _app.Goal.Add(new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });
+
+        var none = await _app.Goal.GetAsync("BuildGoal/Start", caller);
+
+        await Assert.That(none).IsNull();
+
+        var start = new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal/Start.goal", ctx) };
+        _app.Goal.Add(start);
+        await Assert.That(await _app.Goal.GetAsync("BuildGoal/Start", caller)).IsSameReferenceAs(start);
+    }
+
+    [Test]
     public async Task BareName_Resolved_AgainstCallersOwnBuildFolder()
     {
         // .pr at /foo/.build/other.pr — sibling of the caller in /foo/Caller.
