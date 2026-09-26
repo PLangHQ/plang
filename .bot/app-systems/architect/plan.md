@@ -17,7 +17,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 ## The shape
 
 **Every `app.X` is the type X (Ingi, round 5).** This reverses two earlier rulings: the separate system class (`X/this.cs` the system, `X/X/this.cs` one X, from the parked draft) and stage 4's "a system is not a plang value type". There are no system classes and no doubled files. The type named `goal` is what knows the goals, the same way the type named `text` knows text's kinds.
-- **`app.X` is a `type<X>` (Ingi: "`%!app.goal%` is `app/goal/this.cs`, no type there").** One generic class, `type.@this<T>` (`type/this.Generic.cs`), serves every concept; there is no class per concept and no `X/type/` folder. `app.goal` is `new type.@this<goal.@this>("goal", new goal.list.@this(app))`: the type named `goal`, defined by `goal/this.cs`. `%!app.goal%` and `%!app.type.goal%` are the same object.
+- **`app.X` is a `type<X>` (Ingi: "`%!app.goal%` is `app/goal/this.cs`, no type there").** One generic class, `type.@this<T>` (`type/this.Generic.cs`), serves every concept; there is no class per concept and no `X/type/` folder. App writes `goal = new(this);` (C#'s target-typed `new`, from the property type `type<goal>`): the type named `goal`, defined by `goal/this.cs`. The name comes from goal's class (`item.NameOf`, `item/this.cs:333-341`, the namespace tail), and the list from goal itself (`List(app)`, beside `Current`). `%!app.goal%` and `%!app.type.goal%` reach the same object (Ingi).
 - **One X stays where it is:** `goal/this.cs`, `type/this.cs` (one type), `module/this.cs`.
 - **The concept's own work lives in its list:** `X/list/this.cs` becomes a `list<X>`, as `step.list` (`goal/step/list/this.cs:14`) and `action.list` (`goal/step/action/list/this.cs:16`) already are. Goal's list keeps its store and its loading of `.pr` files; the registry, `type/list/this.cs`, becomes the `list<type>` at `app.type.list` and keeps the lookups by other keys (`Mime`, `Extension`, `[System.Type]`: `app.type.list.Mime(…)`). Today goal's, module's and actor's list classes don't inherit the plang list (`goal/list/this.cs:13`, `module/list/this.cs:14`, `actor/list/this.cs:8`).
 - **No name clash in the registry:** a `list<T>` subclass is a kind of list and claims no name (`Registry.cs:246-254`), and the open generic `type.@this<T>` (reflection name "this\`1") isn't taken for an `@this` class (`:237-238`), so it claims nothing, like `list.@this<T>`.
@@ -38,7 +38,7 @@ namespace app.type;
 public sealed class @this<T> : @this
     where T : item.@this, item.ICreate<T>, item.IMatch, item.ICurrent<T>
 {
-    public @this(string name, item.list.@this<T> list) : base(name) => this.list = list;   // base ctor: type/this.cs:105
+    public @this(app.@this app) : base(item.@this.NameOf(typeof(T))) => list = T.List(app);   // base ctor: type/this.cs:105
     public item.list.@this<T> list { get; }
     public data.@this<T> this[string key] => list.all.First(p => p.Match(key));  // p is a T: plain C#
     public data.@this<T> current(actor.context.@this context)
@@ -47,20 +47,22 @@ public sealed class @this<T> : @this
 }
 
 // sketch: app/this.cs — the properties' types change; today goal.list.@this (:146), type.list.@this (:210), module.list.@this (:135)
-public type.@this<goal.@this>   goal   { get; }   // new("goal", new goal.list.@this(this))
-public type.@this<type.@this>   type   { get; }   // new("type", the registry: type/list/this.cs)
-public type.@this<module.@this> module { get; }   // new("module", new module.list.@this(this))
+public type.@this<goal.@this>   goal   { get; }   // goal = new(this);   its list: goal.list.@this
+public type.@this<type.@this>   type   { get; }   // type = new(this);   its list: the registry, type/list/this.cs
+public type.@this<module.@this> module { get; }   // module = new(this); its list: module.list.@this
 
 // sketch: type/item/IMatch.cs — NEW: what a collected element answers to
 public interface IMatch { bool Match(string key); }
 
-// sketch: type/item/ICurrent.cs — NEW: which one is in play; the ICreate pattern
+// sketch: type/item/ICurrent.cs — NEW: which one is in play, and which list holds them; the ICreate pattern
 public interface ICurrent<TSelf> where TSelf : @this, ICurrent<TSelf>
 {
     static virtual TSelf? Current(actor.context.@this context) => null;          // nothing is ever inside it
+    static virtual item.list.@this<TSelf> List(app.@this app) => new();           // a plain list<T>
 }
 // goal/this.cs — NEW
 public static goal.@this? Current(actor.context.@this context) => context.Goal;
+public static item.list.@this<goal.@this> List(app.@this app) => new goal.list.@this(app);   // it loads .pr files
 // actor/this.cs — NEW
 public static actor.@this? Current(actor.context.@this context) => context.Actor;
 
@@ -121,7 +123,7 @@ public sealed class @this : app.type.item.list.@this<goal.@this>
 | `%!app.goal.list%` | `app.goal.list` | `app/goal/list/this.cs`, a `list<goal>` |
 | `%!app.goal["/show"]%` | `app.goal["/show"]` | `app/goal/this.cs`, one goal |
 | `%!app.goal.current%` | `app.goal.current(context)` | `app/goal/this.cs`, the running goal |
-| `%!app.variable.some%` | `app.variable["some"]` | the type named `variable`; its list is the asker's memory (`app/variable/list/this.cs`); see Open |
+| `%!app.variable.some%` | `app.variable["some"]` | the type named `variable` (a `type<variable>`); its list is the asker's memory, reached through navigation's context |
 | `Start.goal` | `app.Start()`, `goal.Start(context)` | the entry point, one word everywhere |
 
 ## Stages
@@ -331,7 +333,7 @@ A collected type's face is a summary (names only); detail comes by navigating to
 | a variable | `%user.name%` | `app.type.item.variable.@this` | `app/type/item/variable/this.cs` | `text` + `code`; `Value()` → `Start()` → `Code.Start()` |
 | the parser | — | `app.type.item.variable.parser.@this` | `app/type/item/variable/parser/this.cs` | the only definition of a reference |
 | an item's variables | — (a value's own) | `item.Variable` | `app/type/item/this.cs` | read-only, born whole; the shared empty list when none |
-| the type named `variable` | `%!app.variable%` | `app.variable` | open (see Open) | its list is the memory of the actor in play |
+| the type named `variable` | `%!app.variable%` | `app.variable` | a `type<variable>` | its list is the memory of the actor in play, reached through navigation's context (as `current` is) |
 | registering an event | `- after text create, call LoadText` | `on.event(item, when, event, action)` → `Item.on[When][Event].Add(…)` | `app/module/action/on/event.cs` | one action for every item; scoped to the registering actor |
 | an object's events | `%!app.type.text.on%` (read) | `x.on` | `app/event/before/<verb>/this.cs`, `app/event/after/<verb>/this.cs` | registered by a step through the `on` module; the shared empty `on` until bound |
 | a value's birth | — | the type's `Create(raw, context)` | `app/type/this.cs` (`Create`) | the one door; fires `on.before/after.create`; `new` only inside the type |
@@ -346,7 +348,5 @@ A collected type's face is a summary (names only); detail comes by navigating to
 
 Rounds 1–4 closed. Round 4 added: one `on.event(item, when, event, action)` for every event, bindings scoped to the registering actor, and binding/firing as verbs (`Add`, `Start`).
 
-Round 5 (2026-09-26) settled every `app.X` as the type X: one generic `type<X>` over the concept's `list<X>` (no class per concept, no `X/type/` folder), `IMatch`, `ICurrent`, `list<T>.First`, the strict `list<T>`, goal keyed by its address, bare names left to `call`, and the choice/kind/scheme stores moved onto the types. Parked for after this branch: `goal.PrPath` → a `pr` object (`pr.path`, later `pr.encryption`; `Documentation/Runtime2/todos.md`). Open:
-1. `%!app.goal%` and `%!app.type.goal%` are one object reached by two names.
-2. **Variable:** its list is the asker's memory (`actor/context/this.cs:43`), which a `list` getter can't reach: it has no context. Navigation carries the context (as it does for `current`). Where the variable type's class lives follows from that, since one variable moves to `app/type/item/variable/` in stage 6.
-3. **Round 3's 5(c):** `show` in `all(show, os)` as a choice.
+Round 5 (2026-09-26) settled every `app.X` as the type X: one generic `type<X>` over the concept's `list<X>` (no class per concept, no `X/type/` folder), `IMatch`, `ICurrent`, `list<T>.First`, the strict `list<T>`, goal keyed by its address, bare names left to `call`, and the choice/kind/scheme stores moved onto the types. Parked for after this branch: `goal.PrPath` → a `pr` object (`pr.path`, later `pr.encryption`; `Documentation/Runtime2/todos.md`). Also settled (Ingi): `%!app.goal%` and `%!app.type.goal%` reach the same object; `app.X = new(this)`, the name from X's class and the list from X (`List(app)`); variable's list, the asker's memory (`actor/context/this.cs:43`), is reached through navigation's context, as `current` is (a `list` getter has no context; coder traces the C# shape). Open:
+1. **Round 3's 5(c):** the settings of `all`.
