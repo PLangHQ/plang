@@ -2,6 +2,18 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 (early morning) — the night's list is done; BLOCKER: the decider returns 403
+
+`62e81a81d`:
+- **The cache crash is fixed at the owner:** RestoreFromCache re-parses the raw response and never renders it.
+- **Reverse text-literal coverage** landed.
+- **`IsAnswered`** (cached or formal). Coder's deviation, accepted: a formal step still goes through Read's checks. Compile's formal first step runs `build.match` with an empty answer when every step is answered, so no decider or LLM is involved. A goal of formal steps alone builds in 0.1 s with no decider key.
+- stage-4d.md has a "Since the first report" section.
+
+**BLOCKER for Ingi: since ~06:30 the TypeSafe decider answers `403: RBAC: access denied`.** Any step that isn't cached or formal can't be built until access is restored. BootstrapTests (Compile's recorded answers) is the one new red; re-record with `GOALS=Compile python3 tools/decider/bootstrap.py` once access is back. Coder did not touch the key or config.
+
+**Open design item found (for Ingi, security-adjacent):** type.Read's string arm makes ANY string holding `%var%` a template whatever the read mode, and .pr goals and the settings store read through the same wire. So "data from outside is never a template" is violated by every store read-back, which is a template-injection path. The fix is an authored wire again for goal reads, then gating the string arm; 16 tests depend on today's behaviour. Written up in `Documentation/v0.2/wire-serialization.md` and indexed in good_to_know.md.
+
 ## 2026-09-26 — formal steps, the pin passes, the builder prints again
 
 `f98e1645d`:
@@ -69,7 +81,7 @@ Ingi confirmed a plang-level `- run %action%` (the explicit door that runs an ac
 
 Chosen (Tests/): Simple/Start, ScalarsAsNative/Stage5/IfBoolTruthy, Stage2/TextForEachDoesNotIterateChars, Math/IntDivSevenByTwoIsThree, Errors/ThrowAttachesData, Errors/GoalFirstReturnsRecoveryValue, Channels/WriteToCustomChannel (+Logger), Serialization/VariableRendersValueOnly, Cleanups/DurationRoundTrip, ScalarsAsNative/Stage6/MissingVarIsNotNullValue. They cover set/templates, if bodies, foreach + sub-goal, math, throw/on error, channels, properties, typed set and null. Coder builds them, runs `plang --test` on them, and reports a table (built / passed / time / which layer failed).
 
-## 2026-09-26 morning — for Ingi: the plang builder builds
+## 2026-09-26 morning — for Ingi: the plang builder builds (see the newer entries above for everything since)
 
 **Read first:** `.bot/builder-formal/coder/stage-4d.md` (short: what works, what fails loudly, speed, every commit).
 
