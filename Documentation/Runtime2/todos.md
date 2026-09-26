@@ -1531,7 +1531,7 @@ goal.call's `Parameter` (and ui.render's) is declared a plain `list` (data<list>
 ## 2026-09-26 — nano double-escapes `\n` inside a text in a list of dicts
 Found in the builder-formal bootstrap: `set %fixMessages% = [{"Role":"user", "Content":"…%!error.Message%\n\nAnswer again…"}]`. Nano wrote `\\n\\n` (a backslash-n in the value, not a new line) in 4 of 4 asks, retries included, and even after a teaching line. Literal coverage refuses it correctly (it's a different value). The builder's own step was reworded to avoid it. Deterministic fix to consider, rather than more prompt: the step's quoted literals come from the programmer's text, which is the truth. When an answer's literal differs from exactly one of the step's literals only by escaping, the builder takes the step's literal (with a debug note). Then one eval round.
 
-## 2026-09-26 — builder check: goal-name coverage
+## 2026-09-26 — builder check: goal-name coverage — DONE (`0daeb36c4`, builder-formal)
 Found in the builder-formal bootstrap: a re-ask of Start.goal's Compile step dropped the whole `on error call FixSteps, then retry` clause and still passed every check. Coverage checks %variables%, quoted literals and numbers, but not an unquoted goal name (`call FixSteps`). Deterministic fix: the builder knows the app's goal names. Every goal name the step's words name must appear as a goal.call Name somewhere in the step's code (including a Recovery), or the step is refused.
 
 ## 2026-09-26 — builder checker gaps and a question (builder-formal 4d)

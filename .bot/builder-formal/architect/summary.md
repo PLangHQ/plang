@@ -13,9 +13,9 @@ Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's h
   1. prompt D (typed multi-line formal), held since "stop doing nano";
   2. the action-as-value design (`item|action<math>|…`);
   3. goal.call dropping `x=%x%` arguments: keep or not;
-  4. the %var%-inside-a-text checker gap.
+  4. the %var%-inside-a-text checker gap (the only silent-miss class still open; goal-name coverage landed, `0daeb36c4`).
   
-  Everything else is in the log below and in `Documentation/Runtime2/todos.md`.
+  Everything else is in the log below and in `Documentation/Runtime2/todos.md`. Coder stopped with a clean tree in sync with origin.
 
 Stage status:
 | Stage | File | Status |
