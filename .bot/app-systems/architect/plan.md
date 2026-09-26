@@ -107,7 +107,17 @@ public data.@this<T> First(System.Func<T, bool> match)
 **What `list` is, each type decides (Ingi).** Today the base item takes the name for every item: `item.list` is the item's **history**, the values it was made from (`item/this.cs:262-269`; a dict parsed from a file holds the file, so `%config% is file` stays true, `:282-286`; an image made from a path holds the path, `image/this.cs:165`). It moves to its own object: `item.history` (`app/type/item/history/this.cs`, today `item/type/list/this.cs`), whose `list` is those values in order (wire → source → dict), with `Add(prior)` and `Has(type)` as today (`item/type/list/this.cs:25-36`). That frees `list` on every item, so `type<T>.list` hides nothing, and `type/list` means only the registry. The call sites: `type/item/this.cs:269,286`, `type/item/source.cs:146,161`, `type/item/image/this.cs:165`, `type/item/file/this.cs:49,106`, `type/item/url/this.cs:35,91`, and `PLang.Tests/Shared/MaterializeProbeExtensions.cs:24`. (`ICreate.cs:66`'s `errVal.list` is an error's own causes, `error/Error.cs:63`, not the history.)
 - `%!app.goal.list%` is the goals loaded so far (goals load when they're called).
 - **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 11) and `goal["address"]` use it.
-- **Every list has `all`, for consistency.** Where everything is already present (the types are registered at startup), `all` answers the list itself, so nobody needs to know which types load lazily.
+- **Every list has `all`, for consistency (settled round 6).** The base list gets it (it has none today) and answers itself; a list that loads lazily overrides it. Async, because goal's override lists `.build/`:
+
+```csharp
+// type/item/list/this.Generic.cs — NEW
+public virtual ValueTask<list.@this<T>> all() => ValueTask.FromResult<list.@this<T>>(this);   // the same list, wrapped
+// goal/list/this.cs — NEW
+public override ValueTask<list.@this<goal.@this>> all() => all(@private: false, os: false);
+public async ValueTask<list.@this<goal.@this>> all(bool @private, bool os) { … }            // lists .build/, loads on touch
+```
+
+  plang's `.all` runs `all()`; `all(private: true)` runs goal's own; the generic `Get` calls `all()` and gets goal's defaults.
 - **`all` takes settings (Ingi):** a method with named, optional parameters; `.all` without parentheses runs it with the defaults (one door). For goals, two yes/no settings, each "include these too" (settled 2026-09-26): `private` (the sub-goals; default false) and `os` (the os/system goals; default false). `%!app.goal.list.all%` is the app's public goals, one per `.pr`, from the listing alone; `%!app.goal.list.all(private: true, os: true)%` is everything, and reads each `.pr` for its sub-goals. Not a `show` choice: `show` is a verb, and "all" isn't a visibility (goal's own choice is `visibility` = `private | public`, `goal/this.cs:13-18`). C#: `all(bool @private = false, bool os = false)`.
 - A list is navigated by index, so `list.all` never clashes with an element's key. plang paths are written in lowercase (`%!app.goal["/show"].name%`); navigation ignores case.
 
@@ -370,7 +380,7 @@ Round 5 (2026-09-26) settled every `app.X` as the type X: one generic `type<X>` 
 Round 6 (fresh eyes, in progress). Settled: the item's history is `item.history` with its `list`, so `list` is each type's own; `["key"]` answers `data<X>`, its C# callers sort into three groups, and a caller that can't await becomes async (the `.pr` reader keeps the name; the async load above it looks it up). The review's factual fixes are applied (citations, paths, missed callers, stage order: stage 1 skips code later stages delete, stage 2 folds into 4, `IMatch` arrives in stage 3). **Open, one at a time with Ingi** (all checked in the code):
 1. ~~**Stored twice**~~: settled, the list is the one store; lookups are `First`/`where` (see "The concept's own work lives in its list").
 2. ~~**The indexer can't load**~~: settled, `Get(key)` is the one async door and the C# indexer goes (see "Members of a collected type").
-3. **`all` isn't on the base list,** and goal's `all(private, os)` can't override a parameterless one, so the generic `list.all()` calls the wrong method.
+3. ~~**`all` isn't on the base list**~~: settled, the base list's `all()` answers itself and goal overrides it (see "`list` is a real object").
 4. **List navigation sends an unknown name to the first element** (`type/item/list/this.cs:575-576`), so `%!app.goal.list.all%` reads the first goal's `all`.
 5. **Two kinds:** the registry's `Kind` store is json/list/dict/`*`, how a value is navigated (`type/kind/list/this.cs:5-15`), not md/csv; a type already has `Kind` (`type/this.cs:60`) and `Kinds` (`:475`), and a `kind` beside `Kind` is ambiguous to navigation, which ignores case (`type/item/kind/reflection/this.cs:20-24`).
 6. **Sub-goals share their file's address** (`goal/this.cs:601`), so `goal["…"]` can't select one.
