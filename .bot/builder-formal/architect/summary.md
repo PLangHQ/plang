@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: the row's `template: plang` is the mark, no "authored wire"
+
+On the string-arm design item: "%var% has template=plang, that tells that it's a variable that needs to be processed, so no new authored". Confirmed in the files: the builder writes `"template": "plang"` on every row whose value holds a variable (show.pr 8×, start.pr 48×); plain rows are `{"name":"text"}`. **Ruling:** type.Read's string arm stops inferring from content. A string is a template only when its row's type carries the marker. Content decides only at BUILD, where the formal reader stamps the marker on the programmer's literal. The 16 tests are re-checked against the row marker; fixtures without it are stale and get regenerated. This closes the template-injection path (a cached/stored/outside text holding `%x%` stays text).
+
 ## 2026-09-26 (early morning) — the night's list is done; BLOCKER: the decider returns 403
 
 `62e81a81d`:
