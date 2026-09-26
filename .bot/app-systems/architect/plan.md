@@ -110,28 +110,35 @@ public data.@this<T> First(System.Func<T, bool> match)
 - **Every list has `all`, and `all` takes a `setting` (round 6, Ingi; replaces the `private`/`os` parameters settled in round 5).** One signature on every list, so an override never changes it. The base list gets `all` (it has none today) and answers itself; a list that loads lazily overrides it. Async, because goal's override lists `.build/`:
 
 ```csharp
-// type/item/list/this.Generic.cs — NEW
-public virtual ValueTask<list.@this<T>> all(ISetting setting) => ValueTask.FromResult<list.@this<T>>(this);   // the same list, wrapped
+// type/item/list/this.Generic.cs — NEW: every list takes the call's setting as it came
+public virtual ValueTask<list.@this<T>> all(data.@this setting) => ValueTask.FromResult<list.@this<T>>(this);   // the same list, wrapped
 
-// type/item/ISetting.cs — NEW: the settings a call passed; a missing key answers the default, never an empty result
-public interface ISetting
+// goal/list/setting/this.cs — NEW: what goal's list can be told; the defaults live here
+namespace app.goal.list.setting;
+public sealed class @this : item.@this, item.ICreate<@this>          // makes itself from the call's dict
 {
-    ValueTask<data.@this<T>> Get<T>(string key, T? fallback = null) where T : item.@this, item.ICreate<T>;
+    public @bool os { get; init; } = false;
+    public choice.@this<goal.Visibility> visibility { get; init; } = goal.Visibility.Public;
 }
 
-// goal/list/this.cs — NEW
-public override async ValueTask<list.@this<goal.@this>> all(ISetting setting)
+// type/item/ISetting.cs — NEW: an item names its setting class; the builder shows that class's properties and defaults
+public interface ISetting<TSetting> where TSetting : item.@this, item.ICreate<TSetting> { }
+
+// goal/list/this.cs
+public sealed class @this : item.list.@this<goal.@this>, item.ISetting<setting.@this>
 {
-    var os         = await setting.Get<@bool>("os");                                                        // missing → false
-    var visibility = await setting.Get<choice.@this<goal.Visibility>>("visibility", goal.Visibility.Public);  // missing → public
-    …                                                                                                       // lists .build/, loads on touch
+    public override async ValueTask<list.@this<goal.@this>> all(data.@this setting)
+    {
+        var s = await setting.Value<setting.@this>();     // the typed ask: the setting class makes itself (data/this.cs:707)
+        … s.os … s.visibility …                           // lists .build/, loads on touch
+    }
 }
 ```
 
   - plang: `%!app.goal.list.all%` (every default: the app's public goals, one per `.pr`, from the listing alone) and `%!app.goal.list.all(setting: {os: true, visibility: private})%`.
-  - `Get<T>` answers `data<T>` (as `app.setting.Get` does, `app/setting/this.cs:32`), the value made through T's own `Create` (`data/this.cs:707`). **A missing key answers the default (Ingi):** the one written at the use, else T's own empty value (`type.Empty`, `type/this.cs:127-143`: 0, "", false). `visibility` writes its default because its enum's zero is `Private` (`goal/this.cs:16`).
-  - **The generator lists the settings (Ingi: `setting.Get<T>("os")`):** it finds every `setting.Get<T>("literal", default)` in the class and records `(name, T, default)`. The builder shows them to the LLM (`os: bool = false, visibility: visibility = public`), and a plang call with an unknown key fails at build. A key that isn't a literal is a build error. No DTO class: `setting` is the call's dict behind `ISetting`.
-  - The type's `Get(key)` calls `all` with no settings, so every default.
+  - **The settings are a C# class (Ingi: "define the settings in c#, not get, because we can then build on top of that"):** `setting/this.cs` under its owner. A missing key is the property's own default (`= false`, `= Public`; Ingi: never an empty result). `visibility` writes its default because its enum's zero is `Private` (`goal/this.cs:16`).
+  - **The builder reads the setting class** (named by `ISetting<TSetting>`) the way it reads a type's facts: properties, types, defaults (`os: bool = false, visibility: visibility = public`); a plang call with an unknown key fails at build. No generator step.
+  - One signature on every list, `all(setting)`: each list turns the call's dict into its own setting class; a list with none ignores it. The type's `Get(key)` calls `all` with the shared empty setting, so every default.
 - A list is navigated by index, so `list.all` never clashes with an element's key. plang paths are written in lowercase (`%!app.goal["/show"].name%`); navigation ignores case.
 
 **One element.** It owns its facts and its `on` (events about it); `current` (the one in play) is its type's.
@@ -372,7 +379,7 @@ A collected type's face is a summary (names only); detail comes by navigating to
 | how an action is written | — | — | a doc, file.read as its worked example | the module pass's template |
 | starting an action from C# | — | `(await (await app.module.Get("file")).Value())!["read"].Start(…)` | `module/this.cs` | through `action.Start`; nothing test-only |
 | every goal | `%!app.goal.list.all%`, `…all(setting: {os: true})%` | `app.goal.list.all(setting)` | `app/goal/list/this.cs` | one signature on every list; `.all` = every default |
-| a call's settings | `all(setting: {os: true, visibility: private})` | `setting.Get<T>("os", default)` → `data<T>` | `app/type/item/ISetting.cs` | a missing key answers the default, never empty; the generator lists `(name, T, default)` for the builder; no DTO |
+| a list's settings | `all(setting: {os: true, visibility: private})` | `await setting.Value<goal.list.setting.@this>()` | `app/goal/list/setting/this.cs`; `app/type/item/ISetting.cs` | a C# class under its owner; a missing key is the property's default; the owner names it with `ISetting<TSetting>`; the builder reads its properties and defaults |
 | a goal's description | `%!app.goal["/show"].comment%` | `goal.Comment` | `app/goal/this.cs` | the lines above the goal's name; the only description member |
 | names | — | — | — | no verb+noun; verbs `Start`, `Add`, `Load`, `Create`, `Match`, `First`; the element's `Current` and `List` named for what they answer; plumbing `Variable`, `Code`, `Alias`, nodes `on`, `current`, `list`, `all`, `kind`, `history`: one word each; nodes lowercase, verbs PascalCase |
 
@@ -385,7 +392,7 @@ Round 5 (2026-09-26) settled every `app.X` as the type X: one generic `type<X>` 
 Round 6 (fresh eyes, in progress). Settled: the item's history is `item.history` with its `list`, so `list` is each type's own; `["key"]` answers `data<X>`, its C# callers sort into three groups, and a caller that can't await becomes async (the `.pr` reader keeps the name; the async load above it looks it up). The review's factual fixes are applied (citations, paths, missed callers, stage order: stage 1 skips code later stages delete, stage 2 folds into 4, `IMatch` arrives in stage 3). **Open, one at a time with Ingi** (all checked in the code):
 1. ~~**Stored twice**~~: settled, the list is the one store; lookups are `First`/`where` (see "The concept's own work lives in its list").
 2. ~~**The indexer can't load**~~: settled, `Get(key)` is the one async door and the C# indexer goes (see "Members of a collected type").
-3. ~~**`all` isn't on the base list**~~: settled, the base list's `all(setting)` answers itself and goal overrides it; settings are `setting.Get<T>("key", default)`, listed by the generator (see "`list` is a real object"). Still open inside it: how a call asks for both visibilities (a list `[public, private]`, or leaving it out means both).
+3. ~~**`all` isn't on the base list**~~: settled, the base list's `all(setting)` answers itself and goal overrides it; the settings are a C# class under their owner (`goal/list/setting/this.cs`), named by `ISetting<TSetting>` (see "`list` is a real object"). Still open inside it: how a call asks for both visibilities (a list `[public, private]`, or leaving it out means both).
 4. **List navigation sends an unknown name to the first element** (`type/item/list/this.cs:575-576`), so `%!app.goal.list.all%` reads the first goal's `all`.
 5. **Two kinds:** the registry's `Kind` store is json/list/dict/`*`, how a value is navigated (`type/kind/list/this.cs:5-15`), not md/csv; a type already has `Kind` (`type/this.cs:60`) and `Kinds` (`:475`), and a `kind` beside `Kind` is ambiguous to navigation, which ignores case (`type/item/kind/reflection/this.cs:20-24`).
 6. **Sub-goals share their file's address** (`goal/this.cs:601`), so `goal["…"]` can't select one.
