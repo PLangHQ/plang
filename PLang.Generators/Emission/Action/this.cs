@@ -52,6 +52,7 @@ public static class @this
         EmitResolve(sb, info);
         EmitAttach(sb, info);
         EmitParse(sb, info);
+        EmitCheck(sb, info);
         EmitExecute(sb);
         EmitHelpers(sb);
         EmitSnapshotPublic(sb);
@@ -264,16 +265,34 @@ public static class @this
         var body = new StringBuilder();
         foreach (var prop in info.Properties)
             prop.EmitParse(body);
+        EmitVerdict(sb, "Parse", body);
+    }
+
+    /// <summary>
+    /// The build-time variable verdict (<c>IClass.Check</c>): each whole %variable% parameter the
+    /// store knows opened through its own typed view, a decline collected per parameter.
+    /// </summary>
+    private static void EmitCheck(StringBuilder sb, ActionClassInfo info)
+    {
+        var body = new StringBuilder();
+        foreach (var prop in info.Properties)
+            prop.EmitCheck(body);
+        EmitVerdict(sb, "Check", body);
+    }
+
+    // A verdict member: the collected declines of its per-property body, or none without awaiting.
+    private static void EmitVerdict(StringBuilder sb, string member, StringBuilder body)
+    {
         const string returns = "System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>";
         if (body.Length == 0)
         {
-            // No literal slot — nothing to open, so nothing to await.
-            sb.AppendLine($"    public {returns} Parse()");
+            // No slot to open, so nothing to await.
+            sb.AppendLine($"    public {returns} {member}()");
             sb.AppendLine($"        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(System.Array.Empty<global::app.error.Error>());");
             sb.AppendLine();
             return;
         }
-        sb.AppendLine($"    public async {returns} Parse()");
+        sb.AppendLine($"    public async {returns} {member}()");
         sb.AppendLine("    {");
         sb.AppendLine("        var __declined = new System.Collections.Generic.List<global::app.error.Error>();");
         sb.Append(body);

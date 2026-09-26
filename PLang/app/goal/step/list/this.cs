@@ -114,10 +114,13 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             read[i] = actions;
         }
 
-        // Each read step, checked — every problem it shows, at once.
-        foreach (var (i, actions) in read)
+        // Each read step, checked — every problem it shows, at once — in the goal's order, walked over
+        // one scratch store: a step reads the variables the steps before it left.
+        using var scratch = Scratch(context);
+        for (int i = 0; i < CountRaw; i++)
         {
             var step = this[i];
+            if (!read.TryGetValue(i, out var actions)) { await step.Scope(scratch); continue; }
             // A step with steps indented under it gets its body from that layout (build.fold places it):
             // a body written over it that holds only what the indented steps do is a copy, dropped; one
             // that holds anything else is invented.
@@ -144,6 +147,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
             var (disagree, warnings) = step.Pick.Agree(actions);
             foreach (var why in disagree) Refuse(i, why);
+            foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
             if (refused.ContainsKey(i)) step.Code = new global::app.goal.step.action.list.@this();   // open again
             else foreach (var warning in warnings) step.Warning.Add(warning);
         }
@@ -155,6 +159,19 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             Details = new() { ["steps"] = string.Join(", ", refused.Keys) },
         };
     }
+
+    /// <summary>The build's walk over the steps, in order, before the LLM answers: each step's code
+    /// — or the code its certain picks know — walked over one scratch store, so each step is left the
+    /// variables it reads with their known types (<c>step.Variable</c>). Nothing runs.</summary>
+    public async System.Threading.Tasks.Task Scope(actor.context.@this context)
+    {
+        using var scratch = Scratch(context);
+        for (int i = 0; i < CountRaw; i++) await this[i].Scope(scratch);
+    }
+
+    // The walk's own store: a System-actor context with no parent — a fresh variable store nothing
+    // watches and nothing inherits into, so what the walk binds never reaches the builder's variables.
+    private actor.context.@this Scratch(actor.context.@this context) => new(context.App, context.App.System);
 
     /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
     /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>

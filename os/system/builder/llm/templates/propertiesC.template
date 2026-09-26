@@ -3,7 +3,8 @@ Prompt C's user message, in three parts.
 
 The goal as written, one line per step: the step (its comments above it, its indentation kept), then
 after `=> decider:` what the decider listed for it (step.Pick.Listed: each action with its score and
-mark), then after `=> formal:` the starting line (step.Pick.Formal) when anything is certain.
+mark), then after `=> formal:` the starting line (step.Pick.Formal) when anything is certain, then
+after `=> types:` the variables the step reads whose type the build knows (step.Variable, the walk's).
 
 Types — the literal types first (text, number, bool, list, dict), then every type a listed action's
 properties use, in the order the goal first reaches them: the type's Description, a choice's options,
@@ -35,6 +36,7 @@ Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
 {%- unless shown contains mark -%}{%- assign shown = shown | append: l.Name | append: "|" -%}{%- endunless -%}
 {%- endfor -%}
 {%- if s.Pick.Formal %} => formal: {{ s.Pick.Formal }}{% endif -%}
+{%- if s.Variable.size > 0 %} => types: {% for v in s.Variable %}%{{ v.Name }}% {{ v.Type }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% endif -%}
 {%- endfor -%}
 {%- comment %} goal.call's definition, when a listed action holds actions (an action property, a Recovery) {% endcomment -%}
 {%- assign holds = false -%}

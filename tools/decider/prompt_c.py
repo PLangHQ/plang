@@ -65,13 +65,62 @@ def prefill(action, text):
     if action == 'goal.call' and ARGUMENTS.search(text): required.append('Parameter={?}')
     return f'{action}(' + ', '.join(required) + ')'
 
+# The known code's words (goal/step/pick/list Code): a step's first variable, a foreach's `as` name, and
+# a `%x% = ` ending in one literal (quoted text, a number, true/false) or one variable.
+FIRST = re.compile(r'%[A-Za-z_][\w.]*%')
+AS = re.compile(r'\bas\s+%?([A-Za-z_]\w*)%?', re.I)
+ASSIGNED = re.compile(r'(%[A-Za-z_]\w*%)\s*=\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$')
+MARKED = re.compile(r'%([A-Za-z_]\w*)%')
+
+def known_code(certain, text):
+    """The code a step's certain picks already know, as (action, binds): the build's walk reads it
+    (goal.step.list.Scope). A foreach first, binding its item to its collection's element; a
+    `set %x% = literal|%y%`; each other action leaving its return as %!data%; a write to %x% last."""
+    code, write = [], WRITE_TO.search(text)
+    for a in sorted(certain, key=lambda a: 0 if a == 'loop.foreach' else 1):
+        if b.declared(*a.split('.', 1))[1]: continue   # a modifier binds nothing
+        if a == 'loop.foreach':
+            if (c := FIRST.search(text)):
+                item = m.group(1) if (m := AS.search(text)) else 'item'
+                code.append(('foreach', c.group(0).strip('%'), item))
+        elif a == 'variable.set':
+            if not write and (m := ASSIGNED.search(text)): code.append(('set', m.group(1).strip('%'), m.group(2)))
+        else: code.append(('data', b.returns(*a.split('.', 1))))
+    if write: code.append(('set', write.group(1).strip('%'), '%!data%'))
+    return code
+
+def literal_type(value):
+    return 'text' if value.startswith('"') else 'bool' if value in ('true', 'false') else 'number'
+
+def scope(store, code, text):
+    """One step at the build's walk over the scratch store (step.Scope): the variables its words name,
+    typed as known before each of its actions (a name the step only writes is not shown; item is unknown)."""
+    names, known = list(dict.fromkeys(MARKED.findall(text))), {}
+    # before each action — and once for a step whose code nothing knows yet
+    for action in code or [None]:
+        for n in names:
+            if n not in known and store.get(n, 'item') != 'item': known[n] = store[n]
+        if action is None: break
+        if action[0] == 'data': store['!data'] = action[1]
+        elif action[0] == 'set':
+            _, name, value = action
+            if value.startswith('%'):
+                if value.strip('%') in store: store[name] = store[value.strip('%')]
+            else: store[name] = literal_type(value)
+        else:
+            _, collection, item = action
+            t = store.get(collection, '')
+            if t.startswith('list<'): store[item] = t[5:-1]
+    return [(n, known[n]) for n in names if n in known]
+
 def user_message_c(goal, picks):
     """picks: {step index: {action: score}} — every score the decider gave."""
     lines = []
     for s in goal['steps']:
         lines.append((s, f'[{s["index"]}] {"    " * s.get("indent", 0)}- {s["text"]}'))
     out = 'Goal, as written:\n  ' + goal['name']
-    shown = []
+    # store: the build walk's scratch variables, name → type — born with every store's own (variable/list)
+    shown, store = [], {'Now': 'datetime', 'NowUtc': 'datetime', 'GUID': 'guid'}
     for s, line in lines:
         pad = ' ' * (len(f'[{s["index"]}] ') + 4 * s.get('indent', 0))
         for c in (s.get('comment') or '').split('\n') if s.get('comment') else []:
@@ -104,6 +153,8 @@ def user_message_c(goal, picks):
             filled = [filled[0] if filled else '?', head] + filled[1:]
         if known: filled.append(prefill('variable.set', s['text']))
         if filled: out += ' => formal: ' + '; '.join(filled)
+        types = scope(store, known_code([a for a, p in step_picks if p >= CERTAIN], s['text']), s['text'])
+        if types: out += ' => types: ' + ', '.join(f'%{n}% {t}' for n, t in types)
         shown += [a for a, _ in step_picks]
     shown = list(dict.fromkeys(shown))
     if any(holds_actions(a) for a in shown) and 'goal.call' not in shown:

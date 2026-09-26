@@ -10,8 +10,20 @@ namespace app.module.action.loop;
 /// Respects goal.return (Returned flag) and cancellation.
 /// </summary>
 [Action("foreach")]
-public partial class Foreach : IContext, IStep
+public partial class Foreach : IContext, IStep, IScope
 {
+    /// <summary>At the build's walk: the item is bound to its collection's element — the empty value
+    /// of the collection's kind — when the store knows the collection and its kind.</summary>
+    public async Task Scope()
+    {
+        if (Collection.Peek() is not global::app.type.item.source { IsVariable: true } source
+            || await source.Get(Context) is not { IsInitialized: true } known
+            || known.Type?.Kind is not { } kind || !Context.App.Type.Contains(kind.Name)) return;
+        var element = Context.App.Type[kind.Name];
+        var name = (Item == null ? null : (await Item.Value())?.Name) ?? "item";
+        await Context.Variable.Set(name, new data.@this(name, element.Empty(Context), element, context: Context));
+    }
+
     public partial data.@this Collection { get; init; }
     /// <summary>The variable each element is bound to — <c>%item%</c> when not named.</summary>
     [Default("item")]

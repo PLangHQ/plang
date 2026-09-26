@@ -40,6 +40,10 @@ public abstract record @this(string Name, string TypeName)
     /// </summary>
     public virtual void EmitParse(StringBuilder sb) { }
 
+    /// <summary>This property's part of <c>IClass.Check</c> — a whole %variable% slot judged against
+    /// the store. Empty by default.</summary>
+    public virtual void EmitCheck(StringBuilder sb) { }
+
     /// <summary>Lowercased parameter name used in .pr lookups.</summary>
     protected string ParamName => Name.ToLowerInvariant();
     /// <summary>Internal backing field name (used by [Code] service slots).</summary>

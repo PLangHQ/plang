@@ -199,6 +199,22 @@ public sealed record @this(
         sb.AppendLine("        }");
     }
 
+    public override void EmitCheck(StringBuilder sb)
+    {
+        if (!IsLiteralSlot) return;
+        // A whole %variable% the store holds a value for is opened through the typed view — the
+        // run's door; a variable the store doesn't know, or holds as a typed null, is unknown.
+        sb.AppendLine($"        if ({Name}.Peek() is global::app.type.item.source {{ IsVariable: true, Raw: var __ref{Name} }} __source{Name}");
+        sb.AppendLine($"            && await __source{Name}.Get(Context) is {{ IsInitialized: true }} __known{Name} && __known{Name}.Peek() is {{ IsNull: false }})");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            await {Name}.Value();");
+        sb.AppendLine($"            if (!{Name}.Success)");
+        sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
+        sb.AppendLine($"                    $\"property '{Name}' is {{__ref{Name}}} ({{__known{Name}.Type}}), which can't be a {{Context.App.Type[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
+        sb.AppendLine($"                    \"PropertyType\", 400));");
+        sb.AppendLine("        }");
+    }
+
     public override void EmitSnapshotEntry(StringBuilder sb)
     {
         // TypeName comes from the type system — no quote/backslash escapes needed.

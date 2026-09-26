@@ -14,8 +14,25 @@ namespace app.module.action.variable;
 /// (Data values are never mutated in place), carrying event subscribers across the name.
 /// </summary>
 [Action("set", Cacheable = false)]
-public partial class Set : IContext
+public partial class Set : IContext, IScope
 {
+    /// <summary>At the build's walk: the name takes what the build knows the value is — one literal,
+    /// or one whole variable the store knows. A template, a navigation, a variable the store doesn't
+    /// know, a setting (<c>%!x%</c>) or a property (<c>%x!p%</c>) leaves the name unknown.</summary>
+    public async Task Scope()
+    {
+        var name = await Name.Value();
+        if (name == null || name.IsMalformed || name.Name.StartsWith('!') || !string.IsNullOrEmpty(name.Property)) return;
+        if (Value.Peek() is global::app.type.item.source { IsVariable: true } source)
+        {
+            if (await source.Get(Context) is { IsInitialized: true } known) await Context.Variable.Set(name.Name, known);
+            return;
+        }
+        // a text with variables inside is unknown; a literal is read as the value it is
+        if (Value.HasVariableReference) return;
+        if (await Value.Value() is { IsNull: false }) await Context.Variable.Set(name.Name, Value);
+    }
+
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
     public async System.Threading.Tasks.Task<global::app.error.Error?> Validate()

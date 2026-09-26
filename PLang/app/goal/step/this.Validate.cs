@@ -23,7 +23,7 @@ public sealed partial class @this
 
     // A %variable% in the step's words; a quoted literal ("…", or '…' when not inside a word, so `don't`
     // is not one); a number that stands alone. These are plang's own markers — no human language is read.
-    private static readonly System.Text.RegularExpressions.Regex Variable = new(@"%[^%\s]+%");
+    private static readonly System.Text.RegularExpressions.Regex Marker = new(@"%[^%\s]+%");
     private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)");
     private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])");
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""");
@@ -38,7 +38,7 @@ public sealed partial class @this
         await Code.Output(writer, global::app.View.Store, context);
         var written = writer.ToString();
         var problems = new List<string>();
-        foreach (var v in Variable.Matches(Text).Select(m => m.Value).Distinct())
+        foreach (var v in Marker.Matches(Text).Select(m => m.Value).Distinct())
             if (!written.Contains(v)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
             if (l.Length > 0 && !written.Contains(l)) problems.Add($"step {Index}: \"{l}\" is in the step but not in your answer");

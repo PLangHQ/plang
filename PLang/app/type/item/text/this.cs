@@ -179,6 +179,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(string value) { _value = value ?? string.Empty; }
 
+    /// <summary>The empty text — what a text holds before anything is in it (type.Empty).</summary>
+    internal @this() : this(string.Empty) { }
+
     /// <summary>
     /// Construction with a template mode. <paramref name="template"/> is the
     /// authored-content mode the reader carries — <c>"plang"</c> when the bytes are

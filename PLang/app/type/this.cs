@@ -124,6 +124,24 @@ public sealed class @this : item.@this
     internal System.Type? ClrType => _clrType;
     private System.Type? _clrType;
 
+    /// <summary>This type's empty value — what a value of it holds before anything is in it: the value
+    /// class's own parameterless construction (an empty list or dict, 0, "", false). A type with none
+    /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
+    public item.@this Empty(global::app.actor.context.@this context)
+    {
+        var clr = context.App.Type[Name]?.ClrType;
+        if (clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters)
+            return new item.@null.@this(Name, Kind?.Name);
+        const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+        // a kinded type is born with its kind (an empty list<goal>) when it takes one
+        if (Kind != null && clr.GetConstructor(any, [typeof(kind.@this)]) is { } kinded)
+            return (item.@this)kinded.Invoke([Kind]);
+        if (clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty)
+            return (item.@this)empty.Invoke(null);
+        return new item.@null.@this(Name, Kind?.Name);
+    }
+
 
     /// <summary>
     /// The "null" type — the type of a Data whose Value is null and no explicit

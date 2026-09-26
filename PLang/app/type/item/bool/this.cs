@@ -22,6 +22,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(bool value) { Value = value; }
 
+    /// <summary>The empty bool, false — what a bool holds before anything is in it (type.Empty).</summary>
+    internal @this() : this(false) { }
+
     public static readonly @this True = new(true);
     public static readonly @this False = new(false);
 

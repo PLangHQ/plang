@@ -77,6 +77,21 @@ public sealed class @this
 
     private List<listed.@this> _listed = new();
 
+    /// <summary>The code the step's certain picks already know, before the LLM answers — what the
+    /// build's walk reads (<c>goal.step.list.Scope</c>): a certain loop.foreach over the step's first
+    /// variable binding its item (<c>as %i%</c>, else <c>%item%</c>) first, then each other certain
+    /// action as it is (its values still to fill), a certain <c>set %x% = </c>one literal or one variable,
+    /// and a <c>write to %x%</c> last. Empty when nothing is certain.</summary>
+    public global::app.goal.step.action.list.@this Known { get; private set; } = new();
+
+    // The step's words the known code reads: its first variable, a foreach's `as` name, and a
+    // `%x% = ` that ends in one literal (quoted text, a number, true/false) or one variable.
+    private static readonly System.Text.RegularExpressions.Regex First = new(@"%[A-Za-z_][\w.]*%");
+    private static readonly System.Text.RegularExpressions.Regex As =
+        new(@"\bas\s+%?([A-Za-z_]\w*)%?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    private static readonly System.Text.RegularExpressions.Regex Assigned =
+        new(@"(%[A-Za-z_]\w*%)\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$");
+
     // The step's words that fill a value the decider can't: `write to %x%` is a known variable.set, `on
     // error … call` names what a recovery runs, `call X name=value` passes arguments.
     private static readonly System.Text.RegularExpressions.Regex WriteTo =
@@ -119,6 +134,7 @@ public sealed class @this
         IsUnsure = Unsure(context);
         _listed = Listing();
         Formal = Prefill(context);
+        Known = await Code(context);
     }
 
     // ---------------------------------------------------------------- the answer against the picks
@@ -225,6 +241,39 @@ public sealed class @this
         }
         if (known.Success) filled.Add($"variable.set(Name={known.Groups[1].Value}, Value=%!data%)");
         return filled.Count > 0 ? string.Join("; ", filled) : null;
+    }
+
+    // The known code, written in formal and read the way an answer is read. A line that doesn't read
+    // knows nothing.
+    private async Task<global::app.goal.step.action.list.@this> Code(global::app.actor.context.@this context)
+    {
+        var text = _step.Text;
+        var known = WriteTo.Match(text);
+        var certain = _listed.Where(l => l.Mark == listed.Mark.Certain).Select(l => Catalog(l.Name, context))
+            .Where(a => a != null && a is not global::app.goal.step.action.modifier.@this).Select(a => a!).ToList();
+        var line = new List<string>();
+        foreach (var action in certain.OrderBy(a => a.Module.Name == "loop" && a.Name == "foreach" ? 0 : 1))
+        {
+            var name = $"{action.Module.Name}.{action.Name}";
+            if (name == "loop.foreach")
+            {
+                if (First.Match(text) is not { Success: true } collection) continue;
+                var item = As.Match(text) is { Success: true } named ? named.Groups[1].Value : "item";
+                line.Add($"loop.foreach(Collection={collection.Value}, Item=%{item}%)");
+            }
+            else if (name == "variable.set")
+            {
+                if (known.Success || Assigned.Match(text) is not { Success: true } set) continue;
+                line.Add($"variable.set(Name={set.Groups[1].Value}, Value={set.Groups[2].Value})");
+            }
+            else line.Add($"{name}()");
+        }
+        if (known.Success) line.Add($"variable.set(Name={known.Groups[1].Value}, Value=%!data%)");
+        if (line.Count == 0) return new();
+        var read = new global::app.goal.step.action.serializer.Formal(_step).Read(string.Join("; ", line), context);
+        if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;
+        await (context.App.Debug?.Write($"build.pick: step {_step.Index}'s known code does not read: {read.Error?.Message}") ?? Task.CompletedTask);
+        return new();
     }
 
     // One action as the pre-fill starts it: its required properties as `?` — and a goal.call whose step

@@ -33,6 +33,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     private @this(object value, kind.@this kind) { _value = value; Kind = kind; }
 
+    /// <summary>The empty number, 0 — what a number holds before anything is in it (type.Empty).</summary>
+    internal @this() : this(0L, @long) { }
+
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;

@@ -38,6 +38,15 @@ public interface IClass
         => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(
             System.Array.Empty<global::app.error.Error>());
 
+    /// <summary>Build-time verdict on the handler's VARIABLE parameters against what its context's store
+    /// knows — the scratch store the build walks the goal into. A slot holding a whole plain %name% the
+    /// store holds a value for is opened through its own typed view, the door the run opens; one error per
+    /// slot its type declines. A variable the store doesn't know, a navigation, a text with variables
+    /// inside — unknown — pass. Generated per handler; empty by default.</summary>
+    System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>> Check()
+        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(
+            System.Array.Empty<global::app.error.Error>());
+
     /// <summary>The goal this handler calls, as its properties name it now — selected the way its run
     /// selects it, on the bound handler (typed views, unresolved). A %var% name is only known at run,
     /// so it answers none. None — the default — for a handler that calls no goal.</summary>

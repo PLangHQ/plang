@@ -305,6 +305,8 @@ public class Default : IBuilder
         foreach (var name in (await action.Popular.Value())!.Items(context)) popular.Add((await name.Value())!.ToString());
         // Each step takes the answers under its own ids; the builder only hands the answer over.
         foreach (var step in goal.Step.Items()) await step.Pick.Take(answer, popular, context);
+        // What the picks know, walked: each step is left the types of the variables it reads.
+        await goal.Step.Scope(context);
         return context.Ok(true);
     }
 

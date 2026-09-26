@@ -138,6 +138,7 @@ public class PickListTests
                 await step.Pick.Take(first, Popular(), context);
                 await step.Pick.Take(second, Popular(), context);
             }
+            await goal.Step.Scope(context);   // build.pick's walk: each step's => types:
             differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
                 await Rendered("propertiesC.template", goal, context), entry.GetProperty("user").GetString()!));
         }

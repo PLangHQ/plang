@@ -62,9 +62,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this() : this(new List<object?>()) { }
     public @this(IEnumerable<Data> items) : this(new List<object?>(items)) { _hasWrapped = true; }
 
+    // The element kind the list was born with — stated by whoever makes it (an empty list has no
+    // elements to narrow from); null for a list born without one.
+    private readonly global::app.type.kind.@this? _kind;
+
+    /// <summary>An empty list of <paramref name="kind"/> — a <c>list&lt;goal&gt;</c> with nothing in it
+    /// yet, born by the type entity that knows its kind (type.Empty).</summary>
+    internal @this(global::app.type.kind.@this kind) : this(new List<object?>()) { _kind = kind; }
+
     /// <summary>A list's own type entity — the type owns its name (no namespace reflection). Carries
-    /// the template flag so a template=plang list resolves its %var% leaves at .Value().</summary>
-    protected internal override global::app.type.@this Type => new("list", typeof(@this)) { Template = Template };
+    /// the template flag so a template=plang list resolves its %var% leaves at .Value(), and the kind
+    /// it was born with.</summary>
+    protected internal override global::app.type.@this Type => new("list", typeof(@this)) { Template = Template, Kind = _kind };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction
@@ -693,7 +702,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// seam the base render uses so it never hard-codes the non-generic type. The
     /// generic <c>list&lt;T&gt;</c> overrides it so render/clone preserve the
     /// element-type tag (a <c>list&lt;path&gt;</c> stays a <c>list&lt;path&gt;</c>).</summary>
-    protected virtual @this Empty() => new();
+    protected virtual @this Empty() => _kind == null ? new() : new(_kind);
 
     /// <summary>A container is never final — an element may be non-final (a template,
     /// a nested container), so a read must go through the element's OWN door. The list
