@@ -2,6 +2,15 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — cached goal: 20.9 s → 5.3 s, and the bare `if`
+
+Coder measured an unchanged build of the builder's 7 files (12 goals) at 20.9 s: Properties' nano with every step kept 9.6 s, the first EmitBuildEvent render's warm-up 4.7 s, and FixSteps re-asking all-kept answers 5×. build.goals itself took 35 ms. After the Compile guard: 5.3 s. The dogfood rebuild of Start.goal asked only the 2 new steps, and the cached code is byte-equal. **The Start guard never fired:** nano built `if %goal.IsCached%` as `Operator="=="` with no Right (always false). **Ruling:**
+- a comparing operator with no Right is refused at build (so Reopen rebuilds that step: a real reopen test);
+- a **bare `if %x%` is truthiness**: Operator becomes optional (the action-as-value draft's settled rule 5), evaluated through the value's own ToBooleanAsync, with a teaching row;
+- not `== true` (wrong for a path, where true means exists).
+
+The first-render warm-up (4.7 s) goes to a todo.
+
 ## 2026-09-26 — Ingi: "the cached goal should be instant"
 
 Traced from the .goal files: an unchanged goal still runs the whole builder. Build.goal:13 calls BuildGoal for every goal; Decide renders its state twice; **Properties calls nano with every step `=> kept`**; every sub-goal Compiles again; the identical .pr is rewritten. That's 0.8–3.3 s per unchanged goal. **Revised by Ingi:** "goal.build should start with if goal.cached return goal.cache". The shortcut is in plang, and build.goals doesn't filter.
