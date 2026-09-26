@@ -3,8 +3,8 @@ builder until the runtime can run the plang one.
 
     stage 1  decider noul    which modules each step uses
     stage 2  decider choice  which action of each such module
-    stage 3  gpt-5.4-nano    order, count, property values — using os/system/builder/llm/Properties.llm
-                             VERBATIM, so this exercises the real prompt, not a copy of it
+    stage 3  gpt-5.4-nano    order, count, property values — prompt A (JSON), frozen in frozen/ when the
+                             plang builder moved to prompt C (os/system/builder/llm/Properties.llm now)
 
 Output goes to out/<goal file's folder>/.build/<name>.pr — a staging tree, never over the live
 builder's .pr files, so a bad build cannot break anything before it has been read.
@@ -19,7 +19,8 @@ ROOT = h.ROOT
 OUT = os.path.join(os.path.dirname(__file__), 'out')
 OPENAI_KEY = os.environ.get('OPENAI_API_KEY')   # only the stage-3 call needs it; the formal parser reads the catalogue alone
 MODEL = os.environ.get('STAGE3_MODEL', 'gpt-5.4-nano')
-SYSTEM = open(f'{ROOT}/os/system/builder/llm/Properties.llm', encoding='utf-8').read()
+FROZEN = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frozen')   # prompts A and B, as they last ran
+SYSTEM = open(f'{FROZEN}/Properties.llm', encoding='utf-8').read()
 
 # ---------------------------------------------------------------- the catalogue, from the C#
 PROP = re.compile(r'public\s+partial\s+(?:global::app\.)?data\.@this(?:<(?P<type>.+?)>)?(?P<opt>\?)?\s+(?P<name>\w+)\s*\{\s*get;\s*init;\s*\}')
@@ -301,12 +302,12 @@ def user_message_b(goal, menu):
                 out += '\n' + notes.replace('## ', '### ')
     return out + '\n'
 
-# The stage-3 answer shape — the file BuildGoal/Properties.goal passes as Schema, so python sends
-# what plang sends. OpenAi.cs appends it to the system message; there is no response_format.
-SCHEMA = open(f'{ROOT}/os/system/builder/llm/Properties.schema', encoding='utf-8').read()
+# The stage-3 answer shape prompts A and B asked for (frozen with them). OpenAi.cs appends it to the
+# system message; there is no response_format.
+SCHEMA = open(f'{FROZEN}/Properties.schema', encoding='utf-8').read()
 SYSTEM_SENT = SYSTEM + '\n' + f'You MUST respond in JSON, schema: {SCHEMA}'
 # Prompt B: rules only (PropertiesB.llm), the same schema appended; its user message is user_message_b.
-SYSTEM_B = open(f'{ROOT}/os/system/builder/llm/PropertiesB.llm', encoding='utf-8').read()
+SYSTEM_B = open(f'{FROZEN}/PropertiesB.llm', encoding='utf-8').read()
 SYSTEM_B_SENT = SYSTEM_B + '\n' + f'You MUST respond in JSON, schema: {SCHEMA}'
 
 def properties(goal, menu, folder=None):

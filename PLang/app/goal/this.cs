@@ -371,19 +371,6 @@ public sealed partial class @this
         }
     }
 
-    /// <summary>
-    /// Groups modifier actions onto their preceding executable action for this goal's
-    /// steps and every sub-goal recursively. Called before .pr serialization so saved
-    /// files have modifiers correctly nested. Without recursion sub-goal steps keep
-    /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %!data%).
-    /// </summary>
-    public void NestRecursive(app.module.list.@this modules)
-    {
-        foreach (var step in Step.Items()) step.Nest(modules);
-        foreach (var subGoal in Child)
-            subGoal.NestRecursive(modules);
-    }
-
     public static @this NotFound(string name) => new()
     {
         Name = name,

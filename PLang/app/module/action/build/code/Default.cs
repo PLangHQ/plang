@@ -213,11 +213,6 @@ public class Default : IBuilder
         if (prPath == null)
             return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
-        // Group modifier actions onto their preceding executable action — recursive so
-        // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
-        // modifiers and fail at runtime (a modifier's no-op Run wipes %!data%).
-        goal.NestRecursive(app.Module);
-
         // Final safety net before persisting: the goal judges itself. Refusing to write the .pr is
         // preferable to saving a half-built artifact the runtime can't execute.
         if (await goal.Validate(context) is { } invalid) return context.Error(invalid);
@@ -308,24 +303,6 @@ public class Default : IBuilder
         // What the picks know, walked: each step is left the types of the variables it reads.
         await goal.Step.Scope(context);
         return context.Ok(true);
-    }
-
-    // --- Merge ---
-
-    public async Task<data.@this> Merge(merge action)
-    {
-
-        // Diagnostic — gated by app.Debug presence (null = off), drops on the floor in production.
-        // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
-        // the builder rebuild; leaving the line in earns its keep next time it drifts.
-        var step = await action.Step.Value();
-        var from = await action.StepFromLlm.Value();
-        _ = action.Context.App.Debug?.Write(
-            $"builder.merge: step.Index={step?.Index} step.Code={step?.Code.Count} " +
-            $"from.Index={from?.Index} from.Keep={from?.Keep} from.Code={from?.Code.Count}");
-
-        step!.Merge(from!);
-        return action.Context.Ok(step);
     }
 
     // --- App ---

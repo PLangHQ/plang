@@ -3,7 +3,6 @@ using app.actor.context;
 using app.data;
 using app.variable;
 using app.module;
-using ActionEl = app.goal.step.action.@this;
 
 namespace app.goal.step;
 
@@ -63,58 +62,6 @@ public sealed partial class @this
         set => _code = value ?? new();
     }
 
-    /// <summary>
-    /// Nests each modifier onto the preceding action's Modifier slot — the flat LLM order becomes
-    /// the .pr shape. A modifier is a TYPE in the catalog (not a flag): the flat item, read as a plain
-    /// action, becomes the modifier it IS, with Position from the catalog. A leading modifier with no
-    /// preceding action is dropped with a warning. Rebuilds the action node. (Carried only until the
-    /// builder emits nested — then it is a no-op.)
-    /// </summary>
-    public void Nest(global::app.module.list.@this modules)
-    {
-        var flat = _code.Items().ToList();
-        if (flat.Count == 0) return;
-
-        var node = new global::app.goal.step.action.list.@this();   // Add non-modifier actions into the node
-        ActionEl? current = null;
-
-        foreach (var a in flat)
-        {
-            if (a.Module[a.Name] is action.modifier.@this catalog)
-            {
-                if (current == null)
-                {
-                    Warning.Add(new global::app.warning.@this
-                    {
-                        Key = "DroppedLeadingModifier",
-                        Message = $"Modifier '{a.Module}.{a.Name}' has no preceding action and was dropped"
-                    });
-                    continue;
-                }
-                // The flat action is dropped here, so its properties move to the modifier — its own.
-                current.Modifier.Add(new action.modifier.@this
-                    { Module = a.Module, Name = a.Name, Property = a.Property, Default = a.Default, Position = catalog.Position });
-            }
-            else
-            {
-                current = a;
-                node.Add(a);
-            }
-        }
-
-        // A flat answer carries no nesting, so it is ordered here: outermost wrapper (lowest Position)
-        // first. Stable: modifiers of equal Position keep the order written — the `on error` clauses are
-        // asked in that order. (A formal answer writes its nesting, and this ordering goes with Nest.)
-        foreach (var a in node.Items())
-        {
-            var ordered = a.Modifier.OrderBy(m => m.Position).ToList();
-            a.Modifier.Clear();
-            foreach (var m in ordered) a.Modifier.Add(m);
-        }
-
-        _code = node;
-    }
-
     private global::app.goal.step.pick.list.@this? _pick;
     /// <summary>The decider's reading of this step — its answers and the picks they mean. Build-time
     /// only: not stored in the .pr.</summary>
@@ -135,9 +82,6 @@ public sealed partial class @this
     /// <summary>Tag set by enrichResponse: "known" (prior text matched), "hint" (text changed, prior available), or "new".</summary>
     [Store, Debug, Default]
     public string? Source { get; set; }
-
-    /// <summary>Build-time only: LLM signal to reuse prior actions. Not stored in .pr (no [Store]).</summary>
-    public bool Keep { get; set; }
 
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();

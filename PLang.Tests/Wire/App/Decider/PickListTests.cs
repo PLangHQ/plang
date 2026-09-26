@@ -140,7 +140,7 @@ public class PickListTests
             }
             await goal.Step.Scope(context);   // build.pick's walk: each step's => types:
             differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
-                await Rendered("propertiesC.template", goal, context), entry.GetProperty("user").GetString()!));
+                await Rendered("properties.template", goal, context), entry.GetProperty("user").GetString()!));
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }

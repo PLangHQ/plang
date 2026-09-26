@@ -101,7 +101,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.EndArray();
                     action.Child = childSteps;
                     break;
-                default: reader.Skip(); break;
+                // a key this format doesn't write is an older builder's: skipping it would load a
+                // different action, silently
+                default: throw new global::app.error.PrFormatOutdatedException($"action key '{name}' isn't in this .pr format");
             }
         }
         reader.EndObject();
@@ -137,7 +139,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     value = type.Name == "action" ? Read(ref row, null, ctx) : type.Read(ref row, ctx);
                     break;
                 case "properties": properties = global::app.data.Properties.Read(ref row.Inner); break;
-                default: row.Skip(); break;
+                default: throw new global::app.error.PrFormatOutdatedException($"property key '{key}' isn't in this .pr format");
             }
         }
         row.EndObject();

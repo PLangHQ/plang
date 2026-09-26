@@ -18,7 +18,6 @@ public interface IBuilder : ICode
     Task<data.@this> Validate(validate action);
     Task<data.@this> Match(match action);
     Task<data.@this> Pick(pick action);
-    Task<data.@this> Merge(merge action);
     Task<data.@this> Load(load action);
     Task<data.@this> AppSave(appSave action);
 }

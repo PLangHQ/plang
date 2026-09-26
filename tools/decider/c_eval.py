@@ -2,9 +2,9 @@
 
 Per round: the decider runs once per goal; its picks feed both prompts, on each model.
 
-    B  PropertiesB.llm + the schema; propertiesUserB's shape with the menu = the picks ≥ 0.5 (names only);
+    B  frozen/PropertiesB.llm + the schema; propertiesUserB's shape with the menu = the picks ≥ 0.5 (names only);
        the answer in JSON; checked by build_pr.match (steps line up, the chain rule, fold)
-    C  PropertiesC.llm; prompt_c.user_message_c (the picks with scores, the certain ones pre-filled in
+    C  Properties.llm; prompt_c.user_message_c (the picks with scores, the certain ones pre-filled in
        formal); the answer in formal, parsed by formal.parse_answer; checked by prompt_c.check (fold, the
        match, and the agreement with the decider)
 

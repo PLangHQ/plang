@@ -1,6 +1,6 @@
 """Prompt C — the decider's picks pre-filled in formal, the answer in formal, and the double check.
 
-    system  os/system/builder/llm/PropertiesC.llm (no schema: the answer is formal text)
+    system  os/system/builder/llm/Properties.llm (no schema: the answer is formal text)
     user    the goal as written, one line per step: the step, `=> decider:` its picks ≥ 0.5 with their scores,
             `=> formal:` the certain ones (≥ 0.9) pre-filled — `?` for a value to fill, known values filled
             (`write to %x%` → variable.set(Name=%x%, Value=%!data%)); then Types; then each listed action
@@ -18,7 +18,7 @@ import formal as f
 import harness as h
 
 ROOT = b.ROOT
-SYSTEM_C = open(f'{ROOT}/os/system/builder/llm/PropertiesC.llm', encoding='utf-8').read()
+SYSTEM_C = open(f'{ROOT}/os/system/builder/llm/Properties.llm', encoding='utf-8').read()
 CERTAIN, POSSIBLE = 0.9, 0.5
 WRITE_TO = re.compile(r'write to\s+(%[^%\s]+%)', re.I)
 

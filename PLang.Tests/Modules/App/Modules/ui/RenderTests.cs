@@ -35,69 +35,7 @@ public class RenderTests : IDisposable
         System.IO.File.WriteAllText(fullPath, content);
     }
 
-    // --- The builder menu (propertiesUser.template) ---
-
-    // The per-property loop, cut verbatim from the builder's real template.
-    private static string PropertyLoopFromBuilderTemplate()
-    {
-        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "os/system/builder/llm/templates/propertiesUser.template")))
-            dir = dir.Parent;
-        var text = System.IO.File.ReadAllText(System.IO.Path.Combine(dir!.FullName, "os/system/builder/llm/templates/propertiesUser.template"));
-        var start = text.IndexOf("{%- for p in a.Property %}", StringComparison.Ordinal);
-        var end = text.IndexOf("{%- endfor -%}", start, StringComparison.Ordinal) + "{%- endfor -%}".Length;
-        return text[start..end];
-    }
-
-    [Test]
-    public async Task BuilderMenu_ChoiceSlot_ShowsItsOptions()
-    {
-        var context = _app.User.Context;
-        // goal.call's catalog entry: its Actor slot is choice<actor> over {system, user}.
-        var call = _app.Module["goal"].Action.Items(global::PLang.Tests.TestApp.SharedContext)
-            .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "call");
-        await context.Variable.Set("a", call);
-        var action = new Render(context) { Template = (global::app.type.item.text.@this)PropertyLoopFromBuilderTemplate(), IsFile = (global::app.type.item.@bool.@this)false };
-
-        var result = await _provider.Render(action);
-
-        await result.IsSuccess();
-        var menu = (await result.Value())!.ToString()!;
-        await Assert.That(menu).Contains("Actor (choice<actor>: one of system, user");
-    }
-
-    private async Task<string> BuilderMenuFor(string module, string actionName)
-    {
-        var context = _app.User.Context;
-        var element = _app.Module[module].Action.Items(global::PLang.Tests.TestApp.SharedContext)
-            .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == actionName);
-        await context.Variable.Set("a", element);
-        var action = new Render(context) { Template = (global::app.type.item.text.@this)PropertyLoopFromBuilderTemplate(), IsFile = (global::app.type.item.@bool.@this)false };
-        var result = await _provider.Render(action);
-        await result.IsSuccess();
-        return (await result.Value())!.ToString()!;
-    }
-
-    [Test]
-    public async Task BuilderMenu_DefaultSlot_IsOptional_AndShowsAFalseDefault()
-    {
-        var menu = await BuilderMenuFor("goal", "call");
-        await Assert.That(menu).Contains("Parallel (bool, optional, default false)");
-    }
-
-    [Test]
-    public async Task BuilderMenu_NumberDefault_IsShown()
-    {
-        var menu = await BuilderMenuFor("goal", "return");
-        await Assert.That(menu).Contains("Depth (number, optional, default 1)");
-    }
-
-    [Test]
-    public async Task BuilderMenu_ChoiceDefault_ShowsItsName_NotItsNumber()
-    {
-        var menu = await BuilderMenuFor("math", "subtract");
-        await Assert.That(menu).Contains("Overflow (choice<overflow>: one of Promote, Throw, optional, default Promote)");
-    }
+    // --- Catalog rows in a template ---
 
     [Test]
     public async Task Template_ComparesAChoiceByItsName()
@@ -123,13 +61,6 @@ public class RenderTests : IDisposable
             global::app.type.item.number.@this.Overflow.Promote;
         await Assert.That(promote.Clr<global::app.type.item.number.@this.Overflow>())
             .IsEqualTo(global::app.type.item.number.@this.Overflow.Promote);
-    }
-
-    [Test]
-    public async Task BuilderMenu_NoNullNoDefault_IsRequired()
-    {
-        var menu = await BuilderMenuFor("goal", "call");
-        await Assert.That(menu).Contains("Name (text, required)");
     }
 
     // --- Batch 1: Core Render Behavior ---
