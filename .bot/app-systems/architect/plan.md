@@ -22,7 +22,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 
 **One element.** It owns its facts, its `on` (events about it) and its `current` (the instance in play).
 
-**`Start` is the entry point of everything that runs (Ingi).** As `Start.goal` is plang's entry: `app.Start()`, `goal.Start(context)`, `step.Start`, `action.Start`, each handler's `Start()`, a list's `Start`, a variable's `Start` (→ `Code.Start(context)`). It's virtual, so an owner can change what starting it means.
+**`Start` is the entry point of everything that runs (Ingi).** As `Start.goal` is plang's entry: `app.Start()`, `goal.Start(context)`, `step.Start`, `action.Start`, each handler's `Start()`, a list's `Start`, a code's `Start`. It's virtual, so an owner can change what starting it means. **A value keeps `Value()`** (Ingi): a variable is a value, so `variable.Value()` → `Code.Start(context)`.
 
 **What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on/create.cs` → `app.type.text.on.create(LoadText)`.
 
@@ -45,7 +45,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 | 3 | **One set of types:** the maps become one set, each type owning its name, aliases, C# class and facts. `Add` is the one way in; `Load` is the startup scan; `Get`/`Clr` become the one door | no |
 | 4 | **The type system is an item:** its stored context goes (`internal Context`, `list/this.cs:30`); `Output` writes its face; it answers its own navigation | no |
 | 5 | **Faces:** system (`list` names, `kind`, `scheme`, `choice`); a type (`name`, `description`, `example`, `kind`); a choice type adds `values`; a kind (`name`, `extension`, `mime`). Prompt C's Types section renders from these facts (`properties.template:82` already reads type facts). `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die | yes: twins byte-equal, or one eval run |
-| 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is `text` + `code`; `Value()` → `Start(context)` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value | yes: `"variable"` in the .pr; twins + one eval run |
+| 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is `text` + `code`; `Value()` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value | yes: `"variable"` in the .pr; twins + one eval run |
 | 7 | **Every system in the same shape:** goal (93 references), actor (15), module (11), test (87), variable (the system at `app/variable/this.cs`, freed by stage 6). Each: `X/this.cs` system + `X/X/this.cs` element, `.list`, `["name"]`, `.name`, `.current` where it means something, a face | no |
 | 8 | **`on` and `current` per object:** events move from `event.on(Trigger=…)` into `X.on.<moment>` (`app.type.text.on.create`, `goal.on.error`, `%user%.on.change`). The `on` module's actions are one-line doors (`on.create`, `on.step`, `on.goal`, …; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- on file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
 | 9 | **`%!app` holds its systems:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one system (a clash fails loudly); `%setting.X%` stays as a short form | no |
@@ -57,7 +57,7 @@ Each stage is its own commits, green against the baseline before the next starts
 ## The reference (stage 6), settled with Ingi 2026-09-26
 
 - **The parser** takes any text holding `%…%` and returns its variables. It is the one definition of a reference: `%` + a path starting with a letter, `_` or `!`, closing at the first `%` outside quotes and parentheses. It finds each `%…%`, and each hop kind parses its own piece. Callers: build validation (writing the .pr's `"variable"` lists), a template born at run (`read …, resolve variables`), `item.Variable`, the build checks (coverage, the types walk, pick's write-to).
-- **A variable is `text` + `code`,** like a step. `code` is the parsed execution path: a list of hops in order, each getting the previous value and doing its one step, the way actions pass `%!data%`. No `next`, no segment classes, no walker switch. `Value()` → `Start(context)` → `Code.Start(context)`.
+- **A variable is `text` + `code`,** like a step. `code` is the parsed execution path: a list of hops in order, each getting the previous value and doing its one step, the way actions pass `%!data%`. No `next`, no segment classes, no walker switch. A variable is a value, so its door stays `Value()` (Ingi), and `Value()` → `Code.Start(context)`.
 - **The hop kinds**, each a small class that parses, writes and runs its own piece; the JSON key is the kind:
   - `variable`: the root, read from the memory (`user`, `!app`);
   - `property`: a member (`.address`). A name starting with `!` is on `.Properties` (`!cost`); the hop is born knowing which, and doesn't re-check at run;
@@ -109,7 +109,7 @@ Each stage is its own commits, green against the baseline before the next starts
 |---|---|---|---|---|
 | type system | `%!app.type%` | `app.type` | `app/type/this.cs` | an item; no stored context; one way in (`Add`) |
 | one type | `%!app.type["text"]%` / `.text` | `app.type["text"]` | `app/type/type/this.cs` | owns its name, aliases, facts, `on`, `current` |
-| a variable | `%user.name%` | `app.type.item.variable.@this` | `app/type/item/variable/this.cs` | `text` + `code`; `Start` runs its code |
+| a variable | `%user.name%` | `app.type.item.variable.@this` | `app/type/item/variable/this.cs` | `text` + `code`; `Value()` starts its code |
 | the parser | — | `app.type.item.variable.parser.@this` | `app/type/item/variable/parser/this.cs` | the only definition of a reference |
 | an item's variables | — (a value's own) | `item.Variable` | `app/type/item/this.cs` | read-only, born whole, null when none |
 | variable system | `%!app.variable%` | `app.variable` | `app/variable/this.cs` | the memory of the actor in play |
