@@ -4,6 +4,12 @@ Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's h
 
 ## 2026-09-26 morning — Ingi: build 10 tests with the new builder and run them
 
+**Rerun (`952e4c4d3`): 7/10 pass, and every test that built passes.** The 3 unbuilt are nano answer misses, refused loudly by the checks. Landed:
+- the `%x%(type)` common step plus reverse variable coverage;
+- MissingVarIsNotNullValue was stale (no value answers `.Type`; `%x!type%` does) and was rewritten;
+- the test report names goals by Name/Path/Hash and steps by Index/Text (their code no longer renders in the runner);
+- a choice setting is made from CLI text by the slot's type.
+
 **First run (`0632b4410`): 6/10 pass** (Simple/Start, IfBoolTruthy, TextForEach, IntDiv, WriteToCustomChannel, VariableRendersValueOnly). 2 not built, loudly (nano dropped an on-error clause; the decider missed on.error). 2 fail at run. Runtime bugs fixed on the way: json integral numbers read as double; goal.Hash ignored folded bodies (always stale); the agreement only saw top-level actions; a property variable (`%x!p%`) dropped its `!p` in formal. **My calls:**
   - DurationRoundTrip (nano invented `Type=%duration%`, a SILENT miss): a common-step line for `%x%(type)` plus **reverse variable coverage** (an answer %var% the step doesn't name refuses, except %!…%);
   - MissingVarIsNotNullValue: null answers `.Type` if other values do, otherwise the test is stale;
