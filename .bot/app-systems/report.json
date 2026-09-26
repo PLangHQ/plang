@@ -1,0 +1,27 @@
+{
+  "branch": "app-systems",
+  "sessions": [
+    {
+      "id": "c4e1a7d2-5b3f-4f0e-9a21-7d6b8e3f1a90",
+      "bot": "architect",
+      "timestamp_start": "2026-09-26T08:00:00",
+      "timestamp_end": "",
+      "intent": "Design the app.X-is-the-X-system restructure with Ingi, round by round, into one branch plan",
+      "before": {
+        "assumptions": "builder-formal's builder works; the parked app-systems draft (2026-09-24) is the base design",
+        "risk": "a large move (hundreds of references across type/goal/test/variable) plus builder-visible changes (faces, .pr variable lists, on actions)"
+      },
+      "plan": ".bot/app-systems/architect/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/app-systems/architect/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Plan v1 written for Ingi's review rounds; coder not started"
+        }
+      ],
+      "after": {}
+    }
+  ]
+}
