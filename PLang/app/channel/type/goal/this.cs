@@ -4,12 +4,12 @@ namespace app.channel.type.goal;
 
 /// <summary>
 /// Concrete goal-backed channel. It holds a <c>goal.call</c> action; WriteAsync runs that call with
-/// the written Data as input (available as <c>%!data%</c> inside the goal) — the call runs as itself,
+/// the written Data as its argument (<c>%message%</c> inside the goal) — the call runs as itself,
 /// so its own arguments and modifiers apply. Returns the call's result Data.
 ///
 /// Recursion rule: while the goal body is running on the current async context,
 /// <see cref="IsExecuting"/> is true and the registry's <c>Get</c> treats this
-/// channel as not-found. A body like <c>- write out %!data%</c> on a channel
+/// channel as not-found. A body like <c>- write out %message%</c> on a channel
 /// named <c>"output"</c> can't loop back into itself; sibling and late-registered
 /// channels stay visible.
 /// </summary>
@@ -17,6 +17,9 @@ public class @this : global::app.channel.type.session.@this
 {
     /// <summary>The call this channel runs for each write — a <c>goal.call</c> action.</summary>
     public global::app.goal.step.action.@this Call { get; }
+
+    /// <summary>The argument the written value reaches the goal as: <c>%message%</c>.</summary>
+    public const string MessageName = "message";
 
     private readonly AsyncLocal<bool> _executing = new();
 
@@ -64,10 +67,11 @@ public class @this : global::app.channel.type.session.@this
         // the user's POV, and the channel layer is the plumbing under it. Whatever
         // upstream operator forked the flow (parallel foreach iteration, async
         // call, listener accept-loop, etc.) has already pushed a Calls overlay,
-        // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
-        // lands in that overlay if there is one, in the actor-shared dict
-        // otherwise — and either way subsequent goal-body sets behave the same.
-        await context.Variable.Set("!data", new data.@this("!data", data.Peek(), data.Type, context: context));
+        // and AsyncLocal carries it down to here.
+        // The written value is the call's argument %message% — bound as goal.call binds its own
+        // arguments, a variable of that name where the goal runs. (%!data% is the action before's
+        // result; the call's own run replaces it before the goal's first step reads it.)
+        await context.Variable.Set(MessageName, new data.@this(MessageName, data.Peek(), data.Type, context: context));
 
         var prev = _executing.Value;
         _executing.Value = true;

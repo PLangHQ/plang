@@ -29,7 +29,7 @@ Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
 {%- endfor -%}
 {%- endif %}
   [{{ s.Index }}] {{ indent }}- {{ s.Text }}
-{%- if s.IsCached %} => cached{% continue %}{% endif %} => decider: {% if s.Pick.Listed.size == 0 %}(nothing it is sure of){% endif -%}
+{%- if s.IsCached or s.IsFormal %} => cached{% continue %}{% endif %} => decider: {% if s.Pick.Listed.size == 0 %}(nothing it is sure of){% endif -%}
 {%- for l in s.Pick.Listed -%}
 {{ l.Name }} {{ l.Shown }}{% case l.Mark %}{% when "Possible" %} (possible){% when "WriteTo" %} (write to){% when "Popular" %} (possible, popular){% endcase %}{% unless forloop.last %}, {% endunless %}
 {%- assign mark = "|" | append: l.Name | append: "|" -%}

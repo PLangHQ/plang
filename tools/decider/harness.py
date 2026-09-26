@@ -23,6 +23,11 @@ def first_line(p):
     return ''
 
 import re
+
+# a step written in formal — its text is its code (step.IsFormal): an action call at its start
+FORMAL_HEAD = re.compile(r'^[a-z]+\.[A-Za-z_]+\(')
+def is_formal(text): return bool(FORMAL_HEAD.match(text))
+
 def example_steps(p):
     """The `Step text: `...`` lines of an examples.md — the step shapes this action is for."""
     if not os.path.exists(p): return []
@@ -170,6 +175,12 @@ def ask(state, questions, retries=4):
     if DUMP:
         folder, label = DUMP
         json.dump(payload, open(os.path.join(folder, f'{label}.request.json'), 'w'), indent=2, ensure_ascii=False)
+    # nothing asked (every step cached or written in formal) — nothing to send: the answer is empty
+    # (llm/code/TypeSafe.cs answers the same)
+    if not questions:
+        resp = {'answers': {}}
+        if DUMP: json.dump(resp, open(os.path.join(folder, f'{label}.response.json'), 'w'), indent=2)
+        return resp, 0.0, 0
     for attempt in range(retries):
         if attempt: time.sleep(2 ** attempt)
         req = urllib.request.Request(URL, data=body, method='POST', headers={
@@ -275,8 +286,8 @@ CLAUSE = (' — its own work, or anything it guards behind a condition, repeats 
 
 def stage1_questions(s, cat):
     """Stage 1's questions of one step, keyed by id (decider1.template writes the same). A kept step
-    (already built, its text unchanged) is not asked."""
-    if s.get('kept'): return {}
+    (already built, its text unchanged) is not asked, nor is a step written in formal."""
+    if s.get('kept') or is_formal(s['text'].strip()): return {}
     text = s['text'].strip()
     qs = {f's{s["index"]}_@module': {'type': 'choice', 'criteria': {m: None for m in cat}, 'instructions':
         f'Step {step_no(s)} of this goal is `{text}`. Which plang module does the main work of step {step_no(s)}?'}}
@@ -347,8 +358,8 @@ BRANCHES = ['condition.else', 'condition.elseif']   # the condition actions that
 
 def stage2_questions(s, cat, chosen, conditions=(), runners=None, unsure_steps=()):
     """Stage 2's questions of one step, keyed by id (the C# pick.list's twin asks the same). A kept step
-    is not asked."""
-    if s.get('kept'): return {}
+    is not asked, nor is a step written in formal."""
+    if s.get('kept') or is_formal(s['text'].strip()): return {}
     runners = runners or {}
     qs = {}
     if s['index'] in unsure_steps:

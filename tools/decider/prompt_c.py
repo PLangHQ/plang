@@ -155,7 +155,7 @@ def user_message_c(goal, picks):
         for c in (s.get('comment') or '').split('\n') if s.get('comment') else []:
             out += f'\n  {pad}/ {c}'
         out += f'\n  {line}'
-        if s.get('kept'):   # already built: in the goal for context, not asked
+        if s.get('kept') or h.is_formal(s['text']):   # already built, or its own code: in the goal for context, not asked
             out += ' => cached'; continue
         step_picks = listed(picks.get(s['index'], {}), s['text'])
         known = WRITE_TO.search(s['text'])
@@ -445,7 +445,8 @@ def check(goal, picks, parsed):
         problems = per_step.setdefault(i, [])
         if not rows: problems.append(f'step {i} ("{steps[i]["text"]}") has no actions')
         elif broken := b.chain(rows, bool(b.body_of(steps, i))): problems.append(f'step {i} ("{steps[i]["text"]}") — {broken}')
-        r, w = disagreements(i, rows, picks.get(i, {}), steps[i]['text'])
+        # a step written in formal was asked of no decider: there are no picks to agree with
+        r, w = ([], []) if h.is_formal(steps[i]['text']) else disagreements(i, rows, picks.get(i, {}), steps[i]['text'])
         problems += r; warnings += w
         problems += [f'step {i}: {v} is in the step but not in your answer' for v in uncovered(steps[i]['text'], written[i])]
         # and the other way: a variable the answer names that the step's words don't is invented (step.Cover)

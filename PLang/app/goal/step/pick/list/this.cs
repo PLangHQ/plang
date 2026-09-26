@@ -145,8 +145,9 @@ public sealed class @this
     /// unsure step is offered.</summary>
     public async Task Take(dict answer, IEnumerable<string> popular, global::app.actor.context.@this context)
     {
-        // A cached step is already built: the decider is asked nothing about it.
-        if (_step.IsCached) return;
+        // A cached step is already built, and a step written in formal is its code: the decider is
+        // asked nothing about either.
+        if (_step.IsCached || _step.IsFormal) return;
         var prefix = Key("");
         foreach (var entry in answer.Entries(context))
         {

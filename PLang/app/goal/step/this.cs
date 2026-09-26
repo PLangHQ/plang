@@ -42,6 +42,14 @@ public sealed partial class @this
     [JsonIgnore]
     public bool IsCached => PriorText != null && PriorText == Text && Code.Count > 0;
 
+    // an action call at the start of the text: module.action(
+    private static readonly System.Text.RegularExpressions.Regex FormalHead = new(@"^[a-z]+\.[A-Za-z_]+\(");
+
+    /// <summary>The step is written in formal — its text is its code. It is read as written, with every
+    /// check an answer's line gets, and asked of no one: not the decider, not the LLM. Build-time only.</summary>
+    [JsonIgnore]
+    public bool IsFormal => FormalHead.IsMatch(Text);
+
     /// <summary>Where the step is written: its line in the .goal file and its indent.</summary>
     [Store, LlmBuilder, Debug, Default]
     public global::app.goal.step.line.@this Line { get; internal set; } = new();

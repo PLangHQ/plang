@@ -93,6 +93,17 @@ def judge_c(case, picks, parsed, errors, whole):
     agreement = [r for p in per_step.values() for r in p if 'decider' in r or "isn't one of step" in r]
     return {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}, whole, per_step, warnings, agreement
 
+def own(case, read):
+    """A parsed answer with each step written in formal read from its own text instead (step.IsFormal):
+    its line in the answer, if any, is set aside."""
+    parsed, errors, whole = read
+    lines = '\n'.join(f'[{i}] {s["text"]}' for i, s in enumerate(case['steps']) if h.is_formal(s['text']))
+    if not lines: return parsed, errors, whole
+    mine, my_errors, _ = f.parse_steps(lines)
+    parsed = {i: r for i, r in parsed.items() if i not in mine and i not in my_errors} | mine
+    errors = {i: x for i, x in errors.items() if i not in mine and i not in my_errors} | my_errors
+    return parsed, errors, whole
+
 def one_c(model, case, picks):
     """C with the per-step retry: a refused step is asked again alone; a whole-answer refusal (a step
     missing, extra, renumbered) asks the whole answer again."""
@@ -105,7 +116,7 @@ def one_c(model, case, picks):
     calls.append({'seconds': secs, 'usage': raw.get('usage') or {}})
     text1 = content(raw)
     open(os.path.join(folder, '1.answer.txt'), 'w', encoding='utf-8').write(text1)
-    parsed, errors, whole = f.parse_steps(text1)
+    parsed, errors, whole = own(case, f.parse_steps(text1))
     before = {'step': [{'index': i, 'action': copy.deepcopy(parsed[i])} for i in sorted(parsed)]}
     first, whole1, steps1, warn1, agree1 = judge_c(case, picks, parsed, errors, whole)
     caught = set(range(len(case['steps']))) if whole1 else set(steps1)
@@ -122,7 +133,7 @@ def one_c(model, case, picks):
         calls.append({'seconds': secs2, 'usage': raw2.get('usage') or {}})
         text2 = content(raw2)
         open(os.path.join(folder, '2.answer.txt'), 'w', encoding='utf-8').write(text2)
-        parsed2, errors2, whole2 = f.parse_steps(text2)
+        parsed2, errors2, whole2 = own(case, f.parse_steps(text2))
         if not whole1:   # only the refused steps were asked: they replace theirs; the rest stands
             merged = {i: r for i, r in parsed.items() if i not in steps1}
             merged.update({i: r for i, r in parsed2.items() if i in steps1})

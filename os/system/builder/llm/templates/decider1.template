@@ -9,7 +9,7 @@ Needs: goal, modules (%!app.module.list%), decider (decider.json).
 {
 {%- assign sep = "" -%}
 {%- for s in goal.Step -%}
-{%- if s.IsCached -%}{%- continue -%}{%- endif -%}
+{%- if s.IsCached or s.IsFormal -%}{%- continue -%}{%- endif -%}
 {%- assign text = s.Text -%}
 {%- capture id %}s{{ s.Index }}_@module{% endcapture -%}
 {%- capture ask %}Step {{ s.Index }} of this goal is `{{ text }}`. Which plang module does the main work of step {{ s.Index }}?{% endcapture %}

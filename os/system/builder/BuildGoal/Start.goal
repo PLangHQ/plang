@@ -34,7 +34,7 @@ Compile
 - if %goal.Step.IsCached%, return
 - call Decide
 - call Properties
-- build.match Goal=%goal%, Answer=%answer%, on error key "ElseWithoutIf" call SourceError, on error call FixSteps first, then retry 1 times
+- build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Order="GoalFirst", RetryCount=1, Recovery=[goal.call(Name="FixSteps")])
 
 
 FixSteps

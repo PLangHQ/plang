@@ -1,0 +1,1 @@
+[0] condition.if(Left=%message%, Operator="isnotempty") { output.write(Data=%message%) }

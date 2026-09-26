@@ -2,8 +2,6 @@ BuilderChannel
 / Builder channel sink. Goal-backed channel registered at Build start so all
 / build-time output flows through one named seam — later we can swap the consumer
 / (file log, TUI, structured stream) without touching the call sites.
-/
-/ The forwarding step (`- write out %!data%`) is removed: a goal-backed channel sets
-/ %!data% in the actor context, but it isn't reaching the goal body here, so it printed
-/ the literal "%!data%" instead of the message. Restore the forward once channel-input
-/ propagation to a goal-backed channel is fixed (see todos).
+/ What the builder writes reaches this goal as its argument %message%.
+/ An event the output template has no line for renders empty, and prints nothing.
+- condition.if(Left=%message%, Operator="isnotempty") { output.write(Data=%message%) }

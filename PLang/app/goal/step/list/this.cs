@@ -83,7 +83,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     {
         var whole = new List<string>();
         var heads = Head.Matches(answer);
-        if (heads.Count == 0 || answer[..heads[0].Index].Trim().Length > 0)
+        // an empty answer is whole: a step it leaves unanswered has no entry (one written in formal needs none)
+        if (answer.Trim().Length > 0 && (heads.Count == 0 || answer[..heads[0].Index].Trim().Length > 0))
             whole.Add("each step's line starts with its index: [0] action; action");
         var lines = new Dictionary<int, string>();
         for (int n = 0; n < heads.Count; n++)
@@ -110,8 +111,15 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                     await (context.App.Debug?.Write($"build.match: step {i} already has its code; its line in the answer is set aside") ?? System.Threading.Tasks.Task.CompletedTask);
                 continue;
             }
-            if (!lines.TryGetValue(i, out var line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
+            // a step written in formal is its own line: read as written, whatever the answer says
+            string? line = step.IsFormal ? step.Text : null;
+            if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
             var formal = new global::app.goal.step.action.serializer.Formal(step).Read(line, context);
+            if (!formal.Success && step.IsFormal)
+            {
+                Refuse(i, $"step {i} is written in formal and does not read: {formal.Error!.FixSuggestion ?? formal.Error.Message}");
+                continue;
+            }
             if (!formal.Success)
             {
                 Refuse(i, $"step {i} does not parse: {formal.Error!.FixSuggestion ?? formal.Error.Message} — in: [{i}] {line.Trim()}");
@@ -162,7 +170,9 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             // only code that judged itself sound is built
             if (invalid == null && await actions.Build(context) is { } failed)
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
-            var (disagree, warnings) = step.Pick.Agree(actions);
+            // a step written in formal was asked of no decider: there are no picks to agree with
+            var (disagree, warnings) = step.IsFormal
+                ? (new List<string>(), new List<global::app.warning.@this>()) : step.Pick.Agree(actions);
             foreach (var why in disagree) Refuse(i, why);
             foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
             if (refused.ContainsKey(i)) step.Code = new global::app.goal.step.action.list.@this();   // open again

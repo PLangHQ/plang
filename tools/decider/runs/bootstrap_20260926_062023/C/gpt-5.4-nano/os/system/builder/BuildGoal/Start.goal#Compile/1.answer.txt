@@ -1,0 +1,4 @@
+[0] condition.if(Left=%goal.Step.IsCached%)
+[1] goal.call(Name="Decide")
+[2] goal.call(Name="Properties")
+[3] build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Order="GoalFirst", RetryCount=1, Recovery=[goal.call(Name="FixSteps")])

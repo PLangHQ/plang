@@ -2,7 +2,10 @@
  "goal": "BuilderChannel",
  "answer1": {},
  "answer2": {},
- "answer": "",
+ "answer": "[0] condition.if(Left=%message%, Operator=\"isnotempty\") { output.write(Data=%message%) }",
  "retry": null,
- "refused": []
+ "caught": [],
+ "refused": [],
+ "warnings": [],
+ "seconds": 1.0
 }

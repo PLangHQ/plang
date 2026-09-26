@@ -1,10 +1,71 @@
 {
   "name": "BuilderChannel",
-  "step": [],
+  "step": [
+    {
+      "index": 0,
+      "text": "condition.if(Left=%message%, Operator=\"isnotempty\") { output.write(Data=%message%) }",
+      "line": {
+        "number": 7
+      },
+      "comment": "Builder channel sink. Goal-backed channel registered at Build start so all\nbuild-time output flows through one named seam — later we can swap the consumer\n(file log, TUI, structured stream) without touching the call sites.\nWhat the builder writes reaches this goal as its argument %message%.\nAn event the output template has no line for renders empty, and prints nothing.",
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%message%"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnotempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "output.write(Data=%message%)",
+              "line": {
+                "number": 7
+              },
+              "code": [
+                {
+                  "module": "output",
+                  "name": "write",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%message%"
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
   "child": [],
   "visibility": "Public",
   "path": "/system/builder/BuilderChannel.goal",
   "prPath": "/system/builder/.build/builderchannel.pr",
+  "hash": "4f5a1d7136a18101a715b0dd622b2af517cc728177ac7d0d70aa5251f25fb483",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

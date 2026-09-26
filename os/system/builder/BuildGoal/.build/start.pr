@@ -917,7 +917,7 @@
         },
         {
           "index": 3,
-          "text": "build.match Goal=%goal%, Answer=%answer%, on error key \"ElseWithoutIf\" call SourceError, on error call FixSteps first, then retry 1 times",
+          "text": "build.match(Goal=%goal%, Answer=%answer%); on.error(Key=\"ElseWithoutIf\", Recovery=[goal.call(Name=\"SourceError\")]); on.error(Order=\"GoalFirst\", RetryCount=1, Recovery=[goal.call(Name=\"FixSteps\")])",
           "line": {
             "number": 37
           },
@@ -995,19 +995,19 @@
                   "name": "error",
                   "property": [
                     {
-                      "name": "RetryCount",
-                      "type": {
-                        "name": "number"
-                      },
-                      "value": 1
-                    },
-                    {
                       "name": "Order",
                       "type": {
                         "name": "choice",
                         "kind": "errororder"
                       },
-                      "value": "RetryFirst"
+                      "value": "GoalFirst"
+                    },
+                    {
+                      "name": "RetryCount",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
                     }
                   ],
                   "default": [
@@ -1054,7 +1054,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "d2dff0f7243e493755482bafa40ed772fdb2ebf53ce4d18f1d1eedb53e22f9a9",
+      "hash": "a0d441cf7fbbcf6a78d8f545b2739bda710a199d0350be6b406decb50b13004d",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,

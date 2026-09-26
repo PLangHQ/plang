@@ -380,6 +380,7 @@ def parse_steps(text):
     ones that don't, [whole-answer problems]). One bad line refuses only its own step; a missing
     `[i]`, text before it or a step answered twice is the whole answer's."""
     heads = list(STEP.finditer(text))
+    if not text.strip(): return {}, {}, []   # an empty answer is whole: a step it leaves out has no entry
     if not heads or text[:heads[0].start()].strip():
         return {}, {}, ['each step\'s line starts with its index: [0] action; action']
     rows, errors, whole = {}, {}, []

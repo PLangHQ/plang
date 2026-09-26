@@ -24,8 +24,24 @@ public class Stage3_GoalChannelTests
         var result = await ch.Write(dataIn);
         await result.IsSuccess();
 
-        var captured = await app.User.Context.Variable.Get("!data");
-        await Assert.That(captured).IsNotNull();
+        var captured = await app.User.Context.Variable.Get("message");
+        await Assert.That((await captured.Value())?.ToString()).IsEqualTo("payload-A");
+    }
+
+    // The goal reads what was written as its argument %message% — from its very first step.
+    [Test]
+    public async Task GoalChannel_TheGoalsFirstStep_ReadsTheWrittenMessage()
+    {
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g_message");
+        var goal = Make.Goal("Sink", Make.Step("set %seen% = %message%",
+            Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), ("Value", "%message%"))));
+        app.Goal.Add(goal);
+        var ch = new GoalChannel("sink", Make.Call(goal.Name), app.User);
+
+        await (await ch.Write(app.Ok("Building path: /"))).IsSuccess();
+
+        var seen = await app.User.Context.Variable.Get("seen");
+        await Assert.That((await seen.Value())?.ToString()).IsEqualTo("Building path: /");
     }
 
     [Test]
