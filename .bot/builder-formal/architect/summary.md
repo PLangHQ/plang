@@ -2,6 +2,15 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — HasVariable is the item's own answer; one owner of %…% (open)
+
+- **Ingi:** `data.HasVariable => _item?.HasVariable ?? false`, the same shape as `data.IsVariable` (data/this.cs:116), not `_item?.Type.Template != null`. Item gets `virtual bool HasVariable => false`; text/dict/list/source answer their marker, and a variable reference answers true. Sent to coder. The static `text.HasVariable(string)` clashes (CS0102), so its owner waits on the next point.
+- **One owner of `%x%` (my analysis, open with Ingi).** Two grammars, each parsed in several places.
+  - *Inside* a reference: `variable.path.Parse` is the real tokenizer, but `variable.@this.Convert` hand-scans the same characters, `variable.list.Get` parses twice (root + re-slice, then `data.Get(string)`), and `CleanName` exists twice. A reference stores only a Name string that is re-parsed every read.
+  - *Where* references sit in text: six regexes, four different definitions (`TryFullVarMatch`, `text.HasVariable`, Resolve, Validate, Scope, pick).
+  - Proposal: `variable.path` is the only inside-parser, and a reference holds its parsed path; a marked text parses its own holes once into chunks + references, and the build checks use the same parse.
+  - The hidden decision for Ingi: what counts as a reference (`"save 50% now and 20% later"`): I proposed `%` + a path starting with a letter, `_` or `!`.
+
 ## 2026-09-26 — the %!x% question dissolved; coder goes again
 
 Ingi: "your open question doesn't make sense, read the doc … and code". The docs and code agree:
