@@ -57,7 +57,7 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 | # | Stage | Changes what the builder sees |
 |---|---|---|
 | 0 | **Base:** re-record builder-formal's `Compile` (TypeSafe is back) so its BootstrapTests pass; take a baseline of the six suites | — |
-| 1 | **`Run` → `Start`:** the C# entry verb of every executable object (`goal/this.cs:325`, `step/this.cs:111`, `step/list/this.cs:28`, `action/this.cs:165`, `action/list/this.cs:31`, the event bindings `binding/this.cs:44`, `binding/list/this.cs:22,28`), every handler's `Run()` (126 files) and the generator's emit. Virtual where an owner may override. No behaviour change. plang action names (`environment.run`, `test.run`, …) are plang vocabulary and not part of this | no |
+| 1 | **`Run` → `Start`:** the C# entry verb of every executable object (`goal/this.cs:325`, `step/this.cs:111`, `step/list/this.cs:28`, `action/this.cs:165`, `action/list/this.cs:31`, the event bindings `binding/this.cs:44`, `binding/list/this.cs:22,28`), every handler's `Run()` (126 files) and the generator's emit. Starting one action is one verb end to end: today it's `action.Run` → `call.ExecuteAsync` (`callstack/call/this.cs:225`) → `handler.Execute()` (`ICodeGenerated.cs:37`) → the handler's `Run()`; `Execute`/`ExecuteAsync` go with `Run`. Virtual where an owner may override. No behaviour change. plang action names (`environment.run`, `test.run`, …) are plang vocabulary and not part of this | no |
 | 2 | **Move type:** `type/list/this.cs` → `type/this.cs` (the system); `type/this.cs` → `type/type/this.cs` (one type). References by full name: `app.type.@this` 257. `App.Type` → `app.type` (lowercase). No behaviour change | no |
 | 3 | **One set of types:** the maps become one set, each type owning its name, aliases, C# class and facts. `Add` is the one way in; `Load` is the startup scan; `Get`/`Clr` become the one door | no |
 | 4 | **The type system is an item:** its stored context goes (`internal Context`, `list/this.cs:30`); `Output` writes its face; it answers its own navigation | no |
@@ -101,14 +101,13 @@ Events are on everything, and they cost nothing unless bound: an object's `On` i
 
 **The rule, one line: every public verb has `on.before.<verb>` and `on.after.<verb>`; an outcome that isn't a method is named for what happened (`on.error`, cache `on.hit` / `on.miss`).** The event name is the method's own name, so the three paths agree (`goal.Start()` → `on.before.start`), and a new verb gets its events for free.
 
+**Each event is a class** (Ingi): `app/event/before/create/this.cs`, `app/event/after/start/this.cs`, … The object's `on` navigates to them, lowercase like every node: `%!app.type.text.on.before.create%` ↔ `app.type.text.on.before.create` ↔ `app/event/before/create/this.cs`.
+
 ```csharp
-// sketch
-public item Create(…, context)
-{
-    On?.Before.Create(this, context);        // null, or no bindings → nothing happens
-    …
-    On?.After.Create(this, context);
-}
+// sketch: where a value is created
+on?.before.create.Start(this, context);      // on is null, or no bindings → nothing happens
+…
+on?.after.create.Start(this, context);
 ```
 
 | object | verbs → events | today's `Trigger` |
