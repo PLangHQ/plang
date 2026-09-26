@@ -325,7 +325,14 @@ public sealed class @this : item.@this
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
-        return Create(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport);
+        // Authored content (a .pr) carrying plang's %var% syntax inside — a list or dict of rows with
+        // variables, `[{"Content": "%msg%"}]` — is born a template of this type, as a string is: it
+        // renders its variables when read.
+        var raw = System.Text.Encoding.UTF8.GetString(reader.Slice());
+        var declared = ctx.Template != null && Template == null && global::app.type.item.text.@this.HasVariable(raw)
+            ? ctx.Context.App.Type[new @this(Name, Kind?.Name, Strict, ctx.Template)]
+            : this;
+        return declared.Create(raw, transport);
     }
 
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared

@@ -114,8 +114,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
     /// generic list reader produced as a base <c>list</c>. The rows are already the right elements
     /// (the element reader ran); only the container wrapper needs to be the declared type.
-    /// Context-free (a program node adopts nothing run-scoped).</summary>
-    protected @this(@this source) : this(new List<object?>(source.Rows)) { }
+    /// Context-free (a program node adopts nothing run-scoped). The source's template comes along: a
+    /// program list of `%x%` rows re-tagged into a typed slot (list&lt;LlmMessage&gt;) still renders them.</summary>
+    protected @this(@this source) : this(new List<object?>(source.Rows)) { Template = source.Template; }
 
     // Type-on-read: a row's slot as a FRESH Data wrapping the raw value, born with the asker's
     // context — never cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,

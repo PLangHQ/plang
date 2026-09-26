@@ -173,6 +173,29 @@ public class ScopeTests
     }
 
     [Test]
+    public async Task AListOfMessages_ReadAsLlmMessages_RendersItsVariables()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("Properties",
+            Make.Step("set %sys% = \"hello\""),
+            Make.Step("set %messages% = [{\"Role\":\"system\", \"Content\":\"%sys%\"}]"));
+        await Picked(goal, app.System.Context, (0, "variable.set"), (1, "variable.set"));
+        var built = await Match(goal, """
+            [0] variable.set(Name=%sys%, Value="hello")
+            [1] variable.set(Name=%messages%, Value=[{Role:"system", Content:%sys%}])
+            """, app.System.Context);
+        await built.IsSuccess();
+
+        await (await goal.Run(app.User.Context)).IsSuccess();
+
+        // as llm.query reads its Message: the typed view, then lowered — the %sys% rendered
+        var messages = (await app.User.Context.Variable.Get("messages"))
+            .As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>();
+        var lowered = (await messages.Value()).Clr<List<global::app.module.action.llm.LlmMessage>>();
+        await Assert.That(lowered![0].Content?.ToString()).IsEqualTo("hello");
+    }
+
+    [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {
         await using var app = TestApp.Create("/test");
