@@ -55,7 +55,7 @@ public class Stage2_NavigationAsyncTests
         {
             ["b"] = new Dictionary<string, object?> { ["c"] = "deep" }
         });
-        var resolved = await vars.Resolve("%a.b.c%");             // ONE await in the caller
+        var resolved = await app.User.Context.Rendered("%a.b.c%");   // ONE await in the caller
         await Assert.That(resolved).IsEqualTo("deep");
     }
 

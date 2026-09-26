@@ -259,14 +259,8 @@ public class PrPipelineTests
         {
             var action = Action;
             var context = Context;
-            object? raw = action?["Data"]?.Value;
-            object? content = (raw as global::app.type.item.text.@this)?.Clr<string>() ?? raw;
-            if (content is string str && str.Contains('%'))
-            {
-                var resolved = await context.Variable.Resolve(str);
-                if (resolved != str)
-                    content = resolved;
-            }
+            // the property's value renders itself when it is marked a template — never guessed
+            object? content = action?["Data"] is { } property ? (await property.Data(context).Value())?.ToString() : null;
             if (content != null)
                 Lines.Add(content.ToString()!);
             return context.App.Ok();

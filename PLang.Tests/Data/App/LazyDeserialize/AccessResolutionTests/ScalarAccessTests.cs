@@ -49,7 +49,7 @@ public class ScalarAccessTests
         var ctx = app.User.Context;
         ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.Type[new type("item", "json")], ctx, "cfg"));
 
-        await Assert.That(await ctx.Variable.Resolve("%cfg%")).IsEqualTo("{\"port\":8080}");
-        await Assert.That(await ctx.Variable.Resolve("%cfg.port%")).IsEqualTo("8080");
+        await Assert.That(await ctx.Rendered("%cfg%")).IsEqualTo("{\"port\":8080}");
+        await Assert.That(await ctx.Rendered("%cfg.port%")).IsEqualTo("8080");
     }
 }

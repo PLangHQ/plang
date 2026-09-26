@@ -84,37 +84,14 @@ public class SecurityFixTests
 
     #endregion
 
-    #region HIGH-2: skipInfrastructure on Resolve
+    #region A template's %!x%
 
+    // An unset %!x% (an optional engine internal) stays as written when a template renders.
     [Test]
-    public async Task Resolve_SkipInfrastructure_DoesNotExpandBangVars()
+    public async Task Template_UnsetBangVar_StaysAsWritten()
     {
-        var context = _app.User.Context;
-        var vars = context.Variable;
-
-        // Set a normal variable
-        vars.Set("name", "Alice");
-
-        // Resolve with skipInfrastructure — %name% resolves, %!app% does not
-        var result = vars.Resolve("Hello %name%, app=%!app.AbsolutePath%", skipInfrastructure: true);
-
-        await Assert.That(await result).IsEqualTo("Hello Alice, app=%!app.AbsolutePath%");
-    }
-
-    [Test]
-    public async Task Resolve_Default_ExpandsBangVars()
-    {
-        var context = _app.User.Context;
-        var vars = context.Variable;
-
-        // Without skipInfrastructure, %!app% should resolve (or leave as-is if not found)
-        // The important thing is it TRIES to resolve — unlike the skip case
         var input = "test=%!nonexistent%";
-        var result = vars.Resolve(input);
-
-        // %!nonexistent% doesn't exist → left as-is (same as skip behavior for missing vars)
-        // But verify skipInfrastructure=false is the default
-        await Assert.That(await result).IsEqualTo(input);
+        await Assert.That(await _app.User.Context.Rendered(input)).IsEqualTo(input);
     }
 
     #endregion

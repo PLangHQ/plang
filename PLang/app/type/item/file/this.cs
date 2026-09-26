@@ -36,11 +36,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly global::app.type.kind.@this? _kind;
 
     /// <summary>A file reference at <paramref name="path"/>; <paramref name="context"/> is the
-    /// creator's, used once to name the kind and not kept.</summary>
-    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
+    /// creator's, used once to name the kind and not kept. <paramref name="template"/> is a birth fact:
+    /// the programmer asked for the content's variables to be filled (<c>read … resolve variables</c>) —
+    /// its text content is born a template and renders itself at use.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, string? template = null)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
+        Template = template;
         // Born from a path — inject its type into this value's history so `is path` answers from
         // the type chain (no CLR-inheritance lattice). The type owns its history of types.
         this.list.Add(path);
@@ -49,10 +52,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>True once the content is in memory (the reference was examined).</summary>
     public bool IsLoaded => _bytes != null;
 
+    /// <summary>A file marked a template answers a render, which depends on the variables at each use —
+    /// never kept (the file stays the reference; its bytes are read once).</summary>
+    public override bool Cacheable => Template == null && base.Cacheable;
+
     /// <summary>A file's entity: name "file", kind = the canonical kind named at
     /// creation — location metadata, never reads content.</summary>
     protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("file", typeof(@this)) { Kind = _kind };
+        new global::app.type.@this("file", typeof(@this)) { Kind = _kind, Template = Template };
 
     /// <summary>
     /// The value door — read + parse through the file channel (mime stamps the
@@ -92,6 +99,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         var answer = read.Item;
         if (answer == null || ReferenceEquals(answer, this)) return this;
+        // a file born a template: its text content is born one, and the door answers it ready —
+        // rendered at this use (a render is never kept: see Cacheable)
+        if (Template != null && answer is global::app.type.item.text.@this content)
+            return await new global::app.type.item.text.@this(content.ToString(), Template) { Kind = content.Kind }.Value(data);
         answer.list.Add(this);
         return answer;
     }

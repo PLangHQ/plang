@@ -41,12 +41,12 @@ public partial class intercept : IContext
             // Check parameter matching if specified
             if (paramMatchers != null && currentAction != null)
             {
-                if (!ParametersMatch(currentAction, context.Variable, paramMatchers))
+                if (!await ParametersMatch(currentAction, context, paramMatchers))
                     return Data(); // no match, let real action run
             }
 
             // Record the call
-            var capturedParams = CaptureParameters(currentAction, context.Variable);
+            var capturedParams = await CaptureParameters(currentAction, context);
             handle.RecordCall(capturedParams);
 
             // Goal-based mock — run the held call in place of the action
@@ -79,35 +79,35 @@ public partial class intercept : IContext
         return Context.Ok<global::app.mock.@this>(handle);
     }
 
-    private static Dictionary<string, object?> CaptureParameters(app.goal.step.action.@this? action, global::app.variable.list.@this variables)
+    private static async Task<Dictionary<string, object?>> CaptureParameters(app.goal.step.action.@this? action, actor.context.@this context)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
 
         foreach (var property in action.Property)
-            result[property.Name] = ResolveParamValue(property, variables);
+            result[property.Name] = await ResolveParamValue(property, context);
         return result;
     }
 
-    private static bool ParametersMatch(
-        app.goal.step.action.@this action, global::app.variable.list.@this variables, Dictionary<string, object?> matchers)
+    private static async Task<bool> ParametersMatch(
+        app.goal.step.action.@this action, actor.context.@this context, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {
             if (action[name] is not { } property) continue;
 
-            var actual = ResolveParamValue(property, variables);
+            var actual = await ResolveParamValue(property, context);
             if (!MatchValue(expected, actual))
                 return false;
         }
         return true;
     }
 
-    private static object? ResolveParamValue(global::app.type.property.@this property, global::app.variable.list.@this variables)
+    private static async Task<object?> ResolveParamValue(global::app.type.property.@this property, actor.context.@this context)
     {
-        // A live ref is a stamped template — the stamp gates resolution.
-        if (property.Value is global::app.type.item.text.@this { Template: not null } st)
-            return variables.Resolve(st.Clr<string>()!);
+        // A live ref is a marked template — it renders itself through its own door.
+        if (property.Value is global::app.type.item.text.@this { Template: not null })
+            return (await property.Data(context).Value())?.ToString();
 
         return property.Value;
     }

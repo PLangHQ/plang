@@ -270,7 +270,8 @@ public class source : @this
             if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
         }
-        writer.String(await context.Variable.Resolve(template));
+        // a partial template is a text's to render: hand over to one
+        await new global::app.type.item.text.@this(template, _type.Template).Output(writer, mode, context);
     }
 
 

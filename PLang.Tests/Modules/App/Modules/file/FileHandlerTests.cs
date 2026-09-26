@@ -173,22 +173,39 @@ public class FileHandlerTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello %name%, welcome");
     }
 
+    // The programmer's request is a birth fact: the file comes back unread, its type marked a template.
     [Test]
-    public async Task Read_ResolveVariablesTrue_BlocksInfrastructureVariables()
+    public async Task Read_ResolveVariablesTrue_IsAFileMarkedATemplate_NothingRead()
     {
-        // skipInfrastructure: file content is untrusted — %!app%, %!fileSystem%
-        // etc. must not resolve even when ResolveVariables = (global::app.type.item.@bool.@this)true. Without this
-        // guard, a malicious file could leak runtime internals through %!app.Id%.
-        System.IO.File.WriteAllText(TempPath("untrusted.txt"), "id is %!app.Id%");
+        System.IO.File.WriteAllText(TempPath("marked.txt"), "Hello %name%");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("untrusted.txt"),
+        var action = new Read(_app.User.Context) { Path = MakePath("marked.txt"),
             ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
 
         await result.IsSuccess();
-        // The literal stays — infrastructure variable was not resolved.
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("id is %!app.Id%");
+        var file = result.Peek() as global::app.type.item.file.@this;
+        await Assert.That(file).IsNotNull();
+        await Assert.That(file!.IsLoaded).IsFalse();
+        await Assert.That(result.Type.Template).IsEqualTo("plang");
+        await Assert.That(result.HasVariableReference).IsTrue();
+    }
+
+    // The content renders when it is used, against the variables then — lazily.
+    [Test]
+    public async Task Read_ResolveVariablesTrue_RendersAtUse()
+    {
+        System.IO.File.WriteAllText(TempPath("late.txt"), "Hello %name%");
+        _app.User.Context.Variable.Set("name", "before");
+
+        var action = new Read(_app.User.Context) { Path = MakePath("late.txt"),
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
+        };
+        var result = await action.Run();
+        _app.User.Context.Variable.Set("name", "after");
+
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello after");
     }
 
     // --- Copy ---

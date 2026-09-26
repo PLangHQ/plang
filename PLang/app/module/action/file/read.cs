@@ -63,27 +63,14 @@ public partial class Read : IContext
             return await prChannel.Read();
         }
 
-        // ResolveVariables is an explicit opt-in that needs the text in hand, so
-        // it forces materialization and resolves %var% — the only non-lazy path.
-        if (await ResolveVariables.ToBooleanAsync())
-        {
-            var channel = new global::app.channel.type.file.@this(path, Context);
-            var read = await channel.Read();
-            if (!read.Success) return read;
-            var content = await read.Value();
-            if (content is global::app.type.item.text.@this)
-            {
-                var resolved = await Context.Variable.Resolve(content.ToString()!, skipInfrastructure: true);
-                return new data.@this(read.Name, resolved, read.Type, context: Context);
-            }
-            return read;
-        }
-
         // The reference: the extension rides as the kind (the content-kind
-        // inference input — `.json` narrows to dict, `.csv` to table/list).
+        // inference input — `.json` narrows to dict, `.csv` to table/list). ResolveVariables is the
+        // programmer marking the content a template: the file is born with the marker, and its text
+        // renders itself when it is used — nothing is read here.
         var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
-        return new data.@this(path.FileName, new global::app.type.item.file.@this(path, Context),
-            Context.App.Type[new global::app.type.@this("file", kind)], context: Context);
+        var template = await ResolveVariables.ToBooleanAsync() ? "plang" : null;
+        return new data.@this(path.FileName, new global::app.type.item.file.@this(path, Context, template),
+            Context.App.Type[new global::app.type.@this("file", kind, template: template)], context: Context);
     }
 
     /// <summary>

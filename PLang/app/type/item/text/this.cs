@@ -116,8 +116,55 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             }
             return await resolved.Value();
         }
-        var interpolated = await context.Variable.Resolve(_value);
-        return new @this(interpolated);
+        return new @this(await Rendered(context));
+    }
+
+    // The template rendered: one pass in order — each literal written as it is, each %var% written
+    // in place through the variable's own door (its Output into a text writer: a wire materializes to
+    // bare content, a container renders its json text). An unset variable is an error at the
+    // reference; an unset %!x% (an optional engine internal) stays as written.
+    private async System.Threading.Tasks.ValueTask<string> Rendered(global::app.actor.context.@this context)
+    {
+        using var ms = new System.IO.MemoryStream();
+        var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+        int pos = 0;
+        foreach (System.Text.RegularExpressions.Match m in RefRx.Matches(_value))
+        {
+            w.String(_value[pos..m.Index]);
+            pos = m.Index + m.Length;
+            var name = m.Value[1..^1];
+            var bound = await context.Variable.Get(name);
+            if (bound == null || !bound.IsInitialized)
+            {
+                if (name.StartsWith('!')) { w.String(m.Value); continue; }
+                throw await Unreachable(name, context);
+            }
+            await bound.Output(w, global::app.View.Out, context);
+        }
+        w.String(_value[pos..]);
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+    }
+
+    // Why a %path% didn't resolve: the deepest prefix that did, and the segment that returned nothing
+    // on it. A bare root gets the plain "not set" form.
+    private async System.Threading.Tasks.ValueTask<global::app.error.VariableNotFoundException> Unreachable(
+        string name, global::app.actor.context.@this context)
+    {
+        var segments = global::app.variable.path.@this.Parse(name).Segments;
+        if (segments.Count <= 1) return new global::app.error.VariableNotFoundException(name);
+        string reachedPrefix = "(root)", reachedType = "nothing";
+        var prefix = new System.Text.StringBuilder();
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var seg = segments[i];
+            prefix.Append(i > 0 && seg is global::app.variable.path.Segment.Member ? "." + seg.Raw : seg.Raw);
+            var hop = await context.Variable.Get(prefix.ToString());
+            if (hop == null || !hop.IsInitialized)
+                return new global::app.error.VariableNotFoundException(name, reachedPrefix, reachedType, seg.Raw);
+            reachedPrefix = prefix.ToString();
+            reachedType = hop.Peek()?.GetType().Name ?? "null";
+        }
+        return new global::app.error.VariableNotFoundException(name);
     }
 
     /// <summary>
@@ -143,7 +190,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
             throw new global::app.error.VariableNotFoundException(resolved!.Name);   // the lookup already carries the name
         }
-        writer.String(await context.Variable.Resolve(_value));
+        writer.String(await Rendered(context));
     }
 
     public override bool IsLeaf => true;
