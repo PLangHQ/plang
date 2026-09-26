@@ -2,6 +2,16 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — the %!x% question dissolved; coder goes again
+
+Ingi: "your open question doesn't make sense, read the doc … and code". The docs and code agree:
+- `%!x%` are ordinary variables in each actor's own store (actor/context/this.cs:160-181, every context, User included);
+- a template renders against the reading context, reaching what the goal can already reach;
+- the marker is only ever the programmer's decision;
+- the actor is the security boundary.
+
+So there's no second mode: the file is born `"plang"`, and `skipInfrastructure` goes with Resolve. A separate security gap found on the way (navigation reaches any public property, so a [Sensitive] leaf prints) → todo with #23. **Sent (Ingi's go):** finish the sweep, file.read born with template, Resolve deleted, rename `HasVariableReference` → `HasVariable` (coder proposes an owner for the clashing static content detector `text.HasVariable(string)`).
+
 ## 2026-09-26 — Ingi: file.read returns its item born with template; the text renders itself
 
 **Reversal of my ruling** (I had told coder "file.read keeps its direct Resolve", then sketched an action that opened and re-wrapped the content). Ingi: "`.Value()` should never be called in an action that is returning an item … the item that gets returned from file.read gets born with template". **Ruling sent to coder:**
