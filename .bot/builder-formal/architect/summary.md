@@ -2,6 +2,13 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: "the cached goal should be instant"
+
+Traced from the .goal files: an unchanged goal still runs the whole builder. Build.goal:13 calls BuildGoal for every goal; Decide renders its state twice; **Properties calls nano with every step `=> kept`**; every sub-goal Compiles again; the identical .pr is rewritten. That's 0.8–3.3 s per unchanged goal. **Ruling:**
+- `goal.IsKept` (every step kept, nothing reopened, sub-goals too) → build.goals leaves the goal out;
+- Start.goal compiles only goals and sub-goals that have an open step (the edit is rebuilt by the builder itself, a dogfood test of kept steps);
+- a timing run before and after.
+
 ## 2026-09-26 — Ingi: `- run %action%`
 
 Ingi confirmed a plang-level `- run %action%` (the explicit door that runs an action held as a value; `action.Run` already runs actions). It's added to the action-as-value draft (`.bot/get-builder-running/architect/action-as-value-draft.md`, "Added 2026-09-26") with the three questions to settle: is `item|action<math>|…` a restriction or teaching; how a variable comes to HOLD an action (by the draft's rule 1, an action given to a value slot RUNS); and the module/action name (`action.run`?). Also noted: the "nested loops" picture is really each node running itself (goal → step.list.Run → step.Run → action.list.Run → action.Run → the handler); `Documentation/v0.2/app-tree.md:97-98` still lists App.Run/RunAction, which is stale.
