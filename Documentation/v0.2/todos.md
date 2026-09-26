@@ -2087,3 +2087,13 @@ entity door answers `{choice, kind: operator}` ("the choice precedent", `:302-30
 reader is registered per `(choice, kind)` (`type/item/choice/serializer/Reader.cs:5`). The builder menu
 shows the first name; the entity door cannot read it (`type("operator").Create("==")` → "no reader for
 type 'operator'"). One type, one name. For Ingi — not fixed on goal-graph-singular.
+
+## Templates hold plang values through an adapter (2026-09-26, builder-formal)
+
+Fluid reads a plang item through its Data door but a plain C# object by reflection, and turns anything
+enumerable into a bare array — its other members are lost. Workarounds it forced, to remove when the
+template holds plang values through an adapter (Ingi, the item.Backing / Fluid-adapter work):
+- `step.Pick` (goal/step/pick/list) is not itself enumerable; its picks are `.Item` so the template can
+  still read `.Question`, `.Listed`, `.Formal`. `.Item` goes back to the list being enumerable.
+- `c[1].true | append: ""` in decider1.template: a plang dict's entries reach the template as raw text
+  items, which the `json` filter reflects as objects; the append forces a string.
