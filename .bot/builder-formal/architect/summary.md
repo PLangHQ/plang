@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — the bare if landed (uncommitted at the time); a bootstrap blocker in the builder's own retry
+
+Operator is optional: a bare `if %x%` is Left's own truth, and operands are judged at build (OperandMissing/OperandExtra). action.Validate asks the handler's Validate so Reopen sees it. The cached Start step reopened for real, and nano answered with a bare if. **Blocker:** the installed Compile step was built with `Order=RetryFirst`, so FixSteps' corrected answer was never matched (earlier it went unseen because refused steps kept their old code). **Ruling:** option 1, a throwaway C# install of Start.goal from recorded answers (Merge + Reopen + Read + retry + fold + Text). Plus a C# test pinning the builder's critical steps (Compile's on.error: FixSteps, GoalFirst, RetryCount 1, the ElseWithoutIf → SourceError clause; Start's bare `if %goal.IsCached%`).
+
 ## 2026-09-26 — Ingi: "why 5.3 s, I was expecting 0 s"
 
 The rest of the 5.3 s: (1) Start's guard never fired (the bare-if bug), so cached goals still ran events, traces, fold and save; (2) Build.goal:9 and :12 call EmitBuildEvent on EVERY build before the goal loop, and the first template render costs a 4.7 s warm-up; (3) BuilderChannel has 0 steps (the forward was removed 2026-07-21: `%!data%` doesn't reach a goal-backed channel), so build events render into nothing. **Sent:** profile and fix the warm-up; fix channel-input propagation so BuilderChannel shows output (or size it first); measure again. Target: process start + load/compare (35 ms), no .pr rewritten.
