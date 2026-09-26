@@ -134,10 +134,19 @@ public sealed partial class @this
             if (_hash != null) return _hash;
             if (Step.Count == 0) return null;
 
+            // every step as written, in the order written: a step indented under a condition is folded
+            // into it (its body) and still counts; a condition's inline { } body is written on its
+            // parent's line and is not a step of the source
             var sb = new StringBuilder();
             sb.Append(Name);
-            foreach (var step in Step.Items())
+            void Written(global::app.goal.step.@this step)
+            {
                 sb.Append(step.Text);
+                foreach (var action in step.Code.Items())
+                    foreach (var body in action.Child.Items())
+                        if (body.Line.Number != step.Line.Number) Written(body);
+            }
+            foreach (var step in Step.Items()) Written(step);
 
             _hash = Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()))).ToLowerInvariant();

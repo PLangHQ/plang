@@ -1,0 +1,356 @@
+{
+  "name": "IfBoolTruthy",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %truthyRan% = \"no\"",
+      "line": {
+        "number": 5
+      },
+      "comment": "`if %b%` with %b% = true is truthy; `if !%b%` is falsy. bool.@this implements\nIBooleanResolvable; this is the load-bearing runtime path for conditions. The\ntruthy branch runs, the negated (falsy) branch does not.",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%truthyRan%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %negatedRan% = \"no\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%negatedRan%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %b% = true",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%b%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "if %b%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%b%"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "child": [
+            {
+              "index": 4,
+              "text": "set %truthyRan% = \"yes\"",
+              "line": {
+                "number": 9,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%truthyRan%"
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "asdefault",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "if !%b%",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%b%"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "child": [
+            {
+              "index": 6,
+              "text": "set %negatedRan% = \"yes\"",
+              "line": {
+                "number": 11,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%negatedRan%"
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "asdefault",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %truthyRan% equals \"yes\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%truthyRan%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %negatedRan% equals \"no\"",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%negatedRan%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/ScalarsAsNative/Stage5/IfBoolTruthy.test.goal",
+  "prPath": "/ScalarsAsNative/Stage5/.build/ifbooltruthy.test.pr",
+  "hash": "7355010b5d500988d3dcde5b942be9c5c229b5600fe6eefbe21e9cd9c1c83917",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

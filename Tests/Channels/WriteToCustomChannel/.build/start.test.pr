@@ -1,0 +1,120 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set channel \"logger\" call Logger",
+      "line": {
+        "number": 4
+      },
+      "comment": "Builder maps the write step's intent to a custom channel name from inventory.\nChannel inventory teaches the LLM, not pattern parsing.",
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "logger"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "text"
+                    },
+                    "value": "/Channels/WriteToCustomChannel/Logger"
+                  }
+                ],
+                "default": [
+                  {
+                    "name": "parallel",
+                    "type": {
+                      "name": "bool"
+                    },
+                    "value": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write 'hi' to logger",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "logger"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %loggerCalled% is true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%loggerCalled%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Channels/WriteToCustomChannel/Start.test.goal",
+  "prPath": "/Channels/WriteToCustomChannel/.build/start.test.pr",
+  "hash": "3b8700e3787ae2d9e651b314a122fce84c5392712645333119dc7caa204b1f4d",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

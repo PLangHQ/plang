@@ -261,8 +261,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// reconstructs the same Name and WasPercentWrapped via <see cref="Convert"/>.</summary>
     public override void Write(global::app.channel.serializer.IWriter w)
     {
-        // In formal a variable is written bare, always with its % signs: `Name: variable = %content%`.
-        if (w.Format == global::app.channel.serializer.formal.Writer.Token) { w.Raw($"%{Name}%"); return; }
+        // In formal a variable is written bare, always with its % signs: `Name: variable = %content%` —
+        // and its property when it names one: `%response!cost%`.
+        if (w.Format == global::app.channel.serializer.formal.Writer.Token)
+        {
+            w.Raw(Property == null ? $"%{Name}%" : $"%{Name}!{Property}%");
+            return;
+        }
         w.String(RawValue);
     }
 }

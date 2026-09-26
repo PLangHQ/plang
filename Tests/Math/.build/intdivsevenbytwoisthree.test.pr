@@ -1,0 +1,124 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "math.intdiv A=7 B=2, write to %quotient%",
+      "line": {
+        "number": 4
+      },
+      "comment": "math.intdiv is the named opt-in for truncating integer division: 7 intdiv 2 → 3.\nThis goal exists so devs reaching for C# integer-division semantics have a clear surface.",
+      "code": [
+        {
+          "module": "math",
+          "name": "intdiv",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "number"
+              },
+              "value": 7
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            }
+          ],
+          "default": [
+            {
+              "name": "overflow",
+              "type": {
+                "name": "choice",
+                "kind": "overflow"
+              },
+              "value": "Promote"
+            },
+            {
+              "name": "precision",
+              "type": {
+                "name": "choice",
+                "kind": "precision"
+              },
+              "value": "Error"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%quotient%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %quotient% equals 3",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%quotient%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Math/IntDivSevenByTwoIsThree.test.goal",
+  "prPath": "/Math/.build/intdivsevenbytwoisthree.test.pr",
+  "hash": "18fc09878ff5bcc33cefeabc998de166c555813b8c3b6288d620089f3cc2b34e",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

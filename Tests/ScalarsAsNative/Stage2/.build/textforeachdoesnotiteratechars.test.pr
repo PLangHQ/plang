@@ -1,0 +1,280 @@
+{
+  "name": "TextForEachDoesNotIterateChars",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %count% = 0",
+      "line": {
+        "number": 4
+      },
+      "comment": "text is atomic — a list of two texts iterates as TWO items, not the 5 characters of\n\"abc\"+\"de\". text.@this is not IEnumerable; a text is never char-decomposed.",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %words% = [\"abc\", \"de\"]",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%words%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["abc","de"]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "foreach %words%, call CountWord item=%word%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%words%"
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "item"
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "CountWord"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item"},"value":"%word%"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 2",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "CountWord",
+      "step": [
+        {
+          "index": 0,
+          "text": "math.add A=%count% B=1, write to %count%",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%count%"
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%count%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%"
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/ScalarsAsNative/Stage2/TextForEachDoesNotIterateChars.test.goal",
+      "prPath": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr",
+      "hash": "1ec328764ea9f4e717c675666a3e2853acdb3b663fce3f5ec671fed507431b30",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/ScalarsAsNative/Stage2/TextForEachDoesNotIterateChars.test.goal",
+  "prPath": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr",
+  "hash": "91ffe0dde920cf8932bf7a6ab2de04d51e89fc60ee48cf06fa4579f6b7c1aae4",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

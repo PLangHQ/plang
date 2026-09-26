@@ -1,0 +1,124 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %response% = 'just-the-value'",
+      "line": {
+        "number": 4
+      },
+      "comment": "%response% (no operator) must render the Value, not the whole Data. Properties must\nNOT bleed into the variable's primary render. Coverage row 4.14.",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "just-the-value"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %response!cost% = 100",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response!cost%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 100
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %response% equals 'just-the-value'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "just-the-value"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%response%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Serialization/VariableRendersValueOnly.test.goal",
+  "prPath": "/Serialization/.build/variablerendersvalueonly.test.pr",
+  "hash": "658aaefdcd2da3cbf035f2a64b33b47064d9cb4d216af9e0d1ffcc65e8b50982",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

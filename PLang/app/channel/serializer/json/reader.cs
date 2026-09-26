@@ -55,7 +55,7 @@ public ref struct Reader : IReader
     public long Long() => _r.GetInt64();
     // Natural precision: long when it fits as an integer, else double — the cast
     // to object keeps the integer from widening to a float (a bare ?: would unify).
-    public object Number() => _r.TryGetInt64(out var l) ? l : _r.GetDouble();
+    public object Number() => _r.TryGetInt64(out var l) ? (object)l : _r.GetDouble();
     public float Float() => _r.GetSingle();
     public double Double() => _r.GetDouble();
     public decimal Decimal() => _r.GetDecimal();

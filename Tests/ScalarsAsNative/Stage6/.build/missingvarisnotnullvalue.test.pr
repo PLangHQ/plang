@@ -1,0 +1,109 @@
+{
+  "name": "MissingVarIsNotNullValue",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = null",
+      "line": {
+        "number": 5
+      },
+      "comment": "An explicit null is a real, typed, present value (Type \"null\") occupying the variable — it is\nNOT the same as a never-set variable (which resolves to not-found). Here we pin the value side:\nassigning null yields a present null-typed value that reads back as null.",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \"null\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "null"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Name%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %x% is null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/ScalarsAsNative/Stage6/MissingVarIsNotNullValue.test.goal",
+  "prPath": "/ScalarsAsNative/Stage6/.build/missingvarisnotnullvalue.test.pr",
+  "hash": "20347aa1df78d56fc1ff25abaca4c578992065c78e99ae46555be6965b5a6139",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

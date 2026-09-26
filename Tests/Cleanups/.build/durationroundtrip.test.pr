@@ -1,0 +1,189 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %iso%(duration) = \"PT5M\"",
+      "line": {
+        "number": 5
+      },
+      "comment": "Both the ISO-8601 form (PT5M) and the dot:colon form (0.00:05:00) parse to\nthe same TimeSpan. duration values compare structurally — ToString collapses\nto canonical \"00:05:00\", so equals across the two input forms passes.",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%iso%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT5M"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%duration%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %dotcolon%(duration) = \"0.00:05:00\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dotcolon%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "0.00:05:00"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%duration%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %iso% is not null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%iso%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %dotcolon% is not null",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dotcolon%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %iso% equals %dotcolon%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%iso%"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dotcolon%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Cleanups/DurationRoundTrip.test.goal",
+  "prPath": "/Cleanups/.build/durationroundtrip.test.pr",
+  "hash": "a4fd7a04c0ded88bfd113dcf77798f7792d73621e644c37849fae20b89185784",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

@@ -100,22 +100,21 @@ public sealed class @this
         new(@"\bcall\s+(/?[A-Za-z_][\w./]*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""|'[^']*'");
 
-    // Every goal.call Name in the code, wherever it sits: the step's actions, the actions they hold,
-    // their modifiers' recovery, their bodies.
-    private IEnumerable<string> Called(IEnumerable<global::app.goal.step.action.@this> actions)
+    // Every action in the code, wherever it sits: the step's actions, the actions they hold, their
+    // modifiers' recovery, their bodies.
+    private IEnumerable<global::app.goal.step.action.@this> Every(IEnumerable<global::app.goal.step.action.@this> actions)
     {
         foreach (var a in actions)
         {
-            if (a.Module.Name == "goal" && a.Name == "call" && a["Name"]?.Value?.ToString() is { } name)
-                yield return name.Trim('"');
+            yield return a;
             foreach (var p in a.Property)
                 if (p.Value is global::app.goal.step.action.@this held)
-                    foreach (var n in Called([held])) yield return n;
+                    foreach (var h in Every([held])) yield return h;
             foreach (var m in a.Modifier)
-                foreach (var n in Called(m.Recovery.Items())) yield return n;
-            foreach (var n in Called(a.Recovery.Items())) yield return n;
+                foreach (var r in Every(m.Recovery.Items())) yield return r;
+            foreach (var r in Every(a.Recovery.Items())) yield return r;
             foreach (var child in a.Child.Items())
-                foreach (var n in Called(child.Code.Items())) yield return n;
+                foreach (var c in Every(child.Code.Items())) yield return c;
         }
     }
 
@@ -182,18 +181,23 @@ public sealed class @this
     {
         var i = _step.Index;
         var used = code.Own.Distinct().ToList();
-        var refused = _listed.Where(l => l.Mark == listed.Mark.Certain && !used.Contains(l.Name))
+        // a certain action may sit anywhere in the step — `on error set %x% = …` sets inside the recovery
+        var every = Every(code.Items()).ToList();
+        var anywhere = every.Select(a => $"{a.Module.Name}.{a.Name}").Concat(used).ToHashSet();
+        var refused = _listed.Where(l => l.Mark == listed.Mark.Certain && !anywhere.Contains(l.Name))
             .Select(l => $"step {i} leaves out {l.Name}, which the decider is certain of ({l.Shown})").ToList();
         refused.AddRange(Unlisted(used));
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
-        // the variable the step's words write is written by a variable.set of the step's own code
-        if (Writes() is { } written && !code.Items().Any(a => a.Module.Name == "variable" && a.Name == "set"
+        // the variable the step's words write is written by a variable.set somewhere in the step's code
+        if (Writes() is { } written && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
                 && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), written.Trim('%'), StringComparison.OrdinalIgnoreCase)))
             refused.Add($"step {i} says it writes {written}, but no action writes it: end the step with variable.set(Name={written}, Value=%!data%)");
         // every goal the step's words call is called by the code (a name may be written as its full
         // address: /system/builder/X calls X)
-        var called = Called(code.Items()).Select(n => "/" + n.TrimStart('/').Replace('\\', '/')).ToList();
+        var called = every.Where(a => a.Module.Name == "goal" && a.Name == "call")
+            .Select(a => a["Name"]?.Value?.ToString()?.Trim('"')).OfType<string>()
+            .Select(n => "/" + n.TrimStart('/').Replace('\\', '/')).ToList();
         foreach (var goal in Calls.Matches(Quoted.Replace(_step.Text, "")).Select(m => m.Groups[1].Value.TrimEnd('.', ',')).Distinct())
         {
             var wanted = "/" + goal.TrimStart('/');

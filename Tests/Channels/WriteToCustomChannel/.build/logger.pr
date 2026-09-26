@@ -1,0 +1,53 @@
+{
+  "name": "Logger",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %loggerCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%loggerCalled%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Channels/WriteToCustomChannel/Logger.goal",
+  "prPath": "/Channels/WriteToCustomChannel/.build/logger.pr",
+  "hash": "5ee893a6cdfb3f82baeeac34895818ace1026b53bd9da0ed346c679cd7e1a48d",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

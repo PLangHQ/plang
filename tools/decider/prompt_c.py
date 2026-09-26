@@ -75,20 +75,25 @@ TARGET = re.compile(r'(%[A-Za-z_]\w*%)\s*=(?!=)')   # the variable an assignment
 CALLS = re.compile(r'\bcall\s+(/?[A-Za-z_][\w./]*)', re.I)   # a goal the step's words call (pick.list Calls)
 QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"|\'[^\']*\'')
 
-def called_goals(rows):
-    """Every goal.call Name in the rows: the actions, what they hold, their recovery, their bodies."""
+def every_action(rows):
+    """Every action in the rows, wherever it sits: the actions, what they hold, their recovery, their
+    bodies (pick.list Every)."""
     out = []
     for a in rows:
         if not isinstance(a, dict): continue
-        if (a.get('module'), a.get('name')) == ('goal', 'call'):
-            out += [str(r['value']).strip('"') for r in a.get('property') or [] if r['name'] == 'Name']
+        out.append(a)
         for r in a.get('property') or []:
             vals = r['value'] if isinstance(r['value'], list) else [r['value']]
-            out += called_goals([v for v in vals if isinstance(v, dict) and 'module' in v])
-        for m in a.get('modifier') or []: out += called_goals(m.get('recovery') or [])
-        out += called_goals(a.get('recovery') or [])
-        for c in a.get('child') or []: out += called_goals(c.get('action') or [])
+            out += every_action([v for v in vals if isinstance(v, dict) and 'module' in v])
+        for m in a.get('modifier') or []: out += every_action(m.get('recovery') or [])
+        out += every_action(a.get('recovery') or [])
+        for c in a.get('child') or []: out += every_action(c.get('action') or [])
     return out
+
+def called_goals(rows):
+    """Every goal.call Name in the rows, wherever the call sits."""
+    return [str(r['value']).strip('"') for a in every_action(rows) if (a.get('module'), a.get('name')) == ('goal', 'call')
+            for r in a.get('property') or [] if r['name'] == 'Name']
 
 def known_code(certain, text):
     """The code a step's certain picks already know, as (action, binds): the build's walk reads it
@@ -241,8 +246,10 @@ def disagreements(i, rows, picks_i, text=''):
     """What the LLM and the decider disagree on in step i: (refusals, unsure)."""
     used = own_actions(rows)
     shown = dict(listed(picks_i, text))
+    # a certain action may sit anywhere in the step: `on error set %x% = …` sets inside the recovery
+    anywhere = set(used) | set(held_actions(rows))
     refused = [f'step {i} leaves out {a}, which the decider is certain of ({p:.2f})'
-               for a, p in shown.items() if p >= CERTAIN and a not in used]
+               for a, p in shown.items() if p >= CERTAIN and a not in anywhere]
     refused += unlisted(i, used, picks_i, text)
     # an action listed only through the popular-action choice builds with a warning of its own
     popular = [a for a in dict.fromkeys(used) if a in popular_only(picks_i)]
@@ -265,7 +272,7 @@ def disagreements(i, rows, picks_i, text=''):
         name = target.group(1).strip('%').lower()
         if not any(a['module'] == 'variable' and a['name'] == 'set' and any(
                 r['name'] == 'Name' and str(r['value']).strip('%"').lower() == name for r in a.get('property') or [])
-                for a in rows):
+                for a in every_action(rows)):
             refused.append(f'step {i} says it writes {target.group(1)}, but no action writes it: '
                            f'end the step with variable.set(Name={target.group(1)}, Value=%!data%)')
     # every goal the step's words call (`call X`, quoted texts left out) is called by the code, wherever
