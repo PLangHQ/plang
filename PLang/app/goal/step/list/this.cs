@@ -50,64 +50,111 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         return body;
     }
 
-    /// <summary>Judges a stage-3 answer's entries against these steps, before any step takes its
-    /// actions: exactly one entry per step, in order, entry i labelled <c>"index": i</c>, none without
-    /// actions — so the .pr matches the .goal line for line. Null when it matches; otherwise one error
-    /// naming every mismatch, so the correction prompt sees all of them at once.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Match(
-        global::app.type.item.list.@this entries, actor.context.@this context)
+    // A step's line in the answer: `[i]` at the start of a line.
+    private static readonly System.Text.RegularExpressions.Regex Head =
+        new(@"^\[(\d+)\][ \t]*", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+    // An action a line names (module.name( …) — a line that doesn't read is still checked for them.
+    private static readonly System.Text.RegularExpressions.Regex Named = new(@"\b([a-z]+)\.([A-Za-z_]+)\(");
+
+    /// <summary>
+    /// Reads the stage-3 answer — one line per step in formal, <c>[i] module.action(…); …</c> — into the
+    /// steps still open (a step without code). Each open step's line is read and checked: it reads
+    /// (formal), it drops what it didn't need to write, a body it wrote over the steps indented under it
+    /// is a copy (dropped) or invented (refused), its chain is whole, its actions and properties judge
+    /// themselves, it agrees with the decider's picks, and it holds what its words say. A step that
+    /// passes takes its code (and the warnings it builds with); a step already holding code keeps it —
+    /// a retry answers only the refused steps. Null when every step has code; otherwise one error
+    /// holding each refused step's problems, every one at once, and the steps under Details["steps"].
+    /// </summary>
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Read(string answer, actor.context.@this context)
     {
-        var rows = entries.Items(context).ToList();
-        var steps = CountRaw;
-        var problems = new List<string>();
-        for (int i = 0; i < System.Math.Max(steps, rows.Count); i++)
+        var whole = new List<string>();
+        var heads = Head.Matches(answer);
+        if (heads.Count == 0 || answer[..heads[0].Index].Trim().Length > 0)
+            whole.Add("each step's line starts with its index: [0] action; action");
+        var lines = new Dictionary<int, string>();
+        for (int n = 0; n < heads.Count; n++)
         {
-            if (i >= rows.Count) { problems.Add($"step {i} (\"{this[i].Text}\") has no entry"); continue; }
-            if (i >= steps) { problems.Add($"entry {i} is extra: the goal has {steps} steps"); continue; }
+            var i = int.Parse(heads[n].Groups[1].Value);
+            var end = n + 1 < heads.Count ? heads[n + 1].Index : answer.Length;
+            var line = answer[(heads[n].Index + heads[n].Length)..end].TrimEnd();
+            if (i >= CountRaw) whole.Add($"entry {i} is extra: the goal has {CountRaw} steps");
+            else if (!lines.TryAdd(i, line)) whole.Add($"step [{i}] is answered twice");
+        }
 
-            var entry = await rows[i].Value<global::app.type.item.dict.@this>();
-            if (entry == null) { problems.Add($"entry {i} is not an object"); continue; }
+        var refused = new SortedDictionary<int, List<string>>();
+        void Refuse(int i, string why) { if (!refused.TryGetValue(i, out var p)) refused[i] = p = new(); p.Add(why); }
+        string? key = null;
 
-            var index = entry.Get("index", context) is { } label
-                ? await label.Value<global::app.type.item.number.@this>() : null;
-            if (index == null) problems.Add($"entry {i} has no index");
-            else if (index.ToInt64() != i) problems.Add($"entry {i} is labelled index {index.ToInt64()}");
-
-            var actions = entry.Get("action", context) is { } held
-                ? await held.Value<global::app.type.item.list.@this>() : null;
-            if (actions == null || actions.CountRaw == 0) { problems.Add($"step {i} (\"{this[i].Text}\") has no actions"); continue; }
-
-            // A step with steps indented under it gets its body from that layout (build.fold places
-            // it). A child the answer wrote as a copy of those steps is dropped by the fold; a child
-            // that is not them is invented — refused, in words about the step, not its layout.
-            var body = Body(i);
-            if (body.CountRaw == 0) continue;
-            var bodyTexts = body.Items().Select(b => Words(b.Text)).ToHashSet();
-            foreach (var row in actions.Items(context))
+        // Each open step's line, read.
+        var read = new Dictionary<int, global::app.goal.step.action.list.@this>();
+        for (int i = 0; i < CountRaw; i++)
+        {
+            var step = this[i];
+            if (step.Code.Count > 0)
             {
-                if (await row.Value<global::app.type.item.dict.@this>() is not { } answered
-                    || answered.Get("child", context) is not { } written
-                    || await written.Value<global::app.type.item.list.@this>() is not { CountRaw: > 0 } child) continue;
-                foreach (var childRow in child.Items(context))
+                if (lines.ContainsKey(i))
+                    await (context.App.Debug?.Write($"build.match: step {i} already has its code; its line in the answer is set aside") ?? System.Threading.Tasks.Task.CompletedTask);
+                continue;
+            }
+            if (!lines.TryGetValue(i, out var line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
+            var formal = new global::app.goal.step.action.serializer.Formal(step).Read(line, context);
+            if (!formal.Success)
+            {
+                Refuse(i, $"step {i} does not parse: {formal.Error!.FixSuggestion ?? formal.Error.Message} — in: [{i}] {line.Trim()}");
+                var named = Named.Matches(line).Select(m => (m.Groups[1].Value, m.Groups[2].Value))
+                    .Where(a => context.App.Module.Contains(a.Item1) && context.App.Module[a.Item1][a.Item2] != null)
+                    .Select(a => $"{a.Item1}.{a.Item2}");
+                foreach (var why in step.Pick.Unlisted(named)) Refuse(i, why);
+                continue;
+            }
+            var actions = (global::app.goal.step.action.list.@this)formal.Peek()!;
+            foreach (var action in actions.Items()) action.Reduce();
+            read[i] = actions;
+        }
+
+        // Each read step, checked — every problem it shows, at once.
+        foreach (var (i, actions) in read)
+        {
+            var step = this[i];
+            // A step with steps indented under it gets its body from that layout (build.fold places it):
+            // a body written over it that holds only what the indented steps do is a copy, dropped; one
+            // that holds anything else is invented.
+            var body = Body(i);
+            if (body.CountRaw > 0)
+            {
+                var below = body.Items().SelectMany(b => (read.TryGetValue(b.Index, out var r) ? r : b.Code).Own).ToList();
+                foreach (var action in actions.Items().Where(a => a.Child.Count > 0))
                 {
-                    var text = await childRow.Value<global::app.type.item.dict.@this>() is { } childStep
-                               && childStep.Get("text", context) is { } t ? (await t.Value())?.ToString() ?? "" : "";
-                    if (bodyTexts.Contains(Words(text))) continue;
-                    problems.Add($"step {i} has a child its own words don't name (\"{text}\") — its entry holds only what step {i} says");
-                    break;
+                    var inside = action.Child.Items().SelectMany(c => c.Code.Own).ToList();
+                    var spare = below.ToList();
+                    if (inside.All(spare.Remove)) action.Child = new @this();
+                    else Refuse(i, $"step {i}'s body is the steps indented under it ({string.Join(", ", body.Items().Select(b => b.Index))}); " +
+                                   $"the builder places them — write step {i} without {{ }} and each indented step on its own line");
                 }
             }
+            step.Code = actions;
+            if (await step.Validate(context) is { } invalid)
+            {
+                key ??= invalid.Key == "ElseWithoutIf" ? invalid.Key : null;
+                foreach (var cause in invalid.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
+            }
+            if (await actions.Build(context) is { } failed)
+                foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
+            var (disagree, warnings) = step.Pick.Agree(actions);
+            foreach (var why in disagree) Refuse(i, why);
+            if (refused.ContainsKey(i)) step.Code = new global::app.goal.step.action.list.@this();   // open again
+            else foreach (var warning in warnings) step.Warning.Add(warning);
         }
-        if (problems.Count == 0) return null;
-        return new global::app.error.Error(
-            $"The answer does not match the goal's {steps} steps: {string.Join("; ", problems)}. " +
-            "Answer exactly one entry per step, in order — entry i with \"index\": i — each with its actions.",
-            "AnswerMismatch", 400);
-    }
 
-    /// <summary>A step's words for comparing — quotes and repeated whitespace set aside.</summary>
-    private string Words(string text)
-        => System.Text.RegularExpressions.Regex.Replace(text.Replace("\"", "").Replace("'", ""), @"\s+", " ").Trim().ToLowerInvariant();
+        if (whole.Count == 0 && refused.Count == 0) return null;
+        var problems = whole.Concat(refused.Values.SelectMany(p => p)).ToList();
+        return new global::app.error.Error(string.Join("; ", problems), key ?? "StepsRefused", 400)
+        {
+            Details = new() { ["steps"] = string.Join(", ", refused.Keys) },
+        };
+    }
 
     /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
     /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>

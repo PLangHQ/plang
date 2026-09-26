@@ -22,13 +22,12 @@ public partial class Set : IContext
     {
         // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
         // CLR-facing machinery).
-        var peeked = Value.Peek();
-        var valueBacking = peeked is global::app.type.item.@this value ? value.Backing : peeked;
-
         // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
-        // string) against the literal's content. %var% values defer to Run.
-        if (Type?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null
-            && valueBacking != null && !Value.HasVariableReference)
+        // string) against the literal's content. %var% values defer to Run. The raw face is read only
+        // here, where a strict type asks for it.
+        if (Type?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null && !Value.HasVariableReference
+            && Value.Peek() is { } peeked
+            && (peeked is global::app.type.item.@this value ? value.Backing : peeked) is { } valueBacking)
         {
             var clr = t.ClrType ?? Context.App.Type.Clr(t.Name);
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))

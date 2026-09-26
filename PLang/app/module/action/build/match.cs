@@ -5,10 +5,9 @@ using Goal = app.goal.@this;
 namespace app.module.action.build;
 
 /// <summary>
-/// Refuses a stage-3 answer that does not line up with the goal's steps — one entry per step, in
-/// order, each labelled with its own index and holding actions — before any step takes its actions.
-/// A step grafts its entry by index, so a dropped, merged or renumbered entry would otherwise hand one
-/// step another step's actions and the .pr would no longer read like its .goal.
+/// Reads the stage-3 answer into the goal's steps: one line per step in formal, each read, checked and
+/// taken as that step's code (goal.step.list.Read). The steps it refuses stay open, and the error names
+/// them and every problem at once; a retry answers only those steps, and the others keep their code.
 /// </summary>
 [Action("match")]
 public partial class match : IContext
@@ -16,9 +15,9 @@ public partial class match : IContext
     [IsNotNull]
     public partial data.@this<Goal> Goal { get; init; }
 
-    /// <summary>The stage-3 answer: <c>{step: [{index, action: [...]}]}</c>.</summary>
+    /// <summary>The stage-3 answer: one line per step, <c>[i] module.action(Name=value); …</c>.</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.item.dict.@this> Answer { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Answer { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

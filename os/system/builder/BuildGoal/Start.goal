@@ -1,12 +1,11 @@
 Start
-/ Build one .goal file: decide which modules and actions each step uses, then let the LLM order
-/ them and fill their properties, then validate and recurse into sub-goals.
+/ Build one .goal file: decide which actions each step uses, let the LLM write each step's actions in
+/ formal, read them into the steps, then recurse into sub-goals.
 
 - call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
 - set %buildStart% = %Now.Ticks%
-- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "menu": null, "subGoals": [], "durationMs": 0}
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "subGoals": [], "durationMs": 0}
 - call Compile, on error call HandleBuildFailure
-- set %trace.menu% = %menu%
 
 - set %parentGoal% = %goal%
 - foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%
@@ -24,51 +23,22 @@ Start
 
 
 Compile
-/ The three stages for the goal in %goal% — shared by the top goal and every sub-goal.
-/ The decider answers WHICH modules and actions a step may use; that is a menu, not a sequence.
-/ The LLM then decides the order, how often each is used, and what goes in their properties.
+/ The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider
+/ answers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read
+/ the answer, each checking its own line, and take their code. A step refused goes back to the LLM
+/ alone; an else written apart from its if is the programmer's to fix, not the LLM's.
 - call Decide
-- foreach %goal.Step%, call Menu step=%item%
 - call Properties
-/ The answer must line up with the goal before any step takes its actions: one entry per step, in
-/ order, each labelled with its own index — so the .pr reads like the .goal, line for line.
-- build.match Goal=%goal%, Answer=%properties%, on error call FixProperties, then retry 2 times
-- foreach %goal.Step%, call Settle step=%item%
+- build.match Goal=%goal%, Answer=%answer%, on error key "ElseWithoutIf" call SourceError, on error call FixSteps, then retry 1 times
 
 
-Menu
-/ Every module that said yes for this step, with the action chosen for it.
-- set %choices% = []
-- foreach %modules%, call MenuModule module=%item%
-- set %menu[step.Index]% = %choices%
-
-MenuModule
-- set %key% = "s%step.Index%_%module.Name%"
-- if %moduleAnswer[key].noul% is less than %threshold%, return
-- if %module.Action.Count% is 1, add "%module.Name%.%module.Action[0].Name%" to %choices%
-- if %module.Action.Count% is more than 1, add "%module.Name%.%actionAnswer[key].choice%" to %choices%
-
-
-Settle
-/ Graft and judge are one unit: a bad literal fails at the graft, a missing property at the
-/ judge — either way the properties conversation gets the complaint and both run again. An else
-/ written apart from its if is the programmer's to fix, not the LLM's: it never goes to the retry.
-- call Apply step=%step%, on error key "ElseWithoutIf" call SourceError, on error call FixProperties, then retry 2 times
-
-
-Apply
-/ The step constructs its own actions from the rows the LLM answered — each born holding the step.
-- set %goal.step[step.Index].code% = %properties.step[step.Index].action%
-- build.validate step=%goal.step[step.Index]%
-
-
-FixProperties
-/ The answer was refused — it did not match the goal's steps, or a step's graft or judge rejected
-/ its actions. Continue the properties conversation with the complaint (it names the step) — it is
-/ the correction prompt; the retry runs the refused step again.
+FixSteps
+/ The answer was refused for some steps — each refusal names its step and every problem at once.
+/ Continue the conversation with them; only those steps are answered again, and the others keep the
+/ code they took.
 - call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
-- set %fixMessages% = [{"Role":"user", "Content":"Your answer was rejected by the validator: %!error.Message%\n\nReturn the corrected answer in the same shape."}]
-- llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %properties%
+- set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%\n\nAnswer again only these steps, one line each, starting with its [i], in formal."}]
+- llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%
 
 
 BuildSubGoal
@@ -77,7 +47,7 @@ BuildSubGoal
 - call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
 - set %subgoalStart% = %Now.Ticks%
 - call Compile, on error call HandleBuildFailure
-- add {goal: %goal%, menu: %menu%} to %trace.subGoals%
+- add {goal: %goal%} to %trace.subGoals%
 - math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
 - math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
 - call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%

@@ -119,6 +119,61 @@ public sealed class @this
         Formal = Prefill(context);
     }
 
+    // ---------------------------------------------------------------- the answer against the picks
+
+    /// <summary>Where the step's code and the decider disagree: what refuses the code (a certain pick
+    /// left out, an action the decider did not list, an action held as a value that is not listed —
+    /// goal.call excepted), and the warnings it builds with (an action the decider was not sure of,
+    /// one from the popular choice).</summary>
+    public (List<string> Refused, List<global::app.warning.@this> Warning) Agree(global::app.goal.step.action.list.@this code)
+    {
+        var i = _step.Index;
+        var used = code.Own.Distinct().ToList();
+        var refused = _listed.Where(l => l.Mark == listed.Mark.Certain && !used.Contains(l.Name))
+            .Select(l => $"step {i} leaves out {l.Name}, which the decider is certain of ({l.Shown})").ToList();
+        refused.AddRange(Unlisted(used));
+        refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
+            .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
+        var warnings = new List<global::app.warning.@this>();
+        foreach (var l in _listed.Where(l => used.Contains(l.Name)))
+            if (l.Mark == listed.Mark.Possible)
+                warnings.Add(new() { Key = "Unsure", Message = $"step {i} uses {l.Name}, which the decider was not sure of ({l.Shown})" });
+            else if (l.Mark == listed.Mark.Popular)
+                warnings.Add(new() { Key = "Popular", Message = $"step {i} uses {l.Name} from the decider's popular-action choice ({l.Shown}): unsure" });
+        return (refused, warnings);
+    }
+
+    /// <summary>The actions named that the decider did not list for the step — each refusal names the
+    /// step's list, so the retry has what it needs.</summary>
+    public IEnumerable<string> Unlisted(IEnumerable<string> names) =>
+        names.Distinct().Where(a => _listed.All(l => l.Name != a))
+            .Select(a => $"{a} isn't one of step {_step.Index}'s actions ({string.Join(", ", _listed.Select(l => l.Name))})");
+
+    // The actions held as values: a property's action, a recovery's actions — and what those hold.
+    private static IEnumerable<string> Held(IEnumerable<global::app.goal.step.action.@this> actions)
+    {
+        foreach (var a in actions)
+        {
+            foreach (var p in a.Property)
+                if (p.Value is global::app.goal.step.action.@this held)
+                {
+                    yield return $"{held.Module.Name}.{held.Name}";
+                    foreach (var name in Held([held])) yield return name;
+                }
+            foreach (var m in a.Modifier)
+            {
+                foreach (var r in m.Recovery.Items())
+                {
+                    yield return $"{r.Module.Name}.{r.Name}";
+                    foreach (var name in Held([r])) yield return name;
+                }
+                foreach (var name in Held([m])) yield return name;
+            }
+            foreach (var child in a.Child.Items())
+                foreach (var name in Held(child.Code.Items())) yield return name;
+        }
+    }
+
     // ---------------------------------------------------------------- what the prompt shows
 
     private List<listed.@this> Listing()

@@ -67,6 +67,31 @@ public sealed class @this
     /// <summary>A step must write this property: it accepts no null and has no default to fall back on.</summary>
     public bool Required => !Nullable && !HasDefault;
 
+    /// <summary>Is <paramref name="value"/> this property's default — a value the step could have left
+    /// out (its default applies: the same behaviour)? A bool compares by its word, a number by its
+    /// value, a variable by its name with or without its % signs, anything else by its text.</summary>
+    public bool IsDefault(global::app.type.item.@this? value)
+    {
+        if (Default == null || value == null) return false;
+        var written = value.ToString();
+        // a value read from formal may still be its JSON slice: "A" is the text A
+        if (written.Length >= 2 && written[0] == '"' && written[^1] == '"')
+            written = System.Text.Json.JsonSerializer.Deserialize<string>(written) ?? written;
+        var fallback = Default switch
+        {
+            bool b => b ? "true" : "false",
+            System.IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+            _ => Default.ToString() ?? "",
+        };
+        if (Default is bool) return string.Equals(written, fallback, System.StringComparison.OrdinalIgnoreCase);
+        if (Type.Name == "variable") return written.Trim('%') == fallback.Trim('%');
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        if (double.TryParse(written, System.Globalization.NumberStyles.Float, invariant, out var a)
+            && double.TryParse(fallback, System.Globalization.NumberStyles.Float, invariant, out var d))
+            return a == d;
+        return written == fallback;
+    }
+
     /// <summary>The value a program action holds, raw as loaded — a lazy wire/source, or the
     /// eagerly read action/goal.call. Never loaded here; the run's Data does that.</summary>
     public global::app.type.item.@this? Value { get; init; }

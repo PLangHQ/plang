@@ -196,6 +196,7 @@ public static class Make
 
             stepNode.Add(new global::app.goal.step.@this
             {
+                Goal = goal,
                 Index = i,
                 Indent = steps[i].Indent,
                 Text = steps[i].Text,

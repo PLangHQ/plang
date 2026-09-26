@@ -287,11 +287,9 @@ public class Default : IBuilder
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
         var answer = (await action.Answer.Value())!;
-        var entries = answer.Get("step", context) is { } held
-            ? await held.Value<global::app.type.item.list.@this>() : null;
 
-        // The goal's steps judge the answer; the builder only reacts.
-        if (await goal.Step.Match(entries ?? new global::app.type.item.list.@this(), context) is { } refusal)
+        // The goal's steps read and judge the answer; the builder only reacts.
+        if (await goal.Step.Read(answer.ToString(), context) is { } refusal)
             return context.Error(refusal);
         return context.Ok(true);
     }

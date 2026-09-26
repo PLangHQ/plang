@@ -103,6 +103,21 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
         if (i >= 0) rows[i] = property; else rows.Add(property);
     }
 
+    /// <summary>Drops the rows the step didn't need to write, against the properties they fill
+    /// (<paramref name="declared"/>, the catalogue's): an explicit null on an optional property, and a
+    /// value equal to the property's default — its default applies, the same behaviour. A null named in
+    /// <paramref name="operand"/> is a value of its own (a condition's <c>Right=null</c>) and stays.</summary>
+    public void Reduce(@this declared, System.Collections.Generic.IReadOnlySet<string> operand)
+    {
+        Rows.RemoveAll(row =>
+        {
+            if (declared[row.Name] is not { } slot) return false;
+            if (row.Value is null or { IsNull: true })
+                return (slot.Nullable || slot.HasDefault) && !operand.Contains(row.Name);
+            return slot.IsDefault(row.Value);
+        });
+    }
+
     /// <summary>The property named <paramref name="name"/>, or null.</summary>
     public Property? this[string name]
         => Rows.FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase));

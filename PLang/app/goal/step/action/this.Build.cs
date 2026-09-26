@@ -46,7 +46,14 @@ public partial class @this
         foreach (var property in Property)
             if (property.Value is @this held && await held.Build(context) is { } heldFailed) causes.Add(heldFailed);
         foreach (var modifier in Modifier)
+        {
             if (await modifier.Build(context) is { } invalid) causes.Add(invalid);
+            // a recovery is what the step runs on error — running this very action again is a retry
+            if (modifier.Recovery.Items().Any(Same))
+                causes.Add(new global::app.error.Error(
+                    $"the Recovery of {modifier.Module}.{modifier.Name} runs {Module}.{Name}, the action it wraps — " +
+                    "Recovery holds what the step runs on error", "RecoveryIsTheAction", 400));
+        }
         if (await Recovery.Build(context) is { } recovery) causes.Add(recovery);
         for (int i = 0; i < Child.Count; i++)
             if (await Child[i].Code.Build(context) is { } branch) causes.Add(branch);
@@ -58,5 +65,30 @@ public partial class @this
             Action = this,
             list = causes,
         };
+    }
+
+    // The same action with the same values.
+    private bool Same(@this other) =>
+        other.Module == Module && other.Name == Name
+        && other.Property.Select(p => (p.Name, p.Value?.ToString())).SequenceEqual(Property.Select(p => (p.Name, p.Value?.ToString())));
+
+    /// <summary>Drops what the step didn't need to write — an explicit null on an optional property,
+    /// a value equal to its default (the same behaviour either way) — here and in every action this one
+    /// holds: a property's action, its modifiers, their recovery, its branch body. A condition's
+    /// operand keeps its null: <c>Right=null</c> compares with null.</summary>
+    public void Reduce()
+    {
+        if (Module[Name] is { } catalog)
+            Property.Reduce(catalog.Property, string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase)
+                ? new HashSet<string> { "Left", "Right" } : new HashSet<string>());
+        foreach (var property in Property)
+            if (property.Value is @this held) held.Reduce();
+        foreach (var modifier in Modifier)
+        {
+            modifier.Reduce();
+            foreach (var recovered in modifier.Recovery.Items()) recovered.Reduce();
+        }
+        for (int i = 0; i < Child.Count; i++)
+            foreach (var action in Child[i].Code.Items()) action.Reduce();
     }
 }

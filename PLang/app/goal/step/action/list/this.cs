@@ -51,6 +51,22 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     /// gather into one error for the chain.
     /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
     /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
+    /// <summary>The actions this code runs as its own (<c>module.action</c>): top level, a condition's
+    /// body, the modifiers — not an action held as a value, nor a modifier's recovery.</summary>
+    public IEnumerable<string> Own
+    {
+        get
+        {
+            foreach (var a in Items())
+            {
+                yield return $"{a.Module.Name}.{a.Name}";
+                foreach (var child in a.Child.Items())
+                    foreach (var name in child.Code.Own) yield return name;
+                foreach (var m in a.Modifier) yield return $"{m.Module.Name}.{m.Name}";
+            }
+        }
+    }
+
     public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(actor.context.@this context)
     {
         if (Count == 0)
