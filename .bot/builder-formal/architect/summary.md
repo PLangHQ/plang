@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — unchanged build: 0.75 s (≈0.5 s of it process start)
+
+`61f21eb11`: goal.Cache/IsCached, Start `if %goal.IsCached%, return %goal.Cache%`, the Compile guard, the bare if, the reopen, the Start.goal install (only step 0 open). The builder's 7 files unchanged: **20.9 s → 0.75 s**; no .pr rewritten. The 4.7 s warm-up wasn't Fluid: the render opened every variable, and %MyIdentity% created an identity (→ todo). A reader crash on a name in an action slot was fixed. **Open:** the Compile pin fails (the step is cached with Order=RetryFirst; nano's answers drop clauses). **Ruling:** use the designed escape hatch (vision §5, a step written in formal is taken as written), and write Compile's match step in formal. BuilderChannel: go (the written value becomes the goal's argument; restore its write out). A dropped Operator is now loud (OperandExtra); watch for it.
+
 ## 2026-09-26 — Ingi: a cached goal returns its cache
 
 "it should be return goal.cache.goal, not the goal coming in, or actually cache.pr". `goal.Cache` is the goal as its .pr holds it, kept by Merge instead of dropped; `goal.IsCached` compares against it; Start's first step is `- if %goal.IsCached%, return %goal.Cache%`; the .pr file is `%goal.Cache.PrPath%`. Folded into the Start.goal bootstrap and its pin test.
