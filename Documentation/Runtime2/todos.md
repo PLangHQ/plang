@@ -1524,3 +1524,6 @@ Ingi: "it should support async". Production C# has about 12 `GetAwaiter().GetRes
 
 ## 2026-09-26 — KYC, proofs and sealed values: moved to research
 An idea, not a todo. It lives at `/shared/research/kyc-proofs/README.md` (index: `/shared/research/INDEX.md`) for the research bot.
+
+## 2026-09-26 — argument rows as their own type
+goal.call's `Parameter` (and ui.render's) is declared a plain `list` (data<list>), the same type as any free list slot. The formal parsers refuse `[{name: …}]` in every plain-list slot, a guard meant for mis-written argument rows (builder-formal 4d). So a real list slot can't take a list of dicts written with bare keys; only `item` slots read one. Fix: argument rows become their own declared type (e.g. `arguments`), the refusal keys on that type, and plain list slots read any list.
