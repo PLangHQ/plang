@@ -1,78 +1,81 @@
 {
   "name": "Start",
-  "visibility": "Public",
-  "path": "/system/builder/BuildGoal/Start.goal",
-  "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "749540773380beeb3a8e8c3fb8cf605d3bad46d1046e62252d1ba6f5e828308e",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
   "step": [
     {
       "index": 0,
       "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
-      "lineNumber": 4,
-      "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"goalHeader\", type:\"string\"},{name:\"goal\", value:\"%goal%\", type:\"object\"}]})",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 5
+      },
+      "code": [
         {
           "module": "goal",
           "name": "call",
-          "parameter": [
+          "property": [
             {
-              "name": "GoalName",
+              "name": "Name",
               "type": {
-                "name": "goal.call"
+                "name": "text"
               },
-              "value": {
-                "name": "/system/builder/EmitBuildEvent",
-                "parallel": false,
-                "parameter": [
-                  {
-                    "name": "kind",
-                    "type": {
-                      "name": "text"
-                    },
-                    "value": "goalHeader"
+              "value": "/system/builder/EmitBuildEvent"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "kind",
+                  "type": {
+                    "name": "text"
                   },
-                  {
-                    "name": "goal",
-                    "value": "%goal%"
-                  }
-                ],
-                "prPath": "/system/builder/.build/emitbuildevent.pr"
-              }
+                  "value": "goalHeader"
+                }
+              ]
             }
           ],
-          "modifier": []
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
-      ]
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses goal.call, which the decider was not sure of (0.79)"
+        }
+      ],
+      "waitForExecution": true
     },
     {
       "index": 1,
       "text": "set %buildStart% = %Now.Ticks%",
-      "lineNumber": 5,
-      "formal": "variable.set(Name=%buildStart%, Value=%Now.Ticks%)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 6
+      },
+      "code": [
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%buildStart%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%Now.Ticks%"
             }
@@ -85,44 +88,35 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"plan\": null, \"stepPasses\": [], \"subGoals\": [], \"durationMs\": 0}",
-      "lineNumber": 6,
-      "formal": "variable.set(Name=%trace%, Value={\"id\":\"%!trace.id%\",\"timestamp\":\"%Now%\",\"goal\":%goal%,\"plan\":null,\"stepPasses\":[],\"subGoals\":[],\"durationMs\":0})",
-      "waitForExecution": true,
-      "action": [
+      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"subGoals\": [], \"durationMs\": 0}",
+      "line": {
+        "number": 7
+      },
+      "code": [
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%trace%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "dict",
-                "template": "plang"
+                "name": "dict"
               },
-              "value": {
-                "id": "%!trace.id%",
-                "timestamp": "%Now%",
-                "goal": "%goal%",
-                "stepPasses": [],
-                "subGoals": [],
-                "durationMs": 0
-              }
+              "value": {"id":"%!trace.id%","timestamp":"%Now%","goal":"%goal%","subGoals":[],"durationMs":0}
             }
           ],
           "default": [
@@ -133,340 +127,107 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "call Plan, on error call HandleBuildFailure",
-      "lineNumber": 8,
-      "formal": "goal.call(GoalName={name:\"Plan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"HandleBuildFailure\"})])",
-      "waitForExecution": true,
-      "action": [
+      "text": "call Compile, on error call HandleBuildFailure",
+      "line": {
+        "number": 8
+      },
+      "code": [
         {
           "module": "goal",
           "name": "call",
-          "parameter": [
+          "property": [
             {
-              "name": "GoalName",
+              "name": "Name",
               "type": {
-                "name": "goal.call"
+                "name": "text"
               },
-              "value": {
-                "name": "Plan",
-                "parallel": false,
-                "parameter": [],
-                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
-              }
+              "value": "Compile"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifier": [
             {
-              "module": "error",
-              "name": "handle",
-              "parameter": [
+              "module": "on",
+              "name": "error",
+              "property": [],
+              "default": [
                 {
-                  "name": "Actions",
+                  "name": "ignoreerror",
                   "type": {
-                    "name": "list"
+                    "name": "bool"
                   },
-                  "value": [
+                  "value": false
+                }
+              ],
+              "recovery": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
                     {
-                      "module": "goal",
-                      "name": "call",
-                      "parameter": [
-                        {
-                          "name": "GoalName",
-                          "type": {
-                            "name": "goal.call"
-                          },
-                          "value": {
-                            "name": "HandleBuildFailure",
-                            "parameter": []
-                          }
-                        }
-                      ]
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "HandleBuildFailure"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
                     }
                   ]
                 }
-              ],
-              "modifier": []
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "set %trace.plan% = %plan%",
-      "lineNumber": 9,
-      "formal": "variable.set(Name=%trace.plan%, Value=%plan%, Type=object)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%trace.plan%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%plan%"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "text"
-              },
-              "value": "object"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 5,
-      "text": "render template \"/system/builder/llm/Compile.llm\", write to %compileSystemPrompt%",
-      "lineNumber": 13,
-      "comment": "The compile system prompt is static across every step in every goal — render\nit once at goal level so the trace doesn't duplicate ~14KB per step.",
-      "formal": "ui.render(Template=\"/system/builder/llm/Compile.llm\") | variable.set(Name=%compileSystemPrompt%, Value=%!data%, type=\"string\")",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "ui",
-          "name": "render",
-          "parameter": [
-            {
-              "name": "Template",
-              "type": {
-                "name": "text"
-              },
-              "value": "/system/builder/llm/Compile.llm"
-            }
-          ],
-          "modifier": []
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%compileSystemPrompt%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 6,
-      "text": "set %trace.compileSystem% = %compileSystemPrompt%",
-      "lineNumber": 14,
-      "formal": "variable.set(Name=%trace.compileSystem%, Value=%compileSystemPrompt%, Type=string)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%trace.compileSystem%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%compileSystemPrompt%"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "text"
-              },
-              "value": "string"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 7,
-      "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure",
-      "lineNumber": 16,
-      "formal": "loop.foreach(Collection=%plan.steps%), goal.call(GoalName={name:\"BuildStep/Start\", parameters:[planStep=%item%]}) | error.handle(Actions=[goal.call(GoalName={name:\"HandleBuildFailure\"})])",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "loop",
-          "name": "foreach",
-          "parameter": [
-            {
-              "name": "Collection",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%plan.steps%"
-            }
-          ],
-          "modifier": []
-        },
-        {
-          "module": "goal",
-          "name": "call",
-          "parameter": [
-            {
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "BuildStep/Start",
-                "parallel": false,
-                "parameter": [
-                  {
-                    "name": "planStep",
-                    "type": {
-                      "name": "text",
-                      "template": "plang"
-                    },
-                    "value": "%item%"
-                  }
-                ],
-                "prPath": "/system/builder/BuildStep/.build/start.pr"
-              }
-            }
-          ],
-          "modifier": [
-            {
-              "module": "error",
-              "name": "handle",
-              "parameter": [
-                {
-                  "name": "Actions",
-                  "type": {
-                    "name": "list"
-                  },
-                  "value": [
-                    {
-                      "module": "goal",
-                      "name": "call",
-                      "parameter": [
-                        {
-                          "name": "GoalName",
-                          "type": {
-                            "name": "goal.call"
-                          },
-                          "value": {
-                            "name": "HandleBuildFailure",
-                            "parameter": []
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "modifier": []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 8,
       "text": "set %parentGoal% = %goal%",
-      "lineNumber": 18,
-      "formal": "variable.set(Name=%parentGoal%, Value=%goal%, Type=object)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 10
+      },
+      "code": [
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%parentGoal%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%goal%"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "text"
-              },
-              "value": "object"
             }
           ],
           "default": [
@@ -477,96 +238,96 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 5,
       "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
-      "lineNumber": 19,
-      "formal": "loop.foreach(Collection=%parentGoal.Child%), goal.call(GoalName={name:\"BuildSubGoal\", parameters:[subGoal=%item%]})",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 11
+      },
+      "code": [
         {
           "module": "loop",
           "name": "foreach",
-          "parameter": [
+          "property": [
             {
               "name": "Collection",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%parentGoal.Child%"
             }
           ],
-          "modifier": []
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "item"
+            }
+          ]
         },
         {
           "module": "goal",
           "name": "call",
-          "parameter": [
-            {
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "BuildSubGoal",
-                "parallel": false,
-                "parameter": [
-                  {
-                    "name": "subGoal",
-                    "type": {
-                      "name": "text",
-                      "template": "plang"
-                    },
-                    "value": "%item%"
-                  }
-                ],
-                "prPath": "/system/builder/BuildGoal/.build/start.pr"
-              }
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 10,
-      "text": "set %goal% = %parentGoal%",
-      "lineNumber": 20,
-      "formal": "variable.set(Name=%goal%, Value=%parentGoal%, Type=object)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "text"
+              },
+              "value": "BuildSubGoal"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"subGoal","type":{"name":"item"},"value":"%item%"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %goal% = %parentGoal%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
               },
               "value": "%goal%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%parentGoal%"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "text"
-              },
-              "value": "object"
             }
           ],
           "default": [
@@ -577,58 +338,71 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 11,
+      "index": 7,
       "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
-      "lineNumber": 22,
-      "formal": "math.subtract(A=%Now.Ticks%, B=%buildStart%) | variable.set(Name=%elapsedTicks%, Value=%!data%)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 14
+      },
+      "code": [
         {
           "module": "math",
           "name": "subtract",
-          "parameter": [
+          "property": [
             {
               "name": "A",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%Now.Ticks%"
             },
             {
               "name": "B",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%buildStart%"
             }
           ],
-          "modifier": []
+          "default": [
+            {
+              "name": "overflow",
+              "type": {
+                "name": "choice",
+                "kind": "overflow"
+              },
+              "value": "Promote"
+            },
+            {
+              "name": "precision",
+              "type": {
+                "name": "choice",
+                "kind": "precision"
+              },
+              "value": "Error"
+            }
+          ]
         },
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%elapsedTicks%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%!data%"
             }
@@ -641,57 +415,71 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 12,
+      "index": 8,
       "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
-      "lineNumber": 23,
-      "formal": "math.divide(A=%elapsedTicks%, B=10000) | variable.set(Name=%elapsedMs%, Value=%!data%)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 15
+      },
+      "code": [
         {
           "module": "math",
           "name": "divide",
-          "parameter": [
+          "property": [
             {
               "name": "A",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%elapsedTicks%"
             },
             {
               "name": "B",
               "type": {
-                "name": "object"
+                "name": "number"
               },
               "value": 10000
             }
           ],
-          "modifier": []
+          "default": [
+            {
+              "name": "overflow",
+              "type": {
+                "name": "choice",
+                "kind": "overflow"
+              },
+              "value": "Promote"
+            },
+            {
+              "name": "precision",
+              "type": {
+                "name": "choice",
+                "kind": "precision"
+              },
+              "value": "Error"
+            }
+          ]
         },
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%elapsedMs%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%!data%"
             }
@@ -704,35 +492,33 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 13,
+      "index": 9,
       "text": "set %trace.durationMs% = %elapsedMs%",
-      "lineNumber": 24,
-      "formal": "variable.set(Name=%trace.durationMs%, Value=%elapsedMs%, Type=object)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 16
+      },
+      "code": [
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%trace.durationMs%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%elapsedMs%"
             }
@@ -745,67 +531,63 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 14,
+      "index": 10,
       "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
-      "lineNumber": 26,
-      "formal": "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\", Value=%trace%)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 18
+      },
+      "code": [
         {
           "module": "file",
           "name": "save",
-          "parameter": [
+          "property": [
             {
               "name": "Path",
               "type": {
-                "name": "path",
-                "template": "plang"
+                "name": "path"
               },
               "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%trace%"
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 15,
+      "index": 11,
       "text": "add %goal.Name% to %traceGoals%",
-      "lineNumber": 27,
-      "formal": "list.add(ListName=%traceGoals%, Value=%goal.Name%)",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 19
+      },
+      "code": [
         {
           "module": "list",
           "name": "add",
-          "parameter": [
+          "property": [
             {
               "name": "ListName",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%traceGoals%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%goal.Name%"
             }
@@ -814,94 +596,382 @@
             {
               "name": "atindex",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "number"
               },
               "value": -1
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
-      "index": 16,
-      "text": "build.goalsSave Goal=%goal%",
-      "lineNumber": 28,
-      "formal": "build.goalsSave(Goal=%goal%, App=%app%)",
-      "waitForExecution": true,
-      "action": [
+      "index": 12,
+      "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
+      "line": {
+        "number": 21
+      },
+      "comment": "Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save.",
+      "code": [
         {
           "module": "build",
-          "name": "goalsSave",
-          "parameter": [
+          "name": "fold",
+          "property": [
             {
               "name": "Goal",
               "type": {
-                "name": "goal",
-                "template": "plang"
+                "name": "goal"
               },
               "value": "%goal%"
-            },
-            {
-              "name": "App",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%app%"
             }
           ],
-          "modifier": []
+          "modifier": [
+            {
+              "module": "on",
+              "name": "error",
+              "property": [],
+              "default": [
+                {
+                  "name": "ignoreerror",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ],
+              "recovery": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "HandleBuildFailure"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "build.goalsSave Goal=%goal%",
+      "line": {
+        "number": 22
+      },
+      "code": [
+        {
+          "module": "build",
+          "name": "goalsSave",
+          "property": [
+            {
+              "name": "Goal",
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goal%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
     }
   ],
   "child": [
     {
-      "name": "BuildSubGoal",
-      "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "a0581f92eef43de0112a035c5da1f3e9567c89e00c9c3ae6ba67625e56f2a731",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
+      "name": "Compile",
       "step": [
         {
           "index": 0,
-          "text": "set %goal% = %subGoal%",
-          "lineNumber": 34,
-          "formal": "variable.set(Name=%goal%, Value=%subGoal%, Type=object)",
-          "waitForExecution": true,
-          "action": [
+          "text": "call Decide",
+          "line": {
+            "number": 30
+          },
+          "comment": "The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider\nanswers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read\nthe answer, each checking its own line, and take their code. A step refused goes back to the LLM\nalone; an else written apart from its if is the programmer's to fix, not the LLM's.",
+          "code": [
             {
-              "module": "variable",
-              "name": "set",
-              "parameter": [
+              "module": "goal",
+              "name": "call",
+              "property": [
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable",
-                    "template": "plang"
+                    "name": "text"
+                  },
+                  "value": "/system/builder/BuildGoal/Decide"
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "call Properties",
+          "line": {
+            "number": 31
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/system/builder/BuildGoal/Properties"
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "build.match Goal=%goal%, Answer=%answer%, on error key \"ElseWithoutIf\" call SourceError, on error call FixSteps first, then retry 1 times",
+          "line": {
+            "number": 32
+          },
+          "code": [
+            {
+              "module": "build",
+              "name": "match",
+              "property": [
+                {
+                  "name": "Goal",
+                  "type": {
+                    "name": "goal"
                   },
                   "value": "%goal%"
                 },
                 {
-                  "name": "Value",
-                  "type": {
-                    "name": "object",
-                    "template": "plang"
-                  },
-                  "value": "%subGoal%"
-                },
-                {
-                  "name": "Type",
+                  "name": "Answer",
                   "type": {
                     "name": "text"
                   },
-                  "value": "object"
+                  "value": "%answer%"
+                }
+              ],
+              "modifier": [
+                {
+                  "module": "on",
+                  "name": "error",
+                  "property": [
+                    {
+                      "name": "Key",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "ElseWithoutIf"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "ignoreerror",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ],
+                  "recovery": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
+                        {
+                          "name": "Name",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "SourceError"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "parallel",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "module": "on",
+                  "name": "error",
+                  "property": [
+                    {
+                      "name": "RetryCount",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
+                    },
+                    {
+                      "name": "Order",
+                      "type": {
+                        "name": "choice",
+                        "kind": "errororder"
+                      },
+                      "value": "RetryFirst"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "ignoreerror",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ],
+                  "recovery": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
+                        {
+                          "name": "Name",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "FixSteps"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "parallel",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "7d49eac0fc52458d05fb9f48b7410c353ec4aaabf29b8c112eb4d64c7f5fa00d",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false
+    },
+    {
+      "name": "FixSteps",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /system/builder/EmitBuildEvent kind=\"properties-rejected\", errorMessage=%!error.Message%",
+          "line": {
+            "number": 39
+          },
+          "comment": "The answer was refused for some steps — each refusal names its step and every problem at once.\nContinue the conversation with them; only those steps are answered again, and the others keep the\ncode they took.",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/system/builder/EmitBuildEvent"
+                },
+                {
+                  "name": "Parameter",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"properties-rejected"},{"name":"errorMessage","type":{"name":"item"},"value":"%!error.Message%"}]
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal.\"}]",
+          "line": {
+            "number": 40
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%fixMessages%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [{"Role":"user","Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
                 }
               ],
               "default": [
@@ -912,71 +982,244 @@
                   },
                   "value": false
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "llm.query Message=%fixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%",
+          "line": {
+            "number": 41
+          },
+          "code": [
+            {
+              "module": "llm",
+              "name": "query",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "list",
+                    "kind": "llmmessage"
+                  },
+                  "value": [{"Role":"user","Content":"Steps 2 were refused: step 2: %fixMessages% is in the step but not in your answer\n\nAnswer again only these steps, one line each, starting with its [i], in formal."}]
+                },
+                {
+                  "name": "Model",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "gpt-5.4-nano"
+                },
+                {
+                  "name": "Cache",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": "%!build.cache%"
+                },
+                {
+                  "name": "ContinuePreviousConversation",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "default": [
+                {
+                  "name": "temperature",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 0
+                },
+                {
+                  "name": "maxtokens",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 16000
+                },
+                {
+                  "name": "maxtoolcalls",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 10
+                },
+                {
+                  "name": "maxvalidationretries",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%answer%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%!data%"
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "62ccf27b7a4bea21b8a96a2bb201f87fe92c14955c69024ae21b6eb76c822049",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false
+    },
+    {
+      "name": "BuildSubGoal",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %goal% = %subGoal%",
+          "line": {
+            "number": 46
+          },
+          "comment": "Sub-goal recursion — the same three stages, attached to the parent trace.",
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%goal%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%subGoal%"
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
         },
         {
           "index": 1,
           "text": "call /system/builder/EmitBuildEvent kind=\"subGoalHeader\", goal=%goal%",
-          "lineNumber": 35,
-          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"subGoalHeader\", type:\"string\"},{name:\"goal\", value:\"%goal%\", type:\"object\"}]})",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 47
+          },
+          "code": [
             {
               "module": "goal",
               "name": "call",
-              "parameter": [
+              "property": [
                 {
-                  "name": "GoalName",
+                  "name": "Name",
                   "type": {
-                    "name": "goal.call"
+                    "name": "text"
                   },
-                  "value": {
-                    "name": "/system/builder/EmitBuildEvent",
-                    "parallel": false,
-                    "parameter": [
-                      {
-                        "name": "kind",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "subGoalHeader"
-                      }
-                    ],
-                    "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  }
+                  "value": "/system/builder/EmitBuildEvent"
+                },
+                {
+                  "name": "Parameter",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [
+                    {
+                      "name": "kind",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "subGoalHeader"
+                    }
+                  ]
                 }
               ],
-              "modifier": []
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
             }
-          ]
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 1 uses goal.call, which the decider was not sure of (0.89)"
+            }
+          ],
+          "waitForExecution": true
         },
         {
           "index": 2,
           "text": "set %subgoalStart% = %Now.Ticks%",
-          "lineNumber": 36,
-          "formal": "variable.set(Name=%subgoalStart%, Value=%Now.Ticks%, Type=object)",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 48
+          },
+          "code": [
             {
               "module": "variable",
               "name": "set",
-              "parameter": [
+              "property": [
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable",
-                    "template": "plang"
+                    "name": "variable"
                   },
                   "value": "%subgoalStart%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%Now.Ticks%"
                 }
@@ -989,171 +1232,98 @@
                   },
                   "value": false
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
         },
         {
           "index": 3,
-          "text": "call Plan, on error call HandleBuildFailure",
-          "lineNumber": 37,
-          "formal": "goal.call(GoalName={name:\"Plan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"HandleBuildFailure\"})])",
-          "waitForExecution": true,
-          "action": [
+          "text": "call Compile, on error call HandleBuildFailure",
+          "line": {
+            "number": 49
+          },
+          "code": [
             {
               "module": "goal",
               "name": "call",
-              "parameter": [
+              "property": [
                 {
-                  "name": "GoalName",
+                  "name": "Name",
                   "type": {
-                    "name": "goal.call"
+                    "name": "text"
                   },
-                  "value": {
-                    "name": "Plan",
-                    "parallel": false,
-                    "parameter": [],
-                    "prPath": "/system/builder/BuildGoal/.build/plan.pr"
-                  }
+                  "value": "Compile"
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
                 }
               ],
               "modifier": [
                 {
-                  "module": "error",
-                  "name": "handle",
-                  "parameter": [
+                  "module": "on",
+                  "name": "error",
+                  "property": [],
+                  "default": [
                     {
-                      "name": "Actions",
+                      "name": "ignoreerror",
                       "type": {
-                        "name": "list"
+                        "name": "bool"
                       },
-                      "value": [
+                      "value": false
+                    }
+                  ],
+                  "recovery": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
                         {
-                          "module": "goal",
-                          "name": "call",
-                          "parameter": [
-                            {
-                              "name": "GoalName",
-                              "type": {
-                                "name": "goal.call"
-                              },
-                              "value": {
-                                "name": "HandleBuildFailure",
-                                "parameter": []
-                              }
-                            }
-                          ]
+                          "name": "Name",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "HandleBuildFailure"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "parallel",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
                         }
                       ]
                     }
-                  ],
-                  "modifier": []
+                  ]
                 }
               ]
             }
-          ]
+          ],
+          "waitForExecution": true
         },
         {
           "index": 4,
-          "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure",
-          "lineNumber": 38,
-          "formal": "loop.foreach(Collection=%plan.steps%), goal.call(GoalName={name:\"BuildStep/Start\", parameters:[planStep=%item%]}) | error.handle(Actions=[goal.call(GoalName={name:\"HandleBuildFailure\"})])",
-          "waitForExecution": true,
-          "action": [
-            {
-              "module": "loop",
-              "name": "foreach",
-              "parameter": [
-                {
-                  "name": "Collection",
-                  "type": {
-                    "name": "object",
-                    "template": "plang"
-                  },
-                  "value": "%plan.steps%"
-                }
-              ],
-              "modifier": []
-            },
-            {
-              "module": "goal",
-              "name": "call",
-              "parameter": [
-                {
-                  "name": "GoalName",
-                  "type": {
-                    "name": "goal.call"
-                  },
-                  "value": {
-                    "name": "BuildStep/Start",
-                    "parallel": false,
-                    "parameter": [
-                      {
-                        "name": "planStep",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%item%"
-                      }
-                    ],
-                    "prPath": "/system/builder/BuildStep/.build/start.pr"
-                  }
-                }
-              ],
-              "modifier": [
-                {
-                  "module": "error",
-                  "name": "handle",
-                  "parameter": [
-                    {
-                      "name": "Actions",
-                      "type": {
-                        "name": "list"
-                      },
-                      "value": [
-                        {
-                          "module": "goal",
-                          "name": "call",
-                          "parameter": [
-                            {
-                              "name": "GoalName",
-                              "type": {
-                                "name": "goal.call"
-                              },
-                              "value": {
-                                "name": "HandleBuildFailure",
-                                "parameter": []
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
-                  "modifier": []
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 5,
-          "text": "add {goal: %goal%, plan: %plan%} to %trace.subGoals%",
-          "lineNumber": 39,
-          "formal": "list.add(ListName=%trace.subGoals%, Value={\"goal\":\"%goal%\",\"plan\":\"%plan%\"})",
-          "waitForExecution": true,
-          "action": [
+          "text": "add {goal: %goal%} to %trace.subGoals%",
+          "line": {
+            "number": 50
+          },
+          "code": [
             {
               "module": "list",
               "name": "add",
-              "parameter": [
+              "property": [
                 {
                   "name": "ListName",
                   "type": {
-                    "name": "variable",
-                    "template": "plang"
+                    "name": "variable"
                   },
                   "value": "%trace.subGoals%"
                 },
@@ -1162,73 +1332,82 @@
                   "type": {
                     "name": "dict"
                   },
-                  "value": {
-                    "goal": "%goal%",
-                    "plan": "%plan%"
-                  }
+                  "value": {"goal":"%goal%"}
                 }
               ],
               "default": [
                 {
                   "name": "atindex",
                   "type": {
-                    "name": "number",
-                    "kind": "int"
+                    "name": "number"
                   },
                   "value": -1
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
         },
         {
-          "index": 6,
+          "index": 5,
           "text": "math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%",
-          "lineNumber": 40,
-          "formal": "math.subtract(A=%Now.Ticks%, B=%subgoalStart%) | variable.set(Name=%elapsedTicks%, Value=%!data%)",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 51
+          },
+          "code": [
             {
               "module": "math",
               "name": "subtract",
-              "parameter": [
+              "property": [
                 {
                   "name": "A",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%Now.Ticks%"
                 },
                 {
                   "name": "B",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%subgoalStart%"
                 }
               ],
-              "modifier": []
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
             },
             {
               "module": "variable",
               "name": "set",
-              "parameter": [
+              "property": [
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable",
-                    "template": "plang"
+                    "name": "variable"
                   },
                   "value": "%elapsedTicks%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%!data%"
                 }
@@ -1241,57 +1420,71 @@
                   },
                   "value": false
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
         },
         {
-          "index": 7,
+          "index": 6,
           "text": "math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%",
-          "lineNumber": 41,
-          "formal": "math.divide(A=%elapsedTicks%, B=10000) | variable.set(Name=%subgoalMs%, Value=%!data%)",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 52
+          },
+          "code": [
             {
               "module": "math",
               "name": "divide",
-              "parameter": [
+              "property": [
                 {
                   "name": "A",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%elapsedTicks%"
                 },
                 {
                   "name": "B",
                   "type": {
-                    "name": "object"
+                    "name": "number"
                   },
                   "value": 10000
                 }
               ],
-              "modifier": []
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
             },
             {
               "module": "variable",
               "name": "set",
-              "parameter": [
+              "property": [
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable",
-                    "template": "plang"
+                    "name": "variable"
                   },
                   "value": "%subgoalMs%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%!data%"
                 }
@@ -1304,135 +1497,116 @@
                   },
                   "value": false
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
         },
         {
-          "index": 8,
+          "index": 7,
           "text": "call /system/builder/EmitBuildEvent kind=\"subGoalDone\", goal=%goal%, subgoalMs=%subgoalMs%",
-          "lineNumber": 42,
-          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"subGoalDone\", type:\"string\"},{name:\"goal\", value:\"%goal%\", type:\"object\"},{name:\"subgoalMs\", value:\"%subgoalMs%\", type:\"object\"}]})",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 53
+          },
+          "code": [
             {
               "module": "goal",
               "name": "call",
-              "parameter": [
-                {
-                  "name": "GoalName",
-                  "type": {
-                    "name": "goal.call"
-                  },
-                  "value": {
-                    "name": "/system/builder/EmitBuildEvent",
-                    "parallel": false,
-                    "parameter": [
-                      {
-                        "name": "kind",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "subGoalDone"
-                      }
-                    ],
-                    "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  }
-                }
-              ],
-              "modifier": []
-            }
-          ]
-        }
-      ],
-      "child": []
-    },
-    {
-      "name": "HandleBuildFailure",
-      "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "08f4e4481f6380e863c5a5a320a3b85c60b39d730fd9575433ee69ecb97537a2",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "step": [
-        {
-          "index": 0,
-          "text": "call /system/builder/EmitBuildEvent kind=\"goalError\", goal=%goal%, errorMessage=%!error.Message%",
-          "lineNumber": 48,
-          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"goalError\", type:\"string\"},{name:\"goal\", value:%goal%, type:\"string\"},{name:\"errorMessage\", value:%!data%.Message%, type:\"string\"}]})",
-          "waitForExecution": true,
-          "action": [
-            {
-              "module": "goal",
-              "name": "call",
-              "parameter": [
-                {
-                  "name": "GoalName",
-                  "type": {
-                    "name": "goal.call"
-                  },
-                  "value": {
-                    "name": "/system/builder/EmitBuildEvent",
-                    "parallel": false,
-                    "parameter": [
-                      {
-                        "name": "kind",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "goalError"
-                      },
-                      {
-                        "name": "errorMessage",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%!data%.Message%"
-                      }
-                    ],
-                    "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  }
-                }
-              ],
-              "modifier": []
-            }
-          ]
-        },
-        {
-          "index": 1,
-          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}",
-          "lineNumber": 49,
-          "formal": "variable.set(Name=%trace.buildError%, Value={\"key\":\"%!error.Key%\",\"message\":\"%!error.Message%\",\"goal\":\"%goal.Name%\"})",
-          "waitForExecution": true,
-          "action": [
-            {
-              "module": "variable",
-              "name": "set",
-              "parameter": [
+              "property": [
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable",
-                    "template": "plang"
+                    "name": "text"
                   },
-                  "value": "%trace.buildError%"
+                  "value": "/system/builder/EmitBuildEvent"
+                },
+                {
+                  "name": "Parameter",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [
+                    {
+                      "name": "kind",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "subGoalDone"
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 7 uses goal.call, which the decider was not sure of (0.85)"
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "b05ec670bb9c771b76fcc564e66738ce25b1dc45fd136581be0e02be6f2b517a",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false
+    },
+    {
+      "name": "SourceError",
+      "step": [
+        {
+          "index": 0,
+          "text": "render template \"/system/builder/llm/SourceFix.llm\", write to %sourceFixSystem%",
+          "line": {
+            "number": 60
+          },
+          "comment": "The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the\ncorrected plang for the programmer; the same error is raised again carrying it, and the build of\nthis goal stops there.",
+          "code": [
+            {
+              "module": "ui",
+              "name": "render",
+              "property": [
+                {
+                  "name": "Template",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/system/builder/llm/SourceFix.llm"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%sourceFixSystem%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict",
-                    "template": "plang"
+                    "name": "item"
                   },
-                  "value": {
-                    "key": "%!error.Key%",
-                    "message": "%!error.Message%",
-                    "goal": "%goal.Name%"
-                  }
+                  "value": "%!data%"
                 }
               ],
               "default": [
@@ -1443,77 +1617,410 @@
                   },
                   "value": false
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %sourceFixMessages% = [{\"Role\":\"system\", \"Content\":\"%sourceFixSystem%\"}, {\"Role\":\"user\", \"Content\":\"%!error.Key%: %!error.Message%\\n\\nThe goal:\\n%goal%\"}]",
+          "line": {
+            "number": 61
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%sourceFixMessages%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [{"Role":"system","Content":"%sourceFixSystem%"},{"Role":"user","Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "llm.query Message=%sourceFixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, write to %sourceFix%",
+          "line": {
+            "number": 62
+          },
+          "code": [
+            {
+              "module": "llm",
+              "name": "query",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "list",
+                    "kind": "llmmessage"
+                  },
+                  "value": "%sourceFixMessages%"
+                },
+                {
+                  "name": "Model",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "gpt-5.4-nano"
+                },
+                {
+                  "name": "Cache",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": "%!build.cache%"
+                }
+              ],
+              "default": [
+                {
+                  "name": "continuepreviousconversation",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                },
+                {
+                  "name": "temperature",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 0
+                },
+                {
+                  "name": "maxtokens",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 16000
+                },
+                {
+                  "name": "maxtoolcalls",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 10
+                },
+                {
+                  "name": "maxvalidationretries",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%sourceFix%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%!data%"
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "throw %!error%, fix suggestion %sourceFix%",
+          "line": {
+            "number": 63
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "item"
+                  },
+                  "value": "%!error%"
+                },
+                {
+                  "name": "FixSuggestion",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "%sourceFix%"
+                }
+              ],
+              "default": [
+                {
+                  "name": "statuscode",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "07a52d62020ebfbd4adaeda341e2d609a99bb04ad2c9459dbe46599c8223981a",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false
+    },
+    {
+      "name": "HandleBuildFailure",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /system/builder/EmitBuildEvent kind=\"goalError\", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%",
+          "line": {
+            "number": 68
+          },
+          "comment": "Capture error onto trace, save, rethrow. No null-pass inference.",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/system/builder/EmitBuildEvent"
+                },
+                {
+                  "name": "Parameter",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [
+                    {
+                      "name": "kind",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "goalError"
+                    },
+                    {
+                      "name": "errorMessage",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%!error.Message%"
+                    },
+                    {
+                      "name": "fix",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%!error.FixSuggestion%"
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses goal.call, which the decider was not sure of (0.88)"
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}",
+          "line": {
+            "number": 69
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%trace.buildError%"
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "dict"
+                  },
+                  "value": {"key":"%!error.Key%","message":"%!error.Message%","goal":"%goal.Name%"}
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
         },
         {
           "index": 2,
           "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
-          "lineNumber": 50,
-          "formal": "file.save(Path=\"/.build/traces/%!trace.id%/%goal.Name%.json\", Value=%trace%)",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 70
+          },
+          "code": [
             {
               "module": "file",
               "name": "save",
-              "parameter": [
+              "property": [
                 {
                   "name": "Path",
                   "type": {
-                    "name": "path",
-                    "template": "plang"
+                    "name": "path"
                   },
                   "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%trace%"
                 }
-              ],
-              "modifier": []
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
         },
         {
           "index": 3,
           "text": "throw %!error%",
-          "lineNumber": 51,
-          "formal": "error.throw(Message=%!error%, StatusCode=500)",
-          "waitForExecution": true,
-          "action": [
+          "line": {
+            "number": 71
+          },
+          "code": [
             {
               "module": "error",
               "name": "throw",
-              "parameter": [
+              "property": [
                 {
-                  "name": "Message",
+                  "name": "Data",
                   "type": {
-                    "name": "text",
-                    "template": "plang"
+                    "name": "item"
                   },
                   "value": "%!error%"
-                },
-                {
-                  "name": "StatusCode",
-                  "type": {
-                    "name": "number",
-                    "kind": "int"
-                  },
-                  "value": 500
                 }
               ],
-              "modifier": []
+              "default": [
+                {
+                  "name": "statuscode",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
             }
-          ]
+          ],
+          "waitForExecution": true
         }
       ],
-      "child": []
+      "child": [],
+      "visibility": "Private",
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "2b326705548e05ffc800e14fd02d96114dbdfea532cbab22c04777f741343cc0",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false
     }
-  ]
+  ],
+  "visibility": "Public",
+  "path": "/system/builder/BuildGoal/Start.goal",
+  "prPath": "/system/builder/BuildGoal/.build/start.pr",
+  "hash": "4e074f2381bc3ef47be269e29f3c06ece98e8e8e4a4952dcbfe4c066d6bc0980",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
 }

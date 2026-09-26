@@ -1,25 +1,17 @@
 {
   "name": "EmitBuildEvent",
-  "visibility": "Public",
-  "path": "/system/builder/EmitBuildEvent.goal",
-  "prPath": "/system/builder/.build/emitbuildevent.pr",
-  "hash": "a202f14a1c677ab9b18d4032ffc771bd2832c31ec69feaa669dae86f35533532",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
   "step": [
     {
       "index": 0,
       "text": "render template \"/system/builder/templates/output/build-output.template\", write to %msg%",
-      "lineNumber": 11,
-      "formal": "ui.render(Template=\"/system/builder/templates/output/build-output.template\") | variable.set(Name=%msg%, Value=%!data%, type=\"string\")",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 11
+      },
+      "code": [
         {
           "module": "ui",
           "name": "render",
-          "parameter": [
+          "property": [
             {
               "name": "Template",
               "type": {
@@ -27,26 +19,23 @@
               },
               "value": "/system/builder/templates/output/build-output.template"
             }
-          ],
-          "modifier": []
+          ]
         },
         {
           "module": "variable",
           "name": "set",
-          "parameter": [
+          "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable",
-                "template": "plang"
+                "name": "variable"
               },
               "value": "%msg%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "text",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%!data%"
             }
@@ -59,27 +48,26 @@
               },
               "value": false
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 1,
       "text": "write out %msg% channel: \"builder\"",
-      "lineNumber": 12,
-      "formal": "output.write(Data=%msg%, channel=\"builder\")",
-      "waitForExecution": true,
-      "action": [
+      "line": {
+        "number": 12
+      },
+      "code": [
         {
           "module": "output",
           "name": "write",
-          "parameter": [
+          "property": [
             {
               "name": "Data",
               "type": {
-                "name": "object",
-                "template": "plang"
+                "name": "item"
               },
               "value": "%msg%"
             },
@@ -90,11 +78,19 @@
               },
               "value": "builder"
             }
-          ],
-          "modifier": []
+          ]
         }
-      ]
+      ],
+      "waitForExecution": true
     }
   ],
-  "child": []
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/builder/EmitBuildEvent.goal",
+  "prPath": "/system/builder/.build/emitbuildevent.pr",
+  "hash": "a202f14a1c677ab9b18d4032ffc771bd2832c31ec69feaa669dae86f35533532",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
 }

@@ -1,0 +1,667 @@
+{
+  "name": "Decide",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %modules% = %!app.module.list%",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%modules%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!app.module.list%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read \"/system/builder/llm/decider.json\", write to %decider%",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/system/builder/llm/decider.json"
+            }
+          ],
+          "default": [
+            {
+              "name": "resolvevariables",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%decider%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %stage% = 1",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%stage%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "render template \"/system/builder/llm/templates/decider.state.template\", write to %state%",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/decider.state.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%state%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "render template \"/system/builder/llm/templates/decider1.template\", write to %questions%",
+      "line": {
+        "number": 19
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/decider1.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%questions%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "llm.decider State=%state%, Question=%questions%, write to %answer%",
+      "line": {
+        "number": 20
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "decider",
+          "property": [
+            {
+              "name": "State",
+              "type": {
+                "name": "text"
+              },
+              "value": "%state%"
+            },
+            {
+              "name": "Question",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%questions%"
+            }
+          ],
+          "default": [
+            {
+              "name": "model",
+              "type": {
+                "name": "text"
+              },
+              "value": "jev-latest"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%answer%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%",
+      "line": {
+        "number": 21
+      },
+      "code": [
+        {
+          "module": "build",
+          "name": "pick",
+          "property": [
+            {
+              "name": "Goal",
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goal%"
+            },
+            {
+              "name": "Answer",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%answer%"
+            },
+            {
+              "name": "Popular",
+              "type": {
+                "name": "list"
+              },
+              "value": "%decider.popular%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "set %stage% = 2",
+      "line": {
+        "number": 23
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%stage%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "render template \"/system/builder/llm/templates/decider.state.template\", write to %state%",
+      "line": {
+        "number": 24
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/decider.state.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%state%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "render template \"/system/builder/llm/templates/decider2.template\", write to %questions%",
+      "line": {
+        "number": 25
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/decider2.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%questions%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "llm.decider State=%state%, Question=%questions%, write to %answer%",
+      "line": {
+        "number": 26
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "decider",
+          "property": [
+            {
+              "name": "State",
+              "type": {
+                "name": "text"
+              },
+              "value": "%state%"
+            },
+            {
+              "name": "Question",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%questions%"
+            }
+          ],
+          "default": [
+            {
+              "name": "model",
+              "type": {
+                "name": "text"
+              },
+              "value": "jev-latest"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%answer%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%",
+      "line": {
+        "number": 27
+      },
+      "code": [
+        {
+          "module": "build",
+          "name": "pick",
+          "property": [
+            {
+              "name": "Goal",
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goal%"
+            },
+            {
+              "name": "Answer",
+              "type": {
+                "name": "dict"
+              },
+              "value": "%answer%"
+            },
+            {
+              "name": "Popular",
+              "type": {
+                "name": "list"
+              },
+              "value": "%decider.popular%"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
+      "line": {
+        "number": 29
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/EmitBuildEvent"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "kind",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "goal-decided"
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/builder/BuildGoal/Decide.goal",
+  "prPath": "/system/builder/BuildGoal/.build/decide.pr",
+  "hash": "3d7d128da670476f633642eb862a7f4538c6c3a76db36bc7e695a11f2849122b",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}

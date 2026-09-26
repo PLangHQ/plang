@@ -1,13 +1,12 @@
 {
   "name": "BuilderChannel",
+  "step": [],
+  "child": [],
   "visibility": "Public",
   "path": "/system/builder/BuilderChannel.goal",
   "prPath": "/system/builder/.build/builderchannel.pr",
-  "hash": "4e53f5e582fac73f9a3028429dd9ec46baa49fe3bb5d06be08aee972445ebeb3",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "step": [],
-  "child": []
+  "isTest": false
 }

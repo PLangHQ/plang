@@ -1,0 +1,314 @@
+{
+  "name": "Properties",
+  "step": [
+    {
+      "index": 0,
+      "text": "render template \"/system/builder/llm/templates/properties.template\", write to %propertiesUserMsg%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/properties.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%propertiesUserMsg%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "render template \"/system/builder/llm/Properties.llm\", write to %propertiesSystemMsg%",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/Properties.llm"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%propertiesSystemMsg%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%propertiesSystemMsg%\"}, {\"Role\":\"user\", \"Content\":\"%propertiesUserMsg%\"}]",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%messages%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"Role":"system","Content":"%propertiesSystemMsg%"},{"Role":"user","Content":"%propertiesUserMsg%"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, write to %answer%",
+      "line": {
+        "number": 16
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "llmmessage"
+              },
+              "value": "%messages%"
+            },
+            {
+              "name": "Model",
+              "type": {
+                "name": "text"
+              },
+              "value": "gpt-5.4-nano"
+            },
+            {
+              "name": "Cache",
+              "type": {
+                "name": "bool"
+              },
+              "value": "%!build.cache%"
+            }
+          ],
+          "default": [
+            {
+              "name": "continuepreviousconversation",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "maxtokens",
+              "type": {
+                "name": "number"
+              },
+              "value": 16000
+            },
+            {
+              "name": "maxtoolcalls",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "maxvalidationretries",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%answer%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "call /system/builder/EmitBuildEvent kind=\"goal-properties\", goal=%goal%",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/EmitBuildEvent"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                {
+                  "name": "kind",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "goal-properties"
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses goal.call, which the decider was not sure of (0.87)"
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/builder/BuildGoal/Properties.goal",
+  "prPath": "/system/builder/BuildGoal/.build/properties.pr",
+  "hash": "d2300ee40ec90d412688bc216db29abece768e5897d91dfe9872931621010b68",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}

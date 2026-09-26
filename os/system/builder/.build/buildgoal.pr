@@ -1,5 +1,47 @@
 {
   "name": "BuildGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "call BuildGoal/Start goal=%goal%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/BuildGoal/Start"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
   "visibility": "Public",
   "path": "/system/builder/BuildGoal.goal",
   "prPath": "/system/builder/.build/buildgoal.pr",
@@ -7,40 +49,5 @@
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "step": [
-    {
-      "index": 0,
-      "text": "call BuildGoal/Start goal=%goal%",
-      "lineNumber": 4,
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "goal",
-          "name": "call",
-          "parameter": [
-            {
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "BuildGoal/Start",
-                "parallel": false,
-                "parameter": [
-                  {
-                    "name": "goal",
-                    "value": "%goal%"
-                  }
-                ],
-                "prPath": "/system/builder/BuildGoal/.build/start.pr"
-              }
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    }
-  ],
-  "child": []
+  "isTest": false
 }
