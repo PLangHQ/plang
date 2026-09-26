@@ -4,7 +4,9 @@
     {
       "index": 0,
       "text": "set %template% = \"/system/error/%error.StatusCode%.txt\"",
-      "lineNumber": 5,
+      "line": {
+        "number": 5
+      },
       "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error.",
       "code": [
         {
@@ -34,7 +36,9 @@
     {
       "index": 1,
       "text": "render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%",
-      "lineNumber": 6,
+      "line": {
+        "number": 6
+      },
       "code": [
         {
           "module": "ui",
@@ -138,7 +142,9 @@
     {
       "index": 2,
       "text": "write %text% to error channel",
-      "lineNumber": 7,
+      "line": {
+        "number": 7
+      },
       "code": [
         {
           "module": "output",
@@ -172,7 +178,9 @@
         {
           "index": 0,
           "text": "set %template% = \"/system/error/400.txt\"",
-          "lineNumber": 11,
+          "line": {
+            "number": 11
+          },
           "comment": "No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.",
           "code": [
             {
@@ -201,7 +209,9 @@
         {
           "index": 1,
           "text": "if %error.StatusCode% >= 500, call Runtime",
-          "lineNumber": 12,
+          "line": {
+            "number": 12
+          },
           "code": [
             {
               "module": "condition",
@@ -235,7 +245,9 @@
                 {
                   "index": 0,
                   "text": "call Runtime",
-                  "lineNumber": 0,
+                  "line": {
+                    "number": 12
+                  },
                   "code": [
                     {
                       "module": "goal",
@@ -275,7 +287,9 @@
         {
           "index": 0,
           "text": "set %template% = \"/system/error/500.txt\"",
-          "lineNumber": 15,
+          "line": {
+            "number": 15
+          },
           "code": [
             {
               "module": "variable",

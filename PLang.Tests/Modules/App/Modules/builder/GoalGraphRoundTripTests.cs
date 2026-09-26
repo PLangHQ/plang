@@ -25,8 +25,7 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
         {
           "index": 0,
           "text": "set %label% = 'big'",
-          "lineNumber": 2,
-          "indent": 0,
+          "line": { "number": 2 },
           "action": [
             {
               "module": "variable",
@@ -72,7 +71,7 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
         await Assert.That(goal.Step.Count).IsEqualTo(1);
         var step = goal.Step[0];
         await Assert.That(step.Text).IsEqualTo("set %label% = 'big'");
-        await Assert.That(step.LineNumber).IsEqualTo(2);
+        await Assert.That(step.Line.Number).IsEqualTo(2);
         await Assert.That(step.WaitForExecution).IsTrue();
 
         await Assert.That(step.Code.Count).IsEqualTo(1);

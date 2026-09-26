@@ -229,12 +229,13 @@ public sealed class Formal
                     // an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
                     // with the step's other problems, saying where the body goes for that step
                     Take("}");
-                    action.Child.Add(new global::app.goal.step.@this { Goal = _step.Goal });
+                    action.Child.Add(new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line });
                     return (action, start);
                 }
                 var bodyStart = _pos;
-                // a condition's body is a child step of this step's goal, its actions born holding it
-                var child = new global::app.goal.step.@this { Goal = _step.Goal };
+                // a condition's body is a child step of this step's goal, its actions born holding it —
+                // written on this step's line
+                var child = new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line };
                 var body = new Cursor(_text, child, _context, _index) { _pos = _pos };
                 var bodyActions = body.Actions("}");
                 _pos = body._pos;

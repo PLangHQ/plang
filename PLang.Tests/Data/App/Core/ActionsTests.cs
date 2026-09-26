@@ -210,7 +210,7 @@ public class ActionsTests
     [Test]
     public async Task MergeStep_PreservesExistingStepProperties()
     {
-        var step = new Step { Index = 3, Text = "original text", LineNumber = 10 };
+        var step = new Step { Index = 3, Text = "original text", Line = new() { Number = 10 } };
         var stepFromLlm = new Step
         {
             Code = new StepActions
@@ -224,7 +224,7 @@ public class ActionsTests
         await Assert.That(error).IsNull();
         await Assert.That(result!.Index).IsEqualTo(3);
         await Assert.That(result.Text).IsEqualTo("original text");
-        await Assert.That(result.LineNumber).IsEqualTo(10);
+        await Assert.That(result.Line.Number).IsEqualTo(10);
     }
 
     [Test]

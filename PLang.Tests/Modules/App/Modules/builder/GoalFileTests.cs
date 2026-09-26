@@ -37,9 +37,9 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- top level\n    - indent 1\n        - indent 2", global::app.type.item.path.@this.Resolve("/Indent.goal", global::PLang.Tests.TestApp.SharedContext), global::PLang.Tests.TestApp.SharedContext);
 
-        await Assert.That(goal!.Step[0].Indent).IsEqualTo(0);
-        await Assert.That(goal.Step[1].Indent).IsEqualTo(1);
-        await Assert.That(goal.Step[2].Indent).IsEqualTo(2);
+        await Assert.That(goal!.Step[0].Line.Indent).IsEqualTo(0);
+        await Assert.That(goal.Step[1].Line.Indent).IsEqualTo(1);
+        await Assert.That(goal.Step[2].Line.Indent).IsEqualTo(2);
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- top\n\t- indented", global::app.type.item.path.@this.Resolve("/Tabs.goal", global::PLang.Tests.TestApp.SharedContext), global::PLang.Tests.TestApp.SharedContext);
 
-        await Assert.That(goal!.Step[1].Indent).IsEqualTo(1);
+        await Assert.That(goal!.Step[1].Line.Indent).IsEqualTo(1);
     }
 
     [Test]
@@ -127,8 +127,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- step one\n- step two", global::app.type.item.path.@this.Resolve("/Lines.goal", global::PLang.Tests.TestApp.SharedContext), global::PLang.Tests.TestApp.SharedContext);
 
-        await Assert.That(goal!.Step[0].LineNumber).IsEqualTo(2);
-        await Assert.That(goal.Step[1].LineNumber).IsEqualTo(3);
+        await Assert.That(goal!.Step[0].Line.Number).IsEqualTo(2);
+        await Assert.That(goal.Step[1].Line.Number).IsEqualTo(3);
     }
 
     [Test]

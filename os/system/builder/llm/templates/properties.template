@@ -19,7 +19,7 @@ Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
   {{ goal.Name }}
 {%- assign shown = "|" -%}
 {%- for s in goal.Step -%}
-{%- capture indent -%}{% if s.Indent > 0 %}{% for k in (1..s.Indent) %}    {% endfor %}{% endif %}{%- endcapture -%}
+{%- capture indent -%}{% if s.Line.Indent > 0 %}{% for k in (1..s.Line.Indent) %}    {% endfor %}{% endif %}{%- endcapture -%}
 {%- assign width = s.Index | append: "" | size | plus: 3 -%}
 {%- capture pad -%}{% for k in (1..width) %} {% endfor %}{{ indent }}{%- endcapture -%}
 {%- if s.Comment -%}

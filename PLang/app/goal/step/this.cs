@@ -42,11 +42,9 @@ public sealed partial class @this
     [JsonIgnore]
     public bool IsKept => PriorText != null && PriorText == Text && Code.Count > 0;
 
-    [Store, Debug, Default]
-    public int LineNumber { get; internal set; }
-
+    /// <summary>Where the step is written: its line in the .goal file and its indent.</summary>
     [Store, LlmBuilder, Debug, Default]
-    public int Indent { get; internal set; }
+    public global::app.goal.step.line.@this Line { get; internal set; } = new();
 
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
@@ -137,7 +135,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Merges LLM-derived fields from another step onto this step.
-    /// Structural fields (Text, Index, Indent, LineNumber) are untouched.
+    /// Structural fields (Text, Index, Line) are untouched.
     /// </summary>
     public void Merge(Step from)
     {

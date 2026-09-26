@@ -62,7 +62,7 @@ public class PrLoadTests : System.IAsyncDisposable
         var built = Make.Goal("Start", "/Start.goal",
             Make.Step("set %n% = 5", Make.Action("variable", "set", Make.Param("Name", "n", "variable"), ("Value", 5))),
             Make.Step("write out \"n is %n%\"", Make.Action("output", "write", ("Data", "n is %n%"))));
-        built.Step[1].Indent = 1;
+        built.Step[1].Line = new() { Indent = 1 };
         built.Step[1].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "step 1 uses output.write" });
         var output = new System.IO.MemoryStream();
         _app.User.Channel.Register(new StreamChannel(
@@ -74,7 +74,7 @@ public class PrLoadTests : System.IAsyncDisposable
         await ran.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(output.ToArray())).Contains("n is 5");
         await Assert.That((await (await _app.User.Context.Variable.Get("n")).Value())?.ToString()).IsEqualTo("5");
-        await Assert.That(goal.Step[1].Indent).IsEqualTo(1);
+        await Assert.That(goal.Step[1].Line.Indent).IsEqualTo(1);
         await Assert.That(goal.Step[1].Warning.Single().Key).IsEqualTo("Unsure");
     }
 

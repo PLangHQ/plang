@@ -198,7 +198,7 @@ public static class Make
             {
                 Goal = goal,
                 Index = i,
-                Indent = steps[i].Indent,
+                Line = new global::app.goal.step.line.@this { Indent = steps[i].Indent },
                 Text = steps[i].Text,
                 Code = actionNode,
             });

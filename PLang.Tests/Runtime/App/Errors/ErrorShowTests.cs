@@ -46,7 +46,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     {
         var built = Make.Goal("Start", "/Start.goal",
             Make.Step(text, Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
-        built.Step[0].LineNumber = 3;
+        built.Step[0].Line = new() { Number = 3 };
         return await RealGoalLoad.ViaChannel(_app, built);
     }
 

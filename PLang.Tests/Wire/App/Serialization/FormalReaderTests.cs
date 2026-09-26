@@ -54,6 +54,21 @@ public class FormalReaderTests
     }
 
     [Test]
+    public async Task ABodyStep_IsWrittenOnItsParentsLine()
+    {
+        var goal = FormalWriterTests.Goal();
+        var step = new global::app.goal.step.@this { Goal = goal, Line = new() { Number = 12, Indent = 1 } };
+
+        var read = new global::app.goal.step.action.serializer.Formal(step).Read(
+            "condition.if(Left=%n%, Operator=\"<\", Right=5) { goal.return() }", global::PLang.Tests.TestApp.SharedContext);
+
+        await read.IsSuccess();
+        var body = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Single().Child[0];
+        await Assert.That(body.Line.Number).IsEqualTo(12);
+        await Assert.That(body.Line.Indent).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task TwoOnErrorClauses_KeepTheOrderWritten()
     {
         var read = Read("file.read(Path=\"a.txt\"); timeout.after(Ms=100); on.error(StatusCode=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);

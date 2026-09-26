@@ -15,8 +15,7 @@ public class StepTests : System.IAsyncDisposable
         {
             Index = 5,
             Text = "call http endpoint",
-            LineNumber = 10,
-            Indent = 2,
+            Line = new() { Number = 10, Indent = 2 },
             Comment = "This makes an HTTP call",
             Code = new StepActions
             {
@@ -32,8 +31,8 @@ public class StepTests : System.IAsyncDisposable
 
         await Assert.That(step.Index).IsEqualTo(5);
         await Assert.That(step.Text).IsEqualTo("call http endpoint");
-        await Assert.That(step.LineNumber).IsEqualTo(10);
-        await Assert.That(step.Indent).IsEqualTo(2);
+        await Assert.That(step.Line.Number).IsEqualTo(10);
+        await Assert.That(step.Line.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
         await Assert.That(step.Code.Count).IsEqualTo(1);
         await Assert.That(step.Code[0].Module.Name).IsEqualTo("http");

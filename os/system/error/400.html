@@ -14,7 +14,7 @@ pre { background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; 
   {{ if error.Step }}
   <div class="detail">
     <p><strong>Step:</strong> {{ error.Step.Text }}</p>
-    <p><strong>File:</strong> {{ error.Step.Goal.Path }}:{{ error.Step.LineNumber }}</p>
+    <p><strong>File:</strong> {{ error.Step.Goal.Path }}:{{ error.Step.Line.Number }}</p>
   </div>
   {{ end }}
   {{ if error.FixSuggestion }}

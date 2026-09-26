@@ -71,7 +71,7 @@ public sealed partial class @this
         foreach (var step in Step.Items())
         {
             sb.AppendLine();
-            sb.Append(new string(' ', step.Indent * 4));
+            sb.Append(new string(' ', step.Line.Indent * 4));
             sb.Append("- ");
             sb.Append(step.Text);
         }
@@ -226,7 +226,7 @@ public sealed partial class @this
             if (!string.IsNullOrEmpty(step.Comment))
                 lines.Add($"/ {step.Comment}");
 
-            var prefix = new string(' ', step.Indent) + "- ";
+            var prefix = new string(' ', step.Line.Indent) + "- ";
             lines.Add(prefix + step.Text);
         }
 
@@ -519,8 +519,7 @@ public sealed partial class @this
                     Goal = currentGoal,   // birth fact — the parser holds the goal, so it hands it over
                     Index = stepIndex,
                     Text = stepText,
-                    LineNumber = lineNumber,
-                    Indent = indent,
+                    Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = indent },
                     Comment = comment
                 };
 
@@ -536,8 +535,7 @@ public sealed partial class @this
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
                     Text = currentStep.Text + "\n" + trimmed.TrimEnd(),
-                    LineNumber = currentStep.LineNumber,
-                    Indent = currentStep.Indent,
+                    Line = currentStep.Line,
                     Comment = currentStep.Comment
                 };                continue;
             }
@@ -551,8 +549,7 @@ public sealed partial class @this
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
                     Text = currentStep.Text + "\n" + escapedText,
-                    LineNumber = currentStep.LineNumber,
-                    Indent = currentStep.Indent,
+                    Line = currentStep.Line,
                     Comment = currentStep.Comment
                 };                continue;
             }

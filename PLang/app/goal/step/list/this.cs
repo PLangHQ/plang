@@ -45,8 +45,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     {
         var body = new @this();
         if (index < 0 || index >= CountRaw) return body;
-        var indent = this[index].Indent;
-        for (int j = index + 1; j < CountRaw && this[j].Indent > indent; j++) body.Add(this[j]);
+        var indent = this[index].Line.Indent;
+        for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) body.Add(this[j]);
         return body;
     }
 

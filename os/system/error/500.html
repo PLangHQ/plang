@@ -17,7 +17,7 @@ pre { background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; 
     <h3>Call Stack</h3>
     <ul>
     {{ for frame in error.CallFrames }}
-      <li>{{ frame.GoalName }} - {{ frame.GoalPath }}{{ if frame.Step }}:{{ frame.Step.LineNumber }}{{ end }}</li>
+      <li>{{ frame.Action.Step.Goal.Name }} - {{ frame.Action.Step.Goal.Path }}:{{ frame.Action.Step.Line.Number }}</li>
     {{ end }}
     </ul>
   </div>

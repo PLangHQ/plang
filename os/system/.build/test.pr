@@ -4,7 +4,9 @@
     {
       "index": 0,
       "text": "set default %path% = '.'",
-      "lineNumber": 4,
+      "line": {
+        "number": 4
+      },
       "comment": "Replacement for the iteration-based runner — uses C# test.discover/run/report.\nThe C# test.run loop ensures one test's failure can't silent-skip the rest.",
       "code": [
         {
@@ -40,7 +42,9 @@
     {
       "index": 1,
       "text": "test.discover tests in %path% recursive, write to %tests%",
-      "lineNumber": 5,
+      "line": {
+        "number": 5
+      },
       "code": [
         {
           "module": "test",
@@ -89,7 +93,9 @@
     {
       "index": 2,
       "text": "test.run tests %tests%",
-      "lineNumber": 6,
+      "line": {
+        "number": 6
+      },
       "code": [
         {
           "module": "test",
@@ -111,7 +117,9 @@
     {
       "index": 3,
       "text": "test.report",
-      "lineNumber": 7,
+      "line": {
+        "number": 7
+      },
       "code": [
         {
           "module": "test",

@@ -18,7 +18,7 @@ public class PrEnvelopeTests : System.IAsyncDisposable
         {
             var steps = goal.Select(e => "{\"index\":" + e.GetProperty("index").GetInt32()
                 + ",\"text\":" + System.Text.Json.JsonSerializer.Serialize(e.GetProperty("text").GetString())
-                + ",\"lineNumber\":" + (e.GetProperty("index").GetInt32() + 2)
+                + ",\"line\":{\"number\":" + (e.GetProperty("index").GetInt32() + 2) + "}"
                 + ",\"code\":" + e.GetProperty("pr").GetRawText() + "}");
             var pr = "{\"name\":\"" + goal.Key + "\",\"path\":\"/" + goal.Key + ".goal\",\"step\":[" + string.Join(",", steps) + "]}";
 

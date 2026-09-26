@@ -1,6 +1,6 @@
 ================== {{ error.Key }} ({{ error.StatusCode }}) ==================
 {%- if error.Step %}
-File: {{ error.Step.Goal.Path }}:{{ error.Step.LineNumber }}
+File: {{ error.Step.Goal.Path }}:{{ error.Step.Line.Number }}
 {%- elsif error.Goal %}
 File: {{ error.Goal.Path }}
 {%- endif %}
@@ -58,7 +58,7 @@ Call stack:
     {{ name }}{% if count > 1 %} ×{{ count }}{% endif %} - {{ where }}
 {%- endif %}
 {%- capture name %}{{ frame.Action.Step.Goal.Name | default: frame.Action.Module.Name }}{% endcapture %}
-{%- capture where %}{{ frame.Action.Step.Goal.Path }}:{{ frame.Action.Step.LineNumber }}{% endcapture %}
+{%- capture where %}{{ frame.Action.Step.Goal.Path }}:{{ frame.Action.Step.Line.Number }}{% endcapture %}
 {%- assign count = 1 %}
 {%- assign previous = key %}
 {%- endif %}
@@ -85,6 +85,6 @@ For C# developers:
 --- Error during error handling [{{ forloop.index }}] ---
     {{ cause.Key }} ({{ cause.StatusCode }}): {{ cause.Message }}
 {%- if cause.Step %}
-    at {{ cause.Step.Goal.Path }}:{{ cause.Step.LineNumber }} - {{ cause.Step.Text }}
+    at {{ cause.Step.Goal.Path }}:{{ cause.Step.Line.Number }} - {{ cause.Step.Text }}
 {%- endif %}
 {%- endfor %}

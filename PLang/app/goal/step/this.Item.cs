@@ -66,8 +66,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>The step writes ITSELF — its bare [Store] shape, singular keys, nulls omitted. Its
-    /// <c>code</c> is the action list's own JSON tree (each action writes itself); <c>indent</c> is
-    /// written when the step is indented, <c>warning</c> when the build left any. The DEBUG view (the
+    /// <c>code</c> is the action list's own JSON tree (each action writes itself); <c>line</c> writes
+    /// itself; <c>warning</c> is written when the build left any. The DEBUG view (the
     /// live --debug channel, never the persisted wire) routes through the reflection (*) kind.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
@@ -81,8 +81,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.BeginObject();
         writer.Name("index"); writer.Int(Index);
         writer.Name("text"); writer.String(Text);
-        writer.Name("lineNumber"); writer.Int(LineNumber);
-        if (Indent > 0) { writer.Name("indent"); writer.Int(Indent); }
+        writer.Name("line"); Line.Output(writer);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("code");
         await Code.Output(writer, mode, context);   // the action.list writes its own bare array

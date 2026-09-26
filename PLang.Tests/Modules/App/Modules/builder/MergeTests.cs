@@ -36,13 +36,12 @@ public class MergeTests
     [Test]
     public async Task StepMerge_PreservesStructuralFields()
     {
-        var target = new Step { Text = "original text", Index = 5, Indent = 2, LineNumber = 10 };
+        var target = new Step { Text = "original text", Index = 5, Line = new() { Number = 10, Indent = 2 } };
         var source = new Step
         {
             Text = "different text",
             Index = 99,
-            Indent = 0,
-            LineNumber = 1,
+            Line = new() { Number = 1 },
             Code = new StepActions(new[]
             {
                 new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read" }
@@ -54,8 +53,8 @@ public class MergeTests
         // Structural fields preserved
         await Assert.That(target.Text).IsEqualTo("original text");
         await Assert.That(target.Index).IsEqualTo(5);
-        await Assert.That(target.Indent).IsEqualTo(2);
-        await Assert.That(target.LineNumber).IsEqualTo(10);
+        await Assert.That(target.Line.Indent).IsEqualTo(2);
+        await Assert.That(target.Line.Number).IsEqualTo(10);
         // LLM field copied
         await Assert.That(target.Code.Count).IsEqualTo(1);
     }

@@ -187,9 +187,9 @@ public class GoalTests : System.IAsyncDisposable
             Name = "TestGoal",
             Step = new GoalSteps
             {
-                new Step { Index = 0, Text = "no indent", Indent = 0 },
-                new Step { Index = 1, Text = "one indent", Indent = 1 },
-                new Step { Index = 2, Text = "two indent", Indent = 2 }
+                new Step { Index = 0, Text = "no indent", Line = new() { Indent = 0 } },
+                new Step { Index = 1, Text = "one indent", Line = new() { Indent = 1 } },
+                new Step { Index = 2, Text = "two indent", Line = new() { Indent = 2 } }
             }
         };
         var text = goal.ToText();

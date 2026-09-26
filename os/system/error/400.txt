@@ -1,6 +1,6 @@
 {{ error.Key }} ({{ error.StatusCode }}): {{ error.Message }}
 {%- if error.Step %}
-  at {{ error.Step.Goal.Path }}:{{ error.Step.LineNumber }}
+  at {{ error.Step.Goal.Path }}:{{ error.Step.Line.Number }}
     - {{ error.Step.Text }}
 {%- elsif error.Goal %}
   in {{ error.Goal.Path }}

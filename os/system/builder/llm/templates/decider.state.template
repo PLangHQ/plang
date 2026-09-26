@@ -23,7 +23,7 @@ How plang is structured:
 This is a plang goal called {{ goal.Name }}. Its steps are numbered from 0.
 {{ nl }}
 {%- for s in goal.Step -%}
-step {{ s.Index }}: {% if s.Indent > 0 %}{% for i in (1..s.Indent) %}    {% endfor %}{% endif %}{{ s.Text }}{{ nl }}
+step {{ s.Index }}: {% if s.Line.Indent > 0 %}{% for i in (1..s.Line.Indent) %}    {% endfor %}{% endif %}{{ s.Text }}{{ nl }}
 {%- endfor -%}
 {{ nl }}These are the plang modules you may choose from:
 {%- if stage == 2 -%}

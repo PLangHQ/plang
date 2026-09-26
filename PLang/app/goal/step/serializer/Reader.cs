@@ -38,8 +38,19 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             {
                 case "index": step.Index = (int)reader.Long(); break;
                 case "text": step.Text = reader.String(); break;
-                case "lineNumber": step.LineNumber = (int)reader.Long(); break;
-                case "indent": step.Indent = (int)reader.Long(); break;
+                case "line":
+                    int number = 0, indent = 0;
+                    reader.BeginObject();
+                    while (reader.NextName(out var field))
+                        switch (field)
+                        {
+                            case "number": number = (int)reader.Long(); break;
+                            case "indent": indent = (int)reader.Long(); break;
+                            default: throw new global::app.error.PrFormatOutdatedException($"line key '{field}' isn't in this .pr format");
+                        }
+                    reader.EndObject();
+                    step.Line = new global::app.goal.step.line.@this { Number = number, Indent = indent };
+                    break;
                 case "comment": step.Comment = reader.String(); break;
                 case "code":
                     reader.BeginArray();
