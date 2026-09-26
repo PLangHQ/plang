@@ -43,7 +43,7 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 
 **Nodes lowercase, verbs PascalCase (Ingi: "the line where C# executes, and in C# starts uppercase").** Lowercase is what plang navigates (`app.type`, `list`, `current`, `on.before.create`, the facts). PascalCase is what C# calls: `Start()`, `Value()`, `Add()`, `Load()`. plang never calls a verb through a path (what runs, runs in a module; `%…%` only reads), so a verb is C#'s alone and sits with C# library methods (`ToString`, `DisposeAsync`). A read inside `%…%` (`%now.tostring("dd.")%`) works either way, since plang's navigation ignores case.
 
-**What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on/after.cs` → `app.type.text.on.after.create(LoadText)`.
+**What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on.event`'s handler → `Item.on[When][Event].Add(Action, context)`.
 
 | plang | C# | file |
 |---|---|---|
@@ -66,10 +66,10 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 | 5 | **Faces and honest facts** (details in "Faces" below): the type faces (system, type, choice `values`, kind); each type's real description and example; internal item classes stay out; prompt C's Types section renders from these facts (`properties.template:82` already reads type facts); `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die. Also: the 356 `.goal` files get their description above the goal's name; `goal.Comment` is the one description member; the hash covers comments; `start.md` docs | yes: twins byte-equal, or one eval run |
 | 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is `text` + `code`; `Value()` → `Start(context)` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value. **Every installed .pr with marked rows** (the builder's 7, `test.pr`, `show.pr`) is rewritten with its `"variable"` lists by a throwaway C# pass (the parser over each marked value, written through `plang.Text`; no LLM), since the loader refuses a marked row without its list | yes: `"variable"` in the .pr; twins + one eval run |
 | 7 | **Every system in the same shape:** goal (93 references), actor (15), module (11), test (87), variable (the system at `app/variable/this.cs`, freed by stage 6). Each: `X/this.cs` system + `X/X/this.cs` element, `.list` (with `all`), `["name"]`, `.name`, `.current` where it means something, a face; its property on `app` goes lowercase (`App.Goal` → `app.goal`, …) | no |
-| 8 | **`on` and `current` on every object** (details below): events move from `event.on(Trigger=…)` to the object, as `on.before.<verb>` / `on.after.<verb>` for every public verb, plus outcomes (`on.error`, `on.hit`, `on.miss`). The `on` module's actions are one-line doors (`on.before`, `on.after`, the outcome actions; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- after file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
+| 8 | **`on` and `current` on every object** (details below): events move from `event.on(Trigger=…)` to the object, as `on.before.<verb>` / `on.after.<verb>` for every public verb, plus outcomes (`on.error`, `on.hit`, `on.miss`). The `on` module has one action for all of them, `on.event(item, when, event, action)` (Ingi), a one-line door; `on.error`, the modifier, stays. Bindings are scoped to the actor that registered them unless `scope: app`. Every plang value is born through its type's `Create`, which fires `create`. `current` is each object's own answer. Payoff: value-level mocking (`- after file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
 | 9 | **Module pass, with file.read as the template (Ingi):** fix file.read first and make it the worked example of a correct action, written up as a doc ("how an action is written"). Then go over every module against it, one module per commit. The checklist: (1) plang values are born through their type (`app.type.file.Create(…)`; `new` only inside the type); (2) `Start()` hands over to the owner in one line; (3) no opened box, no broken seal (no `.Value()` on what it returns or forwards); (4) errors are results; (5) properties are typed (`Data<T>`), write targets are variables; (6) events fire from the owner, not the handler | per module: twins where a prompt changes |
 | 10 | **`%!app` holds its systems:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one system (a clash fails loudly); `%setting.X%` stays as a short form | no |
-| 11 | **Tests through the app's own doors:** `new app.@this(test: true)`, `app.variable.Set("some", "var")`, `await app.module["file"]["read"].Start(new { Path = "…" })` (a start of that action with those property values, through `action.Start`). The static helpers `TestApp`/`TestAction` die. The builder warns about goals no public goal reaches (dead code); `app.Test.Coverage` shows what the tests reached | a build warning |
+| 11 | **Tests through the app's own doors:** `new app.@this(test: true)`, `app.variable.Set("some", "var")`, `await app.module["file"]["read"].Start(new { Path = "…" })` (a start of that action with those property values, through `action.Start`). The static helpers `TestApp`/`TestAction` die. The builder warns about goals no public goal reaches (dead code); `app.test.coverage` shows what the tests reached | a build warning |
 | 12 | **Exception pass, before the branch closes:** go over every `throw` in the code this branch touched. A problem the programmer caused is an error in the result; an exception only ever means plang itself is broken. Most should already be gone by then (the name lookups become `["name"]` doors answering NotFound; `Push` answers the overflow; the .pr readers return their error) | no |
 
 Each stage is its own commits, green against the baseline before the next starts.
@@ -130,10 +130,14 @@ on?.after.create.Start(this, context);
 - **An object's own `on` vs its type's:** `%user%`'s bindings are that one variable's; `app.type.text.on…` binds every text.
 
 ```
-- before goal start, call LogStart        → on.before(… goal.Start …, goal.call(LogStart))
-- after text create, call LoadText        → app.type.text.on.after.create(LoadText)
-- after %user% set, call UserChanged      → the variable's on.after.set
+- before goal show start, call LogStart   → on.event(item: %!app.goal.show%, when: before, event: start, goal.call: LogStart)
+- after text create, call LoadText        → on.event(item: %!app.type.text%, when: after,  event: create, goal.call: LoadText)
+- after %user% set, call UserChanged      → on.event(item: %user%,           when: after,  event: set,    goal.call: UserChanged)
 ```
+
+**One action, `on.event` (Ingi).** Its properties: `item` (the item the event is put on, read through a path; `%…%` only reads, the binding happens in the module), `when` (`before` | `after`, or none for an outcome), `event` (the verb or outcome: `create`, `start`, `set`, `error`, `hit`, …), and the action to run (a `goal.call`, or any action). Its C# is one line, the same for every item: `Item.on[When][Event].Add(Action, context)`. The event class's verbs are `Add` (bind) and `Start` (fire). Names are the architect's sketch; coder owns the final ones.
+
+**Scope.** A binding fires only inside the actor that registered it, as `event.on` behaves today (a test's fixture only affects the test); `scope: app` makes it global (a system logger).
 
 ## Faces (stages 5 and 7), settled with Ingi 2026-09-26
 
@@ -201,6 +205,7 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | the parser | — | `app.type.item.variable.parser.@this` | `app/type/item/variable/parser/this.cs` | the only definition of a reference |
 | an item's variables | — (a value's own) | `item.Variable` | `app/type/item/this.cs` | read-only, born whole, null when none |
 | variable system | `%!app.variable%` | `app.variable` | `app/variable/this.cs` | the memory of the actor in play |
+| registering an event | `- after text create, call LoadText` | `on.event(item, when, event, action)` → `Item.on[When][Event].Add(…)` | `app/module/action/on/event.cs` | one action for every item; scoped to the registering actor |
 | an object's events | `%!app.type.text.on%` (read) | `x.on` | `app/event/before/<verb>/this.cs`, `app/event/after/<verb>/this.cs` | registered by a step through the `on` module; null until bound |
 | a value's birth | — | `app.type.file.Create(…)` | `app/type/type/this.cs` (`Create`) | the one door; fires `on.before/after.create`; `new` only inside the type |
 | how an action is written | — | — | a doc, file.read as its worked example | the module pass's template |
@@ -211,4 +216,4 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 
 ## Open for the next round
 
-Rounds 1–3 closed. Round 3 added: lowercase covers the structure (facts keep their C# names), values born through their type (`create` fires reliably), and the module pass with file.read as the template (stage 9). Next: round 4, a full pass.
+Rounds 1–4 closed. Round 4 added: one `on.event(item, when, event, action)` for every event, bindings scoped to the registering actor, and binding/firing as verbs (`Add`, `Start`). Next: round 5, a full pass.
