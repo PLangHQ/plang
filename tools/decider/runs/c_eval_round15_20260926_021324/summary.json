@@ -1,0 +1,1947 @@
+[
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "checkout",
+  "first": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "read",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "orders/%orderId%.json"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "list",
+       "name": "count",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order.items%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"Your cart is empty\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "Your cart is empty"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "elseif",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"One item\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "One item"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"%itemCount% items\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "%itemCount% items"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.email%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notcontains"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "@"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"Invalid email address\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Invalid email address"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.coupon%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnotempty"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%})",
+         "action": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "ApplyCoupon"
+            },
+            {
+             "name": "Parameter",
+             "type": {
+              "name": "list"
+             },
+             "value": [
+              {
+               "name": "code",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order.coupon%"
+              },
+              {
+               "name": "order",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order%"
+              }
+             ]
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnot"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "number"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"The total must be a number\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "The total must be a number"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.country%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "IS"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.24)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.24
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.25)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.25
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "math",
+       "name": "multiply",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%vat%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%vatAmount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.note%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notstartswith"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "#"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "list.add(ListName=%notes%, Value=%order.note%)",
+         "action": [
+          {
+           "module": "list",
+           "name": "add",
+           "property": [
+            {
+             "name": "ListName",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%notes%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%order.note%"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Total: %order.total%, VAT: %vatAmount%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "read",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "orders/%orderId%.json"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "list",
+       "name": "count",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order.items%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"Your cart is empty\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "Your cart is empty"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "elseif",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"One item\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "One item"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"%itemCount% items\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "%itemCount% items"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.email%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notcontains"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "@"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"Invalid email address\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Invalid email address"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.coupon%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnotempty"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%})",
+         "action": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "ApplyCoupon"
+            },
+            {
+             "name": "Parameter",
+             "type": {
+              "name": "list"
+             },
+             "value": [
+              {
+               "name": "code",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order.coupon%"
+              },
+              {
+               "name": "order",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order%"
+              }
+             ]
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnot"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "number"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"The total must be a number\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "The total must be a number"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.country%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "IS"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.24)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.24
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.25)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.25
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "math",
+       "name": "multiply",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%vat%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%vatAmount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.note%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notstartswith"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "#"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "list.add(ListName=%notes%, Value=%order.note%)",
+         "action": [
+          {
+           "module": "list",
+           "name": "add",
+           "property": [
+            {
+             "name": "ListName",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%notes%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%order.note%"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Total: %order.total%, VAT: %vatAmount%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [],
+  "caught": [],
+  "final": {
+   "step": [
+    {
+     "index": 0,
+     "action": [
+      {
+       "module": "file",
+       "name": "read",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path"
+         },
+         "value": "orders/%orderId%.json"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "list",
+       "name": "count",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%order.items%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"Your cart is empty\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "Your cart is empty"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "elseif",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%itemCount%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "number"
+         },
+         "value": 1
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"One item\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "One item"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "output.write(Data=\"%itemCount% items\")",
+         "action": [
+          {
+           "module": "output",
+           "name": "write",
+           "property": [
+            {
+             "name": "Data",
+             "type": {
+              "name": "text"
+             },
+             "value": "%itemCount% items"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.email%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notcontains"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "@"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"Invalid email address\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "Invalid email address"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.coupon%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnotempty"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%})",
+         "action": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "ApplyCoupon"
+            },
+            {
+             "name": "Parameter",
+             "type": {
+              "name": "list"
+             },
+             "value": [
+              {
+               "name": "code",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order.coupon%"
+              },
+              {
+               "name": "order",
+               "type": {
+                "name": "item"
+               },
+               "value": "%order%"
+              }
+             ]
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "isnot"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "number"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "error.throw(Message=\"The total must be a number\")",
+         "action": [
+          {
+           "module": "error",
+           "name": "throw",
+           "property": [
+            {
+             "name": "Message",
+             "type": {
+              "name": "text"
+             },
+             "value": "The total must be a number"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.country%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "=="
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "IS"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.24)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.24
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "module": "condition",
+       "name": "else",
+       "property": [],
+       "modifier": [],
+       "child": [
+        {
+         "text": "variable.set(Name=%vat%, Value=0.25)",
+         "action": [
+          {
+           "module": "variable",
+           "name": "set",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%vat%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "number"
+             },
+             "value": 0.25
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "math",
+       "name": "multiply",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.total%"
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item"
+         },
+         "value": "%vat%"
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%vatAmount%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "condition",
+       "name": "if",
+       "property": [
+        {
+         "name": "Left",
+         "type": {
+          "name": "item"
+         },
+         "value": "%order.note%"
+        },
+        {
+         "name": "Operator",
+         "type": {
+          "name": "choice",
+          "kind": "operator"
+         },
+         "value": "notstartswith"
+        },
+        {
+         "name": "Right",
+         "type": {
+          "name": "text"
+         },
+         "value": "#"
+        }
+       ],
+       "modifier": [],
+       "child": [
+        {
+         "text": "list.add(ListName=%notes%, Value=%order.note%)",
+         "action": [
+          {
+           "module": "list",
+           "name": "add",
+           "property": [
+            {
+             "name": "ListName",
+             "type": {
+              "name": "variable"
+             },
+             "value": "%notes%"
+            },
+            {
+             "name": "Value",
+             "type": {
+              "name": "item"
+             },
+             "value": "%order.note%"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "output",
+       "name": "write",
+       "property": [
+        {
+         "name": "Data",
+         "type": {
+          "name": "text"
+         },
+         "value": "Total: %order.total%, VAT: %vatAmount%"
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [],
+  "warnings": [],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 3.6233325004577637,
+    "usage": {
+     "prompt_tokens": 4190,
+     "completion_tokens": 361,
+     "total_tokens": 4551,
+     "prompt_tokens_details": {
+      "cached_tokens": 3840,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "1": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "4": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "5": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "right",
+    "misses": []
+   }
+  },
+  "cost": 0.0005980499999999999
+ }
+]

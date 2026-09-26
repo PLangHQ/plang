@@ -89,6 +89,12 @@ def known_code(certain, text):
     if write: code.append(('set', write.group(1).strip('%'), '%!data%'))
     return code
 
+CHAIN = {'condition.if': 0, 'condition.elseif': 1, 'condition.else': 2}
+
+def link(action):
+    """Where an action stands in a condition chain (action.Link): if 0, elseif 1, else 2, anything else after."""
+    return CHAIN.get(action, 3)
+
 def literal_type(value):
     return 'text' if value.startswith('"') else 'bool' if value in ('true', 'false') else 'number'
 
@@ -138,7 +144,8 @@ def user_message_c(goal, picks):
         # step's last line)
         out += f' => decider: {decider or "(nothing it is sure of)"}'
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
-        certain = [a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)]
+        certain = sorted([a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)],
+                         key=link)   # a certain condition chain leads (action.Link); the rest by score
         filled = [prefill(a, s['text']) for a in certain if not b.declared(*a.split('.', 1))[1]]
         # a certain modifier is shown right after the step's first action — the action it modifies
         for m in [a for a in certain if b.declared(*a.split('.', 1))[1]]:

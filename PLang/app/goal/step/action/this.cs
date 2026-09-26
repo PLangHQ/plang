@@ -116,6 +116,13 @@ public partial class @this
     [JsonIgnore]
     public bool IsBranch => IsCondition && !string.Equals(Name, "if", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Where this action stands in a condition chain: the if 0, an elseif 1, the else 2 (it
+    /// closes the chain); null for an action that isn't a condition.</summary>
+    [JsonIgnore]
+    public int? Link => !IsCondition ? null
+        : !IsBranch ? 0
+        : string.Equals(Name, "else", StringComparison.OrdinalIgnoreCase) ? 2 : 1;
+
     /// <summary>The step this action belongs to — a BIRTH FACT for every action that is part of a
     /// PROGRAM: the reader builds the step shell first and hands it down at construction, so it is
     /// never stamped in afterwards. Null is not a repair hole, it is a real state: three kinds of

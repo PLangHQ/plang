@@ -236,21 +236,35 @@ if __name__ == '__main__':
     # Rendered requests go to /shared/coder/2.0/ only (Ingi): the current round in <goal>/, each run
     # copied to rounds/round<N>-run<M>/<goal>/ afterwards.
     run = os.environ.get('RUN', '') or '1'
+    # REPLAY=<a run folder>: its recorded picks (decider.json) instead of asking the decider again — a
+    # failed case replayed through a changed prompt. CASES=a,b: only those goals. A replay writes its
+    # requests and answers to rounds/round<N>-run<M>/ only: the current round's pages stay as they are.
+    replay = os.environ.get('REPLAY', '')
+    wanted = [x for x in os.environ.get('CASES', '').split(',') if x]
+    GOLDEN = [case for case in e.GOLDEN if not wanted or case['id'] in wanted]
+    home = (lambda cid: os.path.join(SHARED, 'rounds', f'round{ROUND}-run{run}', cid)) if replay \
+        else (lambda cid: os.path.join(SHARED, cid))
     os.makedirs(OUT, exist_ok=True)
-    print(f'round {ROUND} run {run}: decider v5 on {len(e.GOLDEN)} goals', flush=True)
-    with cf.ThreadPoolExecutor(5) as ex:
-        decided = dict(zip([c_['id'] for c_ in e.GOLDEN],
-                           ex.map(lambda case: d.one(case, cat, os.path.join(SHARED, case['id'], 'decider')), e.GOLDEN)))
-    # a step's picks; an unsure step also carries '@popular': the top 3 of the decider's popular-action choice
-    picks = {cid: {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
-                                **({'@popular': s['popular']} if s.get('popular') else {})} for s in r['steps']}
-             for cid, r in decided.items()}
-    json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
-               'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},
-              open(os.path.join(OUT, 'decider.json'), 'w'), indent=1)
+    if replay:
+        print(f'round {ROUND} run {run}: replaying the picks of {replay} on {len(GOLDEN)} goals', flush=True)
+        recorded = json.load(open(os.path.join(replay, 'decider.json')))
+        picks = {cid: {int(i): p for i, p in v.items()} for cid, v in recorded['picks'].items()}
+        json.dump({'picks': recorded['picks'], 'replay': replay}, open(os.path.join(OUT, 'decider.json'), 'w'), indent=1)
+    else:
+        print(f'round {ROUND} run {run}: decider v5 on {len(GOLDEN)} goals', flush=True)
+        with cf.ThreadPoolExecutor(5) as ex:
+            decided = dict(zip([c_['id'] for c_ in GOLDEN],
+                               ex.map(lambda case: d.one(case, cat, os.path.join(SHARED, case['id'], 'decider')), GOLDEN)))
+        # a step's picks; an unsure step also carries '@popular': the top 3 of the decider's popular-action choice
+        picks = {cid: {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
+                                    **({'@popular': s['popular']} if s.get('popular') else {})} for s in r['steps']}
+                 for cid, r in decided.items()}
+        json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
+                   'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},
+                  open(os.path.join(OUT, 'decider.json'), 'w'), indent=1)
     # the rendered prompt-C requests and the expected results, for reading
-    for case in e.GOLDEN:
-        folder = os.path.join(SHARED, case['id'])
+    for case in GOLDEN:
+        folder = home(case['id'])
         os.makedirs(folder, exist_ok=True)
         system, user = request('C', case, picks[case['id']])
         open(os.path.join(folder, 'system.txt'), 'w', encoding='utf-8').write(system)
@@ -258,10 +272,10 @@ if __name__ == '__main__':
         expected = {int(k): [fc.rows_of(a) for a in acts] for k, acts in case['expect'].items()}
         open(os.path.join(folder, 'expected.typed.txt'), 'w', encoding='utf-8').write(f.write_answer(expected) + '\n')
         open(os.path.join(folder, 'expected.answer.txt'), 'w', encoding='utf-8').write(f.write_answer(expected, types=False) + '\n')
-    jobs = [(p, m, case) for p in PROMPTS for m in MODELS for case in e.GOLDEN]
+    jobs = [(p, m, case) for p in PROMPTS for m in MODELS for case in GOLDEN]
     with cf.ThreadPoolExecutor(10) as ex:
         records = list(ex.map(lambda j: one(j[0], j[1], j[2], picks[j[2]['id']]), jobs))
-    by_id = {case['id']: case for case in e.GOLDEN}
+    by_id = {case['id']: case for case in GOLDEN}
     summary = []
     for rec in records:
         o = outcomes(rec, by_id[rec['case']])
@@ -282,12 +296,13 @@ if __name__ == '__main__':
                   f' | retries {sum(len(r["calls"]) > 1 for r in rows)}, disagreements {sum(len(r["disagreements"]) for r in rows)}, warnings {sum(len(r["warnings"]) for r in rows)}'
                   f' | {sum(secs):.1f}s (max goal {max(secs):.1f}), tokens {tin:,}/{tout:,}, ${sum(r["cost"] for r in rows):.4f}')
     # what came back (C + the first model): beside the request, and the whole run into rounds/ as history
-    for case in e.GOLDEN:
+    for case in GOLDEN:
         src = os.path.join(OUT, 'C', MODELS[0], case['id'])
-        folder = os.path.join(SHARED, case['id'])
+        folder = home(case['id'])
         for name, dest in (('1.answer.txt', 'answer.txt'), ('2.answer.txt', 'answer.retry.txt')):
             if os.path.exists(os.path.join(src, name)): shutil.copy(os.path.join(src, name), os.path.join(folder, dest))
             elif os.path.exists(os.path.join(folder, dest)): os.remove(os.path.join(folder, dest))
-        shutil.copytree(folder, os.path.join(SHARED, 'rounds', f'round{ROUND}-run{run}', case['id']), dirs_exist_ok=True)
-    readme(f'round {ROUND}, run {run}', OUT)
+        if not replay:
+            shutil.copytree(folder, os.path.join(SHARED, 'rounds', f'round{ROUND}-run{run}', case['id']), dirs_exist_ok=True)
+    if not replay: readme(f'round {ROUND}, run {run}', OUT)
     print('wrote', OUT)

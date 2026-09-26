@@ -70,8 +70,9 @@ public sealed class @this
     /// popular choice's options at the choice floor (0.2) or more — each with its mark.</summary>
     public IReadOnlyList<listed.@this> Listed => _listed;
 
-    /// <summary>The step's starting formal: its certain actions, <c>?</c> where a value is still
-    /// needed, a certain modifier right after the first action, a <c>write to %x%</c> filled in last.
+    /// <summary>The step's starting formal: its certain actions — a condition chain first, in chain
+    /// order, the rest by score — <c>?</c> where a value is still needed, a certain modifier right after
+    /// the first action, a <c>write to %x%</c> filled in last.
     /// Null when nothing is certain.</summary>
     public string? Formal { get; private set; }
 
@@ -225,8 +226,11 @@ public sealed class @this
     {
         var text = _step.Text;
         var known = WriteTo.Match(text);
+        // a certain condition chain leads, in chain order (if, elseif, else); the other certain actions
+        // follow by score — a tie in the scores never puts a body's action before its if
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known.Success))
-            .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!).ToList();
+            .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!)
+            .OrderBy(a => a.Link ?? 3).ToList();
         var filled = certain.Where(a => a is not global::app.goal.step.action.modifier.@this).Select(a => Call(a, text)).ToList();
         foreach (var m in certain.Where(a => a is global::app.goal.step.action.modifier.@this))
         {
