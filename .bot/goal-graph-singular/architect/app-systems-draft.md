@@ -114,6 +114,15 @@ Also coming into the type system (ruled 2026-09-24, queued for coder): `app.Type
 - The same holds for every system: `%!app.goal["Start"]%`, with `%!app.goal.Start%` as shorthand, and `%!app.goal.list%` / `%!app.goal.current%` as members.
 - **The OBP test this comes from:** the plang path, the C# path and the file path agree (`Documentation/v0.2/object_pattern_formal.md`, "The three paths agree").
 
+## Next piece (Ingi, 2026-09-26): every object owns its events and its current
+
+- **Each element's info has `on` and `current`.** `%!app.type.text%` prints the text type's info, including `current` (the text value in play) and its event bindings.
+- **Events are members of the thing they're about:** `app.type.text.on.create`, `goal.on.error`, `%user%.on.change`. This is where the `event.on` → `on.*` move lands.
+- **`current` is each object's own answer,** designed per case and read from the context: `app.actor.current => context.Actor`, `app.goal.current` = the running goal, `app.type.text.current` = the text value in play. No shared field, no global rule. (It replaces CLAUDE.md's "a concept nothing is ever inside has no `.current`".)
+- **What runs, runs in a module (Ingi).** A step maps only to module actions; `%!app…%` and every `%…%` only read. Registering is a step: `- on text create, call LoadText` → `on.create(…)`, whose C# is one line handing over to the owner, `app.type.text.on.create(LoadText)`. A method call inside `%…%` must only read.
+- **Payoff: value-level mocking.** `- on file create, call LoadFixture` → LoadFixture sets `%!app.type.file.current%`, so the goal under test reads fixture content unchanged. That's a different layer from `mock.intercept` (which stops an action), and it's the "dry walk with mock values" from the builder's types walk.
+- Ingi on the three-paths symmetry: "programming can be beautiful".
+
 ## Open
 
 1. ~~The system class's name and place~~: settled above.

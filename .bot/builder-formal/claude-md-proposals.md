@@ -13,3 +13,11 @@
 ```
 - **Only a marked template renders.** A value renders `%var%` only when its type carries `template` (`"type": {"name": "text", "template": "plang"}` in a .pr row). Nothing infers it from content at read: a text from outside (LLM answer, cache, http, file content, a store read-back) that holds `%x%` stays plain text. The marker is born at build, when the formal reader types the programmer's literal, or by an explicit request (`file.read … ResolveVariables=true`). A build-time "does this hold a variable" check asks the marker (`data.HasVariableReference`), never `raw.Contains('%')`.
 ```
+
+## architect — builder-formal — 2026-09-26
+**Target:** /CLAUDE.md (Runtime2 Conventions, the `app.X` collection-node bullet)
+**Why:** Ingi didn't recognize "a concept nothing is ever inside has no `.current`" and ruled it the other way: `current` is each object's own answer, designed per case (`app.actor.current => context.Actor`; `app.type.text.current` = the text value in play). He also stated the rule behind the module design: what runs in plang runs in a module; `%!app%` is read-only.
+**Proposed change:** replace "A concept that execution flows *through* also has `app.X.current` … a concept nothing is ever *inside* (`type`, `channel`, `event`, `module`, `format`) has no `.current`." with:
+```
+`X.current` is the X in play, and each object designs what that means, read from the context (`app.actor.current => context.Actor`, `app.goal.current` = the running goal, `app.type.text.current` = the text value in play), never a shared field. **What runs in plang runs in a module:** a step maps only to module actions; `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the object that owns the behavior, in one line. Events are members of the thing they're about (`X.on.<moment>`).
+```
