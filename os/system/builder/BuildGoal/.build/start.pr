@@ -49,7 +49,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 0 uses goal.call, which the decider was not sure of (0.79)"
+          "message": "step 0 uses goal.call, which the decider was not sure of (0.82)"
         }
       ],
       "waitForExecution": true
@@ -75,7 +75,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%Now.Ticks%"
             }
@@ -95,7 +96,7 @@
     },
     {
       "index": 2,
-      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"subGoals\": [], \"durationMs\": 0}",
+      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}",
       "line": {
         "number": 7
       },
@@ -114,9 +115,10 @@
             {
               "name": "Value",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
-              "value": {"id":"%!trace.id%","timestamp":"%Now%","goal":"%goal%","subGoals":[],"durationMs":0}
+              "value": {"id":"%!trace.id%","timestamp":"%Now%","goal":"%goal.Name%","subGoals":[],"durationMs":0}
             }
           ],
           "default": [
@@ -225,7 +227,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%goal%"
             }
@@ -257,7 +260,8 @@
             {
               "name": "Collection",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%parentGoal.Child%"
             }
@@ -325,7 +329,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%parentGoal%"
             }
@@ -357,14 +362,16 @@
             {
               "name": "A",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%Now.Ticks%"
             },
             {
               "name": "B",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%buildStart%"
             }
@@ -402,7 +409,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -434,7 +442,8 @@
             {
               "name": "A",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%elapsedTicks%"
             },
@@ -479,7 +488,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -518,7 +528,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%elapsedMs%"
             }
@@ -550,14 +561,16 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
             },
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%trace%"
             }
@@ -587,7 +600,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%goal.Name%"
             }
@@ -620,7 +634,8 @@
             {
               "name": "Goal",
               "type": {
-                "name": "goal"
+                "name": "goal",
+                "template": "plang"
               },
               "value": "%goal%"
             }
@@ -683,7 +698,8 @@
             {
               "name": "Goal",
               "type": {
-                "name": "goal"
+                "name": "goal",
+                "template": "plang"
               },
               "value": "%goal%"
             }
@@ -776,14 +792,16 @@
                 {
                   "name": "Goal",
                   "type": {
-                    "name": "goal"
+                    "name": "goal",
+                    "template": "plang"
                   },
                   "value": "%goal%"
                 },
                 {
                   "name": "Answer",
                   "type": {
-                    "name": "text"
+                    "name": "text",
+                    "template": "plang"
                   },
                   "value": "%answer%"
                 }
@@ -969,7 +987,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": [{"Role":"user","Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
                 }
@@ -1002,7 +1021,8 @@
                   "name": "Message",
                   "type": {
                     "name": "list",
-                    "kind": "llmmessage"
+                    "kind": "llmmessage",
+                    "template": "plang"
                   },
                   "value": [{"Role":"user","Content":"Steps 2 were refused: step 2: %fixMessages% is in the step but not in your answer\n\nAnswer again only these steps, one line each, starting with its [i], in formal."}]
                 },
@@ -1016,7 +1036,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool"
+                    "name": "bool",
+                    "template": "plang"
                   },
                   "value": "%!build.cache%"
                 },
@@ -1073,7 +1094,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1127,7 +1149,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%subGoal%"
                 }
@@ -1193,7 +1216,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 1 uses goal.call, which the decider was not sure of (0.89)"
+              "message": "step 1 uses goal.call, which the decider was not sure of (0.87)"
             }
           ],
           "waitForExecution": true
@@ -1219,7 +1242,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%Now.Ticks%"
                 }
@@ -1311,7 +1335,7 @@
         },
         {
           "index": 4,
-          "text": "add {goal: %goal%} to %trace.subGoals%",
+          "text": "add {goal: \"%goal.Name%\"} to %trace.subGoals%",
           "line": {
             "number": 50
           },
@@ -1330,9 +1354,10 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict"
+                    "name": "dict",
+                    "template": "plang"
                   },
-                  "value": {"goal":"%goal%"}
+                  "value": {"goal":"%goal.Name%"}
                 }
               ],
               "default": [
@@ -1362,14 +1387,16 @@
                 {
                   "name": "A",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%Now.Ticks%"
                 },
                 {
                   "name": "B",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%subgoalStart%"
                 }
@@ -1407,7 +1434,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1439,7 +1467,8 @@
                 {
                   "name": "A",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%elapsedTicks%"
                 },
@@ -1484,7 +1513,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1550,7 +1580,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 7 uses goal.call, which the decider was not sure of (0.85)"
+              "message": "step 7 uses goal.call, which the decider was not sure of (0.88)"
             }
           ],
           "waitForExecution": true
@@ -1560,7 +1590,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "b05ec670bb9c771b76fcc564e66738ce25b1dc45fd136581be0e02be6f2b517a",
+      "hash": "b95860fba66875c5e198ba0cfee7ff3ef7031034f86aa0bd6f98de507e6da12e",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -1604,7 +1634,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1643,7 +1674,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": [{"Role":"system","Content":"%sourceFixSystem%"},{"Role":"user","Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]
                 }
@@ -1676,7 +1708,8 @@
                   "name": "Message",
                   "type": {
                     "name": "list",
-                    "kind": "llmmessage"
+                    "kind": "llmmessage",
+                    "template": "plang"
                   },
                   "value": "%sourceFixMessages%"
                 },
@@ -1690,7 +1723,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool"
+                    "name": "bool",
+                    "template": "plang"
                   },
                   "value": "%!build.cache%"
                 }
@@ -1747,7 +1781,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1779,14 +1814,16 @@
                 {
                   "name": "Data",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!error%"
                 },
                 {
                   "name": "FixSuggestion",
                   "type": {
-                    "name": "text"
+                    "name": "text",
+                    "template": "plang"
                   },
                   "value": "%sourceFix%"
                 }
@@ -1916,7 +1953,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict"
+                    "name": "dict",
+                    "template": "plang"
                   },
                   "value": {"key":"%!error.Key%","message":"%!error.Message%","goal":"%goal.Name%"}
                 }
@@ -1948,14 +1986,16 @@
                 {
                   "name": "Path",
                   "type": {
-                    "name": "path"
+                    "name": "path",
+                    "template": "plang"
                   },
                   "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%trace%"
                 }
@@ -1978,7 +2018,8 @@
                 {
                   "name": "Data",
                   "type": {
-                    "name": "item"
+                    "name": "item",
+                    "template": "plang"
                   },
                   "value": "%!error%"
                 }
@@ -2018,7 +2059,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Start.goal",
   "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "4e074f2381bc3ef47be269e29f3c06ece98e8e8e4a4952dcbfe4c066d6bc0980",
+  "hash": "4915860f487ec9d902682e6754b434f87d00697820023257d5db3886f15ce83f",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

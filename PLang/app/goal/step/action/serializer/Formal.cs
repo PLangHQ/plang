@@ -319,21 +319,27 @@ public sealed class Formal
             var type = _context.App.Type[typeName];
             global::app.type.item.@this born;
             if (value.Action != null) born = value.Action;
-            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, Arguments(value));
+            // argument rows are named rows, each value its own (a %x% row value is born a template on
+            // its own): the rows are never rendered as one list, which would drop their names
+            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, Arguments(value), template: null);
             else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
             { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }
             else born = Born(type, Json(value));
-            return (new global::app.type.property.@this { Name = prop, Type = type, Value = born }, frozen);
+            // a value born a template (it holds %variables%) is declared one in the .pr too, so it renders
+            // again when the .pr is read
+            var declaredType = born.Type is { Template: not null } templated ? templated : type;
+            return (new global::app.type.property.@this { Name = prop, Type = declaredType, Value = born }, frozen);
         }
 
         // Each value born through the type's own door — the one a .pr row's value reads through.
-        private global::app.type.item.@this Born(global::app.type.@this type, string json)
+        // Authored content: a value holding %variables% is born a template ("plang").
+        private global::app.type.item.@this Born(global::app.type.@this type, string json, string? template = "plang")
         {
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
             utf8.Read();
             var reader = new global::app.channel.serializer.json.Reader(utf8, bytes);
-            return type.Read(ref reader, new global::app.type.reader.ReadContext(_context, "plang"));
+            return type.Read(ref reader, new global::app.type.reader.ReadContext(_context, template));
         }
 
         private static string LiteralType(Literal v)

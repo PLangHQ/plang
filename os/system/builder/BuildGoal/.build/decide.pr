@@ -22,7 +22,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!app.module.list%"
             }
@@ -83,7 +84,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             },
@@ -184,7 +186,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -236,7 +239,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -268,14 +272,16 @@
             {
               "name": "State",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%state%"
             },
             {
               "name": "Question",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": "%questions%"
             }
@@ -304,7 +310,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -336,21 +343,24 @@
             {
               "name": "Goal",
               "type": {
-                "name": "goal"
+                "name": "goal",
+                "template": "plang"
               },
               "value": "%goal%"
             },
             {
               "name": "Answer",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": "%answer%"
             },
             {
               "name": "Popular",
               "type": {
-                "name": "list"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%decider.popular%"
             }
@@ -432,7 +442,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -484,7 +495,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -516,14 +528,16 @@
             {
               "name": "State",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%state%"
             },
             {
               "name": "Question",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": "%questions%"
             }
@@ -552,7 +566,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -584,21 +599,24 @@
             {
               "name": "Goal",
               "type": {
-                "name": "goal"
+                "name": "goal",
+                "template": "plang"
               },
               "value": "%goal%"
             },
             {
               "name": "Answer",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": "%answer%"
             },
             {
               "name": "Popular",
               "type": {
-                "name": "list"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%decider.popular%"
             }

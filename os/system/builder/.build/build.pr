@@ -245,7 +245,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -277,7 +278,8 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "%path%"
             }
@@ -297,7 +299,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -376,7 +379,8 @@
             {
               "name": "Collection",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%goals%"
             }
@@ -437,14 +441,16 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "/.build/traces/%!trace.id%/manifest.json"
             },
             {
               "name": "Value",
               "type": {
-                "name": "item"
+                "name": "item",
+                "template": "plang"
               },
               "value": "%traceGoals%"
             }

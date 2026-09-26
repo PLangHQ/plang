@@ -4,7 +4,7 @@ Start
 
 - call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
 - set %buildStart% = %Now.Ticks%
-- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "subGoals": [], "durationMs": 0}
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": "%goal.Name%", "subGoals": [], "durationMs": 0}
 - call Compile, on error call HandleBuildFailure
 
 - set %parentGoal% = %goal%
@@ -47,7 +47,7 @@ BuildSubGoal
 - call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
 - set %subgoalStart% = %Now.Ticks%
 - call Compile, on error call HandleBuildFailure
-- add {goal: %goal%} to %trace.subGoals%
+- add {goal: "%goal.Name%"} to %trace.subGoals%
 - math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
 - math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
 - call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
