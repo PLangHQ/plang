@@ -25,7 +25,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 - **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 11) uses it.
 - **Every list has `all`, for consistency.** Where everything is already present (the types are registered at startup), `all` answers the list itself, so nobody needs to know which systems load lazily.
 - **`all` takes settings (Ingi):** a method with named, optional parameters; `.all` without parentheses runs it with the defaults (one door). For goals: `show` = `public` (default) | `private` | `all`, and `os` = whether os/system goals are included (default false: the app's own goals). `%!app.goal.list.all(show: "all", os: true)%`. The default lists each `.pr`'s main goal without reading the files; `private`/`all` read them for their sub-goals.
-- A list is navigated by index, so `list.all` never clashes with an element's name; one element by name stays on the system (`%!app.goal.Start%`).
+- A list is navigated by index, so `list.all` never clashes with an element's name; one element by name stays on the system (`%!app.goal.start%`). plang paths are written in lowercase (`%!app.goal.show.name%`); navigation ignores case.
 
 ```csharp
 // sketch: app/goal/list/this.cs
@@ -127,13 +127,15 @@ on?.after.create.Start(this, context);
 | actor, module, setting, test, … | their verbs, by the same rule | new |
 
 - **`current`** during a handler is the item passed in (`this`): `%!app.type.text.current%` is the text being created.
-- **An object's own `on` vs its type's:** `%user%`'s bindings are that one variable's; `app.type.text.on…` binds every text.
+- **An object's own `on` vs its type's:** `%!app.variable.user%`'s bindings are that one variable's; `app.type.text.on…` binds every text.
 
 ```
 - before goal show start, call LogStart   → on.event(item: %!app.goal.show%, when: before, event: start, goal.call: LogStart)
 - after text create, call LoadText        → on.event(item: %!app.type.text%, when: after,  event: create, goal.call: LoadText)
-- after %user% set, call UserChanged      → on.event(item: %user%,           when: after,  event: set,    goal.call: UserChanged)
+- after %user% set, call UserChanged      → on.event(item: %!app.variable.user%, when: after, event: set, goal.call: UserChanged)
 ```
+
+The item is always the object itself, reached through its system: `%user%` would read the variable's VALUE (and put the event on it), so one variable is `%!app.variable.user%`.
 
 **One action, `on.event` (Ingi).** Its properties: `item` (the item the event is put on, read through a path; `%…%` only reads, the binding happens in the module), `when` (`before` | `after`, or none for an outcome), `event` (the verb or outcome: `create`, `start`, `set`, `error`, `hit`, …), and the action to run (a `goal.call`, or any action). Its C# is one line, the same for every item: `Item.on[When][Event].Add(Action, context)`. The event class's verbs are `Add` (bind) and `Start` (fire). Names are the architect's sketch; coder owns the final ones.
 
@@ -159,13 +161,13 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | `%!app.type.text%` | `name`, `description`, `example`, `kind`; a choice type adds `values` |
 | `%!app.type.text.kind.md%` | `name`, `extension`, `mime` |
 | `%!app.goal%` | `list` (names of the goals loaded so far), `current` |
-| `%!app.goal.Start%` | `name`, `path`, `comment`, its steps (index and text), `child` (its sub-goals), `on` |
+| `%!app.goal.start%` | `name`, `path`, `comment`, its steps (index and text), `child` (its sub-goals), `on` |
 | `%!app.actor%` | `list` (system, user), `current` |
 | `%!app.actor.user%` | `name` |
 | `%!app.module%` | `list` (module names) |
 | `%!app.module.file%` | `name`, `description`, its action names |
 | `%!app.test%` | `list` (test names), `current` |
-| `%!app.test.X%` | `name`, `status` |
+| `%!app.test.x%` | `name`, `status` |
 | `%!app.variable%` | `list` (variable names) |
 | `%!app.variable.some%` | `name`, `type` |
 
@@ -188,7 +190,7 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | `type/list/view/` (whole folder) and `BuildTypeEntries`; `goal.Description`; the goal hash that ignores comments; the four `os/` `readme.md` (→ `start.md`) | 5 |
 | `app/variable/path/` (`Parse`, `Segment` and its kinds, `Segment.Index.Key`'s string re-parse, `Segment.Call.Args`); the walker's switch and clr special case (`data/this.Navigation.cs:33-94`); `data.TryFullVarMatch`; static `text.HasVariable(string)`; `CleanName` ×2 (`data/this.cs:647`, `variable/list/this.cs:617`); `variable.@this.Convert`'s hand scan; the regexes in `step/this.Validate.cs:26`, `step/this.Scope.cs:9`, `pick/list/this.cs:90,96`; `data.HasVariableReference` | 6 |
 | the per-concept `X.list.@this` as the class reached at `app.X` (goal, actor, module, test) | 7 |
-| `event.on`, `Trigger` as a list of moments beside the objects | 8 |
+| `event.on`, `Trigger` as a list of moments beside the objects; the per-context binding lists (`context.LifecycleFor(…)`, `goal/this.cs:307`; `app/event/lifecycle/`): bindings live on the item, each carrying its scope | 8 |
 | every direct `new` of a plang value outside its type (≥ 78 production sites); whatever else the checklist catches, per module | 9 |
 | reflection over the C# `App` as `%!app`'s answer | 10 |
 | `PLang.Tests/Shared/TestApp.cs`, `TestAction.cs` (statics) | 11 |
@@ -211,8 +213,8 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | how an action is written | — | — | a doc, file.read as its worked example | the module pass's template |
 | starting an action from C# | — | `app.module["file"]["read"].Start(…)` | `module/module/…` | through `action.Start`; nothing test-only |
 | every goal | `%!app.goal.list.all%` | `app.goal.list.all(show, os)` | `app/goal/list/this.cs` | a method with optional parameters; `.all` = the defaults |
-| a goal's description | `%!app.goal.Show.comment%` | `goal.Comment` | `app/goal/goal/this.cs` | the lines above the goal's name; the only description member |
-| names | — | — | — | no verb+noun; `Start`, `Add`, `Load`, `Variable`, `Code`, `On`, `current`, `list`, `all`: one word each; plang vocabulary lowercase |
+| a goal's description | `%!app.goal.show.comment%` | `goal.Comment` | `app/goal/goal/this.cs` | the lines above the goal's name; the only description member |
+| names | — | — | — | no verb+noun; verbs `Start`, `Add`, `Load`, `Create`, plumbing `Variable`, `Code`, nodes `on`, `current`, `list`, `all`: one word each; nodes lowercase, verbs PascalCase |
 
 ## Open for the next round
 
