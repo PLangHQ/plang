@@ -75,7 +75,7 @@
    ],
    "menu": {
     "0": ["goal.call"], "1": ["variable.set"], "2": ["variable.set"],
-    "3": ["goal.call", "error.handle"],
+    "3": ["goal.call", "on.error"],
     "4": ["variable.set"], "5": ["variable.set"],
     "6": ["loop.foreach", "goal.call"],
     "7": ["variable.set"],
@@ -84,7 +84,7 @@
     "10": ["variable.set"],
     "11": ["file.save"],
     "12": ["list.add"],
-    "13": ["build.fold", "error.handle"],
+    "13": ["build.fold", "on.error"],
     "14": ["build.goalsSave"]
    },
    "expect": {
@@ -95,7 +95,7 @@
            "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
            {"id": "%!trace.id%", "timestamp": "%Now%", "goal": "%goal%", "menu": null, "subGoals": [], "durationMs": 0}]}}}],
     "3": [{"module": "goal", "name": "call", "property": {"Name": "Compile"},
-           "modifier": [{"module": "error", "name": "handle",
+           "modifier": [{"module": "on", "name": "error",
                          "recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}]}],
     "4": [{"module": "variable", "name": "set", "property": {"Name": "%trace.menu%", "Value": "%menu%"}}],
     "5": [{"module": "variable", "name": "set", "property": {"Name": "%parentGoal%", "Value": "%goal%"}}],
@@ -110,7 +110,7 @@
     "11": [{"module": "file", "name": "save", "property": {"Path": "/.build/traces/%!trace.id%/%goal.Name%.json", "Value": "%trace%"}}],
     "12": [{"module": "list", "name": "add", "property": {"ListName": "%traceGoals%", "Value": "%goal.Name%"}}],
     "13": [{"module": "build", "name": "fold", "property": {"Goal": "%goal%"},
-            "modifier": [{"module": "error", "name": "handle",
+            "modifier": [{"module": "on", "name": "error",
                           "recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}]}],
     "14": [{"module": "build", "name": "goalsSave", "property": {"Goal": "%goal%"}}]
    }
@@ -247,7 +247,7 @@
     "7": ["output.write"],
     "8": ["ui.render", "variable.set"],
     "9": ["file.save"],
-    "10": ["goal.call", "error.handle"],
+    "10": ["goal.call", "on.error"],
     "11": ["output.write"]
    },
    "expect": {
@@ -266,7 +266,7 @@
     "9": [{"module": "file", "name": "save", "property": {"Path": "/reports/week.html", "Value": "%html%"}}],
     "10": [{"module": "goal", "name": "call", "property": {"Name": "SendReport",
              "Parameter": [{"name": "to", "value": "ops@example.com"}, {"name": "subject", "value": "Weekly report"}]},
-            "modifier": [{"module": "error", "name": "handle",
+            "modifier": [{"module": "on", "name": "error",
                           "recovery": [{"module": "goal", "name": "call", "property": {"Name": "LogFailure"}}]}]}],
     "11": [{"module": "output", "name": "write", "property": {"Data": "Report sent", "channel": "log"}}]
    }

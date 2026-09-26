@@ -169,7 +169,7 @@ public class TimeoutAfterTests
             {
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) })
                 },
                 TimeoutModifier(50)

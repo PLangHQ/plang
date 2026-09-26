@@ -138,7 +138,7 @@ public static class Make
 
     /// <summary>
     /// Wraps an action with one or more modifier actions (e.g. <c>timeout.after</c>,
-    /// <c>error.handle</c>, <c>cache</c>). The modifiers run around the inner action;
+    /// <c>on.error</c>, <c>cache</c>). The modifiers run around the inner action;
     /// each fires its own lifecycle events. Returns the same inner action for nesting
     /// inside <see cref="Step"/>.
     /// </summary>

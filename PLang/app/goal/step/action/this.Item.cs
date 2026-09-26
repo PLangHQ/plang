@@ -76,7 +76,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             writer.Name("child");
             await Child.Output(writer, mode, context);   // step.list writes its own bare array
         }
-        // The body of an `on error` clause — omitted on every action but error.handle.
+        // The body of an `on error` clause — omitted on every action but on.error.
         if (Recovery.Count > 0)
         {
             writer.Name("recovery");
@@ -87,7 +87,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The action in formal: its own call; a condition's body inline after it (<c>{ a; b }</c>);
     /// then its modifiers after it, innermost first (the list is outermost first) — each the next call in
-    /// the same sequence: <c>file.read(…); cache.wrap(…); error.handle(…)</c>.</summary>
+    /// the same sequence: <c>file.read(…); cache.wrap(…); on.error(…)</c>.</summary>
     private async System.Threading.Tasks.ValueTask Formal(global::app.channel.serializer.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {

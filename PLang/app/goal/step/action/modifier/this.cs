@@ -2,7 +2,7 @@ namespace app.goal.step.action.modifier;
 
 /// <summary>
 /// A modifier — an action whose ROLE is to wrap the preceding action (cache.wrap,
-/// error.handle, timeout.after). Same mechanism as any action (handler, params, Run,
+/// on.error, timeout.after). Same mechanism as any action (handler, params, Run,
 /// dispatch, .pr reading); the type IS the role. It exists only inside a target's
 /// Modifiers slot — never standalone — enforced by where it is born, not by a check.
 /// </summary>

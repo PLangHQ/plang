@@ -15,7 +15,7 @@ namespace app.goal.step.action.serializer;
 ///   value   = "text" | number | true | false | null | %variable% | [ … ] | { … } | action
 /// </code>
 /// <para><c>{ }</c> is only a condition's body (its child step). A modifier follows the action it modifies,
-/// in the same list — <c>file.read(…); cache.wrap(…); error.handle(…)</c> — the first written innermost;
+/// in the same list — <c>file.read(…); cache.wrap(…); on.error(…)</c> — the first written innermost;
 /// the action's modifier list keeps them outermost first. A modifier's recovery is its
 /// <c>Recovery=[…]</c>.</para>
 ///
@@ -192,7 +192,7 @@ public sealed class Formal
                 var at = _pos;
                 var prop = Ident();
                 if (!given.Add(prop)) Fail($"`{prop}` is given twice", at);
-                if (prop == "Recovery" && isModifier && module == "error" && name == "handle")
+                if (prop == "Recovery" && isModifier && module == "on" && name == "error")
                 {
                     WrittenType(prop, "list<action>");
                     Take("=");
@@ -206,7 +206,7 @@ public sealed class Formal
                 if (declared == null)
                 {
                     var have = catalog.Property.Select(p => p.Name).ToList();
-                    if (isModifier && module == "error" && name == "handle") have.Add("Recovery");
+                    if (isModifier && module == "on" && name == "error") have.Add("Recovery");
                     Fail($"`{module}.{name}` has no property `{prop}` (it has {(have.Count > 0 ? string.Join(", ", have) : "none")})", at);
                 }
                 var (row, frozen) = Row(prop, declared!);

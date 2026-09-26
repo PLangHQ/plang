@@ -67,8 +67,8 @@
           ],
           "modifier": [
             {
-              "module": "error",
-              "name": "handle",
+              "module": "on",
+              "name": "error",
               "property": [
                 {
                   "name": "StatusCode",

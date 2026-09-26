@@ -74,13 +74,13 @@ public sealed class OpenAi : ILlm
         // --- Validate ---
         // HACK (minimal): Messages.Value can be NULL (not just empty) — the [IsNotNull]
         // guard checks the parameter's presence, not the lazily-resolved value. Seen in the
-        // builder self-build: when error.handle RETRIES QueryAndValidatePlan
+        // builder self-build: when on.error RETRIES QueryAndValidatePlan
         // (BuildGoal/Plan.goal:26), the parent-scope %messages% variable resolves to null on
         // the retry (it's fine on the first call), so `action.Messages.Value!.Count` NRE'd
         // and crashed the whole build with a bare NullReferenceException. Treat null like
         // empty → clean ValidationError instead of a crash.
         // TODO(coder): real fix is in the retry/scope handling — a sub-goal's access to a
-        // parent-scope variable should survive an error.handle retry (or pass %messages% as
+        // parent-scope variable should survive an on.error retry (or pass %messages% as
         // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
         // .bot/type-kind-strict/builder/v2/baseline-findings.md.
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.

@@ -7,7 +7,7 @@ namespace app.module.action.cache;
 /// On a cache hit, the inner delegate is skipped entirely and the cached result
 /// is returned (also published as %!data% for the next action in the step).
 /// </summary>
-// cache.wrap bounds the OUTCOME of the real work, so it sits between error.handle and
+// cache.wrap bounds the OUTCOME of the real work, so it sits between on.error and
 // timeout.after: a hit skips both the work and its deadline, a miss runs the deadline around the
 // action and caches the success, and a recovery result is never cached because recovery happens
 // outside the cache.

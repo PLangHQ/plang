@@ -32,20 +32,20 @@
   "message": "line 1, column 19: `Name` names a variable: write it with its % signs"
  },
  {
-  "input": "goal.call(Name=\"X\")\n    error.handle() { goal.call(Name=\"Y\") }",
+  "input": "goal.call(Name=\"X\")\n    on.error() { goal.call(Name=\"Y\") }",
   "message": "line 2, column 5: separate a step's actions with `;`"
  },
  {
-  "input": "error.handle(Recovery=[goal.call(Name=\"Y\")])",
-  "message": "line 1, column 1: error.handle modifies the action before it; step 0 has none"
+  "input": "on.error(Recovery=[goal.call(Name=\"Y\")])",
+  "message": "line 1, column 1: on.error modifies the action before it; step 0 has none"
  },
  {
-  "input": "error.handle() { goal.call(Name=\"X\"); goal.call(Name=\"Y\") }",
-  "message": "line 1, column 16: `error.handle` takes no { }: write the action first, then error.handle after it — next.action(…); error.handle(…)"
+  "input": "on.error() { goal.call(Name=\"X\"); goal.call(Name=\"Y\") }",
+  "message": "line 1, column 12: `on.error` takes no { }: write the action first, then on.error after it — next.action(…); on.error(…)"
  },
  {
-  "input": "error.handle(Recovery=\"Y\") { goal.call(Name=\"X\") }",
-  "message": "line 1, column 14: `Recovery` is a list of actions: [goal.call(Name=\"X\")]"
+  "input": "on.error(Recovery=\"Y\") { goal.call(Name=\"X\") }",
+  "message": "line 1, column 10: `Recovery` is a list of actions: [goal.call(Name=\"X\")]"
  },
  {
   "input": "goal.call(Name=\"X\") { output.write(Data=\"y\") }",
@@ -80,8 +80,8 @@
   "message": "line 1, column 21: separate a step's actions with `;`, not `·`"
  },
  {
-  "input": "error.handle(Recovery=[goal.call(…)]) { goal.call(Name=\"X\") }",
-  "message": "line 1, column 34: a `…` is still there: fill in goal.call's properties, as the step gives them"
+  "input": "on.error(Recovery=[goal.call(…)]) { goal.call(Name=\"X\") }",
+  "message": "line 1, column 30: a `…` is still there: fill in goal.call's properties, as the step gives them"
  },
  {
   "input": "variable.set(Name=%d%, Value={name: text = \"a\"})",
@@ -92,12 +92,12 @@
   "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `<>` is not"
  },
  {
-  "input": "error.handle(Recovery=[goal.call(Name=\"Fix\")]); file.read(Path=\"x\")",
-  "message": "line 1, column 1: error.handle modifies the action before it; step 0 has none"
+  "input": "on.error(Recovery=[goal.call(Name=\"Fix\")]); file.read(Path=\"x\")",
+  "message": "line 1, column 1: on.error modifies the action before it; step 0 has none"
  },
  {
-  "input": "file.read(Path=\"x\"); error.handle(Recovery=[goal.call(Name=\"Fix\")]) { goal.call(Name=\"Y\") }",
-  "message": "line 1, column 69: `error.handle` takes no { }: write the action first, then error.handle after it — next.action(…); error.handle(…)"
+  "input": "file.read(Path=\"x\"); on.error(Recovery=[goal.call(Name=\"Fix\")]) { goal.call(Name=\"Y\") }",
+  "message": "line 1, column 65: `on.error` takes no { }: write the action first, then on.error after it — next.action(…); on.error(…)"
  },
  {
   "input": "",

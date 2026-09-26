@@ -2,7 +2,8 @@ namespace app.goal.step.action.modifier.list;
 
 /// <summary>
 /// The modifiers wrapping one action (<c>action.Modifier</c>), outermost first — the order they are
-/// written in formal (<c>error.handle(…) { cache.wrap(…) { file.read(…) } }</c>). The list owns how they
+/// written in formal, after the action (<c>file.read(…); cache.wrap(…); on.error(…)</c>, read
+/// innermost first). The list owns how they
 /// compose around the action: <see cref="Wrap"/> folds them right to left, each modifier wrapping the one
 /// inside it, and <c>on error</c> clauses written one after another wrap once, together, as ONE try/catch
 /// asked in the order written. No sort: the written order is the order.

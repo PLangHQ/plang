@@ -1,7 +1,7 @@
 namespace PLang.Tests.App.Modules.modifier;
 
 /// <summary>
-/// Tests for the error.handle modifier handler.
+/// Tests for the on.error modifier handler.
 /// Wraps an action with error matching, retry logic, and error goal calls.
 /// </summary>
 public class ErrorHandleTests
@@ -38,7 +38,7 @@ public class ErrorHandleTests
         foreach (var p in parameters) list.Add(new(p.name, p.value, context: global::PLang.Tests.TestApp.SharedContext));
         return new global::app.goal.step.action.modifier.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
             Property = global::PLang.Tests.Shared.Make.Properties(list)
         };
     }

@@ -98,7 +98,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s0_error.handle": {
+   "s0_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -160,7 +160,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s1_error.handle": {
+   "s1_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -222,7 +222,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s2_error.handle": {
+   "s2_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -284,7 +284,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s3_error.handle": {
+   "s3_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -346,7 +346,7 @@
     "type": "noul",
     "noul": 0.21
    },
-   "s4_error.handle": {
+   "s4_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -408,7 +408,7 @@
     "type": "noul",
     "noul": 0.08
    },
-   "s5_error.handle": {
+   "s5_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -470,7 +470,7 @@
     "type": "noul",
     "noul": 0.08
    },
-   "s6_error.handle": {
+   "s6_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -532,7 +532,7 @@
     "type": "noul",
     "noul": 0.24
    },
-   "s7_error.handle": {
+   "s7_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -594,7 +594,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s8_error.handle": {
+   "s8_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -656,7 +656,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s9_error.handle": {
+   "s9_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -718,7 +718,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s10_error.handle": {
+   "s10_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -949,7 +949,7 @@
     "variable.set": 0.99,
     "goal.call": 0.06,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.11,
     "file.read": 0.03
    },
@@ -957,7 +957,7 @@
     "variable.set": 0.99,
     "goal.call": 0.06,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.12,
     "file.read": 0.04
    },
@@ -965,7 +965,7 @@
     "variable.set": 0.99,
     "goal.call": 0.06,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.09,
     "file.read": 0.04
    },
@@ -973,7 +973,7 @@
     "variable.set": 0.09,
     "goal.call": 0.17,
     "output.write": 0.06,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.04,
     "channel.set": 1.0
@@ -982,7 +982,7 @@
     "variable.set": 0.1,
     "goal.call": 0.82,
     "output.write": 0.21,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.04
    },
@@ -990,7 +990,7 @@
     "variable.set": 0.84,
     "goal.call": 0.08,
     "output.write": 0.08,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.12,
     "build.load": 1.0
@@ -999,7 +999,7 @@
     "variable.set": 0.91,
     "goal.call": 0.11,
     "output.write": 0.08,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.08,
     "build.goals": 1.0
@@ -1008,7 +1008,7 @@
     "variable.set": 0.1,
     "goal.call": 0.88,
     "output.write": 0.24,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.04
    },
@@ -1016,7 +1016,7 @@
     "variable.set": 0.11,
     "goal.call": 0.99,
     "output.write": 0.05,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.06,
     "file.read": 0.04,
     "loop.foreach": 0.98
@@ -1025,7 +1025,7 @@
     "variable.set": 0.1,
     "goal.call": 0.08,
     "output.write": 0.07,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.04,
     "file.save": 0.94
@@ -1034,7 +1034,7 @@
     "variable.set": 0.1,
     "goal.call": 0.1,
     "output.write": 0.06,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.06,
     "build.appSave": 1.0
@@ -1156,7 +1156,7 @@
     "type": "noul",
     "noul": 0.16
    },
-   "s0_error.handle": {
+   "s0_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -1218,7 +1218,7 @@
     "type": "noul",
     "noul": 0.03
    },
-   "s1_error.handle": {
+   "s1_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1280,7 +1280,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s2_error.handle": {
+   "s2_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1342,7 +1342,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s3_error.handle": {
+   "s3_on.error": {
     "type": "noul",
     "noul": 0.98
    },
@@ -1404,7 +1404,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s4_error.handle": {
+   "s4_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1466,7 +1466,7 @@
     "type": "noul",
     "noul": 0.03
    },
-   "s5_error.handle": {
+   "s5_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1528,7 +1528,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s6_error.handle": {
+   "s6_on.error": {
     "type": "noul",
     "noul": 0.08
    },
@@ -1590,7 +1590,7 @@
     "type": "noul",
     "noul": 0.03
    },
-   "s7_error.handle": {
+   "s7_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1652,7 +1652,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s8_error.handle": {
+   "s8_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1714,7 +1714,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s9_error.handle": {
+   "s9_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1776,7 +1776,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s10_error.handle": {
+   "s10_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1838,7 +1838,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s11_error.handle": {
+   "s11_on.error": {
     "type": "noul",
     "noul": 0.06
    },
@@ -1900,7 +1900,7 @@
     "type": "noul",
     "noul": 0.03
    },
-   "s12_error.handle": {
+   "s12_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -1962,7 +1962,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s13_error.handle": {
+   "s13_on.error": {
     "type": "noul",
     "noul": 0.98
    },
@@ -2024,7 +2024,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s14_error.handle": {
+   "s14_on.error": {
     "type": "noul",
     "noul": 0.05
    },
@@ -2357,7 +2357,7 @@
     "variable.set": 0.08,
     "goal.call": 0.81,
     "output.write": 0.16,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.03
    },
@@ -2365,7 +2365,7 @@
     "variable.set": 0.99,
     "goal.call": 0.06,
     "output.write": 0.03,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.03,
     "file.read": 0.03
    },
@@ -2373,7 +2373,7 @@
     "variable.set": 0.98,
     "goal.call": 0.11,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.04
    },
@@ -2381,7 +2381,7 @@
     "variable.set": 0.1,
     "goal.call": 0.98,
     "output.write": 0.05,
-    "error.handle": 0.98,
+    "on.error": 0.98,
     "condition.if": 0.06,
     "file.read": 0.06,
     "build.validate": 0.14
@@ -2390,7 +2390,7 @@
     "variable.set": 0.97,
     "goal.call": 0.07,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.05,
     "file.read": 0.04
    },
@@ -2398,7 +2398,7 @@
     "variable.set": 0.99,
     "goal.call": 0.1,
     "output.write": 0.03,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.03,
     "file.read": 0.03
    },
@@ -2406,7 +2406,7 @@
     "variable.set": 0.13,
     "goal.call": 0.97,
     "output.write": 0.04,
-    "error.handle": 0.08,
+    "on.error": 0.08,
     "condition.if": 0.05,
     "file.read": 0.04,
     "loop.foreach": 0.98
@@ -2415,7 +2415,7 @@
     "variable.set": 0.99,
     "goal.call": 0.07,
     "output.write": 0.03,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.03
    },
@@ -2423,7 +2423,7 @@
     "variable.set": 0.89,
     "goal.call": 0.07,
     "output.write": 0.05,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.03,
     "math.subtract": 1.0
@@ -2432,7 +2432,7 @@
     "variable.set": 0.85,
     "goal.call": 0.07,
     "output.write": 0.05,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.03,
     "math.divide": 1.0
@@ -2441,7 +2441,7 @@
     "variable.set": 0.99,
     "goal.call": 0.07,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.03,
     "file.read": 0.04
    },
@@ -2449,7 +2449,7 @@
     "variable.set": 0.1,
     "goal.call": 0.09,
     "output.write": 0.05,
-    "error.handle": 0.06,
+    "on.error": 0.06,
     "condition.if": 0.04,
     "file.read": 0.05,
     "file.save": 1.0
@@ -2458,7 +2458,7 @@
     "variable.set": 0.13,
     "goal.call": 0.11,
     "output.write": 0.03,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.05,
     "list.add": 1.0
@@ -2467,7 +2467,7 @@
     "variable.set": 0.1,
     "goal.call": 0.32,
     "output.write": 0.05,
-    "error.handle": 0.98,
+    "on.error": 0.98,
     "condition.if": 0.07,
     "file.read": 0.05,
     "build.fold": 1.0
@@ -2476,7 +2476,7 @@
     "variable.set": 0.09,
     "goal.call": 0.1,
     "output.write": 0.05,
-    "error.handle": 0.05,
+    "on.error": 0.05,
     "condition.if": 0.05,
     "file.read": 0.06,
     "build.goalsSave": 1.0
@@ -2578,7 +2578,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s0_error.handle": {
+   "s0_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -2640,7 +2640,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s1_error.handle": {
+   "s1_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -2702,7 +2702,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s2_error.handle": {
+   "s2_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -2764,7 +2764,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s3_error.handle": {
+   "s3_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -2826,7 +2826,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s4_error.handle": {
+   "s4_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -2888,7 +2888,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s5_error.handle": {
+   "s5_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -2950,7 +2950,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s6_error.handle": {
+   "s6_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3012,7 +3012,7 @@
     "type": "noul",
     "noul": 0.08
    },
-   "s7_error.handle": {
+   "s7_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3074,7 +3074,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s8_error.handle": {
+   "s8_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3136,7 +3136,7 @@
     "type": "noul",
     "noul": 0.08
    },
-   "s9_error.handle": {
+   "s9_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3250,7 +3250,7 @@
     "type": "choice",
     "instructions": "Step 9 of this goal is `call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%`. It uses the plang module `event`. Which action of `event` does step 9 call?",
     "criteria": {
-     "on": "Register a goal callback to fire at a lifecycle or channel event. Step phrasings starting with \"on\", \"before\", or \"after\" (e.g. \"on ask on input channel call X\", \"before step call X\", \"after write call X\") map here, NOT to output.ask, channel.set, or environment.run. It is the STEP's leading word that selects this action — a step that leads with `call` is `goal.call`, NOT `event.on`, even when the callee's name or a parameter value contains \"event\"/\"on\"/\"before\"/\"after\". Never pick `event.on` because of a word inside a goal name or a parameter value. The `Trigger` parameter is a `trigger` enum member emitted as a bare string (see Type Information for the members). Channel events (the read/write/ask family) also take a `ChannelName` filter.",
+     "on": "Register a goal callback to fire at a lifecycle or channel event. Step phrasings starting with \"on\", \"before\", or \"after\" (e.g. \"on ask on input channel call X\", \"before step call X\", \"after write call X\") map here, NOT to output.ask, channel.set, or environment.run. An \"on error …\" clause after an action is `on.error`, not `event.on`. It is the STEP's leading word that selects this action — a step that leads with `call` is `goal.call`, NOT `event.on`, even when the callee's name or a parameter value contains \"event\"/\"on\"/\"before\"/\"after\". Never pick `event.on` because of a word inside a goal name or a parameter value. The `Trigger` parameter is a `trigger` enum member emitted as a bare string (see Type Information for the members). Channel events (the read/write/ask family) also take a `ChannelName` filter.",
      "remove": "Unregister a previously registered lifecycle event binding by its ID",
      "skipAction": "Skip the intercepted action and return a custom value from inside a beforeAction event handler"
     }
@@ -3261,7 +3261,7 @@
     "variable.set": 0.99,
     "goal.call": 0.05,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.03
    },
@@ -3269,7 +3269,7 @@
     "variable.set": 0.98,
     "goal.call": 0.15,
     "output.write": 0.05,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.05
    },
@@ -3277,7 +3277,7 @@
     "variable.set": 0.98,
     "goal.call": 0.09,
     "output.write": 0.04,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.04,
     "file.read": 0.03
    },
@@ -3285,7 +3285,7 @@
     "variable.set": 0.11,
     "goal.call": 0.92,
     "output.write": 0.05,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.05,
     "file.read": 0.03,
     "loop.foreach": 0.98
@@ -3294,7 +3294,7 @@
     "variable.set": 0.1,
     "goal.call": 0.85,
     "output.write": 0.05,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.06,
     "file.read": 0.03,
     "loop.foreach": 0.98
@@ -3303,7 +3303,7 @@
     "variable.set": 0.93,
     "goal.call": 0.08,
     "output.write": 0.07,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.32,
     "ui.render": 1.0
@@ -3312,7 +3312,7 @@
     "variable.set": 0.8,
     "goal.call": 0.1,
     "output.write": 0.07,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.04,
     "llm.decider": 1.0
@@ -3321,7 +3321,7 @@
     "variable.set": 0.9,
     "goal.call": 0.09,
     "output.write": 0.08,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.28,
     "ui.render": 1.0
@@ -3330,7 +3330,7 @@
     "variable.set": 0.86,
     "goal.call": 0.1,
     "output.write": 0.07,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.05,
     "llm.decider": 1.0
@@ -3339,7 +3339,7 @@
     "variable.set": 0.08,
     "goal.call": 0.91,
     "output.write": 0.08,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.04,
     "event.on": 0.06
@@ -3441,7 +3441,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s0_error.handle": {
+   "s0_on.error": {
     "type": "noul",
     "noul": 0.05
    },
@@ -3503,7 +3503,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s1_error.handle": {
+   "s1_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3565,7 +3565,7 @@
     "type": "noul",
     "noul": 0.98
    },
-   "s2_error.handle": {
+   "s2_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3627,7 +3627,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s3_error.handle": {
+   "s3_on.error": {
     "type": "noul",
     "noul": 0.09
    },
@@ -3689,7 +3689,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s4_error.handle": {
+   "s4_on.error": {
     "type": "noul",
     "noul": 0.06
    },
@@ -3751,7 +3751,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s5_error.handle": {
+   "s5_on.error": {
     "type": "noul",
     "noul": 0.08
    },
@@ -3813,7 +3813,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s6_error.handle": {
+   "s6_on.error": {
     "type": "noul",
     "noul": 0.03
    },
@@ -3875,7 +3875,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s7_error.handle": {
+   "s7_on.error": {
     "type": "noul",
     "noul": 0.05
    },
@@ -3937,7 +3937,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s8_error.handle": {
+   "s8_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -3999,7 +3999,7 @@
     "type": "noul",
     "noul": 0.99
    },
-   "s9_error.handle": {
+   "s9_on.error": {
     "type": "noul",
     "noul": 0.05
    },
@@ -4208,14 +4208,6 @@
     "type": "noul",
     "instructions": "Step 3 is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. Does step 3 use the plang module `error`?"
    },
-   "s3_error": {
-    "type": "choice",
-    "instructions": "Step 3 of this goal is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. It uses the plang module `error`. Which action of `error` does step 3 call?",
-    "criteria": {
-     "handle": "Intercept errors from the preceding action; optionally retry, run a recovery action chain, or suppress the error",
-     "throw": "Immediately fail the step with a structured error message, status code, and optional key"
-    }
-   },
    "s4_condition.elseif": {
     "type": "noul",
     "instructions": "Step 4 is `if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%`. It tests a condition. Does step 4 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
@@ -4235,14 +4227,6 @@
    "s5_@also.error": {
     "type": "noul",
     "instructions": "Step 5 is `if %order.total% is not a number, throw \"The total must be a number\"`. Does step 5 use the plang module `error`?"
-   },
-   "s5_error": {
-    "type": "choice",
-    "instructions": "Step 5 of this goal is `if %order.total% is not a number, throw \"The total must be a number\"`. It uses the plang module `error`. Which action of `error` does step 5 call?",
-    "criteria": {
-     "handle": "Intercept errors from the preceding action; optionally retry, run a recovery action chain, or suppress the error",
-     "throw": "Immediately fail the step with a structured error message, status code, and optional key"
-    }
    },
    "s6_condition.elseif": {
     "type": "noul",
@@ -4312,7 +4296,7 @@
     "variable.set": 0.97,
     "goal.call": 0.07,
     "output.write": 0.06,
-    "error.handle": 0.05,
+    "on.error": 0.05,
     "condition.if": 0.05,
     "file.read": 0.99
    },
@@ -4320,7 +4304,7 @@
     "variable.set": 0.96,
     "goal.call": 0.09,
     "output.write": 0.06,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.05,
     "file.read": 0.06,
     "list.count": 0.96
@@ -4329,7 +4313,7 @@
     "variable.set": 0.08,
     "goal.call": 0.07,
     "output.write": 0.98,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.99,
     "file.read": 0.05,
     "condition.elseif": 0.97,
@@ -4339,7 +4323,7 @@
     "variable.set": 0.08,
     "goal.call": 0.07,
     "output.write": 0.07,
-    "error.handle": 0.09,
+    "on.error": 0.09,
     "condition.if": 0.98,
     "file.read": 0.05,
     "error.throw": 0.88,
@@ -4350,7 +4334,7 @@
     "variable.set": 0.09,
     "goal.call": 0.97,
     "output.write": 0.05,
-    "error.handle": 0.06,
+    "on.error": 0.06,
     "condition.if": 0.99,
     "file.read": 0.06,
     "condition.elseif": 0.03,
@@ -4360,7 +4344,7 @@
     "variable.set": 0.09,
     "goal.call": 0.08,
     "output.write": 0.06,
-    "error.handle": 0.08,
+    "on.error": 0.08,
     "condition.if": 0.98,
     "file.read": 0.05,
     "error.throw": 0.91,
@@ -4371,7 +4355,7 @@
     "variable.set": 0.98,
     "goal.call": 0.07,
     "output.write": 0.05,
-    "error.handle": 0.03,
+    "on.error": 0.03,
     "condition.if": 0.99,
     "file.read": 0.04,
     "condition.elseif": 0.28,
@@ -4381,7 +4365,7 @@
     "variable.set": 0.93,
     "goal.call": 0.06,
     "output.write": 0.06,
-    "error.handle": 0.05,
+    "on.error": 0.05,
     "condition.if": 0.05,
     "file.read": 0.04,
     "math.multiply": 1.0
@@ -4390,7 +4374,7 @@
     "variable.set": 0.13,
     "goal.call": 0.07,
     "output.write": 0.05,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.99,
     "file.read": 0.06,
     "list.add": 0.97,
@@ -4401,7 +4385,7 @@
     "variable.set": 0.09,
     "goal.call": 0.07,
     "output.write": 0.99,
-    "error.handle": 0.05,
+    "on.error": 0.05,
     "condition.if": 0.05,
     "file.read": 0.04
    }
@@ -4510,7 +4494,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s0_error.handle": {
+   "s0_on.error": {
     "type": "noul",
     "noul": 0.05
    },
@@ -4572,7 +4556,7 @@
     "type": "noul",
     "noul": 0.04
    },
-   "s1_error.handle": {
+   "s1_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -4634,7 +4618,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s2_error.handle": {
+   "s2_on.error": {
     "type": "noul",
     "noul": 0.05
    },
@@ -4696,7 +4680,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s3_error.handle": {
+   "s3_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -4758,7 +4742,7 @@
     "type": "noul",
     "noul": 0.98
    },
-   "s4_error.handle": {
+   "s4_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -4820,7 +4804,7 @@
     "type": "noul",
     "noul": 0.05
    },
-   "s5_error.handle": {
+   "s5_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -4882,7 +4866,7 @@
     "type": "noul",
     "noul": 0.07
    },
-   "s6_error.handle": {
+   "s6_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -4944,7 +4928,7 @@
     "type": "noul",
     "noul": 0.98
    },
-   "s7_error.handle": {
+   "s7_on.error": {
     "type": "noul",
     "noul": 0.04
    },
@@ -5006,7 +4990,7 @@
     "type": "noul",
     "noul": 0.09
    },
-   "s8_error.handle": {
+   "s8_on.error": {
     "type": "noul",
     "noul": 0.06
    },
@@ -5068,7 +5052,7 @@
     "type": "noul",
     "noul": 0.06
    },
-   "s9_error.handle": {
+   "s9_on.error": {
     "type": "noul",
     "noul": 0.06
    },
@@ -5130,7 +5114,7 @@
     "type": "noul",
     "noul": 0.1
    },
-   "s10_error.handle": {
+   "s10_on.error": {
     "type": "noul",
     "noul": 0.98
    },
@@ -5192,7 +5176,7 @@
     "type": "noul",
     "noul": 0.98
    },
-   "s11_error.handle": {
+   "s11_on.error": {
     "type": "noul",
     "noul": 0.06
    },
@@ -5345,7 +5329,7 @@
     "variable.set": 0.94,
     "goal.call": 0.07,
     "output.write": 0.07,
-    "error.handle": 0.05,
+    "on.error": 0.05,
     "condition.if": 0.05,
     "file.read": 0.05,
     "file.list": 1.0
@@ -5354,7 +5338,7 @@
     "variable.set": 0.99,
     "goal.call": 0.06,
     "output.write": 0.04,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.04,
     "file.read": 0.03
    },
@@ -5362,7 +5346,7 @@
     "variable.set": 0.14,
     "goal.call": 0.94,
     "output.write": 0.06,
-    "error.handle": 0.05,
+    "on.error": 0.05,
     "condition.if": 0.06,
     "file.read": 0.18,
     "loop.foreach": 0.9
@@ -5371,7 +5355,7 @@
     "variable.set": 0.08,
     "goal.call": 0.09,
     "output.write": 0.06,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.98,
     "file.read": 0.04,
     "condition.elseif": 0.04,
@@ -5381,7 +5365,7 @@
     "variable.set": 0.06,
     "goal.call": 0.06,
     "output.write": 0.98,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.11,
     "file.read": 0.04
    },
@@ -5389,7 +5373,7 @@
     "variable.set": 0.06,
     "goal.call": 0.25,
     "output.write": 0.05,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.1,
     "file.read": 0.04,
     "goal.return": 1.0
@@ -5398,7 +5382,7 @@
     "variable.set": 0.09,
     "goal.call": 0.09,
     "output.write": 0.07,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.97,
     "file.read": 0.05,
     "condition.elseif": 0.04,
@@ -5408,7 +5392,7 @@
     "variable.set": 0.07,
     "goal.call": 0.07,
     "output.write": 0.98,
-    "error.handle": 0.04,
+    "on.error": 0.04,
     "condition.if": 0.2,
     "file.read": 0.05
    },
@@ -5416,7 +5400,7 @@
     "variable.set": 0.85,
     "goal.call": 0.09,
     "output.write": 0.09,
-    "error.handle": 0.06,
+    "on.error": 0.06,
     "condition.if": 0.07,
     "file.read": 0.13,
     "ui.render": 1.0
@@ -5425,7 +5409,7 @@
     "variable.set": 0.13,
     "goal.call": 0.08,
     "output.write": 0.06,
-    "error.handle": 0.06,
+    "on.error": 0.06,
     "condition.if": 0.05,
     "file.read": 0.05,
     "file.save": 1.0
@@ -5434,7 +5418,7 @@
     "variable.set": 0.08,
     "goal.call": 0.95,
     "output.write": 0.1,
-    "error.handle": 0.98,
+    "on.error": 0.98,
     "condition.if": 0.07,
     "file.read": 0.05,
     "http.request": 0.22
@@ -5443,7 +5427,7 @@
     "variable.set": 0.07,
     "goal.call": 0.08,
     "output.write": 0.98,
-    "error.handle": 0.06,
+    "on.error": 0.06,
     "condition.if": 0.04,
     "file.read": 0.04
    }

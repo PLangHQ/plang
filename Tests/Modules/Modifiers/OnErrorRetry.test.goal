@@ -1,5 +1,5 @@
 TestOnErrorRetry
-/ Verifies that error.handle modifier retries a failing action
+/ Verifies that on.error modifier retries a failing action
 - set %counter% = 0
 - call IncrementAndFail
     on error retry 3 times

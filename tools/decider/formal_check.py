@@ -126,7 +126,7 @@ def main():
     #     in an open slot
     own = {}
     for text in ['goal.return(Depth: number ?= 1)',
-                 'goal.call(Name="X"); error.handle(Key="B", Recovery=[goal.call(Name="RB")]); error.handle(Key="A", Recovery=[goal.call(Name="RA")])',
+                 'goal.call(Name="X"); on.error(Key="B", Recovery=[goal.call(Name="RB")]); on.error(Key="A", Recovery=[goal.call(Name="RA")])',
                  'variable.set(Name=%d%, Value: date = "2026-01-01")']:
         try:
             rows = f.parse(text)
@@ -143,10 +143,10 @@ def main():
                 'file.read(Path: text = "x")',
                 'condition.if(Left=%n%, Operator="less", Right=5)',
                 'variable.set(Name="y", Value=1)',
-                'goal.call(Name="X")\n    error.handle() { goal.call(Name="Y") }',
-                'error.handle(Recovery=[goal.call(Name="Y")])',
-                'error.handle() { goal.call(Name="X"); goal.call(Name="Y") }',
-                'error.handle(Recovery="Y") { goal.call(Name="X") }',
+                'goal.call(Name="X")\n    on.error() { goal.call(Name="Y") }',
+                'on.error(Recovery=[goal.call(Name="Y")])',
+                'on.error() { goal.call(Name="X"); goal.call(Name="Y") }',
+                'on.error(Recovery="Y") { goal.call(Name="X") }',
                 'goal.call(Name="X") { output.write(Data="y") }',
                 'file.read(Path="x"',
                 'nope.nothing()']:
@@ -188,7 +188,7 @@ def main():
     print('\nthe notation\'s own cases:')
     for text, (verdict, written, rows) in own.items():
         print(f'   {text}\n      -> {verdict}; written back: {written!r}')
-        if rows and 'error.handle' in text:
+        if rows and 'on.error' in text:
             print(f'      wrapped: {rows[0]["module"]}.{rows[0]["name"]}, modifier keys in order: '
                   + ', '.join(next(r["value"] for r in m["property"] if r["name"] == "Key") for m in rows[0]["modifier"]))
         if rows and 'frozen' in json.dumps(rows): print('      frozen:', [r for r in rows[0]['property'] if r.get('frozen')])

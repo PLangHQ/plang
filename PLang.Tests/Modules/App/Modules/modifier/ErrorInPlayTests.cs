@@ -35,7 +35,7 @@ public class ErrorInPlayTests
         params (string name, object? value)[] parameters) =>
         new()
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters
                 .Select(p => new global::app.data.@this(p.name, p.value,
                     context: global::PLang.Tests.TestApp.SharedContext)).ToList())
@@ -170,7 +170,7 @@ public class ErrorInPlayTests
     /// <summary>
     /// The end-to-end shape: %!error% inside a recovery chain is the error being recovered.
     /// Runs the real modifier fold, so it pins that the failing action's frame is still live
-    /// while its error.handle runs — the whole reason the frame spans the modifiers.
+    /// while its on.error runs — the whole reason the frame spans the modifiers.
     /// </summary>
     [Test]
     public async Task ErrorInPlay_DuringRecovery_IsTheErrorBeingRecovered()
@@ -207,7 +207,7 @@ public class ErrorInPlayTests
     /// timeout.after, not to the sleep it cancelled, so the error an enclosing `on error` recovers
     /// from is the TIMEOUT — not the inner action's cancellation, and not nothing.
     /// <para>This is why the verdict is recorded on the action's frame rather than a frame of the
-    /// modifier's own: a modifier's frame would already have popped by the time error.handle reads
+    /// modifier's own: a modifier's frame would already have popped by the time on.error reads
     /// the chain, and the walk never descends into closed children.</para>
     /// </summary>
     [Test]
@@ -221,7 +221,7 @@ public class ErrorInPlayTests
             Module = ctx.App.Module["timer"], Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
         };
-        // The slot folds index 0 outermost, so error.handle wraps timeout.after wraps the sleep —
+        // The slot folds index 0 outermost, so on.error wraps timeout.after wraps the sleep —
         // the recovery is outside the deadline and sees the verdict the deadline produced.
         sleep.Modifier.Add(ErrorHandlerCalling("Recover", ("order", "GoalFirst")));
         sleep.Modifier.Add(new global::app.goal.step.action.modifier.@this

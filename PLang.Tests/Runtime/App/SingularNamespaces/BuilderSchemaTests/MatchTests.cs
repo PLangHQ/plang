@@ -212,7 +212,7 @@ public class MatchTests
 
         var handler = new global::app.goal.step.action.modifier.@this
         {
-            Module = app.Module["error"], Name = "handle",
+            Module = app.Module["on"], Name = "error",
             Property = Make.Properties(new List<global::app.data.@this>
             {
                 new("order", "GoalFirst", context: shared),

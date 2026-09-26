@@ -1,4 +1,4 @@
-A modifier: it wraps the action it sits on, in that action's `modifier` list.
+A modifier: it comes right after the action it modifies, and wraps it (in that action's `modifier` list).
 
 recovery — the actions to run when the wrapped action fails: what the step says after "on error" (or "if it fails", in any language).
 StatusCode — handle only errors with this status code.

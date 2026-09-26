@@ -50,7 +50,7 @@ public sealed partial class @this : IAsyncDisposable
     public error.@this Errors { get; } = new();
 
     /// <summary>
-    /// Flipped <c>true</c> by error.handle.Wrap on recovery success. Renderers use this to
+    /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
     /// show "errored — recovered" vs "errored — uncaught."
     /// </summary>
     public bool Handled { get; set; }

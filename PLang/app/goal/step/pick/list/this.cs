@@ -33,7 +33,7 @@ public sealed class @this : IReadOnlyList<pick.@this>
     // families left out — what an unsure step is asked to choose one of.
     private static readonly string[] Popular =
     [
-        "variable.set", "goal.call", "output.write", "error.handle", "condition.if", "file.read", "file.save",
+        "variable.set", "goal.call", "output.write", "on.error", "condition.if", "file.read", "file.save",
         "error.throw", "file.delete", "signing.sign", "list.count", "math.add", "loop.foreach", "signing.verify",
         "cache.wrap",
     ];

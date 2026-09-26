@@ -75,14 +75,14 @@ public class GroupModifiersTests
             ("file", "read"),
             ("timeout", "after"),
             ("cache", "wrap"),
-            ("error", "handle"));
+            ("on", "error"));
 
         var step = new Step { Code = actions }; step.Nest(modules);
 
         await Assert.That(step.Code.Count).IsEqualTo(1);
         var mods = step.Code[0].Modifier;
         await Assert.That(mods.Count).IsEqualTo(3);
-        await Assert.That(mods[0].Module.Name).IsEqualTo("error");
+        await Assert.That(mods[0].Module.Name).IsEqualTo("on");
         await Assert.That(mods[1].Module.Name).IsEqualTo("cache");
         await Assert.That(mods[2].Module.Name).IsEqualTo("timeout");
     }
@@ -121,12 +121,12 @@ public class GroupModifiersTests
     public async Task GroupModifiers_Mixed_CorrectGrouping()
     {
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
-        // [file.read, cache.wrap, error.handle, variable.set, timeout.after]
+        // [file.read, cache.wrap, on.error, variable.set, timeout.after]
         // -> file.read with sorted [error(1), cache(2)]; variable.set with [timeout(3)]
         var actions = Flat(
             ("file", "read"),
             ("cache", "wrap"),
-            ("error", "handle"),
+            ("on", "error"),
             ("variable", "set"),
             ("timeout", "after"));
 
@@ -135,7 +135,7 @@ public class GroupModifiersTests
         await Assert.That(step.Code.Count).IsEqualTo(2);
         await Assert.That(step.Code[0].Module.Name).IsEqualTo("file");
         await Assert.That(step.Code[0].Modifier.Count).IsEqualTo(2);
-        await Assert.That(step.Code[0].Modifier[0].Module.Name).IsEqualTo("error");
+        await Assert.That(step.Code[0].Modifier[0].Module.Name).IsEqualTo("on");
         await Assert.That(step.Code[0].Modifier[1].Module.Name).IsEqualTo("cache");
         await Assert.That(step.Code[1].Module.Name).IsEqualTo("variable");
         await Assert.That(step.Code[1].Modifier.Count).IsEqualTo(1);

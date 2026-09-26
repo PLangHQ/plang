@@ -45,7 +45,7 @@ public partial class @this
     [JsonIgnore]
     public global::app.type.property.list.@this Default { get; init; } = new();
 
-    /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after), outermost
+    /// <summary>The modifiers wrapping this action (cache.wrap, on.error, timeout.after), outermost
     /// first — the written order. The list owns how they compose around the action (<c>Modifier.Wrap</c>).</summary>
     [Store, Debug, Default]
     public modifier.list.@this Modifier { get; init; } = new();
@@ -58,7 +58,7 @@ public partial class @this
     public global::app.goal.step.list.@this Child { get; set; } = new();
 
     /// <summary>The actions that run when this one's recovery fires — the body of an `on error`
-    /// clause. Empty on every action but <c>error.handle</c>. A structural slot like
+    /// clause. Empty on every action but <c>on.error</c>. A structural slot like
     /// <see cref="Modifier"/> and <see cref="Child"/>, not a parameter value: an action is program,
     /// not data, so it is read at load through the same door as any other action and is born
     /// holding the enclosing step. A <c>action.list</c>, so it runs itself.</summary>
@@ -118,7 +118,7 @@ public partial class @this
     /// module-minted descriptor), a synthetic action composed in C# (<c>app.Run(new sign{...})</c>,
     /// the signing/verify/ask seam), and — until recovery moves into <c>Child</c> — a recovery
     /// action materialised from a parameter value.</summary>
-    /// <remarks><c>internal set</c>, not <c>init</c>, for exactly one more step: <c>error.handle</c>
+    /// <remarks><c>internal set</c>, not <c>init</c>, for exactly one more step: <c>on.error</c>
     /// must hand recovery actions the enclosing step. When recovery is read at load like every
     /// other action, that last stamp goes and this tightens to <c>init</c>.</remarks>
     [JsonIgnore]
@@ -154,7 +154,7 @@ public partial class @this
     {
         // ONE FRAME PER ACTION. The frame spans the action's whole run — its lifecycle events,
         // its modifiers, and its dispatch — not just the dispatch. A modifier recovering from a
-        // failure (error.handle) therefore runs INSIDE the frame that failed, which is where the
+        // failure (on.error) therefore runs INSIDE the frame that failed, which is where the
         // error already is: CallStack.Error / %!error% read it off the live chain, and marking it
         // Handled on that frame is what takes it out of play. When the Push wrapped dispatch only,
         // the frame died between the failure and the recovery that had to see it.

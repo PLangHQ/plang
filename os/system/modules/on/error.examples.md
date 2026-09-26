@@ -1,4 +1,4 @@
-`error.handle` is the action behind an `on error …` clause (in any wording: "on error", "if it fails", "catch error", "on failure"). It wraps the action before it. The clause's own content — a call, a set — is an action in the handler's `recovery`: never a property of `error.handle`, never beside it. Several `on error` clauses in one step are several `error.handle` modifiers, asked in the order written.
+`on.error` is the action behind an `on error …` clause (in any wording: "on error", "if it fails", "catch error", "on failure"). It comes right after the action it modifies. The clause's own content — a call, a set — is an action in the handler's `recovery`: never a property of `on.error`, never beside it. Several `on error` clauses in one step are several `on.error` modifiers, asked in the order written.
 
 Step text: `read file.txt, on error call HandleMissing`
 Properties: `{}` — no filter, no retry, nothing to ignore. The read is the step's action; the call is in the handler's `recovery`.

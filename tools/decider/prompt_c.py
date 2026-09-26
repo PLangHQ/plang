@@ -5,7 +5,7 @@
             `=> formal:` the certain ones (≥ 0.9) pre-filled — `?` for a value to fill, known values filled
             (`write to %x%` → variable.set(Name=%x%, Value=%!data%)); then Types; then each listed action
             once (signature, description line, notes), and goal.call's definition when a listed action
-            holds actions (an action-typed property, error.handle's Recovery)
+            holds actions (an action-typed property, on.error's Recovery)
 
 The check — the LLM and the decider must agree:
     refused   a pick ≥ 0.9 missing from the step, or an action the decider did not list for it
@@ -93,10 +93,10 @@ def user_message_c(goal, picks):
         for m in [a for a in certain if b.declared(*a.split('.', 1))[1]]:
             head = prefill(m, s['text'])
             if f.takes_recovery(*m.split('.', 1)):
-                # `on error call X` names what the recovery runs: a goal.call — a known value, like write to
-                # no `?` nested inside: the model fills the goal.call as it fills any action
+                # `on error call X` names what the recovery runs: a goal.call — a known action, its Name
+                # still to fill, `?` like any other value (a `?` left in is refused like any other)
                 if ON_ERROR_CALL.search(s['text']):
-                    head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=[goal.call(…)])'
+                    head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=[goal.call(Name=?)])'
                 else:
                     head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=?)'
             filled = [filled[0] if filled else '?', head] + filled[1:]

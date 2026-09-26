@@ -10,7 +10,7 @@ public sealed class ModifierAttribute : Attribute
 {
     /// <summary>
     /// The nesting a flat answer is given. Lower values wrap outer; higher values wrap closer to the action.
-    /// Current assignments: error.handle=1, cache.wrap=2, timeout.after=3.
+    /// Current assignments: on.error=1, cache.wrap=2, timeout.after=3.
     /// </summary>
     public int Order { get; init; }
 }

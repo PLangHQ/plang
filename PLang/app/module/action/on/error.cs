@@ -1,22 +1,22 @@
-using app.error;
 using app.variable;
 using Action = app.goal.step.action.@this;
 using Call = app.callstack.call.@this;
 
-namespace app.module.action.error;
+namespace app.module.action.on;
 
 /// <summary>
-/// Modifier: wraps an action with error matching, retry, and an on-error action chain.
-/// On success, passes through untouched. On failure, applies filters (StatusCode, Key,
-/// Message); if matched, either ignores, retries, or runs its actions — ordered by
-/// Order (RetryFirst default, GoalFirst runs the actions before retry).
+/// <c>on.error</c> — what runs when the action before it fails. A modifier: on success it passes
+/// through untouched; on failure it applies its filters (StatusCode, Key, Message) and, if they match,
+/// retries, runs its Recovery, or ignores — ordered by Order (RetryFirst default, GoalFirst runs the
+/// Recovery before retrying). The class is <c>OnError</c>, not <c>Error</c>: every action carries a
+/// generated <c>Error</c> member, and a member can't share its class's name.
 /// </summary>
-// A modifier's Order follows what it BOUNDS, lowest outermost. error.handle bounds the ATTEMPTS —
+// A modifier's Order follows what it BOUNDS, lowest outermost. on.error bounds the ATTEMPTS —
 // every retry, and the recovery that follows them — so it is outermost and catches a deadline like
 // any other error.
-[Action("handle", Cacheable = false)]
+[Action("error", Cacheable = false)]
 [Modifier(Order = 1)]
-public partial class Handle : IContext, ICatch, IAction
+public partial class OnError : IContext, ICatch, IAction
 {
     public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
@@ -99,7 +99,7 @@ public partial class Handle : IContext, ICatch, IAction
         {
             if (erroredCall != null) erroredCall.Handled = true;
             await (context.App.Debug?.Write(
-                $"error.handle: ignored error {result.Error?.Key}: {result.Error?.Message}") ?? Task.CompletedTask);
+                $"on.error: ignored error {result.Error?.Key}: {result.Error?.Message}") ?? Task.CompletedTask);
             return context.Ok();
         }
 

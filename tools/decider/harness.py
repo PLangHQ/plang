@@ -261,9 +261,9 @@ def windows(steps):
 
 # The actions most steps use, asked by name in stage 1 beside the modules — counted, not guessed: the
 # share of steps using each across tools/decider/labels/, the builder's own .pr files and the golden
-# set (variable.set 42%, goal.call 8.7%, output.write 6.4%, error.handle 6.2%, condition.if 4.2%,
+# set (variable.set 42%, goal.call 8.7%, output.write 6.4%, on.error 6.2%, condition.if 4.2%,
 # file.read 2.3%). The assert.* actions rank high only because the labels are mostly tests.
-COMMON = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read']
+COMMON = ['variable.set', 'goal.call', 'output.write', 'on.error', 'condition.if', 'file.read']
 NEAR_CERTAIN = 0.9   # a common action scored at or above this is picked; its module skips stage 2
 
 # What yes and no mean for each common-action question (the noul's optional criteria, docs.typesafe.ai):
@@ -276,7 +276,7 @@ COMMON_CRITERIA = {
                   'false': 'the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step'},
     'output.write': {'true': 'the step shows or writes something out, to the user or to a named channel: `write out "Hello"`, `show %message%`, `write %x% to "log" channel`',
                      'false': 'the step shows nothing; `…, write to %x%` keeps a value in a variable, it is not output'},
-    'error.handle': {'true': 'the step says what happens when it fails: `…, on error call X`, `…, on error retry 3 times`',
+    'on.error': {'true': 'the step says what happens when it fails: `…, on error call X`, `…, on error retry 3 times`',
                      'false': 'the step says nothing about failing; throwing an error (`throw "…"`) is not handling one'},
     'condition.if': {'true': 'the step tests something and does its work only when it holds: `if %x% > 5, …`, `if %list% is empty`',
                      'false': 'the step tests nothing'},
@@ -286,7 +286,7 @@ COMMON_CRITERIA = {
 
 # What a common-action question counts as the step's own. CLAUSE=1 adds "its own work, or anything it
 # guards, loops or hands to an error handler"; measured on the golden goals it made output.write and
-# error.handle fire where they don't belong (46/58 steps exact at 0.5 against 51/58 without), so the
+# on.error fire where they don't belong (46/58 steps exact at 0.5 against 51/58 without), so the
 # bare question is the default.
 CLAUSE = (' — its own work, or anything it guards behind a condition, repeats in a loop, or hands to an '
           'error handler —') if os.environ.get('CLAUSE', '0') == '1' else ''
@@ -327,7 +327,7 @@ def main_module(probs_i, cat):
 # golden set), test-only families (assert.*, identity.*, test.*) left out. A step stage 1 is unsure of
 # (its best score under UNSURE) is asked, in stage 2, which one of these it uses — a choice, so it
 # answers "which one", not "which ones".
-POPULAR = ['variable.set', 'goal.call', 'output.write', 'error.handle', 'condition.if', 'file.read', 'file.save',
+POPULAR = ['variable.set', 'goal.call', 'output.write', 'on.error', 'condition.if', 'file.read', 'file.save',
            'error.throw', 'file.delete', 'signing.sign', 'list.count', 'math.add', 'loop.foreach', 'signing.verify',
            'cache.wrap']
 UNSURE = 0.8
@@ -435,8 +435,8 @@ NOT_FOR = {
     'output.write': '`…, write to %x%` — that keeps a value in a variable, it is not output',
     'variable.set': 'reading a variable, or keeping nothing',
     'goal.call': 'a goal named to run later (the goal behind a channel or an event) — that is not calling it',
-    'error.handle': 'throwing an error (`throw "…"`) — that is error.throw',
-    'error.throw': 'handling an error (`on error …`) — that is error.handle',
+    'on.error': 'throwing an error (`throw "…"`) — that is error.throw',
+    'error.throw': 'handling an error (`on error …`) — that is on.error',
     'file.read': 'saving, listing or deleting a file',
     'condition.if': 'a step that tests nothing',
 }

@@ -1,5 +1,5 @@
 TestHandledFlagFalseWhenRecoveryFails
-/ When the recovery body itself throws, error.handle.Wrap leaves Handled=false on the inner Call and re-throws — the original error propagates (with the recovery error chained) and the outer handler catches it. Side-effect proof: %outerCaught% gets set by the outer handler, which only fires if the inner recovery failed and re-threw.
+/ When the recovery body itself throws, on.error.Wrap leaves Handled=false on the inner Call and re-throws — the original error propagates (with the recovery error chained) and the outer handler catches it. Side-effect proof: %outerCaught% gets set by the outer handler, which only fires if the inner recovery failed and re-threw.
 - call InnerWithFailingRecovery, on error set %outerCaught% = true
 - assert %outerCaught% is true, "outer handler should have caught — recovery body must have re-thrown"
 

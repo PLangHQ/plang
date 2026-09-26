@@ -1,7 +1,7 @@
 """Formal — a step's actions written as calls, and the two directions between it and the .pr rows.
 
     [0] file.read(Path: path = "orders/%orderId%.json"); variable.set(Name: variable = %order%, Value: item = %!data%)
-    [3] goal.call(Name: text = "Compile"); error.handle(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: text = "FixProperties")])
+    [3] goal.call(Name: text = "Compile"); on.error(RetryCount: number = 2, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: text = "FixProperties")])
 
 Grammar (ours, strict — the programmer's language has no syntax, this notation does). Whitespace,
 new lines included, may sit between any two tokens.
@@ -16,7 +16,7 @@ new lines included, may sit between any two tokens.
     dict      = "{" [ key ":" value { "," key ":" value } ] "}"      key = name | "text"
 
 `{ }` is only a condition's body (its child). A modifier follows the action it modifies, in the same
-list: `file.read(…); cache.wrap(…); error.handle(…)` — the first written is innermost, and the rows
+list: `file.read(…); cache.wrap(…); on.error(…)` — the first written is innermost, and the rows
 keep them outermost first in the action's `modifier` list. A modifier's recovery is its `Recovery`
 property.
 
@@ -63,7 +63,7 @@ def is_modifier(module, name):
     return b.declared(module, name)[1]
 
 def takes_recovery(module, name):
-    return (module, name) == ('error', 'handle')
+    return (module, name) == ('on', 'error')
 
 def known(module, name):
     return b.handler_source(module, name) is not None

@@ -115,7 +115,7 @@ public class FormalReaderTests
     public async Task EveryAction_IsBornHoldingTheStep_ModifiersFollowIt_TheFirstWrittenInnermost()
     {
         // B is written first after the call, so B is innermost; the modifier list is outermost first: A, B
-        var read = Read("goal.call(Name=\"X\"); error.handle(Key=\"B\", Recovery=[goal.call(Name=\"RB\")]); error.handle(Key=\"A\", Recovery=[goal.call(Name=\"RA\")])", out var step);
+        var read = Read("goal.call(Name=\"X\"); on.error(Key=\"B\", Recovery=[goal.call(Name=\"RB\")]); on.error(Key=\"A\", Recovery=[goal.call(Name=\"RA\")])", out var step);
         var actions = (global::app.goal.step.action.list.@this)read.Peek()!;
         var call = actions.Items().Single();
         await Assert.That(call.Name).IsEqualTo("call");

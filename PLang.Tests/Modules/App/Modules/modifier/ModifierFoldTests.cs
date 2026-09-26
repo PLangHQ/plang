@@ -97,7 +97,7 @@ public class ModifierFoldTests
     [Test]
     public async Task RunAsync_TwoModifiers_CorrectNestingOrder()
     {
-        // error.handle(ignore) wraps timeout.after(5000ms) wraps variable.set
+        // on.error(ignore) wraps timeout.after(5000ms) wraps variable.set
         // Verify both modifiers participate: fast action completes cleanly.
         var action = new PrAction
         {
@@ -116,7 +116,7 @@ public class ModifierFoldTests
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
@@ -158,7 +158,7 @@ public class ModifierFoldTests
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "handle",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }

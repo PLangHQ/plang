@@ -7,7 +7,7 @@ namespace app.module.action.timeout;
 /// exceeds Ms milliseconds and returns a 408 Timeout error.
 /// </summary>
 // timeout.after bounds one ATTEMPT, so it is innermost: each retry gets a fresh deadline, and an
-// enclosing error.handle catches a Timeout like any other error.
+// enclosing on.error catches a Timeout like any other error.
 [Action("after", Cacheable = false)]
 [Modifier(Order = 3)]
 public partial class After : IContext, IModifier
