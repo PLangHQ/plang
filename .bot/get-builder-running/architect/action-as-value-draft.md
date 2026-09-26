@@ -34,6 +34,17 @@ public override async ValueTask<item.@this> Value(data.@this data)
            "property": [{"name": "Path", "type": {"name": "path"}, "value": "%file%"}]}}
 ```
 
+## Added 2026-09-26 (builder-formal, unparked for design)
+
+- **Ingi: a slot can name the modules whose actions it takes:** "can't value be data<item|math>, it tells it can call an action in the math module", then "it can take both item|math|file….". First case: `set %total% = %total% + %item%` → `variable.set(Name=%total%, Value=math.add(A=%total%, B=%item%))`, the sum stored (AddItem's arithmetic waits on this).
+- **Ingi: `- run %action%`**, a plang action that runs an action held as a value (the explicit door; `action.Run` already exists). Its own property is declared `action`, so by rule 1 it holds the action, and its Run runs it. A polymorphic forwarder: bare `Task<Data>`.
+- **Found building the builder:** in a Value or a step's first `if`, the held form and the sequence form (`A; variable.set(Value=%!data%)`) are the same program, so the builder can save one form. In a conditional position (an elseif's Left) only the lazy run is correct.
+
+**To settle tomorrow:**
+1. Is `item|action<math>|action<file>` a **restriction** (only the listed modules' actions are accepted) or **teaching** (rule 6 stands, any action runs, and the signature shows nano the likely ones)? Rule 1 said "nothing new is declared in C#"; a union is a new declaration.
+2. How does a variable come to HOLD an action for `run %action%`? variable.set's Value isn't declared `action`, so by rule 1 an action given to it RUNS and stores the result. Holding needs its own door (a goal parameter typed action? `set %a% as action = …`?).
+3. Names: the module and action for `run` (e.g. `action.run`, the partner of `goal.call`).
+
 ## Open
 
 1. How the asking Data knows its declared property type (callbacks must get the action, not its result).

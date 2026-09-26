@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: `- run %action%`
+
+Ingi confirmed a plang-level `- run %action%` (the explicit door that runs an action held as a value; `action.Run` already runs actions). It's added to the action-as-value draft (`.bot/get-builder-running/architect/action-as-value-draft.md`, "Added 2026-09-26") with the three questions to settle: is `item|action<math>|…` a restriction or teaching; how a variable comes to HOLD an action (by the draft's rule 1, an action given to a value slot RUNS); and the module/action name (`action.run`?). Also noted: the "nested loops" picture is really each node running itself (goal → step.list.Run → step.Run → action.list.Run → action.Run → the handler); `Documentation/v0.2/app-tree.md:97-98` still lists App.Run/RunAction, which is stale.
+
 ## 2026-09-26 morning — Ingi: build 10 tests with the new builder and run them
 
 **Rerun (`952e4c4d3`): 7/10 pass, and every test that built passes.** The 3 unbuilt are nano answer misses, refused loudly by the checks. Landed:
