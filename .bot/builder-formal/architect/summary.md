@@ -2,6 +2,18 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — formal steps, the pin passes, the builder prints again
+
+`f98e1645d`:
+- **A step written in formal is taken as written** (`step.IsFormal`; the decider asks nothing; every Read check except the agreement). Compile's match step is now formal, and the installed builder rebuilt it (Order → GoalFirst). BuilderPinTests pass.
+- **BuilderChannel** receives the written value as `%message%` (goal.call argument binding) and writes it out again, so build output is visible: "Building goal: Start / Saved Start (2.3s)", then an unchanged rebuild in 668 ms.
+
+**Rulings on the findings:**
+1. **Data from outside is never a template:** an LLM answer read back from the cache got `template=plang` and crashed the next build's render. Fix at the owner, plus a good_to_know rule (it's also a template-injection guard).
+2. **Reverse text-literal coverage:** a text literal in the answer must occur in the step, so an invented `channel="BuilderChannel"` is refused.
+3. EchoBack's dropped `to echo` (an unquoted word) → todo.
+4. Nano is skipped when every step is answered (cached or formal). A formal step takes its code at birth.
+
 ## 2026-09-26 — unchanged build: 0.75 s (≈0.5 s of it process start)
 
 `61f21eb11`: goal.Cache/IsCached, Start `if %goal.IsCached%, return %goal.Cache%`, the Compile guard, the bare if, the reopen, the Start.goal install (only step 0 open). The builder's 7 files unchanged: **20.9 s → 0.75 s**; no .pr rewritten. The 4.7 s warm-up wasn't Fluid: the render opened every variable, and %MyIdentity% created an identity (→ todo). A reader crash on a name in an action slot was fixed. **Open:** the Compile pin fails (the step is cached with Order=RetryFirst; nano's answers drop clauses). **Ruling:** use the designed escape hatch (vision §5, a step written in formal is taken as written), and write Compile's match step in formal. BuilderChannel: go (the written value becomes the goal's argument; restore its write out). A dropped Operator is now loud (OperandExtra); watch for it.
