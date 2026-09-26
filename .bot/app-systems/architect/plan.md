@@ -40,13 +40,37 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 | 2 | **One set of types:** the maps become one set, each type owning its name, aliases, C# class and facts. `Add` is the one way in; `Load` is the startup scan; `Get`/`Clr` become the one door | no |
 | 3 | **The type system is an item:** its stored context goes (`internal Context`, `list/this.cs:30`); `Output` writes its face; it answers its own navigation | no |
 | 4 | **Faces:** system (`list` names, `kind`, `scheme`, `choice`); a type (`name`, `description`, `example`, `kind`); a choice type adds `values`; a kind (`name`, `extension`, `mime`). Prompt C's Types section renders from these facts (`properties.template:82` already reads type facts). `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die | yes: twins byte-equal, or one eval run |
-| 5 | **The reference:** `app.variable.@this` → `app.type.item.variable` (53 references), with its path parser (`app/variable/path/`). **One definition:** a reference is `%` + a path that starts with a letter, `_` or `!`, closing at the first `%` outside quotes and parentheses; a call's values are `Parameter` (not `Args`, `Segment.cs:88`). **Build validation writes each marked row's `"variable"` list** into the .pr (each reference with its parsed path); at run a marked text reads its list, and a template born at run (`read …, resolve variables`) is parsed by the same parser. `item.Variable` (a read-only list of references, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one reference covering the whole value. The six parsers go | yes: `"variable"` in the .pr; twins + one eval run |
+| 5 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is its `text` plus its `code`; `Value()` is `Code.Run(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value. The six parsers, `variable.path` with its `Segment` classes, and the walker's switch go | yes: `"variable"` in the .pr; twins + one eval run |
 | 6 | **Every system in the same shape:** goal (93 references), actor (15), module (11), test (87), variable (the system at `app/variable/this.cs`, freed by stage 5). Each: `X/this.cs` system + `X/X/this.cs` element, `.list`, `["name"]`, `.name`, `.current` where it means something, a face | no |
 | 7 | **`on` and `current` per object:** events move from `event.on(Trigger=…)` into `X.on.<moment>` (`app.type.text.on.create`, `goal.on.error`, `%user%.on.change`). The `on` module's actions are one-line doors (`on.create`, `on.step`, `on.goal`, …; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- on file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
 | 8 | **`%!app` holds its systems:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one system (a clash fails loudly); `%setting.X%` stays as a short form | no |
 | 9 | **Tests through the app's own doors:** `new app.@this(test: true)`, `app.variable.set("some", "var")`, `await app.module["file"]["read"].run(new { Path = "…" })` (a run of that action with those property values, through `action.Run`). The static helpers `TestApp`/`TestAction` die. The builder warns about goals no public goal reaches (dead code); `app.Test.Coverage` shows what the tests reached | a build warning |
 
 Each stage is its own commits, green against the baseline before the next starts.
+
+## The reference (stage 5), settled with Ingi 2026-09-26
+
+- **The parser** takes any text holding `%…%` and returns its variables. It is the one definition of a reference: `%` + a path starting with a letter, `_` or `!`, closing at the first `%` outside quotes and parentheses. It finds each `%…%`, and each hop kind parses its own piece. Callers: build validation (writing the .pr's `"variable"` lists), a template born at run (`read …, resolve variables`), `item.Variable`, the build checks (coverage, the types walk, pick's write-to).
+- **A variable is `text` + `code`,** like a step. `code` is the parsed execution path: a list of hops in order, each getting the previous value and doing its one step, the way actions pass `%!data%`. No `next`, no segment classes, no walker switch: `Value()` is `Code.Run(context)`.
+- **The hop kinds**, each a small class that parses, writes and runs its own piece; the JSON key is the kind:
+  - `variable`: the root, read from the memory (`user`, `!app`);
+  - `property`: a member (`.address`). A name starting with `!` is on `.Properties` (`!cost`); the hop is born knowing which, and doesn't re-check at run;
+  - `index`: `[…]`. Its key is a typed value, keyed by its type (`{"number": "%i%"}`, `{"text": "k"}`), and a variable key carries its own code;
+  - `method`: a call (`.tostring("dd.")`), whose values are its `parameter` list.
+- **In the .pr:**
+
+```json
+{"name": "Data", "type": {"name": "text", "template": "plang"},
+ "value": "today is %now.tostring(\"dd.\")% for %user.address[%i%].city% (%order!cost%)",
+ "variable": [
+   {"text": "%now.tostring(\"dd.\")%",
+    "code": [{"variable": "now"}, {"method": "tostring", "parameter": [{"type": {"name": "text"}, "value": "dd."}]}]},
+   {"text": "%user.address[%i%].city%",
+    "code": [{"variable": "user"}, {"property": "address"},
+             {"index": {"number": "%i%", "variable": [{"text": "%i%", "code": [{"variable": "i"}]}]}},
+             {"property": "city"}]},
+   {"text": "%order!cost%", "code": [{"variable": "order"}, {"property": "!cost"}]}]}
+```
 
 ## Cross-cutting decisions
 
