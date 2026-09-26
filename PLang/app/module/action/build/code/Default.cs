@@ -68,10 +68,12 @@ public class Default : IBuilder
         // Each row lifts to a path at ITS door — a JSON-string row becomes a path (path.Create), a
         // %var% row resolves the variable. This is the materialize-on-read the plang-typed Build.Files
         // buys: the walk stored the list lazily, the consumer opens each row here.
+        // A files entry names a goal file of the app being built: a relative one is from the app's root
+        // (as the user types it at the root), never from the builder's own folder.
         var filters = new List<path>();
         foreach (var row in app.Build.Files.Items(context))
-            if (await row.Value<global::app.type.item.path.@this>() is { } bf)
-                filters.Add(bf);
+            if ((await row.Value())?.ToString() is { Length: > 0 } entry)
+                filters.Add(path.Resolve(entry.StartsWith('/') || entry.StartsWith('\\') ? entry : "/" + entry, context));
 
         if (filters.Count > 0)
         {
@@ -91,7 +93,9 @@ public class Default : IBuilder
             }
             files = ordered;
             if (files.Count == 0)
-                return context.Ok(new global::app.type.item.list.@this<Goal>());
+                return context.Error(new global::app.error.Error(
+                    $"no goal matched {string.Join(", ", filters.Select(f => $"'{f.Raw}'"))} under {rootRelative}",
+                    "NoGoalMatched", 404));
         }
 
         var allGoals = new List<Goal>();

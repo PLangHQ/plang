@@ -219,7 +219,7 @@ public class GetGoalsTests
     }
 
     [Test]
-    public async Task GetGoals_FilesFilter_NoMatch_ReturnsEmptyList()
+    public async Task GetGoals_FilesFilter_NoMatch_FailsNamingTheFilter()
     {
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(_tempDir, "Start.goal"),
@@ -231,10 +231,27 @@ public class GetGoalsTests
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("NoGoalMatched");
+        await Assert.That(result.Error.Message).Contains("NonExistent.goal");
+    }
+
+    [Test]
+    public async Task GetGoals_FilesFilter_RelativeEntry_IsFromTheAppRoot()
+    {
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_tempDir, "Sanity"));
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Sanity", "AddItem.goal"), "AddItem\n- write out 'x'");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Other.goal"), "Other\n- write out 'other'");
+
+        // as typed at the app's root: no leading slash
+        _app.Build.Files.Add(new global::app.type.item.text.@this("Sanity/AddItem.goal"));
+
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
+        var result = await _app.Run(action, _app.User.Context);
+
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
-        await Assert.That(goals).IsNotNull();
-        await Assert.That(goals!.Count).IsEqualTo(0);
+        await Assert.That(goals!.Select(g => g.Name)).IsEquivalentTo(new[] { "AddItem" });
     }
 
     [Test]
