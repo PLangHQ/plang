@@ -42,11 +42,15 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// A step list that is cached has nothing to ask.</summary>
     public bool IsCached => Items().All(s => s.IsCached);
 
-    /// <summary>The step list answers what it knows of itself (<c>%goal.Step.IsCached%</c>); any other
-    /// key is a list's read.</summary>
+    /// <summary>No step needs an answer — each is cached or written in formal: nothing to ask the
+    /// decider or the LLM.</summary>
+    public bool IsAnswered => Items().All(s => s.IsAnswered);
+
+    /// <summary>The step list answers what it knows of itself (<c>%goal.Step.IsCached%</c>,
+    /// <c>%goal.Step.IsAnswered%</c>); any other key is a list's read.</summary>
     public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
-        => string.Equals(key, nameof(IsCached), System.StringComparison.OrdinalIgnoreCase)
-            ? new data.@this(key, IsCached, parent: parent)
+        => string.Equals(key, nameof(IsCached), System.StringComparison.OrdinalIgnoreCase) ? new data.@this(key, IsCached, parent: parent)
+            : string.Equals(key, nameof(IsAnswered), System.StringComparison.OrdinalIgnoreCase) ? new data.@this(key, IsAnswered, parent: parent)
             : await base.Get(parent, key);
 
     /// <summary>The steps indented under the step at <paramref name="index"/> — the consecutive steps

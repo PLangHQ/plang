@@ -853,9 +853,81 @@
         },
         {
           "index": 1,
+          "text": "condition.if(Left=%goal.Step.IsAnswered%) { build.match(Goal=%goal%, Answer=\"\"); goal.return() }",
+          "line": {
+            "number": 36
+          },
+          "comment": "Steps each cached or written in formal need no answer: the formal ones read their own text.",
+          "code": [
+            {
+              "module": "condition",
+              "name": "if",
+              "property": [
+                {
+                  "name": "Left",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%goal.Step.IsAnswered%"
+                }
+              ],
+              "child": [
+                {
+                  "index": 0,
+                  "text": "build.match(Goal=%goal%, Answer=\"\"); goal.return()",
+                  "line": {
+                    "number": 36
+                  },
+                  "code": [
+                    {
+                      "module": "build",
+                      "name": "match",
+                      "property": [
+                        {
+                          "name": "Goal",
+                          "type": {
+                            "name": "goal",
+                            "template": "plang"
+                          },
+                          "value": "%goal%"
+                        },
+                        {
+                          "name": "Answer",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": ""
+                        }
+                      ]
+                    },
+                    {
+                      "module": "goal",
+                      "name": "return",
+                      "property": [],
+                      "default": [
+                        {
+                          "name": "depth",
+                          "type": {
+                            "name": "number"
+                          },
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "waitForExecution": true
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
           "text": "call Decide",
           "line": {
-            "number": 35
+            "number": 37
           },
           "code": [
             {
@@ -884,10 +956,10 @@
           "waitForExecution": true
         },
         {
-          "index": 2,
+          "index": 3,
           "text": "call Properties",
           "line": {
-            "number": 36
+            "number": 38
           },
           "code": [
             {
@@ -916,10 +988,10 @@
           "waitForExecution": true
         },
         {
-          "index": 3,
+          "index": 4,
           "text": "build.match(Goal=%goal%, Answer=%answer%); on.error(Key=\"ElseWithoutIf\", Recovery=[goal.call(Name=\"SourceError\")]); on.error(Order=\"GoalFirst\", RetryCount=1, Recovery=[goal.call(Name=\"FixSteps\")])",
           "line": {
-            "number": 37
+            "number": 39
           },
           "code": [
             {
@@ -1054,7 +1126,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "a0d441cf7fbbcf6a78d8f545b2739bda710a199d0350be6b406decb50b13004d",
+      "hash": "7fd38e10b530d1d6fc6944553ef37dfd0dec34824b0221e57b9ae2df7c6cb30e",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -1067,7 +1139,7 @@
           "index": 0,
           "text": "call /system/builder/EmitBuildEvent kind=\"properties-rejected\", errorMessage=%!error.Message%",
           "line": {
-            "number": 44
+            "number": 46
           },
           "comment": "The answer was refused for some steps — each refusal names its step and every problem at once.\nContinue the conversation with them; only those steps are answered again, and the others keep the\ncode they took.",
           "code": [
@@ -1107,7 +1179,7 @@
           "index": 1,
           "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal.\"}]",
           "line": {
-            "number": 45
+            "number": 47
           },
           "code": [
             {
@@ -1147,7 +1219,7 @@
           "index": 2,
           "text": "llm.query Message=%fixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%",
           "line": {
-            "number": 46
+            "number": 48
           },
           "code": [
             {
@@ -1268,7 +1340,7 @@
           "index": 0,
           "text": "set %goal% = %subGoal%",
           "line": {
-            "number": 51
+            "number": 53
           },
           "comment": "Sub-goal recursion — the same three stages, attached to the parent trace.",
           "code": [
@@ -1309,7 +1381,7 @@
           "index": 1,
           "text": "call /system/builder/EmitBuildEvent kind=\"subGoalHeader\", goal=%goal%",
           "line": {
-            "number": 52
+            "number": 54
           },
           "code": [
             {
@@ -1362,7 +1434,7 @@
           "index": 2,
           "text": "set %subgoalStart% = %Now.Ticks%",
           "line": {
-            "number": 53
+            "number": 55
           },
           "code": [
             {
@@ -1402,7 +1474,7 @@
           "index": 3,
           "text": "call Compile, on error call HandleBuildFailure",
           "line": {
-            "number": 54
+            "number": 56
           },
           "code": [
             {
@@ -1474,7 +1546,7 @@
           "index": 4,
           "text": "add {goal: \"%goal.Name%\"} to %trace.subGoals%",
           "line": {
-            "number": 55
+            "number": 57
           },
           "code": [
             {
@@ -1514,7 +1586,7 @@
           "index": 5,
           "text": "math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%",
           "line": {
-            "number": 56
+            "number": 58
           },
           "code": [
             {
@@ -1594,7 +1666,7 @@
           "index": 6,
           "text": "math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%",
           "line": {
-            "number": 57
+            "number": 59
           },
           "code": [
             {
@@ -1673,7 +1745,7 @@
           "index": 7,
           "text": "call /system/builder/EmitBuildEvent kind=\"subGoalDone\", goal=%goal%, subgoalMs=%subgoalMs%",
           "line": {
-            "number": 58
+            "number": 60
           },
           "code": [
             {
@@ -1740,7 +1812,7 @@
           "index": 0,
           "text": "render template \"/system/builder/llm/SourceFix.llm\", write to %sourceFixSystem%",
           "line": {
-            "number": 65
+            "number": 67
           },
           "comment": "The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the\ncorrected plang for the programmer; the same error is raised again carrying it, and the build of\nthis goal stops there.",
           "code": [
@@ -1794,7 +1866,7 @@
           "index": 1,
           "text": "set %sourceFixMessages% = [{\"Role\":\"system\", \"Content\":\"%sourceFixSystem%\"}, {\"Role\":\"user\", \"Content\":\"%!error.Key%: %!error.Message%\\n\\nThe goal:\\n%goal%\"}]",
           "line": {
-            "number": 66
+            "number": 68
           },
           "code": [
             {
@@ -1834,7 +1906,7 @@
           "index": 2,
           "text": "llm.query Message=%sourceFixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, write to %sourceFix%",
           "line": {
-            "number": 67
+            "number": 69
           },
           "code": [
             {
@@ -1941,7 +2013,7 @@
           "index": 3,
           "text": "throw %!error%, fix suggestion %sourceFix%",
           "line": {
-            "number": 68
+            "number": 70
           },
           "code": [
             {
@@ -2003,7 +2075,7 @@
           "index": 0,
           "text": "call /system/builder/EmitBuildEvent kind=\"goalError\", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%",
           "line": {
-            "number": 73
+            "number": 75
           },
           "comment": "Capture error onto trace, save, rethrow. No null-pass inference.",
           "code": [
@@ -2073,7 +2145,7 @@
           "index": 1,
           "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}",
           "line": {
-            "number": 74
+            "number": 76
           },
           "code": [
             {
@@ -2113,7 +2185,7 @@
           "index": 2,
           "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
           "line": {
-            "number": 75
+            "number": 77
           },
           "code": [
             {
@@ -2145,7 +2217,7 @@
           "index": 3,
           "text": "throw %!error%",
           "line": {
-            "number": 76
+            "number": 78
           },
           "code": [
             {

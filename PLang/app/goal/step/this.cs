@@ -50,6 +50,10 @@ public sealed partial class @this
     [JsonIgnore]
     public bool IsFormal => FormalHead.IsMatch(Text);
 
+    /// <summary>The step needs no answer: it is cached, or its own text is its code. Build-time only.</summary>
+    [JsonIgnore]
+    public bool IsAnswered => IsCached || IsFormal;
+
     /// <summary>Where the step is written: its line in the .goal file and its indent.</summary>
     [Store, LlmBuilder, Debug, Default]
     public global::app.goal.step.line.@this Line { get; internal set; } = new();

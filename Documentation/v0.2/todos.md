@@ -2097,3 +2097,13 @@ template holds plang values through an adapter (Ingi, the item.Backing / Fluid-a
   still read `.Question`, `.Listed`, `.Formal`. `.Item` goes back to the list being enumerable.
 - `c[1].true | append: ""` in decider1.template: a plang dict's entries reach the template as raw text
   items, which the `json` filter reflects as objects; the append forces a string.
+- `assign event = kind | append: ""` in builder/templates/output/build-output.template: a root text
+  variable binds as its item, so `{% case kind %}{% when "x" %}` never matches; the append forces a string.
+
+## An unquoted word a step relies on isn't covered (2026-09-26, builder-formal)
+
+`write %message% to echo` was built as `output.write(Data=%message%)` — the channel dropped — and no
+check caught it: coverage reads plang's own markers (%vars%, quoted literals, numbers), and `echo` is a
+bare word. A general "every word" rule would misfire on prose. Options: the action checks its own words
+(output.write knows "to <channel>"), or the author writes the step in formal. Tests/Channels/
+GoalChannelRecursion stays unbuilt until then.

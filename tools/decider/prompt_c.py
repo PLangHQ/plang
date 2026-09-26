@@ -425,6 +425,25 @@ def invented_numbers(text, rows):
     written = {float(n) for n in NUMBER.findall(text)}
     return [n for n in dict.fromkeys(numbers_of(rows)) if float(n) not in written]
 
+def texts_of(rows):
+    """Every text-typed property value the answer writes — the actions, the actions they hold, their
+    modifiers and recovery, their bodies (step.Texts)."""
+    out = []
+    for a in rows:
+        for r in a.get('property') or []:
+            v = r.get('value')
+            if isinstance(v, dict) and 'module' in v: out += texts_of([v]); continue
+            if (r.get('type') or {}).get('name') == 'text' and isinstance(v, str): out.append(v)
+        out += texts_of(a.get('modifier') or [])   # a modifier is an action: its recovery is walked with it
+        out += texts_of(a.get('recovery') or [])
+        for c in a.get('child') or []: out += texts_of(c.get('action') or [])
+    return out
+
+def invented_texts(text, rows):
+    """The texts the answer writes that the step's text doesn't hold — an invented value
+    (channel="X" on a step that names no X). A choice's option, a number, a dict's keys are not texts."""
+    return [t for t in dict.fromkeys(texts_of(rows)) if t and t.lower() not in text.lower()]
+
 WHOLE = ('has no entry', 'is extra', 'is labelled', 'has no index', 'is not an object')
 
 def check(goal, picks, parsed):
@@ -456,4 +475,6 @@ def check(goal, picks, parsed):
         problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], written[i])]
         problems += [f'step {i}: your answer writes {n}, which the step doesn\'t — leave out what the step doesn\'t give'
                      for n in invented_numbers(steps[i]['text'], rows)]
+        problems += [f'step {i}: your answer writes "{t}", which the step doesn\'t — leave out what the step doesn\'t give'
+                     for t in invented_texts(steps[i]['text'], rows)]
     return whole, {i: p for i, p in per_step.items() if p}, warnings

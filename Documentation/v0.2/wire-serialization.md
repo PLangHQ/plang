@@ -267,6 +267,27 @@ This replaced the earlier posture ("Wire.Read does not auto-verify — verificat
 
 Runtime channels (`_inbound`) share the Wire instance but have `template = null`; a `%ref%` arriving in an HTTP body is born a literal `text`, never a template. The mode is set once at construction and never inferred from the bytes themselves.
 
+### Data from outside is never a template (2026-09-26)
+
+**The rule.** Only authored content — a `.goal` literal, its `.pr` rows — is born a template. Data from
+outside is plain text whatever it holds: an LLM's answer (fresh, or read back from the LLM cache), an
+http body, a file's content, a store read-back. It is also a **template-injection guard**: an LLM
+answer or a web page holding `%secret%` must never render against the scope that reads it.
+
+**The drift (open).** The code no longer matches the section above. The plang serializer builds two
+wires, `_inboundWire` and `_storeWire`, both `template = null` — there is no authored wire — and
+`type.Read`'s string arm stamps a `%var%` string a template **regardless of** `ReadContext.Template`
+(`app/type/this.cs`, the `reader.Peek() == String` branch; the container branch below it does honour
+the mode). `.pr` goals and the settings store both read through `_storeWire`, so the ungated stamp is
+what makes `.pr` strings templates today — and what made a cached LLM answer one. Gating the string arm
+on `ctx.Template` alone breaks every `.pr` read (16 tests): the fix is to give goal reads an authored
+wire again (`Template="plang"`) and then gate the string arm.
+
+**Closed at the owner meanwhile.** `OpenAi.RestoreFromCache` takes the stored raw response as its raw
+text (never opened through a door that renders it) and re-parses it as the live path does, so a
+cached answer comes back the same plain text a fresh one is (`QueryCacheTests.Query_CachedAnswerHoldingAVariable_StaysText`).
+Before, a cached answer holding `%name%` crashed the build's event render ("Variable %name% is not set").
+
 ## Multi-segment serializer extension matching
 
 `Serializers.GetByExtension` walks **multi-segment** extensions before falling back to the trailing segment. `report.junit.xml` first probes `junit.xml`; if no serializer is registered there, it falls back to `xml`. This lets a future `JunitSerializer` register against the multi-segment stem without colliding with the generic XML serializer.

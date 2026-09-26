@@ -271,6 +271,45 @@ public class ScopeTests
         await Assert.That((await app.User.Context.Variable.Get("iso")).Type.Name).IsEqualTo("duration");
     }
 
+    // A text the answer writes that the step doesn't hold is invented: the channel it didn't name.
+    [Test]
+    public async Task ATextTheStepDoesNotHold_IsRefused()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("Start", Make.Step("write out %message%"));
+        await Picked(goal, app.System.Context, (0, "output.write"));
+
+        var refused = await Match(goal, """
+            [0] output.write(Data=%message%, Channel="BuilderChannel")
+            """, app.System.Context);
+
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Message).Contains("your answer writes \"BuilderChannel\"");
+    }
+
+    // A text the step's words hold passes, quoted or not: the file a step reads.
+    [Test]
+    public async Task ATextTheStepHolds_Passes()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("Start", Make.Step("write out 'hello' to builder"));
+        await Picked(goal, app.System.Context, (0, "output.write"));
+
+        var accepted = await Match(goal, """
+            [0] output.write(Data="hello", Channel="builder")
+            """, app.System.Context);
+
+        await accepted.IsSuccess();
+
+        var read = Make.Goal("Start", Make.Step("read file.txt, write to %c%"));
+        await Picked(read, app.System.Context, (0, "file.read"), (0, "variable.set"));
+        var taken = await Match(read, """
+            [0] file.read(Path="file.txt"); variable.set(Name=%c%, Value=%!data%)
+            """, app.System.Context);
+
+        await taken.IsSuccess();
+    }
+
     [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {

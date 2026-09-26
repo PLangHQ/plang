@@ -50,6 +50,35 @@ public sealed partial class @this
         foreach (var n in Number.Matches(Quoted.Replace(written, "")).Select(m => m.Value).Distinct())
             if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
                 problems.Add($"step {Index}: your answer writes {n}, which the step doesn't — leave out what the step doesn't give");
+        // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
+        // step that names no X) — a choice's option, a number and a dict's keys are not texts
+        foreach (var t in (await Texts(Code.Items(), context)).Distinct())
+            if (t.Length > 0 && !Text.Contains(t, System.StringComparison.OrdinalIgnoreCase))
+                problems.Add($"step {Index}: your answer writes \"{t}\", which the step doesn't — leave out what the step doesn't give");
         return problems;
+    }
+
+    // Every text property value the code writes, as written (its own Store writer — a template is not
+    // rendered): the actions, the actions they hold, their modifiers and recovery, their bodies.
+    private async System.Threading.Tasks.Task<List<string>> Texts(
+        IEnumerable<global::app.goal.step.action.@this> actions, global::app.actor.context.@this context)
+    {
+        var texts = new List<string>();
+        foreach (var a in actions)
+        {
+            foreach (var p in a.Property)
+            {
+                if (p.Value is global::app.goal.step.action.@this held) { texts.AddRange(await Texts([held], context)); continue; }
+                if (p.Type?.Name != "text" || p.Value is null) continue;
+                var writer = new global::app.channel.serializer.formal.Writer();
+                await p.Value.Output(writer, global::app.View.Store, context);
+                var json = writer.ToString();
+                if (json.StartsWith('"') && System.Text.Json.JsonSerializer.Deserialize<string>(json) is { } s) texts.Add(s);
+            }
+            texts.AddRange(await Texts(a.Modifier, context));   // a modifier is an action: its recovery is walked with it
+            texts.AddRange(await Texts(a.Recovery.Items(), context));
+            foreach (var child in a.Child.Items()) texts.AddRange(await Texts(child.Code.Items(), context));
+        }
+        return texts;
     }
 }

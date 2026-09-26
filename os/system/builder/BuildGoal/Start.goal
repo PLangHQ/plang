@@ -32,6 +32,8 @@ Compile
 / alone; an else written apart from its if is the programmer's to fix, not the LLM's.
 / Steps that are all cached have nothing to ask.
 - if %goal.Step.IsCached%, return
+/ Steps each cached or written in formal need no answer: the formal ones read their own text.
+- condition.if(Left=%goal.Step.IsAnswered%) { build.match(Goal=%goal%, Answer=""); goal.return() }
 - call Decide
 - call Properties
 - build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Order="GoalFirst", RetryCount=1, Recovery=[goal.call(Name="FixSteps")])

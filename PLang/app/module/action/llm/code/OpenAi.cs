@@ -1011,10 +1011,15 @@ public sealed class OpenAi : ILlm
         // the stored "Value" can yield a list/dict the consumer can't convert.
         // A dict-navigated prop rides as the native text value — read its backing
         // string; a legacy raw prop is already a string.
+        // An LLM's answer is data from outside, never a template: the store hands its values back
+        // unopened (a %name% in them reads as a template's variable there), so the raw response is
+        // taken as the text it is — its raw content, never opened through a door that renders it.
         static string? AsText(object? v) => v switch
         {
-            global::app.type.item.text.@this t => t.Clr<string>(),
             string s => s,
+            global::app.type.item.wire.@this => null,   // still encoded: the stored Value stands
+            global::app.type.item.source { RawText: { } raw } => raw,
+            global::app.type.item.text.@this t => t.Clr<string>(),
             _ => null,
         };
         string? rawResp = AsText(props.GetValueOrDefault("RawResponse"));

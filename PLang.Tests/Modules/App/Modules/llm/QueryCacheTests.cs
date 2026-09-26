@@ -64,6 +64,29 @@ public class QueryCacheTests
         await Assert.That((await result2.Properties.Value("Cached"))).IsEqualTo(true);
     }
 
+    // Data from outside is never a template: an answer holding %name% comes back from the cache as the
+    // same text the live call gave — never rendered against the scope that reads it.
+    [Test]
+    public async Task Query_CachedAnswerHoldingAVariable_StaysText()
+    {
+        const string answer = "[1] output.write(Data=\"hello %name%\")";
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(answer)));
+
+        var live = LlmTestHelper.MakeQuery(Ctx, userText: "a variable in the answer");
+        await live.Attach(null, Ctx);
+        var fresh = await live.Run();
+
+        var again = LlmTestHelper.MakeQuery(Ctx, userText: "a variable in the answer");
+        await again.Attach(null, Ctx);
+        var cached = await again.Run();
+
+        await Assert.That((await cached.Properties.Value("Cached"))).IsEqualTo(true);
+        await Assert.That(cached.Type?.Template).IsNull();
+        await Assert.That((await cached.Value())?.ToString()).IsEqualTo(answer);
+        await Assert.That((await fresh.Value())?.ToString()).IsEqualTo(answer);
+    }
+
     [Test]
     public async Task Query_CacheTrue_DifferentMessages_CacheMiss()
     {

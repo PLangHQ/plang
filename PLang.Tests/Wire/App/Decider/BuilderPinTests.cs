@@ -37,7 +37,7 @@ public class BuilderPinTests
         await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
         var compile = (await Installed(os)).Child.Single(g => g.Name == "Compile");
 
-        var match = compile.Step[3].Code[0];
+        var match = compile.Step.Items().Select(s => s.Code[0]).Single(a => a.Module.Name == "build" && a.Name == "match");
         await Assert.That($"{match.Module.Name}.{match.Name}").IsEqualTo("build.match");
         var source = match.Modifier.Single(m => Value(m, "Key") == "ElseWithoutIf");
         await Assert.That(Value(source.Recovery.Items().Single(), "Name")).IsEqualTo("SourceError");

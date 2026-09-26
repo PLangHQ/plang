@@ -19,6 +19,9 @@ public class FormalStepTests
 
         await Assert.That(goal.Step[0].IsFormal).IsTrue();
         await Assert.That(goal.Step[1].IsFormal).IsFalse();
+        // one step still needs an answer; a goal of formal steps alone needs none
+        await Assert.That(goal.Step.IsAnswered).IsFalse();
+        await Assert.That(Parse("Start\n- output.write(Data=\"a\")\n", context).Step.IsAnswered).IsTrue();
 
         // the decider is asked nothing about it
         var answer = Make.Dict(new Dictionary<string, object?>

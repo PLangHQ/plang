@@ -84,6 +84,42 @@ Cost per goal: about $0.001 for nano (the 5-goal eval: $0.0053), plus two decide
   top level, a body or a recovery; dropping a whole `on error call X` clause is refused.
 - Still open (needs design): a variable counts as covered when it only appears inside a quoted text.
 
+## Since the first report
+
+**An unchanged build is instant.** Before: the builder's 7 files, all unchanged, took 20.9 s (nano asked
+about every kept step, 9.6 s; 5× FixSteps on all-kept answers, 3.5 s; the first render creating the
+folder's identity, 4.7 s). Now **~0.75 s, ~0.5 s of it process start**, no .pr rewritten:
+- `goal.IsCached` (its source is its `.pr`'s, every step and sub-goal cached) → Start returns
+  `%goal.Cache%` as its first step.
+- `goal.Step.IsAnswered` (every step cached or written in formal) → Compile asks no one and only reads.
+- The 4.7 s is paid once per project folder (see the eager-render todo).
+
+**A step written in formal is its code** (`module.action(…)` at its start): asked of no decider and no
+LLM, read with every check an answer gets. A goal of formal steps alone builds with no key, in 0.1 s.
+The builder uses it for its hardest steps: Compile's match step (`Order="GoalFirst"` — the installed
+one had RetryFirst, so FixSteps' corrected answer was never matched) and BuilderChannel.
+`BuilderPinTests` pin both.
+
+**The builder prints its own output again**: a goal-backed channel hands the written value to its goal
+as `%message%`.
+```
+Building path: …/hello
+Found 1 goals
+Building goal: Start
+  Saved Start (2.3s)
+```
+
+**Also closed**: a bare `if %x%` is Left's own truth (a path: does it exist) and a comparison with no
+Right is refused at build; `action.Validate` asks the handler, so a cached step that no longer holds
+reopens; an invented text value (`channel="X"`) is refused; a name in an action slot is refused instead
+of crashing; a cached LLM answer holding `%name%` comes back text, not a template (it crashed the build).
+
+**Open**: the reader stamps any `%var%` string a template whatever its mode (wire-serialization.md,
+"Data from outside is never a template"); a template render opens every variable in scope; a bare
+word a step relies on (`to echo`) isn't covered — Tests/Channels/GoalChannelRecursion stays unbuilt.
+**BootstrapTests fails on Compile** until its answers are re-recorded: the decider service answers
+403 "RBAC: access denied" since ~06:30.
+
 ## Commits tonight
 
 308bb583f pre-fill · 2c150a5b3 bootstrap + take path · be36e72a7 D fixes · 008f7d61c recursion allowed ·
