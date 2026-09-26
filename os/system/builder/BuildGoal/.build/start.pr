@@ -1024,7 +1024,7 @@
                     "kind": "llmmessage",
                     "template": "plang"
                   },
-                  "value": [{"Role":"user","Content":"Steps 2 were refused: step 2: %fixMessages% is in the step but not in your answer\n\nAnswer again only these steps, one line each, starting with its [i], in formal."}]
+                  "value": "%fixMessages%"
                 },
                 {
                   "name": "Model",
