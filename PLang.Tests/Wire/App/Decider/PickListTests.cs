@@ -30,9 +30,19 @@ public class PickListTests
     private static global::app.type.item.dict.@this Answer(System.Text.Json.JsonElement e, global::app.actor.context.@this context)
         => Make.Dict((System.Collections.IDictionary)Raw(e)!, context);
 
+    // The golden goal; a kept step (already built, its text unchanged) holds its saved code and its
+    // prior text, as goal.Merge leaves it.
     private static global::app.goal.@this Goal(System.Text.Json.JsonElement entry)
-        => Make.Goal(entry.GetProperty("name").GetString()!, "/" + entry.GetProperty("name").GetString() + ".goal",
-            entry.GetProperty("step").EnumerateArray().Select(s => Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32())).ToArray());
+    {
+        var steps = entry.GetProperty("step").EnumerateArray().ToList();
+        var goal = Make.Goal(entry.GetProperty("name").GetString()!, "/" + entry.GetProperty("name").GetString() + ".goal",
+            steps.Select(s => s.GetProperty("kept").GetBoolean()
+                ? Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32(), Make.Action("file", "read", ("Path", "saved.json")))
+                : Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32())).ToArray());
+        foreach (var s in steps.Where(s => s.GetProperty("kept").GetBoolean()))
+            goal.Step[s.GetProperty("index").GetInt32()].PriorText = s.GetProperty("text").GetString();
+        return goal;
+    }
 
     private static string RepoRoot()
     {

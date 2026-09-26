@@ -7,7 +7,7 @@ popular options); this template only writes their words. Keys and wording are th
 {
 {%- assign sep = "" -%}
 {%- for s in goal.Step -%}
-{%- assign text = s.Text | strip -%}
+{%- assign text = s.Text -%}
 {%- for q in s.Pick.Question -%}
 {{ sep }}
   {{ q.Id | json }}: {

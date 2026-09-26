@@ -147,7 +147,7 @@ public class GetGoalsTests
                         {
                             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"],
                             Name = "write",
-                            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: _app.User.Context) })
+                            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Data", "hello", context: _app.User.Context) })
                         }
                     })
                 }

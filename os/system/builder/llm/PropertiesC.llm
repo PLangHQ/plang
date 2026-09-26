@@ -8,10 +8,12 @@ Before you, a decider (a separate model) read each step and scored the actions i
 - after `=> decider:`, the decider's actions with their scores: 0.90 or more is certain; below that is marked (possible). (write to) marks the variable.set of a `write to %x%`, already filled in. (possible, popular) is its best guess on a step it was unsure of;
 - after `=> formal:`, your starting line: the certain actions, with `?` where a value is still needed. There is no `=> formal:` when nothing is certain.
 
+A step ending in `=> kept` is already built: don't answer it; it is there for the steps around it.
+
 Then the types a value can take, then each action once: `## module.action(Name: type, Name?: type = default)`,
 what it does, and its notes. `?` after a name marks an optional property, `= x` its default.
 
-The answer: one line per step, in step order, and nothing else. A line starts with the step's index in square
+The answer: one line per step that isn't kept, in step order, and nothing else. A line starts with the step's index in square
 brackets, and a step's actions are separated by ; — for a goal of two steps:
 
   [0] file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)

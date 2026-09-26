@@ -274,7 +274,9 @@ CLAUSE = (' — its own work, or anything it guards behind a condition, repeats 
           'error handler —') if os.environ.get('CLAUSE', '0') == '1' else ''
 
 def stage1_questions(s, cat):
-    """Stage 1's questions of one step, keyed by id (decider1.template writes the same)."""
+    """Stage 1's questions of one step, keyed by id (decider1.template writes the same). A kept step
+    (already built, its text unchanged) is not asked."""
+    if s.get('kept'): return {}
     text = s['text'].strip()
     qs = {f's{s["index"]}_@module': {'type': 'choice', 'criteria': {m: None for m in cat}, 'instructions':
         f'Step {step_no(s)} of this goal is `{text}`. Which plang module does the main work of step {step_no(s)}?'}}
@@ -344,7 +346,9 @@ def picks(probs_i, cat, threshold=0.5):
 BRANCHES = ['condition.else', 'condition.elseif']   # the condition actions that continue an if (action.IsBranch), by name
 
 def stage2_questions(s, cat, chosen, conditions=(), runners=None, unsure_steps=()):
-    """Stage 2's questions of one step, keyed by id (the C# pick.list's twin asks the same)."""
+    """Stage 2's questions of one step, keyed by id (the C# pick.list's twin asks the same). A kept step
+    is not asked."""
+    if s.get('kept'): return {}
     runners = runners or {}
     qs = {}
     if s['index'] in unsure_steps:

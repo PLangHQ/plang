@@ -8,67 +8,78 @@
     "index": 0,
     "text": "set default %path% = \"/\"",
     "indent": 0,
-    "comment": "Main entry point for the PLang builder\nTransforms .goal files (natural language) into .pr files (JSON the Runtime executes)\nParameters: %path% - folder to build (default: \".\")"
+    "comment": "Main entry point for the PLang builder\nTransforms .goal files (natural language) into .pr files (JSON the Runtime executes)\nParameters: %path% - folder to build (default: \".\")",
+    "kept": false
    },
    {
     "index": 1,
     "text": "set default %!build.cache% = true",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 2,
     "text": "set default %!build.summary% = true",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 3,
     "text": "set channel \"builder\" call BuilderChannel",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 4,
     "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 5,
     "text": "build.load, write to %app%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 6,
     "text": "build.goals path=%path%, write to %goals%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 7,
     "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 8,
     "text": "foreach %goals%, call BuildGoal goal=%item%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 9,
     "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 10,
     "text": "build.appSave",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    }
   ],
   "answer1": {
@@ -2024,91 +2035,106 @@
     "index": 0,
     "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
     "indent": 0,
-    "comment": "Build one .goal file: decide which modules and actions each step uses, then let the LLM order\nthem and fill their properties, then validate and recurse into sub-goals."
+    "comment": "Build one .goal file: decide which modules and actions each step uses, then let the LLM order\nthem and fill their properties, then validate and recurse into sub-goals.",
+    "kept": false
    },
    {
     "index": 1,
     "text": "set %buildStart% = %Now.Ticks%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 2,
     "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 3,
     "text": "call Compile, on error call HandleBuildFailure",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 4,
     "text": "set %trace.menu% = %menu%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 5,
     "text": "set %parentGoal% = %goal%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 6,
     "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 7,
     "text": "set %goal% = %parentGoal%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 8,
     "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 9,
     "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 10,
     "text": "set %trace.durationMs% = %elapsedMs%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 11,
     "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 12,
     "text": "add %goal.Name% to %traceGoals%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 13,
     "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
     "indent": 0,
-    "comment": "Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save."
+    "comment": "Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save.",
+    "kept": false
    },
    {
     "index": 14,
     "text": "build.goalsSave Goal=%goal%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    }
   ],
   "answer1": {
@@ -4792,61 +4818,71 @@
     "index": 0,
     "text": "set %threshold% = 0.5",
     "indent": 0,
-    "comment": "Decide which module and which action every step of this goal uses — the whole goal in two\nexchanges, not one LLM call per step."
+    "comment": "Decide which module and which action every step of this goal uses — the whole goal in two\nexchanges, not one LLM call per step.",
+    "kept": false
    },
    {
     "index": 1,
     "text": "set %modules% = %!app.module.list%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 2,
     "text": "set %state.goal% = %goal.Name%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 3,
     "text": "foreach %goal.Step%, call AddStepToState step=%item%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 4,
     "text": "foreach %modules%, call AddModuleToState module=%item%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 5,
     "text": "render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 6,
     "text": "llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 7,
     "text": "render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 8,
     "text": "llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 9,
     "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    }
   ],
   "answer1": {
@@ -6535,132 +6571,80 @@
  {
   "goal": "checkout",
   "name": "Checkout",
-  "user": "Goal, as written:\n  Checkout\n      / Price one order and tell the customer what it costs.\n  [0] - read 'orders/%orderId%.json', write to %order% => decider: file.read 0.99, variable.set 0.97 => formal: file.read(Path=?); variable.set(Name=%order%, Value=%!data%)\n  [1] - count %order.items%, write to %itemCount% => decider: variable.set 0.96, list.count 0.96 => formal: list.count(ListName=?); variable.set(Name=%itemCount%, Value=%!data%)\n  [2] - if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\" => decider: condition.if 0.99, output.write 0.98, condition.elseif 0.97, condition.else 0.96 => formal: condition.if(Left=?, Operator=?); output.write(Data=?); condition.elseif(Left=?, Operator=?); condition.else()\n  [3] - if %order.email% does not contain \"@\", throw \"Invalid email address\" => decider: condition.if 0.98, error.throw 0.88 (possible) => formal: condition.if(Left=?, Operator=?)\n  [4] - if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order% => decider: condition.if 0.99, goal.call 0.97 => formal: condition.if(Left=?, Operator=?); goal.call(Name=?, Parameter={?})\n  [5] - if %order.total% is not a number, throw \"The total must be a number\" => decider: condition.if 0.98, error.throw 0.91 => formal: condition.if(Left=?, Operator=?); error.throw()\n  [6] - if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25 => decider: condition.if 0.99, variable.set 0.98, condition.else 0.94 => formal: condition.if(Left=?, Operator=?); variable.set(Name=?, Value=?); condition.else()\n  [7] - math.multiply A=%order.total%, B=%vat%, write to %vatAmount% => decider: math.multiply 1.00, variable.set 0.93 => formal: math.multiply(A=?, B=?); variable.set(Name=%vatAmount%, Value=%!data%)\n  [8] - if %order.note% does not start with \"#\", add %order.note% to %notes% => decider: condition.if 0.99, list.add 0.97 => formal: condition.if(Left=?, Operator=?); list.add(ListName=?, Value=?)\n  [9] - write out \"Total: %order.total%, VAT: %vatAmount%\" => decider: output.write 0.99 => formal: output.write(Data=?)\n\nTypes\n- text — Textual content. Kind is set from the file extension (md, txt, csv, html, ...). Kind is a hint by default; strict is a no-op for text (plain vs markdown is not detectable from content). (e.g. readme.md)\n- number (e.g. 3.14)\n- bool (e.g. true)\n- list (e.g. [1, 2, 3])\n- dict (e.g. {\"name\":\"a\"})\n- path (e.g. /some/file.json)\n- variable\n- item\n- choice<operator> — one of: ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or\n- choice<actor> — one of: system, user\n- choice<overflow> — one of: Promote, Throw\n- choice<precision> — one of: Error, Double, Decimal\n\n## file.read(Path: path, ResolveVariables?: bool = false)\nRead a file's content; optionally resolve %var% patterns in the text before returning\nPath — the file to read, as the step writes it.\nResolveVariables — true only when the step asks for the %variables% in the file's text to be filled in.\n\n## variable.set(Name: variable, Value: item, Type?: item, AsDefault?: bool = false)\nAssign a value to a named variable, optionally coercing to a type or setting only when unset\nName — the variable to set, with its % signs. A `(<kind>)` written after it is not part of the name: it is the Type.\nValue — the value as the step writes it, typed as what it is (a quoted date is a date, \"42\" a number, a label stays text). After another action in the same step it is %!data%.\nType — only when the step forces a type: `as <type>` or `(<kind>)`.\nAsDefault — true when the step says \"set default\", \"default to\" or \"only if unset\"; the variable keeps a value it already has.\n\n- `set %x% = …` is one variable.set.\n- `<action>, write to %x%` is that action followed by variable.set(Name=%x%, Value=%!data%) — its own action, never a modifier, and without a Type.\n\n## list.count(ListName: variable)\nReturn the number of items in the list\nListName — the list to count, with its % signs.\n\n## condition.if(Left: item, Operator: choice<operator>, Right?: item)\nEvaluate a condition and execute the then-branch actions; pair with elseif/else for full branching\nLeft — the value tested, as the step writes it.\nOperator — the comparison, one of choice<operator>. A negation is its own operator, never written anywhere else.\nRight — what Left is compared to. Left out for isempty / isnotempty.\n\n| the step says | Operator | Right |\n|---|---|---|\n| `is 5`, `equals %b%`, `is \"x\"`, `is true`, `is null` | == | the value |\n| `is not 5`, `does not equal %b%`, `is not null` | != | the value |\n| `is less than`, `is more than`, `is at least`, `is at most` | <, >, >=, <= | the value |\n| `contains` / `does not contain` | contains / notcontains | the value |\n| `starts with` / `does not start with` | startswith / notstartswith | the value |\n| `ends with` / `does not end with` | endswith / notendswith | the value |\n| `is in [..]` / `is not in [..]` | in / notin | the list |\n| `is empty` / `is not empty` | isempty / isnotempty | left out |\n| `is a number` / `is not a list` | is / isnot | the type name: number, list |\n\n- `is` and `isnot` take only a type name; a value after \"is\" is `==`.\n- There is no istrue, isfalse, isnull or isnotnull.\n- `if A and B`: one condition.if cannot hold both. Compare each side with condition.compare, keep each result with variable.set, then one condition.if over the two with Operator `and` (or `or`).\n\n## output.write(Data: item, channel?: text)\nWrite Data to a named channel — defaults to the actor's output channel.\nData — what to write, as the step writes it: a quoted text (with or without %variables% in it) is text, a bare %variable% is item.\nchannel — the name of a registered channel to write to, only when the step names one (`to \"log\" channel`, `on X channel`, `via X`). Left out otherwise: the actor's output.\n\n- Naming a channel routes the output; it never registers one (that is channel.set).\n\n## condition.elseif(Left: item, Operator: choice<operator>, Right?: item)\nAdditional condition branch evaluated when the preceding if condition is false\nLeft, Operator, Right — the same as condition.if's.\n\n- Right after the if (or another elseif) of the same step: `…, else if %x% is 1, …`.\n\n## condition.else()\nFallback branch that executes when all preceding if/elseif conditions are false\nNo properties: it runs its child when no branch before it held.\n\n- Right after the if or elseif of the same step.\n\n## error.throw(Message?: text, Data?: item, StatusCode?: number = 400, Key?: text = error, FixSuggestion?: text)\nImmediately fail the step with a structured error message, status code, and optional key\nMessage — the error's message: the quoted text after `throw`.\nData — the values the error carries: the %variables% after `throw` (`throw %!error%` re-raises that error).\nStatusCode — the status code, only when the step gives one.\nKey — the error's key, only when the step names one.\nFixSuggestion — how the programmer fixes it: the text after `fix suggestion`.\n\n## goal.call(Name: text, Parameter?: list, Actor?: choice<actor>, Parallel?: bool = false)\nCall a named goal, injecting parameters into its context, optionally on a different actor\nName — the goal to call, copied exactly as the step writes it: `Goal`, `Folder/Goal`, `/system/builder/Goal`. Never an action name like `goal.call`.\nParameter — the arguments: every `name=value` after the goal name is one argument, its value as written. Left out when the step passes none.\nActor — the actor the goal runs on, only when the step names one (`on actor \"system\"`, `as user`). Not because the goal is a system goal, a sub-goal or a recovery.\nParallel — true only when the step says the call may run beside others.\n\n- The arguments belong to the called goal; they are never properties of goal.call.\n- `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.\n\n## math.multiply(A: item, B: item, Overflow?: choice<overflow> = Promote, Precision?: choice<precision> = Error)\nMultiply A by B and return the numeric result\nA, B — the two numbers: the result is A × B.\nOverflow — only when the step says what to do when an integer overflows: Promote widens it, Throw fails.\nPrecision — only when the step says how to mix a decimal and a floating-point number.\n\n## list.add(ListName: variable, Value: item, AtIndex?: number = -1)\nAppend or insert a value into a list variable at an optional index\nListName — the list variable to add to, with its % signs: in `add X to %list%` it is %list%.\nValue — what to add, as the step writes it; a `{…}` or `[…]` literal is one value, typed dict or list.\nAtIndex — the position to insert at, only when the step names one (\"at position 2\"); otherwise it appends.\n\n- `add X to %list%` has no variable.set: %list% is the target, not a result to keep.\n",
+  "user": "Goal, as written:\n  Checkout\n      / Price one order and tell the customer what it costs.\n  [0] - read 'orders/%orderId%.json', write to %order% => kept\n  [1] - count %order.items%, write to %itemCount% => decider: variable.set 0.96, list.count 0.96 => formal: list.count(ListName=?); variable.set(Name=%itemCount%, Value=%!data%)\n  [2] - if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\" => decider: condition.if 0.99, output.write 0.98, condition.elseif 0.97, condition.else 0.96 => formal: condition.if(Left=?, Operator=?); output.write(Data=?); condition.elseif(Left=?, Operator=?); condition.else()\n  [3] - if %order.email% does not contain \"@\", throw \"Invalid email address\" => decider: condition.if 0.98, error.throw 0.88 (possible) => formal: condition.if(Left=?, Operator=?)\n  [4] - if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order% => decider: condition.if 0.99, goal.call 0.97 => formal: condition.if(Left=?, Operator=?); goal.call(Name=?, Parameter={?})\n  [5] - if %order.total% is not a number, throw \"The total must be a number\" => decider: condition.if 0.98, error.throw 0.91 => formal: condition.if(Left=?, Operator=?); error.throw()\n  [6] - if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25 => decider: condition.if 0.99, variable.set 0.98, condition.else 0.94 => formal: condition.if(Left=?, Operator=?); variable.set(Name=?, Value=?); condition.else()\n  [7] - math.multiply A=%order.total%, B=%vat%, write to %vatAmount% => decider: math.multiply 1.00, variable.set 0.93 => formal: math.multiply(A=?, B=?); variable.set(Name=%vatAmount%, Value=%!data%)\n  [8] - if %order.note% does not start with \"#\", add %order.note% to %notes% => decider: condition.if 0.99, list.add 0.97 => formal: condition.if(Left=?, Operator=?); list.add(ListName=?, Value=?)\n  [9] - write out \"Total: %order.total%, VAT: %vatAmount%\" => decider: output.write 0.99 => formal: output.write(Data=?)\n\nTypes\n- text — Textual content. Kind is set from the file extension (md, txt, csv, html, ...). Kind is a hint by default; strict is a no-op for text (plain vs markdown is not detectable from content). (e.g. readme.md)\n- number (e.g. 3.14)\n- bool (e.g. true)\n- list (e.g. [1, 2, 3])\n- dict (e.g. {\"name\":\"a\"})\n- variable\n- item\n- choice<operator> — one of: ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or\n- choice<actor> — one of: system, user\n- choice<overflow> — one of: Promote, Throw\n- choice<precision> — one of: Error, Double, Decimal\n\n## variable.set(Name: variable, Value: item, Type?: item, AsDefault?: bool = false)\nAssign a value to a named variable, optionally coercing to a type or setting only when unset\nName — the variable to set, with its % signs. A `(<kind>)` written after it is not part of the name: it is the Type.\nValue — the value as the step writes it, typed as what it is (a quoted date is a date, \"42\" a number, a label stays text). After another action in the same step it is %!data%.\nType — only when the step forces a type: `as <type>` or `(<kind>)`.\nAsDefault — true when the step says \"set default\", \"default to\" or \"only if unset\"; the variable keeps a value it already has.\n\n- `set %x% = …` is one variable.set.\n- `<action>, write to %x%` is that action followed by variable.set(Name=%x%, Value=%!data%) — its own action, never a modifier, and without a Type.\n\n## list.count(ListName: variable)\nReturn the number of items in the list\nListName — the list to count, with its % signs.\n\n## condition.if(Left: item, Operator: choice<operator>, Right?: item)\nEvaluate a condition and execute the then-branch actions; pair with elseif/else for full branching\nLeft — the value tested, as the step writes it.\nOperator — the comparison, one of choice<operator>. A negation is its own operator, never written anywhere else.\nRight — what Left is compared to. Left out for isempty / isnotempty.\n\n| the step says | Operator | Right |\n|---|---|---|\n| `is 5`, `equals %b%`, `is \"x\"`, `is true`, `is null` | == | the value |\n| `is not 5`, `does not equal %b%`, `is not null` | != | the value |\n| `is less than`, `is more than`, `is at least`, `is at most` | <, >, >=, <= | the value |\n| `contains` / `does not contain` | contains / notcontains | the value |\n| `starts with` / `does not start with` | startswith / notstartswith | the value |\n| `ends with` / `does not end with` | endswith / notendswith | the value |\n| `is in [..]` / `is not in [..]` | in / notin | the list |\n| `is empty` / `is not empty` | isempty / isnotempty | left out |\n| `is a number` / `is not a list` | is / isnot | the type name: number, list |\n\n- `is` and `isnot` take only a type name; a value after \"is\" is `==`.\n- There is no istrue, isfalse, isnull or isnotnull.\n- `if A and B`: one condition.if cannot hold both. Compare each side with condition.compare, keep each result with variable.set, then one condition.if over the two with Operator `and` (or `or`).\n\n## output.write(Data: item, channel?: text)\nWrite Data to a named channel — defaults to the actor's output channel.\nData — what to write, as the step writes it: a quoted text (with or without %variables% in it) is text, a bare %variable% is item.\nchannel — the name of a registered channel to write to, only when the step names one (`to \"log\" channel`, `on X channel`, `via X`). Left out otherwise: the actor's output.\n\n- Naming a channel routes the output; it never registers one (that is channel.set).\n\n## condition.elseif(Left: item, Operator: choice<operator>, Right?: item)\nAdditional condition branch evaluated when the preceding if condition is false\nLeft, Operator, Right — the same as condition.if's.\n\n- Right after the if (or another elseif) of the same step: `…, else if %x% is 1, …`.\n\n## condition.else()\nFallback branch that executes when all preceding if/elseif conditions are false\nNo properties: it runs its child when no branch before it held.\n\n- Right after the if or elseif of the same step.\n\n## error.throw(Message?: text, Data?: item, StatusCode?: number = 400, Key?: text = error, FixSuggestion?: text)\nImmediately fail the step with a structured error message, status code, and optional key\nMessage — the error's message: the quoted text after `throw`.\nData — the values the error carries: the %variables% after `throw` (`throw %!error%` re-raises that error).\nStatusCode — the status code, only when the step gives one.\nKey — the error's key, only when the step names one.\nFixSuggestion — how the programmer fixes it: the text after `fix suggestion`.\n\n## goal.call(Name: text, Parameter?: list, Actor?: choice<actor>, Parallel?: bool = false)\nCall a named goal, injecting parameters into its context, optionally on a different actor\nName — the goal to call, copied exactly as the step writes it: `Goal`, `Folder/Goal`, `/system/builder/Goal`. Never an action name like `goal.call`.\nParameter — the arguments: every `name=value` after the goal name is one argument, its value as written. Left out when the step passes none.\nActor — the actor the goal runs on, only when the step names one (`on actor \"system\"`, `as user`). Not because the goal is a system goal, a sub-goal or a recovery.\nParallel — true only when the step says the call may run beside others.\n\n- The arguments belong to the called goal; they are never properties of goal.call.\n- `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.\n\n## math.multiply(A: item, B: item, Overflow?: choice<overflow> = Promote, Precision?: choice<precision> = Error)\nMultiply A by B and return the numeric result\nA, B — the two numbers: the result is A × B.\nOverflow — only when the step says what to do when an integer overflows: Promote widens it, Throw fails.\nPrecision — only when the step says how to mix a decimal and a floating-point number.\n\n## list.add(ListName: variable, Value: item, AtIndex?: number = -1)\nAppend or insert a value into a list variable at an optional index\nListName — the list variable to add to, with its % signs: in `add X to %list%` it is %list%.\nValue — what to add, as the step writes it; a `{…}` or `[…]` literal is one value, typed dict or list.\nAtIndex — the position to insert at, only when the step names one (\"at position 2\"); otherwise it appends.\n\n- `add X to %list%` has no variable.set: %list% is the target, not a result to keep.\n",
   "step": [
    {
     "index": 0,
     "text": "read 'orders/%orderId%.json', write to %order%",
     "indent": 0,
-    "comment": "Price one order and tell the customer what it costs."
+    "comment": "Price one order and tell the customer what it costs.",
+    "kept": true
    },
    {
     "index": 1,
     "text": "count %order.items%, write to %itemCount%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 2,
     "text": "if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 3,
     "text": "if %order.email% does not contain \"@\", throw \"Invalid email address\"",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 4,
     "text": "if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 5,
     "text": "if %order.total% is not a number, throw \"The total must be a number\"",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 6,
     "text": "if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 7,
     "text": "math.multiply A=%order.total%, B=%vat%, write to %vatAmount%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 8,
     "text": "if %order.note% does not start with \"#\", add %order.note% to %notes%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 9,
     "text": "write out \"Total: %order.total%, VAT: %vatAmount%\"",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    }
   ],
   "answer1": {
-   "s0_@module": {
-    "type": "choice",
-    "choice": "file",
-    "confidence": 1.0,
-    "probabilities": {
-     "code": 0.0,
-     "output": 0.0,
-     "snapshot": 0.0,
-     "settings": 0.0,
-     "http": 0.0,
-     "condition": 0.0,
-     "cache": 0.0,
-     "llm": 0.0,
-     "ui": 0.0,
-     "identity": 0.0,
-     "file": 1.0,
-     "mock": 0.0,
-     "build": 0.0,
-     "event": 0.0,
-     "signing": 0.0,
-     "loop": 0.0,
-     "channel": 0.0,
-     "error": 0.0,
-     "debug": 0.0,
-     "variable": 0.0,
-     "callback": 0.0,
-     "environment": 0.0,
-     "module": 0.0,
-     "crypto": 0.0,
-     "goal": 0.0,
-     "timeout": 0.0,
-     "list": 0.0,
-     "assert": 0.0,
-     "timer": 0.0,
-     "test": 0.0,
-     "math": 0.0
-    }
-   },
-   "s0_variable.set": {
-    "type": "noul",
-    "noul": 0.97
-   },
-   "s0_goal.call": {
-    "type": "noul",
-    "noul": 0.07
-   },
-   "s0_output.write": {
-    "type": "noul",
-    "noul": 0.06
-   },
-   "s0_on.error": {
-    "type": "noul",
-    "noul": 0.05
-   },
-   "s0_condition.if": {
-    "type": "noul",
-    "noul": 0.05
-   },
-   "s0_file.read": {
-    "type": "noul",
-    "noul": 0.99
-   },
    "s1_@module": {
     "type": "choice",
     "choice": "list",
@@ -7372,92 +7356,6 @@
   },
   "state1": "How plang is structured:\n- A goal is a list of steps. Each step is a sentence saying what to do, written in any human language. There is no syntax and no reserved words; only the intent matters.\n- A step is carried out by one or more actions. Every action belongs to exactly one module.\n- Within a step the actions form a chain: the result of one action can feed the next one.\n- A step may keep its result for later use by naming a variable (a name between % signs). That is the variable module's job, in addition to whatever module did the work.\n- A step may guard part of its work behind a condition (condition module), repeat part of it for each item of a collection (loop module), or attach error handling to it (error module). Each of those is an action of its own, and whatever runs INSIDE the guard, the loop or the error handler is also an action of its own — so calling a goal inside an if, a loop or an error handler uses the goal module as well.\n- So one step often uses several modules: the one doing the main work; condition/loop/error for a surrounding clause; goal when a goal is called anywhere in it; variable when the result is kept.\n- A module counts as used by a step whenever the step's sentence names work that module does, EVEN IF that work only runs in some cases — the body of a condition, of a loop, or of an error handler is named by the step and counts, regardless of whether it happens to run.\n- A step that REGISTERS something to happen later — an event handler, a callback, a scheduled goal — does not do that work now. Naming a goal to be run later is not calling it; the step uses the module that does the registering.\n- Steps are listed in order and may be indented. An indented step is the body of the step above it, and belongs to that step; each step is still asked about on its own, for what its own sentence does.\n\nThis is a plang goal called Checkout. Its steps are numbered from 0.\n\nstep 0: read 'orders/%orderId%.json', write to %order%\nstep 1: count %order.items%, write to %itemCount%\nstep 2: if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"\nstep 3: if %order.email% does not contain \"@\", throw \"Invalid email address\"\nstep 4: if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%\nstep 5: if %order.total% is not a number, throw \"The total must be a number\"\nstep 6: if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25\nstep 7: math.multiply A=%order.total%, B=%vat%, write to %vatAmount%\nstep 8: if %order.note% does not start with \"#\", add %order.note% to %notes%\nstep 9: write out \"Total: %order.total%, VAT: %vatAmount%\"\n\nThese are the plang modules you may choose from:\n- assert: Test assertions: demand that something holds and fail the step with a descriptive error when it does not. A step that DEMANDS an outcome is this module; a step that merely asks whether something holds, and branches or keeps the answer, is the condition module. Only one of the two is ever used in a step, never both.\n- build: Builder internals: load, merge, validate, and save goal and step data during the build pipeline\n- cache: Modifier that wraps the preceding action with result caching for a given duration\n- callback: Run a callback — resume execution from the Data's Snapshot.\n- channel: Manage channels (set, remove) for the current or named actor.\n  e.g. `set output channel as MyGoal`\n  e.g. `set error channel as ErrorHandler`\n  e.g. `set channel \"builder\" call BuilderChannel`\n- code: Manage the provider registry: list, load, remove, and change defaults for signing, crypto, etc.\n- condition: Comparisons: ask whether something holds — equal, greater, contains, starts with, empty — and either branch on the answer (if/elseif/else) or keep it. Any yes/no question belongs here, whatever it is about: whether a list holds an item, whether text starts with something, whether a number is bigger. The subject's own module is not involved just because the question is about its contents. What follows the comparison is an ordinary action — call a goal, write out, keep the answer in a variable — and is that action's own module.\n  e.g. `compare %a% > %b%, write to %isGreater%`\n  e.g. `check if %myList% contains 20, write to %has20%`\n  e.g. `check if %name% starts with \"plang\", write to %isPlang%`\n  e.g. `check if %content% is empty, write out \"nothing here\"`\n  e.g. `else if %a% > 5, write 'mid'`\n  e.g. `if %count% > 0, call ProcessItems`\n  e.g. `if %content% is not empty`\n  e.g. `if %flag% is true, call Go`\n- crypto: Cryptographic hashing and hash verification using configurable algorithms\n  e.g. `hash %content%, write to %hash%`\n  e.g. `hash %content% with sha256, write to %hash%`\n  e.g. `verify %content% against %hash%, write to %isValid%`\n- debug: Write tag metadata onto the current call frame for diagnostics\n- environment: Run a goal, step, or action on a specified actor\n- error: Throw an error from a step (handling one is on.error)\n- event: Lifecycle event hooks: register callbacks that run before or after goals, steps, or actions\n  e.g. `before step, call LogStep, on goal pattern 'Api/*'`\n  e.g. `on ask on \"input\" channel call CaptchaGoal, write to %bindingId%`\n  e.g. `before write on \"output\" channel call LogOutput`\n  e.g. `before each goal call LogBefore`\n  e.g. `after each goal call LogAfter, level=\"info\"`\n  e.g. `before action variable.set call OnVarSet`\n  e.g. `skip action, value = %mockResponse%`\n- file: Read, write, copy, move, delete, and list files through the configured filesystem abstraction\n  e.g. `check if file.txt exists, write to %fileInfo%`\n  e.g. `list files in docs/ recursive, write to %files%`\n  e.g. `list files in %folder%`\n  e.g. `read file.txt, write to %content%`\n  e.g. `read 'config/settings.json'`\n- goal: Goals: call another goal (`call X`, on its own or as the body of an if/foreach/on-error clause) and return from the current goal\n  e.g. `call Finalize`\n  e.g. `call ProcessOrder id=%orderId%, retries=3`\n  e.g. `call /system/builder/EmitBuildEvent kind=\"done\"`\n  e.g. `if %total% > 5, call MarkBig`\n  e.g. `foreach %items%, call HandleItem item=%item%`\n  e.g. `verify %data% with contracts ['C1'], on error call HandleContractError`\n- http: HTTP client: send requests, and upload or download files\n- identity: Manage cryptographic identities: create, list, set default, rename, archive, and export keys\n- list: Inspect and manipulate in-memory lists: add, remove, sort, search, split, join, and group items\n  e.g. `add 'apple' to %fruits%`\n  e.g. `add %newItem% to %items%`\n  e.g. `add {name: \"Ada\", age: 30} to %users%`\n  e.g. `add {goal: %goal.Name%, index: %step.Index%, response: %compileResult%} to %trace.stepPasses%`\n  e.g. `insert 'first' at position 0 in %items%`\n- llm: Send prompts to an LLM and receive structured or streamed responses, with optional tool use; or ask a decision service typed yes/no and pick-one questions about a shared state\n  e.g. `system: analyze sentiment, user: %comment%, schema: {sentiment: string}, write to %result%`\n  e.g. `ask the llm \"summarise %text%\", write to %summary%`\n- loop: Iterate over a collection, executing the remaining step actions once per item\n  e.g. `foreach %items%, call ProcessItem item=%item%`\n  e.g. `foreach %rows%, write out %row%`\n  e.g. `foreach %products% as %product%, call Handle`\n  e.g. `foreach %prices% as %price% with key %sku%, write out \"%sku%: %price%\"`\n- math: Arithmetic operations on numeric values: add, subtract, multiply, divide, round, and more\n- mock: Test mocking: intercept actions by pattern and replace them with fixed responses or spy on calls\n- module: Load and unload external module DLLs at runtime to extend the available action catalog\n- on: Events: what runs when something happens — on error, the action before it failed: retry it, run a recovery, or carry on\n  e.g. `read file.txt, on error call HandleMissing`\n  e.g. `verify %data% with contracts ['C1'], on error call HandleContractError`\n  e.g. `save %doc%, on error key Conflict, write out \"already exists\"`\n  e.g. `read %path%, on error 404, write out \"missing\"`\n  e.g. `http get %url%, on error retry 3 times`\n  e.g. `write out \"hi\", on error ignore`\n  e.g. `call Save, on error retry 2 times, then call Rollback`\n  e.g. `call Save, on error call Rollback first, then retry 2 times`\n  e.g. `render %template%, on error 404 call Fallback then retry, write to %text%`\n- output: Send text or data to a channel (console, logger, audit, etc.)\n  e.g. `ask user 'what's your name?', write to %name%`\n  e.g. `ask 'Allow access? (y/n/a)', write to %answer%`\n  e.g. `write out \"Welcome back, %user.name%\"`\n  e.g. `show %message% to the user`\n  e.g. `print %result%`\n  e.g. `write %error.Message% to \"errors\" channel`\n- setting: Persistent key-value settings store backed by the System actor's data source. A step that configures a named piece of the app or a service — a timeout, a limit, an api key — is setting a setting, and the configured thing's own module is not involved. Setting a %variable% is never this module, even when the step says \"default\": that is the variable module.\n- signing: Sign and verify data payloads using pluggable cryptographic providers. Only a step whose work IS signing or verifying belongs here. Another action's step may mention being signed or unsigned — a request sent unsigned, a file saved signed — and that is an option of that action, not this module.\n- snapshot: Resume a captured snapshot — restore its Variables and CallStack and re-enter the step where execution was suspended (typically read back from a `.snapshot` file).\n  e.g. `resume %snap%`\n  e.g. `resume %snapshot%`\n- test: Discover, run, and report on PLang test goals with tag filtering and coverage tracking\n  e.g. `discover tests in 'Tests/Foo' recursive=false, write to %tests%`\n  e.g. `discover tests in '_fixtures', pattern='*.fixture.goal'`\n  e.g. `write test report format='junit', write to %report%`\n  e.g. `run tests %tests%, write to %results%`\n  e.g. `tag this test 'http', 'fast'`\n- timeout: Modifier that wraps ANOTHER action with a hard deadline, returning a 408 error on expiry. It always attaches to work being done — `read the file, timeout after 5s`. A step that only waits for time to pass, with no work to bound, is the timer module.\n- timer: Time: pause the goal for a while (wait, sleep, hold for N milliseconds or seconds), and named stopwatches for measuring elapsed time across steps\n  e.g. `wait for 60 ms`\n  e.g. `sleep 2 seconds`\n  e.g. `pause for half a second before retrying`\n- ui: Render Liquid templates from inline content or files with PLang variable injection\n  e.g. `render 'page.html' with title=%pageTitle%, write to %html%`\n  e.g. `render 'layout.html'`\n- variable: Read, write, and inspect PLang runtime variables in the current scope\n  e.g. `compress %user%, write to %archived%`\n  e.g. `decompress %archived%, write to %restored%`\n  e.g. `set %x% = 5`\n  e.g. `set default %enabled% = true`\n  e.g. `set %birthday% = \"2026-01-01\"`\n  e.g. `set %start% = \"1st jan 2026\"`\n  e.g. `set %timeout% = \"PT30S\"`\n  e.g. `set %count% = \"42\"`\n  e.g. `set %version% = \"2.0\"`\n  e.g. `set %iso%(duration) = \"PT5M\"`\n  e.g. `set %doc% = \"2026-01-01\" as text`\n  e.g. `set %img% = \"real.gif\" as image/gif strict`\n  e.g. `set %n% = \"42\" as int`\n  e.g. `get 'https://example.com/rates.json', write to %rates%`\n  e.g. `hash %password%, write to %passwordHash%`\n  e.g. `call GetUser id=%userId%, write to %user%`\n  e.g. `sort %names%, write to %sortedNames%`\n\nThese actions are asked about by name:\n- variable.set: Assign a value to a named variable, optionally coercing to a type or setting only when unset\n  e.g. `set %x% = 5`\n  e.g. `set default %enabled% = true`\n  e.g. `set %birthday% = \"2026-01-01\"`\n  e.g. `set %start% = \"1st jan 2026\"`\n  e.g. `set %timeout% = \"PT30S\"`\n  e.g. `set %count% = \"42\"`\n  e.g. `set %version% = \"2.0\"`\n  e.g. `set %iso%(duration) = \"PT5M\"`\n  e.g. `set %doc% = \"2026-01-01\" as text`\n  e.g. `set %img% = \"real.gif\" as image/gif strict`\n  e.g. `set %n% = \"42\" as int`\n  e.g. `get 'https://example.com/rates.json', write to %rates%`\n  e.g. `hash %password%, write to %passwordHash%`\n  e.g. `call GetUser id=%userId%, write to %user%`\n  e.g. `sort %names%, write to %sortedNames%`\n- goal.call: Call a named goal, injecting parameters into its context, optionally on a different actor\n  e.g. `call Finalize`\n  e.g. `call ProcessOrder id=%orderId%, retries=3`\n  e.g. `call /system/builder/EmitBuildEvent kind=\"done\"`\n  e.g. `if %total% > 5, call MarkBig`\n  e.g. `foreach %items%, call HandleItem item=%item%`\n  e.g. `verify %data% with contracts ['C1'], on error call HandleContractError`\n- output.write: Write Data to a named channel — defaults to the actor's output channel.\n  e.g. `write out \"Welcome back, %user.name%\"`\n  e.g. `show %message% to the user`\n  e.g. `print %result%`\n  e.g. `write %error.Message% to \"errors\" channel`\n- on.error: Intercept errors from the preceding action; optionally retry, run a recovery action chain, or suppress the error\n  e.g. `read file.txt, on error call HandleMissing`\n  e.g. `verify %data% with contracts ['C1'], on error call HandleContractError`\n  e.g. `save %doc%, on error key Conflict, write out \"already exists\"`\n  e.g. `read %path%, on error 404, write out \"missing\"`\n  e.g. `http get %url%, on error retry 3 times`\n  e.g. `write out \"hi\", on error ignore`\n  e.g. `call Save, on error retry 2 times, then call Rollback`\n  e.g. `call Save, on error call Rollback first, then retry 2 times`\n  e.g. `render %template%, on error 404 call Fallback then retry, write to %text%`\n- condition.if: Evaluate a condition and execute the then-branch actions; pair with elseif/else for full branching\n  e.g. `if %count% > 0, call ProcessItems`\n  e.g. `if %content% is not empty`\n  e.g. `if %flag% is true, call Go`\n- file.read: Read a file's content; optionally resolve %var% patterns in the text before returning\n  e.g. `read file.txt, write to %content%`\n  e.g. `read 'config/settings.json'`",
   "question1": {
-   "s0_@module": {
-    "type": "choice",
-    "criteria": {
-     "assert": null,
-     "build": null,
-     "cache": null,
-     "callback": null,
-     "channel": null,
-     "code": null,
-     "condition": null,
-     "crypto": null,
-     "debug": null,
-     "environment": null,
-     "error": null,
-     "event": null,
-     "file": null,
-     "goal": null,
-     "http": null,
-     "identity": null,
-     "list": null,
-     "llm": null,
-     "loop": null,
-     "math": null,
-     "mock": null,
-     "module": null,
-     "on": null,
-     "output": null,
-     "setting": null,
-     "signing": null,
-     "snapshot": null,
-     "test": null,
-     "timeout": null,
-     "timer": null,
-     "ui": null,
-     "variable": null
-    },
-    "instructions": "Step 0 of this goal is `read 'orders/%orderId%.json', write to %order%`. Which plang module does the main work of step 0?"
-   },
-   "s0_variable.set": {
-    "type": "noul",
-    "instructions": "Step 0 is `read 'orders/%orderId%.json', write to %order%`. Does step 0 use `variable.set`?",
-    "criteria": {
-     "true": "the step sets a variable or keeps a result in one: `set %x% = 5`, `set default %x% = …`, `…, write to %x%`",
-     "false": "the step keeps no value in a variable"
-    }
-   },
-   "s0_goal.call": {
-    "type": "noul",
-    "instructions": "Step 0 is `read 'orders/%orderId%.json', write to %order%`. Does step 0 use `goal.call`?",
-    "criteria": {
-     "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-     "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
-    }
-   },
-   "s0_output.write": {
-    "type": "noul",
-    "instructions": "Step 0 is `read 'orders/%orderId%.json', write to %order%`. Does step 0 use `output.write`?",
-    "criteria": {
-     "true": "the step shows or writes something out, to the user or to a named channel: `write out \"Hello\"`, `show %message%`, `write %x% to \"log\" channel`",
-     "false": "the step shows nothing; `…, write to %x%` keeps a value in a variable, it is not output"
-    }
-   },
-   "s0_on.error": {
-    "type": "noul",
-    "instructions": "Step 0 is `read 'orders/%orderId%.json', write to %order%`. Does step 0 use `on.error`?",
-    "criteria": {
-     "true": "the step says what happens when it fails: `…, on error call X`, `…, on error retry 3 times`",
-     "false": "the step says nothing about failing; throwing an error (`throw \"…\"`) is not handling one"
-    }
-   },
-   "s0_condition.if": {
-    "type": "noul",
-    "instructions": "Step 0 is `read 'orders/%orderId%.json', write to %order%`. Does step 0 use `condition.if`?",
-    "criteria": {
-     "true": "the step tests something and does its work only when it holds: `if %x% > 5, …`, `if %list% is empty`",
-     "false": "the step tests nothing"
-    }
-   },
-   "s0_file.read": {
-    "type": "noul",
-    "instructions": "Step 0 is `read 'orders/%orderId%.json', write to %order%`. Does step 0 use `file.read`?",
-    "criteria": {
-     "true": "the step reads a file's content: `read 'notes.txt'`, `read file %path%, write to %text%`",
-     "false": "the step reads no file; saving, listing or deleting a file is not reading it"
-    }
-   },
    "s1_@module": {
     "type": "choice",
     "criteria": {
@@ -8364,14 +8262,7 @@
    }
   },
   "picks": {
-   "0": {
-    "variable.set": 0.97,
-    "goal.call": 0.07,
-    "output.write": 0.06,
-    "on.error": 0.05,
-    "condition.if": 0.05,
-    "file.read": 0.99
-   },
+   "0": {},
    "1": {
     "variable.set": 0.96,
     "goal.call": 0.09,
@@ -8472,73 +8363,85 @@
     "index": 0,
     "text": "list files in '/logs', pattern \"*.log\", write to %files%",
     "indent": 0,
-    "comment": "Collect the week's errors from the log files and send the report."
+    "comment": "Collect the week's errors from the log files and send the report.",
+    "kept": false
    },
    {
     "index": 1,
     "text": "set %errors% = []",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 2,
     "text": "foreach %files%, call ScanFile file=%item%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 3,
     "text": "if %errors% is empty",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 4,
     "text": "write out \"No errors this week\"",
     "indent": 1,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 5,
     "text": "return",
     "indent": 1,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 6,
     "text": "if %files% is a list",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 7,
     "text": "write out \"Scanned the log files\"",
     "indent": 1,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 8,
     "text": "render template \"report.html\", errors=%errors%, write to %html%",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 9,
     "text": "save %html% to file '/reports/week.html'",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 10,
     "text": "call SendReport to=\"ops@example.com\", subject=\"Weekly report\", on error call LogFailure",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    },
    {
     "index": 11,
     "text": "write out \"Report sent\" to \"log\" channel",
     "indent": 0,
-    "comment": null
+    "comment": null,
+    "kept": false
    }
   ],
   "answer1": {

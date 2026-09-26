@@ -37,6 +37,12 @@ public sealed partial class @this
     [JsonIgnore]
     public string? PriorText { get; set; }
 
+    /// <summary>The step is already built: its text is the prior build's, word for word, and it kept
+    /// that build's code (goal.Merge). A kept step is not asked again — not of the decider, not of the
+    /// LLM — and its code stands. Build-time only.</summary>
+    [JsonIgnore]
+    public bool IsKept => PriorText != null && PriorText == Text && Code.Count > 0;
+
     [Store, Debug, Default]
     public int LineNumber { get; internal set; }
 

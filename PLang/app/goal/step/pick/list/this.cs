@@ -96,6 +96,8 @@ public sealed class @this
     /// unsure step is offered.</summary>
     public async Task Take(dict answer, IEnumerable<string> popular, global::app.actor.context.@this context)
     {
+        // A kept step is already built: the decider is asked nothing about it.
+        if (_step.IsKept) return;
         var prefix = Key("");
         foreach (var entry in answer.Entries(context))
         {

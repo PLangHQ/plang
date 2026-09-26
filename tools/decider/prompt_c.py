@@ -77,6 +77,8 @@ def user_message_c(goal, picks):
         for c in (s.get('comment') or '').split('\n') if s.get('comment') else []:
             out += f'\n  {pad}/ {c}'
         out += f'\n  {line}'
+        if s.get('kept'):   # already built: in the goal for context, not asked
+            out += ' => kept'; continue
         step_picks = listed(picks.get(s['index'], {}), s['text'])
         known = WRITE_TO.search(s['text'])
         pop = popular_only(picks.get(s['index'], {}))

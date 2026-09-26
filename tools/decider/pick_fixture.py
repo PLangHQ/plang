@@ -41,9 +41,14 @@ for case in e.GOLDEN:
         p = os.path.join(folder, name)
         return json.load(open(p, encoding='utf-8')) if os.path.exists(p) else {}
     goal = e.goal_of(case)
+    # one kept step (already built, its text unchanged): checkout's first — not asked, not answered
+    if case['id'] == 'checkout': goal['steps'][0]['kept'] = True
+    kept = {s['index'] for s in goal['steps'] if s.get('kept')}
     # a round recorded before error.handle became on.error: its ids and options take today's name
     renamed = lambda d: json.loads(json.dumps(d).replace('error.handle', 'on.error'))
-    answer1, answer2 = renamed(read('1.decider.answers.json')), renamed(read('2.decider.answers.json'))
+    unasked = lambda d: {k: v for k, v in d.items() if int(k[1:].split('_', 1)[0]) not in kept}
+    answer1 = unasked(renamed(read('1.decider.answers.json')))
+    answer2 = unasked(renamed(read('2.decider.answers.json')))
     probs = stage1_probs(answer1)
     split = {i: h.picks(probs[i], cat) for i in probs}
     chosen = {i: ask2 for i, (_, ask2, _) in split.items()}
@@ -82,7 +87,8 @@ for case in e.GOLDEN:
         picks[str(i)] = pick
     user = c.user_message_c(goal, {int(i): p for i, p in picks.items()})
     entries.append({'goal': case['id'], 'name': goal['name'], 'user': user,
-                    'step': [{'index': s['index'], 'text': s['text'], 'indent': s.get('indent', 0), 'comment': s.get('comment')}
+                    'step': [{'index': s['index'], 'text': s['text'], 'indent': s.get('indent', 0), 'comment': s.get('comment'),
+                              'kept': bool(s.get('kept'))}
                              for s in goal['steps']],
                     'answer1': answer1, 'answer2': answer2, 'state1': state1, 'question1': question1,
                     'state2': state2, 'question2': questions, 'picks': picks})

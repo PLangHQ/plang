@@ -393,8 +393,9 @@ public class Default : IBuilder
             return;
         }
 
-        if (prGoal.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase))
-            goal.Merge(prGoal);
+        if (!prGoal.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase)) return;
+        goal.Merge(prGoal);
+        await goal.Reopen(context);
     }
 
 }

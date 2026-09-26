@@ -274,6 +274,24 @@ public sealed partial class @this
 
     }
 
+    /// <summary>A kept step whose saved code no longer holds against today's catalogue (an action gone
+    /// or renamed, a check it now fails) is opened again — its code cleared — and rebuilt, with a
+    /// warning saying why. The step's own judgement decides; sub-goals are judged the same way.</summary>
+    public async Task Reopen(actor.context.@this context)
+    {
+        foreach (var step in Step.Items().Where(s => s.IsKept).ToList())
+        {
+            if (await step.Validate(context) is not { } invalid) continue;
+            step.Code = new global::app.goal.step.action.list.@this();
+            step.Warning.Add(new global::app.warning.@this
+            {
+                Key = "Reopened",
+                Message = $"step {step.Index}'s saved code no longer holds — rebuilt: {invalid.Message}",
+            });
+        }
+        foreach (var subGoal in Child) await subGoal.Reopen(context);
+    }
+
     /// <summary>
     /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
     /// Context travels as parameter — goals may be cached/shared.
@@ -502,7 +520,10 @@ public sealed partial class @this
 
                 var leadingSpaces = raw.Length - raw.TrimStart().Length;
                 var indent = leadingSpaces / 4;
-                var stepText = trimmed.Length > 2 ? trimmed[2..] : "";
+                // The step's text is canonical at birth: every line trimmed at both ends (its \r gone),
+                // continuation lines joined by \n — nothing inside a line changes. Readers compare and
+                // print it as is (goal.Merge's `==`, the prompts), never trimming it again.
+                var stepText = trimmed.Length > 2 ? trimmed[2..].Trim() : "";
                 var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
                 pendingComment.Clear();
 
@@ -527,7 +548,7 @@ public sealed partial class @this
                 {
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
-                    Text = currentStep.Text + "\n" + trimmed,
+                    Text = currentStep.Text + "\n" + trimmed.TrimEnd(),
                     LineNumber = currentStep.LineNumber,
                     Indent = currentStep.Indent,
                     Comment = currentStep.Comment
@@ -537,7 +558,7 @@ public sealed partial class @this
             // Escape character — \ at start of line continues previous step text
             if (currentStep != null && trimmed.StartsWith("\\"))
             {
-                var escapedText = trimmed[1..]; // strip the leading backslash
+                var escapedText = trimmed[1..].TrimEnd(); // strip the leading backslash
                 currentStep = new Step
                 {
                     Goal = currentStep.Goal,
