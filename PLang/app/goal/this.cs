@@ -253,6 +253,11 @@ public sealed partial class @this
     {
         if (existing == null) return;
 
+        Cache = existing;
+        // the source's hash — every step as written, in order — read before any step takes back its
+        // code: a condition's code carries its body, which the source already lists
+        _ = Hash;
+
         // Exact-text match only — robust to reorder/insert/delete; a text change drops the prior
         // mapping and the LLM rebuilds that step fresh. Sets PriorText so the builder can emit @known.
         var prior = existing.Step.Items().ToList();
@@ -283,12 +288,24 @@ public sealed partial class @this
 
     }
 
-    /// <summary>A kept step whose saved code no longer holds against today's catalogue (an action gone
+    /// <summary>The goal as its .pr holds it — the last build of this source (goal.Merge). Null when
+    /// the goal has no .pr yet.</summary>
+    [JsonIgnore]
+    public @this? Cache { get; private set; }
+
+    /// <summary>The goal is cached: its source is the one its <see cref="Cache"/> was built from (every
+    /// step as written, in order, and the same sub-goals), every step is cached (none reopened), and so
+    /// is every sub-goal. A cached goal isn't built again — its cache stands.</summary>
+    [JsonIgnore]
+    public bool IsCached => Cache != null && Cache.Hash == Hash && Cache.Child.Count == Child.Count
+        && Step.IsCached && Child.All(g => g.IsCached);
+
+    /// <summary>A cached step whose saved code no longer holds against today's catalogue (an action gone
     /// or renamed, a check it now fails) is opened again — its code cleared — and rebuilt, with a
     /// warning saying why. The step's own judgement decides; sub-goals are judged the same way.</summary>
     public async Task Reopen(actor.context.@this context)
     {
-        foreach (var step in Step.Items().Where(s => s.IsKept).ToList())
+        foreach (var step in Step.Items().Where(s => s.IsCached).ToList())
         {
             if (await step.Validate(context) is not { } invalid) continue;
             step.Code = new global::app.goal.step.action.list.@this();

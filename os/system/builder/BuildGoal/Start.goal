@@ -2,6 +2,9 @@ Start
 / Build one .goal file: decide which actions each step uses, let the LLM write each step's actions in
 / formal, read them into the steps, then recurse into sub-goals.
 
+/ A cached goal — the source its .pr was built from, every step and sub-goal cached — isn't built:
+/ its cache stands.
+- if %goal.IsCached%, return %goal.Cache%
 - call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
 - set %buildStart% = %Now.Ticks%
 - set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": "%goal.Name%", "subGoals": [], "durationMs": 0}
@@ -27,6 +30,8 @@ Compile
 / answers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read
 / the answer, each checking its own line, and take their code. A step refused goes back to the LLM
 / alone; an else written apart from its if is the programmer's to fix, not the LLM's.
+/ Steps that are all cached have nothing to ask.
+- if %goal.Step.IsCached%, return
 - call Decide
 - call Properties
 - build.match Goal=%goal%, Answer=%answer%, on error key "ElseWithoutIf" call SourceError, on error call FixSteps first, then retry 1 times

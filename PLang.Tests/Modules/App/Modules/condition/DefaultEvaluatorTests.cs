@@ -195,4 +195,45 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         var fp = new global::app.type.item.path.file.@this(missing);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
     }
+
+    // --- `if %x%` alone — no Operator: Left's own truth ---
+
+    private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Truth(object? left)
+        => _eval.Evaluate(new If(_app.User.Context) { Left = D(left) });
+
+    [Test] public async Task BareIf_TrueBool_IsTrue() => await Assert.That(IsTrue(await Truth(true))).IsTrue();
+    [Test] public async Task BareIf_FalseBool_IsFalse() => await Assert.That(IsFalse(await Truth(false))).IsTrue();
+
+    [Test] public async Task BareIf_ExistingPath_IsTrue()
+    {
+        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
+        var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
+        System.IO.File.WriteAllText(file, "x");
+        await Assert.That(IsTrue(await Truth(new global::app.type.item.path.file.@this(file)))).IsTrue();
+        System.IO.File.Delete(file);
+    }
+
+    [Test] public async Task BareIf_MissingPath_IsFalse()
+        => await Assert.That(IsFalse(await Truth(new global::app.type.item.path.file.@this(
+            System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt"))))).IsTrue();
+
+    // --- Operands, judged at build ---
+
+    private global::app.data.@this<global::app.type.item.choice.@this<Operator>> Op(string op)
+        => _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op));
+
+    [Test] public async Task Operands_AComparisonWithoutRight_IsRefused()
+        => await Assert.That((await _eval.Operands(Op("=="), null))?.Key).IsEqualTo("OperandMissing");
+
+    [Test] public async Task Operands_EmptinessWithRight_IsRefused()
+        => await Assert.That((await _eval.Operands(Op("isempty"), D(1)))?.Key).IsEqualTo("OperandExtra");
+
+    [Test] public async Task Operands_RightWithoutOperator_IsRefused()
+        => await Assert.That((await _eval.Operands(null, D(1)))?.Key).IsEqualTo("OperandExtra");
+
+    [Test] public async Task Operands_RightNullWritten_IsARight()
+        => await Assert.That(await _eval.Operands(Op("=="), _app.User.Context.Ok((object?)null))).IsNull();
+
+    [Test] public async Task Operands_LeftAlone_IsLeftsTruth()
+        => await Assert.That(await _eval.Operands(null, null)).IsNull();
 }

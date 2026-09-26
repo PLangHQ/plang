@@ -6,6 +6,7 @@ Build
 - set default %path% = "/"
 - set default %!build.cache% = true
 - set default %!build.summary% = true
+- set %traceGoals% = []
 - set channel "builder" call BuilderChannel
 - call EmitBuildEvent kind="build-path", path=%path%
 - build.load, write to %app%

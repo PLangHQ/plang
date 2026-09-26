@@ -1,0 +1,4 @@
+[0] condition.if(Left=%goal.Step.IsCached%) { goal.return() }
+[1] goal.call(Name="Decide")
+[2] goal.call(Name="Properties")
+[3] build.match(Goal=%goal%, Answer=%answer%); on.error(Recovery=[goal.call(Name="SourceError")])

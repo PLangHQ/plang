@@ -60,6 +60,12 @@ public partial class @this
             }
         }
 
+        // the handler's own judgement: the combinations of its properties only it knows are legal. A
+        // literal its slot declines is the build's to name, not a judgement.
+        if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass own
+            && (await own.Parse()).Count == 0 && await own.Validate() is { } complaint)
+            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.StatusCode));
+
         if (causes.Count == 0) return null;
         return new global::app.error.Error(
             string.Join("; ", causes.Select(c => c.Message)), "ActionInvalid", 400)

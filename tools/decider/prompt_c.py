@@ -156,7 +156,7 @@ def user_message_c(goal, picks):
             out += f'\n  {pad}/ {c}'
         out += f'\n  {line}'
         if s.get('kept'):   # already built: in the goal for context, not asked
-            out += ' => kept'; continue
+            out += ' => cached'; continue
         step_picks = listed(picks.get(s['index'], {}), s['text'])
         known = WRITE_TO.search(s['text'])
         pop = popular_only(picks.get(s['index'], {}))

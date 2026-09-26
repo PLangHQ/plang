@@ -63,9 +63,14 @@ public class BootstrapTests
                 ? s.Split(", ").Select(int.Parse).ToHashSet() : new HashSet<int>();
             if (!refused.SetEquals(caught))
                 differ.Add($"{rel} {goal.Name}: C# refused [{string.Join(", ", refused)}] where python refused [{string.Join(", ", caught)}]: {first?.Message}");
-            if (answers.GetProperty("retry").GetString() is { } retry && first != null
-                && await goal.Step.Read(retry, context) is { } second)
+            // after the retry: C# refuses where python still did, and only there
+            var pythonStill = answers.GetProperty("refused").GetArrayLength() > 0;
+            var second = answers.GetProperty("retry").GetString() is { } retry && first != null
+                ? await goal.Step.Read(retry, context) : null;
+            if (second != null && !pythonStill)
                 differ.Add($"{rel} {goal.Name}: after the retry C# still refuses: {second.Message}");
+            if (second == null && pythonStill)
+                differ.Add($"{rel} {goal.Name}: after the retry C# takes what python still refused");
         }
         var folded = await new global::app.module.action.build.code.Default().Fold(
             new global::app.module.action.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(root) });

@@ -23,7 +23,7 @@ public sealed class TypeSafe : IDecider
         var context = action.Context;
         var app = context.App;
 
-        // nothing asked (every step kept) — nothing to send: the answer is empty
+        // nothing asked (every step cached) — nothing to send: the answer is empty
         var questions = await action.Question.Value();
         if (questions == null || questions.CountRaw == 0)
             return context.Ok(new global::app.type.item.dict.@this());

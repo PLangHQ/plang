@@ -114,9 +114,48 @@
     },
     {
       "index": 3,
-      "text": "set channel \"builder\" call BuilderChannel",
+      "text": "set %traceGoals% = []",
       "line": {
         "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%traceGoals%"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set channel \"builder\" call BuilderChannel",
+      "line": {
+        "number": 10
       },
       "code": [
         {
@@ -164,10 +203,10 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
       "line": {
-        "number": 10
+        "number": 11
       },
       "code": [
         {
@@ -211,10 +250,10 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "build.load, write to %app%",
       "line": {
-        "number": 11
+        "number": 12
       },
       "code": [
         {
@@ -265,10 +304,10 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "build.goals path=%path%, write to %goals%",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
@@ -319,10 +358,10 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
       "line": {
-        "number": 13
+        "number": 14
       },
       "code": [
         {
@@ -366,10 +405,10 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "foreach %goals%, call BuildGoal goal=%item%",
       "line": {
-        "number": 14
+        "number": 15
       },
       "code": [
         {
@@ -428,10 +467,10 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "line": {
-        "number": 15
+        "number": 16
       },
       "code": [
         {
@@ -460,10 +499,10 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "build.appSave",
       "line": {
-        "number": 16
+        "number": 17
       },
       "code": [
         {
@@ -479,7 +518,7 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "65ce61154526b17395e7cd2812cf5ea7ab307aba61ce0bb12241a05351a580eb",
+  "hash": "e48b5a0478e99a76967f562e1a2adbefb82aa5c003f4bde87652963e0164ebda",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

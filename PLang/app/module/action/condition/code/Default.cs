@@ -11,11 +11,33 @@ public sealed class Default : IEvaluator
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
+    // A property left out is born uninitialized; a written Right=null is initialized, holding null.
+
     public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(If action) =>
-        EvaluateOperator(action.Operator, action.Left, action.Right);
+        action.Operator is { IsInitialized: true } op ? EvaluateOperator(op, action.Left, action.Right) : Truth(action.Left, action.Context);
 
     public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Elseif action) =>
-        EvaluateOperator(action.Operator, action.Left, action.Right);
+        action.Operator is { IsInitialized: true } op ? EvaluateOperator(op, action.Left, action.Right) : Truth(action.Left, action.Context);
+
+    public async Task<global::app.error.Error?> Operands(data.@this<global::app.type.item.choice.@this<Operator>>? op, data.@this? right)
+    {
+        var hasRight = right is { IsInitialized: true };
+        if (op is not { IsInitialized: true })
+            return !hasRight ? null : new ValidationError(
+                "Right is compared by an Operator — write the Operator, or leave Right out for Left's own truth", "OperandExtra");
+        if (op.HasVariableReference) return null;   // an operator named by a variable is known at run
+        Operator written = (await op.Value())!;
+        return written.Operands(hasRight);
+    }
+
+    /// <summary>A condition with no Operator is Left's own truth — the value answers for itself (a
+    /// path: does it exist). An absent variable is false; a failed Left is its error.</summary>
+    private async Task<data.@this<global::app.type.item.@bool.@this>> Truth(data.@this left, actor.context.@this context)
+    {
+        if (!left.Success) return context.Error<global::app.type.item.@bool.@this>(left.Error!);
+        var present = await TolerateAbsentVariable(left);
+        return context.Ok<global::app.type.item.@bool.@this>(await Operator.IsTruthy(present));
+    }
 
     public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Compare action) =>
         EvaluateOperator(action.Operator, action.Left, action.Right);

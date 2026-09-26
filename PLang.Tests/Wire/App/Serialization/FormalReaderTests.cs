@@ -40,6 +40,18 @@ public class FormalReaderTests
         string.Join(", ", ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Single().Modifier
             .Select(m => $"{m.Module.Name}.{m.Name}{(m["StatusCode"] is { } s ? $"({s.Value})" : "")}"));
 
+    // a goal's name in an action slot is refused where it's read, naming the fix — never held as a value
+    // nothing can read back
+    [Test]
+    public async Task AnActionSlot_GivenAName_IsRefused()
+    {
+        var read = Read("channel.set(Name=\"builder\", Goal=\"BuilderChannel\")", out _);
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Message).Contains("`Goal` takes an action");
+        await Read("channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))", out _).IsSuccess();
+    }
+
     [Test]
     public async Task Modifiers_WrittenInEitherOrder_NestTheSame()
     {

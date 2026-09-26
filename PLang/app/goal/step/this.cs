@@ -36,11 +36,11 @@ public sealed partial class @this
     [JsonIgnore]
     public string? PriorText { get; set; }
 
-    /// <summary>The step is already built: its text is the prior build's, word for word, and it kept
-    /// that build's code (goal.Merge). A kept step is not asked again — not of the decider, not of the
+    /// <summary>The step is cached: its text is the prior build's, word for word, and it holds that
+    /// build's code (goal.Merge). A cached step is not asked again — not of the decider, not of the
     /// LLM — and its code stands. Build-time only.</summary>
     [JsonIgnore]
-    public bool IsKept => PriorText != null && PriorText == Text && Code.Count > 0;
+    public bool IsCached => PriorText != null && PriorText == Text && Code.Count > 0;
 
     /// <summary>Where the step is written: its line in the .goal file and its indent.</summary>
     [Store, LlmBuilder, Debug, Default]

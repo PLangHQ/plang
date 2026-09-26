@@ -1,9 +1,10 @@
 namespace PLang.Tests.App.Decider;
 
 // An unchanged step is not rebuilt: its text is canonical at birth, goal.Merge gives it back its saved
-// code, and a kept step is asked nothing — no decider question, `=> kept` in prompt C, its answer line
-// set aside — so its code in the new .pr is byte-equal to the old. A kept step whose saved code no
-// longer holds is opened again, with a warning.
+// code, and a cached step is asked nothing — no decider question, `=> cached` in prompt C, its answer
+// line set aside — so its code in the new .pr is byte-equal to the old. A cached step whose saved code
+// no longer holds is opened again, with a warning. A goal whose source and steps are all cached isn't
+// built again.
 public class KeptStepTests
 {
     private static string RepoRoot()
@@ -61,7 +62,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[2].Text).IsEqualTo("write out \"c\"");
-        await Assert.That(second.Step.Items().Select(s => s.IsKept).ToList()).IsEquivalentTo(new[] { true, false, true });
+        await Assert.That(second.Step.Items().Select(s => s.IsCached).ToList()).IsEquivalentTo(new[] { true, false, true });
 
         // only the changed step is asked of the decider, and prompt C marks the others kept
         await Picked(second, context, 1, "output.write");
@@ -100,8 +101,68 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].Code.Count).IsEqualTo(0);
-        await Assert.That(second.Step[0].IsKept).IsFalse();
+        await Assert.That(second.Step[0].IsCached).IsFalse();
         await Assert.That(second.Step[0].Warning.Single().Key).IsEqualTo("Reopened");
-        await Assert.That(second.Step[1].IsKept).IsTrue();
+        await Assert.That(second.Step[1].IsCached).IsTrue();
+        await Assert.That(second.IsCached).IsFalse();
+    }
+
+    // The goal its .pr was built from, unchanged, is cached — and the build reads that through the goal.
+    [Test]
+    public async Task TheSourceItsPrWasBuiltFrom_IsCached()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+
+        var first = Parse(First, context);
+        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        var second = Parse(First, context);
+        second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
+        await second.Reopen(context);
+
+        await Assert.That(second.IsCached).IsTrue();
+        await Assert.That(second.Cache!.Hash).IsEqualTo(second.Hash);
+        await context.Variable.Set("goal", second);
+        await Assert.That((await (await context.Variable.Get("goal.IsCached")).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await context.Variable.Get("goal.Step.IsCached")).Value())?.ToString()).IsEqualTo("true");
+
+        // the build's guard: `if %goal.IsCached%` — a bare if, Left's own truth
+        var guard = new global::app.module.action.condition.If(context) { Left = await context.Variable.Get("goal.IsCached") };
+        var answer = await new global::app.module.action.condition.code.Default().Evaluate(guard);
+        await Assert.That((await answer.Value())?.ToString()).IsEqualTo("true");
+    }
+
+    // A step deleted: the steps left are cached, but the goal isn't — its .pr is written again.
+    [Test]
+    public async Task AStepDeleted_ItsStepsAreCached_TheGoalIsNot()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+
+        var first = Parse(First, context);
+        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        var second = Parse("Start\n- write out \"a\"\n- write out \"c\"\n", context);
+        second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
+        await second.Reopen(context);
+
+        await Assert.That(second.Step.IsCached).IsTrue();
+        await Assert.That(second.IsCached).IsFalse();
+    }
+
+    // A changed step: neither its steps nor the goal are cached.
+    [Test]
+    public async Task AStepChanged_NothingIsCached()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+
+        var first = Parse(First, context);
+        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        var second = Parse(Second, context);
+        second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
+        await second.Reopen(context);
+
+        await Assert.That(second.Step.IsCached).IsFalse();
+        await Assert.That(second.IsCached).IsFalse();
     }
 }

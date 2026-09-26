@@ -314,6 +314,10 @@ public sealed class Formal
                     Fail($"`{prop}` names a variable: write it with its % signs", at);
             }
 
+            // an action slot holds an action as written (or a variable holding one) — a name alone is not one
+            if (declared.Type.Name == "action" && value.Action == null && !value.IsVariable)
+                Fail($"`{prop}` takes an action: write the action itself, {prop}=goal.call(Name=\"…\")", at);
+
             // the type: the declared one; in an open slot the written one, else the literal's own
             var typeName = declaredFace != "item" ? declaredFace : written ?? LiteralType(value);
             var type = _context.App.Type[typeName];

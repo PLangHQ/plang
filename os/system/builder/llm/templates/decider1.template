@@ -1,5 +1,5 @@
 {% comment %}
-Stage 1 of the decider — per step (a kept step, already built, is not asked) ONE choice (which module does the main work; the options are the
+Stage 1 of the decider — per step (a cached step, already built, is not asked) ONE choice (which module does the main work; the options are the
 bare module names, their descriptions are in the state once) and a yes/no per common action, with
 what yes and no mean (decider.json). Keys and wording are the eval's (tools/decider/harness.py
 stage1_questions); a twin test holds the two equal.
@@ -9,7 +9,7 @@ Needs: goal, modules (%!app.module.list%), decider (decider.json).
 {
 {%- assign sep = "" -%}
 {%- for s in goal.Step -%}
-{%- if s.IsKept -%}{%- continue -%}{%- endif -%}
+{%- if s.IsCached -%}{%- continue -%}{%- endif -%}
 {%- assign text = s.Text -%}
 {%- capture id %}s{{ s.Index }}_@module{% endcapture -%}
 {%- capture ask %}Step {{ s.Index }} of this goal is `{{ text }}`. Which plang module does the main work of step {{ s.Index }}?{% endcapture %}

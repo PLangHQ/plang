@@ -85,6 +85,17 @@ public sealed class Operator
         Evaluate = eval;
     }
 
+    /// <summary>The operator asks of Left alone: emptiness takes no Right.</summary>
+    public bool IsUnary => Value is "isempty" or "isnotempty";
+
+    /// <summary>What's wrong with this operator's operands as written, or null: emptiness asks of Left
+    /// alone; every other operator compares Left with a Right (<c>Right=null</c> written is a Right).</summary>
+    public global::app.error.Error? Operands(bool right) =>
+        IsUnary && right ? new global::app.error.Error($"'{Value}' asks of Left alone — leave Right out", "OperandExtra", 400)
+        : !IsUnary && !right ? new global::app.error.Error(
+            $"'{Value}' compares Left with Right, and Right is missing — for Left's own truth (is it true, does it exist, is it set) leave Operator out", "OperandMissing", 400)
+        : null;
+
     public static implicit operator string(Operator op) => op.Value;
     public static implicit operator Operator(string s) => new(s);
     public override string ToString() => Value;

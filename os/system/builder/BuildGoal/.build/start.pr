@@ -3,9 +3,75 @@
   "step": [
     {
       "index": 0,
+      "text": "if %goal.IsCached%, return %goal.Cache%",
+      "line": {
+        "number": 7
+      },
+      "comment": "A cached goal — the source its .pr was built from, every step and sub-goal cached — isn't built:\nits cache stands.",
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%goal.IsCached%"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.return(Data=%goal.Cache%)",
+              "line": {
+                "number": 7
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "return",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%goal.Cache%"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "depth",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses goal.return, which the decider was not sure of (0.86)"
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
       "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
       "line": {
-        "number": 5
+        "number": 8
       },
       "code": [
         {
@@ -55,10 +121,10 @@
       "waitForExecution": true
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "set %buildStart% = %Now.Ticks%",
       "line": {
-        "number": 6
+        "number": 9
       },
       "code": [
         {
@@ -95,10 +161,10 @@
       "waitForExecution": true
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}",
       "line": {
-        "number": 7
+        "number": 10
       },
       "code": [
         {
@@ -135,10 +201,10 @@
       "waitForExecution": true
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "call Compile, on error call HandleBuildFailure",
       "line": {
-        "number": 8
+        "number": 11
       },
       "code": [
         {
@@ -207,10 +273,10 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "set %parentGoal% = %goal%",
       "line": {
-        "number": 10
+        "number": 13
       },
       "code": [
         {
@@ -247,10 +313,10 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
       "line": {
-        "number": 11
+        "number": 14
       },
       "code": [
         {
@@ -309,10 +375,10 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "set %goal% = %parentGoal%",
       "line": {
-        "number": 12
+        "number": 15
       },
       "code": [
         {
@@ -349,10 +415,10 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
       "line": {
-        "number": 14
+        "number": 17
       },
       "code": [
         {
@@ -429,10 +495,10 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
       "line": {
-        "number": 15
+        "number": 18
       },
       "code": [
         {
@@ -508,10 +574,10 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "set %trace.durationMs% = %elapsedMs%",
       "line": {
-        "number": 16
+        "number": 19
       },
       "code": [
         {
@@ -548,10 +614,10 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
       "line": {
-        "number": 18
+        "number": 21
       },
       "code": [
         {
@@ -580,10 +646,10 @@
       "waitForExecution": true
     },
     {
-      "index": 11,
+      "index": 12,
       "text": "add %goal.Name% to %traceGoals%",
       "line": {
-        "number": 19
+        "number": 22
       },
       "code": [
         {
@@ -620,10 +686,10 @@
       "waitForExecution": true
     },
     {
-      "index": 12,
+      "index": 13,
       "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
       "line": {
-        "number": 21
+        "number": 24
       },
       "comment": "Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save.",
       "code": [
@@ -685,10 +751,10 @@
       "waitForExecution": true
     },
     {
-      "index": 13,
+      "index": 14,
       "text": "build.goalsSave Goal=%goal%",
       "line": {
-        "number": 22
+        "number": 25
       },
       "code": [
         {
@@ -715,11 +781,82 @@
       "step": [
         {
           "index": 0,
+          "text": "if %goal.Step.IsCached%, return",
+          "line": {
+            "number": 34
+          },
+          "comment": "The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider\nanswers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read\nthe answer, each checking its own line, and take their code. A step refused goes back to the LLM\nalone; an else written apart from its if is the programmer's to fix, not the LLM's.\nSteps that are all cached have nothing to ask.",
+          "code": [
+            {
+              "module": "condition",
+              "name": "if",
+              "property": [
+                {
+                  "name": "Left",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%goal.Step.IsCached%"
+                },
+                {
+                  "name": "Operator",
+                  "type": {
+                    "name": "choice",
+                    "kind": "operator"
+                  },
+                  "value": "=="
+                },
+                {
+                  "name": "Right",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "child": [
+                {
+                  "index": 0,
+                  "text": "goal.return()",
+                  "line": {
+                    "number": 34
+                  },
+                  "code": [
+                    {
+                      "module": "goal",
+                      "name": "return",
+                      "property": [],
+                      "default": [
+                        {
+                          "name": "depth",
+                          "type": {
+                            "name": "number"
+                          },
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "waitForExecution": true
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses goal.return, which the decider was not sure of (0.82)"
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
           "text": "call Decide",
           "line": {
-            "number": 30
+            "number": 35
           },
-          "comment": "The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider\nanswers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read\nthe answer, each checking its own line, and take their code. A step refused goes back to the LLM\nalone; an else written apart from its if is the programmer's to fix, not the LLM's.",
           "code": [
             {
               "module": "goal",
@@ -747,10 +884,10 @@
           "waitForExecution": true
         },
         {
-          "index": 1,
+          "index": 2,
           "text": "call Properties",
           "line": {
-            "number": 31
+            "number": 36
           },
           "code": [
             {
@@ -779,10 +916,10 @@
           "waitForExecution": true
         },
         {
-          "index": 2,
+          "index": 3,
           "text": "build.match Goal=%goal%, Answer=%answer%, on error key \"ElseWithoutIf\" call SourceError, on error call FixSteps first, then retry 1 times",
           "line": {
-            "number": 32
+            "number": 37
           },
           "code": [
             {
@@ -917,7 +1054,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "7d49eac0fc52458d05fb9f48b7410c353ec4aaabf29b8c112eb4d64c7f5fa00d",
+      "hash": "d2dff0f7243e493755482bafa40ed772fdb2ebf53ce4d18f1d1eedb53e22f9a9",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -930,7 +1067,7 @@
           "index": 0,
           "text": "call /system/builder/EmitBuildEvent kind=\"properties-rejected\", errorMessage=%!error.Message%",
           "line": {
-            "number": 39
+            "number": 44
           },
           "comment": "The answer was refused for some steps — each refusal names its step and every problem at once.\nContinue the conversation with them; only those steps are answered again, and the others keep the\ncode they took.",
           "code": [
@@ -970,7 +1107,7 @@
           "index": 1,
           "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal.\"}]",
           "line": {
-            "number": 40
+            "number": 45
           },
           "code": [
             {
@@ -1010,7 +1147,7 @@
           "index": 2,
           "text": "llm.query Message=%fixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%",
           "line": {
-            "number": 41
+            "number": 46
           },
           "code": [
             {
@@ -1131,7 +1268,7 @@
           "index": 0,
           "text": "set %goal% = %subGoal%",
           "line": {
-            "number": 46
+            "number": 51
           },
           "comment": "Sub-goal recursion — the same three stages, attached to the parent trace.",
           "code": [
@@ -1172,7 +1309,7 @@
           "index": 1,
           "text": "call /system/builder/EmitBuildEvent kind=\"subGoalHeader\", goal=%goal%",
           "line": {
-            "number": 47
+            "number": 52
           },
           "code": [
             {
@@ -1225,7 +1362,7 @@
           "index": 2,
           "text": "set %subgoalStart% = %Now.Ticks%",
           "line": {
-            "number": 48
+            "number": 53
           },
           "code": [
             {
@@ -1265,7 +1402,7 @@
           "index": 3,
           "text": "call Compile, on error call HandleBuildFailure",
           "line": {
-            "number": 49
+            "number": 54
           },
           "code": [
             {
@@ -1337,7 +1474,7 @@
           "index": 4,
           "text": "add {goal: \"%goal.Name%\"} to %trace.subGoals%",
           "line": {
-            "number": 50
+            "number": 55
           },
           "code": [
             {
@@ -1377,7 +1514,7 @@
           "index": 5,
           "text": "math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%",
           "line": {
-            "number": 51
+            "number": 56
           },
           "code": [
             {
@@ -1457,7 +1594,7 @@
           "index": 6,
           "text": "math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%",
           "line": {
-            "number": 52
+            "number": 57
           },
           "code": [
             {
@@ -1536,7 +1673,7 @@
           "index": 7,
           "text": "call /system/builder/EmitBuildEvent kind=\"subGoalDone\", goal=%goal%, subgoalMs=%subgoalMs%",
           "line": {
-            "number": 53
+            "number": 58
           },
           "code": [
             {
@@ -1603,7 +1740,7 @@
           "index": 0,
           "text": "render template \"/system/builder/llm/SourceFix.llm\", write to %sourceFixSystem%",
           "line": {
-            "number": 60
+            "number": 65
           },
           "comment": "The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the\ncorrected plang for the programmer; the same error is raised again carrying it, and the build of\nthis goal stops there.",
           "code": [
@@ -1657,7 +1794,7 @@
           "index": 1,
           "text": "set %sourceFixMessages% = [{\"Role\":\"system\", \"Content\":\"%sourceFixSystem%\"}, {\"Role\":\"user\", \"Content\":\"%!error.Key%: %!error.Message%\\n\\nThe goal:\\n%goal%\"}]",
           "line": {
-            "number": 61
+            "number": 66
           },
           "code": [
             {
@@ -1697,7 +1834,7 @@
           "index": 2,
           "text": "llm.query Message=%sourceFixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, write to %sourceFix%",
           "line": {
-            "number": 62
+            "number": 67
           },
           "code": [
             {
@@ -1804,7 +1941,7 @@
           "index": 3,
           "text": "throw %!error%, fix suggestion %sourceFix%",
           "line": {
-            "number": 63
+            "number": 68
           },
           "code": [
             {
@@ -1866,7 +2003,7 @@
           "index": 0,
           "text": "call /system/builder/EmitBuildEvent kind=\"goalError\", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%",
           "line": {
-            "number": 68
+            "number": 73
           },
           "comment": "Capture error onto trace, save, rethrow. No null-pass inference.",
           "code": [
@@ -1936,7 +2073,7 @@
           "index": 1,
           "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}",
           "line": {
-            "number": 69
+            "number": 74
           },
           "code": [
             {
@@ -1976,7 +2113,7 @@
           "index": 2,
           "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
           "line": {
-            "number": 70
+            "number": 75
           },
           "code": [
             {
@@ -2008,7 +2145,7 @@
           "index": 3,
           "text": "throw %!error%",
           "line": {
-            "number": 71
+            "number": 76
           },
           "code": [
             {
@@ -2059,7 +2196,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Start.goal",
   "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "4915860f487ec9d902682e6754b434f87d00697820023257d5db3886f15ce83f",
+  "hash": "a7263bf588df8e272e11f183906419e803e9c63177d23f8a13b36835a775a80e",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

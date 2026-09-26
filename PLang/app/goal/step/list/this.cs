@@ -38,6 +38,17 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         return result;
     }
 
+    /// <summary>Every step is cached — built before, word for word, its code standing (none reopened).
+    /// A step list that is cached has nothing to ask.</summary>
+    public bool IsCached => Items().All(s => s.IsCached);
+
+    /// <summary>The step list answers what it knows of itself (<c>%goal.Step.IsCached%</c>); any other
+    /// key is a list's read.</summary>
+    public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
+        => string.Equals(key, nameof(IsCached), System.StringComparison.OrdinalIgnoreCase)
+            ? new data.@this(key, IsCached, parent: parent)
+            : await base.Get(parent, key);
+
     /// <summary>The steps indented under the step at <paramref name="index"/> — the consecutive steps
     /// after it written deeper than it: its body as the author laid it out (the parser records each
     /// step's indent). Empty when nothing is indented under it.</summary>
@@ -139,7 +150,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 }
             }
             step.Code = actions;
-            if (await step.Validate(context) is { } invalid)
+            var invalid = await step.Validate(context);
+            if (invalid != null)
             {
                 key ??= invalid.Key == "ElseWithoutIf" ? invalid.Key : null;
                 foreach (var cause in invalid.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
@@ -147,7 +159,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             // the answer holds what the step's words say — checked on the answer as written, before the
             // handlers' Build may change it
             foreach (var uncovered in await step.Cover(context)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
-            if (await actions.Build(context) is { } failed)
+            // only code that judged itself sound is built
+            if (invalid == null && await actions.Build(context) is { } failed)
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
             var (disagree, warnings) = step.Pick.Agree(actions);
             foreach (var why in disagree) Refuse(i, why);

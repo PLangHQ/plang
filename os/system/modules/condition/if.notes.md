@@ -1,9 +1,10 @@
 Left — the value tested, as the step writes it.
-Operator — the comparison, one of choice<operator>. A negation is its own operator, never written anywhere else.
-Right — what Left is compared to. Left out for isempty / isnotempty.
+Operator — the comparison, one of choice<operator>. A negation is its own operator, never written anywhere else. Left out when the step names only Left: then the condition is Left's own truth.
+Right — what Left is compared to. Left out for isempty / isnotempty, and when Operator is.
 
 | the step says | Operator | Right |
 |---|---|---|
+| `if %x%` alone (is it true, does it exist, is it set) | left out | left out |
 | `is 5`, `equals %b%`, `is "x"`, `is true`, `is null` | == | the value |
 | `is not 5`, `does not equal %b%`, `is not null` | != | the value |
 | `is less than`, `is more than`, `is at least`, `is at most` | <, >, >=, <= | the value |
