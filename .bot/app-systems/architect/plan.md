@@ -24,7 +24,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 
 **`Start` is the entry point of everything that runs (Ingi).** As `Start.goal` is plang's entry: `app.Start()`, `goal.Start(context)`, `step.Start`, `action.Start`, each handler's `Start()`, a list's `Start`, a code's `Start`. It's virtual, so an owner can change what starting it means. **A value keeps `Value()`** (Ingi); anything that has code also has `Start`, for consistency. A variable is both: `variable.Value()` → `variable.Start(context)` → `Code.Start(context)`.
 
-**What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on/create.cs` → `app.type.text.on.create(LoadText)`.
+**What runs, runs in a module.** A step maps only to module actions. `%!app…%` and every `%…%` only read (a method call inside `%…%` must not change anything). An action's C# hands over to the owner in one line: `on/after.cs` → `app.type.text.on.after.create(LoadText)`.
 
 | plang | C# | file |
 |---|---|---|
@@ -47,7 +47,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 | 5 | **Faces:** system (`list` names, `kind`, `scheme`, `choice`); a type (`name`, `description`, `example`, `kind`); a choice type adds `values`; a kind (`name`, `extension`, `mime`). Prompt C's Types section renders from these facts (`properties.template:82` already reads type facts). `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die | yes: twins byte-equal, or one eval run |
 | 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is `text` + `code`; `Value()` → `Start(context)` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value | yes: `"variable"` in the .pr; twins + one eval run |
 | 7 | **Every system in the same shape:** goal (93 references), actor (15), module (11), test (87), variable (the system at `app/variable/this.cs`, freed by stage 6). Each: `X/this.cs` system + `X/X/this.cs` element, `.list`, `["name"]`, `.name`, `.current` where it means something, a face | no |
-| 8 | **`on` and `current` per object:** events move from `event.on(Trigger=…)` into `X.on.<moment>` (`app.type.text.on.create`, `goal.on.error`, `%user%.on.change`). The `on` module's actions are one-line doors (`on.create`, `on.step`, `on.goal`, …; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- on file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
+| 8 | **`on` and `current` on every object** (details below): events move from `event.on(Trigger=…)` to the object, as `on.before.<verb>` / `on.after.<verb>` for every public verb, plus outcomes (`on.error`, `on.hit`, `on.miss`). The `on` module's actions are one-line doors (`on.before`, `on.after`, the outcome actions; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- after file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
 | 9 | **`%!app` holds its systems:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one system (a clash fails loudly); `%setting.X%` stays as a short form | no |
 | 10 | **Tests through the app's own doors:** `new app.@this(test: true)`, `app.variable.set("some", "var")`, `await app.module["file"]["read"].Start(new { Path = "…" })` (a start of that action with those property values, through `action.Start`). The static helpers `TestApp`/`TestAction` die. The builder warns about goals no public goal reaches (dead code); `app.Test.Coverage` shows what the tests reached | a build warning |
 | 11 | **Exception pass, before the branch closes:** go over every `throw` in the code this branch touched. A problem the programmer caused is an error in the result; an exception only ever means plang itself is broken. Most should already be gone by then (the name lookups become `["name"]` doors answering NotFound; `Push` answers the overflow; the .pr readers return their error) | no |
@@ -80,23 +80,38 @@ Each stage is its own commits, green against the baseline before the next starts
 
 ## Events on each object (stage 8), settled with Ingi 2026-09-26
 
-Each moment moves from `event.on`'s one `Trigger` list to the object it happens to. `start`/`end` replace `before`/`after` everywhere (a write is `on write start` / `on write end`).
+Events are on everything, and they cost nothing unless bound: an object's `On` is null until something binds, and a method's call is `On?.Before.Create(this, context)`, returning at once.
 
-| object | `on.` moments | today's trigger |
+**The rule, one line: every public verb has `on.before.<verb>` and `on.after.<verb>`; an outcome that isn't a method is named for what happened (`on.error`, cache `on.hit` / `on.miss`).** The event name is the method's own name, so the three paths agree (`goal.Start()` → `on.before.start`), and a new verb gets its events for free.
+
+```csharp
+// sketch
+public item Create(…, context)
+{
+    On?.Before.Create(this, context);        // null, or no bindings → nothing happens
+    …
+    On?.After.Create(this, context);
+}
+```
+
+| object | verbs → events | today's `Trigger` |
 |---|---|---|
-| app | `start`, `end` | BeforeAppStart, AfterAppStart |
-| goal | `start`, `end`, `error`, `load` | BeforeGoal, AfterGoal, OnError, OnBefore/AfterGoalLoad |
-| step | `start`, `end`, `load` | BeforeStep, AfterStep, OnBefore/AfterStepLoad |
-| action | `start`, `end` | BeforeAction, AfterAction |
-| variable | `create`, `change`, `remove` | OnVariableChange (create and remove are new) |
-| type | `create` | new |
-| channel | `write`, `read`, `ask` (write and read with `start`/`end`) | BeforeWrite/AfterWrite, BeforeRead/AfterRead, OnAsk |
-| cache | `hit`, `miss` | OnCacheHit, OnCacheMiss |
+| app | `Start` | BeforeAppStart, AfterAppStart |
+| goal, step | `Start`, `Load`; goal `on.error` | BeforeGoal/AfterGoal, BeforeStep/AfterStep, OnBefore/After…Load, OnError |
+| action | `Start` | BeforeAction, AfterAction |
+| type (any value) | `Create` (`app.type.text.on.before.create`) | new |
+| variable | `Set`, `Remove` | OnVariableChange |
+| channel | `Write`, `Read`, `Ask` | BeforeWrite/AfterWrite, BeforeRead/AfterRead, OnAsk |
+| cache | outcomes `on.hit`, `on.miss` | OnCacheHit, OnCacheMiss |
+| actor, module, setting, test, … | their verbs, by the same rule | new |
+
+- **`current`** during a handler is the item passed in (`this`): `%!app.type.text.current%` is the text being created.
+- **An object's own `on` vs its type's:** `%user%`'s bindings are that one variable's; `app.type.text.on…` binds every text.
 
 ```
-- on goal start, call LogStart           → on.start(… goal …, Goal=goal.call(LogStart))
-- on text create, call LoadText          → app.type.text.on.create(LoadText)
-- on %user% change, call UserChanged     → the variable's on.change
+- before goal start, call LogStart        → on.before(… goal.Start …, goal.call(LogStart))
+- after text create, call LoadText        → app.type.text.on.after.create(LoadText)
+- after %user% set, call UserChanged      → the variable's on.after.set
 ```
 
 ## Cross-cutting decisions
@@ -122,7 +137,7 @@ Each moment moves from `event.on`'s one `Trigger` list to the object it happens 
 | reflection over the C# `App` as `%!app`'s answer | 9 |
 | `PLang.Tests/Shared/TestApp.cs`, `TestAction.cs` (statics) | 10 |
 
-**Stays:** `modifier.list`; the `on.error` modifier; `mock.intercept` (it mocks an action; `on.create` mocks a value, a different layer); the builder pipeline as built on builder-formal.
+**Stays:** `modifier.list`; the `on.error` modifier; `mock.intercept` (it mocks an action; `on.after.create` mocks a value, a different layer); the builder pipeline as built on builder-formal.
 
 ## OBP validation
 
