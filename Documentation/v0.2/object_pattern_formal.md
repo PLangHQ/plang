@@ -106,6 +106,18 @@ You navigate the graph by name; the name alone must tell you what you'll find.
 
 **Test**: if the name could describe two different things, it's too broad. If you need two words, you haven't found the right one.
 
+### The three paths agree
+
+The plang path, the C# path (namespace and class) and the file path name the same thing. When they line up, the objects are in the right places and named for what they are. When one of them has to be explained, the design is off at that spot.
+
+| plang | C# | file |
+|---|---|---|
+| `%!app.type%` | `App.Type`, class `app.type.@this` | `app/type/this.cs` |
+| `%!app.type.list%` | `App.Type.list` | a member of `app/type/this.cs` |
+| `%!app.type.text%` | `App.Type["text"]`, class `app.type.type.@this` | `app/type/type/this.cs` |
+
+**Test**: write a thing's three paths side by side. If one needs a sentence to explain it ("the type system is reached at `app.type` but lives at `type/list/this.cs`"), fix the shape, not the sentence.
+
 ### Keep the reference
 
 Store the object, not extracted fields. Store `Step`, not `step.Text`. Decomposing objects into primitives discards information, and the flat copy drifts when the source changes. Wrapper DTOs exist only at serialization boundaries.
