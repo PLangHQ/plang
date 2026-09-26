@@ -1527,3 +1527,6 @@ An idea, not a todo. It lives at `/shared/research/kyc-proofs/README.md` (index:
 
 ## 2026-09-26 — argument rows as their own type
 goal.call's `Parameter` (and ui.render's) is declared a plain `list` (data<list>), the same type as any free list slot. The formal parsers refuse `[{name: …}]` in every plain-list slot, a guard meant for mis-written argument rows (builder-formal 4d). So a real list slot can't take a list of dicts written with bare keys; only `item` slots read one. Fix: argument rows become their own declared type (e.g. `arguments`), the refusal keys on that type, and plain list slots read any list.
+
+## 2026-09-26 — nano double-escapes `\n` inside a text in a list of dicts
+Found in the builder-formal bootstrap: `set %fixMessages% = [{"Role":"user", "Content":"…%!error.Message%\n\nAnswer again…"}]`. Nano wrote `\\n\\n` (a backslash-n in the value, not a new line) in 4 of 4 asks, retries included, and even after a teaching line. Literal coverage refuses it correctly (it's a different value). The builder's own step was reworded to avoid it. Deterministic fix to consider, rather than more prompt: the step's quoted literals come from the programmer's text, which is the truth. When an answer's literal differs from exactly one of the step's literals only by escaping, the builder takes the step's literal (with a debug note). Then one eval round.
