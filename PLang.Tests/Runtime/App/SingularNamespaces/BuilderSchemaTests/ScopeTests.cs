@@ -196,6 +196,23 @@ public class ScopeTests
     }
 
     [Test]
+    public async Task AnActionHeldInAValueSlot_IsRefused()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("AddItem", Make.Step("set %total% = %a% + %b%"));
+        await Picked(goal, app.System.Context, (0, "variable.set"), (0, "math.add"));
+
+        var result = await Match(goal, """
+            [0] variable.set(Name=%total%, Value=math.add(A=%a%, B=%b%))
+            """, app.System.Context);
+
+        // variable.set's Value takes a value: holding math.add there would store the action, not the sum
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("variable.set's Value holds an action (math.add), but Value takes a value");
+        await Assert.That(goal.Step[0].Code.Count).IsEqualTo(0);
+    }
+
+    [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {
         await using var app = TestApp.Create("/test");

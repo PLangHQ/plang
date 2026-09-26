@@ -44,11 +44,20 @@ public partial class @this
                         "MissingProperty", 400));
             }
             foreach (var property in Property)
-                if (element.Property[property.Name] == null)
+            {
+                if (element.Property[property.Name] is not { } slot)
                     causes.Add(new global::app.error.Error(
                         $"{Module}.{Name}: '{property.Name}' is not a property of this action. " +
                         $"Its properties are: {string.Join(", ", element.Property.Select(p => p.Name))}.",
                         "UnknownProperty", 400));
+                // an action held as a value belongs only in a slot that takes actions (action, list<action>)
+                else if (property.Value is @this held && !(slot.Type.Name == "action"
+                         || (slot.Type.Name == "list" && slot.Type.Kind?.Name == "action")))
+                    causes.Add(new global::app.error.Error(
+                        $"{Module}.{Name}'s {property.Name} holds an action ({held.Module.Name}.{held.Name}), but " +
+                        $"{property.Name} takes a value. Write the action first, then {Module}.{Name}({property.Name}=%!data%).",
+                        "ActionAsValue", 400));
+            }
         }
 
         if (causes.Count == 0) return null;
