@@ -22,7 +22,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 
 **`list` is a real object (Ingi).** Each system's `list` is its `X.list` type (`app/goal/list/this.cs`), which inherits from the plang list: it prints, enumerates, counts and indexes like any list, and carries its own members.
 - `%!app.goal.list%` is the goals loaded so far (goals load when they're called, `goal/list/this.cs:128-176`).
-- **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 10) uses it.
+- **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 11) uses it.
 - **Every list has `all`, for consistency.** Where everything is already present (the types are registered at startup), `all` answers the list itself, so nobody needs to know which systems load lazily.
 - **`all` takes settings (Ingi):** a method with named, optional parameters; `.all` without parentheses runs it with the defaults (one door). For goals: `show` = `public` (default) | `private` | `all`, and `os` = whether os/system goals are included (default false: the app's own goals). `%!app.goal.list.all(show: "all", os: true)%`. The default lists each `.pr`'s main goal without reading the files; `private`/`all` read them for their sub-goals.
 - A list is navigated by index, so `list.all` never clashes with an element's name; one element by name stays on the system (`%!app.goal.Start%`).
@@ -39,7 +39,7 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 
 **`Start` is the entry point of everything that runs (Ingi).** As `Start.goal` is plang's entry: `app.Start()`, `goal.Start(context)`, `step.Start`, `action.Start`, each handler's `Start()`, a list's `Start`, a code's `Start`. It's virtual, so an owner can change what starting it means. **A value keeps `Value()`** (Ingi); anything that has code also has `Start`, for consistency. A variable is both: `variable.Value()` → `variable.Start(context)` → `Code.Start(context)`.
 
-**plang vocabulary is lowercase in C# too (Ingi).** Everything plang can reach is a lowercase member: `app.type`, `app.goal`, `app.variable`, `app.module`, `app.actor`, `app.test`, and their `list`, `current`, `all`, `on`, and the facts a face shows. C# plumbing plang never navigates stays PascalCase; a C# keyword keeps its `@` (`app.@event`); an item's own `Type` (its type entity) stays. So the three paths match letter for letter: `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/type/this.cs`. Each system's property on `app` is renamed in the stage that moves it (type: stage 2; the others: stage 7). This replaces CLAUDE.md's "Property names on `app.@this` stay PascalCase" (proposal filed).
+**plang vocabulary is lowercase in C# too (Ingi).** The structure plang navigates is lowercase: `app.type`, `app.goal`, `app.variable`, `app.module`, `app.actor`, `app.test`, their `list`, `current`, `all`, `on`, `before`, `after` and the event classes. Facts keep their C# names (`Name`, `Path`, `Comment`): plang writes its paths in lowercase (`%!app.goal.show.name%`) and its navigation ignores case, and the face writes facts lowercase already. C# plumbing plang never navigates stays PascalCase, including an item's `Variable` list and a variable's `Code` (`%order.variable%` must reach the order's own key, not the item's metadata); a C# keyword keeps its `@` (`app.@event`); an item's own `Type` (its type entity) stays. So the three paths match letter for letter: `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/type/this.cs`. Each system's property on `app` is renamed in the stage that moves it (type: stage 2; the others: stage 7). This replaces CLAUDE.md's "Property names on `app.@this` stay PascalCase" (proposal filed).
 
 **Nodes lowercase, verbs PascalCase (Ingi: "the line where C# executes, and in C# starts uppercase").** Lowercase is what plang navigates (`app.type`, `list`, `current`, `on.before.create`, the facts). PascalCase is what C# calls: `Start()`, `Value()`, `Add()`, `Load()`. plang never calls a verb through a path (what runs, runs in a module; `%…%` only reads), so a verb is C#'s alone and sits with C# library methods (`ToString`, `DisposeAsync`). A read inside `%…%` (`%now.tostring("dd.")%`) works either way, since plang's navigation ignores case.
 
@@ -67,9 +67,10 @@ public sealed class @this : app.type.item.list.@this<goal.goal.@this>
 | 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (53 references). A variable is `text` + `code`; `Value()` → `Start(context)` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables, null when none); `HasVariable => Variable?.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value. **Every installed .pr with marked rows** (the builder's 7, `test.pr`, `show.pr`) is rewritten with its `"variable"` lists by a throwaway C# pass (the parser over each marked value, written through `plang.Text`; no LLM), since the loader refuses a marked row without its list | yes: `"variable"` in the .pr; twins + one eval run |
 | 7 | **Every system in the same shape:** goal (93 references), actor (15), module (11), test (87), variable (the system at `app/variable/this.cs`, freed by stage 6). Each: `X/this.cs` system + `X/X/this.cs` element, `.list` (with `all`), `["name"]`, `.name`, `.current` where it means something, a face; its property on `app` goes lowercase (`App.Goal` → `app.goal`, …) | no |
 | 8 | **`on` and `current` on every object** (details below): events move from `event.on(Trigger=…)` to the object, as `on.before.<verb>` / `on.after.<verb>` for every public verb, plus outcomes (`on.error`, `on.hit`, `on.miss`). The `on` module's actions are one-line doors (`on.before`, `on.after`, the outcome actions; `on.error`, the modifier, stays). `current` is each object's own answer. Payoff: value-level mocking (`- after file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
-| 9 | **`%!app` holds its systems:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one system (a clash fails loudly); `%setting.X%` stays as a short form | no |
-| 10 | **Tests through the app's own doors:** `new app.@this(test: true)`, `app.variable.set("some", "var")`, `await app.module["file"]["read"].Start(new { Path = "…" })` (a start of that action with those property values, through `action.Start`). The static helpers `TestApp`/`TestAction` die. The builder warns about goals no public goal reaches (dead code); `app.Test.Coverage` shows what the tests reached | a build warning |
-| 11 | **Exception pass, before the branch closes:** go over every `throw` in the code this branch touched. A problem the programmer caused is an error in the result; an exception only ever means plang itself is broken. Most should already be gone by then (the name lookups become `["name"]` doors answering NotFound; `Push` answers the overflow; the .pr readers return their error) | no |
+| 9 | **Module pass, with file.read as the template (Ingi):** fix file.read first and make it the worked example of a correct action, written up as a doc ("how an action is written"). Then go over every module against it, one module per commit. The checklist: (1) plang values are born through their type (`app.type.file.Create(…)`; `new` only inside the type); (2) `Start()` hands over to the owner in one line; (3) no opened box, no broken seal (no `.Value()` on what it returns or forwards); (4) errors are results; (5) properties are typed (`Data<T>`), write targets are variables; (6) events fire from the owner, not the handler | per module: twins where a prompt changes |
+| 10 | **`%!app` holds its systems:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one system (a clash fails loudly); `%setting.X%` stays as a short form | no |
+| 11 | **Tests through the app's own doors:** `new app.@this(test: true)`, `app.variable.Set("some", "var")`, `await app.module["file"]["read"].Start(new { Path = "…" })` (a start of that action with those property values, through `action.Start`). The static helpers `TestApp`/`TestAction` die. The builder warns about goals no public goal reaches (dead code); `app.Test.Coverage` shows what the tests reached | a build warning |
+| 12 | **Exception pass, before the branch closes:** go over every `throw` in the code this branch touched. A problem the programmer caused is an error in the result; an exception only ever means plang itself is broken. Most should already be gone by then (the name lookups become `["name"]` doors answering NotFound; `Push` answers the overflow; the .pr readers return their error) | no |
 
 Each stage is its own commits, green against the baseline before the next starts.
 
@@ -99,7 +100,9 @@ Each stage is its own commits, green against the baseline before the next starts
 
 ## Events on each object (stage 8), settled with Ingi 2026-09-26
 
-Events are on everything, and they cost nothing unless bound: an object's `On` is null until something binds, and a method's call is `On?.Before.Create(this, context)`, returning at once.
+Events are on everything, and they cost nothing unless bound: an object's `on` is null until something binds, and the call is `on?.before.create.Start(this, context)`, returning at once.
+
+**A value is born through its type, so `create` fires every time.** Today plang values are born with `new` in at least 78 production places (`file/read.cs:72`: `new global::app.type.item.file.@this(path, Context, template)`), none passing the type, so `after file create` would miss them; a constructor can't fire it (it can't await, and an item stores no context). Stage 8 makes the type's `Create` door (`type/this.cs:340`) fire `on.before/after.create`; stage 9 moves every birth onto it (`new` of a plang value only inside its type).
 
 **The rule, one line: every public verb has `on.before.<verb>` and `on.after.<verb>`; an outcome that isn't a method is named for what happened (`on.error`, cache `on.hit` / `on.miss`).** The event name is the method's own name, so the three paths agree (`goal.Start()` → `on.before.start`), and a new verb gets its events for free.
 
@@ -165,8 +168,8 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 ## Cross-cutting decisions
 
 - **The .pr:** a marked row without its `"variable"` list is an old format (PrFormatOutdated, rebuild), not something to parse on load.
-- **Errors, not exceptions (Ingi):** a problem the programmer caused is an error in the result, never an exception. An exception only ever means plang itself is broken. New code in every stage follows it; stage 11 checks the rest once.
-- **Builder-visible stages (5, 6, 8):** the prompt twins stay byte-equal, or the change gets one eval run (C + nano, the 5 goals + the builder's 12). No nano chasing past that.
+- **Errors, not exceptions (Ingi):** a problem the programmer caused is an error in the result, never an exception. An exception only ever means plang itself is broken. New code in every stage follows it; stage 12 checks the rest once.
+- **Builder-visible stages (5, 6, 8, and 9 where a module's prompt teaching changes):** the prompt twins stay byte-equal, or the change gets one eval run (C + nano, the 5 goals + the builder's 12). No nano chasing past that.
 - **Renames of hundreds of references** go through the compiler's positions and the Edit tool (the hook blocks sed), in the stage that moves the class.
 - **Rulings from builder-formal that carry over:** only a marked value renders `%var%` (the row's `template: plang`); file.read's item is born marked; `variable.list.Resolve` is gone (text renders itself).
 
@@ -182,8 +185,9 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | `app/variable/path/` (`Parse`, `Segment` and its kinds, `Segment.Index.Key`'s string re-parse, `Segment.Call.Args`); the walker's switch and clr special case (`data/this.Navigation.cs:33-94`); `data.TryFullVarMatch`; static `text.HasVariable(string)`; `CleanName` ×2 (`data/this.cs:647`, `variable/list/this.cs:617`); `variable.@this.Convert`'s hand scan; the regexes in `step/this.Validate.cs:26`, `step/this.Scope.cs:9`, `pick/list/this.cs:90,96`; `data.HasVariableReference` | 6 |
 | the per-concept `X.list.@this` as the class reached at `app.X` (goal, actor, module, test) | 7 |
 | `event.on`, `Trigger` as a list of moments beside the objects | 8 |
-| reflection over the C# `App` as `%!app`'s answer | 9 |
-| `PLang.Tests/Shared/TestApp.cs`, `TestAction.cs` (statics) | 10 |
+| every direct `new` of a plang value outside its type (≥ 78 production sites); whatever else the checklist catches, per module | 9 |
+| reflection over the C# `App` as `%!app`'s answer | 10 |
+| `PLang.Tests/Shared/TestApp.cs`, `TestAction.cs` (statics) | 11 |
 
 **Stays:** `modifier.list`; the `on.error` modifier; `mock.intercept` (it mocks an action; `on.after.create` mocks a value, a different layer); the builder pipeline as built on builder-formal.
 
@@ -197,7 +201,9 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 | the parser | — | `app.type.item.variable.parser.@this` | `app/type/item/variable/parser/this.cs` | the only definition of a reference |
 | an item's variables | — (a value's own) | `item.Variable` | `app/type/item/this.cs` | read-only, born whole, null when none |
 | variable system | `%!app.variable%` | `app.variable` | `app/variable/this.cs` | the memory of the actor in play |
-| an object's events | `%!app.type.text.on%` (read) | `x.On` | each element's folder | registered by a step through the `on` module |
+| an object's events | `%!app.type.text.on%` (read) | `x.on` | `app/event/before/<verb>/this.cs`, `app/event/after/<verb>/this.cs` | registered by a step through the `on` module; null until bound |
+| a value's birth | — | `app.type.file.Create(…)` | `app/type/type/this.cs` (`Create`) | the one door; fires `on.before/after.create`; `new` only inside the type |
+| how an action is written | — | — | a doc, file.read as its worked example | the module pass's template |
 | starting an action from C# | — | `app.module["file"]["read"].Start(…)` | `module/module/…` | through `action.Start`; nothing test-only |
 | every goal | `%!app.goal.list.all%` | `app.goal.list.all(show, os)` | `app/goal/list/this.cs` | a method with optional parameters; `.all` = the defaults |
 | a goal's description | `%!app.goal.Show.comment%` | `goal.Comment` | `app/goal/goal/this.cs` | the lines above the goal's name; the only description member |
@@ -205,4 +211,4 @@ A system's face is a summary (names only); detail comes by navigating to one ele
 
 ## Open for the next round
 
-Round 1 closed: every open point settled. Next: round 2, a full pass over the plan.
+Rounds 1–3 closed. Round 3 added: lowercase covers the structure (facts keep their C# names), values born through their type (`create` fires reliably), and the module pass with file.read as the template (stage 9). Next: round 4, a full pass.
