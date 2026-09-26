@@ -4,6 +4,14 @@ Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's h
 
 ## 2026-09-26 morning — Ingi: build 10 tests with the new builder and run them
 
+**First run (`0632b4410`): 6/10 pass** (Simple/Start, IfBoolTruthy, TextForEach, IntDiv, WriteToCustomChannel, VariableRendersValueOnly). 2 not built, loudly (nano dropped an on-error clause; the decider missed on.error). 2 fail at run. Runtime bugs fixed on the way: json integral numbers read as double; goal.Hash ignored folded bodies (always stale); the agreement only saw top-level actions; a property variable (`%x!p%`) dropped its `!p` in formal. **My calls:**
+  - DurationRoundTrip (nano invented `Type=%duration%`, a SILENT miss): a common-step line for `%x%(type)` plus **reverse variable coverage** (an answer %var% the step doesn't name refuses, except %!…%);
+  - MissingVarIsNotNullValue: null answers `.Type` if other values do, otherwise the test is stale;
+  - the test report writes a test's goal as a reference (name + path), not the program;
+  - fix the CLI choice setting (`--test={"format":"text"}`).
+  
+  Then rerun the 10.
+
 Chosen (Tests/): Simple/Start, ScalarsAsNative/Stage5/IfBoolTruthy, Stage2/TextForEachDoesNotIterateChars, Math/IntDivSevenByTwoIsThree, Errors/ThrowAttachesData, Errors/GoalFirstReturnsRecoveryValue, Channels/WriteToCustomChannel (+Logger), Serialization/VariableRendersValueOnly, Cleanups/DurationRoundTrip, ScalarsAsNative/Stage6/MissingVarIsNotNullValue. They cover set/templates, if bodies, foreach + sub-goal, math, throw/on error, channels, properties, typed set and null. Coder builds them, runs `plang --test` on them, and reports a table (built / passed / time / which layer failed).
 
 ## 2026-09-26 morning — for Ingi: the plang builder builds
