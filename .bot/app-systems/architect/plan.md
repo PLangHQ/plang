@@ -17,31 +17,52 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 ## The shape
 
 **Every `app.X` is the type X (Ingi, round 5).** This reverses two earlier rulings: the separate system class (`X/this.cs` the system, `X/X/this.cs` one X, from the parked draft) and stage 4's "a system is not a plang value type". There are no system classes and no doubled files. The type named `goal` is what knows the goals, the same way the type named `text` knows text's kinds.
+- **`app.X` is a `type<X>` (Ingi: "`%!app.goal%` is `app/goal/this.cs`, no type there").** One generic class, `type.@this<T>` (`type/this.Generic.cs`), serves every concept; there is no class per concept and no `X/type/` folder. `app.goal` is `new type.@this<goal.@this>("goal", new goal.list.@this(app))`: the type named `goal`, defined by `goal/this.cs`. `%!app.goal%` and `%!app.type.goal%` are the same object.
 - **One X stays where it is:** `goal/this.cs`, `type/this.cs` (one type), `module/this.cs`.
-- **The type X is `X/type/this.cs`, a `type.@this<X>`:** `goal/type/this.cs` is the type named `goal`; `type/type/this.cs` is the type named `type` (today's registry, `type/list/this.cs`). `%!app.goal%` and `%!app.type.goal%` are the same object.
+- **The concept's own work lives in its list:** `X/list/this.cs` becomes a `list<X>`, as `step.list` (`goal/step/list/this.cs:14`) and `action.list` (`goal/step/action/list/this.cs:16`) already are. Goal's list keeps its store and its loading of `.pr` files; the registry, `type/list/this.cs`, becomes the `list<type>` at `app.type.list` and keeps the lookups by other keys (`Mime`, `Extension`, `[System.Type]`: `app.type.list.Mime(…)`). Today goal's, module's and actor's list classes don't inherit the plang list (`goal/list/this.cs:13`, `module/list/this.cs:14`, `actor/list/this.cs:8`).
+- **No name clash in the registry:** a `list<T>` subclass is a kind of list and claims no name (`Registry.cs:246-254`), and the open generic `type.@this<T>` (reflection name "this\`1") isn't taken for an `@this` class (`:237-238`), so it claims nothing, like `list.@this<T>`.
 - **A value type (text, number) is a plain `type.@this`** built from the catalog; it has no `list`.
 
 **Members of a collected type (`type.@this<X>`):**
 - `list`: a `list<X>`, the X's loaded so far; `list.all` is every one (below).
+- `current(context)`: the one in play, an X (`%!app.goal.current%` is a `goal/this.cs` instance, Ingi). The element's class answers it through a `static virtual` member, the same pattern as ICreate's `Create` (`type/item/ICreate.cs`): goal `context.Goal` (`actor/context/this.cs:100`), actor `context.Actor` (`:89`); a concept nothing is inside answers none (404). A method taking only the context is navigated like a property (`type/list/this.cs:527-528`), so plang writes `%!app.goal.current%`.
 - `["key"]`: `list.all.First(p => p.Match(key))`, answering `data<X>`. No match is a 404 NotFound result, not an exception (today both lookups throw: `goal/list/this.cs:244`, `type/list/this.cs:171`).
 - **The element says which key is its own (`IMatch.Match(key)`, one line each):** a goal its `Address` (`goal/this.cs:214`: its .goal path without the extension, `/system/builder/EmitBuildEvent`, the name that reaches it from anywhere); a type its name or one of its aliases (`"string"` → text; each type owns its aliases, stage 3); a module or an actor its name. A precision (`int`) is a kind of number, not an alias: `["number"].kind["int"]`. The spelled forms `"text/md"` and `"list<path>"` become `["text"].kind["md"]` and `["list"].kind["path"]`. (`type.Is(string)`, `type/this.cs:438`, isn't reused: it answers true for `item` on every type.)
 - `.key`: shorthand for `["key"]` where the key is a plain word (`%!app.type.text%`, `%!app.module.file%`). The type's own members win: `%!app.type.list%` is the list, and the type named `list` is `["list"]`. A goal's key is a path, so a goal is always `%!app.goal["/show"]%`.
-- `current`, the facts, `on` and `kind`, as on every type.
+- the facts, `on` and `kind`, as on every type.
 - **A bare goal name is `call`'s lookup, not the indexer's (Ingi; reverses round 3's "a bare name resolves the way call does").** `call Start` searches from the caller: the caller, its children, each ancestor and theirs, then the caller's folder and up (`goal/list/this.cs:131-169`). `goal["x"]` takes an address only, and searches `list.all`, so a goal that isn't loaded yet still answers.
 
 ```csharp
 // sketch: type/this.Generic.cs — NEW; the same pattern as item/list/this.Generic.cs
 namespace app.type;
-public abstract class @this<T> : @this
-    where T : item.@this, item.ICreate<T>, item.IMatch
+public sealed class @this<T> : @this
+    where T : item.@this, item.ICreate<T>, item.IMatch, item.ICurrent<T>
 {
-    protected @this(string name) : base(name) { }                                // base ctor: type/this.cs:105
-    public abstract item.list.@this<T> list { get; }                             // each concept fills its own
+    public @this(string name, item.list.@this<T> list) : base(name) => this.list = list;   // base ctor: type/this.cs:105
+    public item.list.@this<T> list { get; }
     public data.@this<T> this[string key] => list.all.First(p => p.Match(key));  // p is a T: plain C#
+    public data.@this<T> current(actor.context.@this context)
+        => T.Current(context) is { } one ? data.@this<T>.Ok(one)
+           : data.@this<T>.FromError(new Error($"no {Name} is current", "NotFound", 404));
 }
+
+// sketch: app/this.cs — the properties' types change; today goal.list.@this (:146), type.list.@this (:210), module.list.@this (:135)
+public type.@this<goal.@this>   goal   { get; }   // new("goal", new goal.list.@this(this))
+public type.@this<type.@this>   type   { get; }   // new("type", the registry: type/list/this.cs)
+public type.@this<module.@this> module { get; }   // new("module", new module.list.@this(this))
 
 // sketch: type/item/IMatch.cs — NEW: what a collected element answers to
 public interface IMatch { bool Match(string key); }
+
+// sketch: type/item/ICurrent.cs — NEW: which one is in play; the ICreate pattern
+public interface ICurrent<TSelf> where TSelf : @this, ICurrent<TSelf>
+{
+    static virtual TSelf? Current(actor.context.@this context) => null;          // nothing is ever inside it
+}
+// goal/this.cs — NEW
+public static goal.@this? Current(actor.context.@this context) => context.Goal;
+// actor/this.cs — NEW
+public static actor.@this? Current(actor.context.@this context) => context.Actor;
 
 // sketch: goal/this.cs — NEW
 public bool Match(string key) => string.Equals(Address, key, System.StringComparison.OrdinalIgnoreCase);
@@ -57,13 +78,6 @@ public data.@this<T> First(System.Func<T, bool> match)
         if (match(item)) return data.@this<T>.Ok(item);                          // data/this.cs:713
     return data.@this<T>.FromError(new Error($"no {typeof(T).Name} matches", "NotFound", 404));   // :714
 }
-
-// sketch: goal/type/this.cs — NEW: the type named "goal" (today's goal/list/this.cs is its list)
-public sealed class @this : global::app.type.@this<goal.@this>
-{
-    public @this(app.@this app) : base("goal") { … }
-    public override goal.list.@this list { get; }                               // covariant: goal's own list class
-}
 ```
 
 **`list<T>` is strict (Ingi: "stricter is always better").** `list<T>` takes `T : item, ICreate<T>`, as `data<T>` does (`data/this.cs:698`); today it takes `T : item` (`item/list/this.Generic.cs:15`). Gaining ICreate: test (`test/this.cs:16`), test timing (`test/timing/this.cs:12`), `LlmMessage` (`llm/LlmMessage.cs:12`), type (`type/this.cs:32`, also unsealed), and module, which isn't an item yet (`module/this.cs:12`). Goal, step, action, actor, path, text, tag and identity already are.
@@ -73,7 +87,7 @@ public sealed class @this : global::app.type.@this<goal.@this>
 - **The type is an item.** It writes its face through `Output` (facts, any writer), a formatter (a template) presents them, and it answers its own navigation (`Get(parent, key)`: a member first, else `this[key]`, else NotFound). Like every item, it stores no context: the caller passes it.
 - **Where `current` gets its context (Ingi):** `%!app%` is a variable in the actor's own memory, registered with that context (`actor/context/this.cs:165`), and navigating from it carries that context down every hop. So `%!app.goal.current%` is answered by the goal type's navigation from the asker's context. `current` stays on every type where it means something (goal, actor, test), for symmetry; C# code that holds the context gets the same answer as `context.Goal`.
 
-**`list` is a real object (Ingi).** Each collected type's `list` is a `list<X>`: it prints, enumerates, counts and indexes like any list, and carries its own members. Goal has its own list class, `goal/list/this.cs : list.@this<goal.@this>` (today's collection, keeping its store and loading), because its `all` is special; a type whose elements are all present uses a plain `list<X>`.
+**`list` is a real object (Ingi).** Each collected type's `list` is its concept's `X/list/this.cs`, a `list<X>`: it prints, enumerates, counts and indexes like any list, and carries its own members (goal's store and loading; the registry's lookups).
 - `%!app.goal.list%` is the goals loaded so far (goals load when they're called).
 - **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 11) and `goal["address"]` use it.
 - **Every list has `all`, for consistency.** Where everything is already present (the types are registered at startup), `all` answers the list itself, so nobody needs to know which types load lazily.
@@ -100,13 +114,13 @@ public sealed class @this : app.type.item.list.@this<goal.@this>
 
 | plang | C# | file |
 |---|---|---|
-| `%!app.type%` | `app.type` | `app/type/type/this.cs`, the type named `type` (a `type.@this<type.@this>`) |
-| `%!app.type.list%` | `app.type.list` | a member, `list<type>` |
+| `%!app.type%` | `app.type` | `app/type/this.cs`, the type named `type` (a `type<type>`) |
+| `%!app.type.list%` | `app.type.list` | `app/type/list/this.cs`, the registry as a `list<type>` |
 | `%!app.type["text"]%`, `%!app.type.text%` | `app.type["text"]` | `app/type/this.cs`, one type |
-| `%!app.goal%`, `%!app.type.goal%` | `app.goal` | `app/goal/type/this.cs`, the type named `goal` |
-| `%!app.goal.list%` | `app.goal.list` | `app/goal/list/this.cs`, `list<goal>` |
+| `%!app.goal%`, `%!app.type.goal%` | `app.goal` | `app/goal/this.cs`, the type named `goal` (a `type<goal>`) |
+| `%!app.goal.list%` | `app.goal.list` | `app/goal/list/this.cs`, a `list<goal>` |
 | `%!app.goal["/show"]%` | `app.goal["/show"]` | `app/goal/this.cs`, one goal |
-| `%!app.goal.current%` | `app.goal.current` | the running goal |
+| `%!app.goal.current%` | `app.goal.current(context)` | `app/goal/this.cs`, the running goal |
 | `%!app.variable.some%` | `app.variable["some"]` | the type named `variable`; its list is the asker's memory (`app/variable/list/this.cs`); see Open |
 | `Start.goal` | `app.Start()`, `goal.Start(context)` | the entry point, one word everywhere |
 
@@ -116,12 +130,12 @@ public sealed class @this : app.type.item.list.@this<goal.@this>
 |---|---|---|
 | 0 | **Base:** re-record builder-formal's `Compile` (TypeSafe is back) so its BootstrapTests pass; take a baseline of the six suites | — |
 | 1 | **`Run` → `Start`:** the C# entry verb of every executable object (`goal/this.cs:325`, `step/this.cs:111`, `step/list/this.cs:28`, `action/this.cs:165`, `action/list/this.cs:31`, the event bindings `binding/this.cs:44`, `binding/list/this.cs:22,28`), every handler's `Run()` (126 files) and the generator's emit. Starting one action is one verb end to end: today it's `action.Run` → `call.ExecuteAsync` (`callstack/call/this.cs:225`) → `handler.Execute()` (`ICodeGenerated.cs:37`) → the handler's `Run()`; `Execute`/`ExecuteAsync` go with `Run`. Virtual where an owner may override. No behaviour change. plang action names (`environment.run`, `test.run`, …) are plang vocabulary and not part of this. **Also** (fresh-eyes review): `list.range` already has a plang property `Start` (`list/range.cs:8`), which clashes with a `Start()` method, so it's renamed (builder-visible); `action.Return` finds the return type with `GetMethod("Run")` (`action/this.Schema.cs:53`), and the string changes with the rename; `App.Run<TAction>` (`app/this.cs:431,454`) and `RunGoalAsync` are in scope; `test.@this.Start()` already means "start the stopwatch" (`test/this.cs:80`) and gets another name; about 157 test files call `Run` | yes: range's property rename; twins |
-| 2 | **Move the registry:** `type/list/this.cs` → `type/type/this.cs`, the type named `type`. `type/this.cs` stays one type, so its 257 full-name references (`app.type.@this`) don't move; the `app.type.list.@this` references (34 in 18 files) and the `AppTypes` alias do. `App.Type` → `app.type` (lowercase). No behaviour change. **C# note:** a lowercase property hides a same-named namespace (a class owning `type` can no longer write `type.item.text.@this`, CS1061; checked by compiling), so references to those namespaces are written `global::app.type…` in every class that owns such a property | no |
+| 2 | **`app.type` lowercase:** no file moves. `type/this.cs` stays one type and `type/list/this.cs` stays the registry (the list of types from stage 4). `App.Type` → `app.type` (lowercase). No behaviour change. **C# note:** a lowercase property hides a same-named namespace (a class owning `type` can no longer write `type.item.text.@this`, CS1061; checked by compiling), so references to those namespaces are written `global::app.type…` in every class that owns such a property | no |
 | 3 | **One set of types:** the maps become one set, each type owning its name, aliases (`Alias`), C# class and facts, and answering `Match(key)`. `Add` is the one way in; `Load` is the startup scan; `Get`/`Clr` become the one door. The name door's spellings go: an alias is the type's own (`Primitive.Aliases`, `type/list/this.cs:79,241`), a precision is number's kind (`Precision`, `:189-195`), and `"text/md"` / `"list<path>"` (`:161-169`) are written `["text"].kind["md"]`. **The registry's `Choice`, `Kind` and `Scheme` stores (`:40,48,56`) move onto the types they belong to (Ingi):** a type's `kind` is an object that knows its type (`%!app.type.text.kind%`), `kind.list` gives md, csv, …, and `kind["md"]` is one kind; choice works the same way (`choice/this.cs`, its `.list` the sets); path's schemes are its kinds. `Add` carries the static `Loader`'s checks that `code.load` relies on (`code/load.cs:40`): sealed names (a loaded DLL can't replace identity, signature, callback or channel, `Loader.cs:55-59`), reserved names (`type`, `error`, `success`, `@schema`), and renderer registration with its coverage check (`:144-175`). `_catalogByName` is built from `BuildTypeEntries(null)` (`type/list/this.cs:118-121`), the only source of Description, Example, Values, Property and Shape that prompt C reads, so the facts move onto each type here | yes: prompt twins byte-equal, or one eval run |
-| 4 | **The collected type:** `type.@this<T>` (`type/this.Generic.cs`: `list`, `["key"]`), `IMatch`, `list<T>.First(match)`, and the strict `list<T>` (`ICreate<T>`; test, test timing, `LlmMessage` and type gain ICreate; type is unsealed). `type/type/this.cs` becomes `type.@this<type.@this>`: its stored context goes (`internal Context`, `list/this.cs:30`); `Output` writes its face; it answers navigation (a member first, else `this[key]`). It keeps the lookups by other keys: `Mime`, `Extension`, `this[System.Type]`, `Reader` (`:203,211,261,75`). A lookup miss is a 404 result. **The registry's scan:** a subclass of `type.@this` is a type, not the class of a value, so its instance is added under its own name (`type`, `goal`, …) and the class claims nothing. Scanned as a class, every `X/type/this.cs` would claim the name `type` (an `@this` class is named by its last namespace segment, `Registry.cs:260-268`; a second claim throws, `:155-160`). Stage 5's internal items (`wire`, `source`, `clr`, `computed`) say by their own fact that they're not plang types. The prompt teaches `%!app.X["key"]%` once | yes: one rule in the prompt; twins |
+| 4 | **The collected type:** `type.@this<T>` (`type/this.Generic.cs`: `list`, `["key"]`, `current(context)`), `IMatch`, `ICurrent<T>`, `list<T>.First(match)`, and the strict `list<T>` (`ICreate<T>`; test, test timing, `LlmMessage` and type gain ICreate; type is unsealed). `app.type` becomes a `type<type>` over the registry, and the registry (`type/list/this.cs`) becomes a `list<type>`: its stored context goes (`internal Context`, `:30`); it keeps the lookups by other keys: `Mime`, `Extension`, `this[System.Type]`, `Reader` (`:203,211,261,75`). The type writes its face through `Output` and answers navigation (a member first, else `this[key]`). A lookup miss is a 404 result. The type's instance is added to the list under its name (`type`, `goal`, …), one entry with the catalog's facts for that name (stage 3's `Add`). Stage 5's internal items (`wire`, `source`, `clr`, `computed`) say by their own fact that they're not plang types. The prompt teaches `%!app.X["key"]%` once | yes: one rule in the prompt; twins |
 | 5 | **Faces and honest facts** (details in "Faces" below): the type faces (system, type, choice `values`, kind); each type's real description and example; internal item classes stay out; prompt C's Types section renders from these facts (`properties.template:82` already reads type facts); `type/list/view` (already `[Obsolete]`) and `BuildTypeEntries` (`:425`) die. Also: the 356 `.goal` files get their description above the goal's name; `goal.Comment` is the one description member; the hash covers comments; `start.md` docs (`os/system/modules/ui/Builder/SetLayout.goal:3` reads `…/readme.md`, and `setlayout.pr` holds that path: both change) | yes: twins byte-equal, or one eval run |
 | 6 | **The reference** (details below): `app.variable.@this` → `app.type.item.variable` (about 141 references: 45 production, 98 tests). A variable is `text` + `code`; `Value()` → `Start(context)` → `Code.Start(context)`. The parser (`app/type/item/variable/parser/`) is the one definition; each hop kind parses its own piece. Build validation writes each marked row's `"variable"` list into the .pr, and loading never parses again. `item.Variable` (a read-only list of variables; one shared empty list when none, never null: the OBP rule "No null checks"); `HasVariable => Variable.Count > 0` on the item, and `data.HasVariable => _item?.HasVariable ?? false`; `IsVariable` is one variable covering the whole value. **Every installed .pr with marked rows** (the builder's 6 marked files, `test.pr`, `show.pr`, and 8 of the 10 tracked `Tests/**/.build/*.pr`) is rewritten with its `"variable"` lists by a throwaway C# pass (the parser over each marked value, written through `plang.Text`; no LLM), since the loader refuses a marked row without its list. **Consumers to move** (fresh-eyes review): the store's Get/Set by name (`variable/list/this.cs:128,261,279,317,339,403`), `type/kind/this.cs:66-81`, `type/clr/this.cs:94-101`, `text/this.cs:153`, `data.Get(string)` (`data/this.Navigation.cs:17`), `data.Set(path, …)` (`:104`). **The source generator, its own step:** it emits `HasVariableReference` and `global::app.variable.@this` as strings (`Emission/Property/Data/this.cs:192`) and finds `IName` by the namespace string `"app.variable"` (`Discovery/this.cs:189-190`); if that moves unnoticed, the missing-parameter guard disappears silently | yes: `"variable"` in the .pr; twins + one eval run |
-| 7 | **Every concept is its type:** goal, actor, module, test, variable. Each: today's class at `app.X` (`X/list/this.cs`) → `X/type/this.cs`, a `type.@this<X>` with its `list` (with `all`), `["key"]`, `.key`, `.current` where it means something, and a face; one X stays at `X/this.cs` and answers `Match`. Goal keeps `goal/list/this.cs` as its list class (the store and the loading; `all` lists `.build/`). Module becomes an ICreate item (`module/this.cs:12`). Goal's name lookups go: `_byName` and `Get(string)`'s form scans (`goal/list/this.cs:23,52-61,68-120`); the bare-name lookup `call` uses (`GetAsync`, `:131-169`) is call's, and coder traces where it lives. Its property on `app` goes lowercase (`App.Goal` → `app.goal`, …). The builder reads `%!app.module.list%` (`Decide.goal:14`) and its templates walk `m.Action` / `m.Modifier` (`module/this.cs:67-71`), so the module system's shape is checked against them. Test mode today is "`App.Test` is set" (`app/this.cs:198`); a test system that always exists needs test mode as its own fact | yes: the builder's own input; twins |
+| 7 | **Every concept is its type:** goal, actor, module, test, variable. Each: `app.X` becomes a `type<X>` over its list; today's class at `app.X` (`X/list/this.cs`) becomes a `list<X>` and keeps the concept's own work (goal: the store, the loading, `all` listing `.build/`); one X stays at `X/this.cs` and answers `Match` and `Current`. Module becomes an ICreate item (`module/this.cs:12`). Goal's name lookups go: `_byName` and `Get(string)`'s form scans (`goal/list/this.cs:23,52-61,68-120`); the bare-name lookup `call` uses (`GetAsync`, `:131-169`) is call's, and coder traces where it lives. Its property on `app` goes lowercase (`App.Goal` → `app.goal`, …). The builder reads `%!app.module.list%` (`Decide.goal:14`) and its templates walk `m.Action` / `m.Modifier` (`module/this.cs:67-71`), so the module system's shape is checked against them. Test mode today is "`App.Test` is set" (`app/this.cs:198`); a test system that always exists needs test mode as its own fact | yes: the builder's own input; twins |
 | 8 | **`on` and `current` on every object** (details below): events move from `event.on(Trigger=…)` to the object, as `on.before.<verb>` / `on.after.<verb>` for every public verb, plus outcomes (`on.error`, `on.hit`, `on.miss`). The `on` module's actions are one-line doors: `on.event(item, when, event, action)` for any event, and `on.error`, `on.cache`, `on.timeout`, which replace today's modifiers as events bound on the action before them (Ingi). Bindings are scoped to the actor that registered them unless `scope: app`. Every plang value is born through its type's `Create`, which fires `create`. `current` is each object's own answer. Payoff: value-level mocking (`- after file create, call LoadFixture`) | yes: the `on` actions; twins + one eval run |
 | 9 | **Module pass, with file.read as the template (Ingi):** fix file.read first and make it the worked example of a correct action, written up as a doc ("how an action is written"). Then go over every module against it, one module per commit. The checklist: (1) plang values are born through their type (`app.type.file.Create(…)`; `new` only inside the type); (2) `Start()` hands over to the owner in one line; (3) no opened box, no broken seal (no `.Value()` on what it returns or forwards); (4) errors are results; (5) properties are typed (`Data<T>`), and a property that names where to write is a variable; (6) events fire from the owner, not the handler | per module: twins where a prompt changes |
 | 10 | **`%!app` holds its types:** built-ins register at startup, a plugin loaded with `code.load` registers its own (`%!app.stripe%`); `%!app.list%` lists them; one name, one type (a clash fails loudly); `%setting.X%` stays as a short form | no |
@@ -288,12 +302,12 @@ A collected type's face is a summary (names only); detail comes by navigating to
 | Dies | Stage |
 |---|---|
 | `Run` as the entry verb (runtime objects, handlers, the generator's emit) | 1 |
-| `type.list.@this` as the registry's class name; `type/list/` as its folder | 2 |
+| `App.Type` in PascalCase | 2 |
 | `Registry.cs`'s five maps, `_catalogByName`, `_full`; `Register`, `RegisterRuntime`; the static `Loader` (`Register`, `SealedNames`, `ReservedCore`, `ReservedShadow`); `Get(string)`/`Clr(string)` as two doors; `Primitive.Aliases` as the registry's (onto each type), `Precision` (`type/list/this.cs:189-195`), the spelled-form parsing in the name door (`:161-169`); the registry's `Choice`, `Kind` and `Scheme` stores (`:40,48,56`, onto the types) | 3 |
-| the registry's stored `Context`; the throw on a lookup miss (`type/list/this.cs:171`, `goal/list/this.cs:244`, `module/list/this.cs:121`); `list<T>`'s loose constraint; `type.@this` being sealed; the scan claiming a name for a type's own class | 4 |
+| the registry's stored `Context`; the throw on a lookup miss (`type/list/this.cs:171`, `goal/list/this.cs:244`, `module/list/this.cs:121`); `list<T>`'s loose constraint; `type.@this` being sealed; the registry as the class reached at `app.type` (it becomes `app.type.list`) | 4 |
 | `type/list/view/` (whole folder) and `BuildTypeEntries`; `goal.Description` (`goal/this.cs:41-42`, its write in `build/code/Default.cs:206-214`, its read in `goal/serializer/Reader.cs:54`); the goal hash that ignores comments; the four `os/` `readme.md` (→ `start.md`) | 5 |
 | `app/variable/path/` (`Parse`, `Segment` and its kinds, `Segment.Index.Key`'s string re-parse, `Segment.Call.Args`); the walker's switch and clr special case (`data/this.Navigation.cs:33-94`); `data.TryFullVarMatch`; static `text.HasVariable(string)`; `CleanName` ×2 (`data/this.cs:647`, `variable/list/this.cs:552`); the other parsers (`Formal.cs:311,418`, `debug/this.cs:506`, `pick/list/this.cs:94,132`); `InvokeMethod`'s string switch (`data/this.Navigation.cs:143-233`); `variable.@this.Convert`'s hand scan; the regexes in `step/this.Validate.cs:26`, `step/this.Scope.cs:9`, `pick/list/this.cs:90,96`; `data.HasVariableReference` | 6 |
-| the per-concept `X.list.@this` as the class reached at `app.X` (goal, actor, module, test; goal keeps `goal/list/` as its list class); goal's `_byName`, `Get(string)`'s form scans and `All` (a second name for `list`, `goal/list/this.cs:23,52-61,68-120,311`) | 7 |
+| the per-concept `X.list.@this` as the class reached at `app.X` (goal, actor, module, test: each stays as the concept's `list<X>`, reached at `app.X.list`); their own name lookups (`goal/list/this.cs:243`, `module/list/this.cs:118`: the type's `["key"]` replaces them); module's `list` member (`module/list/this.cs:125`: the class is the list); goal's `_byName`, `Get(string)`'s form scans and `All` (a second name for `list`, `goal/list/this.cs:23,52-61,68-120,311`) | 7 |
 | `event.on`, `Trigger` as a list of moments beside the objects; the per-context binding lists (`context.LifecycleFor(…)`, called at `goal/this.cs:333`, defined at `actor/context/this.cs:425,448,472`; `app/event/lifecycle/`): bindings live on the item, each carrying its scope; `mock.intercept`'s wiring (replaced by `mock` → `app.test.mock`); the modifier concept: `modifier.list`, `Wrap`, the catch grouping, `[Modifier(Order)]`, `IModifier`, `ModifierAttribute`, `cache.wrap`, `timeout.after` and the `timeout` module (replaced by `on.error`, `on.cache`, `on.timeout` as events) | 8 |
 | every direct `new` of a plang value outside its type (≥ 78 production sites); whatever else the checklist catches, per module | 9 |
 | reflection over the C# `App` as `%!app`'s answer | 10 |
@@ -305,9 +319,12 @@ A collected type's face is a summary (names only); detail comes by navigating to
 
 | New or moved surface | plang path | C# | file | Check |
 |---|---|---|---|---|
-| the type named `type` | `%!app.type%` | `app.type` | `app/type/type/this.cs` | a `type.@this<type.@this>`; no stored context; one way in (`Add`); its instance is registered, its class claims no name |
-| one type | `%!app.type["text"]%` / `.text` | `app.type["text"]` | `app/type/this.cs` | owns its name, aliases, facts, `kind`, `on`, `current`; answers `Match` |
-| a collected type | `%!app.goal%` (= `%!app.type.goal%`) | `app.goal` | `app/goal/type/this.cs` | a `type.@this<goal>`: supplies only its `list`; the rest is the base's |
+| the type named `type` | `%!app.type%` | `app.type` | `app/type/this.cs` (a `type<type>`) | over the registry; one way in (`Add`) |
+| the list of types | `%!app.type.list%` | `app.type.list` | `app/type/list/this.cs` | a `list<type>`; no stored context; keeps the lookups by other keys (`Mime`, `Extension`, `[System.Type]`) |
+| one type | `%!app.type["text"]%` / `.text` | `app.type["text"]` | `app/type/this.cs` | owns its name, aliases, facts, `kind`, `on`; answers `Match` |
+| a collected type | `%!app.goal%` (= `%!app.type.goal%`) | `app.goal` | `app/goal/this.cs` (a `type<goal>`) | one generic class for every concept; no class per concept |
+| a concept's list | `%!app.goal.list%` | `app.goal.list` | `app/goal/list/this.cs` | a `list<goal>`, like `step.list`; holds the concept's own work (loading) |
+| the one in play | `%!app.goal.current%` | `app.goal.current(context)` → `data<goal>` | `app/type/item/ICurrent.cs`; `goal.Current` | the element's `static virtual`, the ICreate pattern; 404 when none |
 | picking one | `%!app.goal["/show"]%` | `app.goal["/show"]` → `data<goal>` | `app/type/this.Generic.cs` | one line: `list.all.First(p => p.Match(key))`; a miss is a 404 result |
 | what an element answers to | — | `x.Match(key)` | `app/type/item/IMatch.cs` | the element's knowledge (goal: address; type: name or alias); one line each |
 | the first match | — | `list.First(match)` → `data<T>` | `app/type/item/list/this.Generic.cs` | typed predicate; no context needed; 404 when none |
@@ -323,13 +340,13 @@ A collected type's face is a summary (names only); detail comes by navigating to
 | starting an action from C# | — | `app.module["file"]["read"].Start(…)` | `module/this.cs` | through `action.Start`; nothing test-only |
 | every goal | `%!app.goal.list.all%` | `app.goal.list.all(show, os)` | `app/goal/list/this.cs` | a method with optional parameters; `.all` = the defaults |
 | a goal's description | `%!app.goal["/show"].comment%` | `goal.Comment` | `app/goal/this.cs` | the lines above the goal's name; the only description member |
-| names | — | — | — | no verb+noun; verbs `Start`, `Add`, `Load`, `Create`, `Match`, `First`, plumbing `Variable`, `Code`, `Alias`, nodes `on`, `current`, `list`, `all`, `kind`: one word each; nodes lowercase, verbs PascalCase |
+| names | — | — | — | no verb+noun; verbs `Start`, `Add`, `Load`, `Create`, `Match`, `First`, `Current`, plumbing `Variable`, `Code`, `Alias`, nodes `on`, `current`, `list`, `all`, `kind`: one word each; nodes lowercase, verbs PascalCase |
 
 ## Open for the next round
 
 Rounds 1–4 closed. Round 4 added: one `on.event(item, when, event, action)` for every event, bindings scoped to the registering actor, and binding/firing as verbs (`Add`, `Start`).
 
-Round 5 (2026-09-26) settled every `app.X` as the type X: `type.@this<T>`, `IMatch`, `list<T>.First`, the strict `list<T>`, goal keyed by its address, bare names left to `call`, and the choice/kind/scheme stores moved onto the types. Open:
-1. **Taken as accepted from the sketch, for Ingi to confirm:** the file path adds a word (`%!app.goal%` ↔ `app/goal/type/this.cs`), and `%!app.goal%` and `%!app.type.goal%` are one object reached by two names.
+Round 5 (2026-09-26) settled every `app.X` as the type X: one generic `type<X>` over the concept's `list<X>` (no class per concept, no `X/type/` folder), `IMatch`, `ICurrent`, `list<T>.First`, the strict `list<T>`, goal keyed by its address, bare names left to `call`, and the choice/kind/scheme stores moved onto the types. Parked for after this branch: `goal.PrPath` → a `pr` object (`pr.path`, later `pr.encryption`; `Documentation/Runtime2/todos.md`). Open:
+1. `%!app.goal%` and `%!app.type.goal%` are one object reached by two names.
 2. **Variable:** its list is the asker's memory (`actor/context/this.cs:43`), which a `list` getter can't reach: it has no context. Navigation carries the context (as it does for `current`). Where the variable type's class lives follows from that, since one variable moves to `app/type/item/variable/` in stage 6.
 3. **Round 3's 5(c):** `show` in `all(show, os)` as a choice.
