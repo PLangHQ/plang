@@ -78,6 +78,27 @@ Each stage is its own commits, green against the baseline before the next starts
    {"text": "%order!cost%", "code": [{"variable": "order"}, {"property": "!cost"}]}]}
 ```
 
+## Events on each object (stage 8), settled with Ingi 2026-09-26
+
+Each moment moves from `event.on`'s one `Trigger` list to the object it happens to. `start`/`end` replace `before`/`after` everywhere (a write is `on write start` / `on write end`).
+
+| object | `on.` moments | today's trigger |
+|---|---|---|
+| app | `start`, `end` | BeforeAppStart, AfterAppStart |
+| goal | `start`, `end`, `error`, `load` | BeforeGoal, AfterGoal, OnError, OnBefore/AfterGoalLoad |
+| step | `start`, `end`, `load` | BeforeStep, AfterStep, OnBefore/AfterStepLoad |
+| action | `start`, `end` | BeforeAction, AfterAction |
+| variable | `create`, `change`, `remove` | OnVariableChange (create and remove are new) |
+| type | `create` | new |
+| channel | `write`, `read`, `ask` (write and read with `start`/`end`) | BeforeWrite/AfterWrite, BeforeRead/AfterRead, OnAsk |
+| cache | `hit`, `miss` | OnCacheHit, OnCacheMiss |
+
+```
+- on goal start, call LogStart           → on.start(… goal …, Goal=goal.call(LogStart))
+- on text create, call LoadText          → app.type.text.on.create(LoadText)
+- on %user% change, call UserChanged     → the variable's on.change
+```
+
 ## Cross-cutting decisions
 
 - **The .pr:** a marked row without its `"variable"` list is an old format (PrFormatOutdated, rebuild), not something to parse on load.
@@ -119,5 +140,5 @@ Each stage is its own commits, green against the baseline before the next starts
 
 ## Open for the next round
 
-1. Which moments each system's `on` offers (type: `create`; goal: `start`, `end`, `error`; step: `start`, `end`; variable: `create`, `change`, `remove`; channel: `write`, `read`, `ask`), and which `event.on` triggers map where.
+1. ~~Which moments each system's `on` offers~~: settled above.
 2. Face facts beyond the start set, per system (goal: `name`, `path`, `description`, its steps by index and text; actor: `name`; module: `name`, `description`, its action names; test: `name`, `status`; variable: `name`, `type`).
