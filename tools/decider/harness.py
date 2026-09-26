@@ -263,26 +263,14 @@ def windows(steps):
 # share of steps using each across tools/decider/labels/, the builder's own .pr files and the golden
 # set (variable.set 42%, goal.call 8.7%, output.write 6.4%, on.error 6.2%, condition.if 4.2%,
 # file.read 2.3%). The assert.* actions rank high only because the labels are mostly tests.
-COMMON = ['variable.set', 'goal.call', 'output.write', 'on.error', 'condition.if', 'file.read']
+# The common actions (each with what yes and no mean — the noul's criteria, docs.typesafe.ai) and the
+# popular actions are one builder data file, os/system/builder/llm/decider.json, read by the plang
+# builder too. CRITERIA=0 asks the common questions without their criteria.
+DECIDER = json.load(open(f'{ROOT}/os/system/builder/llm/decider.json', encoding='utf-8'))
+COMMON = list(DECIDER['common'])
+COMMON_CRITERIA = DECIDER['common']
 NEAR_CERTAIN = 0.9   # a common action scored at or above this is picked; its module skips stage 2
-
-# What yes and no mean for each common-action question (the noul's optional criteria, docs.typesafe.ai):
-# the action's meaning, with example steps as step texts. CRITERIA=0 asks without them.
 CRITERIA = os.environ.get('CRITERIA', '1') != '0'
-COMMON_CRITERIA = {
-    'variable.set': {'true': 'the step sets a variable or keeps a result in one: `set %x% = 5`, `set default %x% = …`, `…, write to %x%`',
-                     'false': 'the step keeps no value in a variable'},
-    'goal.call': {'true': 'the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)',
-                  'false': 'the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step'},
-    'output.write': {'true': 'the step shows or writes something out, to the user or to a named channel: `write out "Hello"`, `show %message%`, `write %x% to "log" channel`',
-                     'false': 'the step shows nothing; `…, write to %x%` keeps a value in a variable, it is not output'},
-    'on.error': {'true': 'the step says what happens when it fails: `…, on error call X`, `…, on error retry 3 times`',
-                     'false': 'the step says nothing about failing; throwing an error (`throw "…"`) is not handling one'},
-    'condition.if': {'true': 'the step tests something and does its work only when it holds: `if %x% > 5, …`, `if %list% is empty`',
-                     'false': 'the step tests nothing'},
-    'file.read': {'true': 'the step reads a file\'s content: `read \'notes.txt\'`, `read file %path%, write to %text%`',
-                  'false': 'the step reads no file; saving, listing or deleting a file is not reading it'},
-}
 
 # What a common-action question counts as the step's own. CLAUSE=1 adds "its own work, or anything it
 # guards, loops or hands to an error handler"; measured on the golden goals it made output.write and
@@ -327,9 +315,7 @@ def main_module(probs_i, cat):
 # golden set), test-only families (assert.*, identity.*, test.*) left out. A step stage 1 is unsure of
 # (its best score under UNSURE) is asked, in stage 2, which one of these it uses — a choice, so it
 # answers "which one", not "which ones".
-POPULAR = ['variable.set', 'goal.call', 'output.write', 'on.error', 'condition.if', 'file.read', 'file.save',
-           'error.throw', 'file.delete', 'signing.sign', 'list.count', 'math.add', 'loop.foreach', 'signing.verify',
-           'cache.wrap']
+POPULAR = DECIDER['popular']
 UNSURE = 0.8
 
 def unsure(probs_i, cat):
@@ -358,7 +344,7 @@ def picks(probs_i, cat, threshold=0.5):
 
 # The branches that can follow an if in the same step. Stage 2 is one choice per module, so it can
 # never give two actions of the condition module; a picked condition.if asks these by name.
-BRANCHES = ['condition.elseif', 'condition.else']
+BRANCHES = ['condition.else', 'condition.elseif']   # the condition actions that continue an if (action.IsBranch), by name
 
 def stage2_questions(s, cat, chosen, conditions=(), runners=None, unsure_steps=()):
     """Stage 2's questions of one step, keyed by id (the C# pick.list's twin asks the same)."""

@@ -34,14 +34,6 @@ public class PickListTests
         => Make.Goal(entry.GetProperty("goal").GetString()!, "/" + entry.GetProperty("goal").GetString() + ".goal",
             entry.GetProperty("step").EnumerateArray().Select(s => Make.Step(s.GetProperty("text").GetString()!)).ToArray());
 
-    private static async Task<string> Json(global::app.type.item.dict.@this dict, global::app.actor.context.@this context)
-    {
-        var json = new global::app.channel.serializer.Json(context);
-        using var ms = new System.IO.MemoryStream();
-        await json.SerializeAsync(ms, new global::app.data.@this("", dict, context: context));
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
-    }
-
     private static string RepoRoot()
     {
         var dir = System.AppContext.BaseDirectory;
@@ -50,10 +42,29 @@ public class PickListTests
         return dir!;
     }
 
-    // The questions quote each action's teaching file (/system/modules/<module>/<action>.description.md):
-    // the app is rooted at the repo's os/ folder, where they are.
+    // The popular actions an unsure step is offered — the builder's decider.json, which python reads too.
+    private static List<string> Popular() =>
+        System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "decider.json")))
+            .RootElement.GetProperty("popular").EnumerateArray().Select(p => p.GetString()!).ToList();
+
+    // decider2.template rendered for the goal, as Decide renders it.
+    private static async Task<string> Rendered(global::app.goal.@this goal, global::app.actor.context.@this context)
+    {
+        context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
+        var render = new global::app.module.action.ui.Render(context)
+        {
+            Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
+                System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "templates", "decider2.template")),
+            IsFile = (global::app.type.item.@bool.@this)false,
+        };
+        var result = await new global::app.module.action.ui.code.Fluid().Render(render);
+        return result.Success ? (await result.Value())!.ToString() : $"render failed: {result.Error!.Message}";
+    }
+
+    // The words are the template's: the app is rooted at the repo's os/ folder, where each action's
+    // teaching file (/system/modules/<module>/<action>.description.md) is.
     [Test]
-    public async Task StageOnesAnswer_AsksTheStageTwoQuestionsPythonAsked()
+    public async Task StageOnesAnswer_RendersTheStageTwoQuestionsPythonAsked()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
         var context = os.User.Context;
@@ -62,18 +73,18 @@ public class PickListTests
         {
             var goal = Goal(entry);
             var first = Answer(entry.GetProperty("answer1"), context);
-            foreach (var step in goal.Step.Items())
-            {
-                await step.Pick.Take(first, context);
-                var ours = System.Text.Json.Nodes.JsonNode.Parse(await Json(await step.Pick.Question(context), context))!.AsObject();
-                var theirs = entry.GetProperty("question2").EnumerateObject().Where(q => q.Name.StartsWith($"s{step.Index}_")).ToList();
-                var at = $"{entry.GetProperty("goal").GetString()}[{step.Index}]";
-                if (!ours.Select(q => q.Key).SequenceEqual(theirs.Select(q => q.Name)))
-                    differ.Add($"{at} asks [{string.Join(", ", ours.Select(q => q.Key))}], python [{string.Join(", ", theirs.Select(q => q.Name))}]");
-                foreach (var q in theirs)
-                    if (ours[q.Name] is { } mine && !System.Text.Json.Nodes.JsonNode.DeepEquals(mine, System.Text.Json.Nodes.JsonNode.Parse(q.Value.GetRawText())))
-                        differ.Add($"{at} {q.Name}\n  ours:   {mine.ToJsonString()}\n  python: {q.Value.GetRawText()}");
-            }
+            foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
+            var rendered = await Rendered(goal, context);
+            var at = entry.GetProperty("goal").GetString();
+            System.Text.Json.Nodes.JsonObject ours;
+            try { ours = System.Text.Json.Nodes.JsonNode.Parse(rendered)!.AsObject(); }
+            catch (System.Text.Json.JsonException ex) { differ.Add($"{at}: not JSON ({ex.Message})\n{rendered}"); continue; }
+            var theirs = entry.GetProperty("question2").EnumerateObject().ToList();
+            if (!ours.Select(q => q.Key).SequenceEqual(theirs.Select(q => q.Name)))
+                differ.Add($"{at} asks [{string.Join(", ", ours.Select(q => q.Key))}], python [{string.Join(", ", theirs.Select(q => q.Name))}]");
+            foreach (var q in theirs)
+                if (ours[q.Name] is { } mine && !System.Text.Json.Nodes.JsonNode.DeepEquals(mine, System.Text.Json.Nodes.JsonNode.Parse(q.Value.GetRawText())))
+                    differ.Add($"{at} {q.Name}\n  ours:   {mine.ToJsonString()}\n  python: {q.Value.GetRawText()}");
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
@@ -90,12 +101,12 @@ public class PickListTests
             var second = Answer(entry.GetProperty("answer2"), context);
             foreach (var step in goal.Step.Items())
             {
-                await step.Pick.Take(first, context);
-                await step.Pick.Take(second, context);
+                await step.Pick.Take(first, Popular(), context);
+                await step.Pick.Take(second, Popular(), context);
                 var at = $"{entry.GetProperty("goal").GetString()}[{step.Index}]";                var python = entry.GetProperty("picks").GetProperty(step.Index.ToString());
                 var theirs = python.EnumerateObject().Where(p => p.Name != "@popular")
                     .Select(p => $"{p.Name} {(p.Value.ValueKind == System.Text.Json.JsonValueKind.Null ? "null" : p.Value.GetDouble().ToString("R"))}");
-                var ours = step.Pick.Select(p => $"{p.Name} {(p.Score is { } s ? ((double)s).ToString("R") : "null")}");
+                var ours = step.Pick.Item.Select(p => $"{p.Name} {(p.Score is { } s ? ((double)s).ToString("R") : "null")}");
                 if (!ours.SequenceEqual(theirs)) differ.Add($"{at}\n  ours:   {string.Join(", ", ours)}\n  python: {string.Join(", ", theirs)}");
                 var popular = python.TryGetProperty("@popular", out var p) ? p.EnumerateObject().Select(o => o.Name) : [];
                 if (!step.Pick.Top.Select(t => t.Name).SequenceEqual(popular))

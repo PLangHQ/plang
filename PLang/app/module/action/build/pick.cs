@@ -19,6 +19,10 @@ public partial class pick : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.dict.@this> Answer { get; init; }
 
+    /// <summary>The popular actions an unsure step is offered (the builder's decider.json).</summary>
+    [IsNotNull]
+    public partial data.@this<global::app.type.item.list.@this> Popular { get; init; }
+
     [Code]
     public partial IBuilder Builder { get; }
 

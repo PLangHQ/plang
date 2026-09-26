@@ -111,6 +111,11 @@ public partial class @this
       || string.Equals(Name, "elseif", StringComparison.OrdinalIgnoreCase)
       || string.Equals(Name, "else", StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>A condition action that continues a chain an if opened — an elseif or an else. It
+    /// follows an if (or an elseif) in the same step, never stands first.</summary>
+    [JsonIgnore]
+    public bool IsBranch => IsCondition && !string.Equals(Name, "if", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>The step this action belongs to — a BIRTH FACT for every action that is part of a
     /// PROGRAM: the reader builds the step shell first and hands it down at construction, so it is
     /// never stamped in afterwards. Null is not a repair hole, it is a real state: three kinds of

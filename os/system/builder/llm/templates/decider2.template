@@ -1,0 +1,54 @@
+{% comment %}
+Stage 2 of the decider — the questions stage 1 leaves open, per step. WHICH questions are asked is the
+step's Pick (step.Pick.Question: its id and what it is about — a module, an action, a branch, the
+popular options); this template only writes their words. Keys and wording are the eval's
+(tools/decider/harness.py stage2_questions), and a twin test holds the two equal.
+{% endcomment %}
+{
+{%- assign sep = "" -%}
+{%- for s in goal.Step -%}
+{%- assign text = s.Text | strip -%}
+{%- for q in s.Pick.Question -%}
+{{ sep }}
+  {{ q.Id | json }}: {
+{%- case q.Kind -%}
+{%- when "Popular" -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. Which of these actions does step {{ s.Index }} use?{% endcapture %}
+    "type": "choice",
+    "criteria": {
+{%- assign osep = "" -%}
+{%- for o in q.Option -%}
+{%- capture name %}{{ o.Module.Name }}.{{ o.Name }}{% endcapture -%}
+{{ osep }}{{ name | json }}: null
+{%- assign osep = ", " -%}
+{%- endfor -%}
+},
+    "instructions": {{ ask | json }}
+{%- when "Branch" -%}
+{%- assign about = q.Branch.Description | strip -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. It tests a condition. Does step {{ s.Index }} also have `{{ q.Branch.Module.Name }}.{{ q.Branch.Name }}` — {{ about }}?{% endcapture %}
+    "type": "noul",
+    "instructions": {{ ask | json }}
+{%- when "Use" -%}
+{%- if q.Also %}{% assign also = " also" %}{% else %}{% assign also = "" %}{% endif -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. Does step {{ s.Index }}{{ also }} use the plang module `{{ q.Module.Name }}`?{% endcapture %}
+    "type": "noul",
+    "instructions": {{ ask | json }}
+{%- when "Action" -%}
+{%- capture ask %}Step {{ s.Index }} of this goal is `{{ text }}`. It uses the plang module `{{ q.Module.Name }}`. Which action of `{{ q.Module.Name }}` does step {{ s.Index }} call?{% endcapture %}
+    "type": "choice",
+    "instructions": {{ ask | json }},
+    "criteria": {
+{%- assign osep = "" -%}
+{%- for o in q.Option -%}
+{%- assign about = o.Description | strip -%}
+{{ osep }}{{ o.Name | json }}: {{ about | json }}
+{%- assign osep = ", " -%}
+{%- endfor -%}
+}
+{%- endcase %}
+  }
+{%- assign sep = "," -%}
+{%- endfor -%}
+{%- endfor %}
+}

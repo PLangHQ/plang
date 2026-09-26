@@ -4188,53 +4188,53 @@
      "where": "Filter a list or dict by a scoped predicate. The predicate's bare field name resolves against the subject. On a list the subject is each element — `where %users% age > 20` keeps the elements whose `age` passes. On a dict the subject is the dict itself — `where %user% age > 20` keeps or drops the one dict. A scalar has no fields to scope into, so `where` on it is an error."
     }
    },
-   "s2_condition.elseif": {
-    "type": "noul",
-    "instructions": "Step 2 is `if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"`. It tests a condition. Does step 2 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
-   },
    "s2_condition.else": {
     "type": "noul",
     "instructions": "Step 2 is `if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"`. It tests a condition. Does step 2 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
    },
-   "s3_condition.elseif": {
+   "s2_condition.elseif": {
     "type": "noul",
-    "instructions": "Step 3 is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. It tests a condition. Does step 3 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
+    "instructions": "Step 2 is `if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"`. It tests a condition. Does step 2 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s3_condition.else": {
     "type": "noul",
     "instructions": "Step 3 is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. It tests a condition. Does step 3 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
    },
+   "s3_condition.elseif": {
+    "type": "noul",
+    "instructions": "Step 3 is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. It tests a condition. Does step 3 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
+   },
    "s3_@also.error": {
     "type": "noul",
     "instructions": "Step 3 is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. Does step 3 use the plang module `error`?"
-   },
-   "s4_condition.elseif": {
-    "type": "noul",
-    "instructions": "Step 4 is `if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%`. It tests a condition. Does step 4 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s4_condition.else": {
     "type": "noul",
     "instructions": "Step 4 is `if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%`. It tests a condition. Does step 4 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
    },
-   "s5_condition.elseif": {
+   "s4_condition.elseif": {
     "type": "noul",
-    "instructions": "Step 5 is `if %order.total% is not a number, throw \"The total must be a number\"`. It tests a condition. Does step 5 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
+    "instructions": "Step 4 is `if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%`. It tests a condition. Does step 4 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s5_condition.else": {
     "type": "noul",
     "instructions": "Step 5 is `if %order.total% is not a number, throw \"The total must be a number\"`. It tests a condition. Does step 5 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
    },
+   "s5_condition.elseif": {
+    "type": "noul",
+    "instructions": "Step 5 is `if %order.total% is not a number, throw \"The total must be a number\"`. It tests a condition. Does step 5 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
+   },
    "s5_@also.error": {
     "type": "noul",
     "instructions": "Step 5 is `if %order.total% is not a number, throw \"The total must be a number\"`. Does step 5 use the plang module `error`?"
    },
-   "s6_condition.elseif": {
-    "type": "noul",
-    "instructions": "Step 6 is `if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25`. It tests a condition. Does step 6 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
-   },
    "s6_condition.else": {
     "type": "noul",
     "instructions": "Step 6 is `if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25`. It tests a condition. Does step 6 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
+   },
+   "s6_condition.elseif": {
+    "type": "noul",
+    "instructions": "Step 6 is `if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25`. It tests a condition. Does step 6 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s7_math": {
     "type": "choice",
@@ -4257,13 +4257,13 @@
      "subtract": "Subtract B from A and return the numeric result"
     }
    },
-   "s8_condition.elseif": {
-    "type": "noul",
-    "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. It tests a condition. Does step 8 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
-   },
    "s8_condition.else": {
     "type": "noul",
     "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. It tests a condition. Does step 8 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
+   },
+   "s8_condition.elseif": {
+    "type": "noul",
+    "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. It tests a condition. Does step 8 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s8_list": {
     "type": "choice",
@@ -4316,8 +4316,8 @@
     "on.error": 0.04,
     "condition.if": 0.99,
     "file.read": 0.05,
-    "condition.elseif": 0.97,
-    "condition.else": 0.96
+    "condition.else": 0.96,
+    "condition.elseif": 0.97
    },
    "3": {
     "variable.set": 0.08,
@@ -4327,8 +4327,8 @@
     "condition.if": 0.98,
     "file.read": 0.05,
     "error.throw": 0.88,
-    "condition.elseif": 0.03,
-    "condition.else": 0.06
+    "condition.else": 0.06,
+    "condition.elseif": 0.03
    },
    "4": {
     "variable.set": 0.09,
@@ -4337,8 +4337,8 @@
     "on.error": 0.06,
     "condition.if": 0.99,
     "file.read": 0.06,
-    "condition.elseif": 0.03,
-    "condition.else": 0.07
+    "condition.else": 0.07,
+    "condition.elseif": 0.03
    },
    "5": {
     "variable.set": 0.09,
@@ -4348,8 +4348,8 @@
     "condition.if": 0.98,
     "file.read": 0.05,
     "error.throw": 0.91,
-    "condition.elseif": 0.03,
-    "condition.else": 0.08
+    "condition.else": 0.08,
+    "condition.elseif": 0.03
    },
    "6": {
     "variable.set": 0.98,
@@ -4358,8 +4358,8 @@
     "on.error": 0.03,
     "condition.if": 0.99,
     "file.read": 0.04,
-    "condition.elseif": 0.28,
-    "condition.else": 0.94
+    "condition.else": 0.94,
+    "condition.elseif": 0.28
    },
    "7": {
     "variable.set": 0.93,
@@ -4378,8 +4378,8 @@
     "condition.if": 0.99,
     "file.read": 0.06,
     "list.add": 0.97,
-    "condition.elseif": 0.03,
-    "condition.else": 0.07
+    "condition.else": 0.07,
+    "condition.elseif": 0.03
    },
    "9": {
     "variable.set": 0.09,
@@ -5273,13 +5273,13 @@
      "save": "Write Value to a file at Path, creating directories as needed"
     }
    },
-   "s3_condition.elseif": {
-    "type": "noul",
-    "instructions": "Step 3 is `if %errors% is empty`. It tests a condition. Does step 3 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
-   },
    "s3_condition.else": {
     "type": "noul",
     "instructions": "Step 3 is `if %errors% is empty`. It tests a condition. Does step 3 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
+   },
+   "s3_condition.elseif": {
+    "type": "noul",
+    "instructions": "Step 3 is `if %errors% is empty`. It tests a condition. Does step 3 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s5_goal": {
     "type": "choice",
@@ -5289,13 +5289,13 @@
      "return": "Return early from the current goal, propagating Data as the goal result"
     }
    },
-   "s6_condition.elseif": {
-    "type": "noul",
-    "instructions": "Step 6 is `if %files% is a list`. It tests a condition. Does step 6 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
-   },
    "s6_condition.else": {
     "type": "noul",
     "instructions": "Step 6 is `if %files% is a list`. It tests a condition. Does step 6 also have `condition.else` — Fallback branch that executes when all preceding if/elseif conditions are false?"
+   },
+   "s6_condition.elseif": {
+    "type": "noul",
+    "instructions": "Step 6 is `if %files% is a list`. It tests a condition. Does step 6 also have `condition.elseif` — Additional condition branch evaluated when the preceding if condition is false?"
    },
    "s9_file": {
     "type": "choice",
@@ -5358,8 +5358,8 @@
     "on.error": 0.04,
     "condition.if": 0.98,
     "file.read": 0.04,
-    "condition.elseif": 0.04,
-    "condition.else": 0.09
+    "condition.else": 0.09,
+    "condition.elseif": 0.04
    },
    "4": {
     "variable.set": 0.06,
@@ -5385,8 +5385,8 @@
     "on.error": 0.04,
     "condition.if": 0.97,
     "file.read": 0.05,
-    "condition.elseif": 0.04,
-    "condition.else": 0.1
+    "condition.else": 0.1,
+    "condition.elseif": 0.04
    },
    "7": {
     "variable.set": 0.07,

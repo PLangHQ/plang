@@ -303,8 +303,10 @@ public class Default : IBuilder
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
         var answer = (await action.Answer.Value())!;
+        var popular = new List<string>();
+        foreach (var name in (await action.Popular.Value())!.Items(context)) popular.Add((await name.Value())!.ToString());
         // Each step takes the answers under its own ids; the builder only hands the answer over.
-        foreach (var step in goal.Step.Items()) await step.Pick.Take(answer, context);
+        foreach (var step in goal.Step.Items()) await step.Pick.Take(answer, popular, context);
         return context.Ok(true);
     }
 

@@ -90,9 +90,7 @@ public sealed class @this : global::app.type.item.list.@this<Action>
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
-            bool continues = action.IsCondition && !string.Equals(action.Name, "if", System.StringComparison.OrdinalIgnoreCase);
-
-            if (continues)
+            if (action.IsBranch)
             {
                 var before = i > 0 ? this[i - 1] : null;
                 if (before is not { IsCondition: true } || string.Equals(before.Name, "else", System.StringComparison.OrdinalIgnoreCase))
