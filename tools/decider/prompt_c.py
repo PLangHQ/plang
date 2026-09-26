@@ -72,6 +72,23 @@ AS = re.compile(r'\bas\s+%?([A-Za-z_]\w*)%?', re.I)
 ASSIGNED = re.compile(r'(%[A-Za-z_]\w*%)\s*=\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$')
 MARKED = re.compile(r'%([A-Za-z_]\w*)%')
 TARGET = re.compile(r'(%[A-Za-z_]\w*%)\s*=(?!=)')   # the variable an assignment writes (pick.list Target)
+CALLS = re.compile(r'\bcall\s+(/?[A-Za-z_][\w./]*)', re.I)   # a goal the step's words call (pick.list Calls)
+QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"|\'[^\']*\'')
+
+def called_goals(rows):
+    """Every goal.call Name in the rows: the actions, what they hold, their recovery, their bodies."""
+    out = []
+    for a in rows:
+        if not isinstance(a, dict): continue
+        if (a.get('module'), a.get('name')) == ('goal', 'call'):
+            out += [str(r['value']).strip('"') for r in a.get('property') or [] if r['name'] == 'Name']
+        for r in a.get('property') or []:
+            vals = r['value'] if isinstance(r['value'], list) else [r['value']]
+            out += called_goals([v for v in vals if isinstance(v, dict) and 'module' in v])
+        for m in a.get('modifier') or []: out += called_goals(m.get('recovery') or [])
+        out += called_goals(a.get('recovery') or [])
+        for c in a.get('child') or []: out += called_goals(c.get('action') or [])
+    return out
 
 def known_code(certain, text):
     """The code a step's certain picks already know, as (action, binds): the build's walk reads it
@@ -251,6 +268,14 @@ def disagreements(i, rows, picks_i, text=''):
                 for a in rows):
             refused.append(f'step {i} says it writes {target.group(1)}, but no action writes it: '
                            f'end the step with variable.set(Name={target.group(1)}, Value=%!data%)')
+    # every goal the step's words call (`call X`, quoted texts left out) is called by the code, wherever
+    # the goal.call sits (pick.list Calls)
+    called = ['/' + n.lstrip('/') for n in called_goals(rows)]
+    for goal in dict.fromkeys(m.group(1).rstrip('.,') for m in CALLS.finditer(QUOTED.sub('', text))):
+        wanted = '/' + goal.lstrip('/')
+        if wanted.lower().endswith('.goal'): wanted = wanted[:-5]
+        if not any(n.lower().endswith(wanted.lower()) or wanted.lower().endswith(n.lower()) for n in called):
+            refused.append(f'step {i} calls {goal}, but no action calls it')
     # unsure = built from a possible pick; a pick the known-value rule placed (write to → variable.set)
     # is not a guess, so it carries no warning
     known = {'variable.set'} if WRITE_TO.search(text) else set()

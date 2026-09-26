@@ -80,12 +80,13 @@ Cost per goal: about $0.001 for nano (the 5-goal eval: $0.0053), plus two decide
 
 - An action held as a value in a value slot (`variable.set(Value=math.add(…))`) is refused.
 - A step whose words write `%x%` (`write to %x%`, `%x% = …`) must write it.
-- Still open: a goal name (`call FixSteps`) isn't covered, so dropping a whole on-error clause
-  passes; a variable counts as covered when it only appears inside a quoted text.
+- A goal the step's words call (`call FixSteps`, `call /system/builder/X`) must be called by its code —
+  top level, a body or a recovery; dropping a whole `on error call X` clause is refused.
+- Still open (needs design): a variable counts as covered when it only appears inside a quoted text.
 
 ## Commits tonight
 
 308bb583f pre-fill · 2c150a5b3 bootstrap + take path · be36e72a7 D fixes · 008f7d61c recursion allowed ·
 2d4ea7909 install · 3b4d22f74 templates · 01e26c342 builder builds · 634bc4fed kept-step decider ·
 ced91ee25 held action · 37204b577 FixSteps · 723724275 files filter · 825d1630c coverage in Read ·
-db0d1f1c6 qualified names + write target
+db0d1f1c6 qualified names + write target · goal-name coverage (the last commit)
