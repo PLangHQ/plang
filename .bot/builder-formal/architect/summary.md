@@ -2,6 +2,10 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: "why 5.3 s, I was expecting 0 s"
+
+The rest of the 5.3 s: (1) Start's guard never fired (the bare-if bug), so cached goals still ran events, traces, fold and save; (2) Build.goal:9 and :12 call EmitBuildEvent on EVERY build before the goal loop, and the first template render costs a 4.7 s warm-up; (3) BuilderChannel has 0 steps (the forward was removed 2026-07-21: `%!data%` doesn't reach a goal-backed channel), so build events render into nothing. **Sent:** profile and fix the warm-up; fix channel-input propagation so BuilderChannel shows output (or size it first); measure again. Target: process start + load/compare (35 ms), no .pr rewritten.
+
 ## 2026-09-26 — cached goal: 20.9 s → 5.3 s, and the bare `if`
 
 Coder measured an unchanged build of the builder's 7 files (12 goals) at 20.9 s: Properties' nano with every step kept 9.6 s, the first EmitBuildEvent render's warm-up 4.7 s, and FixSteps re-asking all-kept answers 5×. build.goals itself took 35 ms. After the Compile guard: 5.3 s. The dogfood rebuild of Start.goal asked only the 2 new steps, and the cached code is byte-equal. **The Start guard never fired:** nano built `if %goal.IsCached%` as `Operator="=="` with no Right (always false). **Ruling:**
