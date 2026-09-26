@@ -108,6 +108,32 @@ public class PickListTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // Prompt C's user message after both answers: each step's line (its listing and starting formal),
+    // the Types and each listed action once — byte for byte what the eval sends.
+    [Test]
+    public async Task ThePromptCUserMessage_IsTheOnePythonSends()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+        var differ = new List<string>();
+        foreach (var entry in Golden())
+        {
+            var goal = Goal(entry);
+            foreach (var s in entry.GetProperty("step").EnumerateArray())
+                if (s.GetProperty("comment").GetString() is { } comment) goal.Step[s.GetProperty("index").GetInt32()].Comment = comment;
+            var first = Answer(entry.GetProperty("answer1"), context);
+            var second = Answer(entry.GetProperty("answer2"), context);
+            foreach (var step in goal.Step.Items())
+            {
+                await step.Pick.Take(first, Popular(), context);
+                await step.Pick.Take(second, Popular(), context);
+            }
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
+                await Rendered("propertiesC.template", goal, context), entry.GetProperty("user").GetString()!));
+        }
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
     [Test]
     public async Task TheStageTwoState_IsTheOnePythonSends()
     {

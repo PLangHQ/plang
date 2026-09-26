@@ -65,6 +65,27 @@ public sealed class @this
 
     private List<global::app.module.@this> _moduleAsked = new();
 
+    /// <summary>What the prompt lists for the step, most certain first: the picks at 0.5 or more,
+    /// the variable.set of a <c>write to %x%</c> whatever it scored, and on an unsure step the
+    /// popular choice's options at the choice floor (0.2) or more — each with its mark.</summary>
+    public IReadOnlyList<listed.@this> Listed => _listed;
+
+    /// <summary>The step's starting formal: its certain actions, <c>?</c> where a value is still
+    /// needed, a certain modifier right after the first action, a <c>write to %x%</c> filled in last.
+    /// Null when nothing is certain.</summary>
+    public string? Formal { get; private set; }
+
+    private List<listed.@this> _listed = new();
+
+    // The step's words that fill a value the decider can't: `write to %x%` is a known variable.set, `on
+    // error … call` names what a recovery runs, `call X name=value` passes arguments.
+    private static readonly System.Text.RegularExpressions.Regex WriteTo =
+        new(@"write to\s+(%[^%\s]+%)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    private static readonly System.Text.RegularExpressions.Regex OnErrorCall =
+        new(@"on error[^,;]*?\bcall\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    private static readonly System.Text.RegularExpressions.Regex Arguments =
+        new(@"\bcall\b[^,]*?\s[A-Za-z_]\w*\s*=", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
     /// <summary>The top three of the popular choice (when the step was asked it), most probable first.</summary>
     public IReadOnlyList<(string Name, number? Score)> Top =>
         _popular == null ? [] : _popular.OrderByDescending(p => p.Value ?? (number)0.0).Take(3).Select(p => (p.Key, p.Value)).ToList();
@@ -94,6 +115,74 @@ public sealed class @this
         _moduleAsked = Asked(context).Select(m => context.App.Module[m]).ToList();
         IsCondition = Tests;
         IsUnsure = Unsure(context);
+        _listed = Listing();
+        Formal = Prefill(context);
+    }
+
+    // ---------------------------------------------------------------- what the prompt shows
+
+    private List<listed.@this> Listing()
+    {
+        var shown = new List<(string Name, number Score)>();
+        foreach (var p in _items)
+            if (p.Score is { } s && s >= (number)Possible) shown.Add((p.Name, s));
+        var known = WriteTo.IsMatch(_step.Text);
+        if (known && shown.All(p => p.Name != "variable.set"))
+            shown.Add(("variable.set", _items.FirstOrDefault(p => p.Name == "variable.set")?.Score ?? (number)0.0));
+        var popular = Popular();
+        foreach (var (name, score) in popular)
+            if (shown.All(p => p.Name != name)) shown.Add((name, score));
+        // most certain first; equal scores keep their order
+        return shown.OrderByDescending(p => p.Score).Select(p => new listed.@this
+        {
+            Name = p.Name, Score = p.Score,
+            Mark = p.Score >= (number)Near ? listed.Mark.Certain
+                 : p.Name == "variable.set" && known ? listed.Mark.WriteTo
+                 : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } own && own >= (number)Possible)
+                     ? listed.Mark.Popular
+                 : listed.Mark.Possible,
+        }).ToList();
+    }
+
+    // The popular choice's options at the choice floor or more.
+    private Dictionary<string, number> Popular() =>
+        (_popular ?? new()).Where(p => (p.Value ?? (number)0.0) >= (number)Runner).ToDictionary(p => p.Key, p => p.Value ?? (number)0.0);
+
+    private string? Prefill(global::app.actor.context.@this context)
+    {
+        var text = _step.Text;
+        var known = WriteTo.Match(text);
+        var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known.Success))
+            .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!).ToList();
+        var filled = certain.Where(a => a is not global::app.goal.step.action.modifier.@this).Select(a => Call(a, text)).ToList();
+        foreach (var m in certain.Where(a => a is global::app.goal.step.action.modifier.@this))
+        {
+            var head = Call(m, text);
+            if (m.Module.Name == "on" && m.Name == "error")
+            {
+                var comma = head.EndsWith("()") ? "" : ", ";
+                head = head[..^1] + comma + (OnErrorCall.IsMatch(text) ? "Recovery=[goal.call(Name=?)])" : "Recovery=?)");
+            }
+            // a certain modifier is shown right after the step's first action — the action it modifies
+            filled = [filled.Count > 0 ? filled[0] : "?", head, .. filled.Skip(1)];
+        }
+        if (known.Success) filled.Add($"variable.set(Name={known.Groups[1].Value}, Value=%!data%)");
+        return filled.Count > 0 ? string.Join("; ", filled) : null;
+    }
+
+    // One action as the pre-fill starts it: its required properties as `?` — and a goal.call whose step
+    // passes arguments, its Parameter.
+    private static string Call(global::app.goal.step.action.@this action, string text)
+    {
+        var required = action.Property.Where(p => p.Required).Select(p => $"{p.Name}=?").ToList();
+        if (action.Module.Name == "goal" && action.Name == "call" && Arguments.IsMatch(text)) required.Add("Parameter={?}");
+        return $"{action.Module.Name}.{action.Name}({string.Join(", ", required)})";
+    }
+
+    private static global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
+    {
+        var parts = name.Split('.', 2);
+        return context.App.Module.Contains(parts[0]) ? context.App.Module[parts[0]][parts[1]] : null;
     }
 
     // A choice's answer as each option's share: its probabilities, or its pick at its confidence.

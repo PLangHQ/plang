@@ -1,19 +1,18 @@
 Properties
-/ Stage 3 — write each step's actions: which of its menu, in what order, how many times, and with
-/ what property values.
+/ Stage 3 — write each step's actions, in formal: which of the decider's picks, in what order, how
+/ many times, and with what property values.
 /
 / This one IS an LLM call, not a decider question: order and property values are written, not
 / picked from a closed set. One request for the whole goal, because the steps refer to each other —
 / `%!data%` means the action before it, and a model shown one step alone cannot see that.
 /
-/ The answer is in the .pr's own action shape, so the step reads it through the same door it reads
-/ a built .pr through — nothing converts it on the way in.
+/ The answer is text, one line per step in formal (`[i] module.action(Name=value); …`); build.match
+/ reads it into each step's code.
 
-- render template "/system/builder/llm/templates/propertiesUser.template", write to %propertiesUserMsg%
-- render template "/system/builder/llm/Properties.llm", write to %propertiesSystemMsg%
-- render template "/system/builder/llm/Properties.schema", write to %propertiesSchema%
+- render template "/system/builder/llm/templates/propertiesC.template", write to %propertiesUserMsg%
+- render template "/system/builder/llm/PropertiesC.llm", write to %propertiesSystemMsg%
 - set %messages% = [{"Role":"system", "Content":"%propertiesSystemMsg%"}, {"Role":"user", "Content":"%propertiesUserMsg%"}]
 
-- llm.query Message=%messages%, Model="gpt-5.4-nano", Schema=%propertiesSchema%, cache=%!build.cache%, write to %properties%
+- llm.query Message=%messages%, Model="gpt-5.4-nano", cache=%!build.cache%, write to %answer%
 
 - call /system/builder/EmitBuildEvent kind="goal-properties", goal=%goal%

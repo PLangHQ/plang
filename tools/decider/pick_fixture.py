@@ -8,6 +8,7 @@ questions stage 1's answer asks (harness.stage2_questions) and the picks both an
 import json, os, sys, collections
 import harness as h
 import child_eval as e
+import prompt_c as c
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROUND = sys.argv[1] if len(sys.argv) > 1 else '/shared/coder/2.0/rounds/round11-run1'
@@ -79,8 +80,10 @@ for case in e.GOLDEN:
         if (i, '@popular') in acts:
             pick['@popular'] = dict(sorted((acts[(i, '@popular')][1] or {}).items(), key=lambda ap: -(ap[1] or 0))[:3])
         picks[str(i)] = pick
-    entries.append({'goal': case['id'], 'name': goal['name'],
-                    'step': [{'index': s['index'], 'text': s['text'], 'indent': s.get('indent', 0)} for s in goal['steps']],
+    user = c.user_message_c(goal, {int(i): p for i, p in picks.items()})
+    entries.append({'goal': case['id'], 'name': goal['name'], 'user': user,
+                    'step': [{'index': s['index'], 'text': s['text'], 'indent': s.get('indent', 0), 'comment': s.get('comment')}
+                             for s in goal['steps']],
                     'answer1': answer1, 'answer2': answer2, 'state1': state1, 'question1': question1,
                     'state2': state2, 'question2': questions, 'picks': picks})
 os.makedirs(os.path.dirname(OUT), exist_ok=True)

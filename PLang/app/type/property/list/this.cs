@@ -26,6 +26,7 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
         typeof(global::app.module.IContext), typeof(global::app.module.IStep),
         typeof(global::app.module.IChannel),
         typeof(global::app.module.IStatic),
+        typeof(global::app.module.IAction),
     };
 
     private readonly System.Collections.Generic.List<Property> _rows = new();

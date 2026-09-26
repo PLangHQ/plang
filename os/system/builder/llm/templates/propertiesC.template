@@ -1,0 +1,102 @@
+{% comment %}
+Prompt C's user message, in three parts.
+
+The goal as written, one line per step: the step (its comments above it, its indentation kept), then
+after `=> decider:` what the decider listed for it (step.Pick.Listed: each action with its score and
+mark), then after `=> formal:` the starting line (step.Pick.Formal) when anything is certain.
+
+Types — the literal types first (text, number, bool, list, dict), then every type a listed action's
+properties use, in the order the goal first reaches them: the type's Description, a choice's options,
+its Example, whichever it has.
+
+Then every listed action ONCE (goal.call too when a listed action holds actions): its signature, the
+first line of its description, its notes (their headings one level down).
+
+The eval's shape (tools/decider/prompt_c.py user_message_c); a twin test holds the two equal.
+Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
+{% endcomment %}Goal, as written:
+  {{ goal.Name }}
+{%- assign shown = "|" -%}
+{%- for s in goal.Step -%}
+{%- capture indent -%}{% if s.Indent > 0 %}{% for k in (1..s.Indent) %}    {% endfor %}{% endif %}{%- endcapture -%}
+{%- assign width = s.Index | append: "" | size | plus: 3 -%}
+{%- capture pad -%}{% for k in (1..width) %} {% endfor %}{{ indent }}{%- endcapture -%}
+{%- if s.Comment -%}
+{%- assign commentLines = s.Comment | split: "\n" -%}
+{%- for c in commentLines %}
+  {{ pad }}/ {{ c }}
+{%- endfor -%}
+{%- endif %}
+  [{{ s.Index }}] {{ indent }}- {{ s.Text }} => decider: {% if s.Pick.Listed.size == 0 %}(nothing it is sure of){% endif -%}
+{%- for l in s.Pick.Listed -%}
+{{ l.Name }} {{ l.Shown }}{% case l.Mark %}{% when "Possible" %} (possible){% when "WriteTo" %} (write to){% when "Popular" %} (possible, popular){% endcase %}{% unless forloop.last %}, {% endunless %}
+{%- assign mark = "|" | append: l.Name | append: "|" -%}
+{%- unless shown contains mark -%}{%- assign shown = shown | append: l.Name | append: "|" -%}{%- endunless -%}
+{%- endfor -%}
+{%- if s.Pick.Formal %} => formal: {{ s.Pick.Formal }}{% endif -%}
+{%- endfor -%}
+{%- comment %} goal.call's definition, when a listed action holds actions (an action property, a Recovery) {% endcomment -%}
+{%- assign holds = false -%}
+{%- assign names = shown | split: "|" -%}
+{%- for n in names -%}
+{%- if n == "" -%}{%- continue -%}{%- endif -%}
+{%- if n == "on.error" -%}{%- assign holds = true -%}{%- endif -%}
+{%- assign mn = n | split: "." | first -%}
+{%- assign an = n | split: "." | last -%}
+{%- assign m = modules | where: "Name", mn | first -%}
+{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- for p in a.Property -%}{%- capture face -%}{{ p.Type }}{%- endcapture -%}{%- if face == "action" -%}{%- assign holds = true -%}{%- endif -%}{%- endfor -%}
+{%- endfor -%}
+{%- if holds -%}{%- unless shown contains "|goal.call|" -%}{%- assign shown = shown | append: "goal.call|" -%}{%- endunless -%}{%- endif -%}
+{%- assign names = shown | split: "|" -%}
+{%- assign faces = "|text|number|bool|list|dict|" -%}
+{%- for n in names -%}
+{%- if n == "" -%}{%- continue -%}{%- endif -%}
+{%- assign mn = n | split: "." | first -%}
+{%- assign an = n | split: "." | last -%}
+{%- assign m = modules | where: "Name", mn | first -%}
+{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- for p in a.Property -%}
+{%- capture face -%}{{ p.Type }}{%- endcapture -%}
+{%- assign mark = "|" | append: face | append: "|" -%}
+{%- unless faces contains mark -%}{%- assign faces = faces | append: face | append: "|" -%}{%- endunless -%}
+{%- endfor -%}
+{%- endfor %}
+
+Types
+{%- assign faceList = faces | split: "|" -%}
+{%- for want in faceList -%}
+{%- if want != "" -%}
+{%- assign found = false -%}
+{%- for m in modules -%}
+{%- assign actions = m.Action | concat: m.Modifier -%}
+{%- for a in actions -%}
+{%- for p in a.Property -%}
+{%- unless found -%}
+{%- capture face -%}{{ p.Type }}{%- endcapture -%}
+{%- if face == want -%}
+{%- assign found = true %}
+- {{ face }}{% if p.Type.Description %} — {{ p.Type.Description }}{% endif %}{% if p.Type.Values %} — one of: {{ p.Type.Values | join: ", " }}{% endif %}{% if p.Type.Example %} (e.g. {{ p.Type.Example }}){% endif %}
+{%- endif -%}
+{%- endunless -%}
+{%- endfor -%}
+{%- endfor -%}
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+{%- for n in names -%}
+{%- if n == "" -%}{%- continue -%}{%- endif -%}
+{%- assign mn = n | split: "." | first -%}
+{%- assign an = n | split: "." | last -%}
+{%- assign m = modules | where: "Name", mn | first -%}
+{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first %}
+
+## {{ n }}({% for p in a.Property %}{{ p.Name }}{% unless p.Required %}?{% endunless %}: {{ p.Type }}{% if p.HasDefault %} = {{ p.Default }}{% endif %}{% unless forloop.last %}, {% endunless %}{% endfor %})
+{%- if a.Description -%}
+{%- assign descriptionLines = a.Description | strip | split: "\n" %}
+{{ descriptionLines[0] }}
+{%- endif -%}
+{%- if a.Notes %}
+{{ a.Notes | strip | replace: "## ", "### " }}
+{%- endif -%}
+{%- endfor %}
