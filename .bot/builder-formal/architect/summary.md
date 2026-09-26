@@ -2,6 +2,13 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: file.read returns its item born with template; the text renders itself
+
+**Reversal of my ruling** (I had told coder "file.read keeps its direct Resolve", then sketched an action that opened and re-wrapped the content). Ingi: "`.Value()` should never be called in an action that is returning an item … the item that gets returned from file.read gets born with template". **Ruling sent to coder:**
+- file.read's ResolveVariables returns the plain lazy file reference, born with the template marker (a constructor fact; its Type answers it). Its text content is born a template when read and renders at use.
+- `variable.list.Resolve` is deleted: the store only answers Get, and the render moves onto text (its Value/Output); source hands over to a text.
+- **Open for Ingi:** the `%!x%` guard (file content must not read `%!app%`/`%!error%`), which needs his call on the marker value; a failing test keeps it visible.
+
 ## 2026-09-26 — Ingi: content guessing is removed completely
 
 "that is really bad and should be completely removed; the only way it should try to render a var is when template is set." The full sweep, with file:line, is in **[template-marker.md](template-marker.md)**, the handoff for coder (its session was lost in the restart):

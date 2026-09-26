@@ -12,7 +12,7 @@ Reading a value today turns ANY string holding `%x%` into a template when its ro
 
 - **A value renders `%var%` only when its type carries `template`.** No marker means the text is plain, whatever it contains.
 - **The marker is born in one place:** at BUILD, when the formal reader types the programmer's literal (content decides there, because it's the programmer's own text). Nowhere else.
-- **An explicit request renders once, where it's asked:** `file.read … ResolveVariables=true` fills the file's variables (never `%!x%`) and returns plain text. That's the step's own request, not a marker.
+- **An explicit request is a birth fact:** `file.read … ResolveVariables=true` returns the file item born with the template marker; its text renders itself when read. Open for Ingi: whether that template may read `%!x%`.
 
 ## The sweep (file:line, read on 2026-09-26)
 
@@ -23,7 +23,8 @@ Reading a value today turns ANY string holding `%x%` into a template when its ro
 | `PLang/app/module/action/file/read.cs:105` (Build) | `raw.Contains('%')` → "can't judge at build" | Ask the marker: `Path.HasVariableReference` (`data/this.cs:132`). |
 | `PLang/app/module/action/http/HttpBuildHelpers.cs:17` | `raw.Contains('%')` | The same: the marker. |
 | `PLang/app/module/action/llm/query.cs:123`, `:127` | `HasVariable(st.ToString())`, `format.Contains('%')` | The same: the marker. |
-| `PLang/app/module/action/file/read.cs:68-78` (ResolveVariables) | calls `Context.Variable.Resolve(content, skipInfrastructure: true)` directly | **Stays.** The step asked explicitly; file.read owns "fill this file's variables, never infrastructure". Its result is plain, already-rendered text with no marker. (Routing it through text's door would need a second template mode just to carry the `%!x%` guard: a new concept to save one call.) |
+| `PLang/app/module/action/file/read.cs:68-80` (ResolveVariables) | opens the content (`read.Value()`) and calls `Context.Variable.Resolve(content, skipInfrastructure: true)` | **Ingi:** the handler never opens what it returns. It returns the plain lazy file reference, **born with the template marker**; the file's text content is born a template when read and renders itself at use. |
+| `PLang/app/variable/list/this.cs:445-478` (`Resolve(string, bool)`) | the store renders any string it's handed | **Deleted.** The store answers `Get(name)`; the render moves onto text (Value/Output); `source.Output` hands over to a text. |
 
 **Stays (checked):**
 - `json.cs:68-71` StringSlot and `:190-197` TextLeaf: gated on `ctx.Template`, which comes only from a type's marker (`wire/this.cs:25`, `source.cs:196`). Inside a marked container, stamping only the slots that hold `%x%` keeps literal slots canonical.
