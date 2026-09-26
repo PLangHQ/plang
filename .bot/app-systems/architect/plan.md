@@ -114,6 +114,26 @@ public item Create(…, context)
 - after %user% set, call UserChanged      → the variable's on.after.set
 ```
 
+## Faces (stages 5 and 7), settled with Ingi 2026-09-26
+
+A system's face is a summary (names only); detail comes by navigating to one element. `current` shows where something is in play. The facts are the start set; a system may add a fact that's worth showing.
+
+| face | shows |
+|---|---|
+| `%!app.type%` | `list` (type names), `kind`, `scheme`, `choice` |
+| `%!app.type.text%` | `name`, `description`, `example`, `kind`; a choice type adds `values` |
+| `%!app.type.text.kind.md%` | `name`, `extension`, `mime` |
+| `%!app.goal%` | `list` (goal names), `current` |
+| `%!app.goal.Start%` | `name`, `path`, `description`, its steps (index and text), `on` |
+| `%!app.actor%` | `list` (system, user), `current` |
+| `%!app.actor.user%` | `name` |
+| `%!app.module%` | `list` (module names) |
+| `%!app.module.file%` | `name`, `description`, its action names |
+| `%!app.test%` | `list` (test names), `current` |
+| `%!app.test.X%` | `name`, `status` |
+| `%!app.variable%` | `list` (variable names) |
+| `%!app.variable.some%` | `name`, `type` |
+
 ## Cross-cutting decisions
 
 - **The .pr:** a marked row without its `"variable"` list is an old format (PrFormatOutdated, rebuild), not something to parse on load.
@@ -155,5 +175,4 @@ public item Create(…, context)
 
 ## Open for the next round
 
-1. ~~Which moments each system's `on` offers~~: settled above.
-2. Face facts beyond the start set, per system (goal: `name`, `path`, `description`, its steps by index and text; actor: `name`; module: `name`, `description`, its action names; test: `name`, `status`; variable: `name`, `type`).
+Round 1 closed: every open point settled. Next: round 2, a full pass over the plan.
