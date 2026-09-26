@@ -36,6 +36,32 @@ public class FormalReaderTests
         return string.Join("\n", differ);
     }
 
+    private static string Modifiers(global::app.data.@this read) =>
+        string.Join(", ", ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Single().Modifier
+            .Select(m => $"{m.Module.Name}.{m.Name}{(m["StatusCode"] is { } s ? $"({s.Value})" : "")}"));
+
+    [Test]
+    public async Task Modifiers_WrittenInEitherOrder_NestTheSame()
+    {
+        var one = Read("file.read(Path=\"a.txt\"); timeout.after(Ms=100); on.error(Recovery=[goal.call(Name=\"Fix\")]); cache.wrap()", out _);
+        var other = Read("file.read(Path=\"a.txt\"); cache.wrap(); on.error(Recovery=[goal.call(Name=\"Fix\")]); timeout.after(Ms=100)", out _);
+
+        await one.IsSuccess();
+        await other.IsSuccess();
+        await Assert.That(Modifiers(one)).IsEqualTo("on.error, cache.wrap, timeout.after");
+        await Assert.That(Modifiers(other)).IsEqualTo("on.error, cache.wrap, timeout.after");
+        await Assert.That(await Written(other)).IsEqualTo(await Written(one));
+    }
+
+    [Test]
+    public async Task TwoOnErrorClauses_KeepTheOrderWritten()
+    {
+        var read = Read("file.read(Path=\"a.txt\"); timeout.after(Ms=100); on.error(StatusCode=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
+
+        await read.IsSuccess();
+        await Assert.That(Modifiers(read)).IsEqualTo("on.error(404), on.error, timeout.after");
+    }
+
     [Test]
     public async Task EveryGoldenStep_Typed_ParsesAndWritesBack_ByteForByte()
         => await Assert.That(await RoundTrips("formal")).IsEqualTo("");
@@ -112,16 +138,16 @@ public class FormalReaderTests
     }
 
     [Test]
-    public async Task EveryAction_IsBornHoldingTheStep_ModifiersFollowIt_TheFirstWrittenInnermost()
+    public async Task EveryAction_IsBornHoldingTheStep_ModifiersOfOneLayerKeepTheOrderWritten()
     {
-        // B is written first after the call, so B is innermost; the modifier list is outermost first: A, B
+        // two on.error clauses are one layer: B is written first, so B is asked first
         var read = Read("goal.call(Name=\"X\"); on.error(Key=\"B\", Recovery=[goal.call(Name=\"RB\")]); on.error(Key=\"A\", Recovery=[goal.call(Name=\"RA\")])", out var step);
         var actions = (global::app.goal.step.action.list.@this)read.Peek()!;
         var call = actions.Items().Single();
         await Assert.That(call.Name).IsEqualTo("call");
         await Assert.That(call.Step).IsSameReferenceAs(step);
         // a row's value is held raw, as its slice ("A"), until a run reads it
-        await Assert.That(string.Join(",", call.Modifier.Select(m => m.Property["Key"]!.Value!.ToString()))).IsEqualTo("\"A\",\"B\"");
+        await Assert.That(string.Join(",", call.Modifier.Select(m => m.Property["Key"]!.Value!.ToString()))).IsEqualTo("\"B\",\"A\"");
         await Assert.That(call.Modifier[0].Recovery.Items().Single().Step).IsSameReferenceAs(step);
     }
 

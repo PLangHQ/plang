@@ -1,12 +1,12 @@
 namespace app.goal.step.action.modifier.list;
 
 /// <summary>
-/// The modifiers wrapping one action (<c>action.Modifier</c>), outermost first — the order they are
-/// written in formal, after the action (<c>file.read(…); cache.wrap(…); on.error(…)</c>, read
-/// innermost first). The list owns how they
-/// compose around the action: <see cref="Wrap"/> folds them right to left, each modifier wrapping the one
-/// inside it, and <c>on error</c> clauses written one after another wrap once, together, as ONE try/catch
-/// asked in the order written. No sort: the written order is the order.
+/// The modifiers wrapping one action (<c>action.Modifier</c>), outermost first — sorted by each one's
+/// declared layer (<c>[Modifier(Order)]</c>: on.error outside cache.wrap outside timeout.after), so the
+/// order they are written in doesn't change what they do; modifiers of the same layer keep the order
+/// written. The list owns how they compose around the action: <see cref="Wrap"/> folds them right to
+/// left, each modifier wrapping the one inside it, and <c>on error</c> clauses side by side wrap once,
+/// together, as ONE try/catch asked in the order written.
 /// </summary>
 public sealed class @this : IReadOnlyList<modifier.@this>
 {
@@ -14,14 +14,18 @@ public sealed class @this : IReadOnlyList<modifier.@this>
 
     public @this() { }
 
-    public @this(IEnumerable<modifier.@this> modifiers) => _items.AddRange(modifiers);
+    public @this(IEnumerable<modifier.@this> modifiers)
+    {
+        foreach (var modifier in modifiers) Add(modifier);
+    }
 
-    /// <summary>The next modifier inward — the written order.</summary>
-    public void Add(modifier.@this modifier) => _items.Add(modifier);
-
-    /// <summary>Puts <paramref name="modifier"/> at <paramref name="index"/> — a wrap read from outside in
-    /// takes its place outermost (index 0).</summary>
-    public void Insert(int index, modifier.@this modifier) => _items.Insert(index, modifier);
+    /// <summary>Takes its place by its layer: after every modifier of its layer or an outer one.</summary>
+    public void Add(modifier.@this modifier)
+    {
+        var at = _items.Count;
+        while (at > 0 && _items[at - 1].Layer > modifier.Layer) at--;
+        _items.Insert(at, modifier);
+    }
 
     public void Clear() => _items.Clear();
 

@@ -49,14 +49,14 @@ public sealed class @this
     internal void Add(string actionName, System.Type? type, IAction? instance)
     {
         var clr = type ?? instance?.GetType();
-        var order = clr?.GetCustomAttribute<global::app.module.ModifierAttribute>()?.Order;
+        var isModifier = clr?.GetCustomAttribute<global::app.module.ModifierAttribute>() != null;
         // The catalog element carries the [Action] cache flag so the teaching template can tag
         // [no-cache] — read off the attribute, its single source, not defaulted.
         var cacheable = clr?.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
         // The catalog element is born with its class's properties, reflected on first read.
-        global::app.goal.step.action.@this element = order != null
+        global::app.goal.step.action.@this element = isModifier
             ? new global::app.goal.step.action.modifier.@this
-                { Module = this, Name = actionName, Position = order.Value, Cacheable = cacheable, Property = new(this, actionName) }
+                { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
             : new global::app.goal.step.action.@this
                 { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) };
         _action[actionName] = new Row(new global::app.module.list.ActionEntry(type, instance), element);

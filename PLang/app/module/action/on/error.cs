@@ -15,7 +15,7 @@ namespace app.module.action.on;
 // every retry, and the recovery that follows them — so it is outermost and catches a deadline like
 // any other error.
 [Action("error", Cacheable = false)]
-[Modifier(Order = 1)]
+[Modifier(Order = 0)]
 public partial class OnError : IContext, ICatch, IAction
 {
     public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }

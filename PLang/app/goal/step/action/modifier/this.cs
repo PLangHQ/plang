@@ -8,10 +8,12 @@ namespace app.goal.step.action.modifier;
 /// </summary>
 public class @this : global::app.goal.step.action.@this
 {
-    /// <summary>Linear wrap precedence (lower = outermost wrapper) — from [Modifier(Order = N)] at
-    /// catalog mint. Not stored in the .pr: position in the Modifiers slot carries it at runtime. Named
-    /// Position, not Order, because the base item.@this owns Order(@this) as the comparison verb.</summary>
-    public int Position { get; init; }
+    /// <summary>How far out this modifier wraps its action — its handler's declared
+    /// <c>[Modifier(Order = N)]</c>, read from the declaration, never copied: lower wraps outer. Not in
+    /// the .pr. Not named Order: item.@this owns Order(…) as the comparison verb.</summary>
+    public int Layer => Module.Handler(Name) is { } handler
+        ? System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.ModifierAttribute>(handler)?.Order ?? 0
+        : 0;
 
     /// <summary>A modifier IS a distinct plang type (the role is the type), not an action — it names
     /// itself "modifier". The wire shape rides action's (module/action/parameters/…), but its identity

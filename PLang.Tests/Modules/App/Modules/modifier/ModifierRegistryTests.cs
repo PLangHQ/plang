@@ -33,16 +33,16 @@ public class ModifierRegistryTests
 
     #region Order on the type
 
-    /// <summary>Position says what a modifier BOUNDS, and lowest wraps outermost: on.error
+    /// <summary>The layer says what a modifier BOUNDS, and lowest wraps outermost: on.error
     /// bounds the attempts, cache.wrap bounds the outcome of the real work, timeout.after bounds
     /// one attempt.</summary>
     [Test]
     public async Task Order_LivesOnTheModifierType()
     {
         await using var app = TestApp.Create("/app");
-        await Assert.That(((Modifier)app.Module["on"]!["error"]!).Position).IsEqualTo(1);
-        await Assert.That(((Modifier)app.Module["cache"]!["wrap"]!).Position).IsEqualTo(2);
-        await Assert.That(((Modifier)app.Module["timeout"]!["after"]!).Position).IsEqualTo(3);
+        await Assert.That(((Modifier)app.Module["on"]!["error"]!).Layer).IsEqualTo(0);
+        await Assert.That(((Modifier)app.Module["cache"]!["wrap"]!).Layer).IsEqualTo(50);
+        await Assert.That(((Modifier)app.Module["timeout"]!["after"]!).Layer).IsEqualTo(100);
     }
 
     #endregion

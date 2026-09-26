@@ -15,8 +15,8 @@ namespace app.goal.step.action.serializer;
 ///   value   = "text" | number | true | false | null | %variable% | [ … ] | { … } | action
 /// </code>
 /// <para><c>{ }</c> is only a condition's body (its child step). A modifier follows the action it modifies,
-/// in the same list — <c>file.read(…); cache.wrap(…); on.error(…)</c> — the first written innermost;
-/// the action's modifier list keeps them outermost first. A modifier's recovery is its
+/// in the same list — <c>file.read(…); on.error(…); cache.wrap(…)</c>, in any order: the action's
+/// modifier list places each by its declared layer. A modifier's recovery is its
 /// <c>Recovery=[…]</c>.</para>
 ///
 /// <para>A value's type never comes from the text alone: it is the catalogue's declared type for the
@@ -133,8 +133,7 @@ public sealed class Formal
         // ---------------------------------------------------------------- actions
 
         /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end. A modifier modifies
-        /// the action before it in the same list: several attach in written order, the first written
-        /// innermost (the modifier list is outermost first, so each one read goes in at 0).</summary>
+        /// the action before it in the same list; its modifier list places it by its layer.</summary>
         public List<global::app.goal.step.action.@this> Actions(string? closing)
         {
             var actions = new List<global::app.goal.step.action.@this>();
@@ -158,7 +157,7 @@ public sealed class Formal
             if (read.Action is not global::app.goal.step.action.modifier.@this modifier) { actions.Add(read.Action); return; }
             if (actions.Count == 0)
                 Fail($"{modifier.Module.Name}.{modifier.Name} modifies the action before it; step {_index} has none", read.At);
-            actions[^1].Modifier.Insert(0, modifier);
+            actions[^1].Modifier.Add(modifier);
         }
 
         private global::app.goal.step.action.@this? Catalog(string module, string name)
@@ -175,8 +174,8 @@ public sealed class Formal
             var isModifier = catalog is global::app.goal.step.action.modifier.@this;
             var isCondition = module == "condition" && name is "if" or "elseif" or "else";
 
-            global::app.goal.step.action.@this action = catalog is global::app.goal.step.action.modifier.@this m
-                ? new global::app.goal.step.action.modifier.@this { Step = _step, Synthetic = false, Position = m.Position }
+            global::app.goal.step.action.@this action = catalog is global::app.goal.step.action.modifier.@this
+                ? new global::app.goal.step.action.modifier.@this { Step = _step, Synthetic = false }
                 : new global::app.goal.step.action.@this { Step = _step, Synthetic = false };
             action.Module = _context.App.Module[module];
             action.Name = name;

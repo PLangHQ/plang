@@ -12,7 +12,7 @@ namespace app.module.action.cache;
 // action and caches the success, and a recovery result is never cached because recovery happens
 // outside the cache.
 [Action("wrap", Cacheable = false)]
-[Modifier(Order = 2)]
+[Modifier(Order = 50)]
 public partial class CacheWrap : IContext, IModifier
 {
     [IsNotNull]

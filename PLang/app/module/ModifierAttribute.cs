@@ -2,15 +2,16 @@ namespace app.module;
 
 /// <summary>
 /// Marks a handler class as an action modifier — it wraps the action it is written around.
-/// The runtime composes an action's modifiers in their written order (outermost first);
-/// Order is the nesting the builder teaches and gives a flat answer.
+/// Order decides how the modifiers of one action nest, whatever order the programmer wrote them in:
+/// the action's modifier list keeps them sorted by it (modifier.list).
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class ModifierAttribute : Attribute
 {
     /// <summary>
-    /// The nesting a flat answer is given. Lower values wrap outer; higher values wrap closer to the action.
-    /// Current assignments: on.error=1, cache.wrap=2, timeout.after=3.
+    /// Lower values wrap outer; higher values wrap closer to the action. Modifiers of equal Order keep
+    /// the order written (on error clauses are asked in that order). Current assignments: on.error=0
+    /// (outermost: it bounds the attempts), cache.wrap=50, timeout.after=100 — gaps for new ones.
     /// </summary>
     public int Order { get; init; }
 }

@@ -45,8 +45,8 @@ public partial class @this
     [JsonIgnore]
     public global::app.type.property.list.@this Default { get; init; } = new();
 
-    /// <summary>The modifiers wrapping this action (cache.wrap, on.error, timeout.after), outermost
-    /// first — the written order. The list owns how they compose around the action (<c>Modifier.Wrap</c>).</summary>
+    /// <summary>The modifiers wrapping this action (on.error, cache.wrap, timeout.after), outermost
+    /// first — by each one's declared layer. The list owns how they compose around the action (<c>Modifier.Wrap</c>).</summary>
     [Store, Debug, Default]
     public modifier.list.@this Modifier { get; init; } = new();
 

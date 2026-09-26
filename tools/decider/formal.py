@@ -16,8 +16,8 @@ new lines included, may sit between any two tokens.
     dict      = "{" [ key ":" value { "," key ":" value } ] "}"      key = name | "text"
 
 `{ }` is only a condition's body (its child). A modifier follows the action it modifies, in the same
-list: `file.read(…); cache.wrap(…); on.error(…)` — the first written is innermost, and the rows
-keep them outermost first in the action's `modifier` list. A modifier's recovery is its `Recovery`
+list: `file.read(…); on.error(…); cache.wrap(…)`, in any order — the action's `modifier` list places
+each by its declared layer ([Modifier(Order)]), outermost first. A modifier's recovery is its `Recovery`
 property.
 
 A value's TYPE never comes from the model. Written or not, it is the property's declared type, or —
@@ -61,6 +61,19 @@ def is_action(v):
 
 def is_modifier(module, name):
     return b.declared(module, name)[1]
+
+LAYER = re.compile(r'\[Modifier\(Order\s*=\s*(\d+)\)\]')
+
+def layer(module, name):
+    """How far out a modifier wraps — its handler's [Modifier(Order = N)] (modifier/this.cs Layer)."""
+    m = LAYER.search(b.handler_source(module, name) or '')
+    return int(m.group(1)) if m else 0
+
+def attach(modifiers, m):
+    """A modifier takes its place by its layer: after every one of its layer or an outer one (modifier.list Add)."""
+    at = len(modifiers)
+    while at > 0 and layer(modifiers[at - 1]['module'], modifiers[at - 1]['name']) > layer(m['module'], m['name']): at -= 1
+    modifiers.insert(at, m)
 
 def takes_recovery(module, name):
     return (module, name) == ('on', 'error')
@@ -132,8 +145,7 @@ class _Reader:
 
     def actions(self, closing=None):
         """action { ";" action } — up to `closing` or the end. A modifier modifies the action before it
-        in the same list: several attach in written order, the first written innermost (the modifier
-        list is outermost first, so each one read goes in at 0)."""
+        in the same list; its modifier list places it by its layer."""
         out = []
         self.attach(out, self.action())
         while not (self.peek(closing) if closing else self.at_end()):
@@ -151,7 +163,7 @@ class _Reader:
             out.append(act); return
         if not out:
             self.fail(f'{act["module"]}.{act["name"]} modifies the action before it; step {self.index} has none', at)
-        out[-1]['modifier'].insert(0, act)
+        attach(out[-1]['modifier'], act)
 
     # action = module "." name "(" props ")" [ "{" actions "}" ] — (the action, where it starts)
     def action(self):
@@ -439,12 +451,12 @@ def _head(a, types=True):
     return f'{a["module"]}.{a["name"]}({", ".join(props)})'
 
 def write_action(a, types=True):
-    """One action; a condition's body inline in { }; then its modifiers after it, innermost first (the
-    modifier list is outermost first)."""
+    """One action; a condition's body inline in { }; then its modifiers after it in their list's order
+    (outermost first, by layer)."""
     s = _head(a, types)
     if a.get('child'):
         s += ' { ' + '; '.join(write_action(x, types) for c in a['child'] for x in c.get('action') or []) + ' }'
-    for m in reversed(a.get('modifier') or []):
+    for m in a.get('modifier') or []:
         s += '; ' + _head(m, types)
     return s
 

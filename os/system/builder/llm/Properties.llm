@@ -42,7 +42,7 @@ The arguments a step passes to a goal are one dict in Parameter:
 `foreach %list%, call X item=%item%` → loop.foreach(Collection=%list%); goal.call(Name="X", Parameter={item: %item%})
 A condition's body goes in its { }; the next branch of the same chain follows after ; :
   condition.if(Left=%n%, Operator="<", Right=5) { goal.return() }; condition.else() { output.write(Data="ok") }
-A modifier comes right after the action it modifies; what it runs on error is its Recovery:
+A modifier comes right after the action it modifies (several: in any order); what it runs on error is its Recovery:
   goal.call(Name="Compile"); on.error(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")])
   file.read(Path="file.txt"); on.error(StatusCode=404, Recovery=[goal.call(Name="Fix")]); variable.set(Name=%content%, Value=%!data%)
 

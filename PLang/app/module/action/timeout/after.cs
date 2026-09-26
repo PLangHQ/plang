@@ -9,7 +9,7 @@ namespace app.module.action.timeout;
 // timeout.after bounds one ATTEMPT, so it is innermost: each retry gets a fresh deadline, and an
 // enclosing on.error catches a Timeout like any other error.
 [Action("after", Cacheable = false)]
-[Modifier(Order = 3)]
+[Modifier(Order = 100)]
 public partial class After : IContext, IModifier
 {
     [IsNotNull]

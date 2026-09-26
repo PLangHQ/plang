@@ -33,7 +33,7 @@ public class ModifierFoldTests
             .Cast<ModifierAttribute>().FirstOrDefault();
 
         await Assert.That(attr).IsNotNull();
-        await Assert.That(attr!.Order).IsEqualTo(3);
+        await Assert.That(attr!.Order).IsEqualTo(100);
     }
 
     #endregion

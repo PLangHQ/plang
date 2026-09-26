@@ -86,8 +86,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>The action in formal: its own call; a condition's body inline after it (<c>{ a; b }</c>);
-    /// then its modifiers after it, innermost first (the list is outermost first) — each the next call in
-    /// the same sequence: <c>file.read(…); cache.wrap(…); on.error(…)</c>.</summary>
+    /// then its modifiers after it in their list's order — each the next call in the same sequence:
+    /// <c>file.read(…); on.error(…); cache.wrap(…)</c>. (Read back in any order, they sort the same.)</summary>
     private async System.Threading.Tasks.ValueTask Formal(global::app.channel.serializer.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
@@ -99,7 +99,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 foreach (var action in step.Code.Items()) await action.Output(writer, mode, context);
             writer.EndBody();
         }
-        for (var i = Modifier.Count - 1; i >= 0; i--) await Modifier[i].Call(writer, mode, context);
+        foreach (var modifier in Modifier) await modifier.Call(writer, mode, context);
     }
 
     /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties, its frozen defaults
