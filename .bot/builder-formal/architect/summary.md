@@ -2,6 +2,16 @@
 
 Newest first. Branched off `get-builder-running` at `92fcae51f`; that branch's history is in `.bot/get-builder-running/architect/summary.md`.
 
+## 2026-09-26 — Ingi: content guessing is removed completely
+
+"that is really bad and should be completely removed; the only way it should try to render a var is when template is set." The full sweep, with file:line, is in **[template-marker.md](template-marker.md)**, the handoff for coder (its session was lost in the restart):
+- delete the two read-time guesses in type/this.cs (the string and container arms);
+- file.read/http/llm.query build checks ask the marker, not `Contains('%')`;
+- file.read's ResolveVariables renders through text's door;
+- the json container slots stay, since they're gated on the marker.
+
+A CLAUDE.md proposal is filed.
+
 ## 2026-09-26 — Ingi: the row's `template: plang` is the mark, no "authored wire"
 
 On the string-arm design item: "%var% has template=plang, that tells that it's a variable that needs to be processed, so no new authored". Confirmed in the files: the builder writes `"template": "plang"` on every row whose value holds a variable (show.pr 8×, start.pr 48×); plain rows are `{"name":"text"}`. **Ruling:** type.Read's string arm stops inferring from content. A string is a template only when its row's type carries the marker. Content decides only at BUILD, where the formal reader stamps the marker on the programmer's literal. The 16 tests are re-checked against the row marker; fixtures without it are stale and get regenerated. This closes the template-injection path (a cached/stored/outside text holding `%x%` stays text).
