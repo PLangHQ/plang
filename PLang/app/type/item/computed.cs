@@ -26,7 +26,7 @@ public sealed class computed : @this
     /// (%Now% is a datetime); "item" when undeclared — the computation's
     /// answer carries its own truth at each use.</summary>
     protected internal override global::app.type.@this Type
-        => new(_declared ?? NamespaceTail(GetType()), _declaredKind);
+        => _declared == null ? new(typeof(@this), _declaredKind) : new(_declared, _declaredKind);
 
     public override bool Cacheable => false;
 

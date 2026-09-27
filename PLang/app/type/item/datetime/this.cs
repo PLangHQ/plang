@@ -10,6 +10,7 @@ namespace app.type.item.datetime;
 /// collapse into method calls. Order is chronological by instant; equality is
 /// same-instant; the bare wire form is ISO round-trip (<c>"o"</c>).</para>
 /// </summary>
+[global::app.Attributes.PlangType("datetime")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
@@ -23,7 +24,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.DateTimeOffset(Value);
-    protected internal override global::app.type.@this Type => new("datetime", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public @this(System.DateTimeOffset value) { Value = value; }
 

@@ -133,6 +133,7 @@ public sealed partial class @this
         return new app.type.@this(entry.Name, kind != null ? kind.Of(entry.ClrType) : entry.ClrType, kind?.Name, type.Strict, type.Template)
         {
             kind = kind,
+            Namespace = entry.Namespace,
             Alias = entry.Alias,
             Owned = entry.Owned,
             Internal = entry.Internal,

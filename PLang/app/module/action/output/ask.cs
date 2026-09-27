@@ -14,7 +14,7 @@ namespace app.module.action.output;
 ///         trailing variable.set binds the Ask. Callers read <c>%name.Answer%</c>.</item>
 /// </list>
 /// </summary>
-[global::app.Attributes.PlangType]
+[global::app.Attributes.PlangType("ask")]
 public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICreate<Ask>, global::app.IExitsGoal
 {
     /// <summary>The entity is "ask" (the namespace-tail default would say

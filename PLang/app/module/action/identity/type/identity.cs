@@ -8,7 +8,7 @@ namespace app.module.action.identity;
 /// Plain domain class — wrapped in Data&lt;Identity&gt; by handlers.
 /// Persistence is owned by IIdentity.
 /// </summary>
-[PlangType]
+[PlangType("identity")]
 public sealed class Identity : global::app.type.item.@this, global::app.type.item.ICreate<Identity>
 {
     public Identity() { }

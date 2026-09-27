@@ -97,13 +97,15 @@ public sealed class @this
             if (string.IsNullOrEmpty(type.Namespace)) continue;
             if (!type.Namespace!.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
 
-            // namespace shape: app.type.<typeName>.serializer
+            // namespace shape: <the type's namespace>.serializer — the renderer is its type's, registered under
+            // the name that type goes by (its word, else its namespace). A folder with no item class of its own
+            // (a module's serializer folder) registers under its last segment.
             var ns = type.Namespace;
             var pivot = ns.LastIndexOf(".serializer", System.StringComparison.Ordinal);
             var head = ns[..pivot];
             var lastDot = head.LastIndexOf('.');
             if (lastDot < 0) continue;
-            var typeName = head[(lastDot + 1)..];
+            var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? head[(lastDot + 1)..];
 
             // file/class name maps to format token; "Default" → wildcard.
             var format = type.Name.Equals("Default", System.StringComparison.Ordinal)

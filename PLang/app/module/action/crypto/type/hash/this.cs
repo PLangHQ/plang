@@ -20,6 +20,7 @@ namespace app.module.action.crypto.type.hash;
 /// per algorithm under <c>hash/kind/</c>, not extension-derived, so there is no
 /// <c>Build</c> hook.</para>
 /// </summary>
+[global::app.Attributes.PlangType("hash")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=";

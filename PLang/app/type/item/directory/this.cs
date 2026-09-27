@@ -7,6 +7,7 @@ namespace app.type.item.directory;
 /// files — <c>read</c> a child to get content, and a write-out of a directory
 /// is a flat listing, never a content dump.
 /// </summary>
+[global::app.Attributes.PlangType("directory")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "/docs";

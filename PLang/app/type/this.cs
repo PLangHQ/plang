@@ -29,6 +29,7 @@ namespace app.type;
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
+[global::app.Attributes.PlangType("type")]
 public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.ICurrent<@this>, item.ILoad<@this>,
     item.IList<@this, list.@this>
 {
@@ -50,8 +51,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>
     /// A type held as a value: its face in the Out view — what a program sees when it writes
-    /// <c>%!app.type.text%</c>: its name, description, example and aliases, and its kinds' names (a
-    /// kinded type shows its own kind). Every other view writes the identity (<see cref="Write"/>).
+    /// <c>%!app.type.text%</c>: its name (the namespace), the word it goes by when it declares one, its
+    /// description, example and aliases, and its kinds' names (a kinded type shows its own kind). Every other
+    /// view writes the identity (<see cref="Write"/>).
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
@@ -59,7 +61,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (mode != global::app.View.Out || context == null) { Write(writer); return; }
         var full = context.App.type.list[this, context];
         writer.BeginObject();
-        writer.Name("name"); writer.String(full.Name);
+        writer.Name("name"); writer.String(full.Namespace ?? full.Name);
+        if (full.Namespace != null && full.Namespace != full.Name) { writer.Name("word"); writer.String(full.Name); }
         if (full.Description != null) { writer.Name("description"); writer.String(full.Description); }
         if (full.Example != null) { writer.Name("example"); writer.String(full.Example); }
         if (full.Alias.Count > 0)
@@ -82,8 +85,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         await System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
+    /// <summary>The name the type goes by — the word its class declares (<c>text</c>), else its
+    /// <see cref="Namespace"/>. What the wire, a <c>.pr</c> slot and the prompts write.</summary>
     [JsonPropertyName("name")]
     public string Name { get; }
+
+    /// <summary>The type's identity: its class's namespace (<c>app.type.item.text</c>,
+    /// <c>app.channel.type.goal</c>) — the type answers to it as to its name. Null for a type known only by
+    /// the name a slot spelled (<c>{"name":"text"}</c>), which the types resolve to their entry.</summary>
+    [JsonIgnore]
+    public string? Namespace { get; init; }
 
     /// <summary>
     /// The subtype refinement ("md", "gif", "int"). Never null: a type with no kind has its empty
@@ -521,7 +532,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         : this(name, kind, strict, template)
     {
         _clrType = clrType;
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType)) Namespace = item.@this.NamespaceOf(clrType);
     }
+
+    /// <summary>The type of the item class <paramref name="clr"/> — the name the class goes by (its declared
+    /// word, else its namespace) and its namespace, with <paramref name="kind"/>.</summary>
+    internal @this(System.Type clr, string? kind = null) : this(item.@this.NameOf(clr), clr, kind) { }
 
     /// <summary>
     /// The type a class defines: its name, its C# class, its aliases and owned C# shapes, and — when
@@ -600,11 +616,24 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>This type answers for its name or one of its aliases, case-insensitive.</summary>
     public System.Threading.Tasks.ValueTask<@this?> Match(string key) => new(Names(key) ? this : null);
 
-    /// <summary>True when <paramref name="key"/> is this type's name or one of its aliases — the
-    /// in-memory answer <see cref="Match"/> gives, for the registry's synchronous walk.</summary>
+    /// <summary>True when <paramref name="key"/> is this type's name, its namespace or one of its aliases —
+    /// the in-memory answer <see cref="Match"/> gives, for the registry's synchronous walk.</summary>
     internal bool Names(string key)
         => string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)
+           || string.Equals(Namespace, key, System.StringComparison.OrdinalIgnoreCase)
            || Alias.Contains(key, System.StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Every name this type answers to — its name, its namespace, its aliases; what no other type
+    /// may claim.</summary>
+    internal IEnumerable<string> Claims
+    {
+        get
+        {
+            yield return Name;
+            if (Namespace != null && !string.Equals(Namespace, Name, System.StringComparison.OrdinalIgnoreCase)) yield return Namespace;
+            foreach (var alias in Alias) yield return alias;
+        }
+    }
 
     /// <summary>A type answers navigation as its full type — the registry's, found with the
     /// asker's context. A full type is its own answer.</summary>

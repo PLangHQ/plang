@@ -31,6 +31,7 @@ using hash = global::app.module.action.crypto.type.hash.@this;
 /// <c>datetime</c>, <c>binary</c>, <c>list</c>, <c>dict</c>, <c>hash</c>), not a
 /// CLR primitive — each renders and behaves itself.</para>
 /// </summary>
+[global::app.Attributes.PlangType("signature")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Description => "A value signed by an identity, with the signer and the algorithm.";

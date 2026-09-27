@@ -6,11 +6,12 @@ namespace app.snapshot;
 /// section (<see cref="Write{T}"/>, or an entry set directly) and reads it back through the entries'
 /// typed asks on restore. The wire shape is the App tree.
 /// </summary>
+[global::app.Attributes.PlangType("snapshot")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The snapshot names its own type. A wire must not depend on a reflection-derived
-    /// name — the name is what a reader dispatches on when a section comes back.</summary>
-    protected internal override global::app.type.@this Type => new("snapshot", typeof(@this));
+    /// <summary>The snapshot names its own type by the word it declares — the name is what a reader
+    /// dispatches on when a section comes back.</summary>
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>
     /// The actor context this snapshot tree is born in. The snapshot renders its entries

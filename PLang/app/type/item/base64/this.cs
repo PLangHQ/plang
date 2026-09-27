@@ -6,6 +6,7 @@ namespace app.type.item.base64;
 /// (<see cref="RawBytes"/>) = the decoded bytes. NOT a binary subtype: binary is
 /// raw bytes, base64 is an encoding.
 /// </summary>
+[global::app.Attributes.PlangType("base64")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "SGVsbG8=";

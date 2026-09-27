@@ -12,7 +12,7 @@ namespace app.module.action.code.registration;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    protected internal override global::app.type.@this Type => new("registration", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;

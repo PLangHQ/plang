@@ -8,7 +8,7 @@ namespace app.module.action.llm;
 /// ToolCallId and ToolCalls are internal — used by the provider during tool conversations,
 /// never set by the builder.
 /// </summary>
-[PlangType]
+[PlangType("llmmessage")]
 public class LlmMessage : global::app.type.item.@this, global::app.type.item.ICreate<LlmMessage>
 {
     [Store, LlmBuilder]

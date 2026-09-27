@@ -40,30 +40,33 @@ public class Stage0_PlangTypeRemovalTests
             .Because("Shape/Example/Description moved to static-property convention.");
     }
 
-    // Every Named usage must encode a name the class-name derivation cannot
-    // produce. One legitimate site: GoalCall→"goal.call" (dotted name).
+    // Nothing is guessed from a folder: an @this type that declares no word goes by its namespace, and one
+    // that declares a word goes by that word — whatever its folder's last segment is.
     [Test]
-    public async Task PlangType_NoTypeUsesNamedFormForDerivableName()
+    public async Task AType_GoesByItsDeclaredWord_ElseItsNamespace()
     {
-        var asm = typeof(global::app.@this).Assembly;
-        var offenders = new List<string>();
+        var context = _app.User.Context;
+        await Assert.That(_app.type.list["app.event"].Name).IsEqualTo("app.event");
+        await Assert.That(_app.type.list["text"].Namespace).IsEqualTo("app.type.item.text");
+        await Assert.That(_app.type.list["app.type.item.text"].Name).IsEqualTo("text");
+        await Assert.That(_app.type.list.Contains("event")).IsFalse();
+        await Assert.That(new global::app.type.@this(typeof(global::app.@event.on.@this)).Name).IsEqualTo("app.event.on");
+    }
 
-        foreach (var type in asm.GetTypes())
+    // Every word, alias and namespace names one type.
+    [Test]
+    public async Task EveryWordAliasAndNamespace_NamesOneType()
+    {
+        var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var clashes = new List<string>();
+        for (var i = 0; i < _app.type.list.CountRaw; i++)
         {
-            var attr = type.GetCustomAttribute<PlangTypeAttribute>(inherit: false);
-            if (attr == null || attr.Name == null) continue;
-
-            // Only an @this class has a derived name (its namespace tail). Any other class has no
-            // derivation — its declared name is its only name (a closed set, a non-@this item).
-            if (type.Name != "this") continue;
-            var derivable = type.Namespace?.Split('.').LastOrDefault() ?? "";
-
-            if (string.Equals(attr.Name, derivable, StringComparison.Ordinal))
-                offenders.Add($"{type.FullName} → [PlangType(\"{attr.Name}\")] is identical to derivation");
+            var type = (global::app.type.@this)_app.type.list.At(i, _app.User.Context)!.Peek()!;
+            foreach (var claim in new[] { type.Name, type.Namespace }.Concat(type.Alias).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase))
+                if (owners.TryGetValue(claim, out var owner) && owner != type.Namespace) clashes.Add($"{claim}: {owner} and {type.Namespace}");
+                else owners[claim] = type.Namespace ?? type.Name;
         }
-
-        await Assert.That(offenders).IsEmpty()
-            .Because("An @this class is named by its namespace; a [PlangType] repeating it names it twice.");
+        await Assert.That(clashes).IsEmpty();
     }
 
 

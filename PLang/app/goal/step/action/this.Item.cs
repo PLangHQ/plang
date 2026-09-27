@@ -12,10 +12,11 @@ namespace app.goal.step.action;
 // explicit item Write + serializer/Reader.cs (the recipe, defining-plang-types.md) replace this
 // delegation in the follow-up; until then the reflection read path still constructs the action
 // from its [Store] props.
+[global::app.Attributes.PlangType("action")]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The action's own type entity — an item names its own type (no namespace reflection).</summary>
-    protected internal override global::app.type.@this Type => new("action", typeof(@this));
+    /// <summary>The action's own type entity — its class's.</summary>
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>An action passes through; anything else is declined. The one way in is its reader
     /// (<c>serializer/Reader.cs</c>) — the .pr wire, a held callback and a nested modifier chain all

@@ -8,6 +8,7 @@ namespace app.type.item.url;
 /// The scheme know-how (consent gate, redirects, signing) stays on the
 /// composed <c>HttpPath</c>.
 /// </summary>
+[global::app.Attributes.PlangType("url")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "https://example.com/data.json";

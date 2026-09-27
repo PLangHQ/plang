@@ -4,6 +4,7 @@ namespace app.goal;
 // reads the typed internals (Name, Steps, Child, …) directly; the item faces are the boundary only.
 // The goal owns its wire: Output writes itself token by token (each field a plang type that writes
 // itself — path, choice, the step/goal children), its serializer/Reader.cs reads itself back.
+[global::app.Attributes.PlangType("goal")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.goal.list.@this>
@@ -24,10 +25,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The app's goals: the list that reads them from their <c>.pr</c>.</summary>
     public static global::app.goal.list.@this List(global::app.@this app) => new(app);
 
-    /// <summary>The goal's own type entity — an item names its own type. Distinct from the goal
-    /// channel; the reverse-name index already carried "goal" for this class, the item flip only adds
-    /// the forward name→type slot.</summary>
-    protected internal override global::app.type.@this Type => new("goal", typeof(@this));
+    /// <summary>The goal's own type entity — its class's.</summary>
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>A goal passes through; anything else is declined. Program structure has one way in —
     /// its reader (<c>serializer/Reader.cs</c>) — and is never converted from a value.</summary>

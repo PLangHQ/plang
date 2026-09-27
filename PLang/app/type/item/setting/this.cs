@@ -9,6 +9,7 @@ namespace app.type.item.setting;
 /// path that leads to settings (a module, an action's <c>llm.query</c>). The asker's settings build one,
 /// the saved row and this run's values on it.
 /// </summary>
+[global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A node: the path it stands for.</summary>
@@ -37,8 +38,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     }
 
     /// <summary>A setting's type is <c>setting</c> with its path as the kind — <c>{setting, goal.list.setting}</c>:
-    /// the kind is what tells a saved row which class to read back.</summary>
-    protected internal override global::app.type.@this Type => new("setting", GetType(), Path);
+    /// the kind is what tells a saved row which class to read back. Its class is the setting class; its name and
+    /// namespace are setting's.</summary>
+    protected internal override global::app.type.@this Type
+        => new(NameOf(typeof(@this)), GetType(), Path) { Namespace = NamespaceOf(typeof(@this)) };
 
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;

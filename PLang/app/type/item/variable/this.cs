@@ -10,7 +10,7 @@ namespace app.type.item.variable;
 /// <see cref="IName"/> tells the source generator's <c>Data&lt;T&gt;</c> emit a slot names a
 /// variable rather than carrying a value.</para>
 /// </summary>
-[global::app.Attributes.PlangType]
+[global::app.Attributes.PlangType("variable")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IName,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.type.item.list.@this<@this>>

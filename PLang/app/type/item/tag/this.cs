@@ -10,6 +10,7 @@ namespace app.type.item.tag;
 /// normalized value; truthiness is non-empty. Backed by a <see cref="string"/> but a DISTINCT type
 /// from <c>text</c> (a tag knows it is a tag).</para>
 /// </summary>
+[global::app.Attributes.PlangType("tag")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
@@ -27,7 +28,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);
-    protected internal override global::app.type.@this Type => new("tag", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>THE PURE CORE — a <c>tag</c> passes through; a non-blank string / <c>text</c> becomes a
     /// tag (normalized once); blank/other declines (<c>null</c>). Context-free.</summary>

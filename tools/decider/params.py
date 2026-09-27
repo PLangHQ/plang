@@ -30,6 +30,8 @@ def plang_type(raw):
         outer = plang_type(head)
         arg = plang_type(inner.rsplit('>', 1)[0])
         return f'{outer}<{arg}>' if outer in ('list', 'dict') else arg
+    # the type's class names it (types.json); a spelling that is no type's class (a global alias) is its last word
+    if (word := h.type_word(raw)): return word
     parts = [x for x in re.split(r'[.:]+', raw) if x]
     while parts and parts[-1].lstrip('@') == 'this': parts.pop()
     return (parts[-1].lstrip('@') if parts else 'item') or 'item'

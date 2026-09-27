@@ -9,13 +9,14 @@ namespace app.type.list;
 /// how a kind comes in (<see cref="Add(global::app.type.kind.@this)"/>), the startup scan, the guard
 /// every slot passes, and the name a C# class reports.
 ///
-/// A class's name, in order:
-///   1. [PlangType("name")] on the class — the declared name; [PlangType] with no name infers it.
-///   2. An @this class — the last namespace segment.
+/// A class's type:
+///   1. Its identity is its namespace (<c>app.type.item.text</c>); it goes by the word its class declares
+///      (<c>[PlangType("text")]</c>), else by its namespace. Nothing is guessed from a folder.
+///   2. An item class is a type of its own when it is an @this, or declares [PlangType].
 ///   3. Only items (app.type.item.@this) are plang types; an engine class has no type name.
 ///   4. A path scheme or a typed program list (<c>list&lt;step&gt;</c>) is a kind of its family and
 ///      claims no name of its own.
-///   One name, one class.
+///   Every word, namespace and alias names one class.
 /// </summary>
 public sealed partial class @this : global::app.type.item.list.@this<global::app.type.@this>
 {
@@ -76,16 +77,17 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
     }
 
-    /// <summary>The guard every slot passes: the types hold types, one name to one class. Only
-    /// plang's own code reaches the slots around <see cref="Add(System.Type, actor.context.@this, string?)"/>,
-    /// so a refusal here is plang broken, and throws.</summary>
+    /// <summary>The guard every slot passes: the types hold types, and every name a type answers to — its
+    /// word, its namespace, its aliases — names one class. Only plang's own code reaches the slots around
+    /// <see cref="Add(System.Type, actor.context.@this, string?)"/>, so a refusal here is plang broken, and throws.</summary>
     protected override void Admit(object? slot)
     {
         if (slot is not global::app.type.@this type)
             throw new InvalidOperationException($"the types hold types, not {slot?.GetType().Name ?? "null"}.");
-        if (Items().FirstOrDefault(t => t.Names(type.Name)) is { } owner && owner.ClrType != type.ClrType)
-            throw new InvalidOperationException(
-                $"type name '{type.Name}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.");
+        foreach (var claim in type.Claims)
+            if (Items().FirstOrDefault(t => t.Names(claim)) is { } owner && owner.ClrType != type.ClrType)
+                throw new InvalidOperationException(
+                    $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.");
     }
 
     protected override void Admit(global::app.type.item.list.@this other)
@@ -104,9 +106,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             return context.Error(new error.Error($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
         if (Types.FirstOrDefault(t => t.Names(claimed)) is { } held && held.ClrType == clr) return context.Ok(held);
-        if (Sealed.Contains(claimed))
+        var aliases = clr.GetProperty("Alias", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            ?.GetValue(null) as IReadOnlyList<string> ?? [];
+        if (aliases.Prepend(claimed).FirstOrDefault(Sealed.Contains) is { } sealedWord)
             return context.Error(new error.Error(
-                $"'{claimed}' is on the sealed built-in list and may not be claimed by a runtime-loaded type.", "TypeLoadCollision", 400));
+                $"'{sealedWord}' is on the sealed built-in list and may not be claimed by a runtime-loaded type.", "TypeLoadCollision", 400));
         if (Array.Find(clr.GetProperties(BindingFlags.Public | BindingFlags.Instance), p => Reserved.Contains(p.Name)) is { } shadow)
             return context.Error(new error.Error(
                 $"Type '{clr.FullName}' declares instance property '{shadow.Name}' — `type`/`error`/`success`/`@schema` are the reserved navigation core and may not be shadowed by a value type.",
@@ -150,9 +154,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (clr.IsAbstract || clr.IsInterface) continue;
             // A class that claims a sealed name is refused whether or not it is an item: the name is
             // what a loaded assembly may not take.
-            var claims = clr.GetCustomAttribute<PlangTypeAttribute>(inherit: false) is { } declared
-                ? declared.Name ?? InferName(clr)
-                : IsThisClass(clr) ? InferName(clr) : null;
+            var claims = clr.GetCustomAttribute<PlangTypeAttribute>(inherit: false) != null || IsThisClass(clr)
+                ? global::app.type.item.@this.NameOf(clr) : null;
             if (claims != null && Sealed.Contains(claims) && Items().FirstOrDefault(t => t.Names(claims))?.ClrType != clr)
                 return context.Error(new error.Error(
                     $"'{claims}' is on the sealed built-in list and may not be claimed by a runtime-loaded type ({clr.FullName}).", "TypeLoadCollision", 400));
@@ -231,7 +234,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // each class of settings, a kind of setting by its path (one of it says the path)
             if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
                 && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null
-                && Items().Any(type => type.Names(InferName(typeof(global::app.type.item.setting.@this))!)))
+                && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(typeof(global::app.type.item.setting.@this)))))
                 Hold(new global::app.type.item.setting.kind.@this((global::app.type.item.setting.@this)Activator.CreateInstance(t)!, this));
             foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
@@ -253,15 +256,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
     }
 
-    // The name a class reports as a type of its own, or null: not an item, a kind of a family, or an
-    // abstract class that neither declares a name nor is an @this.
+    // The name a class's type goes by (its declared word, else its namespace), or null when it is no type
+    // of its own: not an item, a kind of a family, or a class that neither declares itself a type nor is an @this.
     private static string? NameOf(System.Type type)
     {
         if (!typeof(app.type.item.@this).IsAssignableFrom(type) || FamilyName(type) != null) return null;
-        var declared = type.GetCustomAttribute<PlangTypeAttribute>(inherit: false);
-        if (declared != null) return declared.Name ?? InferName(type);
-        if (!IsThisClass(type) || type.ContainsGenericParameters) return null;
-        return InferName(type);
+        if (type.GetCustomAttribute<PlangTypeAttribute>(inherit: false) == null
+            && (!IsThisClass(type) || type.ContainsGenericParameters)) return null;
+        return global::app.type.item.@this.NameOf(type);
     }
 
     private static bool IsThisClass(System.Type type) =>
@@ -276,30 +278,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private static string? FamilyName(System.Type type)
     {
         if (type.IsDefined(typeof(app.type.item.path.PathSchemeAttribute), inherit: false))
-            return InferName(typeof(app.type.item.path.@this));
+            return global::app.type.item.@this.NameOf(typeof(app.type.item.path.@this));
         // a class of settings is a kind of setting, named by its path
         if (type != typeof(app.type.item.setting.@this) && typeof(app.type.item.setting.@this).IsAssignableFrom(type))
-            return InferName(typeof(app.type.item.setting.@this));
+            return global::app.type.item.@this.NameOf(typeof(app.type.item.setting.@this));
         for (var b = type.BaseType; b != null; b = b.BaseType)
             if (b.IsGenericType && b.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
-                return InferName(typeof(app.type.item.list.@this));
+                return global::app.type.item.@this.NameOf(typeof(app.type.item.list.@this));
         return null;
-    }
-
-    /// <summary>
-    /// Inferred name: last namespace segment for @this classes, lowercased class
-    /// name otherwise. Null when the type has no namespace.
-    /// </summary>
-    private static string? InferName(System.Type type)
-    {
-        if (IsThisClass(type))
-        {
-            if (string.IsNullOrEmpty(type.Namespace)) return null;
-            var ns = type.Namespace;
-            var lastDot = ns.LastIndexOf('.');
-            return (lastDot >= 0 ? ns[(lastDot + 1)..] : ns).ToLowerInvariant();
-        }
-        return type.Name.ToLowerInvariant();
     }
 
     private static IEnumerable<System.Type> SafeGetTypes(Assembly assembly)

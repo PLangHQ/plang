@@ -15,6 +15,7 @@ namespace app.type.item.duration;
 /// the empty-is-falsy convention of the other scalars. The bare wire form is
 /// ISO-8601 (<see cref="ToString"/>).</para>
 /// </summary>
+[global::app.Attributes.PlangType("duration")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
@@ -28,7 +29,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.TimeSpan(Value);
-    protected internal override global::app.type.@this Type => new("duration", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public @this(System.TimeSpan value) { Value = value; }
 

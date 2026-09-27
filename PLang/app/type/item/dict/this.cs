@@ -20,6 +20,7 @@ namespace app.type.item.dict;
 /// (that path would reflect Count/Keys/Entries and bury the real keys); reading a
 /// dict is the reader's / <c>kind[json].Parse</c>'s job, never STJ reconstruction.</para>
 /// </summary>
+[global::app.Attributes.PlangType("dict")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -56,7 +57,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A dict's own type entity — the type owns its name (no namespace reflection). Carries
     /// the template flag so a template=plang dict resolves its %var% leaves at .Value().</summary>
-    protected internal override global::app.type.@this Type => new("dict", typeof(@this)) { Template = Template };
+    protected internal override global::app.type.@this Type => new(typeof(@this)) { Template = Template };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>dict</c> through; any other value declines (<c>null</c>). Real construction

@@ -27,6 +27,7 @@ namespace app.type.item.text;
 /// it deliberately does <b>not</b> implement <c>IEnumerable</c>, so
 /// <c>foreach %s%</c> never char-iterates it.</para>
 /// </summary>
+[global::app.Attributes.PlangType("text")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

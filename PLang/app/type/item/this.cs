@@ -26,6 +26,7 @@ namespace app.type.item;
 /// does not). <c>item</c> must <b>not</b> implement either, or <c>dict : item</c>
 /// would inherit an order it can't honor (its <c>Compare.Order</c> throws).</para>
 /// </summary>
+[global::app.Attributes.PlangType("item")]
 public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this>
 {
     /// <summary>
@@ -291,11 +292,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
     /// kind, text its extension, a source its declared judgement, dict/list name themselves). The
     /// single owner of its identity; provenance lives on the value's <see cref="list"/> and is asked
-    /// via <see cref="Is"/>. The default derives the name from the namespace tail — a reflection
-    /// fallback still used by ~19 domain types (actor/snapshot/…); killing it fully means each
-    /// declaring its name (see coder followups).
+    /// via <see cref="Is"/>. The default is its class's type — the word the class declares, else its
+    /// namespace.
     /// </summary>
-    protected internal virtual global::app.type.@this Type => new(NamespaceTail(GetType()), GetType());
+    protected internal virtual global::app.type.@this Type => new(GetType());
 
     /// <summary>
     /// Is this value (now or in its narrow history) an <paramref name="other"/>? Asks its type
@@ -380,18 +380,28 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     internal virtual bool IsFinal => Template == null;
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaceTails = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaces = new();
 
-    /// <summary>The PLang name of an item CLASS (the namespace-tail rule) —
-    /// for messages that must name a type with no instance in hand.</summary>
-    internal static string NameOf(System.Type t) => NamespaceTail(t);
+    /// <summary>The name a class's type goes by — the word it declares (<c>[PlangType("text")]</c>), else its
+    /// namespace (<see cref="NamespaceOf"/>). Nothing is guessed from a folder.</summary>
+    internal static string NameOf(System.Type t)
+        => System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(t, inherit: false)?.Name
+           ?? NamespaceOf(t);
 
-    private protected static string NamespaceTail(System.Type t)
-        => _namespaceTails.GetOrAdd(t, static ct =>
+    /// <summary>The name the type of <paramref name="namespace"/> goes by — the <c>@this</c> item class there,
+    /// its word else its namespace; null when no item class is the folder's.</summary>
+    internal static string? NameOf(System.Reflection.Assembly assembly, string @namespace)
+        => assembly.GetType(@namespace + ".this") is { } owner && typeof(@this).IsAssignableFrom(owner) ? NameOf(owner) : null;
+
+    /// <summary>The identity of a class's type: its namespace — an <c>@this</c> class is its folder
+    /// (<c>app.type.item.text</c>), any other class its folder and its name (<c>app.module.action.llm.llmmessage</c>);
+    /// lowercase, the <c>@</c> of a keyword folder dropped.</summary>
+    internal static string NamespaceOf(System.Type t)
+        => _namespaces.GetOrAdd(t, static ct =>
         {
-            var ns = ct.Namespace ?? "item";
-            var tail = ns[(ns.LastIndexOf('.') + 1)..];
-            return tail.TrimStart('@');
+            var ns = string.Join('.', (ct.Namespace ?? "").Split('.').Select(s => s.TrimStart('@')));
+            var name = ct.Name.Split('`')[0];
+            return (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{name}").ToLowerInvariant();
         });
 
     /// <summary>A human-readable name for a type in an error — a plang <c>@this</c> type reads as its

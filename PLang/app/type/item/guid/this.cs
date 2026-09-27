@@ -12,6 +12,7 @@ namespace app.type.item.guid;
 /// <b>Truthiness policy: the empty guid is falsy</b>, any other is truthy —
 /// matching the empty-is-falsy convention of the other scalars.</para>
 /// </summary>
+[global::app.Attributes.PlangType("guid")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
@@ -25,7 +26,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.Guid(Value);
-    protected internal override global::app.type.@this Type => new("guid", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public @this(System.Guid value) { Value = value; }
 

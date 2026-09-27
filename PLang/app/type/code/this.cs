@@ -10,6 +10,7 @@ namespace app.type.code;
 /// <c>"text"</c> when language can't be detected — derived at build by
 /// <see cref="Build"/>.</para>
 /// </summary>
+[global::app.Attributes.PlangType("code")]
 public sealed partial class @this : global::app.type.item.@this
 {
     public static string Example => "Console.WriteLine(\"hi\");";

@@ -24,6 +24,29 @@ def first_line(p):
 
 import re
 
+# ---------------------------------------------------------------- the types, as plang names them
+# os/system/builder/llm/types.json (written from the C# types by TypeCatalogTwinTests): each type's namespace — its
+# identity — the word it goes by when its class declares one, and its aliases. Nothing is guessed from a folder.
+TYPES = json.load(open(f'{ROOT}/os/system/builder/llm/types.json', encoding='utf-8'))
+
+def type_word(spelled):
+    """The name a type's class goes by, as C# spells the class — fully (`global::app.type.item.@bool.@this`) or
+    by its last folders (`text.@this`, `goal.@this`): its declared word, else its namespace. None when the spelling
+    names no one type."""
+    parts = [p.lstrip('@') for p in re.split(r'[.:]+', (spelled or '').replace('global::', '')) if p]
+    while parts and parts[-1] == 'this': parts.pop()
+    joined = '.'.join(parts).lower()
+    if not joined: return None
+    hits = [n for n in TYPES if n == joined or n.endswith('.' + joined)]
+    if len(hits) != 1: return None
+    return TYPES[hits[0]]['word'] or hits[0]
+
+def type_namespace(name):
+    """The namespace of the type `name` names — its word, an alias or the namespace itself. None when none does."""
+    for ns, entry in TYPES.items():
+        if name in (ns, entry['word']) or name in entry.get('alias', []): return ns
+    return None
+
 # a step written in formal — its text is its code (step.IsFormal): an action call at its start
 FORMAL_HEAD = re.compile(r'^[a-z]+\.[A-Za-z_]+\(')
 def is_formal(text): return bool(FORMAL_HEAD.match(text))

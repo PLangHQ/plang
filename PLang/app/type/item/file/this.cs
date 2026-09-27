@@ -12,6 +12,7 @@ namespace app.type.item.file;
 /// The scheme know-how stays on the composed <see cref="Path"/>
 /// (<c>FilePath</c>/<c>HttpPath</c>); this type owns content laziness.</para>
 /// </summary>
+[global::app.Attributes.PlangType("file")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "/config/settings.json";

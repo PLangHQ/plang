@@ -1,0 +1,174 @@
+{
+  "app.actor": {
+    "word": "actor"
+  },
+  "app.error.error": {
+    "word": "error"
+  },
+  "app.event": {
+    "word": null
+  },
+  "app.event.binding": {
+    "word": null
+  },
+  "app.event.moment": {
+    "word": null
+  },
+  "app.event.on": {
+    "word": null
+  },
+  "app.goal": {
+    "word": "goal"
+  },
+  "app.goal.step": {
+    "word": "step"
+  },
+  "app.goal.step.action": {
+    "word": "action"
+  },
+  "app.goal.step.action.modifier": {
+    "word": "modifier"
+  },
+  "app.mock": {
+    "word": "mock"
+  },
+  "app.module": {
+    "word": "module"
+  },
+  "app.module.action.code.defaultoverride": {
+    "word": null
+  },
+  "app.module.action.code.registration": {
+    "word": null
+  },
+  "app.module.action.crypto.type.hash": {
+    "word": "hash"
+  },
+  "app.module.action.identity.identity": {
+    "word": "identity"
+  },
+  "app.module.action.llm.llmmessage": {
+    "word": "llmmessage"
+  },
+  "app.module.action.output.ask": {
+    "word": "ask"
+  },
+  "app.snapshot": {
+    "word": "snapshot"
+  },
+  "app.test": {
+    "word": "test"
+  },
+  "app.test.timing": {
+    "word": "timing"
+  },
+  "app.type": {
+    "word": "type"
+  },
+  "app.type.clr": {
+    "word": "clr"
+  },
+  "app.type.code": {
+    "word": "code"
+  },
+  "app.type.item": {
+    "word": "item"
+  },
+  "app.type.item.archive": {
+    "word": "archive"
+  },
+  "app.type.item.base64": {
+    "word": "base64"
+  },
+  "app.type.item.binary": {
+    "word": "binary",
+    "alias": [
+      "bytes"
+    ]
+  },
+  "app.type.item.bool": {
+    "word": "bool",
+    "alias": [
+      "boolean"
+    ]
+  },
+  "app.type.item.choice": {
+    "word": "choice"
+  },
+  "app.type.item.date": {
+    "word": "date"
+  },
+  "app.type.item.datetime": {
+    "word": "datetime"
+  },
+  "app.type.item.dict": {
+    "word": "dict",
+    "alias": [
+      "dictionary",
+      "map"
+    ]
+  },
+  "app.type.item.directory": {
+    "word": "directory"
+  },
+  "app.type.item.duration": {
+    "word": "duration"
+  },
+  "app.type.item.file": {
+    "word": "file"
+  },
+  "app.type.item.guid": {
+    "word": "guid"
+  },
+  "app.type.item.image": {
+    "word": "image"
+  },
+  "app.type.item.list": {
+    "word": "list",
+    "alias": [
+      "array"
+    ]
+  },
+  "app.type.item.null": {
+    "word": "null"
+  },
+  "app.type.item.number": {
+    "word": "number"
+  },
+  "app.type.item.path": {
+    "word": "path"
+  },
+  "app.type.item.permission": {
+    "word": "permission"
+  },
+  "app.type.item.setting": {
+    "word": "setting"
+  },
+  "app.type.item.signature": {
+    "word": "signature"
+  },
+  "app.type.item.tag": {
+    "word": "tag"
+  },
+  "app.type.item.text": {
+    "word": "text",
+    "alias": [
+      "string"
+    ]
+  },
+  "app.type.item.time": {
+    "word": "time"
+  },
+  "app.type.item.url": {
+    "word": "url"
+  },
+  "app.type.item.variable": {
+    "word": "variable"
+  },
+  "app.type.item.wire": {
+    "word": null
+  },
+  "app.type.table": {
+    "word": "table"
+  }
+}

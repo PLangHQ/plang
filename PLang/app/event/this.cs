@@ -84,8 +84,8 @@ public abstract class @this : global::app.type.item.@this
         return result;
     }
 
-    /// <summary>Every event is of the type <c>event</c>, whichever its class.</summary>
-    protected internal override global::app.type.@this Type => new("event", typeof(@this));
+    /// <summary>Every event is of the event type (<c>app.event</c>), whichever its class.</summary>
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public override string ToString() => Name;
 }

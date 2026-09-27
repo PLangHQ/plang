@@ -10,8 +10,8 @@ namespace app.test;
 /// (<see cref="Start"/>) and holds its outcome (Status, Stdout, Timings, Error,
 /// Duration). There is no separate execution record — the test IS its own run. Fields are plang values marked <c>[Out]</c>, so the test
 /// rides the wire directly (the report serializes it — no hand-mapped shape).
-/// The PLang name "test" derives from the @this namespace tail — no [PlangType] needed.
 /// </summary>
+[global::app.Attributes.PlangType("test")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, list.@this>, global::app.type.item.setting.IConcept<setting.@this>

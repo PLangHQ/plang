@@ -155,17 +155,30 @@ public class RuntimeTypeLoadingTests
         await Assert.That(result.Error?.Message).Contains("signature");
     }
 
-    [Test] public async Task LoadDll_InferredSealedName_FailsWith_TypeLoadCollision()
+    // A loaded type may not claim a sealed word as an alias either. It declares no type of its own (no
+    // [PlangType], not an @this) and isn't exported, so no scan of this assembly takes it in; the test names it.
+    private sealed class AliasShadow : global::app.type.item.@this
     {
-        // Pass-1 @this-convention inferred-name branch — the loaded assembly
-        // declares a `this`-named class in namespace `*.callback`, so
-        // InferName yields "callback" (a sealed name). The gate refuses
-        // before the registry is touched.
-        var asm = System.Reflection.Assembly.LoadFrom(CallbackInferredShadowDll);
-        var result = new global::app.type.list.@this().Add(asm, Ctx);
+        public static IReadOnlyList<string> Alias => ["identity"];
+    }
+
+    [Test] public async Task AddType_ASealedWordAsAlias_FailsWith_TypeLoadCollision()
+    {
+        var result = new global::app.type.list.@this().Add(typeof(AliasShadow), Ctx, "aliasshadow");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Key).IsEqualTo("TypeLoadCollision");
-        await Assert.That(result.Error?.Message).Contains("callback");
+        await Assert.That(result.Error?.Message).Contains("identity");
+    }
+
+    [Test] public async Task LoadDll_AnUndeclaredCallbackFolder_GoesByItsNamespace_NotTheSealedWord()
+    {
+        // The loaded assembly holds a `this`-named class in a namespace ending `.callback` and declares no
+        // word. Nothing is guessed from a folder: it goes by its namespace, which claims no sealed word.
+        var asm = System.Reflection.Assembly.LoadFrom(CallbackInferredShadowDll);
+        var types = new global::app.type.list.@this();
+        var result = types.Add(asm, Ctx);
+        await result.IsSuccess();
+        await Assert.That(types.Contains("callback")).IsFalse();
     }
 
     [Test] public async Task SealedNames_AreCaseInsensitive_AndCoverCoreSigningTypes()

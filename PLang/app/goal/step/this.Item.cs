@@ -3,10 +3,11 @@ namespace app.goal.step;
 // The step IS a plang value (item) — see action/this.Item.cs for the ruling. The engine reads the
 // typed internals (Index, Text, Actions, …) directly; the item faces are the boundary only. The step
 // owns its wire: Output writes itself token by token, its serializer/Reader.cs reads itself back.
+[global::app.Attributes.PlangType("step")]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The step's own type entity — an item names its own type.</summary>
-    protected internal override global::app.type.@this Type => new("step", typeof(@this));
+    /// <summary>The step's own type entity — its class's.</summary>
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>A step passes through; anything else is declined. A step is built by its goal, never
     /// converted from a value.</summary>

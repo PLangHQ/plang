@@ -61,7 +61,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     string IChoice.Symbol => ToString();
 
     /// <summary>A choice names itself by its set: <c>{choice, kind: operator}</c>.</summary>
-    protected internal override global::app.type.@this Type => new("choice", typeof(@this<T>), _set.Name);
+    protected internal override global::app.type.@this Type => new(typeof(@this<T>), _set.Name);
 
     /// <summary>The one symbol→choice resolution home — the wire form is the option's SYMBOL
     /// (an enum member's name, a named-set registry key like "=="). Shared by the ICreate core

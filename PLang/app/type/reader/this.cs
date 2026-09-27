@@ -181,16 +181,15 @@ public sealed class @this
             if (string.IsNullOrEmpty(type.Namespace)) continue;
             if (!type.Namespace!.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
 
-            // namespace shape: app.type.<typeName>.serializer
+            // namespace shape: <the type's namespace>.serializer — the reader is its type's, registered under
+            // the name that type goes by (its word, else its namespace). A folder with no item class of its own
+            // (a module's serializer folder) registers under its last segment.
             var ns = type.Namespace;
             var pivot = ns.LastIndexOf(".serializer", System.StringComparison.Ordinal);
             var head = ns[..pivot];
             var lastDot = head.LastIndexOf('.');
             if (lastDot < 0) continue;
-            // Strip a leading @ — a type whose folder/namespace is a C# keyword
-            // (app.type.item.@bool) is named without it everywhere else ("bool"), so the
-            // reader must register under the bare name to be found by Readers.Of.
-            var typeName = head[(lastDot + 1)..].TrimStart('@');
+            var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? head[(lastDot + 1)..].TrimStart('@');
 
             // The typed (ITypeReader) pull reader — an instance class whose own Kind
             // names the (type, kind) variant. Registered into the token-stream table;

@@ -22,6 +22,7 @@ namespace app.type.table;
 // plang type (number/currency, datetime) instead of the raw string. When added,
 // EnumerateItems/Navigate would type each cell through the per-column format
 // rather than letting it lift to its default (text/number) type.
+[global::app.Attributes.PlangType("table")]
 public sealed class @this : global::app.type.item.@this
 {
     /// <summary>Column headers in source order.</summary>
@@ -48,7 +49,7 @@ public sealed class @this : global::app.type.item.@this
     }
 
     /// <summary>type = <c>table</c>; kind = the encoding it was read from (csv/xlsx).</summary>
-    protected internal override global::app.type.@this Type => new("table", typeof(@this), Kind);
+    protected internal override global::app.type.@this Type => new(typeof(@this), Kind);
 
     /// <summary>
     /// Navigate <c>rows</c> (the row list) and <c>headers</c> (the column names).

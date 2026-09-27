@@ -45,6 +45,7 @@ public enum Verb
 /// <c>SkipFreshnessCheck=true</c>, so the wire-freshness window doesn't apply;
 /// the grant lives for its signature's <c>Expires</c> (null today = permanent).</para>
 /// </summary>
+[global::app.Attributes.PlangType("permission")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     [Out, Store] public string Actor { get; }

@@ -85,7 +85,9 @@ public class CollectedTypeTests
     {
         await using var app = TestApp.Create("/test");
         var face = await Out(app, app.type.list["number"]);
-        await Assert.That(face).Contains("\"name\":\"number\"");
+        // named by its namespace; the word it goes by beside it
+        await Assert.That(face).Contains("\"name\":\"app.type.item.number\"");
+        await Assert.That(face).Contains("\"word\":\"number\"");
         await Assert.That(face).Contains("\"description\"");
         await Assert.That(face).Contains("\"example\":\"42\"");
         await Assert.That(face).Contains("\"int\"");

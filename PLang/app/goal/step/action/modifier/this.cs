@@ -6,6 +6,7 @@ namespace app.goal.step.action.modifier;
 /// dispatch, .pr reading); the type IS the role. It exists only inside a target's
 /// Modifiers slot — never standalone — enforced by where it is born, not by a check.
 /// </summary>
+[global::app.Attributes.PlangType("modifier")]
 public class @this : global::app.goal.step.action.@this
 {
     /// <summary>How far out this modifier wraps its action — its handler's declared
@@ -18,7 +19,7 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>A modifier IS a distinct plang type (the role is the type), not an action — it names
     /// itself "modifier". The wire shape rides action's (module/action/parameters/…), but its identity
     /// is its own so the fold slot constructs the subtype and catalog/Is asks answer "modifier".</summary>
-    protected internal override global::app.type.@this Type => new("modifier", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>The modifier wraps <paramref name="inner"/> in ITSELF — it owns wrapping. Resolves its
     /// own handler, verifies it implements IModifier, wires its parameter slots, then delegates to

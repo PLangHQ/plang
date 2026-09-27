@@ -8,6 +8,7 @@ namespace app.type.clr;
 /// graduates to its own item subclass only when a generic answer stops being the true
 /// answer for it.
 /// </summary>
+[global::app.Attributes.PlangType("clr")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A carrier of a C# host is plang's own machinery; no program names it.</summary>

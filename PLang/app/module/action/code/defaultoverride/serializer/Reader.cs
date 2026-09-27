@@ -12,7 +12,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("defaultoverride", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(new global::app.type.@this(typeof(global::app.module.action.code.defaultoverride.@this), kind));
 
         string typeName = "", providerName = "";
 

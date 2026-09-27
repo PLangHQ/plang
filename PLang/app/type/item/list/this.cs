@@ -17,6 +17,7 @@ namespace app.type.item.list;
 /// Without the converter, raw STJ would reflect each element's <c>Data</c> C#
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
+[global::app.Attributes.PlangType("list")]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     // A CHUNK row: another list's elements appended in O(1) by an extend (`Add(list)`), read in
@@ -75,7 +76,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A list's own type entity — the type owns its name (no namespace reflection). Carries
     /// the template flag so a template=plang list resolves its %var% leaves at .Value(), and the kind
     /// it was born with.</summary>
-    protected internal override global::app.type.@this Type => new("list", typeof(@this)) { Template = Template, kind = _kind };
+    protected internal override global::app.type.@this Type => new(typeof(@this)) { Template = Template, kind = _kind };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction

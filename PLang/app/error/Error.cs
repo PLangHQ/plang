@@ -17,9 +17,12 @@ namespace app.error;
 /// directly. The value-face is independent of <c>Data.Error</c>, the sidecar
 /// failure channel on the envelope.</para>
 /// </summary>
-[global::app.Attributes.PlangType]
+[global::app.Attributes.PlangType("error")]
 public class Error : global::app.type.item.@this
 {
+    /// <summary>Every error, whichever its class, is of the type <c>error</c>.</summary>
+    protected internal override global::app.type.@this Type => new(typeof(Error));
+
     public string Id { get; }
     public string Message { get; }
     public string Key { get; }

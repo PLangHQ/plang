@@ -6,6 +6,7 @@ namespace app.type.item.time;
 /// unhandled); this wrapper closes that gap. Order/equality are within
 /// time-of-day; the bare wire form is ISO <c>HH:mm:ss[.fffffff]</c>.
 /// </summary>
+[global::app.Attributes.PlangType("time")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
@@ -19,7 +20,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
-    protected internal override global::app.type.@this Type => new("time", typeof(@this));
+    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public @this(System.TimeOnly value) { Value = value; }
 

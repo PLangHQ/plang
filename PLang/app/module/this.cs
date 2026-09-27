@@ -8,6 +8,7 @@ namespace app.module;
 /// it as actions are discovered, and a module is picked by name through the type
 /// (<c>app.module.Get("file")</c>). Navigated by reflection, read by templates through its own doors.
 /// </summary>
+[global::app.Attributes.PlangType("module")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, list.@this>

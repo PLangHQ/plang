@@ -13,7 +13,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("registration", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(new global::app.type.@this(typeof(global::app.module.action.code.registration.@this), kind));
 
         string typeName = "", providerName = "";
         string? source = null;

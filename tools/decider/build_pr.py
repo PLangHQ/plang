@@ -56,8 +56,11 @@ def plang_type(cs):
         return f'choice<{kind}>'
     if 'goal.step.action.@this' in outer: return 'action'
     if 'variable' in outer.lower(): return 'variable'
-    m = re.search(r'app\.type\.item\.@?(\w+)', outer)
-    name = m.group(1) if m else None
+    # the type's class names it (types.json); a spelling that is no type's class (a global alias) is read off it
+    name = h.type_word(outer)
+    if name is None:
+        m = re.search(r'app\.type\.item\.@?(\w+)', outer)
+        name = m.group(1) if m else None
     if name is None:
         # A global alias (`path`, `Goal`, `Step`) or a folder's @this (`app.goal.@this`): the plang
         # name is the alias itself, or the folder that owns the @this — lowercase, as the catalog names it.
@@ -253,9 +256,14 @@ def signature(choice):
     return f'{choice}({", ".join(parts)})'
 
 def type_files(name):
-    """The files of the class a type name names — the @this class whose namespace ends in the name,
-    all its partials: app.type.item.<name> when there is one, else the shortest such namespace
-    (app.goal over app.channel.type.goal, app.goal.step.action, app.type.item for `item`)."""
+    """The files of the class a type name names — its word, alias or namespace (types.json) names the type, and the
+    @this class of that namespace is it, all its partials."""
+    if (ns := h.type_namespace(name)):
+        files = []
+        for path in sorted(glob.glob(f'{ROOT}/PLang/app/**/this*.cs', recursive=True)):
+            m = re.search(r'^namespace\s+([\w.@]+)\s*;', open(path, encoding='utf-8').read(4000), re.M)
+            if m and m.group(1).replace('@', '').lower() == ns: files.append(path)
+        if files: return files
     spaces = {}
     for path in sorted(glob.glob(f'{ROOT}/PLang/app/**/this*.cs', recursive=True)):
         head = open(path, encoding='utf-8').read(4000)
