@@ -10,6 +10,9 @@ namespace app.type.clr;
 /// </summary>
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
+    /// <summary>A carrier of a C# host is plang's own machinery; no program names it.</summary>
+    public static bool Internal => true;
+
     /// <summary>The clr entity's construction face — wrap ANY foreign host in a carrier. A CLR type
     /// no value type owns IS clr(T), so this never declines for a real host; it is terminal, which
     /// is what lets the lift's clr rung be plain entity dispatch instead of a special case. The

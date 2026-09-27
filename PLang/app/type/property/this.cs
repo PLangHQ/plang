@@ -115,7 +115,7 @@ public sealed class @this
         if (!Type.IsNull)
         {
             writer.Name("type");
-            await Type.Output(writer, mode, context);
+            Type.Write(writer);   // the slot is the type's identity in every view
         }
         writer.Name("value");
         await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);

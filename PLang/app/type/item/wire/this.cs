@@ -13,6 +13,9 @@ namespace app.type.item.wire;
 /// </summary>
 public sealed class @this : global::app.type.item.source
 {
+    /// <summary>A still-encoded slice is plang's own machinery; no program names it.</summary>
+    public static bool Internal => true;
+
     // The serializer that sliced this raw — an object reference, never a format name. Held
     // since birth; the read reaches it directly (the registry lookup is what died, not the door).
     private readonly global::app.channel.serializer.ITransport _reader;

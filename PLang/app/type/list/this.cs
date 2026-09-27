@@ -136,6 +136,7 @@ public sealed partial class @this
             kind = kind,
             Alias = entry.Alias,
             Owned = entry.Owned,
+            Internal = entry.Internal,
             Property = entry.Property,
             Values = kind is global::app.type.item.choice.set.@this set ? set.Values : entry.Values,
             Shape = entry.Shape,

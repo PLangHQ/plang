@@ -61,6 +61,43 @@ public class CollectedTypeTests
         await Assert.That(none.Success).IsFalse();
     }
 
+    // The faces: what a program sees when it writes a type out.
+    private static async Task<string> Out(global::app.@this app, global::app.type.item.@this value,
+        global::app.View view = global::app.View.Out)
+    {
+        var buffer = new System.IO.MemoryStream();
+        using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
+            await value.Output(new global::app.channel.serializer.json.Writer(utf8, view), view, app.User.Context);
+        return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+    }
+
+    [Test] public async Task Face_OfAppType_IsTheTypeNames_WithoutInternalOnes()
+    {
+        await using var app = TestApp.Create("/test");
+        var face = await Out(app, app.type);
+        await Assert.That(face).Contains("\"list\"");
+        await Assert.That(face).Contains("\"text\"");
+        await Assert.That(face).DoesNotContain("\"wire\"");
+        await Assert.That(face).DoesNotContain("\"clr\"");
+    }
+
+    [Test] public async Task Face_OfOneType_IsItsFacts_AndItsKindNames()
+    {
+        await using var app = TestApp.Create("/test");
+        var face = await Out(app, app.type.list["number"]);
+        await Assert.That(face).Contains("\"name\":\"number\"");
+        await Assert.That(face).Contains("\"description\"");
+        await Assert.That(face).Contains("\"example\":\"42\"");
+        await Assert.That(face).Contains("\"int\"");
+    }
+
+    [Test] public async Task A_TypeInTheStoreView_StaysItsIdentity()
+    {
+        await using var app = TestApp.Create("/test");
+        var store = await Out(app, app.type.list["number"], global::app.View.Store);
+        await Assert.That(store).IsEqualTo("{\"name\":\"number\"}");
+    }
+
     [Test] public async Task Current_WithNothingInside_IsNotFound()
     {
         await using var app = TestApp.Create("/test");

@@ -90,11 +90,11 @@ public partial class @this
             }
             if (!Type.IsNull)
             {
-                // The type serializes ITSELF — {name, kind?, strict?, template?} — through its own
-                // Output. One owner of the type-entity wire shape (app.type.@this.Output); the Data
-                // writer does not re-implement it.
+                // The type slot is the type's identity — {name, kind?, strict?, template?}, written by
+                // the type itself (app.type.@this.Write) in every view; its face is for a type held
+                // as a value.
                 writer.Name("type");
-                await Type.Output(writer, mode, context);
+                Type.Write(writer);
             }
             writer.Name("value");
         }

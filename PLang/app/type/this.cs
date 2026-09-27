@@ -35,12 +35,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
     public static list.@this List(global::app.@this app) => new();
 
-    /// <summary>Self-write (the sync core; base <c>Output</c> wraps it): the type entity's
-    /// <c>{name, kind?, strict?}</c> identity — the same shape Data writes for its <c>type</c>
-    /// slot. Used both when a type entity rides as a VALUE (a <c>variable.set</c> <c>Type</c>
-    /// default) and for the Data envelope's <c>type</c> field (<c>json.Writer.BeginRecord</c>).
-    /// Descriptor metadata is pure sync primitives — no <c>%var%</c>, no async — so it lives on
-    /// <c>Write</c>, not an <c>Output</c> override.</summary>
+    /// <summary>Self-write: the type entity's <c>{name, kind?, strict?, template?}</c> identity — the
+    /// shape Data writes for its <c>type</c> slot (<c>json.Writer.BeginRecord</c>), and a type held
+    /// as a value in every view but Out (a <c>.pr</c> row holding a type stays its identity).</summary>
     public override void Write(global::app.channel.serializer.IWriter writer)
     {
         writer.BeginObject();
@@ -49,6 +46,40 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (!string.IsNullOrEmpty(Template)) { writer.Name("template"); writer.String(Template!); }
         writer.EndObject();
+    }
+
+    /// <summary>
+    /// A type held as a value: its face in the Out view — what a program sees when it writes
+    /// <c>%!app.type.text%</c>: its name, description, example and aliases, and its kinds' names (a
+    /// kinded type shows its own kind). Every other view writes the identity (<see cref="Write"/>).
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        if (mode != global::app.View.Out || context == null) { Write(writer); return; }
+        var full = context.App.type.list[this, context];
+        writer.BeginObject();
+        writer.Name("name"); writer.String(full.Name);
+        if (full.Description != null) { writer.Name("description"); writer.String(full.Description); }
+        if (full.Example != null) { writer.Name("example"); writer.String(full.Example); }
+        if (full.Alias.Count > 0)
+        {
+            writer.Name("alias");
+            writer.BeginArray(full.Alias.Count);
+            foreach (var alias in full.Alias) writer.String(alias);
+            writer.EndArray();
+        }
+        writer.Name("kind");
+        if (!kind.IsEmpty) writer.String(kind.Name);
+        else
+        {
+            var names = full.kind.list(context).Items().Select(t => t.kind.Name).ToList();
+            writer.BeginArray(names.Count);
+            foreach (var name in names) writer.String(name);
+            writer.EndArray();
+        }
+        writer.EndObject();
+        await System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     [JsonPropertyName("name")]
@@ -476,6 +507,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [JsonIgnore]
     internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get; init; } = [];
 
+    /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
+    /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —
+    /// naming answers it — and stays out of their face.</summary>
+    [JsonIgnore]
+    public bool Internal { get; init; }
+
     /// <summary>A type born knowing its C# class — the registry's entries and the full types it
     /// builds for an identity.</summary>
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, string? template = null)
@@ -496,6 +533,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
         Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
+        Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                                               | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
 

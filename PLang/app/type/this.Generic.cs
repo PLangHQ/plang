@@ -16,6 +16,25 @@ public sealed class @this<T, L> : @this
     public L list { get; }
 
     /// <summary>
+    /// A collected type's face in the Out view is a summary — the names of its list (a type plang
+    /// keeps for itself stays out); detail comes by navigating to one. Every other view writes the
+    /// type's identity.
+    /// </summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        if (mode != global::app.View.Out) return base.Output(writer, mode, context);
+        var names = list.Items().Where(p => p is not @this { Internal: true }).Select(p => p.ToString()!).ToList();
+        writer.BeginObject();
+        writer.Name("list");
+        writer.BeginArray(names.Count);
+        foreach (var name in names) writer.String(name);
+        writer.EndArray();
+        writer.EndObject();
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
+    /// <summary>
     /// The one <paramref name="key"/> names — the first of <see cref="list"/> whose own
     /// <c>Match(key)</c> answers (a goal by its address, a type by its name or alias). No match is a
     /// NotFound result. C#'s door; plang's <c>["key"]</c> and <c>.key</c> reach it through navigation.
