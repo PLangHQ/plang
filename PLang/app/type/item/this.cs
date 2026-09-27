@@ -276,7 +276,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// fallback still used by ~19 domain types (actor/snapshot/…); killing it fully means each
     /// declaring its name (see coder followups).
     /// </summary>
-    protected internal virtual global::app.type.@this Type => new(NamespaceTail(GetType()));
+    protected internal virtual global::app.type.@this Type => new(NamespaceTail(GetType()), GetType());
 
     /// <summary>
     /// Is this value (now or in its narrow history) an <paramref name="other"/>? Asks its type

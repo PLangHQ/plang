@@ -94,7 +94,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         // No value slot — a typed absence under its declared type (the absence the type's own
         // door makes for a null raw), born with the same context as a value.
         var typedNull = typeRef is { IsNull: false }
-            ? new Data(name, new global::app.type.item.@null.@this(typeRef.Name, typeRef.Kind?.Name), context: born)
+            ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: born)
             : new Data(name, (object?)null, context: born);
         if (properties != null) typedNull.Properties = properties;
         return typedNull;

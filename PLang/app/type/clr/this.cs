@@ -61,7 +61,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// Mirrors <c>number</c>/<c>int</c>: type = the lattice position, kind = the format.
     /// </summary>
     protected internal override global::app.type.@this Type
-        => new global::app.type.@this("item", Kind.Name);
+        => new global::app.type.@this("item", typeof(global::app.type.item.@this), Kind.Name);
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose
     /// <c>Peek</c> answers self). The carried host is reachable ONLY through the explicit

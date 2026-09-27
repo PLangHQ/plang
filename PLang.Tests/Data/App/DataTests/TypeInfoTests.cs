@@ -40,7 +40,7 @@ public class TypeTests
     {
         var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int")];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
@@ -70,58 +70,59 @@ public class TypeTests
         await Assert.That(type.ClrType).IsNull();
     }
 
-    [Test]
-    public async Task String_StaticProperty_ReturnsStringType()
-    {
-        var type = Type.String;
+    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+    [Test]
+    public async Task Text_FromList_ReturnsTextType()
+    {
+        var type = Types["text"];
+
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.text.@this));
         await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test]
-    public async Task Int_StaticProperty_ReturnsIntType()
+    public async Task NumberInt_FromList_ReturnsNumberType()
     {
-        var type = Type.Int;
+        var type = Types[new Type("number", "int")];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Long_StaticProperty_ReturnsLongType()
+    public async Task NumberLong_FromList_ReturnsNumberType()
     {
-        var type = Type.Long;
+        var type = Types[new Type("number", "long")];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(long));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Double_StaticProperty_ReturnsDoubleType()
+    public async Task NumberDouble_FromList_ReturnsNumberType()
     {
-        var type = Type.Double;
+        var type = Types[new Type("number", "double")];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(double));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Bool_StaticProperty_ReturnsBoolType()
+    public async Task Bool_FromList_ReturnsBoolType()
     {
-        var type = Type.Bool;
+        var type = Types["bool"];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(bool));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.@bool.@this));
         await Assert.That(type.Name).IsEqualTo("bool");
     }
 
     [Test]
-    public async Task DateTime_StaticProperty_ReturnsDateTimeType()
+    public async Task DateTime_FromList_ReturnsDateTimeType()
     {
-        // plang-types Stage 6: datetime resolves to DateTimeOffset.
-        var type = Type.DateTime;
+        var type = Types["datetime"];
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(DateTimeOffset));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.datetime.@this));
         await Assert.That(type.Name).IsEqualTo("datetime");
     }
 

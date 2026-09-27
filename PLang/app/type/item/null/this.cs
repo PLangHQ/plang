@@ -33,21 +33,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // result). It is still null (IsNull, falsy, empty, renders/serialises null);
     // the declaration only surfaces through Mint/Type/Kind. Absorbs the former
     // `item.absent` — a value-less slot is just a null that remembers its type.
-    private readonly string? _typeName;
-    private readonly string? _kind;
+    private readonly global::app.type.@this? _declared;
 
     internal @this(string typeName, string? kind = null)
-    {
-        _typeName = string.IsNullOrWhiteSpace(typeName) ? null : typeName;
-        _kind = kind;
-    }
+        => _declared = string.IsNullOrWhiteSpace(typeName) ? null : new global::app.type.@this(typeName, kind);
 
-    /// <summary>A typeless null mints "null"; a typed null mints its declared
+    /// <summary>A null of <paramref name="declared"/> — the type as declared, its class with it.</summary>
+    internal @this(global::app.type.@this declared) => _declared = declared;
+
+    /// <summary>A typeless null mints "null"; a typed null answers its declared
     /// type/kind so an empty <c>path</c> slot still answers <c>path</c>.</summary>
-    protected internal override global::app.type.@this Type
-        => _typeName == null
-            ? base.Type
-            : new global::app.type.@this(_typeName) { Kind = _kind is { } k ? new global::app.type.kind.@this(k) : null };
+    protected internal override global::app.type.@this Type => _declared ?? base.Type;
 
     /// <summary>
     /// Is this raw value "null" in PLang's sense — a C# null reference OR the born-native

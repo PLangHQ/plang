@@ -33,7 +33,7 @@ public sealed partial class @this
         // A still-encoded slice born holding the serializer that reads it — the exact mirror of
         // Serialize, which wrote through the same one. A structured payload rides here rather than
         // as a bare source: a source decodes a scalar off its own token and has no document to walk.
-        var snapshotType = new global::app.type.@this("snapshot");
+        var snapshotType = context.App.Type["snapshot"];
         var slice = new global::app.type.item.wire.@this(
             json, snapshotType, new global::app.channel.serializer.plang.@this(context));
         var wire = new global::app.data.@this("", slice, snapshotType, context: context);

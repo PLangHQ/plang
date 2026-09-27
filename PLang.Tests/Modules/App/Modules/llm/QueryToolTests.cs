@@ -68,7 +68,7 @@ public class QueryToolTests
             }.ToListData<LlmMessage>(),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("GetWeather", parameter: new List<Data> { new Data("city", null, global::app.type.@this.String, context: Ctx) })
+                Make.Tool("GetWeather", parameter: new List<Data> { new Data("city", null, Ctx.App.Type["text"], context: Ctx) })
             }.ToListData()
         };
         await action.Attach(null, Ctx);
@@ -313,8 +313,8 @@ public class QueryToolTests
             {
                 Make.Tool("TestTool", parameter: new List<Data>
                     {
-                        new Data("city", null, global::app.type.@this.String, context: Ctx),     // required (no default)
-                        new Data("units", "metric", global::app.type.@this.String, context: Ctx) // optional (has default)
+                        new Data("city", null, Ctx.App.Type["text"], context: Ctx),     // required (no default)
+                        new Data("units", "metric", Ctx.App.Type["text"], context: Ctx) // optional (has default)
                     })
             }.ToListData()
         };
@@ -341,7 +341,7 @@ public class QueryToolTests
             {
                 Make.Tool("TestTool", parameter: new List<Data>
                     {
-                        new Data("query", null, global::app.type.@this.String, context: Ctx)
+                        new Data("query", null, Ctx.App.Type["text"], context: Ctx)
                     })
             }.ToListData()
         };
@@ -405,8 +405,8 @@ public class QueryToolTests
             {
                 Make.Tool("GetWeather", parameter: new List<Data>
                     {
-                        new Data("city", null, global::app.type.@this.String, context: Ctx),       // required
-                        new Data("units", "metric", global::app.type.@this.String, context: Ctx)   // optional, default "metric"
+                        new Data("city", null, Ctx.App.Type["text"], context: Ctx),       // required
+                        new Data("units", "metric", Ctx.App.Type["text"], context: Ctx)   // optional, default "metric"
                     })
             }.ToListData()
         };
@@ -440,7 +440,7 @@ public class QueryToolTests
             {
                 Make.Tool("TypedTool", parameter: new List<Data>
                     {
-                        new Data("name", null, global::app.type.@this.String, context: Ctx),
+                        new Data("name", null, Ctx.App.Type["text"], context: Ctx),
                         new Data("count", null, new global::app.type.@this("int"), context: Ctx),
                         new Data("enabled", null, new global::app.type.@this("bool"), context: Ctx),
                         new Data("items", null, new global::app.type.@this("list"), context: Ctx),

@@ -18,6 +18,6 @@ public partial class Join : IContext
             strings.Add((await item.Value())?.ToString() ?? "");
 
         var result = string.Join((await Separator.Value())!.Clr<string>()!, strings);
-        return Context.Ok<global::app.type.item.text.@this>(result, app.type.@this.String);
+        return Context.Ok<global::app.type.item.text.@this>(result, Context.App.Type["text"]);
     }
 }

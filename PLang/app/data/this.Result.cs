@@ -80,7 +80,7 @@ public partial class @this
     {
         get
         {
-            var clr = Type?.ClrType ?? (Type is { } t ? Context?.App.Type.Clr(t.Name) : null);
+            var clr = Type?.ClrType;
             return clr != null && typeof(global::app.IExitsGoal).IsAssignableFrom(clr);
         }
     }

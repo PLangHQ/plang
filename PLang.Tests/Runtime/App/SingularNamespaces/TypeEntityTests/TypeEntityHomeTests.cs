@@ -20,7 +20,7 @@ public class TypeEntityHomeTests
         await using var app = TestApp.Create("/test");
         var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
         await Assert.That(d.Type).IsNotNull();
-        await Assert.That(d.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(d.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test] public async Task DataType_OnStampedData_ResolvesViaAppTypeIndexer()

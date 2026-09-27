@@ -78,7 +78,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>An image's entity: name "image", kind = the canonical kind named at birth.</summary>
     protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("image") { Kind = _kind };
+        new global::app.type.@this("image", typeof(@this)) { Kind = _kind };
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)

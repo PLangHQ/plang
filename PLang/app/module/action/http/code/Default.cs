@@ -720,7 +720,7 @@ public sealed class Default : IHttp
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            await RunCallbackAsync(onStream, line, PlangType.String, "chunk", app, context, ct);
+            await RunCallbackAsync(onStream, line, context.App.Type["text"], "chunk", app, context, ct);
         }
     }
 
@@ -739,7 +739,7 @@ public sealed class Default : IHttp
             if (line == null)
             {
                 if (dataBuffer.Length > 0)
-                    await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", app, context, ct);
+                    await RunCallbackAsync(onStream, dataBuffer.ToString(), context.App.Type["text"], "chunk", app, context, ct);
                 break;
             }
 
@@ -769,7 +769,7 @@ public sealed class Default : IHttp
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
                 consecutiveOverflows = 0; // successful event resets counter
-                await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", app, context, ct);
+                await RunCallbackAsync(onStream, dataBuffer.ToString(), context.App.Type["text"], "chunk", app, context, ct);
                 dataBuffer.Clear();
             }
         }

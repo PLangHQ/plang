@@ -116,9 +116,10 @@ public sealed class @this : item.@this, item.IMatch<@this>
     }
 
     /// <summary>
-    /// The C# class this type object was born knowing — a registry entry always carries it; a
-    /// value's own type carries it when the value stamped it. Null otherwise: a caller that needs
-    /// the class for a bare name asks the registry with its own context (<c>App.Type.Clr(name)</c>).
+    /// The item class values of this type are (<c>text.@this</c> for text, <c>number.@this</c> for
+    /// {number, int}) — never the C# value underneath, which is its owner's (a number kind's storage,
+    /// an item's OwnedClrTypes). A type from the types' list and an item's own type carry it; null
+    /// only for a name no type answers to.
     /// </summary>
     [JsonIgnore]
     internal System.Type? ClrType => _clrType;
@@ -129,9 +130,9 @@ public sealed class @this : item.@this, item.IMatch<@this>
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
     {
-        var clr = context.App.Type[Name]?.ClrType;
+        var clr = ClrType;
         if (clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters)
-            return new item.@null.@this(Name, Kind?.Name);
+            return new item.@null.@this(this);
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
         // a kinded type is born with its kind (an empty list<goal>) when it takes one
@@ -139,7 +140,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
             return (item.@this)kinded.Invoke([Kind]);
         if (clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty)
             return (item.@this)empty.Invoke(null);
-        return new item.@null.@this(Name, Kind?.Name);
+        return new item.@null.@this(this);
     }
 
 
@@ -164,17 +165,6 @@ public sealed class @this : item.@this, item.IMatch<@this>
     [JsonIgnore]
     public bool Polymorphic => Kind == null && !Strict
         && string.Equals(Name, "item", System.StringComparison.OrdinalIgnoreCase);
-
-    // Static helpers — names match the new canonical primitives. The numeric
-    // helpers carry their kind so callers don't have to re-stamp it: Int/Long/
-    // Decimal/Double all surface as `number` with a precision kind.
-    public static @this String => new("text", typeof(string));
-    public static @this Int => new("number", typeof(int)) { Kind = new kind.@this("int") };
-    public static @this Long => new("number", typeof(long)) { Kind = new kind.@this("long") };
-    public static @this Decimal => new("number", typeof(decimal)) { Kind = new kind.@this("decimal") };
-    public static @this Double => new("number", typeof(double)) { Kind = new kind.@this("double") };
-    public static @this Bool => new("bool", typeof(bool));
-    public static @this DateTime => new("datetime", typeof(System.DateTimeOffset));
 
     /// <summary>
     /// The type-system value factory: a raw CLR value → its plang value (the one
@@ -211,11 +201,11 @@ public sealed class @this : item.@this, item.IMatch<@this>
             $"context-never-null: building a '{Name}' value without a context — pass the actor context at the construction site.");
 
         // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too).
-        if (raw is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(Name, Kind?.Name);
+        if (raw is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(this);
 
         // A raw-name declared type (variable) NAMES a thing — the name IS the variable (a write-target),
         // not a value to defer. Before the string→source branch (else the name becomes a deferred source).
-        if (raw is string rawName && context.App.Type[Name]?.ClrType == typeof(app.variable.@this))
+        if (raw is string rawName && ClrType == typeof(app.variable.@this))
             return app.variable.@this.Resolve(rawName, context);
 
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
@@ -244,7 +234,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
         {
             // A raw-name declared type (variable) NAMES a thing — the leaf's raw string is the variable.
             var backing = leaf.RawText;
-            if (context.App.Type[Name]?.ClrType == typeof(app.variable.@this) && backing != null)
+            if (ClrType == typeof(app.variable.@this) && backing != null)
                 return app.variable.@this.Resolve(backing, context);
 
             // Already this type → hold; refine a matching leaf to the declared kind.
@@ -256,12 +246,12 @@ public sealed class @this : item.@this, item.IMatch<@this>
             }
             // The value's type history already contains this type (an image born from a path
             // satisfies a path slot) → hold it, don't downgrade.
-            if (leaf.Is(context.App.Type[Name])) return leaf;
+            if (leaf.Is(this)) return leaf;
             // A different type → unwrap to the leaf's raw CLR form, then re-type EAGERLY via the family
             // courier (kind-aware build — path parses a string, number parses a token). A decline lands
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
             var lowered = leaf.Clr<object>();
-            var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(Name, Kind?.Name), context: context);
+            var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context);
             if (Create(lowered, carrier) is { } made) return made;
             if (carrier.Error != null) throw Failed(carrier.Error);
             // No family hook AND no error — nothing can build this shape (architect ruling: the
@@ -315,7 +305,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
             // content door; the kind-parse stays lazy on the content source. A literal string under
             // any other type rides the wire (strict, byte-identical).
             return Template != null
-                    || ctx.Context.App.Type[Name]?.ClrType == typeof(global::app.variable.@this)
+                    || ClrType == typeof(global::app.variable.@this)
                 ? Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
                 : Create(slice, transport);
         }
@@ -333,7 +323,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
     // closed thunk (or the decline) and forwards, so every later door call is a bare invocation.
     private item.@this? Bind(object? raw, global::app.actor.context.@this? ctx)
     {
-        _byContext = Creatable(ctx) is { } clr
+        _byContext = Creatable is { } clr
             ? _openByContext.MakeGenericMethod(clr)
                 .CreateDelegate<System.Func<object?, global::app.actor.context.@this?, item.@this?>>()
             : static (_, _) => null;
@@ -342,20 +332,19 @@ public sealed class @this : item.@this, item.IMatch<@this>
 
     private item.@this? Bind(object? raw, global::app.data.@this data)
     {
-        _byData = Creatable(data.Context) is { } clr
+        _byData = Creatable is { } clr
             ? _openByData.MakeGenericMethod(clr)
                 .CreateDelegate<System.Func<object?, global::app.data.@this, item.@this?>>()
             : static (_, _) => null;
         return _byData(raw, data);
     }
 
-    // The one eligibility check both binders share: this type's class — the one it was born with,
-    // else the registry's, asked with the caller's context — when it is an ICreate<clr> family —
-    // ICreate<clr> SPECIFICALLY (a subtype implementing ICreate<base>, e.g. FilePath : ICreate<path>,
-    // can't close Create<subtype>); null for a primitive/host entity, whose doors decline so the
-    // collection perimeter falls to the next rung.
-    private System.Type? Creatable(global::app.actor.context.@this? ctx)
-        => (ClrType ?? ctx?.App.Type.Clr(Name)) is { } clr
+    // The one eligibility check both binders share: this type's class when it is an ICreate<clr>
+    // family — ICreate<clr> SPECIFICALLY (a subtype implementing ICreate<base>, e.g.
+    // FilePath : ICreate<path>, can't close Create<subtype>); null for a host entity, whose doors
+    // decline so the collection perimeter falls to the next rung.
+    private System.Type? Creatable
+        => ClrType is { } clr
            && typeof(item.@this).IsAssignableFrom(clr)
            && System.Array.Exists(clr.GetInterfaces(),
                   i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)

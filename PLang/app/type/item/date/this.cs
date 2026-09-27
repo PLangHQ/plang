@@ -19,7 +19,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
-    protected internal override global::app.type.@this Type => new("date", typeof(System.DateOnly));
+    protected internal override global::app.type.@this Type => new("date", typeof(@this));
 
     public @this(System.DateOnly value) { Value = value; }
 

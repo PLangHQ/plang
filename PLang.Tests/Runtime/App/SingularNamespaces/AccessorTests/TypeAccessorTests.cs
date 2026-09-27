@@ -18,7 +18,7 @@ public class TypeAccessorTests
         await using var app = TestApp.Create("/test");
         var t = app.Type[new global::app.type.@this("number", "int")];
         await Assert.That(t.Name).IsEqualTo("number");
-        await Assert.That(t.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(t.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test] public async Task AppType_IndexByRuntimeType_ReturnsTypeEntity()

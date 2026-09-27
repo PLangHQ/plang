@@ -19,7 +19,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Shape => "bool";
 
     public bool Value { get; }
-    protected internal override global::app.type.@this Type => new("bool", typeof(bool));
+    protected internal override global::app.type.@this Type => new("bool", typeof(@this));
 
     public @this(bool value) { Value = value; }
 

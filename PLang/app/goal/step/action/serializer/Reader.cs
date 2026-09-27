@@ -145,7 +145,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         row.EndObject();
         // No value slot — a typed absence under its declared type.
         if (value == null && type is { IsNull: false })
-            value = new global::app.type.item.@null.@this(type.Name, type.Kind?.Name);
+            value = new global::app.type.item.@null.@this(type);
         return new global::app.type.property.@this
         {
             Name = name,

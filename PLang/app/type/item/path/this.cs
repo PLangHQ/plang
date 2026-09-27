@@ -24,7 +24,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// every scheme variant answers <c>is path</c> by name (no CLR-inheritance lattice), and a
     /// value that narrowed from a path (an image) carries this "path" entry in its type history.</summary>
     protected internal override global::app.type.@this Type
-        => new global::app.type.@this("path") { Kind = new global::app.type.kind.@this(Scheme) };
+        => new global::app.type.@this("path", typeof(@this), Scheme);
 
 
     /// <summary>

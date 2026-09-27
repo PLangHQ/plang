@@ -27,7 +27,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.TimeSpan(Value);
-    protected internal override global::app.type.@this Type => new("duration", typeof(System.TimeSpan));
+    protected internal override global::app.type.@this Type => new("duration", typeof(@this));
 
     public @this(System.TimeSpan value) { Value = value; }
 

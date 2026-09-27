@@ -118,10 +118,7 @@ public sealed partial class @this
             if (Array.Find(Types, t => t.Names(type.Name)) is not { } entry)
                 return new app.type.@this(type.Name, kind, type.Strict, type.Template);
             if (kind == null && !type.Strict && type.Template == null) return entry;
-            // A kind that pins a C# mate carries it ({number, int} → Int32).
-            var clr = kind != null && entry.Owned.FirstOrDefault(o => string.Equals(o.Kind, kind, StringComparison.OrdinalIgnoreCase)) is { } mate
-                ? mate.Clr : entry.ClrType;
-            return new app.type.@this(entry.Name, clr, kind, type.Strict, type.Template)
+            return new app.type.@this(entry.Name, entry.ClrType, kind, type.Strict, type.Template)
             {
                 Alias = entry.Alias,
                 Owned = entry.Owned,

@@ -37,7 +37,7 @@ public class StrictValidateBuildTests
         return new(ctx)
         {
             Value = new global::app.data.@this("Value", value, context: ctx),
-            Type = new global::app.data.@this("Type", typeEntity, context: ctx),
+            Type = new global::app.data.@this("Type", ctx.App.Type[typeEntity], context: ctx),
         };
     }
 

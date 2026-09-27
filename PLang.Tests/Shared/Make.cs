@@ -56,7 +56,7 @@ public static class Make
             action.Property.Add(Property(value is global::app.data.@this typed
                 ? typed
                 : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
-                    ? new global::app.data.@this(name, s, new global::app.type.@this("text", template: "plang"), context: global::PLang.Tests.TestApp.SharedContext)
+                    ? new global::app.data.@this(name, s, global::PLang.Tests.TestApp.SharedContext.App.Type[new global::app.type.@this("text", template: "plang")], context: global::PLang.Tests.TestApp.SharedContext)
                     // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
                     : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
                             System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
@@ -87,7 +87,7 @@ public static class Make
         // A %ref% argument is an authored template, as the builder stamps it — it renders against
         // live variables when the callee reads it.
         var rows = arguments.Select(a => a.value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
-            ? new global::app.data.@this(a.name, s, new global::app.type.@this("text", template: "plang"), context: ctx)
+            ? new global::app.data.@this(a.name, s, ctx.App.Type[new global::app.type.@this("text", template: "plang")], context: ctx)
             : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
         return Action("goal", "call", ("Name", goal),
             ("Parameter", new global::app.type.item.list.@this(rows)));
@@ -132,7 +132,8 @@ public static class Make
     /// <see cref="global::app.type.@this"/> directly.</summary>
     public static (string name, object? value) Param(
         string name, object? value, global::app.type.@this type)
-        => (name, new global::app.data.@this(name, value, type, context: global::PLang.Tests.TestApp.SharedContext));
+        => (name, new global::app.data.@this(name, value, global::PLang.Tests.TestApp.SharedContext.App.Type[type],
+            context: global::PLang.Tests.TestApp.SharedContext));
 
     /// <summary>A text parameter carrying an interpolation template (an embedded or full
     /// <c>%ref%</c>) — models the builder stamping <c>type.template="plang"</c> on a value

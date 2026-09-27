@@ -78,9 +78,12 @@ public partial class @this
         Context = context;
         // System variables are born WITH context — a computed lifts its factory result
         // through the registry, so it must hold a context at birth (not stamped after).
-        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, context, app.type.@this.DateTime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, context, app.type.@this.DateTime);
-        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context, new app.type.@this("guid"));
+        // Built with the actors, before the app's types exist: each type carries its class itself.
+        var datetime = new app.type.@this("datetime", typeof(app.type.item.datetime.@this));
+        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, context, datetime);
+        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, context, datetime);
+        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context,
+            new app.type.@this("guid", typeof(app.type.item.guid.@this)));
     }
 
     /// <summary>

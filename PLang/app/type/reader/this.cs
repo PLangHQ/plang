@@ -112,7 +112,7 @@ public sealed class @this
         {
             // Narrow ONLY when the kind's type can actually read this kind; otherwise the
             // bytes ride as binary (an xlsx file is binary bytes until an xlsx reader exists).
-            var inner = new global::app.type.kind.@this(kind!, context).Type.Name;
+            var inner = new global::app.type.kind.@this(kind!, context).type.Name;
             if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
                 && Typed(inner, kind) is not null) typeName = inner;
         }

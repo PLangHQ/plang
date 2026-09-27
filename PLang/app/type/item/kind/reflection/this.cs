@@ -165,7 +165,7 @@ public sealed class @this : global::app.type.kind.@this
                 ? global::System.Enum.ToObject(t.GetGenericArguments()[0], reader.Long())
                 : reader.String();
             return entity.Create(member,
-                new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name, entity.Kind?.Name), context: ctx.Context));
+                new global::app.data.@this("", new global::app.type.item.@null.@this(entity), context: ctx.Context));
         }
 
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the

@@ -36,17 +36,18 @@ public class @this
     public virtual System.Type? ClrForm => null;
 
     /// <summary>
-    /// The type a value of this kind narrows to once decoded — the reader's owner type when a
-    /// kind-specific reader exists, else the format family, else <c>binary</c>.
+    /// The type this kind is a kind of — what its content is (md → text, json → item): the type
+    /// whose reader reads this kind, else the format family, else <c>binary</c>. <c>{binary, md}</c>
+    /// is bytes whose content is text.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.@this Type
+    public global::app.type.@this type
     {
         get
         {
             if (Context == null)
                 throw new System.InvalidOperationException(
-                    $"kind '{Name}' has no Context — resolving its Type needs a stamped kind.");
+                    $"kind '{Name}' has no Context — resolving its type needs a stamped kind.");
             string name = Context.App.Type.Reader.TypeOf(Name)
                           ?? Context.App.Format.Kind(Name)
                           ?? "binary";

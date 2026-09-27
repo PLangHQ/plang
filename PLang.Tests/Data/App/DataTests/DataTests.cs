@@ -42,12 +42,12 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_WithType_SetsType()
     {
-        var type = Type.String;
+        var type = _app.Type["text"];
 
         var ov = _app.Data("test", "hello", type);
 
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]
@@ -56,7 +56,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = _app.Data("test", 42);
 
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
@@ -153,7 +153,7 @@ public class DataTests : System.IAsyncDisposable
         ov.SetValue(42);
 
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
@@ -461,7 +461,7 @@ public class DataTests : System.IAsyncDisposable
         // The family lives on the format registry, keyed by the kind (the
         // subtype) — jpg → image — not by the Name, which is just "binary".
         await Assert.That(ov.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Type.Kind[ov.Type!.Kind!.Name].Type.Name).IsEqualTo("image");
+        await Assert.That(engine.Type.Kind[ov.Type!.Kind!.Name].type.Name).IsEqualTo("image");
     }
 
     [Test]
@@ -475,7 +475,7 @@ public class DataTests : System.IAsyncDisposable
         // Type lazily derived through context's Engine.Types
         await Assert.That(ov.Type).IsNotNull();
         await Assert.That(ov.Type!.Name).IsEqualTo("text");
-        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]
@@ -488,7 +488,7 @@ public class DataTests : System.IAsyncDisposable
         ov.SetValue(42);
 
         await Assert.That(ov.Type!.Name).IsEqualTo("number");
-        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]
@@ -543,7 +543,7 @@ public class DataTests : System.IAsyncDisposable
         // Binary content; the kind (jpg) carries the family. The kind's family
         // is image, which is not compressible (already-compressed content).
         await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Type.Kind[data.Type!.Kind!.Name].Type.Name).IsEqualTo("image");
+        await Assert.That(engine.Type.Kind[data.Type!.Kind!.Name].type.Name).IsEqualTo("image");
         await Assert.That(engine.Format.Compressible(data.Type!)).IsFalse();
     }
 
@@ -983,7 +983,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task Value_WithType_SetsType()
     {
-        var dov = new DynamicData("now", () => DateTime.Now, _app.User.Context, Type.DateTime);
+        var dov = new DynamicData("now", () => DateTime.Now, _app.User.Context, _app.Type["datetime"]);
 
         await Assert.That(dov.Type).IsNotNull();
         await Assert.That(dov.Type!.Name).IsEqualTo("datetime");

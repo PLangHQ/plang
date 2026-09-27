@@ -22,7 +22,7 @@ public class TypeExitTests
 
     // An `ask` typed absence — the type names `ask`, the value carries no class.
     private global::app.data.@this AskAbsent()
-        => new("", new global::app.type.item.@null.@this(_app.Type[typeof(Ask)].Name), context: Ctx);
+        => new("", new global::app.type.item.@null.@this(_app.Type[typeof(Ask)]), context: Ctx);
 
     [Test] public async Task Exits_TrueFor_TypedAbsentAsk()
         => await Assert.That(AskAbsent().Exits).IsTrue();

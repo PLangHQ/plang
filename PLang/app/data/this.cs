@@ -196,7 +196,9 @@ public partial class @this
         // typed absence). A polymorphic stamp / no declared type is the natural lift,
         // the value's own truth stands.
         if (type is { IsNull: false } && !type.Polymorphic)
-            _item = type.Create(parsed, _context);
+            // A declared type that doesn't know its class is born through the types with this
+            // Data's context, so it does.
+            _item = (type.ClrType == null && _context != null ? _context.App.Type[type] : type).Create(parsed, _context);
         // A value that needs no lift is context-free — the null citizen (every sentinel:
         // NotFound/Uninitialized/`new Data(name)`) and an already-native item pass through
         // without consulting the registry. Only a raw value to lift reaches the collection.

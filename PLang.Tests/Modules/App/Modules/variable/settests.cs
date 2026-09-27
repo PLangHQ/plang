@@ -47,7 +47,7 @@ public class SetTests
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Variable.Get("count"))!.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That((await context.Variable.Get("count"))!.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]

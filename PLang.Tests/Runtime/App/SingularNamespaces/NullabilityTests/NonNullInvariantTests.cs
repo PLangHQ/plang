@@ -30,12 +30,12 @@ public class NonNullInvariantTests
         // read went through Context.App.Type.Clr.
         await using var app = new PLangEngine("/test");
 
-        // A bare type object answers only the class stamped at its birth; the asker brings the
-        // context and the registry answers by name.
+        // A declared type that doesn't know its class is born through the types by the Data,
+        // which holds the context.
         var d = new global::app.data.@this("", "any/raw/value",
             new global::app.type.@this("path"), context: app.User.Context);
-        await Assert.That(d.Type.ClrType).IsNull()
-            .Because("a bare type holds no context — it never reaches the registry itself.");
+        await Assert.That(d.Type.ClrType).IsEqualTo(typeof(global::app.type.item.path.@this))
+            .Because("the Data births its declared type through the types, which know path's class.");
         var clr = d.Context!.App.Type.Clr(d.Type.Name);
         await Assert.That(clr).IsNotNull()
             .Because("registry knows 'path' → typeof(global::app.type.item.path.@this); static fallback returns null.");

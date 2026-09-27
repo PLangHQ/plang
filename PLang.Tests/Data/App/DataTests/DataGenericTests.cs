@@ -21,11 +21,11 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_WithType_SetsType()
     {
-        var data = _app.User.Context.Ok(42, Type.Int);
+        var data = _app.User.Context.Ok(42, _app.Type[new Type("number", "int")]);
 
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(data.Type).IsNotNull();
-        await Assert.That(data.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(data.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test]

@@ -175,7 +175,7 @@ public class LlmIntegrationTests
         {
             Make.Tool("GetWeather", parameter: new List<Data>
             {
-                new Data("city", null, global::app.type.@this.String, context: Ctx)
+                new Data("city", null, Ctx.App.Type["text"], context: Ctx)
             })
         };
 
