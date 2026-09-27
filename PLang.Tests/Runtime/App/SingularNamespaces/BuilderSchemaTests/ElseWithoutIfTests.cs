@@ -188,13 +188,13 @@ public class ElseWithoutIfTests
 
         var keyed = new global::app.goal.step.action.modifier.@this
         {
-            Module = app.Module["on"], Name = "error",
+            Module = app.Module("on"), Name = "error",
             Property = Make.Properties(new List<global::app.data.@this> { new("key", "ElseWithoutIf", context: shared) })
         };
         keyed.Recovery.Add(Make.Call("SourceError"));
         var retry = new global::app.goal.step.action.modifier.@this
         {
-            Module = app.Module["on"], Name = "error",
+            Module = app.Module("on"), Name = "error",
             Property = Make.Properties(new List<global::app.data.@this>
             {
                 new("order", "GoalFirst", context: shared),

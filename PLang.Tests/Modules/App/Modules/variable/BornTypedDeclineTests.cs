@@ -49,7 +49,7 @@ public class BornTypedDeclineTests
         var ctx = _app.User.Context;
         var act = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
@@ -72,7 +72,7 @@ public class BornTypedDeclineTests
         var ctx = _app.User.Context;
         var act = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {

@@ -41,7 +41,7 @@ public class RenderTests : IDisposable
     public async Task Template_ComparesAChoiceByItsName()
     {
         var context = _app.User.Context;
-        var subtract = _app.Module["math"].Action.Items(global::PLang.Tests.TestApp.SharedContext)
+        var subtract = _app.Module("math").Action.Items(global::PLang.Tests.TestApp.SharedContext)
             .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "subtract");
         await context.Variable.Set("a", subtract);
         var action = new Render(context)
@@ -650,7 +650,7 @@ public class RenderTests : IDisposable
     {
         var action = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module(actionClass),
             Name = method,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                 ? PrParam.List(actionClass, method, dict)

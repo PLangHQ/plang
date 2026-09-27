@@ -43,7 +43,7 @@ public class ModifierFoldTests
     [Test]
     public async Task Action_Modifiers_DefaultsToEmptyList()
     {
-        var action = new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read" };
+        var action = new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "read" };
 
         await Assert.That(action.Modifier).IsNotNull();
         await Assert.That(action.Modifier.Count).IsEqualTo(0);
@@ -72,7 +72,7 @@ public class ModifierFoldTests
         // timeout.after around a fast variable.set — action completes, result passes through
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
@@ -82,7 +82,7 @@ public class ModifierFoldTests
             {
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timeout"), Name = "after",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
@@ -101,7 +101,7 @@ public class ModifierFoldTests
         // Verify both modifiers participate: fast action completes cleanly.
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
@@ -111,12 +111,12 @@ public class ModifierFoldTests
             {
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timeout"), Name = "after",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) })
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("on"), Name = "error",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
@@ -134,7 +134,7 @@ public class ModifierFoldTests
         // timeout > cache > error > action — all three wrap a successful variable.set
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
@@ -144,12 +144,12 @@ public class ModifierFoldTests
             {
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timeout"), Name = "after",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) })
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["cache"], Name = "wrap",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("cache"), Name = "wrap",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                     {
                         new("durationMs", 60_000L, context: global::PLang.Tests.TestApp.SharedContext),
@@ -158,7 +158,7 @@ public class ModifierFoldTests
                 },
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("on"), Name = "error",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) })
                 }
             }
@@ -176,7 +176,7 @@ public class ModifierFoldTests
         // variable.set is NOT a modifier — using it as one yields a ModifierError
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
@@ -187,7 +187,7 @@ public class ModifierFoldTests
                 // variable.set as a modifier is invalid
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                     {
                         new("name", "%bad%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "no", context: global::PLang.Tests.TestApp.SharedContext)

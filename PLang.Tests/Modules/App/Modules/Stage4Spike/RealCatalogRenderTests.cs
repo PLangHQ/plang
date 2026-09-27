@@ -10,7 +10,7 @@ public class RealCatalogRenderTests
     private static async Task<string> Render(global::app.@this app, string template)
     {
         var ctx = app.User.Context;
-        ctx.Variable.Set(new Data("modules", app.Module.list, context: ctx));
+        ctx.Variable.Set(new Data("modules", app.module.list, context: ctx));
         var action = new Render(ctx)
         {
             Template = (global::app.type.item.text.@this)template,
@@ -45,7 +45,7 @@ public class RealCatalogRenderTests
     public async Task ModuleActions_IsNativeList_Filterable()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s4-realcat-3");
-        var file = app.Module["file"];
+        var file = app.Module("file");
         await Assert.That(file.Action.CountRaw).IsGreaterThan(0);
     }
 }

@@ -383,7 +383,7 @@ public class SetupTests
         {
             new global::app.goal.step.action.@this
             {
-                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["nonexistent"],
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module("nonexistent"),
                 Name = "doesnotexist",
                 Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>())
             }

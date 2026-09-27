@@ -363,7 +363,7 @@ public sealed partial class @this
         // points at).
         var goalEntryAction = new global::app.goal.step.action.@this
         {
-            Module = context.App.Module["goal"],
+            Module = (await (await context.App.module.Get("goal")).Value())!,
             Name = "enter",
             Step = Step.Count > 0 ? Step[0] : null,
         };

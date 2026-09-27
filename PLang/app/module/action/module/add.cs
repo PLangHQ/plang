@@ -26,7 +26,7 @@ public partial class Add : IContext
 
         var ns = Namespace == null ? null : (await Namespace.Value())?.ToString();
         var assembly = (await loadResult.Value()).Clr<System.Reflection.Assembly>()!;
-        var count = app.Module.Discover(assembly, ns);
+        var count = app.module.list.Discover(assembly, ns);
         // The assembly's plang types and kinds (the closed sets its choice<T> params draw on) come in
         // through the types' one way in.
         var types = app.type.list.Add(assembly, Context);

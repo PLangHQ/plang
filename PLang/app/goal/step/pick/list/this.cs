@@ -42,6 +42,9 @@ public sealed class @this
     private List<pick.@this> _items = new();
     private List<question.@this> _question = new();
 
+    // The app's modules by name, awaited once when the answer is taken — what the picks are made from.
+    private Dictionary<string, global::app.module.@this> _modules = new(StringComparer.OrdinalIgnoreCase);
+
     public @this(global::app.goal.step.@this step) => _step = step;
 
     /// <summary>The id of one of this step's questions: <c>s{index}_{question}</c>.</summary>
@@ -187,6 +190,8 @@ public sealed class @this
         // A cached step is already built, and a step written in formal is its code: the decider is
         // asked nothing about either.
         if (_step.IsCached || _step.IsFormal) return;
+        var modules = (global::app.type.item.list.@this<global::app.module.@this>)await context.App.module.list.all();
+        _modules = modules.Items().ToDictionary(m => m.Name, StringComparer.OrdinalIgnoreCase);
         var prefix = Key("");
         foreach (var entry in answer.Entries(context))
         {
@@ -203,12 +208,12 @@ public sealed class @this
         }
         _items = Picks(context);
         _question = Questions(popular, context);
-        _moduleAsked = Asked(context).Select(m => context.App.Module[m]).ToList();
+        _moduleAsked = Asked(context).Select(m => _modules[m]).ToList();
         IsCondition = Tests;
         IsUnsure = Unsure(context);
         _listed = Listing();
         Formal = Prefill(context);
-        Known = await Code(context);
+        Known = await Code(modules, context);
     }
 
     // ---------------------------------------------------------------- the answer against the picks
@@ -342,7 +347,8 @@ public sealed class @this
 
     // The known code, written in formal and read the way an answer is read. A line that doesn't read
     // knows nothing.
-    private async Task<global::app.goal.step.action.list.@this> Code(global::app.actor.context.@this context)
+    private async Task<global::app.goal.step.action.list.@this> Code(
+        global::app.type.item.list.@this<global::app.module.@this> modules, global::app.actor.context.@this context)
     {
         var text = _step.Text;
         var known = Destination();
@@ -367,7 +373,7 @@ public sealed class @this
         }
         if (known != null) line.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         if (line.Count == 0) return new();
-        var read = new global::app.goal.step.action.serializer.Formal(_step).Read(string.Join("; ", line), context);
+        var read = new global::app.goal.step.action.serializer.Formal(_step, modules).Read(string.Join("; ", line), context);
         if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;
         await (context.App.Debug?.Write($"build.pick: step {_step.Index}'s known code does not read: {read.Error?.Message}") ?? Task.CompletedTask);
         return new();
@@ -382,10 +388,10 @@ public sealed class @this
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", required)})";
     }
 
-    private static global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
+    private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
     {
         var parts = name.Split('.', 2);
-        return context.App.Module.Contains(parts[0]) ? context.App.Module[parts[0]][parts[1]] : null;
+        return _modules.TryGetValue(parts[0], out var module) ? module[parts[1]] : null;
     }
 
     // A choice's answer as each option's share: its probabilities, or its pick at its confidence.
@@ -408,7 +414,7 @@ public sealed class @this
     // The actions that may follow an if — the condition module's own branches (action.IsBranch).
     private List<global::app.goal.step.action.@this> Branch(global::app.actor.context.@this context)
     {
-        var condition = context.App.Module["condition"];
+        var condition = _modules["condition"];
         return condition.ActionNames.OrderBy(a => a, StringComparer.Ordinal)
             .Select(a => condition[a]!).Where(a => a.IsBranch).ToList();
     }
@@ -417,7 +423,7 @@ public sealed class @this
 
     // The modules of the choice, most probable first — only modules the app has.
     private List<(string Module, number Share)> Ranked(global::app.actor.context.@this context) =>
-        _module.Where(m => m.Value is not null && context.App.Module.Contains(m.Key))
+        _module.Where(m => m.Value is not null && _modules.ContainsKey(m.Key))
                .Select(m => (m.Key, m.Value!))
                .OrderByDescending(m => m.Item2)
                .ToList();
@@ -464,7 +470,7 @@ public sealed class @this
         var yesNo = YesNo(context);
         foreach (var m in Asked(context))
         {
-            var module = context.App.Module[m];
+            var module = _modules[m];
             string? action = module.Count == 1 ? module.ActionNames.Single() : _choice.GetValueOrDefault(m).Action;
             if (action == null) continue;
             var name = $"{m}.{action}";
@@ -492,17 +498,17 @@ public sealed class @this
             questions.Add(new question.@this
             {
                 Id = Key("@popular"), Kind = Kind.Popular,
-                Option = popular.Select(a => a.Split('.')).Select(a => context.App.Module[a[0]][a[1]]!).ToList(),
+                Option = popular.Select(a => a.Split('.')).Select(a => _modules[a[0]][a[1]]!).ToList(),
             });
         if (Tests)
             foreach (var branch in Branch(context))
                 questions.Add(new question.@this { Id = Key($"{branch.Module.Name}.{branch.Name}"), Kind = Kind.Branch, Branch = branch });
         var asked = Asked(context);
         foreach (var m in YesNo(context))
-            questions.Add(new question.@this { Id = Key($"@also.{m}"), Kind = Kind.Use, Module = context.App.Module[m], Also = asked[0] != m });
+            questions.Add(new question.@this { Id = Key($"@also.{m}"), Kind = Kind.Use, Module = _modules[m], Also = asked[0] != m });
         foreach (var m in asked)
         {
-            var module = context.App.Module[m];
+            var module = _modules[m];
             if (module.Count == 1) continue;   // one action: nothing to decide
             questions.Add(new question.@this
             {

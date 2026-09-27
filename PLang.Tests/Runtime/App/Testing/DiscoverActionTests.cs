@@ -261,7 +261,7 @@ public class DiscoverActionTests
                     {
                         new PrAction
                         {
-                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["http"], Name = "request",
+                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("http"), Name = "request",
                             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Url", "https://example.com", context: _app.User.Context) })
                         }
                     }

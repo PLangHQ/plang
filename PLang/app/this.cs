@@ -19,7 +19,6 @@ namespace app;
 public sealed partial class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly global::app.module.list.@this _modules;
     private bool _disposed;
 
     private global::app.service.list.@this? _services;
@@ -127,10 +126,10 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.@event.list.@this Event { get; }
 
     /// <summary>
-    /// Flat action registry. Discovers, registers, and resolves actions by module.action.
-    /// Built-in actions from PLang assembly, external DLLs add via Discover().
+    /// The type named <c>module</c> — <c>%!app.module%</c>: its <c>list</c> is the app's modules (and the
+    /// discovery that registers their actions), <c>Get(name)</c> is one module as a result.
     /// </summary>
-    public global::app.module.list.@this Module => _modules;
+    public global::app.type.@this<global::app.module.@this, global::app.module.list.@this> module { get; }
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -285,7 +284,7 @@ public sealed partial class @this : IAsyncDisposable
         Code = new AppCode(System.Context);
         _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
-        _modules = new global::app.module.list.@this(this);
+        module = new(this);
         goal = new(this);
 
         Code.RegisterDefaults();
@@ -430,12 +429,14 @@ public sealed partial class @this : IAsyncDisposable
     /// actions (providers, tests). Spec-deferred follow-up: this overload may
     /// be removed entirely when handlers grow their own RunAsync surface.
     /// </summary>
-    public Task<data.@this> Run<TAction>(TAction handler, actor.context.@this context)
-        where TAction : module.ICodeGenerated
+    public async Task<data.@this> Run<TAction>(TAction handler, actor.context.@this context)
+        where TAction : global::app.module.ICodeGenerated
     {
+        var found = await module.Get(ResolveModuleName(typeof(TAction)));
+        if (!found.Success) return context.Error(found.Error!);
         var entity = new global::app.goal.step.action.@this
         {
-            Module = Module[ResolveModuleName(typeof(TAction))],
+            Module = (await found.Value())!,
             Name = ResolveActionName(typeof(TAction)),
             Seed = handler,
             // Born knowing the step that INVOKED it. That is a different question from "which
@@ -447,14 +448,14 @@ public sealed partial class @this : IAsyncDisposable
             // Never split compose from run here — the fusion is what makes this honest.
             Step = context.CallStack.Current?.Action.Step,
         };
-        return entity.Start(context);
+        return await entity.Start(context);
     }
 
     /// <summary>
     /// Typed variant — same dispatch path, casts the result Value to TResult.
     /// </summary>
     public async Task<data.@this<TResult>> Run<TAction, TResult>(TAction handler, actor.context.@this context)
-        where TAction : module.ICodeGenerated
+        where TAction : global::app.module.ICodeGenerated
         where TResult : global::app.type.item.@this, global::app.type.item.ICreate<TResult>
     {
         var result = await Run(handler, context);
@@ -471,7 +472,7 @@ public sealed partial class @this : IAsyncDisposable
 
     private static string ResolveActionName(System.Type handlerType)
     {
-        var attr = handlerType.GetCustomAttribute<module.ActionAttribute>(inherit: false);
+        var attr = handlerType.GetCustomAttribute<global::app.module.ActionAttribute>(inherit: false);
         return attr?.Name ?? handlerType.Name.ToLowerInvariant();
     }
 
@@ -581,7 +582,7 @@ public sealed partial class @this : IAsyncDisposable
 
         await actor.list.DisposeAsync();
 
-        await _modules.DisposeAsync();
+        await module.list.DisposeAsync();
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
         if (_settingsStore.IsValueCreated) _settingsStore.Value.Dispose();

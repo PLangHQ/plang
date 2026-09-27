@@ -24,13 +24,13 @@ public class ModuleRemoveTests
     public async Task Remove_ExistingModule_Succeeds()
     {
         // "variable" is a built-in module
-        await Assert.That(_app.Module.Contains("variable")).IsTrue();
+        await Assert.That((await _app.module.Get("variable")).Success).IsTrue();
 
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(_app.Module.Contains("variable")).IsFalse();
+        await Assert.That((await _app.module.Get("variable")).Success).IsFalse();
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class ModuleRemoveTests
     {
         // Hold the element from THIS app's registry, taken before removal — an action that was
         // already built still carries its module, so this asks the question removal must answer.
-        var held = _app.Module["variable"];
+        var held = _app.Module("variable");
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         await action.Start();
 

@@ -25,7 +25,7 @@ public class ErrorInPlayTests
         global::app.goal.step.action.modifier.list.@this? modifiers = null) =>
         new()
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                 { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) }),
             Modifier = modifiers ?? new global::app.goal.step.action.modifier.list.@this()
@@ -35,7 +35,7 @@ public class ErrorInPlayTests
         params (string name, object? value)[] parameters) =>
         new()
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("on"), Name = "error",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters
                 .Select(p => new global::app.data.@this(p.name, p.value,
                     context: global::PLang.Tests.TestApp.SharedContext)).ToList())
@@ -49,7 +49,7 @@ public class ErrorInPlayTests
         var handler = ErrorHandler(parameters);
         handler.Recovery.Add(new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"), Name = "call",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
@@ -77,7 +77,7 @@ public class ErrorInPlayTests
     /// <summary>An action that copies %!error.Message% into the named variable.</summary>
     private static PrAction CaptureError(string varName) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
+        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("name", "%" + varName + "%", new global::app.type.@this("variable"),
@@ -193,7 +193,7 @@ public class ErrorInPlayTests
     /// <summary>An action that copies %!error.Key% into the named variable.</summary>
     private static PrAction CaptureErrorKey(string varName) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
+        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("name", "%" + varName + "%", new global::app.type.@this("variable"),
@@ -218,7 +218,7 @@ public class ErrorInPlayTests
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         var sleep = new PrAction
         {
-            Module = ctx.App.Module["timer"], Name = "sleep",
+            Module = ctx.App.Module("timer"), Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
         };
         // The slot folds index 0 outermost, so on.error wraps timeout.after wraps the sleep —
@@ -226,7 +226,7 @@ public class ErrorInPlayTests
         sleep.Modifier.Add(ErrorHandlerCalling("Recover", ("order", "GoalFirst")));
         sleep.Modifier.Add(new global::app.goal.step.action.modifier.@this
         {
-            Module = ctx.App.Module["timeout"], Name = "after",
+            Module = ctx.App.Module("timeout"), Name = "after",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1L, context: ctx) })
         });
 

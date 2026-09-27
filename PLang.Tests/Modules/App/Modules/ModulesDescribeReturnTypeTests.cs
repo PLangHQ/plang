@@ -46,7 +46,7 @@ public class ModulesDescribeReturnTypeTests
     }
 
     private global::app.goal.step.action.@this Find(string module, string action)
-        => _app.Module[module][action]
+        => _app.Module(module)[action]
            ?? throw new InvalidOperationException($"catalog missing {module}.{action} — fixture stale");
 
     // Bare Task<Data> — polymorphic. Both bare Data and Data<object> are the
@@ -108,8 +108,8 @@ public class ModulesDescribeReturnTypeTests
     [Test]
     public async Task Return_AllCatalogRows_HaveAValue()
     {
-        var catalog = _app.Module.Names
-            .SelectMany(n => _app.Module.GetActions(n).Select(a => _app.Module[n][a]!));
+        var catalog = _app.module.list.Items()
+            .SelectMany(m => m.ActionNames.Select(a => m[a]!));
         var missing = catalog.Where(a => a.Return == null)
                              .Select(a => $"{a.Module}.{a.Name}")
                              .ToList();

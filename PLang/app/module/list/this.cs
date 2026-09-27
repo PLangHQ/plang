@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Reflection;
 using app.module;
 using app.actor.context;
@@ -7,36 +6,35 @@ using app.error;
 namespace app.module.list;
 
 /// <summary>
-/// Flat action registry. Owns discovery, registration, and resolution of all actions.
-/// Built-in actions are discovered from the PLang assembly at construction.
-/// External DLLs add actions via Discover(assembly, namespace).
+/// The app's modules — a list of them, each owning its actions. Its own work: discovering
+/// [Action]-attributed classes in an assembly and registering each with its module (built-ins from the
+/// PLang assembly at construction; external DLLs through <c>module.add</c>), and disposing the shared
+/// instances the modules hold. One module is picked by name through the type:
+/// <c>app.module.Get("file")</c>.
 /// </summary>
-public sealed class @this : IAsyncDisposable
+public sealed class @this : global::app.type.item.list.@this<global::app.module.@this>, IAsyncDisposable
 {
-    // The collection owns MODULES — selection and lifecycle. Each module owns its own actions;
-    // there is no module→action index here to keep in step with them.
-    private readonly ConcurrentDictionary<string, global::app.module.@this> _modules = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
+    private readonly object _registering = new();
 
-    /// <summary>The App this registry serves — handed at construction, like every other collection
-    /// App builds (<c>Type</c> takes its context the same way). Never assigned afterwards.</summary>
+    /// <summary>The App this list serves — handed at construction. Never assigned afterwards.</summary>
     public global::app.@this App { get; }
 
-    public @this(global::app.@this app)
+    public @this(global::app.@this app) : base(new List<object?>())
     {
         App = app;
         Discover(typeof(@this).Assembly, "app.module.action");
     }
 
     /// <summary>
-    /// Disposes every registered handler instance (IAsyncDisposable preferred,
-    /// IDisposable fallback). Same projection as <see cref="All"/>.
+    /// Disposes every registered handler instance the modules hold (IAsyncDisposable preferred,
+    /// IDisposable fallback).
     /// </summary>
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
         _disposed = true;
-        foreach (var module in _modules.Values) await module.DisposeAsync();
+        foreach (var module in Items()) await module.DisposeAsync();
     }
 
     /// <summary>
@@ -75,12 +73,6 @@ public sealed class @this : IAsyncDisposable
     public void RegisterType(string module, string actionName, Type type)
         => Element(module).Add(actionName, type, null);
 
-    // Get-or-create the module, then the MODULE takes the action. Registration never reaches two
-    // levels deep into someone else's contents.
-    private global::app.module.@this Element(string name)
-        => _modules.GetOrAdd(name, n => new global::app.module.@this(n, this));
-
-
     /// <summary>
     /// Registers a shared action instance (stateful — external DLLs, test overrides).
     /// Instance takes priority over type during resolution.
@@ -88,62 +80,29 @@ public sealed class @this : IAsyncDisposable
     public void Register(string module, string actionName, IAction instance)
         => Element(module).Add(actionName, null, instance);
 
-    // --- Queries ---
-
-    /// <summary>Does this module exist? Whether it HAS an action is the module's own question:
-    /// <c>list[module][action] != null</c>.</summary>
-    public bool Contains(string module)
-        => _modules.ContainsKey(module);
-
-    public IEnumerable<string> Names
-        => _modules.Keys;
-
-    // --- Selection + enumeration: the concept's element surface ---
-
-    /// <summary>Select a module by name. Throws on miss (names are authored). There is no second
-    /// cache to invalidate — the module IS the entry.</summary>
-    public global::app.module.@this this[string name]
-        => _modules.TryGetValue(name, out var module)
-            ? module
-            : throw new KeyNotFoundException($"No module named '{name}'.");
-
-    /// <summary>The modules as the NATIVE plang list — filterable by the list module,
-    /// renderable by templates. A fresh, cheap wrapper per ask over the same cached elements.</summary>
-    public global::app.type.item.list.@this list
-        => new(Names.Select(n => (object?)this[n]).ToList());
-
-    /// <summary>The names a module answers to — asked OF the module, tolerating an unknown one so
-    /// callers probing an arbitrary name need no pre-check.</summary>
-    public IEnumerable<string> GetActions(string module)
-        => _modules.TryGetValue(module, out var m) ? m.ActionNames : Enumerable.Empty<string>();
-
-    public Type? GetActionType(string module, string actionName)
-        => _modules.TryGetValue(module, out var m) ? m.Handler(actionName) : null;
-
-    public int Count => _modules.Values.Sum(m => m.Count);
-
-    /// <summary>
-    /// All registered instances (for disposal on app shutdown).
-    /// Type-registered actions are per-call — no disposal tracking needed.
-    /// </summary>
-    public IEnumerable<IAction> All
-        => _modules.Values.SelectMany(m => m.Instances);
-
-    /// <summary>
-    /// Removes all actions for a module. Returns true if the module existed.
-    /// </summary>
-    public bool Remove(string module)
+    // Get-or-create the module, then the MODULE takes the action. Registration never reaches two
+    // levels deep into someone else's contents.
+    private global::app.module.@this Element(string name)
     {
-        if (!_modules.TryRemove(module, out var removed)) return false;
-        removed.Clear();   // authoritative: anyone still holding the element finds it empty
-        return true;
+        lock (_registering)
+        {
+            if (Items().FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)) is { } held)
+                return held;
+            var born = new global::app.module.@this(name, this);
+            Add(born);
+            return born;
+        }
     }
 
-    public void Clear()
-    {
-        foreach (var module in _modules.Values) module.Clear();
-        _modules.Clear();
-    }
+    /// <summary>
+    /// The module a <c>.pr</c> row names — for the readers only, which read a synchronous pass and birth
+    /// a module in every action row (as the type list's lookup births a type in every value slot).
+    /// Everything else picks through the type: <c>await app.module.Get(name)</c>. A name that isn't one
+    /// of this app's modules is the row's format error; the goal load turns it into a result.
+    /// </summary>
+    internal global::app.module.@this this[string name]
+        => Items().FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase))
+           ?? throw new System.Text.Json.JsonException($"module '{name}' isn't one of this app's modules.");
 
     /// <summary>Where per-action LLM teaching markdown lives — <c>/system/modules</c>, resolved
     /// through <c>path.Resolve</c> so every downstream read passes <c>AuthGate</c>. FilePath's

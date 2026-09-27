@@ -68,7 +68,7 @@ public class ForeachErrorPropagationTests
         // Inner goal with a single step: [condition.if(true), goal.call Missing]
         var innerCondAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: context), new Data("Operator", "==", context: context), new Data("Right", true, context: context)
@@ -76,7 +76,7 @@ public class ForeachErrorPropagationTests
         };
         var innerGoalCall = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"), Name = "call",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("name", "MissingGoal", context: context)

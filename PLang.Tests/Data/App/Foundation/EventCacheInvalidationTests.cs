@@ -78,7 +78,7 @@ public class EventCacheInvalidationTests
         using var context = new global::app.actor.context.@this(engine, engine.User);
         var action = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set"
         };
 

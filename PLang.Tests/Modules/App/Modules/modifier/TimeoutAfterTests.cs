@@ -22,7 +22,7 @@ public class TimeoutAfterTests
 
     private static global::app.goal.step.action.modifier.@this TimeoutModifier(int ms) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"],
+        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timeout"),
         Name = "after",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", ms, context: global::PLang.Tests.TestApp.SharedContext) })
     };
@@ -32,7 +32,7 @@ public class TimeoutAfterTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
@@ -52,7 +52,7 @@ public class TimeoutAfterTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) }),
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(50) }
@@ -71,7 +71,7 @@ public class TimeoutAfterTests
         // Token did propagate: sleep was cut short well before its 10s target
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) }),
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(30) }
@@ -96,7 +96,7 @@ public class TimeoutAfterTests
 
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) }),
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(5000) }
@@ -113,7 +113,7 @@ public class TimeoutAfterTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1000, context: Ctx) }),
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(0) }
@@ -134,7 +134,7 @@ public class TimeoutAfterTests
         {
             new global::app.goal.step.action.modifier.@this
             {
-                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timeout"], Name = "after",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timeout"), Name = "after",
                 Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1, context: Ctx) })
             }
         };
@@ -162,14 +162,14 @@ public class TimeoutAfterTests
         // handler outside it ignores that like any other error → final result is Ok.
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["timer"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) }),
             Modifier = new global::app.goal.step.action.modifier.list.@this
             {
                 new global::app.goal.step.action.modifier.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("on"), Name = "error",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) })
                 },
                 TimeoutModifier(50)

@@ -25,7 +25,7 @@ public class ModifierFrameTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%x%", new global::app.type.@this("variable"),
@@ -35,7 +35,7 @@ public class ModifierFrameTests
         };
         action.Modifier.Add(new global::app.goal.step.action.modifier.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("data", "not a modifier", context: global::PLang.Tests.TestApp.SharedContext)
@@ -74,12 +74,12 @@ public class ModifierFrameTests
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         var action = new PrAction
         {
-            Module = ctx.App.Module["timer"], Name = "sleep",
+            Module = ctx.App.Module("timer"), Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
         };
         action.Modifier.Add(new global::app.goal.step.action.modifier.@this
         {
-            Module = ctx.App.Module["timeout"], Name = "after",
+            Module = ctx.App.Module("timeout"), Name = "after",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1L, context: ctx) })
         });
         return action;

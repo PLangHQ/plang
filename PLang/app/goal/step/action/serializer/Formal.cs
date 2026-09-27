@@ -33,15 +33,22 @@ namespace app.goal.step.action.serializer;
 public sealed class Formal
 {
     private readonly global::app.goal.step.@this _step;
+    private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
 
-    public Formal(global::app.goal.step.@this step) => _step = step;
+    /// <summary>Born with the step it reads for and the modules its actions are picked from — the
+    /// caller awaited them once (<c>app.module.list.all()</c>); the read itself stays synchronous.</summary>
+    public Formal(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
+    {
+        _step = step;
+        _modules = modules;
+    }
 
     /// <summary>The step's actions read from <paramref name="text"/> — Ok(action.list), or the error.</summary>
     public global::app.data.@this Read(string text, global::app.actor.context.@this context)
     {
         try
         {
-            var cursor = new Cursor(text, _step, context, _step.Index);
+            var cursor = new Cursor(text, _step, context, _step.Index, _modules);
             cursor.Space();
             if (cursor.AtEnd) cursor.Fail("a step holds at least one action");
             var list = new global::app.goal.step.action.list.@this();
@@ -79,14 +86,17 @@ public sealed class Formal
         private readonly global::app.goal.step.@this _step;
         private readonly global::app.actor.context.@this _context;
         private readonly int _index;   // the step's index — a body's cursor names the step it is in
+        private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
         private int _pos;
 
-        public Cursor(string text, global::app.goal.step.@this step, global::app.actor.context.@this context, int index)
+        public Cursor(string text, global::app.goal.step.@this step, global::app.actor.context.@this context, int index,
+            global::app.type.item.list.@this<global::app.module.@this> modules)
         {
             _text = text;
             _step = step;
             _context = context;
             _index = index;
+            _modules = modules;
         }
 
         public bool AtEnd { get { Space(); return _pos >= _text.Length; } }
@@ -160,8 +170,9 @@ public sealed class Formal
             actions[^1].Modifier.Add(modifier);
         }
 
-        private global::app.goal.step.action.@this? Catalog(string module, string name)
-            => _context.App.Module.Contains(module) ? _context.App.Module[module][name] : null;
+        // The module named, out of the ones this read was handed; null when none answers to it.
+        private global::app.module.@this? Module(string name)
+            => _modules.Items().FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase));
 
         // action = module "." name "(" rows ")" [ "{" actions "}" ] — the action, and where it starts
         private (global::app.goal.step.action.@this Action, int At) Action()
@@ -169,7 +180,8 @@ public sealed class Formal
             Space();
             var start = _pos;
             var module = Ident(); Take("."); var name = Ident();
-            var catalog = Catalog(module, name);
+            var owner = Module(module);
+            var catalog = owner?[name];
             if (catalog == null) Fail($"`{module}.{name}` is not an action", start);
             var isModifier = catalog is global::app.goal.step.action.modifier.@this;
             var isCondition = module == "condition" && name is "if" or "elseif" or "else";
@@ -177,7 +189,7 @@ public sealed class Formal
             global::app.goal.step.action.@this action = catalog is global::app.goal.step.action.modifier.@this
                 ? new global::app.goal.step.action.modifier.@this { Step = _step, Synthetic = false }
                 : new global::app.goal.step.action.@this { Step = _step, Synthetic = false };
-            action.Module = _context.App.Module[module];
+            action.Module = owner!;
             action.Name = name;
 
             Take("(");
@@ -236,7 +248,7 @@ public sealed class Formal
                 // a condition's body is a child step of this step's goal, its actions born holding it —
                 // written on this step's line
                 var child = new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line };
-                var body = new Cursor(_text, child, _context, _index) { _pos = _pos };
+                var body = new Cursor(_text, child, _context, _index, _modules) { _pos = _pos };
                 var bodyActions = body.Actions("}");
                 _pos = body._pos;
                 child.Text = _text[bodyStart.._pos].Trim();

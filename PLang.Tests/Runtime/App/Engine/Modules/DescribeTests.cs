@@ -7,10 +7,10 @@ public class DescribeTests
     [Test]
     public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
     {
-        var app = TestApp.Create("/test"); var modules = app.Module;
+        var app = TestApp.Create("/test"); var modules = app.module.list;
         modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
 
-        var action = modules["testmod"]["datapath"];
+        var action = app.Module("testmod")["datapath"];
         await Assert.That(action).IsNotNull();
 
         var pathParam = action!.Property.First(r => r.Name == "Path");

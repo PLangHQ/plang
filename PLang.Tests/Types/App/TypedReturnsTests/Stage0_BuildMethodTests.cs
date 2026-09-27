@@ -23,11 +23,11 @@ public class Stage0_BuildMethodTests
     public void Setup()
     {
         _app = new global::app.@this("/app");
-        _app.Module.RegisterType("typedreturns", "noopbuild", typeof(NoopBuild));
-        _app.Module.RegisterType("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
-        _app.Module.RegisterType("typedreturns", "buildfails", typeof(BuildFails));
-        _app.Module.RegisterType("typedreturns", "buildbareok", typeof(BuildBareOk));
-        _app.Module.RegisterType("typedreturns", "buildordered", typeof(BuildOrdered));
+        _app.module.list.RegisterType("typedreturns", "noopbuild", typeof(NoopBuild));
+        _app.module.list.RegisterType("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
+        _app.module.list.RegisterType("typedreturns", "buildfails", typeof(BuildFails));
+        _app.module.list.RegisterType("typedreturns", "buildbareok", typeof(BuildBareOk));
+        _app.module.list.RegisterType("typedreturns", "buildordered", typeof(BuildOrdered));
         BuildOrdered.InvocationLog.Clear();
     }
 
@@ -38,7 +38,7 @@ public class Stage0_BuildMethodTests
         params (string name, object? value)[] parameters)
         => new PrAction
         {
-            Module = _app.Module[module],
+            Module = _app.Module(module),
             Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };

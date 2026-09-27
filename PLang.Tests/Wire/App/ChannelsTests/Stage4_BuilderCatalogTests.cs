@@ -10,7 +10,7 @@ public class Stage4_BuilderCatalogTests
     public async Task BuilderCatalog_DescribesChannelParameter_OnIChannelActions()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-a");
-        var write = app.Module["output"]["write"];
+        var write = app.Module("output")["write"];
         await Assert.That(write).IsNotNull();
         await Assert.That(write!.Property.Any(r => r.Name == "channel")).IsTrue();
     }

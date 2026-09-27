@@ -106,6 +106,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
 
         // Each open step's line, read.
         var read = new Dictionary<int, global::app.goal.step.action.list.@this>();
+        // The modules every line is read against, awaited once.
+        var modules = (global::app.type.item.list.@this<global::app.module.@this>)await context.App.module.list.all();
         for (int i = 0; i < CountRaw; i++)
         {
             var step = this[i];
@@ -118,7 +120,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             // a step written in formal is its own line: read as written, whatever the answer says
             string? line = step.IsFormal ? step.Text : null;
             if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
-            var formal = new global::app.goal.step.action.serializer.Formal(step).Read(line, context);
+            var formal = new global::app.goal.step.action.serializer.Formal(step, modules).Read(line, context);
             if (!formal.Success && step.IsFormal)
             {
                 Refuse(i, $"step {i} is written in formal and does not read: {formal.Error!.FixSuggestion ?? formal.Error.Message}");
@@ -128,7 +130,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             {
                 Refuse(i, $"step {i} does not parse: {formal.Error!.FixSuggestion ?? formal.Error.Message} — in: [{i}] {line.Trim()}");
                 var named = Named.Matches(line).Select(m => (m.Groups[1].Value, m.Groups[2].Value))
-                    .Where(a => context.App.Module.Contains(a.Item1) && context.App.Module[a.Item1][a.Item2] != null)
+                    .Where(a => modules.Items().Any(m => string.Equals(m.Name, a.Item1, System.StringComparison.OrdinalIgnoreCase)
+                        && m[a.Item2] != null))
                     .Select(a => $"{a.Item1}.{a.Item2}");
                 foreach (var why in step.Pick.Unlisted(named)) Refuse(i, why);
                 continue;

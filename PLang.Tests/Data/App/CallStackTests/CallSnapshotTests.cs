@@ -12,7 +12,7 @@ public class CallSnapshotTests
         var app = global::PLang.Tests.TestApp.Create("/test");
         var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
-        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module], Name = actionName };
+        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName };
         action.Step = step;
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -67,7 +67,7 @@ public class CallSnapshotTests
                 Path = global::app.type.item.path.@this.Resolve("/ResolveGoal.goal", global::PLang.Tests.TestApp.SharedContext)
             };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
+            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test" };
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
@@ -112,7 +112,7 @@ public class CallSnapshotTests
             var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "HashGoal", Path = global::app.type.item.path.@this.Resolve("/HashGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
             var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
+            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test" };
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
@@ -139,7 +139,7 @@ public class CallSnapshotTests
             var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
             var dstStep = new Step { Index = 0, Text = "same step text", Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" };
+            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
@@ -166,7 +166,7 @@ public class CallSnapshotTests
             var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "test" };
+            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test" };
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);

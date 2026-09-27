@@ -24,7 +24,7 @@ public class CallBuildTests
         });
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"),
             Name = "call",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {

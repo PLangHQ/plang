@@ -46,7 +46,7 @@ public class ModuleAddTests
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
-            var countBefore = app.Module.Count;
+            var countBefore = app.module.list.Items().Sum(m => m.Count);
             var result = await add.Start();
 
             await result.IsSuccess();
@@ -69,7 +69,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // After adding, actions should be discoverable via the flat registry
-            await Assert.That((app.Module.Contains("variable") && app.Module["variable"]["set"] != null)).IsTrue();
+            await Assert.That(app.Module("variable")["set"] != null).IsTrue();
         }
     }
 
@@ -122,7 +122,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // With null namespace, Discover defaults to App.modules
-            await Assert.That((app.Module.Contains("variable") && app.Module["variable"]["set"] != null)).IsTrue();
+            await Assert.That(app.Module("variable")["set"] != null).IsTrue();
         }
     }
 
@@ -140,7 +140,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = (new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+            var (action, error) = (new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

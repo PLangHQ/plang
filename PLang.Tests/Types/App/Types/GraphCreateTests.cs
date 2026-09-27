@@ -64,7 +64,7 @@ public class GraphCreateTests
     public async Task Action_PassesThrough()
     {
         await using var app = TestApp.Create("/t");
-        var action = new global::app.goal.step.action.@this { Module = app.Module["output"], Name = "write" };
+        var action = new global::app.goal.step.action.@this { Module = app.Module("output"), Name = "write" };
         var slot = new global::app.data.@this("node", action, context: app.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.action.@this>()).IsSameReferenceAs(action);
     }

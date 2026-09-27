@@ -26,7 +26,7 @@ public class ErrorHandleTests
         if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
         return new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters),
             Modifier = modifiers ?? new global::app.goal.step.action.modifier.list.@this()
         };
@@ -38,7 +38,7 @@ public class ErrorHandleTests
         foreach (var p in parameters) list.Add(new(p.name, p.value, context: global::PLang.Tests.TestApp.SharedContext));
         return new global::app.goal.step.action.modifier.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["on"], Name = "error",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("on"), Name = "error",
             Property = global::PLang.Tests.Shared.Make.Properties(list)
         };
     }
@@ -56,7 +56,7 @@ public class ErrorHandleTests
     /// <summary>One recovery action: a call to <paramref name="goalName"/>.</summary>
     private static PrAction CallGoal(string goalName) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call",
+        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"), Name = "call",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
@@ -68,7 +68,7 @@ public class ErrorHandleTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
@@ -347,7 +347,7 @@ public class ErrorHandleTests
     {
         var prAction = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module], Name = actionName,
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new global::app.data.@this(p.name, p.value,
                 PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList())
         };

@@ -76,7 +76,7 @@ public class StartGoalTests
         await using var engine = TestApp.Create("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Module.Register("output", "write", capture);
+        engine.module.list.Register("output", "write", capture);
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set user",
@@ -98,7 +98,7 @@ public class StartGoalTests
         await using var engine = TestApp.Create("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Module.Register("output", "write", capture);
+        engine.module.list.Register("output", "write", capture);
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write literal",
@@ -121,7 +121,7 @@ public class StartGoalTests
         await using var engine = TestApp.Create("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Module.Register("output", "write", capture);
+        engine.module.list.Register("output", "write", capture);
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write with unknown var",

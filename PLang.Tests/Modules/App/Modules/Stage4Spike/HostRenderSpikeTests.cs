@@ -122,7 +122,7 @@ public class HostRenderSpikeTests
         // typed `variable` names a variable, so it advertises as %var%.
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-c");
         var ctx = app.User.Context;
-        var actions = NativeList(ctx, app.Module["file"]["read"]!, app.Module["variable"]["set"]!);
+        var actions = NativeList(ctx, app.Module("file")["read"]!, app.Module("variable")["set"]!);
         var outp = await Render(app,
             "{% for a in modules %}{{ a.Name }}:{% for p in a.Property %} {{ p.Name }}=" +
             "{% if p.Type.Name == 'variable' %}%var%{% else %}{{ p.Type.Name }}{% if p.Nullable %}?{% endif %}{% endif %}" +
@@ -158,7 +158,7 @@ public class HostRenderSpikeTests
         // Real catalog action elements ride as raw POCOs (clr) in a native list —
         // the shape 4a's app.module surface will answer.
         var subset = new[] { "file", "variable" }
-            .SelectMany(m => app.Module.GetActions(m).Select(a => (global::app.goal.step.action.@this)app.Module[m][a]!))
+            .SelectMany(m => app.Module(m).ActionNames.Select(a => (global::app.goal.step.action.@this)app.Module(m)[a]!))
             .ToList();
         var actions = new ItemList(new List<object?>(subset.Cast<object?>()));
         ctx.Variable.Set(new Data("actions", actions, context: ctx));

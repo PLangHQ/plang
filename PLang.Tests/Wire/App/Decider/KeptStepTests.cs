@@ -27,7 +27,7 @@ public class KeptStepTests
     {
         for (int i = 0; i < lines.Length; i++)
         {
-            var read = new global::app.goal.step.action.serializer.Formal(goal.Step[i]).Read(lines[i], context);
+            var read = new global::app.goal.step.action.serializer.Formal(goal.Step[i], context.App.module.list).Read(lines[i], context);
             goal.Step[i].Code = (global::app.goal.step.action.list.@this)read.Peek()!;
         }
     }

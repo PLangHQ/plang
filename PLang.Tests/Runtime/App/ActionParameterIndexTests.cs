@@ -18,7 +18,7 @@ public class ActionParameterIndexTests
     {
         return new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"),
             Name = "fixture",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };
@@ -30,7 +30,7 @@ public class ActionParameterIndexTests
     {
         return new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"],
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"),
             Name = "fixture",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()),
             Default = global::PLang.Tests.Shared.Make.Properties(defaults.Select(d => new Data(d.name, d.value, context: _app.User.Context)).ToList())
@@ -76,7 +76,7 @@ public class ActionParameterIndexTests
     [Test]
     public async Task Index_EmptyLists_IsNull()
     {
-        var action = new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "fixture" };
+        var action = new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "fixture" };
 
         await Assert.That(action["anything"]).IsNull();
     }

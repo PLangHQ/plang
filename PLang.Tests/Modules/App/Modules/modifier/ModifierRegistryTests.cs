@@ -16,17 +16,17 @@ public class ModifierRegistryTests
     {
         await using var app = TestApp.Create("/app");
         // the module element routes [Modifier] handlers to the Modifiers home; the type IS the role.
-        await Assert.That(app.Module["timeout"]!["after"] is Modifier).IsTrue();
-        await Assert.That(app.Module["cache"]!["wrap"] is Modifier).IsTrue();
-        await Assert.That(app.Module["on"]!["error"] is Modifier).IsTrue();
+        await Assert.That(app.Module("timeout")!["after"] is Modifier).IsTrue();
+        await Assert.That(app.Module("cache")!["wrap"] is Modifier).IsTrue();
+        await Assert.That(app.Module("on")!["error"] is Modifier).IsTrue();
     }
 
     [Test]
     public async Task RegularHandler_IsNotAModifierElement()
     {
         await using var app = TestApp.Create("/app");
-        await Assert.That(app.Module["variable"]!["set"] is Modifier).IsFalse();
-        await Assert.That(app.Module["file"]!["read"] is Modifier).IsFalse();
+        await Assert.That(app.Module("variable")!["set"] is Modifier).IsFalse();
+        await Assert.That(app.Module("file")!["read"] is Modifier).IsFalse();
     }
 
     #endregion
@@ -40,9 +40,9 @@ public class ModifierRegistryTests
     public async Task Order_LivesOnTheModifierType()
     {
         await using var app = TestApp.Create("/app");
-        await Assert.That(((Modifier)app.Module["on"]!["error"]!).Layer).IsEqualTo(0);
-        await Assert.That(((Modifier)app.Module["cache"]!["wrap"]!).Layer).IsEqualTo(50);
-        await Assert.That(((Modifier)app.Module["timeout"]!["after"]!).Layer).IsEqualTo(100);
+        await Assert.That(((Modifier)app.Module("on")!["error"]!).Layer).IsEqualTo(0);
+        await Assert.That(((Modifier)app.Module("cache")!["wrap"]!).Layer).IsEqualTo(50);
+        await Assert.That(((Modifier)app.Module("timeout")!["after"]!).Layer).IsEqualTo(100);
     }
 
     #endregion

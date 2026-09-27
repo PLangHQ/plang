@@ -18,7 +18,7 @@ public class BuildAndRunGoalTests
     {
         await using var app = TestApp.Create("/test");
         // Smoke: the renamed namespaces compile and the renamed-module action types exist.
-        var setType = app.Module.GetActionType("variable", "set");
+        var setType = app.Module("variable").Handler("set");
         await Assert.That(setType).IsNotNull();
         await Assert.That(setType!.Namespace).IsEqualTo("app.module.action.variable");
 
@@ -32,7 +32,7 @@ public class BuildAndRunGoalTests
     [Test] public async Task GeneratedActionHandler_ResolvesViaAppModule_UnderNewShape()
     {
         await using var app = TestApp.Create("/test");
-        var fileType = app.Module.GetActionType("file", "read");
+        var fileType = app.Module("file").Handler("read");
         await Assert.That(fileType).IsNotNull();
         await Assert.That(fileType!.Namespace).StartsWith("app.module.action.file");
     }

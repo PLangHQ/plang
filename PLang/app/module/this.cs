@@ -3,14 +3,39 @@ using System.Reflection;
 namespace app.module;
 
 /// <summary>
-/// One module — a HOST (never authored, never created from values; item⟺ICreate rules
-/// it out as a plang type). Carried as <c>clr(module)</c>, navigated by reflection, read
-/// by templates through its own doors. The element at the concept node <c>app.module</c>;
-/// the collection is <c>app.module.list.@this</c>, which owns selection and lifecycle and
-/// mints these elements.
+/// One module — "file", "variable", "list": the actions of one kind. An item that is never authored
+/// or created from a value (<see cref="Create"/> declines); its list (<c>app.module.list</c>) registers
+/// it as actions are discovered, and a module is picked by name through the type
+/// (<c>app.module.Get("file")</c>). Navigated by reflection, read by templates through its own doors.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IList<@this, list.@this>
 {
+    /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
+    public static @this? Create(object? raw, global::app.data.@this data)
+    {
+        if (raw is @this module) return module;
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
+            "a module is registered from its actions, never made from a value.", "CreateItemDeclined", 400));
+        return null;
+    }
+
+    /// <summary>A key names this module by its name; case is not the program's to get right.</summary>
+    public System.Threading.Tasks.ValueTask<@this?> Match(string key)
+        => System.Threading.Tasks.ValueTask.FromResult(string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase) ? this : null);
+
+    /// <summary>The app's modules: the list that discovers and registers their actions.</summary>
+    public static list.@this List(global::app.@this app) => new(app);
+
+    /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
+    public override bool IsLeaf => false;
+
+    public override System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+        => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
+
     private readonly list.@this _list;
 
     /// <summary>The module name — "file", "variable", "list".</summary>

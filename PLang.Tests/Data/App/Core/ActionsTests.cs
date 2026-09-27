@@ -19,8 +19,8 @@ public class ActionsTests
     {
         var list = new List<global::app.goal.step.action.@this>
         {
-            new() { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" },
-            new() { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "save" }
+            new() { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" },
+            new() { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "save" }
         };
 
         var actions = new StepActions(list);
@@ -116,8 +116,8 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" },
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "save" }
+            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" },
+            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -131,7 +131,7 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["bogus"], Name = "nope" }
+            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("bogus"), Name = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -146,9 +146,9 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" },
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["bogus"], Name = "nope" },
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["fake"], Name = "missing" }
+            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" },
+            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("bogus"), Name = "nope" },
+            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("fake"), Name = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -194,7 +194,7 @@ public class ActionsTests
         {
             Code = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" }
+                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }
             }
         };
 
@@ -215,7 +215,7 @@ public class ActionsTests
         {
             Code = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" }
+                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write" }
             }
         };
 
@@ -253,7 +253,7 @@ public class ActionsTests
             Text = "test",
             Code = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["old"], Name = "action" }
+                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("old"), Name = "action" }
             }
         };
         var stepFromLlm = new Step { Code = new StepActions() };
@@ -293,12 +293,12 @@ public class ActionsTests
         if (actions == null || actions.Count == 0)
             return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var modules = TestApp.Create("/app").Module;
+        var app = TestApp.Create("/app");
 
         var notFound = new List<string>();
         foreach (var action in actions)
         {
-            if (!(modules.Contains(action.Module.Name) && modules[action.Module.Name][action.Name] != null))
+            if (app.Module(action.Module.Name)[action.Name] == null)
                 notFound.Add($"{action.Module}.{action.Name}");
         }
 
@@ -314,17 +314,17 @@ public class ActionsTests
     /// </summary>
     private static StepActions DiscoverActions()
     {
-        var modules = TestApp.Create("/app").Module;
+        var modules = TestApp.Create("/app").module.list;
 
         var actions = new StepActions();
 
-        foreach (var ns in modules.Names)
+        foreach (var module in modules.Items())
         {
-            foreach (var actionName in modules.GetActions(ns))
+            foreach (var actionName in module.ActionNames)
             {
                 actions.Add(new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module[ns],
+                    Module = module,
                     Name = actionName,
                 });
             }

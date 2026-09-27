@@ -5,46 +5,66 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
-// Batch D (part 1) — app.module: action registry as a normal collection node (NO demote).
-// app.module["file"] selects, app.module.action.list enumerates, the 6 ops (GetCodeGenerated/Discover/Describe/Contains/Remove)
-// stay as methods on module.@this. NO .current — action modules are dispatched, not navigated.
+// app.module is the module type: app.module.Get("file") selects, app.module.list enumerates. A module is
+// never inside anything, so the element's Current answers nothing a program walks into.
 public class ModuleAccessorTests
 {
-    [Test] public async Task AppModule_IndexByName_SelectsTheModuleElement()
+    [Test] public async Task AppModule_GetByName_SelectsTheModuleElement()
     {
         await using var app = TestApp.Create("/test");
-        var file = app.Module["file"];
+        var found = await app.module.Get("file");
+        await found.IsSuccess();
+        var file = await found.Value();
         await Assert.That(file).IsNotNull();
-        await Assert.That(file.Name).IsEqualTo("file");
+        await Assert.That(file!.Name).IsEqualTo("file");
+    }
+
+    [Test] public async Task AppModule_GetIgnoresCase()
+    {
+        await using var app = TestApp.Create("/test");
+        var found = await app.module.Get("FILE");
+        await found.IsSuccess();
+        await Assert.That((await found.Value())!.Name).IsEqualTo("file");
     }
 
     [Test] public async Task AppModuleList_Enumerates_LoadedModules()
     {
         await using var app = TestApp.Create("/test");
-        // .list is the NATIVE plang list of module elements; Names is the raw name enumeration.
-        var names = app.Module.Names.ToList();
+        var names = app.module.list.Items().Select(m => m.Name).ToList();
         await Assert.That(names.Contains("file")).IsTrue();
         await Assert.That(names.Contains("variable")).IsTrue();
-        await Assert.That(app.Module.list.CountRaw).IsGreaterThan(0);
+        await Assert.That(app.module.list.CountRaw).IsGreaterThan(0);
     }
 
-    [Test] public async Task AppModule_ResolvesAndDispatchesAction_UnderTheNewShape()
+    [Test] public async Task AppModule_ResolvesAction_UnderTheNewShape()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That((app.Module.Contains("file") && app.Module["file"]["read"] != null)).IsTrue();
+        var file = await (await app.module.Get("file")).Value();
+        await Assert.That(file!["read"]).IsNotNull();
     }
 
-    [Test] public async Task AppModule_HasNoCurrentMember_ReflectionGuard()
-    {
-        var t = typeof(global::app.module.list.@this);
-        var current = t.GetProperty("current");
-        await Assert.That(current).IsNull();
-    }
-
-    [Test] public async Task AppModule_IndexOfUnknownName_ThrowsTypedError()
+    [Test] public async Task AppModule_GetOfUnknownName_Fails()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(() => { _ = app.Module["nope"]; return Task.CompletedTask; })
-            .Throws<KeyNotFoundException>();
+        var found = await app.module.Get("nope");
+        await Assert.That(found.Success).IsFalse();
+    }
+
+    // The builder's Decide reads the modules as %!app.module.list%.
+    [Test] public async Task AppModuleList_ReadsAsAVariable()
+    {
+        await using var app = TestApp.Create("/test");
+        var ctx = app.User.Context;
+        var variable = new global::app.type.item.variable.parser.@this("%!app.module.list%").Variable.Single();
+        var read = await variable.Start(ctx);
+        await read.IsSuccess();
+        await Assert.That(read.Peek()).IsSameReferenceAs(app.module.list);
+    }
+
+    [Test] public async Task ModuleList_IndexOfUnknownName_Throws()
+    {
+        await using var app = TestApp.Create("/test");
+        await Assert.That(() => { _ = app.module.list["nope"]; return Task.CompletedTask; })
+            .Throws<System.Text.Json.JsonException>();
     }
 }

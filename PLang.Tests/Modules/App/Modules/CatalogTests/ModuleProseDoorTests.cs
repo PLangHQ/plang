@@ -30,7 +30,7 @@ public class ModuleProseDoorTests
         Directory.CreateDirectory(Path.Combine(_mdRoot, FixtureModule));
 
         _app = TestApp.Create(_tempDir);
-        _app.Module.RegisterType(FixtureModule, FixtureAction1, typeof(FixtureAction));
+        _app.module.list.RegisterType(FixtureModule, FixtureAction1, typeof(FixtureAction));
     }
 
     [After(Test)]
@@ -47,12 +47,12 @@ public class ModuleProseDoorTests
     private void Stage(string fileName, string body)
         => File.WriteAllText(Path.Combine(_mdRoot, FixtureModule, fileName), body);
 
-    private FileItem Notes() => _app.Module[FixtureModule]![FixtureAction1]!.Notes;
+    private FileItem Notes() => _app.Module(FixtureModule)![FixtureAction1]!.Notes;
 
     [Test]
     public async Task ModuleDescription_IsAFileHandle_InTheModuleFolder()
     {
-        var handle = _app.Module[FixtureModule]!.Description;
+        var handle = _app.Module(FixtureModule)!.Description;
         await Assert.That(handle).IsTypeOf<FileItem>();
         await Assert.That(handle.Path.FileName).IsEqualTo("module.description.md");
     }
@@ -87,7 +87,7 @@ public class ModuleProseDoorTests
     [Test]
     public async Task Prose_Handles_CacheOnTheElement()
     {
-        var module = _app.Module[FixtureModule]!;
+        var module = _app.Module(FixtureModule)!;
         var action = module[FixtureAction1]!;
         await Assert.That(module.Description).IsSameReferenceAs(module.Description);
         await Assert.That(action.Notes).IsSameReferenceAs(action.Notes);

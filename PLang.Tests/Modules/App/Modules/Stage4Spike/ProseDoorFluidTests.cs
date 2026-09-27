@@ -18,7 +18,7 @@ public class ProseDoorFluidTests
     private static async Task<string> Render(global::app.@this app, string template)
     {
         var ctx = app.System.Context;
-        ctx.Variable.Set(new Data("m", app.Module[FixtureModule]!["setvalue"], context: ctx));
+        ctx.Variable.Set(new Data("m", app.Module(FixtureModule)!["setvalue"], context: ctx));
         var action = new Render(ctx)
         {
             Template = (global::app.type.item.text.@this)template,
@@ -37,7 +37,7 @@ public class ProseDoorFluidTests
             System.IO.File.WriteAllText(System.IO.Path.Combine(mdRoot, FixtureModule, file), body);
 
         var app = global::PLang.Tests.TestApp.Create(tempDir);
-        app.Module.RegisterType(FixtureModule, "setvalue", typeof(FixtureAction));
+        app.module.list.RegisterType(FixtureModule, "setvalue", typeof(FixtureAction));
         return app;
     }
 

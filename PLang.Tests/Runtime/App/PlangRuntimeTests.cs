@@ -47,7 +47,7 @@ public class PlangRuntimeTests : IDisposable
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"],
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"),
                     Name = "write",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello kernel", context: global::PLang.Tests.TestApp.SharedContext) })
                 }

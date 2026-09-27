@@ -66,7 +66,7 @@ public class OtherAccessorsTests
         var appType = typeof(global::app.@this);
         await Assert.That(appType.GetProperty("goal")).IsNotNull();
         await Assert.That(appType.GetProperty("Event")).IsNotNull();
-        await Assert.That(appType.GetProperty("Module")).IsNotNull();
+        await Assert.That(appType.GetProperty("module")).IsNotNull();
         await Assert.That(typeof(global::app.actor.@this).GetProperty("Channel")).IsNotNull();
     }
 

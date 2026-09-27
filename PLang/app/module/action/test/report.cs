@@ -34,7 +34,7 @@ public partial class report : IContext
         {
             var console = new StringBuilder();
             RenderConsole(console, results, testing, Context);
-            RenderCoverageTables(console, testing, Context.App.Module);
+            RenderCoverageTables(console, testing, Context.App.module.list);
             await Context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
         }
 
@@ -159,13 +159,13 @@ public partial class report : IContext
         var observed = testing.Coverage.ModuleActions.ToHashSet();
         var universeCount = 0;
         var observedCount = observed.Count;
-        foreach (var module in modules.Names.OrderBy(n => n))
+        foreach (var module in modules.Items().OrderBy(m => m.Name))
         {
-            foreach (var action in modules.GetActions(module).OrderBy(a => a))
+            foreach (var action in module.ActionNames.OrderBy(a => a))
             {
                 universeCount++;
-                var hit = observed.Contains((module, action)) ? "x" : " ";
-                sb.AppendLine($"  [{hit}] {module}.{action}");
+                var hit = observed.Contains((module.Name, action)) ? "x" : " ";
+                sb.AppendLine($"  [{hit}] {module.Name}.{action}");
             }
         }
         sb.AppendLine($"  total: {observedCount}/{universeCount}");

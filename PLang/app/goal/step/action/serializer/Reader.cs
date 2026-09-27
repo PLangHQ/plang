@@ -50,7 +50,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // The wire carries the module NAME; the action holds the element. Resolving here
                 // means a .pr naming a module that no longer exists fails at LOAD (the registry
                 // indexer throws) instead of mid-execution.
-                case "module": action.Module = ctx.Context.App.Module[reader.String()]; break;
+                case "module": action.Module = ctx.Context.App.module.list[reader.String()]; break;
                 // The .pr's own keys are the only keys — the LLM answers in them too, so the answer
                 // reads through the same door a built .pr does.
                 case "name": action.Name = reader.String(); break;

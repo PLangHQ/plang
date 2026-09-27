@@ -25,7 +25,7 @@ public class Stage4_TypeHintPrecedenceTests
     private PrAction Make(string module, string action, params (string name, object? value)[] parameters)
         => new PrAction
         {
-            Module = _app.Module[module],
+            Module = _app.Module(module),
             Name = action,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
         };

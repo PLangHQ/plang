@@ -10,7 +10,7 @@ public class FormalReaderTests
     {
         var goal = FormalWriterTests.Goal();
         step = new global::app.goal.step.@this { Goal = goal };
-        return new global::app.goal.step.action.serializer.Formal(step).Read(formal, global::PLang.Tests.TestApp.SharedContext);
+        return new global::app.goal.step.action.serializer.Formal(step, global::PLang.Tests.TestApp.SharedContext.App.module.list).Read(formal, global::PLang.Tests.TestApp.SharedContext);
     }
 
     private static async Task<string> Written(global::app.data.@this read)
@@ -71,7 +71,7 @@ public class FormalReaderTests
         var goal = FormalWriterTests.Goal();
         var step = new global::app.goal.step.@this { Goal = goal, Line = new() { Number = 12, Indent = 1 } };
 
-        var read = new global::app.goal.step.action.serializer.Formal(step).Read(
+        var read = new global::app.goal.step.action.serializer.Formal(step, global::PLang.Tests.TestApp.SharedContext.App.module.list).Read(
             "condition.if(Left=%n%, Operator=\"<\", Right=5) { goal.return() }", global::PLang.Tests.TestApp.SharedContext);
 
         await read.IsSuccess();

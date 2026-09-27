@@ -21,7 +21,7 @@ public class StepTests : System.IAsyncDisposable
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["http"],
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("http"),
                     Name = "get",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { app.Data("url", "https://api.example.com") }),
                 }

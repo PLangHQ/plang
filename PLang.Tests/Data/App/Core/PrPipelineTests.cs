@@ -20,7 +20,7 @@ public class PrPipelineTests
         await using var engine = TestApp.Create(fixturesDir);
 
         var capture = new CapturingWriteHandler();
-        engine.Module.Register("output", "write", capture);
+        engine.module.list.Register("output", "write", capture);
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
         var loadResult = await engine.goal.list.Load("FullPipeline.pr");
@@ -53,7 +53,7 @@ public class PrPipelineTests
 
         // Capture output
         var capture = new CapturingWriteHandler();
-        engine.Module.Register("output", "write", capture);
+        engine.module.list.Register("output", "write", capture);
 
         // Load and execute
         var loadResult = await engine.goal.list.Load("ReadFile.pr");

@@ -62,7 +62,7 @@ public class PickListTests
     private static async Task<string> Rendered(string template, global::app.goal.@this goal, global::app.actor.context.@this context, int stage = 0)
     {
         context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
-        context.Variable.Set(new global::app.data.@this("modules", context.App.Module.list, context: context));
+        context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
         var decider = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "decider.json"))).RootElement;
         context.Variable.Set(new global::app.data.@this("decider", Answer(decider, context), context: context));

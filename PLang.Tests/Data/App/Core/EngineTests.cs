@@ -16,7 +16,7 @@ public class EngineTests
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module(actionClass),
                     Name = method,
                     Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
@@ -36,7 +36,7 @@ public class EngineTests
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module(actionClass),
                     Name = method,
                     Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
@@ -44,7 +44,7 @@ public class EngineTests
                 },
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
                     Name = "set",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
                     {
@@ -213,8 +213,8 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That((engine.Module.Contains("variable") && engine.Module["variable"]["set"] != null)).IsTrue();
-        await Assert.That((engine.Module.Contains("variable") && engine.Module["variable"]["get"] != null)).IsTrue();
+        await Assert.That(engine.Module("variable")["set"] != null).IsTrue();
+        await Assert.That(engine.Module("variable")["get"] != null).IsTrue();
     }
 
     [Test]
@@ -222,7 +222,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That((engine.Module.Contains("output") && engine.Module["output"]["write"] != null)).IsTrue();
+        await Assert.That(engine.Module("output")["write"] != null).IsTrue();
     }
 
     [Test]
@@ -389,7 +389,7 @@ public class EngineTests
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
         var throwingHandler = new ThrowingHandler();
-        engine.Module.Register("throwing", "fail", throwingHandler);
+        engine.module.list.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
         var context = engine.User.Context;
@@ -409,7 +409,7 @@ public class EngineTests
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
-        engine.Module.Register("legacy", "do", nonGeneratedHandler);
+        engine.module.list.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
         var context = engine.User.Context;
@@ -426,7 +426,7 @@ public class EngineTests
     {
         var engine = global::PLang.Tests.TestApp.Create("/app");
         var disposableHandler = new DisposableHandler();
-        engine.Module.Register("disposable", "do", disposableHandler);
+        engine.module.list.Register("disposable", "do", disposableHandler);
 
         await engine.DisposeAsync();
 
@@ -438,7 +438,7 @@ public class EngineTests
     {
         var engine = global::PLang.Tests.TestApp.Create("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
-        engine.Module.Register("asyncdisposable", "do", asyncDisposableHandler);
+        engine.module.list.Register("asyncdisposable", "do", asyncDisposableHandler);
 
         await engine.DisposeAsync();
 

@@ -41,6 +41,15 @@ Goes: `_goals`/`_byPath`/`_byName`, `Get(string)`'s form scans, `this[string]`, 
 `Clear`, the stale "no app-level current" comment. Stays on the list as its work: `Load(pr)`, `Setup`,
 call's lookup.
 
+## Before stage 7 closes (plang-40)
+
+- **One name for `all`.** `all()` answers its list at once and walking it is async: `list<T> :
+  IAsyncEnumerable<T>` (the base list's enumeration is its held items; goal's `all` is a lazy list that
+  loads each `.pr` as the walk reaches it). `Every` goes; `type<T, L>.Get` is `await foreach (var p in
+  list.all())`. `all()` with no argument is every default (the shared empty setting), not
+  `setting = null`. If a sync member (`Count`, `Items()`) would have to load synchronously, report the
+  snag instead of forcing it.
+
 ## 7b trace — module and actor
 
 **module** — `app.Module` is `module.list.@this`, a registry over a name → module dictionary: `Discover`,
@@ -121,3 +130,19 @@ beside it, so the system listing is empty in tests.
 8. **Adding keeps one goal per PrPath** (today's dictionary semantics, which tests rely on — `Add` ×104):
    goal.list overrides nothing on `Add`; it removes the goal already at that PrPath first (its own
    `Add(goal)`, the typed door beside the base's untyped ones).
+
+## 7b module — as built
+
+- `module.@this` is an item (`ICreate` declines, `IMatch` by name ignoring case, `ICurrent` none);
+  `module.list` is a `list<module>` (Discover, Register, RegisterType; `Element` get-or-creates under its
+  lock). `app.module` = `type<module, module.list>`; `Run<T>` awaits `app.module.Get(name)`.
+- Readers (the `.pr` action reader) use the internal `module.list[name]`, which throws on a miss; the goal
+  load turns the throw into a result (ruling (b), a reversal of "higher up the stack" — for Ingi).
+- `Formal(step, modules)`: its async callers (`step.list` validation, `pick.list.Take`) await
+  `app.module.list.all()` once and hand it in. `pick.list` holds them by name for the answer it takes.
+- `module.remove` finds via `app.module.Get`, removes from the list, and empties the module.
+- Tests: a test-side `app.Module(name)` (PLang.Tests/Shared/ModuleTestExtensions) — the app's module, or
+  an empty one outside the app for an unknown name (tests that name a bogus module). `%!app.module.list%`
+  (Decide.goal) is guarded by `ModuleAccessorTests.AppModuleList_ReadsAsAVariable`.
+- Suites: no new failures vs baseline (Runtime 22, Data 36, Generator 10 — at or under). plang --test
+  7/0/317 after a clean rebuild.

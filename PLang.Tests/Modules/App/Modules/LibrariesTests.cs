@@ -10,75 +10,75 @@ public class LibrariesTests
     public async Task Constructor_DiscoversBultInHandlers()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
         // global::app.module.list.@this constructor auto-discovers built-in handlers
-        await Assert.That((modules.Contains("variable") && modules["variable"]["set"] != null)).IsTrue();
-        await Assert.That((modules.Contains("output") && modules["output"]["write"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["set"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("output")["write"] != null).IsTrue();
     }
 
     [Test]
     public async Task Register_AddsHandler()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         var handler = new MockHandler();
 
         modules.Register("test", "do", handler);
 
-        await Assert.That((modules.Contains("test") && modules["test"]["do"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("test")["do"] != null).IsTrue();
     }
 
     [Test]
     public async Task Register_CaseInsensitive()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         var handler = new MockHandler();
         modules.Register("Test", "Do", handler);
 
-        await Assert.That((modules.Contains("test") && modules["test"]["do"] != null)).IsTrue();
-        await Assert.That((modules.Contains("TEST") && modules["TEST"]["DO"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("test")["do"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("TEST")["DO"] != null).IsTrue();
     }
 
     [Test]
     public async Task Contains_WithModuleAndAction_ReturnsTrue()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         modules.Register("test", "do", new MockHandler());
 
-        await Assert.That((modules.Contains("test") && modules["test"]["do"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("test")["do"] != null).IsTrue();
     }
 
     [Test]
     public async Task Contains_WithModuleOnly_ReturnsTrue()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         modules.Register("test", "do", new MockHandler());
 
-        await Assert.That(modules.Contains("test")).IsTrue();
+        await Assert.That((await modulesHost.module.Get("test")).Success).IsTrue();
     }
 
     [Test]
     public async Task Contains_NonexistentModule_ReturnsFalse()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
-        await Assert.That(modules.Contains("nonexistent_xyz_123")).IsFalse();
+        await Assert.That((await modulesHost.module.Get("nonexistent_xyz_123")).Success).IsFalse();
     }
 
     [Test]
     public async Task GetActions_ReturnsAllActionsInModule()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         modules.Register("custom", "alpha", new MockHandler());
         modules.Register("custom", "beta", new MockHandler());
 
-        var actions = modules.GetActions("custom").ToList();
+        var actions = modulesHost.Module("custom").ActionNames.ToList();
 
         await Assert.That(actions).Contains("alpha");
         await Assert.That(actions).Contains("beta");
@@ -88,9 +88,9 @@ public class LibrariesTests
     public async Task GetActions_NonexistentModule_ReturnsEmpty()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
-        var actions = modules.GetActions("nonexistent_xyz_123").ToList();
+        var actions = modulesHost.Module("nonexistent_xyz_123").ActionNames.ToList();
 
         await Assert.That(actions.Count).IsEqualTo(0);
     }
@@ -99,9 +99,9 @@ public class LibrariesTests
     public async Task Names_ReturnsAllModules()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
-        var names = modules.Names.ToList();
+        var names = modules.Items().Select(m => m.Name).ToList();
 
         // Built-in modules should be present
         await Assert.That(names).Contains("variable");
@@ -109,24 +109,10 @@ public class LibrariesTests
     }
 
     [Test]
-    public async Task Clear_RemovesAllHandlers()
-    {
-        await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
-        modules.Register("custom", "do", new MockHandler());
-
-        modules.Clear();
-
-        await Assert.That(modules.Contains("custom")).IsFalse();
-        // Built-in handlers also cleared
-        await Assert.That(modules.Contains("variable")).IsFalse();
-    }
-
-    [Test]
     public async Task Register_SameKeyTwice_ReplacesHandler()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         var handler1 = new MockHandler();
         var handler2 = new MockHandler();
         modules.Register("test", "do", handler1);
@@ -135,41 +121,41 @@ public class LibrariesTests
 
         // GetCodeGenerated won't work for MockHandler (not ICodeGenerated),
         // but GetActionType confirms the replacement
-        await Assert.That(modules.GetActionType("test", "do")).IsEqualTo(typeof(MockHandler));
+        await Assert.That(modulesHost.Module("test").Handler("do")).IsEqualTo(typeof(MockHandler));
     }
 
     [Test]
     public async Task BuiltIn_DiscoversFindHandlers()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
         // Should discover variable.set, variable.get, etc.
-        await Assert.That((modules.Contains("variable") && modules["variable"]["set"] != null)).IsTrue();
-        await Assert.That((modules.Contains("variable") && modules["variable"]["get"] != null)).IsTrue();
-        await Assert.That((modules.Contains("variable") && modules["variable"]["remove"] != null)).IsTrue();
-        await Assert.That((modules.Contains("variable") && modules["variable"]["exists"] != null)).IsTrue();
-        await Assert.That((modules.Contains("variable") && modules["variable"]["clear"] != null)).IsTrue();
-        await Assert.That((modules.Contains("output") && modules["output"]["write"] != null)).IsTrue();
-        await Assert.That((modules.Contains("file") && modules["file"]["save"] != null)).IsTrue();
-        await Assert.That((modules.Contains("file") && modules["file"]["read"] != null)).IsTrue();
-        await Assert.That((modules.Contains("file") && modules["file"]["delete"] != null)).IsTrue();
-        await Assert.That((modules.Contains("file") && modules["file"]["exists"] != null)).IsTrue();
-        await Assert.That((modules.Contains("file") && modules["file"]["copy"] != null)).IsTrue();
-        await Assert.That((modules.Contains("file") && modules["file"]["move"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["set"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["get"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["remove"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["exists"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["clear"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("output")["write"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("file")["save"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("file")["read"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("file")["delete"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("file")["exists"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("file")["copy"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("file")["move"] != null).IsTrue();
     }
 
     [Test]
     public async Task All_ReturnsRegisteredHandlers()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         var handler1 = new MockHandler();
         var handler2 = new MockHandler();
         modules.Register("ns1", "cls1", handler1);
         modules.Register("ns2", "cls2", handler2);
 
-        var all = modules.All.ToList();
+        var all = modules.Items().SelectMany(m => m.Instances).ToList();
 
         await Assert.That(all).Contains(handler1);
         await Assert.That(all).Contains(handler2);
@@ -179,22 +165,22 @@ public class LibrariesTests
     public async Task Register_DirectlyOnModules()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         modules.Register("custom", "magic", new MockHandler());
 
-        await Assert.That((modules.Contains("custom") && modules["custom"]["magic"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("custom")["magic"] != null).IsTrue();
     }
 
-    #region global::app.module.list.@this.GetCodeGenerated
+    #region action.Instance
 
     [Test]
     public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
     {
         await using var engine = TestApp.Create("/app");
-        var modules = engine.Module;
+        var modules = engine.module.list;
         var context = engine.User.Context;
 
-        var (action, error) = (new PrAction { Module = modules["variable"], Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (action, error) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(action).IsNotNull();
         await Assert.That(error).IsNull();
@@ -204,12 +190,12 @@ public class LibrariesTests
     public async Task GetCodeGenerated_ExplicitCodeGenAction_ReturnsAction()
     {
         await using var engine = TestApp.Create("/app");
-        var modules = engine.Module;
+        var modules = engine.module.list;
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
         var context = engine.User.Context;
 
-        var (result, error) = (new PrAction { Module = modules["custom"], Name = "run" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (result, error) = (new PrAction { Module = engine.Module("custom"), Name = "run" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(result).IsEqualTo(action);
         await Assert.That(error).IsNull();
@@ -219,11 +205,11 @@ public class LibrariesTests
     public async Task GetCodeGenerated_NonICodeGeneratedAction_ReturnsActionError()
     {
         await using var engine = TestApp.Create("/app");
-        var modules = engine.Module;
+        var modules = engine.module.list;
         modules.Register("legacy", "do", new MockHandler());
         var context = engine.User.Context;
 
-        var (action, error) = (new PrAction { Module = modules["legacy"], Name = "do" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (action, error) = (new PrAction { Module = engine.Module("legacy"), Name = "do" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -234,10 +220,10 @@ public class LibrariesTests
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
         await using var engine = TestApp.Create("/app");
-        var modules = engine.Module;
+        var modules = engine.module.list;
         var context = engine.User.Context;
 
-        var (action, error) = (new PrAction { Module = modules["variable"], Name = "nope" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (action, error) = (new PrAction { Module = engine.Module("variable"), Name = "nope" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -248,7 +234,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_RegisteredTwice_LastWins()
     {
         await using var engine = TestApp.Create("/app");
-        var modules = engine.Module;
+        var modules = engine.module.list;
         var handler1 = new MockCodeGenHandler { Tag = "first" };
         var handler2 = new MockCodeGenHandler { Tag = "second" };
         modules.Register("custom", "run", handler1);
@@ -256,7 +242,7 @@ public class LibrariesTests
 
         var context = engine.User.Context;
 
-        var (result, error) = (new PrAction { Module = modules["custom"], Name = "run" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (result, error) = (new PrAction { Module = engine.Module("custom"), Name = "run" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(error).IsNull();
         await Assert.That(((MockCodeGenHandler)result!).Tag).IsEqualTo("second");
@@ -266,12 +252,12 @@ public class LibrariesTests
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
         await using var engine = TestApp.Create("/app");
-        var modules = engine.Module;
+        var modules = engine.module.list;
         var context = engine.User.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
-        var (action1, _) = (new PrAction { Module = modules["variable"], Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
-        var (action2, _) = (new PrAction { Module = modules["variable"], Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (action1, _) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+        var (action2, _) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
         // Per-call instantiation — different instances each time
         await Assert.That(action1).IsNotNull();
@@ -287,8 +273,7 @@ public class LibrariesTests
     public async Task Discover_NonMatchingNamespace_FindsNothing()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
-        modules.Clear(); // start fresh
+        var modules = modulesHost.module.list;
 
         var count = modules.Discover(typeof(global::app.@this).Assembly, "Some.Completely.Wrong.Namespace");
 
@@ -299,13 +284,12 @@ public class LibrariesTests
     public async Task Discover_CorrectNamespace_FindsHandlers()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
-        modules.Clear(); // start fresh
+        var modules = modulesHost.module.list;
 
         var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module.action");
 
-        await Assert.That((modules.Contains("variable") && modules["variable"]["set"] != null)).IsTrue();
-        await Assert.That((modules.Contains("output") && modules["output"]["write"] != null)).IsTrue();
+        await Assert.That(modulesHost.Module("variable")["set"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("output")["write"] != null).IsTrue();
         await Assert.That(count).IsGreaterThan(0);
     }
 
@@ -317,22 +301,22 @@ public class LibrariesTests
     public async Task Count_IncludesBuiltInAndRegistered()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
-        var countBefore = modules.Count;
+        var modules = modulesHost.module.list;
+        var countBefore = modules.Items().Sum(m => m.Count);
 
         modules.Register("custom", "one", new MockHandler());
         modules.Register("custom", "two", new MockHandler());
 
-        await Assert.That(modules.Count).IsEqualTo(countBefore + 2);
+        await Assert.That(modules.Items().Sum(m => m.Count)).IsEqualTo(countBefore + 2);
     }
 
     [Test]
     public async Task GetActionType_ReturnsTypeForBuiltIn()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
-        var type = modules.GetActionType("variable", "set");
+        var type = modulesHost.Module("variable").Handler("set");
 
         await Assert.That(type).IsNotNull();
     }
@@ -341,11 +325,11 @@ public class LibrariesTests
     public async Task GetActionType_ReturnsTypeForExplicitHandler()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         var handler = new MockCodeGenHandler();
         modules.Register("custom", "run", handler);
 
-        var type = modules.GetActionType("custom", "run");
+        var type = modulesHost.Module("custom").Handler("run");
 
         await Assert.That(type).IsEqualTo(typeof(MockCodeGenHandler));
     }
@@ -354,9 +338,9 @@ public class LibrariesTests
     public async Task GetActionType_NonexistentAction_ReturnsNull()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
 
-        var type = modules.GetActionType("nonexistent_xyz", "nope");
+        var type = modulesHost.Module("nonexistent_xyz").Handler("nope");
 
         await Assert.That(type).IsNull();
     }
@@ -365,23 +349,23 @@ public class LibrariesTests
     public async Task RegisterType_RegistersTypeEntry()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         modules.RegisterType("custom", "run", typeof(MockCodeGenHandler));
 
-        await Assert.That((modules.Contains("custom") && modules["custom"]["run"] != null)).IsTrue();
-        await Assert.That(modules.GetActionType("custom", "run")).IsEqualTo(typeof(MockCodeGenHandler));
+        await Assert.That(modulesHost.Module("custom")["run"] != null).IsTrue();
+        await Assert.That(modulesHost.Module("custom").Handler("run")).IsEqualTo(typeof(MockCodeGenHandler));
     }
 
     [Test]
     public async Task Names_IncludesRegistered_NoDuplicates()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         // "variable" already exists from built-in discovery
         modules.Register("variable", "custom_action", new MockHandler());
         modules.Register("exotic", "magic", new MockHandler());
 
-        var names = modules.Names.ToList();
+        var names = modules.Items().Select(m => m.Name).ToList();
 
         await Assert.That(names).Contains("variable");
         await Assert.That(names).Contains("exotic");
@@ -393,12 +377,12 @@ public class LibrariesTests
     public async Task GetActions_IncludesAll_NoDuplicates()
     {
         await using var modulesHost = TestApp.Create("/app");
-        var modules = modulesHost.Module;
+        var modules = modulesHost.module.list;
         // "variable.set" already exists from built-in
         modules.Register("variable", "set", new MockHandler()); // overwrites
         modules.Register("variable", "custom_action", new MockHandler()); // new
 
-        var actions = modules.GetActions("variable").ToList();
+        var actions = modulesHost.Module("variable").ActionNames.ToList();
 
         await Assert.That(actions).Contains("set");
         await Assert.That(actions).Contains("custom_action");

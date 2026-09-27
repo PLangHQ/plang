@@ -145,7 +145,7 @@ public class GetGoalsTests
                     {
                         new global::app.goal.step.action.@this
                         {
-                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"],
+                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"),
                             Name = "write",
                             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Data", "hello", context: _app.User.Context) })
                         }

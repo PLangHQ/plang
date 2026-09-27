@@ -225,7 +225,7 @@ public class ReResolveAcrossCallsTests
         app.User.Context.Variable.Set("x", "v1");
         var action1 = new PrAction
         {
-            Module = app.Module["matrix.resolution"],
+            Module = app.Module("matrix.resolution"),
             Name = "reresolveacrosscalls",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { sharedData })
         };
@@ -239,7 +239,7 @@ public class ReResolveAcrossCallsTests
         app.User.Context.Variable.Set("x", "v2");
         var action2 = new PrAction
         {
-            Module = app.Module["matrix.resolution"],
+            Module = app.Module("matrix.resolution"),
             Name = "reresolveacrosscalls",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { sharedData })
         };
@@ -285,7 +285,7 @@ public class ConcurrentHandlersTests
         {
             var action = new PrAction
             {
-                Module = app.Module["matrix.resolution"],
+                Module = app.Module("matrix.resolution"),
                 Name = "concurrenthandlers",
                 Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { sharedData })
             };
