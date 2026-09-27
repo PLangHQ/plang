@@ -157,8 +157,8 @@ public partial class discover : IContext
             };
         }
 
-        // The fresh goal becomes its test, as this run takes it.
-        return await Context.App.test.list.Create(prGoal, Context);
+        // The fresh goal becomes its test, as a run will take it.
+        return await global::app.test.@this.From(prGoal, Context);
     }
 
 }

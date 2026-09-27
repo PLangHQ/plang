@@ -185,11 +185,11 @@ public class TestingClassTests
 
     // The run's tag filter is the session's own: a test it leaves out is born Skipped, with the reason.
     [Test]
-    public async Task Create_ExcludedTest_ComesBackSkippedWithItsReason()
+    public async Task From_ExcludedTest_ComesBackSkippedWithItsReason()
     {
         _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
 
-        var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);
+        var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
@@ -197,25 +197,57 @@ public class TestingClassTests
 
     // Exclude set from the CLI shape (--test={"exclude":["slow"]}) binds and filters.
     [Test]
-    public async Task Create_ExcludeSetThroughTheWalk_Filters()
+    public async Task From_ExcludeSetThroughTheWalk_Filters()
     {
         var set = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await set.IsSuccess();
 
-        var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);
+        var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
     }
 
     [Test]
-    public async Task Create_TakenTest_IsReady()
+    public async Task From_TakenTest_IsReady()
     {
         _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
 
-        var test = await _app.test.list.Create(TaggedGoal("fast"), _app.User.Context);
+        var test = await global::app.test.@this.From(TaggedGoal("fast"), _app.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Ready);
         await Assert.That(test.StatusReason).IsNull();
+    }
+
+    // The include/exclude rules are the setting's options: the setting answers for a test.
+    [Test]
+    public async Task TheSetting_AnswersWhyItLeavesATestOut()
+    {
+        var context = _app.User.Context;
+        var setting = new global::app.test.setting.@this();
+        setting.Include.Add(new global::app.type.item.text.@this("fast"));
+        var slow = new global::app.test.@this { Goal = TaggedGoal("slow") };
+        slow.Tags.Add(new global::app.type.item.tag.@this("slow"));
+        var fast = new global::app.test.@this { Goal = TaggedGoal("fast") };
+        fast.Tags.Add(new global::app.type.item.tag.@this("fast"));
+
+        await Assert.That(setting.Exclusion(slow, context)?.ToString()).IsEqualTo("no include match");
+        await Assert.That(setting.Exclusion(fast, context)).IsNull();
+    }
+
+    // A test is born with the goals it reaches; the run's coverage takes them in when the run takes the test —
+    // a skipped test's sites still show.
+    [Test]
+    public async Task TheRun_TakesInTheGoalsATestReaches()
+    {
+        var goal = Make.Goal("Covered",
+            Make.Step("if %x% is 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1))));
+        goal.Tag.Add(new global::app.type.item.tag.@this("skip"));
+        var test = await global::app.test.@this.From(goal, _app.User.Context);
+
+        await _app.test.list.Start(new global::app.type.item.list.@this<global::app.test.@this>(new[] { test }), _app.User.Context);
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
+        await Assert.That(_app.test.list.Report.Coverage.BranchChains.Keys.Any(site => site.Contains("Covered"))).IsTrue();
     }
 }

@@ -25,4 +25,19 @@ public sealed class @this : global::app.type.item.setting.@this
 
     /// <summary>The tags that leave a test out (empty = none). Applied after include — exclude wins.</summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; } = new();
+
+    /// <summary>Why these options leave <paramref name="test"/> out — a tag in <see cref="Exclude"/> (exclude
+    /// wins), or no tag in a non-empty <see cref="Include"/>. Null when the run takes it. Tags compare by the
+    /// tag's own equality.</summary>
+    public global::app.type.item.text.@this? Exclusion(global::app.test.@this test, global::app.actor.context.@this context)
+    {
+        var tags = test.Tags.Items().ToHashSet();
+        // Each filter row is taken out as a value (a list set from the CLI holds its raw rows).
+        bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
+            => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek()) is { } tag && tags.Contains(tag));
+
+        if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
+        if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";
+        return null;
+    }
 }

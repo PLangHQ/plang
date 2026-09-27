@@ -89,10 +89,12 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         return executed;
     }
 
-    // One test: a test that isn't Ready is recorded, not run; a Ready one runs itself in an App of its
-    // own, a child of this one, testing it (its session open) — the App lives exactly as long as the run.
+    // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
+    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, a child of this one,
+    // testing it (its session open) — the App lives exactly as long as the run.
     private async Task Run(global::app.test.@this test, actor.context.@this context)
     {
+        foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
             await using var app = new global::app.@this(_app);
@@ -104,53 +106,4 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         Add(test);
     }
 
-    /// <summary>The test a test goal is, as this run takes it. Its tags are the goal's own
-    /// (<c>goal.Tag</c>, stamped at build) and the capabilities every action it reaches requires —
-    /// its own and those of each goal its calls reach, as they are now. Seeds this run's coverage with
-    /// the same goals. A goal tagged <c>skip</c> is Skipped; a test this run's tag filter leaves out
-    /// is Skipped with the filter's reason; otherwise Ready.</summary>
-    public async Task<global::app.test.@this> Create(global::app.goal.@this goal, actor.context.@this context)
-    {
-        var test = new global::app.test.@this { Goal = goal };
-        test.Tags.Add(goal.Tag);
-
-        var reached = new List<global::app.goal.@this> { goal };
-        reached.AddRange(await goal.Callee(context));
-        foreach (var g in reached)
-        {
-            foreach (var step in g.Step.Items())
-                foreach (var action in step.Code.Items())
-                    foreach (var required in action.Requirement)
-                        if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
-            Report.Coverage.Add(g);
-        }
-
-        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip")))
-        {
-            test.Status = Status.Skipped;
-            test.StatusReason = "tagged 'skip'";
-        }
-        else if (Exclusion(test, context) is { } reason)
-        {
-            test.Status = Status.Skipped;
-            test.StatusReason = reason;
-        }
-        return test;
-    }
-
-    /// <summary>Why this run leaves <paramref name="test"/> out — a tag in the setting's exclude (exclude
-    /// wins), or no tag in a non-empty include. Null when the run takes it. Tags compare by the tag's own
-    /// equality.</summary>
-    public global::app.type.item.text.@this? Exclusion(global::app.test.@this test, actor.context.@this context)
-    {
-        var tags = test.Tags.Items().ToHashSet();
-        var setting = context.Setting.Of<global::app.test.setting.@this>();
-        // Each filter row is taken out as a value (a list set from the CLI holds its raw rows).
-        bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
-            => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek()) is { } tag && tags.Contains(tag));
-
-        if (setting.Exclude.CountRaw > 0 && Carries(setting.Exclude)) return "excluded by tag";
-        if (setting.Include.CountRaw > 0 && !Carries(setting.Include)) return "no include match";
-        return null;
-    }
 }

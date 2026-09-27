@@ -36,6 +36,42 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>();
     }
 
+    /// <summary>
+    /// The test <paramref name="goal"/> is, as a run will take it. It reaches its goal and every goal its calls
+    /// reach, as they are now (<see cref="Reach"/>); its tags are the goal's own (<c>goal.Tag</c>, stamped at
+    /// build) and the capabilities every action it reaches requires. A goal tagged <c>skip</c> is Skipped; a test
+    /// test's setting leaves out is Skipped with the setting's reason; otherwise Ready.
+    /// </summary>
+    public static async System.Threading.Tasks.Task<@this> From(global::app.goal.@this goal, global::app.actor.context.@this context)
+    {
+        var reach = new List<global::app.goal.@this> { goal };
+        reach.AddRange(await goal.Callee(context));
+        var test = new @this { Goal = goal, Reach = reach };
+
+        test.Tags.Add(goal.Tag);
+        foreach (var reached in reach)
+            foreach (var step in reached.Step.Items())
+                foreach (var action in step.Code.Items())
+                    foreach (var required in action.Requirement)
+                        if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
+
+        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip")))
+        {
+            test.Status = Status.Skipped;
+            test.StatusReason = "tagged 'skip'";
+        }
+        else if (context.Setting.Of<setting.@this>().Exclusion(test, context) is { } reason)
+        {
+            test.Status = Status.Skipped;
+            test.StatusReason = reason;
+        }
+        return test;
+    }
+
+    /// <summary>The goals this test reaches — its own first, then every goal its calls reach, as they were when
+    /// it was made. Empty for a test that couldn't be read.</summary>
+    internal IReadOnlyList<global::app.goal.@this> Reach { get; init; } = [];
+
     // --- Discovery (populated by test.discover) ---
 
     /// <summary>The discovered goal. Always populated — built from the .pr
