@@ -30,6 +30,7 @@ A value is written as the step writes it:
   true  false   a bool
   null
   %x%           a variable, with its % signs; %!data% is the result of the action before it in the same step
+  %!app.goal["/start"]%   one goal by its key: one element of %!app.goal.list% (so too %!app.module["file"]%)
   [a, b]        a list
   {k: v}        a dict
   "=="          a choice: one of the options listed for it, quoted
