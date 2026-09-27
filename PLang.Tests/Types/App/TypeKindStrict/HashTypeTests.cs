@@ -18,14 +18,6 @@ public class HashTypeTests
         await Assert.That(t.ClrType).IsEqualTo(typeof(hash));
     }
 
-    [Test] public async Task HashKinds_DoNotLeakIntoTheLlmPromptVocabulary()
-    {
-        // The prompt's kind table is scoped to fundamentals; a result type's
-        // algorithms are noise the LLM never chooses from.
-        await using var app = TestApp.Create("/test");
-        await Assert.That((app.Module.Schema.Build()).Kinds.ContainsKey("hash")).IsFalse();
-    }
-
     [Test] public async Task HashType_OwnsBase64RoundTrip()
     {
         var bytes = new byte[] { 1, 2, 3, 4, 5 };

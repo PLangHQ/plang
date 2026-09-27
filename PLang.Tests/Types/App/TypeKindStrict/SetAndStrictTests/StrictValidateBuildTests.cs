@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 
-namespace PLang.Tests.App.type.listKindStrict.SetAndStrictTests;
+namespace PLang.Tests.App.TypeKindStrict.SetAndStrictTests;
 
 public class StrictValidateBuildTests
 {

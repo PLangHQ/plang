@@ -1,6 +1,6 @@
 using text = global::app.type.item.text.@this;
 
-namespace PLang.Tests.App.type.lists;
+namespace PLang.Tests.App.Types;
 
 // W8 — KindHooks + the four X.Build statics are deleted. The kind now derives by building
 // through the family's eager door (App.type.list[name].Create) and reading it off the built value.

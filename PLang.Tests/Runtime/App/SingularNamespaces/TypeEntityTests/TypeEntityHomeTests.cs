@@ -60,10 +60,8 @@ public class TypeEntityHomeTests
     [Test] public async Task TypeEntity_OnRecordType_FoldedEntryFields_AreReadableOffTheEntity()
     {
         await using var app = TestApp.Create("/test");
-        var entries = app.type.list.BuildTypeEntries(app.Module);
-        var record = entries.FirstOrDefault(e => e.Property != null && e.Property.Count > 0);
-        await Assert.That(record).IsNotNull();
-        await Assert.That(record!.Property).IsNotNull();
+        var record = app.type.list["goal"];
+        await Assert.That(record.Property).IsNotNull();
         await Assert.That(record.Property!.Count).IsGreaterThan(0);
     }
 

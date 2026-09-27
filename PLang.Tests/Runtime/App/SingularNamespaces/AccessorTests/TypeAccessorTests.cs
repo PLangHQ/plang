@@ -10,7 +10,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 // app.type.list[name] returns the catalog-built entity (app.type.@this); .of<T>() likewise.
 // The entity carries Value (PLang name), ClrType (System.Type) pre-stamped from the
 // registry, and the folded Entry knowledge (Fields, Shape, Example, …) — all populated
-// at construction by BuildTypeEntries, no manual Context stamp needed.
+// at construction, no manual Context stamp needed.
 public class TypeAccessorTests
 {
     [Test] public async Task AppType_IndexByName_ReturnsTypeEntity_WithNameAndClrType()

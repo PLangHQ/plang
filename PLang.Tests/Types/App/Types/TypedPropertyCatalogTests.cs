@@ -75,7 +75,7 @@ public class TypedPropertyCatalogTests
     [Test]
     public async Task Catalog_TypeProperties_RenderTypeAnnotation_PerProperty()
     {
-        // BuildTypeEntries surfaces each [LlmBuilder]-marked property with its
+        // A type surfaces each [LlmBuilder]-marked property with its
         // PLang type name (the typed-property annotation that lets LLM-driven
         // dot navigation type-check).
         var image = FindEntry("kind-fixture-image");

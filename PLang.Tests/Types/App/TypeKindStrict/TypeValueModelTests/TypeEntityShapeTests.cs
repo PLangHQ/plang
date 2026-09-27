@@ -5,7 +5,7 @@ using TUnit.Assertions.Extensions;
 using TypeEntity = global::app.type.@this;
 using PLangEngine = global::app.@this;
 
-namespace PLang.Tests.App.type.listKindStrict.TypeValueModelTests;
+namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
 // Public surface of `app.type.@this`. Name is the family (e.g. "image"); Kind
 // is the subtype (e.g. "gif"); Strict is a bool; ClrType is non-public

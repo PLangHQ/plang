@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 
-namespace PLang.Tests.App.type.listKindStrict.IntegrationCutsTests;
+namespace PLang.Tests.App.TypeKindStrict.IntegrationCutsTests;
 
 public class Cut2_StrictMismatchFailsAtRightLayer
 {

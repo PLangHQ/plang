@@ -3,7 +3,7 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using PLangEngine = global::app.@this;
 
-namespace PLang.Tests.App.type.listKindStrict.TypeValueModelTests;
+namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
 // Three call-sites read `type.ClrType` today. After the reroute, ClrType is
 // non-public and these sites resolve via App.type.list.Clr(name) / .Get(name):

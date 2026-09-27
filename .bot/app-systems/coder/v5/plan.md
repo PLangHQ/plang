@@ -24,6 +24,33 @@ This file holds the trace, the proposals and the order.
 3. **Internal items stay out of the face, not out of the list.** The name `clr` is what `PlangName` answers for an unowned C# class, so `wire` and `clr` stay in the list. They declare `Internal` (a fact on the type, read from the class like `Alias`), and the `%!app.type%` face and prompt C skip them.
 4. **357 goal files.** The helper agent edits them with the Edit tool (the hook blocks shell edits of `.goal`), a folder at a time. The os/ `.pr` files are then re-saved by `plang build`: the hash now covers comments, so each goal's `.pr` no longer matches and is written again with every step still cached (no decider, no LLM). I verify by diffing each `.pr`: only comments and hashes may change.
 
+## Waiting on Ingi: the kind faces
+`%!app.type.text.kind.md%` (name, extension, mime) and `%!app.type.choice.kind.operator%` (name,
+values) stay unfaced for now.
+
+Kinds aren't items, and navigation reaches a type's `kind` through the reflection carrier, which reads
+properties only. So `.md` (the empty kind's indexer) and `.list` (a method taking the context) are
+unreachable.
+
+Ingi ruled that a kind is an object answering `.list` and `["md"]`, not a list, so the navigation
+shortcut (b) is out. The shape that honours the ruling is (a): a kind is an item. Its cost is in the
+kind verbs that clash with item's own. Proposed names, one word each:
+
+| kind verb today | clashes with | proposed |
+|---|---|---|
+| `Get(obj, path, parent, ctx)` — walk a value by the plang path | item's `Get(parent, key)` | `Walk` |
+| `Output(obj, writer, mode, ctx)` — write a host value of this kind | item's `Output(writer, mode, ctx)` | `Render` |
+| `Data(name, node, parent, ctx)` — build the child Data for a landed node | (item has none, but `Data` names the Data type) | `Child` |
+| `Descend(obj, key, isIndex, ctx)` | — | unchanged |
+| `Set(host, key, isIndex, value, ctx)` | item's `Set(key, isIndex, value, ctx)` | `Put` |
+| `Read(obj, reader, kind, ctx)` | item's internal `Read(reader, kind, ctx)` | `Bridge` |
+
+Every kind class overrides some of these: json, list, dict, `*`, the 15 number kinds, and the set,
+scheme and hash kinds. Callers are the navigation walk (`clr`), the clr carrier's Output/Set/Read and
+`kind/this.cs` itself. After that, a kind is an item whose face is name + its facts (extension and mime
+from the formats, a set's values), and whose own navigation answers `list` and `[name]` knowing its
+type.
+
 ## Order (each its own commit, green against the baseline)
 1. Honest facts: each type's description and example; `Internal` on wire and clr. Twins re-recorded plus one eval run; this is the builder-visible commit.
 2. Faces: `type.Output` in the Out view (`%!app.type%` → names; one type → name, description, example, alias, kind names; a kind → name, extension, mime; a choice's kind → name, values).

@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.type.lists;
+namespace PLang.Tests.App.Types;
 
 // A kind's class declares the type it is a kind of; a kind owns its aliases; a type's kinds are
 // answered as full types.

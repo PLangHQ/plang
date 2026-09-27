@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PLang.Tests.App.type.lists;
+namespace PLang.Tests.App.Types;
 
 // A clr carrying a JsonElement navigates by its KIND (json), not by C# reflection —
 // so %doc.steps[0].index% walks the json instead of reflecting a nonexistent property.

@@ -32,11 +32,6 @@ internal static class TypeMapping
             | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy) != null;
         return closed && new global::app.type.item.choice.set.@this(held) is { IsClosed: true } set ? set.Values : null;
     }
-
-
-    public static List<global::app.type.@this> BuildTypeEntries(global::app.module.list.@this? modules)
-        => _app.type.list.BuildTypeEntries(modules);
-
 }
 
 /// <summary>

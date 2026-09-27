@@ -45,51 +45,21 @@ public class ComplexTypeDiscoveryTests
     }
 
     [Test]
-    public async Task LlmMessage_DiscoveredFromQueryParameters()
-    {
-        // llm.query has Messages parameter of type List<LlmMessage>
-        // LlmMessage should be auto-discovered and its schema included
-        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
-
-        await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
-    }
-
-    [Test]
     public async Task LlmMessage_SchemaIncludesRoleAndContent()
     {
-        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
+        var schema = RenderEntry(_app.type.list["llmmessage"]);
 
-        await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
-        var schema = schemas["llmmessage"];
         await Assert.That(schema).Contains("role");
         await Assert.That(schema).Contains("content");
     }
 
     [Test]
-    public async Task GoalCall_StillIncluded()
-    {
-        // goal.call was already in TypeMapping — should still be discovered
-        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
-
-        await Assert.That(schemas.ContainsKey("goal.call")).IsTrue();
-    }
-
-    [Test]
     public async Task PrimitiveTypes_NotInSchemas()
     {
-        // Primitive types must never appear as COMPLEX (record-with-Fields) schemas.
-        // Born-native scalars (number/text/bool/…) DO appear as scalar entries
-        // (Shape only, no Fields) — that is their catalog form, same as number/text.
-        var complex = TypeMapping.BuildTypeEntries(_app.Module)
-            .Where(e => e.Property != null && e.Property.Count > 0)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
-
-        await Assert.That(complex.ContainsKey("string")).IsFalse();
-        await Assert.That(complex.ContainsKey("int")).IsFalse();
-        await Assert.That(complex.ContainsKey("bool")).IsFalse();
+        // Scalars (text/number/bool) are never records: no Property list.
+        await Assert.That(_app.type.list["text"].Property).IsNull();
+        await Assert.That(_app.type.list["number"].Property).IsNull();
+        await Assert.That(_app.type.list["bool"].Property).IsNull();
     }
 
     [Test]

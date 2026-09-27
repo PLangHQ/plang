@@ -45,14 +45,6 @@ public class Stage2_MechanicalTypings_Part2Tests
         await Assert.That(ret).IsEqualTo(expected);
     }
 
-    [Test]
-    public async Task BuilderRecords_LiveAtOBPSingularFolders()
-    {
-        // builder.Types.@this is the only catalog wrapper; builder.actions and
-        // builder.goals return their natural list shapes directly.
-        await Assert.That(typeof(global::app.type.list.view.@this).Namespace).IsEqualTo("app.type.list.view");
-    }
-
     // test.tag is bare Task<Data> or Task<Data<global::app.type.item.@bool.@this>>; the meaningful negative
     // guard is that it never degrades to Task<Data<object>>.
     [Test]

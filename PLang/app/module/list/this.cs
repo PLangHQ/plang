@@ -22,17 +22,9 @@ public sealed class @this : IAsyncDisposable
     /// App builds (<c>Type</c> takes its context the same way). Never assigned afterwards.</summary>
     public global::app.@this App { get; }
 
-    /// <summary>
-    /// The type-catalog's LLM view — PrimitiveNames / Types / Kinds, "what the type vocabulary
-    /// looks like for the LLM." Built on demand via <c>Schema.Build()</c> (which reads
-    /// <c>App.Type</c>).
-    /// </summary>
-    public global::app.type.list.view.@this Schema { get; }
-
     public @this(global::app.@this app)
     {
         App = app;
-        Schema = new global::app.type.list.view.@this(this);
         Discover(typeof(@this).Assembly, "app.module.action");
     }
 

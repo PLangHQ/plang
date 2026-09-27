@@ -462,55 +462,6 @@ public class EngineTypesTests
     }
 
 
-    // --- Finding #4: BuilderNames/ComplexSchemas tests ---
-
-    [Test]
-    public async Task BuilderNames_ReturnsNonEmptyList()
-    {
-        #pragma warning disable CS0618
-        var names = new global::app.type.list.view.@this(null!).BuilderNames;
-#pragma warning restore CS0618
-
-        await Assert.That(names).IsNotNull();
-        await Assert.That(names.Count).IsGreaterThan(0);
-    }
-
-    [Test]
-    public async Task BuilderNames_ContainsCommonTypes()
-    {
-        #pragma warning disable CS0618
-        var names = new global::app.type.list.view.@this(null!).BuilderNames;
-#pragma warning restore CS0618
-
-        await Assert.That(names).Contains("text");
-        await Assert.That(names).Contains("number");
-        await Assert.That(names).Contains("bool");
-        await Assert.That(names).Contains("datetime");
-    }
-
-    [Test]
-    public async Task BuilderNames_ExcludesNullableVariants()
-    {
-        #pragma warning disable CS0618
-        var names = new global::app.type.list.view.@this(null!).BuilderNames;
-#pragma warning restore CS0618
-
-        await Assert.That(names).DoesNotContain("int?");
-        await Assert.That(names).DoesNotContain("bool?");
-    }
-
-    [Test]
-    public async Task BuilderNames_ExcludesDuplicateClrTypes()
-    {
-        #pragma warning disable CS0618
-        var names = new global::app.type.list.view.@this(null!).BuilderNames;
-#pragma warning restore CS0618
-
-        // "string" and "text" both map to typeof(string) — only the first should appear
-        var stringCount = names.Count(n => n == "string" || n == "text");
-        await Assert.That(stringCount).IsEqualTo(1);
-    }
-
     // --- Finding #7: Lazy derivation distinguishes context path from fallback ---
 
     [Test]
