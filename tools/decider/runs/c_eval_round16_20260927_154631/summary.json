@@ -1,0 +1,2547 @@
+[
+ {
+  "prompt": "C",
+  "model": "gpt-5.4-nano",
+  "case": "start",
+  "first": {
+   "step": [
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStart%",
+         "variable": [
+          {
+           "text": "%buildStart%",
+           "code": [
+            {
+             "variable": "buildStart"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%Now.Ticks%",
+         "variable": [
+          {
+           "text": "%Now.Ticks%",
+           "code": [
+            {
+             "variable": "Now"
+            },
+            {
+             "property": "Ticks"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace%",
+         "variable": [
+          {
+           "text": "%trace%",
+           "code": [
+            {
+             "variable": "trace"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "dict",
+          "template": "plang"
+         },
+         "value": {
+          "id": "%!trace.id%",
+          "timestamp": "%Now%",
+          "goal": "%goal%",
+          "menu": null,
+          "subGoals": [],
+          "durationMs": 0
+         },
+         "variable": [
+          {
+           "text": "%!trace.id%",
+           "code": [
+            {
+             "variable": "!trace"
+            },
+            {
+             "property": "id"
+            }
+           ]
+          },
+          {
+           "text": "%Now%",
+           "code": [
+            {
+             "variable": "Now"
+            }
+           ]
+          },
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "on",
+         "name": "error",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.menu%",
+         "variable": [
+          {
+           "text": "%trace.menu%",
+           "code": [
+            {
+             "variable": "trace"
+            },
+            {
+             "property": "menu"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%menu%",
+         "variable": [
+          {
+           "text": "%menu%",
+           "code": [
+            {
+             "variable": "menu"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%parentGoal%",
+         "variable": [
+          {
+           "text": "%parentGoal%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%parentGoal.Child%",
+         "variable": [
+          {
+           "text": "%parentGoal.Child%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            },
+            {
+             "property": "Child"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildSubGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "subGoal",
+           "type": {
+            "name": "item",
+            "template": "plang"
+           },
+           "value": "%item%",
+           "variable": [
+            {
+             "text": "%item%",
+             "code": [
+              {
+               "variable": "item"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%parentGoal%",
+         "variable": [
+          {
+           "text": "%parentGoal%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "math",
+       "name": "subtract",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%Now.Ticks%",
+         "variable": [
+          {
+           "text": "%Now.Ticks%",
+           "code": [
+            {
+             "variable": "Now"
+            },
+            {
+             "property": "Ticks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%buildStart%",
+         "variable": [
+          {
+           "text": "%buildStart%",
+           "code": [
+            {
+             "variable": "buildStart"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedTicks%",
+         "variable": [
+          {
+           "text": "%elapsedTicks%",
+           "code": [
+            {
+             "variable": "elapsedTicks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%!data%",
+         "variable": [
+          {
+           "text": "%!data%",
+           "code": [
+            {
+             "variable": "!data"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "math",
+       "name": "divide",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%elapsedTicks%",
+         "variable": [
+          {
+           "text": "%elapsedTicks%",
+           "code": [
+            {
+             "variable": "elapsedTicks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "number"
+         },
+         "value": 10000
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedMs%",
+         "variable": [
+          {
+           "text": "%elapsedMs%",
+           "code": [
+            {
+             "variable": "elapsedMs"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%!data%",
+         "variable": [
+          {
+           "text": "%!data%",
+           "code": [
+            {
+             "variable": "!data"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.durationMs%",
+         "variable": [
+          {
+           "text": "%trace.durationMs%",
+           "code": [
+            {
+             "variable": "trace"
+            },
+            {
+             "property": "durationMs"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%elapsedMs%",
+         "variable": [
+          {
+           "text": "%elapsedMs%",
+           "code": [
+            {
+             "variable": "elapsedMs"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path",
+          "template": "plang"
+         },
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+         "variable": [
+          {
+           "text": "%!trace.id%",
+           "code": [
+            {
+             "variable": "!trace"
+            },
+            {
+             "property": "id"
+            }
+           ]
+          },
+          {
+           "text": "%goal.Name%",
+           "code": [
+            {
+             "variable": "goal"
+            },
+            {
+             "property": "Name"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%trace%",
+         "variable": [
+          {
+           "text": "%trace%",
+           "code": [
+            {
+             "variable": "trace"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%traceGoals%",
+         "variable": [
+          {
+           "text": "%traceGoals%",
+           "code": [
+            {
+             "variable": "traceGoals"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%goal.Name%",
+         "variable": [
+          {
+           "text": "%goal.Name%",
+           "code": [
+            {
+             "variable": "goal"
+            },
+            {
+             "property": "Name"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "action": [
+      {
+       "module": "build",
+       "name": "fold",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "on",
+         "name": "error",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "action": [
+      {
+       "module": "build",
+       "name": "goalsSave",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "before": {
+   "step": [
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStart%",
+         "variable": [
+          {
+           "text": "%buildStart%",
+           "code": [
+            {
+             "variable": "buildStart"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%Now.Ticks%",
+         "variable": [
+          {
+           "text": "%Now.Ticks%",
+           "code": [
+            {
+             "variable": "Now"
+            },
+            {
+             "property": "Ticks"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace%",
+         "variable": [
+          {
+           "text": "%trace%",
+           "code": [
+            {
+             "variable": "trace"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "dict",
+          "template": "plang"
+         },
+         "value": {
+          "id": "%!trace.id%",
+          "timestamp": "%Now%",
+          "goal": "%goal%",
+          "menu": null,
+          "subGoals": [],
+          "durationMs": 0
+         },
+         "variable": [
+          {
+           "text": "%!trace.id%",
+           "code": [
+            {
+             "variable": "!trace"
+            },
+            {
+             "property": "id"
+            }
+           ]
+          },
+          {
+           "text": "%Now%",
+           "code": [
+            {
+             "variable": "Now"
+            }
+           ]
+          },
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "on",
+         "name": "error",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.menu%",
+         "variable": [
+          {
+           "text": "%trace.menu%",
+           "code": [
+            {
+             "variable": "trace"
+            },
+            {
+             "property": "menu"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%menu%",
+         "variable": [
+          {
+           "text": "%menu%",
+           "code": [
+            {
+             "variable": "menu"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%parentGoal%",
+         "variable": [
+          {
+           "text": "%parentGoal%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%parentGoal.Child%",
+         "variable": [
+          {
+           "text": "%parentGoal.Child%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            },
+            {
+             "property": "Child"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildSubGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "subGoal",
+           "type": {
+            "name": "item",
+            "template": "plang"
+           },
+           "value": "%item%",
+           "variable": [
+            {
+             "text": "%item%",
+             "code": [
+              {
+               "variable": "item"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%parentGoal%",
+         "variable": [
+          {
+           "text": "%parentGoal%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "math",
+       "name": "subtract",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%Now.Ticks%",
+         "variable": [
+          {
+           "text": "%Now.Ticks%",
+           "code": [
+            {
+             "variable": "Now"
+            },
+            {
+             "property": "Ticks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%buildStart%",
+         "variable": [
+          {
+           "text": "%buildStart%",
+           "code": [
+            {
+             "variable": "buildStart"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedTicks%",
+         "variable": [
+          {
+           "text": "%elapsedTicks%",
+           "code": [
+            {
+             "variable": "elapsedTicks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%!data%",
+         "variable": [
+          {
+           "text": "%!data%",
+           "code": [
+            {
+             "variable": "!data"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "math",
+       "name": "divide",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%elapsedTicks%",
+         "variable": [
+          {
+           "text": "%elapsedTicks%",
+           "code": [
+            {
+             "variable": "elapsedTicks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "number"
+         },
+         "value": 10000
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedMs%",
+         "variable": [
+          {
+           "text": "%elapsedMs%",
+           "code": [
+            {
+             "variable": "elapsedMs"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%!data%",
+         "variable": [
+          {
+           "text": "%!data%",
+           "code": [
+            {
+             "variable": "!data"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.durationMs%",
+         "variable": [
+          {
+           "text": "%trace.durationMs%",
+           "code": [
+            {
+             "variable": "trace"
+            },
+            {
+             "property": "durationMs"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%elapsedMs%",
+         "variable": [
+          {
+           "text": "%elapsedMs%",
+           "code": [
+            {
+             "variable": "elapsedMs"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path",
+          "template": "plang"
+         },
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+         "variable": [
+          {
+           "text": "%!trace.id%",
+           "code": [
+            {
+             "variable": "!trace"
+            },
+            {
+             "property": "id"
+            }
+           ]
+          },
+          {
+           "text": "%goal.Name%",
+           "code": [
+            {
+             "variable": "goal"
+            },
+            {
+             "property": "Name"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%trace%",
+         "variable": [
+          {
+           "text": "%trace%",
+           "code": [
+            {
+             "variable": "trace"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%traceGoals%",
+         "variable": [
+          {
+           "text": "%traceGoals%",
+           "code": [
+            {
+             "variable": "traceGoals"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%goal.Name%",
+         "variable": [
+          {
+           "text": "%goal.Name%",
+           "code": [
+            {
+             "variable": "goal"
+            },
+            {
+             "property": "Name"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "action": [
+      {
+       "module": "build",
+       "name": "fold",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "on",
+         "name": "error",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "action": [
+      {
+       "module": "build",
+       "name": "goalsSave",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "unsure": [],
+  "popular_used": [],
+  "refused1": [
+   "step 0 (\"call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%\") has no entry"
+  ],
+  "caught": [
+   0
+  ],
+  "final": {
+   "step": [
+    {
+     "index": 1,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%buildStart%",
+         "variable": [
+          {
+           "text": "%buildStart%",
+           "code": [
+            {
+             "variable": "buildStart"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%Now.Ticks%",
+         "variable": [
+          {
+           "text": "%Now.Ticks%",
+           "code": [
+            {
+             "variable": "Now"
+            },
+            {
+             "property": "Ticks"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 2,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace%",
+         "variable": [
+          {
+           "text": "%trace%",
+           "code": [
+            {
+             "variable": "trace"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "dict",
+          "template": "plang"
+         },
+         "value": {
+          "id": "%!trace.id%",
+          "timestamp": "%Now%",
+          "goal": "%goal%",
+          "menu": null,
+          "subGoals": [],
+          "durationMs": 0
+         },
+         "variable": [
+          {
+           "text": "%!trace.id%",
+           "code": [
+            {
+             "variable": "!trace"
+            },
+            {
+             "property": "id"
+            }
+           ]
+          },
+          {
+           "text": "%Now%",
+           "code": [
+            {
+             "variable": "Now"
+            }
+           ]
+          },
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "Compile"
+        }
+       ],
+       "modifier": [
+        {
+         "module": "on",
+         "name": "error",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.menu%",
+         "variable": [
+          {
+           "text": "%trace.menu%",
+           "code": [
+            {
+             "variable": "trace"
+            },
+            {
+             "property": "menu"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%menu%",
+         "variable": [
+          {
+           "text": "%menu%",
+           "code": [
+            {
+             "variable": "menu"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%parentGoal%",
+         "variable": [
+          {
+           "text": "%parentGoal%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "action": [
+      {
+       "module": "loop",
+       "name": "foreach",
+       "property": [
+        {
+         "name": "Collection",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%parentGoal.Child%",
+         "variable": [
+          {
+           "text": "%parentGoal.Child%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            },
+            {
+             "property": "Child"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "goal",
+       "name": "call",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "text"
+         },
+         "value": "BuildSubGoal"
+        },
+        {
+         "name": "Parameter",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "name": "subGoal",
+           "type": {
+            "name": "item",
+            "template": "plang"
+           },
+           "value": "%item%",
+           "variable": [
+            {
+             "text": "%item%",
+             "code": [
+              {
+               "variable": "item"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%parentGoal%",
+         "variable": [
+          {
+           "text": "%parentGoal%",
+           "code": [
+            {
+             "variable": "parentGoal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "action": [
+      {
+       "module": "math",
+       "name": "subtract",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%Now.Ticks%",
+         "variable": [
+          {
+           "text": "%Now.Ticks%",
+           "code": [
+            {
+             "variable": "Now"
+            },
+            {
+             "property": "Ticks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%buildStart%",
+         "variable": [
+          {
+           "text": "%buildStart%",
+           "code": [
+            {
+             "variable": "buildStart"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedTicks%",
+         "variable": [
+          {
+           "text": "%elapsedTicks%",
+           "code": [
+            {
+             "variable": "elapsedTicks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%!data%",
+         "variable": [
+          {
+           "text": "%!data%",
+           "code": [
+            {
+             "variable": "!data"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "action": [
+      {
+       "module": "math",
+       "name": "divide",
+       "property": [
+        {
+         "name": "A",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%elapsedTicks%",
+         "variable": [
+          {
+           "text": "%elapsedTicks%",
+           "code": [
+            {
+             "variable": "elapsedTicks"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "B",
+         "type": {
+          "name": "number"
+         },
+         "value": 10000
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%elapsedMs%",
+         "variable": [
+          {
+           "text": "%elapsedMs%",
+           "code": [
+            {
+             "variable": "elapsedMs"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%!data%",
+         "variable": [
+          {
+           "text": "%!data%",
+           "code": [
+            {
+             "variable": "!data"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "action": [
+      {
+       "module": "variable",
+       "name": "set",
+       "property": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%trace.durationMs%",
+         "variable": [
+          {
+           "text": "%trace.durationMs%",
+           "code": [
+            {
+             "variable": "trace"
+            },
+            {
+             "property": "durationMs"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%elapsedMs%",
+         "variable": [
+          {
+           "text": "%elapsedMs%",
+           "code": [
+            {
+             "variable": "elapsedMs"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "action": [
+      {
+       "module": "file",
+       "name": "save",
+       "property": [
+        {
+         "name": "Path",
+         "type": {
+          "name": "path",
+          "template": "plang"
+         },
+         "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+         "variable": [
+          {
+           "text": "%!trace.id%",
+           "code": [
+            {
+             "variable": "!trace"
+            },
+            {
+             "property": "id"
+            }
+           ]
+          },
+          {
+           "text": "%goal.Name%",
+           "code": [
+            {
+             "variable": "goal"
+            },
+            {
+             "property": "Name"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%trace%",
+         "variable": [
+          {
+           "text": "%trace%",
+           "code": [
+            {
+             "variable": "trace"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "action": [
+      {
+       "module": "list",
+       "name": "add",
+       "property": [
+        {
+         "name": "ListName",
+         "type": {
+          "name": "variable"
+         },
+         "value": "%traceGoals%",
+         "variable": [
+          {
+           "text": "%traceGoals%",
+           "code": [
+            {
+             "variable": "traceGoals"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "item",
+          "template": "plang"
+         },
+         "value": "%goal.Name%",
+         "variable": [
+          {
+           "text": "%goal.Name%",
+           "code": [
+            {
+             "variable": "goal"
+            },
+            {
+             "property": "Name"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "action": [
+      {
+       "module": "build",
+       "name": "fold",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": [
+        {
+         "module": "on",
+         "name": "error",
+         "property": [],
+         "modifier": [],
+         "recovery": [
+          {
+           "module": "goal",
+           "name": "call",
+           "property": [
+            {
+             "name": "Name",
+             "type": {
+              "name": "text"
+             },
+             "value": "HandleBuildFailure"
+            }
+           ],
+           "modifier": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "index": 14,
+     "action": [
+      {
+       "module": "build",
+       "name": "goalsSave",
+       "property": [
+        {
+         "name": "Goal",
+         "type": {
+          "name": "goal",
+          "template": "plang"
+         },
+         "value": "%goal%",
+         "variable": [
+          {
+           "text": "%goal%",
+           "code": [
+            {
+             "variable": "goal"
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  "refused2": [
+   "step 0 (\"call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%\") has no entry"
+  ],
+  "warnings": [],
+  "disagreements": [],
+  "calls": [
+   {
+    "seconds": 2.209956407546997,
+    "usage": {
+     "prompt_tokens": 4339,
+     "completion_tokens": 309,
+     "total_tokens": 4648,
+     "prompt_tokens_details": {
+      "cached_tokens": 3840,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   },
+   {
+    "seconds": 2.3819379806518555,
+    "usage": {
+     "prompt_tokens": 4707,
+     "completion_tokens": 309,
+     "total_tokens": 5016,
+     "prompt_tokens_details": {
+      "cached_tokens": 3840,
+      "audio_tokens": 0
+     },
+     "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+     }
+    }
+   }
+  ],
+  "steps": {
+   "0": {
+    "first": "caught",
+    "final": "failed",
+    "misses": [
+     "step 0: not in the answer"
+    ]
+   },
+   "1": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "2": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "3": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "4": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "5": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "6": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "7": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "8": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "9": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "10": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "11": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "12": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "13": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   },
+   "14": {
+    "first": "right",
+    "final": "failed",
+    "misses": []
+   }
+  },
+  "cost": 0.0011993
+ }
+]

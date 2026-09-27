@@ -1,0 +1,3 @@
+[1] variable.set(Name=%buildStart%, Value=%Now.Ticks%)
+[2] variable.set(Name=%trace%, Value={"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "menu": null, "subGoals": [], "durationMs": 0})
+[10] variable.set(Name=%trace.durationMs%, Value=%elapsedMs%)
