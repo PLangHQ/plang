@@ -317,7 +317,30 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// thing that keeps the clone bounded.
     /// </summary>
     protected internal virtual @this Clone()
-        => Force.DeepCloner.DeepClonerExtensions.DeepClone(this);
+    {
+        // a copy is a new value: nothing is bound on it (its events would reach the actors and the app)
+        var copy = (@this)MemberwiseClone();
+        copy._on = global::app.@event.on.@this.Empty;
+        var deep = Force.DeepCloner.DeepClonerExtensions.DeepClone(copy);
+        deep._on = global::app.@event.on.@this.Empty;   // the shared one, not a copy of it
+        return deep;
+    }
+
+    private global::app.@event.on.@this _on = global::app.@event.on.@this.Empty;
+
+    /// <summary>This value's events (<c>%x.on.start%</c>) — the shared empty ones until something is bound on it.
+    /// Not written with the value, and not taught as one of its properties.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public global::app.@event.on.@this on => _on;
+
+    /// <summary>This value's own events, given to it by its first binding — what a binding is added to.</summary>
+    internal global::app.@event.on.own Own()
+    {
+        if (_on is global::app.@event.on.own held) return held;
+        var made = new global::app.@event.on.own();
+        return System.Threading.Interlocked.CompareExchange(ref _on, made, global::app.@event.on.@this.Empty) is global::app.@event.on.own won
+            ? won : made;
+    }
 
     /// <summary>
     /// Language tag when this value is a builder-authored template — a value

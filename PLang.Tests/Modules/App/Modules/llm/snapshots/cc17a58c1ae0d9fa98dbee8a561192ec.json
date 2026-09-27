@@ -1,0 +1,1 @@
+{"id":"snapshot","object":"chat.completion","model":"gpt-5.4-nano","choices":[{"index":0,"message":{"role":"assistant","content":"Your name is Alice."},"finish_reason":"stop"}],"usage":{"prompt_tokens":54,"completion_tokens":8,"total_tokens":62}}
