@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 7 end-to-end runtime DLL roundtrip.
-// Loads the TypeProvider.dll fixture (Money + CustomInt + their renderers) and
-// drives a real value through the runtime-registered renderer table. This is
+// Loads the TypeProvider.dll fixture (Money) and drives a real
+// value through its own Write — a value writes itself. This is
 // the cross-assembly coverage the Cut4 plang goals can't express (the goal
 // language has no surface for constructing arbitrary CLR instances).
 
@@ -14,7 +14,7 @@ public class TypeProviderDllRoundtripTests
 
     private static System.Reflection.Assembly LoadFixture() => System.Reflection.Assembly.LoadFrom(FixtureDll);
 
-    [Test] public async Task LoadDll_Money_RegistersTypeAndRenderer_ProducesExpectedWireString()
+    [Test] public async Task LoadDll_Money_RegistersType_WritesExpectedWireString()
     {
         var asm = LoadFixture();
         var types = new global::app.type.list.@this();
@@ -27,13 +27,10 @@ public class TypeProviderDllRoundtripTests
         await Assert.That(moneyType).IsNotNull();
         await Assert.That(moneyType!.FullName).IsEqualTo("TypeProvider.Money");
 
-        var money = System.Activator.CreateInstance(moneyType, 10m, "USD")!;
-
-        var write = types.Renderer.Of("money", "json");
-        await Assert.That(write).IsNotNull();
+        var money = (global::app.type.item.@this)System.Activator.CreateInstance(moneyType, 10m, "USD")!;
 
         var captured = new CapturingWriter("json");
-        write!(money, captured);
+        money.Write(captured);
         await Assert.That(captured.Captured).IsEqualTo("USD 10");
     }
 

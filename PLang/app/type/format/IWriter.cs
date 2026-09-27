@@ -22,9 +22,7 @@ public interface IWriter
     /// Short format token — <c>"json"</c>, <c>"plang"</c>, <c>"text"</c>,
     /// <c>"protobuf"</c>, … A value's own <c>Write</c> branches on this when it
     /// renders differently per format (e.g. image: base64 vs text label).
-    /// Each <see cref="IWriter"/> impl returns its own constant token; the
-    /// channel-layer serializer registry maps mime → writer instance, but
-    /// type-renderer dispatch keys off this short token, never the mime.
+    /// Each <see cref="IWriter"/> impl returns its own constant token — a format, never a mime.
     /// </summary>
     string Format { get; }
 

@@ -4,16 +4,14 @@ namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 2
 // IWriter grows a `string Format { get; }` property. Each writer returns its short token
-// ("json"/"plang"/"text"/…). The TypedValueNode case calls (await TypeSerializers.Get(typeName, Format)).
+// ("json"/"plang"/"text"/…). A value reads the token when it writes itself.
 
 public class IWriterFormatTests
 {
-    private static global::app.type.format.json.Writer MakeJsonWriter(
-        System.IO.Stream stream, global::app.type.renderer.@this? renderers = null)
+    private static global::app.type.format.json.Writer MakeJsonWriter(System.IO.Stream stream)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.type.format.json.Writer(utf,
-            view: global::app.View.Out, renderers: renderers);
+        return new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
     }
 
     [Test]

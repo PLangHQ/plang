@@ -66,18 +66,8 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Per-(type, format) renderer table. Vestigial now that a value renders
-    /// itself via <c>item.Write</c> — only its membership check feeds Normalize's
-    /// "renders-itself, don't reflect" signal. Discovers
-    /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via
-    /// reflection over <see cref="renderer.@this.Assemblies"/> and exposes a
-    /// runtime-registration seam for DLLs loaded at runtime.
-    /// </summary>
-    public renderer.@this Renderer { get; } = new();
-
-    /// <summary>
-    /// Per-(type, kind) reader dispatch — the read-side mirror of
-    /// <see cref="Renderers"/>. Discovers <c>app/type/&lt;name&gt;/serializer/&lt;kind&gt;.cs</c>
+    /// Per-(type, kind) reader dispatch — the read side; a value writes itself. Discovers
+    /// <c>app/type/&lt;name&gt;/serializer/&lt;kind&gt;.cs</c>
     /// classes exposing a static <c>Read(object, string?, ReadContext)</c> and
     /// exposes the same runtime-registration seam. The single json
     /// <c>Converter</c> routes mid-graph typed fields through here.

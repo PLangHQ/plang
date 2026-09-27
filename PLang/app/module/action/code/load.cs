@@ -32,7 +32,7 @@ public partial class load : IContext
             return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
         var assembly = (await loadResult.Value()).Clr<System.Reflection.Assembly>()!;
 
-        // The assembly's plang types and their renderers come in through the types' one way in.
+        // The assembly's plang types come in through the types' one way in (a value writes itself).
         // They add new resolution and rendering, but cannot rewrite what the source generator
         // already baked into compiled handler slots.
         var typeLoad = Context.App.type.list.Add(assembly, Context);

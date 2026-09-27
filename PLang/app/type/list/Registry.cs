@@ -28,7 +28,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     /// <summary>
     /// Built-in type names a runtime-loaded assembly may not claim. Their bodies are signing- or
-    /// transport-load-bearing: a DLL that replaced <c>identity</c>'s class or its renderer could
+    /// transport-load-bearing: a DLL that replaced <c>identity</c>'s class could
     /// produce authentically-signed values whose body was attacker-composed.
     /// </summary>
     public IReadOnlySet<string> Sealed { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -135,14 +135,13 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     }
 
     /// <summary>
-    /// Adds every plang type <paramref name="assembly"/> exports, the kinds it brings (kind classes,
-    /// the closed sets its <c>choice&lt;T&gt;</c> properties draw on), and its renderers
-    /// (<see cref="ITypeRenderer"/>). Every type added must render — its own renderer or one already
-    /// known. The first error stops the load; what was added before it stays.
+    /// Adds every plang type <paramref name="assembly"/> exports and the kinds it brings (kind classes,
+    /// the closed sets its <c>choice&lt;T&gt;</c> properties draw on, its formats). A value writes itself.
+    /// The first error stops the load; what was added before it stays.
     /// </summary>
     public data.@this Add(Assembly assembly, actor.context.@this context)
     {
-        // An assembly the startup scan read brings nothing new: its types, kinds and renderers are in.
+        // An assembly the startup scan read brings nothing new: its types and kinds are in.
         if (Assemblies.Contains(assembly)) return context.Ok(new List<global::app.type.@this>());
 
         System.Type[] exported;
@@ -173,23 +172,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
         Enlist(assembly);
         Guard();
-
-        foreach (var clr in exported)
-        {
-            if (clr.IsAbstract || clr.IsInterface || !typeof(ITypeRenderer).IsAssignableFrom(clr)) continue;
-            if (clr.GetConstructor(System.Type.EmptyTypes) is not { } ctor) continue;
-            var renderer = (ITypeRenderer)ctor.Invoke(null);
-            if (Sealed.Contains(renderer.TypeName))
-                return context.Error(new error.Error(
-                    $"ITypeRenderer for '{renderer.TypeName}' rejected — '{renderer.TypeName}' is on the sealed built-in list and its rendering may not be replaced by a runtime-loaded DLL.",
-                    "TypeLoadCollision", 400));
-            Renderer.Register(renderer.TypeName, renderer.Format, (value, writer) => renderer.Write(value, writer));
-        }
-
-        if (added.Find(t => !Renderer.Has(t.Name)) is { } bare)
-            return context.Error(new error.Error(
-                $"type '{bare.Name}' loaded with no covering renderer (need a Default ITypeRenderer or per-format coverage).",
-                "TypeLoadCoverage", 400));
         return context.Ok(added);
     }
 

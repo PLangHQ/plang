@@ -32,7 +32,7 @@ public sealed class @this : global::app.type.kind.@this
         {
             var face = view ?? global::app.View.Out;
             await using var utf8 = new Utf8JsonWriter(stream);
-            await data.Output(new global::app.type.format.json.Writer(utf8, face, context.App.type.list.Renderer, emitsSchema: false), face, context);
+            await data.Output(new global::app.type.format.json.Writer(utf8, face, emitsSchema: false), face, context);
             await utf8.FlushAsync(ct);
             return context.Ok();
         }

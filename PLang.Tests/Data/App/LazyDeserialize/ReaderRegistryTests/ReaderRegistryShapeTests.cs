@@ -5,12 +5,10 @@ using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 
-// The reader registry mirrors `app.type.renderer.@this` — same structural
-// shape: a `(Type, Kind)` keyed `Of` lookup, a `Register` runtime seam, a
-// `"*"` wildcard, and a precedence order of
+// The reader registry's shape: a `(Type, Kind)` keyed `Of` lookup, a
+// `Register` runtime seam, a `"*"` wildcard, and a precedence order of
 // runtime-exact > generated-exact > runtime-wildcard > generated-wildcard.
-// Shape-equivalence with the renderer is the primary contract here; per-type
-// `Read` entries are pinned separately in PerTypeReadEntriesTests.
+// Per-type `Read` entries are pinned separately in PerTypeReadEntriesTests.
 public class ReaderRegistryShapeTests
 {
     private global::app.type.reader.@this _r = null!;
@@ -48,13 +46,10 @@ public class ReaderRegistryShapeTests
         await Assert.That(ps[2].ParameterType).IsEqualTo(typeof(global::app.type.reader.@this.Read));
     }
 
-    // Independent #1 — renderer exposes its wildcard via `AnyFormat`; the
-    // reader mirrors with `AnyKind`. Both publish the one wildcard string "*".
-    [Test] public async Task Reader_HasWildcardConstant_MatchingRendererAnyFormat()
+    // The reader publishes its wildcard kind as `AnyKind` — the string "*".
+    [Test] public async Task Reader_HasWildcardConstant_Star()
     {
         await Assert.That(global::app.type.reader.@this.AnyKind).IsEqualTo("*");
-        await Assert.That(global::app.type.reader.@this.AnyKind)
-            .IsEqualTo(global::app.type.renderer.@this.AnyFormat);
     }
 
     // The Read delegate is the read-side mirror of `Write(object, IWriter)`:
@@ -73,8 +68,8 @@ public class ReaderRegistryShapeTests
 
     // Independent #1 — precedence: a runtime registration shadows a discovered
     // (generated) one for the same (type, kind). `path` ships a discovered
-    // wildcard `Read`; a runtime entry for path wins over it. Mirror of
-    // renderer line 52 (runtime tier consulted before generated tier).
+    // wildcard `Read`; a runtime entry for path wins over it (runtime tier
+    // consulted before generated tier).
     [Test] public async Task Reader_PrecedenceProbe_RuntimeExactBeatsGeneratedExact()
     {
         object sentinel = new();
@@ -88,7 +83,7 @@ public class ReaderRegistryShapeTests
     }
 
     // Independent #1 — an exact (type, kind) match beats a wildcard at the
-    // same level. Mirror of renderer lines 52–55.
+    // same level.
     [Test] public async Task Reader_PrecedenceProbe_ExactBeatsWildcard()
     {
         object exact = new();
@@ -112,8 +107,7 @@ public class ReaderRegistryShapeTests
         await Assert.That(_r.Of("never-registered", "json")).IsNull();
     }
 
-    // Independent #2 — discovery's static-Read scan mirrors the renderer's
-    // static-Write scan (renderer/this.cs:100): a `serializer/Default.cs`
+    // Independent #2 — discovery's static-Read scan: a `serializer/Default.cs`
     // file's `static Read` is indexed without central wiring. path ships one.
     [Test] public async Task Reader_DiscoversStaticReadInSerializerDefault()
     {

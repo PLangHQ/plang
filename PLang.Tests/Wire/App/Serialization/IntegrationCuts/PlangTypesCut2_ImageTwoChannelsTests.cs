@@ -49,10 +49,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, p!, app.User.Context);
 
-        var write = app.type.list.Renderer.Of("image", "text");
-        await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
-        write!(img, w);
+        img.Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(((string)w.Last!).Contains("photo.png") || ((string)w.Last!).Contains("image:")).IsTrue();
     }
@@ -66,8 +64,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf,
-                view: global::app.View.Out, renderers: app.type.list.Renderer);
+            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
             w.Value(img);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -82,29 +79,11 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var img = new image(PngBytes, p!, app.User.Context);
         var beforeBytes = img.Bytes;
 
-        app.type.list.Renderer.Of("image", "text")!(img, new CaptureWriter("text"));
-        app.type.list.Renderer.Of("image", "json")!(img, new CaptureWriter("json"));
+        img.Write(new CaptureWriter("text"));
+        img.Write(new CaptureWriter("json"));
 
         // Bytes is the same reference — no copy, no re-decode.
         await Assert.That(ReferenceEquals(img.Bytes, beforeBytes)).IsTrue();
-    }
-
-    [Test] public async Task ChannelSwitch_AcrossTwoOutputs_NoTypeBranching_InChannelCode()
-    {
-        // Channel/writer code is type-agnostic: the json writer has ONE
-        // `case TypedValueNode` that dispatches via renderers, no per-type
-        // switch. Verify by reflection: json.Writer.Value(object?) is the
-        // only place writer ever sees the typed value, and the case it
-        // takes is TypedValueNode — not image/number/code branches.
-        var writerType = typeof(global::app.type.format.json.Writer);
-        var valueMethod = writerType.GetMethod("Value",
-            new[] { typeof(object) });
-        await Assert.That(valueMethod).IsNotNull();
-        // The dispatch indirection is the renderers lookup; assert it has
-        // a renderers field (passed to the ctor).
-        var renderersField = writerType.GetField("_renderers",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        await Assert.That(renderersField).IsNotNull();
     }
 
     [Test] public async Task ImageInstance_DataTypeStaysImage_AcrossBothChannels()
@@ -116,9 +95,9 @@ public class PlangTypesCut2_ImageTwoChannelsTests
             new global::app.type.@this("image"), context: app.User.Context);
 
         await Assert.That(data.Type?.Name).IsEqualTo("image");
-        app.type.list.Renderer.Of("image", "text")!(img, new CaptureWriter("text"));
+        img.Write(new CaptureWriter("text"));
         await Assert.That(data.Type?.Name).IsEqualTo("image");
-        app.type.list.Renderer.Of("image", "json")!(img, new CaptureWriter("json"));
+        img.Write(new CaptureWriter("json"));
         await Assert.That(data.Type?.Name).IsEqualTo("image");
     }
 }

@@ -4,8 +4,8 @@ using code = global::app.type.code.@this;
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 5
-// code/serializer/Default.cs → writer.String(Source). HTML wrap (<pre><code>) deferred
-// until an HTML writer ships. The Default covers json + plang + text uniformly.
+// A code value writes itself → writer.String(Source). HTML wrap (<pre><code>) deferred
+// until an HTML writer ships. json + plang + text render uniformly.
 
 public class CodeSerializerTests
 {
@@ -43,55 +43,38 @@ public class CodeSerializerTests
     {
         var c = new code("hello", "text");
         var w = new CaptureWriter("json");
-        global::app.type.code.serializer.Default.Write(c, w);
+        c.Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo("hello");
     }
 
-    [Test] public async Task Code_JsonFormat_ViaStar_RoundTripsSourceAndLanguage()
+    [Test] public async Task Code_JsonFormat_RoundTripsSource()
     {
-        // The (code, *) wildcard handles json. Round-trip Source via the writer.
-        var renderers = new global::app.type.renderer.@this();
+        // Round-trip Source via the json writer — the code value writes itself.
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf,
-                view: global::app.View.Out, renderers: renderers);
+            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
             w.Value(new code("Console.WriteLine();", "csharp"));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json.Contains("Console.WriteLine")).IsTrue();
     }
 
-    [Test] public async Task Code_PlangFormat_ViaStar_RoundTripsSourceAndLanguage()
+    [Test] public async Task Code_PlangFormat_WritesSource()
     {
-        // plang format falls through to wildcard "*" → Default.
-        var renderers = new global::app.type.renderer.@this();
-        var write = renderers.Of("code", "plang");
-        await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("plang");
-        write!(new code("print(1)", "python"), w);
+        new code("print(1)", "python").Write(w);
         await Assert.That(w.Last).IsEqualTo("print(1)");
     }
 
     [Test] public async Task Code_TextFormat_PlainString_NoHtmlMarkup()
     {
-        // text Format falls through to wildcard — no HTML wrap (the HTML
+        // text Format writes the plain source — no HTML wrap (the HTML
         // writer is a follow-up).
-        var renderers = new global::app.type.renderer.@this();
-        var write = renderers.Of("code", "text");
-        await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
-        write!(new code("body", "text"), w);
+        new code("body", "text").Write(w);
         await Assert.That(w.Last).IsEqualTo("body");
         await Assert.That(((string)w.Last!).Contains("<pre>") || ((string)w.Last!).Contains("<code>")).IsFalse();
-    }
-
-    [Test] public async Task Code_SerializerCoverage_PassesPlngGate()
-    {
-        var renderers = new global::app.type.renderer.@this();
-        await Assert.That(renderers.Has("code")).IsTrue();
-        await Assert.That(renderers.Of("code", "json")).IsNotNull();
-        await Assert.That(renderers.Of("code", "plang")).IsNotNull();
     }
 }

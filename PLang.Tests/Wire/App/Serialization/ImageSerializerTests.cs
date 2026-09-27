@@ -4,10 +4,10 @@ using image = global::app.type.item.image.@this;
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 5 (the format-asymmetric proof)
-// image/serializer/text.cs → path placeholder.
-// image/serializer/protobuf.cs → raw bytes (stub until protobuf writer ships).
-// image/serializer/Default.cs → base64 (covers json + plang).
-// One Image instance, three wire shapes by writer Format token.
+// An image writes itself by the writer's Format token:
+// text → path placeholder; protobuf → raw bytes (stub until protobuf writer ships);
+// anything else → base64 (covers json + plang).
+// One Image instance, three wire shapes.
 
 public class ImageSerializerTests
 {
@@ -50,7 +50,7 @@ public class ImageSerializerTests
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.User.Context);
         var img = new image(PngBytes, p!, app.User.Context);
         var w = new CaptureWriter("text");
-        global::app.type.item.image.serializer.text.Write(img, w);
+        img.Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(((string)w.Last!).Contains("photo.png") || ((string)w.Last!).Contains("image:")).IsTrue();
     }
@@ -60,7 +60,7 @@ public class ImageSerializerTests
         // No Path → text writer falls back to the bare label.
         var img = new image(PngBytes, "image/png");
         var w = new CaptureWriter("text");
-        global::app.type.item.image.serializer.text.Write(img, w);
+        img.Write(w);
         await Assert.That(((string)w.Last!).Contains("[image:")).IsTrue();
     }
 
@@ -68,29 +68,23 @@ public class ImageSerializerTests
     {
         var img = new image(PngBytes, "image/png");
         var w = new CaptureWriter("json");
-        global::app.type.item.image.serializer.Default.Write(img, w);
+        img.Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo(System.Convert.ToBase64String(PngBytes));
     }
 
     [Test] public async Task Image_PlangFormat_DefaultFallback_RendersBase64()
     {
-        var renderers = new global::app.type.renderer.@this();
-        // plang Format falls through to wildcard "*" → Default → base64.
-        var write = renderers.Of("image", "plang");
-        await Assert.That(write).IsNotNull();
+        // plang Format takes the portable default → base64.
         var w = new CaptureWriter("plang");
-        write!(new image(PngBytes, "image/png"), w);
+        new image(PngBytes, "image/png").Write(w);
         await Assert.That(w.Last).IsEqualTo(System.Convert.ToBase64String(PngBytes));
     }
 
     [Test] public async Task Image_ProtobufFormat_RendersRawBytes_StubInPlace()
     {
-        var renderers = new global::app.type.renderer.@this();
-        var write = renderers.Of("image", "protobuf");
-        await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("protobuf");
-        write!(new image(PngBytes, "image/png"), w);
+        new image(PngBytes, "image/png").Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Bytes");
         await Assert.That(w.Last).IsEqualTo(PngBytes);
     }
@@ -99,12 +93,10 @@ public class ImageSerializerTests
     {
         // Write → base64 string. Round-trip back via image.Resolve(byte[]).
         var img = new image(PngBytes, "image/png");
-        var renderers = new global::app.type.renderer.@this();
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf,
-                view: global::app.View.Out, renderers: renderers);
+            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
             w.Value(img);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -115,17 +107,5 @@ public class ImageSerializerTests
         var roundTripped = image.FromBytes(System.Convert.FromBase64String(b64));
         await Assert.That(roundTripped!.Mime).IsEqualTo("image/png");
         await Assert.That(roundTripped.Bytes.SequenceEqual(PngBytes)).IsTrue();
-    }
-
-    [Test] public async Task Image_SerializerCoverage_PassesPlngGate()
-    {
-        // image has Default.cs + text.cs + protobuf.cs — three files, the
-        // (type, *) wildcard covers any format that doesn't ship a dedicated
-        // file. The would-be PLNG gate accepts it.
-        var renderers = new global::app.type.renderer.@this();
-        await Assert.That(renderers.Has("image")).IsTrue();
-        await Assert.That(renderers.Of("image", "json")).IsNotNull();
-        await Assert.That(renderers.Of("image", "text")).IsNotNull();
-        await Assert.That(renderers.Of("image", "protobuf")).IsNotNull();
     }
 }

@@ -4,9 +4,7 @@ using System.Reflection;
 namespace app.type.reader;
 
 /// <summary>
-/// Per-(type, kind) reader dispatch — the read-side mirror of
-/// <see cref="app.type.renderer.@this"/>. Where the renderer encodes a value
-/// <em>into</em> a channel (keyed by the channel format), the reader decodes
+/// Per-(type, kind) reader dispatch — the read side (a value writes itself). The reader decodes
 /// the value's <em>own</em> raw source form (keyed by <c>kind</c> — the
 /// encoding within the type's shape: <c>json</c>/<c>xml</c>/<c>yaml</c> for
 /// <c>object</c>, <c>csv</c>/<c>xlsx</c> for <c>table</c>, <c>int</c>/<c>uint</c>
@@ -17,21 +15,18 @@ namespace app.type.reader;
 /// — each file is a <c>public static class</c> exposing a static
 /// <c>object? Read(object raw, string? kind, <see cref="ReadContext"/> ctx)</c>.
 /// The file name maps to the kind token (<c>Default.cs</c> → wildcard
-/// <c>"*"</c>); the parent folder name maps to the PLang type name. The exact
-/// mirror of the renderer's static-<c>Write</c> scan, with <c>Write</c>→<c>Read</c>.</para>
+/// <c>"*"</c>); the parent folder name maps to the PLang type name.</para>
 ///
 /// <para><see cref="Register"/> is the runtime seam for DLLs loaded via
-/// <c>code.load</c> — runtime registrations shadow generator-discovered entries,
-/// same precedence as the renderer.</para>
+/// <c>code.load</c> — runtime registrations shadow generator-discovered entries.</para>
 /// </summary>
 public sealed class @this
 {
-    /// <summary>Wildcard kind token — covers any kind the type reads uniformly. Mirror of <see cref="app.type.renderer.@this.AnyFormat"/>.</summary>
+    /// <summary>Wildcard kind token — covers any kind the type reads uniformly.</summary>
     public const string AnyKind = "*";
 
     /// <summary>
-    /// Read-side mirror of the renderer's <c>Write(object, IWriter)</c>:
-    /// turns the value's own raw source form into the materialized value,
+    /// Turns the value's own raw source form into the materialized value,
     /// using <paramref name="kind"/> to pick the variant.
     /// </summary>
     public delegate object? Read(object raw, string? kind, ReadContext ctx);
@@ -65,8 +60,8 @@ public sealed class @this
     /// <paramref name="typeName"/> + <paramref name="kind"/>, falling back to
     /// the wildcard <c>"*"</c> entry, or null when neither is present. Runtime
     /// registrations win over generated entries; an exact (type, kind) match
-    /// wins over the wildcard at the same level. Precedence mirrors the
-    /// renderer exactly: runtime-exact → generated-exact → runtime-"*" → generated-"*".
+    /// wins over the wildcard at the same level. Precedence: runtime-exact → generated-exact →
+    /// runtime-"*" → generated-"*".
     /// </summary>
     public Read? Of(string typeName, string? kind)
     {

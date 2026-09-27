@@ -79,13 +79,13 @@ public class PathSerializerMigrationTests
 
     // Placeholder removed; converter deletion is tracked in
     // Documentation/v0.2/todos.md "Delete app/type/path/this.JsonConverter.cs"
-    // (structural — requires ITypeRenderer.Read or a record-schema redesign).
+    // (structural — requires a record-schema redesign).
     // The real "JsonConverter is absent" assertion lands with the migration.
 
     [Test]
     public async Task Path_Wire_ByteForByteParity_BeforeAndAfter_Migration()
     {
-        // The Default.cs renderer mirrors JsonConverter.Write exactly
+        // The path's own Write mirrors JsonConverter.Write exactly
         // (Relative ?? Raw ?? Absolute). Drive the same path through both
         // paths and compare the produced JSON string.
         await using var app = NewApp();
@@ -95,8 +95,7 @@ public class PathSerializerMigrationTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf,
-                view: global::app.View.Out, renderers: app.type.list.Renderer);
+            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
             w.Value(p);
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());

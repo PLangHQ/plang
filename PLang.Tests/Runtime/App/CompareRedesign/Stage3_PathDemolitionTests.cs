@@ -218,11 +218,11 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
-        // a `path` value has one face — the renderer entry emits the location string
+        // a `path` value has one face — it writes itself as the location string
         var p = new global::app.type.item.path.file.@this("docs/readme.md") { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
-        global::app.type.item.path.serializer.Default.Write(p, new global::app.type.format.json.Writer(jw));
+        p.Write(new global::app.type.format.json.Writer(jw));
         jw.Flush();
         await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("\"docs/readme.md\"");
     }

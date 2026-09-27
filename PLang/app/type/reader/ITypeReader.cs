@@ -1,8 +1,8 @@
 namespace app.type.reader;
 
 /// <summary>
-/// The type-owned, format-agnostic value read — the read-side mirror of a type's
-/// <c>Write(value, IWriter)</c> renderer. The type <em>pulls</em> its own value
+/// The type-owned, format-agnostic value read — the read-side mirror of a value's own
+/// <c>Write(IWriter)</c>. The type <em>pulls</em> its own value
 /// off an <see cref="app.type.format.IReader"/> (<c>reader.Long()</c>,
 /// <c>reader.BeginArray()</c>, …) and constructs itself, knowing only the abstract
 /// reader — never the concrete format. The same impl serves every front-end: a
