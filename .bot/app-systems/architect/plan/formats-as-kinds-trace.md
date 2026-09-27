@@ -54,6 +54,15 @@ My lean is (1), plus (2) only when a family needs behaviour of its own (a video 
 - `text/plain` → text itself, with no kind. `application/octet-stream` → binary itself.
 - `CanonicaliseKind` (jpeg→jpg, markdown→md) → the kind's own aliases (`jpg` with alias `jpeg`, `md` with alias `markdown`). Its shortest-extension guessing goes.
 
-## Comparison with the coder's trace
+## Comparison with the coder's trace (`.bot/app-systems/coder/v8/formats-trace.md`, c65cfe3a4; read after mine was pushed, 6157200c4)
 
-(to fill in after reading it)
+**The coder's is better on what actually happens when bytes are read:**
+- **Owning a family ≠ reading it:** archive has **no reader** (zip, rar, … read as `binary{ext}`), table reads **only csv** (a `{table, xlsx}` would throw), and csv's family is text but it reads as table.
+- **There is no `wire` type.** `type/item/wire` is an internal `source` subclass, and `data/Wire.cs` reads the Data shape. `application/plang` never reaches `type.list.Mime`, because the channel's Transport check runs first.
+- **`text/plain` today is `ini`**, not "text with no kind" as I assumed, and `.goal` reads as text{ini}.
+- **json today materializes to `clr(JsonElement)` or a scalar, not dict/list.** It narrows only when a dict/list slot receives it, and the dict/list kinds' `Convert` has no production caller.
+- **Consumer counts:** `IWriter` is in 114 files (76 would change namespace only, 19 are real uses); the serializer list has ~20 production sites; stream is the only channel that picks a serializer; Python mirrors nothing.
+
+**Mine adds:** the family → type table (7 typed, ~18 not), what families are used for (compressible, teaching), the options later ruled in decision 114, and `CanonicaliseKind` → the kind's own aliases.
+
+**Lesson:** "which type owns the format" must also ask "**can that type read it**". A type owns a format only once it reads it. Until then the format stays binary's. That's the rule that makes decision 114 safe for archive, table and the rest.
