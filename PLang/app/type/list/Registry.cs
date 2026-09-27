@@ -73,6 +73,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             while (CountRaw > 0) RemoveAt(0);
             foreach (var type in faceted) base.Add(type);
             foreach (var assembly in Assemblies) Enlist(assembly);
+            Guard();
             _loaded = true;
         }
     }
@@ -171,6 +172,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             added.Add(this[NameOf(clr)!]);
         }
         Enlist(assembly);
+        Guard();
 
         foreach (var clr in exported)
         {
@@ -217,6 +219,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     public void Add(global::app.type.kind.@this kind)
     {
         Load();
+        foreach (var key in kind.Mime.Concat(kind.Extension))
+            foreach (var type in Items())
+                if (type.kind[key] is { } taken
+                    && !(string.Equals(taken.Owner, kind.Owner, StringComparison.OrdinalIgnoreCase) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
+                    throw Taken(key, taken, kind);
         Hold(kind);
     }
 
@@ -227,22 +234,26 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if (kind.Owner is not { } owner
             || Items().FirstOrDefault(t => t.Names(owner))?.kind is not global::app.type.kind.empty.@this root)
             throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
-        // A MIME or an extension is one format's: a second kind answering to it would make the walk's
-        // answer depend on the order the types came in.
-        lock (_formats)
-        {
-            foreach (var key in kind.Mime.Concat(kind.Extension))
-                if (_formats.TryGetValue(key, out var taken)
-                    && !(string.Equals(taken.Owner, owner, StringComparison.OrdinalIgnoreCase) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
-                    throw new InvalidOperationException(
-                        $"'{key}' is already the format '{taken.Owner}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — '{owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
-            foreach (var key in kind.Mime.Concat(kind.Extension)) _formats[key] = kind;
-        }
         root.Add(kind);
     }
 
-    // Each MIME and extension a format answers to, to the one kind that holds it.
-    private readonly Dictionary<string, global::app.type.kind.@this> _formats = new(StringComparer.OrdinalIgnoreCase);
+    // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
+    // a second kind answering to it would make the walk's answer depend on the order the types came in.
+    // One pass over the held kinds; what it sees is dropped when it returns.
+    private void Guard()
+    {
+        var seen = new Dictionary<string, global::app.type.kind.@this>(StringComparer.OrdinalIgnoreCase);
+        foreach (var type in Items())
+            if (type.kind is global::app.type.kind.empty.@this root)
+                foreach (var kind in root.Kinds)
+                    foreach (var key in kind.Mime.Concat(kind.Extension))
+                        if (!seen.TryAdd(key, kind) && !ReferenceEquals(seen[key], kind))
+                            throw Taken(key, seen[key], kind);
+    }
+
+    private InvalidOperationException Taken(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
+        => new($"'{key}' is already the format '{taken.Owner}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
+               + $"'{kind.Owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
 
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
     // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable

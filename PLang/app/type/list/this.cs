@@ -111,7 +111,7 @@ public sealed partial class @this
     /// The value stays unread until touched — its type reads it then.
     /// </summary>
     public app.type.@this Mime(string mime, actor.context.@this context)
-        => Format(mime) is { } kind ? Of(kind, context) : this["binary"];
+        => !string.IsNullOrEmpty(mime) && Held(mime) is { } kind ? Of(kind, context) : this["binary"];
 
     /// <summary>
     /// The type a file of this extension holds — the format with that extension, as a kind of the type that
@@ -121,17 +121,8 @@ public sealed partial class @this
     public app.type.@this Extension(string extension, actor.context.@this context)
     {
         if (string.IsNullOrEmpty(extension)) return app.type.@this.Null;
-        return Format(extension.StartsWith('.') ? extension : "." + extension) is { } kind ? Of(kind, context)
+        return Held(extension.StartsWith('.') ? extension : "." + extension) is { } kind ? Of(kind, context)
             : this[new app.type.@this("binary", extension.TrimStart('.')), context];
-    }
-
-    // The format a MIME (its media type — parameters dropped) or an extension (with its dot) is.
-    private global::app.type.kind.@this? Format(string key)
-    {
-        Load();
-        var semicolon = key.IndexOf(';');
-        var media = semicolon >= 0 ? key[..semicolon].Trim() : key;
-        lock (_formats) return _formats.TryGetValue(media, out var kind) ? kind : null;
     }
 
     // The full type a held kind makes: its owner, with the kind unless it is the owner's own format.
