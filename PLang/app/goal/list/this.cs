@@ -244,10 +244,18 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     }
 
     /// <summary>
-    /// Reads a goal from a .pr file and adds it to this collection.
+    /// Reads a goal from a .pr file and adds it to this collection, through its <c>on.load</c>: what is bound
+    /// before a goal loads is the goal type's, handed the .pr (there is no goal yet) — a failure or a Handled
+    /// answer is the load's answer and nothing is read; what is bound after it runs across the goal's levels,
+    /// handed the goal.
     /// </summary>
     private async Task<data.@this> Read(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
     {
+        var context = App.System.Context;
+        var before = App.goal.on.load.before;
+        if (before.Count > 0 && await before.Start(prPath, context.Ok(), context) is { } answer
+            && (!answer.Success || answer.Handled))
+            return answer;
         try
         {
             // The path reads itself AND parses by MIME — a .pr reads back as a goal.
@@ -265,7 +273,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             foreach (var child in primary.Child.Items()) child.LoadedFromPrPath = prPath;
 
             Add(primary);
-            return readResult;
+            return await primary.on.load.After(primary, readResult, context);
         }
         // The reader doesn't know its file; the load does — a refused .pr names itself.
         catch (global::app.error.PrFormatOutdatedException outdated)
