@@ -7,6 +7,7 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 |---|-------|----------|-----|-------|
 | 1 | 3 | `ClrType` has one meaning: the item class (text → `text.@this`). The C# value underneath (datetime → `DateTimeOffset`, `{number, int}` → `Int32`) belongs to its owner: a number kind's storage, a scalar item's `OwnedClrTypes`; `variable.set` asks the kind or item | one name had two meanings (nothing named two ways) | plan.md stage 3 |
 | 2 | 3 | An item's own type isn't born through the type list (items hold no context): the ~35 `item.Type` overrides pass their own class (`typeof(@this)`); everything holding a context is born through the list | narrows ruling (a) but keeps its point: every type knows its class, the self-lookups go | plan.md stage 3 |
+| 3 | 3 | Test `LoadDll_CustomInt_OverridesBuiltInName` (a DLL overriding "int") is deleted; what it guarded flips: a loaded DLL claiming a taken type name is refused (`Add` answers an error) | contradicts one name one type and "int is a kind"; already failing in the baseline | coder's stage 3 |
 
 ## 2026-09-27 — app-systems plan ready for coder
 
@@ -18,7 +19,7 @@ Stage status:
 | 0 | Base: re-record Compile, baseline, delete v0.1 .pr, .dll, .pdb files | complete (57d180afe, 9ee92ac9c, c918a9a1b) |
 | 1 | `Run` → `Start` (+ test/environment/callback.start, range From/To, test stopwatch Begin) | complete (4b396e780) |
 | 2 | folded into 4 | — |
-| 3 | One set of types | in progress |
+| 3 | One set of types | in progress (step 1, the one list: 4bfd09c61) |
 | 4 | The collected type | pending |
 | 5 | Faces and honest facts | pending |
 | 6 | The reference (variable parser) | pending |
