@@ -3,9 +3,10 @@
     system  os/system/builder/llm/Properties.llm (no schema: the answer is formal text)
     user    the goal as written, one line per step: the step, `=> decider:` its picks ≥ 0.5 with their scores,
             `=> formal:` the certain ones (≥ 0.9) pre-filled — `?` for a value to fill, known values filled
-            (`write to %x%` → variable.set(Name=%x%, Value=%!data%)); then Types; then each listed action
-            once (signature, description line, notes), and goal.call's definition when a listed action
-            holds actions (an action-typed property, on.error's Recovery)
+            (`write to %x%` → variable.set(Name=%x%, Value=%!data%)); then Types; then Settings (only when
+            a step names a %!path% of a class of settings); then each listed action once (signature,
+            description line, notes), and goal.call's definition when a listed action holds actions (an
+            action-typed property, on.error's Recovery)
 
 The check — the LLM and the decider must agree:
     refused   a pick ≥ 0.9 missing from the step, or an action the decider did not list for it
@@ -22,6 +23,42 @@ ROOT = b.ROOT
 SYSTEM_C = open(f'{ROOT}/os/system/builder/llm/Properties.llm', encoding='utf-8').read()
 CERTAIN, POSSIBLE = 0.9, 0.5
 WRITE_TO = re.compile(r'write to\s+(?=%)', re.I)
+# The classes of settings as the C# classes are — each path's options, name, type and default as the builder
+# shows them. A C# twin test (SettingCatalogTwinTests) writes the file from the classes.
+SETTINGS = json.load(open(f'{ROOT}/os/system/builder/llm/settings.json', encoding='utf-8'))
+SETTING_PATHS = {path.lower(): path for path in SETTINGS}
+
+def setting_paths(v):
+    """The dotted paths a setting's variable spells, shortest first (variable.Paths): its root without the !,
+    then each member; a binding, an index or a method ends them."""
+    root = v['code'][0]['variable']
+    if not root.startswith('!'): return
+    path = root[1:]
+    yield path
+    for hop in v['code'][1:]:
+        name = hop.get('property')
+        if name is None or name.startswith('!'): return
+        path += '.' + name
+        yield path
+
+def settings_named(goal):
+    """The classes of settings the goal's steps name, each once, in the order first named (step.Setting): a
+    %!…% names the class its longest path is."""
+    named = []
+    for s in goal['steps']:
+        for v in ref.parse(s['text']):
+            found = [SETTING_PATHS[p.lower()] for p in setting_paths(v) if p.lower() in SETTING_PATHS]
+            if found and found[-1] not in named: named.append(found[-1])
+    return named
+
+def settings_block(goal):
+    """The user message's Settings: each class a step names, %!path%(option: type = default, …); none, nothing."""
+    named = settings_named(goal)
+    if not named: return ''
+    return '\n\nSettings' + ''.join(
+        f'\n- %!{path}%(' + ', '.join(o['name'] + ': ' + o['type'] + ('' if o['default'] is None else ' = ' + o['default'])
+                                      for o in SETTINGS[path]) + ')'
+        for path in named)
 
 def destination(text):
     """The variable a `write to %x%` names, as written (pick.list Destination)."""
@@ -223,6 +260,7 @@ def user_message_c(goal, picks):
         for p in b.declared(*a.split('.', 1))[0].values():
             faces.setdefault(p['type'], p.get('options'))
     out += '\n\nTypes' + ''.join('\n' + b.type_line(t, o) for t, o in faces.items())
+    out += settings_block(goal)
     for a in shown:
         module, name = a.split('.', 1)
         out += f'\n\n## {b.signature(a)}'

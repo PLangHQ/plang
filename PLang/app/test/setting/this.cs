@@ -13,8 +13,9 @@ public sealed class @this : global::app.type.item.setting.@this
     /// <summary>Per-test wall-clock timeout in seconds. Default 30.</summary>
     [Out, Store] public global::app.type.item.number.@this TimeoutSeconds { get; set; } = 30;
 
-    /// <summary>How many tests run at once. Default one per processor.</summary>
-    [Out, Store] public global::app.type.item.number.@this Parallel { get; set; } = System.Environment.ProcessorCount;
+    /// <summary>How many tests run at once; 0 (the default) is one per processor — a default the same on every
+    /// machine, so it reads (and is taught) the same everywhere.</summary>
+    [Out, Store] public global::app.type.item.number.@this Parallel { get; set; } = 0;
 
     /// <summary>The report's file format. The console is always written.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.test.Format> Format { get; set; } = global::app.test.Format.Json;

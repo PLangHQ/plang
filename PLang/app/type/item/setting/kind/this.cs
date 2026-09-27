@@ -7,9 +7,38 @@ namespace app.type.item.setting.kind;
 public sealed class @this : global::app.type.kind.@this
 {
     private readonly System.Type _class;
+    private readonly System.Lazy<global::app.type.property.list.@this> _property;
 
     /// <param name="sample">One of the class, which says its own path.</param>
-    public @this(global::app.type.item.setting.@this sample) : base(sample.Path) => _class = sample.GetType();
+    /// <param name="types">The types it names its options' types through.</param>
+    public @this(global::app.type.item.setting.@this sample, global::app.type.list.@this types) : base(sample.Path)
+    {
+        _class = sample.GetType();
+        _property = new(() => Options(types));
+    }
+
+    /// <summary>The class's options as the builder teaches them — each by the name a <c>%!path%</c> writes
+    /// (<c>cache</c>), its type, and its default as its own text (<c>true</c>, <c>30</c>, <c>[]</c>).</summary>
+    public global::app.type.property.list.@this Property => _property.Value;
+
+    // The option rows, read off a fresh one of the class (its defaults).
+    private global::app.type.property.list.@this Options(global::app.type.list.@this types)
+    {
+        var fresh = Create();
+        var rows = new global::app.type.property.list.@this();
+        foreach (var option in fresh.Options)
+        {
+            var reflected = new global::app.type.property.@this(option, types);
+            rows.Add(new global::app.type.property.@this
+            {
+                Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
+                Type = reflected.Type,
+                Nullable = reflected.Nullable,
+                Default = option.GetValue(fresh) is global::app.type.item.@this { IsNull: false } value ? value.ToString() : null,
+            });
+        }
+        return rows;
+    }
 
     protected internal override string Owner => "setting";
 

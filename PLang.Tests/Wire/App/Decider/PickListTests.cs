@@ -145,6 +145,40 @@ public class PickListTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // Prompt C's Settings block: for each goal of settings_golden.json (tools/decider/settings_fixture.py), the
+    // classes its steps name, as python shows them from settings.json — the template's block, byte for byte.
+    [Test]
+    public async Task ThePromptCSettingsBlock_IsTheOnePythonSends()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        var context = os.User.Context;
+        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(
+            RepoRoot(), "PLang.Tests", "Wire", "App", "Decider", "settings_golden.json"))).RootElement.EnumerateArray().ToList();
+        await Assert.That(cases.Count).IsGreaterThan(0);
+        var differ = new List<string>();
+        foreach (var entry in cases)
+        {
+            var name = entry.GetProperty("goal").GetString()!;
+            var goal = Make.Goal(name, "/" + name + ".goal",
+                entry.GetProperty("steps").EnumerateArray().Select(t => Make.Step(t.GetString()!, 0)).ToArray());
+            await goal.Step.Scope(context);
+            // the message ends in one newline (python: out + "\n"); the block is what comes before it
+            var rendered = (await Rendered("properties.template", goal, context)).TrimEnd('\n');
+            var at = rendered.IndexOf("\n\nSettings\n", StringComparison.Ordinal);
+            var end = at < 0 ? -1 : rendered.IndexOf("\n\n", at + 2, StringComparison.Ordinal);
+            var block = at < 0 ? "" : end < 0 ? rendered[at..] : rendered[at..end];
+            var python = entry.GetProperty("block").GetString()!;
+            if (block != python)
+            {
+                var i = 0;
+                while (i < block.Length && i < python.Length && block[i] == python[i]) i++;
+                var from = Math.Max(0, i - 30);
+                differ.Add($"{name} differs at {i}: ours {System.Text.Json.JsonSerializer.Serialize(block[from..Math.Min(block.Length, i + 40)])}, python {System.Text.Json.JsonSerializer.Serialize(python[from..Math.Min(python.Length, i + 40)])}");
+            }
+        }
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
     [Test]
     public async Task TheStageTwoState_IsTheOnePythonSends()
     {

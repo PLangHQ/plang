@@ -82,11 +82,11 @@ public class TestingClassTests
         await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(30);
     }
 
-    // Architect spec: Parallel defaults to Environment.ProcessorCount.
+    // Parallel defaults to 0 — one per processor (the run reads <= 0 so) — the same value on every machine.
     [Test]
-    public async Task NewInstance_Parallel_DefaultIsProcessorCount()
+    public async Task NewInstance_Parallel_DefaultIsOnePerProcessor()
     {
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(Environment.ProcessorCount);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
     }
 
     // No tag filter by default — Include is empty, meaning every discovered test matches.

@@ -1,0 +1,160 @@
+{
+  "app.actor.permission.setting": [
+    {
+      "name": "grant",
+      "type": "list<permission>",
+      "default": "[]"
+    }
+  ],
+  "app.callstack.setting": [
+    {
+      "name": "timing",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "diff",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "deepDiff",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "tags",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "history",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "maxFrames",
+      "type": "number",
+      "default": "1000"
+    }
+  ],
+  "app.goal.list.setting": [
+    {
+      "name": "os",
+      "type": "bool",
+      "default": "true"
+    },
+    {
+      "name": "visibility",
+      "type": "list<choice<visibility>>",
+      "default": "[Public]"
+    }
+  ],
+  "app.setting": [
+    {
+      "name": "create",
+      "type": "bool",
+      "default": "false"
+    }
+  ],
+  "app.test.setting": [
+    {
+      "name": "actor",
+      "type": "choice<actor>",
+      "default": "user"
+    },
+    {
+      "name": "timeoutSeconds",
+      "type": "number",
+      "default": "30"
+    },
+    {
+      "name": "parallel",
+      "type": "number",
+      "default": "0"
+    },
+    {
+      "name": "format",
+      "type": "choice<format>",
+      "default": "Json"
+    },
+    {
+      "name": "include",
+      "type": "list<text>",
+      "default": "[]"
+    },
+    {
+      "name": "exclude",
+      "type": "list<text>",
+      "default": "[]"
+    }
+  ],
+  "build": [
+    {
+      "name": "cache",
+      "type": "bool",
+      "default": "true"
+    },
+    {
+      "name": "files",
+      "type": "list",
+      "default": "[]"
+    }
+  ],
+  "debug": [
+    {
+      "name": "goal",
+      "type": "text",
+      "default": null
+    },
+    {
+      "name": "step",
+      "type": "number",
+      "default": null
+    },
+    {
+      "name": "variables",
+      "type": "list<text>",
+      "default": "[]"
+    },
+    {
+      "name": "maxLength",
+      "type": "number",
+      "default": "500"
+    },
+    {
+      "name": "grep",
+      "type": "text",
+      "default": null
+    },
+    {
+      "name": "level",
+      "type": "choice<level>",
+      "default": "Step"
+    },
+    {
+      "name": "verbose",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "llm",
+      "type": "clr",
+      "default": null
+    }
+  ],
+  "identity": [
+    {
+      "name": "identity",
+      "type": "list<identity>",
+      "default": "[]"
+    }
+  ],
+  "llm": [
+    {
+      "name": "cache",
+      "type": "bool",
+      "default": "true"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "goal": "Named",
+    "steps": [
+      "set default %!build.cache% = true",
+      "read notes.txt, cache=%!llm.cache%, write to %notes%",
+      "set %!app.test.setting.parallel% = 1",
+      "set %!build.files% = [\"a.goal\"]"
+    ],
+    "block": "\n\nSettings\n- %!build%(cache: bool = true, files: list = [])\n- %!llm%(cache: bool = true)\n- %!app.test.setting%(actor: choice<actor> = user, timeoutSeconds: number = 30, parallel: number = 0, format: choice<format> = Json, include: list<text> = [], exclude: list<text> = [])"
+  },
+  {
+    "goal": "NoneNamed",
+    "steps": [
+      "write out %!data%",
+      "set %x% = %!goal.Name%"
+    ],
+    "block": ""
+  }
+]

@@ -232,7 +232,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
                 && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null
                 && Items().Any(type => type.Names(InferName(typeof(global::app.type.item.setting.@this))!)))
-                Hold(new global::app.type.item.setting.kind.@this((global::app.type.item.setting.@this)Activator.CreateInstance(t)!));
+                Hold(new global::app.type.item.setting.kind.@this((global::app.type.item.setting.@this)Activator.CreateInstance(t)!, this));
             foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 var held = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;

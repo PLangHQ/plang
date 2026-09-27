@@ -50,6 +50,26 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal bool IsMembers => !Code.Root.Name.StartsWith('!')
         && Code.Items().Skip(1).All(h => h is code.Property { IsBinding: false });
 
+    /// <summary>The dotted paths a setting's variable spells, shortest first — <c>%!app.test.setting.parallel%</c>
+    /// spells <c>app</c>, <c>app.test</c>, <c>app.test.setting</c>, <c>app.test.setting.parallel</c> (its root
+    /// without the <c>!</c>, then each member). A binding, an index or a method ends them; a variable that is no
+    /// setting's (<c>%x%</c>) spells none.</summary>
+    internal IEnumerable<string> Paths
+    {
+        get
+        {
+            if (!Code.Root.Name.StartsWith('!')) yield break;
+            var path = Code.Root.Name[1..];
+            yield return path;
+            foreach (var hop in Code.Items().Skip(1))
+            {
+                if (hop is not code.Property { IsBinding: false } member) yield break;
+                path += "." + member.Name;
+                yield return path;
+            }
+        }
+    }
+
     /// <summary>The text between the % signs (<c>user.name</c>, <c>!data</c>) — the form the variable
     /// store takes while callers still hand it names.</summary>
     public string Name => Text.Length >= 2 ? Text[1..^1] : Text;
