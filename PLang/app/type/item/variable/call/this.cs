@@ -72,6 +72,16 @@ public sealed class @this : IAsyncDisposable
         return false;
     }
 
+    /// <summary>The names this overlay and its callers hold, the inner scope first.</summary>
+    internal IEnumerable<string> Names
+    {
+        get
+        {
+            for (var node = this; node != null; node = node.Caller)
+                foreach (var name in node._entries.Keys) yield return name;
+        }
+    }
+
     /// <summary>
     /// Writes <paramref name="value"/> into this overlay under <paramref name="name"/>.
     /// Does not propagate to <see cref="Caller"/> — siblings are isolated.

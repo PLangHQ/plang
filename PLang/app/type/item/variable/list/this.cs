@@ -347,6 +347,26 @@ public partial class @this
         return result;
     }
 
+    /// <summary>The variables this memory holds, as a list — <c>%!app.variable.list%</c>: one variable per
+    /// name, the current call's first (they shadow the actor's), a setting (<c>!</c>) left out. Born on
+    /// each read; the memory itself is the one store.</summary>
+    public global::app.type.item.list.@this<global::app.type.item.variable.@this> list
+    {
+        get
+        {
+            var names = (Calls.Current?.Names ?? []).Concat(_variables.Keys)
+                .Where(n => !n.StartsWith('!'))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>();
+            foreach (var name in names)
+                // a name the parser doesn't read back whole (stored by C#, not written in plang) isn't
+                // one a program can name
+                if (new parser.@this($"%{name}%").Read(0) is { } variable && variable.Text.Length == name.Length + 2)
+                    held.Add(variable);
+            return held;
+        }
+    }
+
     /// <summary>
     /// Gets all variable names.
     /// </summary>

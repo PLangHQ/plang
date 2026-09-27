@@ -12,4 +12,9 @@ public interface IList<TSelf, L>
     where L : list.@this<TSelf>
 {
     static abstract L List(global::app.@this app);
+
+    /// <summary>The list the asker (<paramref name="context"/>) sees. Null — every concept but one — is
+    /// the app's list (<see cref="List"/>); a concept whose list belongs to the asker (variable: its
+    /// actor's memory) answers it here.</summary>
+    static virtual L? Of(global::app.actor.context.@this context) => null;
 }

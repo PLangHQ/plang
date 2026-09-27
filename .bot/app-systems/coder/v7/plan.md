@@ -259,3 +259,17 @@ play, reached through navigation's context"; `Get(key)` takes no context (decisi
 I lean to (a): one type class, and the only new thing it learns (a list that belongs to the asker) is
 exactly what the plan says variable is. The `type` fact of `%!app.variable.user%` is its value's type
 (the variable reads its row's Data).
+
+## 7d — as built (ruling (a))
+
+- `IList<T, L>.Of(context)`: the list the asker sees; null (every concept but variable) is the app's list.
+  `type<T, L>` makes its app list lazily (`list`, on first read) and navigation always asks
+  `Of(parent.Context) ?? list` — the `list` member and a key naming one X both; C#'s `Get(key)` uses `list`.
+- `app.variable` = `type<variable, list<variable>>`. `variable` adds `Match(name)` (ignore case), no
+  `Current`, `List(app)` throws "a variable list belongs to an actor: use context.Variable", `Of(context)`
+  = `context.Variable.list`.
+- The memory's view `context.Variable.list`: one variable per name, the current call's overlay names first
+  (`call.Names`, inner scope first), `!` settings left out, names the parser can't read back whole
+  skipped. Born on each read; the dictionary stays the one store (its shape untouched).
+- One variable navigated as itself: its members by reflection; its `type` is the type of what it holds.
+- Tests: `VariableAccessorTests` (list, key, name, type, NotFound, overlay order, C# list throws).

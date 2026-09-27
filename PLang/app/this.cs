@@ -185,6 +185,13 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.type.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
 
     /// <summary>
+    /// The type named <c>variable</c> — <c>%!app.variable%</c>: its <c>list</c> is the asker's memory
+    /// (navigation's context), <c>.user</c> one variable in it. C# has no asker here: it uses
+    /// <c>context.Variable</c>, and <c>app.variable.list</c> says so.
+    /// </summary>
+    public global::app.type.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable { get; }
+
+    /// <summary>
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
@@ -288,6 +295,7 @@ public sealed partial class @this : IAsyncDisposable
         module = new(this);
         goal = new(this);
         test = new(this);
+        variable = new(this);
 
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own

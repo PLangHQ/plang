@@ -10,10 +10,18 @@ public sealed class @this<T, L> : @this
     where T : item.@this, item.ICreate<T>, item.IMatch<T>, item.ICurrent<T>, item.IList<T, L>
     where L : item.list.@this<T>
 {
-    public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T)) => list = T.List(app);
+    private readonly System.Lazy<L> _list;
 
-    /// <summary>The X's loaded so far — the list class T names, with its own work.</summary>
-    public L list { get; }
+    public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T))
+        => _list = new(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first
+    /// read; a concept whose list belongs to the asker has none here (its <c>List</c> says so).</summary>
+    public L list => _list.Value;
+
+    // The list the asker sees — its own for a concept whose list belongs to the asker, else the app's.
+    // Navigation always asks through here: one path for every concept.
+    private L Of(actor.context.@this context) => T.Of(context) ?? list;
 
     /// <summary>
     /// A collected type's face in the Out view is a summary — the names of its list (a type plang
@@ -24,7 +32,7 @@ public sealed class @this<T, L> : @this
         global::app.View mode, global::app.actor.context.@this? context)
     {
         if (mode != global::app.View.Out) return base.Output(writer, mode, context);
-        var names = list.Items().Where(p => p is not @this { Internal: true }).Select(p => p.ToString()!).ToList();
+        var names = (context != null ? Of(context) : list).Items().Where(p => p is not @this { Internal: true }).Select(p => p.ToString()!).ToList();
         writer.BeginObject();
         writer.Name("list");
         writer.BeginArray(names.Count);
@@ -39,10 +47,13 @@ public sealed class @this<T, L> : @this
     /// <c>Match(key)</c> answers (a goal by its address, a type by its name or alias). No match is a
     /// NotFound result. C#'s door; plang's <c>["key"]</c> and <c>.key</c> reach it through navigation.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key)
+    public System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key) => Find(list, key);
+
+    // The one key names in the list given — walked as the list reaches its items, so a list that
+    // reads them (goal's) stops at the match.
+    private async System.Threading.Tasks.ValueTask<data.@this<T>> Find(L from, string key)
     {
-        // walked as the list reaches its items — a list that reads them (goal's) stops at the match
-        await foreach (var p in list.Every())
+        await foreach (var p in from.Every())
             if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);
         return data.@this<T>.FromError(new global::app.error.Error($"no {Name} '{key}'", "NotFound", 404));
     }
@@ -54,18 +65,20 @@ public sealed class @this<T, L> : @this
             : data.@this<T>.FromError(new global::app.error.Error($"no {Name} is current", "NotFound", 404));
 
     /// <summary>
-    /// plang's door, one navigation step: the type's own members first (<c>current</c> with the
-    /// asker's context, then <c>list</c> and the facts), and a key that is none of them is one X —
-    /// <see cref="Get(string)"/>. The answer takes its context from the parent.
+    /// plang's door, one navigation step: the type's own members first (<c>current</c> and <c>list</c>
+    /// with the asker's context, then the facts), and a key that is none of them is one X, found in the
+    /// list the asker sees. The answer takes its context from the parent.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
     {
         if (string.Equals(key, "current", System.StringComparison.OrdinalIgnoreCase))
             return current(parent.Context);
+        if (string.Equals(key, "list", System.StringComparison.OrdinalIgnoreCase))
+            return new data.@this(key, Of(parent.Context), parent: parent);
         // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
         if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
         if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
-        var found = await Get(key);
+        var found = await Find(Of(parent.Context), key);
         if (!found.Success) return found;
         return new data.@this(key, (await found.Value())!, parent: parent);
     }

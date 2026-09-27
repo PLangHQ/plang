@@ -11,10 +11,24 @@ namespace app.type.item.variable;
 /// variable rather than carrying a value.</para>
 /// </summary>
 [global::app.Attributes.PlangType]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IName
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IName,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IList<@this, global::app.type.item.list.@this<@this>>
 {
     public static string Example => "%user%";
     public static string Description => "A variable, named between % signs, that holds a value.";
+
+    /// <summary>A key names this variable by its name; case is not the program's to get right.</summary>
+    public System.Threading.Tasks.ValueTask<@this?> Match(string key)
+        => System.Threading.Tasks.ValueTask.FromResult(string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase) ? this : null);
+
+    /// <summary>The variables belong to an actor, not to the app: there is no app-wide list of them.</summary>
+    public static global::app.type.item.list.@this<@this> List(global::app.@this app)
+        => throw new System.InvalidOperationException("a variable list belongs to an actor: use context.Variable");
+
+    /// <summary>The variables the asker sees — its actor's memory.</summary>
+    public static global::app.type.item.list.@this<@this>? Of(global::app.actor.context.@this context)
+        => context.Variable.list;
 
     /// <summary>The variable as written, with its % signs.</summary>
     [Out] public string Text { get; }
@@ -168,6 +182,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <inheritdoc/>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => await Start(ctx);
+
+    /// <summary>One variable navigated as itself (<c>%!app.variable.user.name%</c>): its members, and its
+    /// <c>type</c> — the type of what it holds.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+    {
+        if (!string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
+            return await base.Get(parent, key);
+        var held = await Start(parent.Context);
+        return held.IsInitialized ? new global::app.data.@this(key, held.Type, parent: parent) : held;
+    }
 
     /// <summary>A reference renders itself FRESH every read — like a computed, never memoized onto
     /// the holding Data. The same authored reference (a goal-call param <c>planStep=%item%</c>) is
