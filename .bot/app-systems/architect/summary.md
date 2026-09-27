@@ -7,6 +7,10 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 **Waiting for Ingi (not decided):**
 - **Kind faces** (`%!app.type.text.kind.md%` → name, extension, mime; `%!app.type.choice.kind.operator%` → name, values). Kinds aren't items, so navigation can't reach `kind.md` or `kind.list` (a kind's indexer and a method aren't properties). (a) A kind becomes an item: it answers `.list` and `["md"]` itself, as Ingi ruled ("kind should not be a list, but a Kind … .list like always"), at the cost of renaming the kind verbs that clash with item's `Get`/`Output` across every kind (json, list, dict, `*`, number's, schemes, sets). (b) The type's navigation answers `.kind` as the list of full types, small, but it makes a bare type's `kind` a list, the opposite of that ruling. Coder leaves the kind faces undone in stage 5; the rest of stage 5 goes on. The coder's cost for (a) (`.bot/app-systems/coder/v5/plan.md`): the kind verbs renamed Get → Walk, Output → Render, Data → Child, Set → Put, Read → Bridge, across json, list, dict, `*`, the 15 number kinds, and the set, scheme and hash kinds. (Architect's note: `Render` may read as presentation, which plang keeps for templates; worth a second look if (a).)
 
+**Noticed overnight, not acted on (for Ingi):**
+- A full `plang build` in `os/` stops after 3 of 70 goals: `os/.build/start.pr` and `test.pr` are old-format files, so the build re-decides them, nano's answer for Start.goal step 6 is refused (StepsRefused), and one refused step aborts the whole build. The coder built the builder with a file list instead and restored both files. Two questions: rebuild those two root goals (costs an LLM run), and should one refused step abort a whole build rather than skip its goal?
+- The debug watch resolves `%!x%` names through the memory only, not the settings, so `--debug` can't show a setting's value (found checking `%!build.cache%`; pinned by tests instead).
+
 **Decisions made while Ingi slept:**
 | # | Stage | Decision | Why | Where |
 |---|-------|----------|-----|-------|
