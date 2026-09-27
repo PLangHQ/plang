@@ -98,11 +98,14 @@ public partial class Read : IContext
         // stamps can't drift; the content type appears only when runtime examination narrows.
         var inferred = Context.App.type.list[new global::app.type.@this("file", p.Extension.TrimStart('.')), Context];
 
-        // Missing-file warning, written only while a build has its "builder" channel open.
-        // A probe that can't answer (denied at build time) gives no warning — the runtime
-        // read asks again under its own grant.
+        // Build warnings, written only while a build has its "builder" channel open: a missing
+        // file, or a probe that couldn't answer (denied at build time) carrying its error. Neither
+        // fails the build — the runtime read asks again under its own grant.
         var exists = await p.ExistsAsync(Context);
-        if (exists.Success && !await exists.ToBooleanAsync())
+        string? message = !exists.Success
+            ? $"file.read: could not check literal path '{raw}': {exists.Error?.Message} ({exists.Error?.Key})"
+            : !await exists.ToBooleanAsync() ? $"file.read: literal path '{raw}' does not exist on disk" : null;
+        if (message != null)
         {
             // Advisory build warning as a native dict {action, message} —
             // `action` is the source attribution (the handler reduces to its
@@ -110,7 +113,7 @@ public partial class Read : IContext
             string source = __action == null ? "" : $"{__action.Module}.{__action.Name}";
             var warning = new global::app.type.item.dict.@this()
                 .Set("action", source)
-                .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
+                .Set("message", message);
             if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
         }
 
