@@ -26,7 +26,7 @@ Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the 
 **Members of a collected type (`type.@this<X>`):**
 - `list`: a `list<X>`, the X's loaded so far; `list.all` is every one (below).
 - `current(context)`: the one in play, an X (`%!app.goal.current%` is a `goal/this.cs` instance, Ingi). The element's class answers it through a `static virtual` member, the same pattern as ICreate's `Create` (`type/item/ICreate.cs`): goal `context.Goal` (`actor/context/this.cs:100`), actor `context.Actor` (`:89`); a concept nothing is inside answers none (404). Today navigation reaches a method taking the context only on the `!` hop (`data/this.Navigation.cs:276-283`; a plain hop reads properties only, `type/item/kind/reflection/this.cs:17-26`), so the type's own navigation (`Get`, below) answers `current` with the asker's context, and plang writes `%!app.goal.current%`.
-- `Get(key)`: walks `(await list.all(empty))` and answers the first element whose `Match(key)` answers (`empty`: the shared empty setting, where every key answers its default, as the shared empty `on`), as `data<X>`. No match is a 404 NotFound result, not an exception (today both lookups throw: `goal/list/this.cs:244`, `type/list/this.cs:171`). **One async door, no C# indexer (Ingi, round 6):** a C# indexer can't await, and finding a goal may load its `.pr`, so C# writes `await app.goal.Get("/show")`, `await app.type.Get("text")`. plang's `["key"]` and `.key` reach the same `Get`: navigation is already async (every item's `ValueTask<data> Get(data parent, string key)`, `type/item/this.cs:235`, `type/this.cs:496`), and the type's navigation calls `Get(key)` for a key that isn't one of its own members. Two `Get`s on one object answer the same question ("what does `key` name"). `all()` is async too (listing `.build/` reads the disk).
+- `Get(key)`: walks `list.all()` (every default) and answers the first element whose `Match(key)` answers, as `data<X>`. No match is a 404 NotFound result, not an exception (today both lookups throw: `goal/list/this.cs:244`, `type/list/this.cs:171`). **One async door, no C# indexer (Ingi, round 6):** a C# indexer can't await, and finding a goal may load its `.pr`, so C# writes `await app.goal.Get("/show")`, `await app.type.Get("text")`. plang's `["key"]` and `.key` reach the same `Get`: navigation is already async (every item's `ValueTask<data> Get(data parent, string key)`, `type/item/this.cs:235`, `type/this.cs:496`), and the type's navigation calls `Get(key)` for a key that isn't one of its own members. Two `Get`s on one object answer the same question ("what does `key` name"). Walking `all()` is async (goal's lazy list reads the disk as it goes); `all()` itself answers at once.
 - **The element answers who a key names (`IMatch<TSelf>.Match(key)`, round 6):** itself, one of its own, or none (async: touching a goal's children loads its `.pr`). A goal answers for its `Address` (`goal/this.cs:214`: its .goal path without the extension, `/system/builder/EmitBuildEvent`, the name that reaches it from anywhere), and **a sub-goal's address is its file's address + `#` + its name** (`/start#show`; Ingi: "get loads start and asks for show"): `/` already means a folder (`call BuildGoal/Start` is Start in the folder BuildGoal, `goal/list/this.cs:107-117`), so `/start/show` would collide with `start/show.goal`, and in a URL `#` names a part inside one document. **The parser sets a sub-goal's parent when it adds the child (Ingi),** as the `.pr` reader already births it with its parent (`goal/serializer/Reader.cs:37-44,66`); today the parse only adds to `Child` (`goal/this.cs:616-621`), so right after a build a sub-goal has no `Parent`. **Visibility is derived from it:** `Parent == null` is public, else private, replacing the `goals.Count == 0 ?` at parse (`:600`) and the `.pr`'s `visibility` key (`Reader.cs:69-72`). A type answers for its name or one of its aliases or one of its aliases (`"string"` → text; each type owns its aliases, stage 3); a module or an actor its name. A precision (`int`) is a kind of number, not an alias: `["number"].kind["int"]`. The spelled forms `"text/md"` and `"list<path>"` become `["text"].kind["md"]` and `["list"].kind["path"]`. (`type.Is(string)`, `type/this.cs:438`, isn't reused: it answers true for `item` on every type.)
 - `.key`: shorthand for `["key"]` where the key is a plain word (`%!app.type.text%`, `%!app.module.file%`). The type's own members win: `%!app.type.list%` is the list, and the type named `list` is `["list"]`. A goal's key is a path, so a goal is always `%!app.goal["/show"]%`.
 - the facts, `on` and `kind`, as on every type.
@@ -40,9 +40,9 @@ public sealed class @this<T> : @this
 {
     public @this(app.@this app) : base(item.@this.NameOf(typeof(T))) => list = T.List(app);   // base ctor: type/this.cs:105
     public item.list.@this<T> list { get; }
-    public async ValueTask<data.@this<T>> Get(string key)                          // empty = every default
+    public async ValueTask<data.@this<T>> Get(string key)
     {
-        foreach (var p in (await list.all(empty)).Items())                        // list/this.Generic.cs:26, typed
+        await foreach (var p in list.all())                                       // every default; a lazy list loads as it goes
             if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);  // data/this.cs:713
         return data.@this<T>.FromError(new Error($"no {Name} '{key}'", "NotFound", 404));   // :714
     }
@@ -116,11 +116,13 @@ public ValueTask<@this?> Match(string key) => new(string.Equals(Name, key, Syste
 **What `list` is, each type decides (Ingi).** Today the base item takes the name for every item: `item.list` is the item's **history**, the values it was made from (`item/this.cs:262-269`; a dict parsed from a file holds the file, so `%config% is file` stays true, `:282-286`; an image made from a path holds the path, `image/this.cs:165`). It moves to its own object: `item.history` (`app/type/item/history/this.cs`, today `item/type/list/this.cs`), whose `list` is those values in order (wire → source → dict), with `Add(prior)` and `Has(type)` as today (`item/type/list/this.cs:25-36`). That frees `list` on every item, so `type<T>.list` hides nothing, and `type/list` means only the registry. The call sites: `type/item/this.cs:269,286`, `type/item/source.cs:146,161`, `type/item/image/this.cs:165`, `type/item/file/this.cs:49,106`, `type/item/url/this.cs:35,91`, and `PLang.Tests/Shared/MaterializeProbeExtensions.cs:24`. (`ICreate.cs:66`'s `errVal.list` is an error's own causes, `error/Error.cs:63`, not the history.)
 - `%!app.goal.list%` is the goals loaded so far (goals load when they're called).
 - **`%!app.goal.list.all%` is every goal in the app,** built from a listing of `.build/` (the `.pr` files, not read); each goal loads when it's first touched. The dead-goal warning (stage 11) and `goal["address"]` use it.
-- **Every list has `all`, and `all` takes a `setting` (round 6, Ingi; replaces the `private`/`os` parameters settled in round 5).** One signature on every list, so an override never changes it. The base list gets `all` (it has none today) and answers itself; a list that loads lazily overrides it. Async, because goal's override lists `.build/`:
+- **Every list has `all`, and `all` takes a `setting` (round 6, Ingi; replaces the `private`/`os` parameters settled in round 5).** One signature on every list, so an override never changes it. The base list gets `all` (it has none today) and answers itself; a list that loads lazily overrides it. **`all` answers its list at once; walking it is async (Ingi: "this should just be `foreach (var p in list.all())`"):** goal's answer is a lazy list that lists `.build/` and loads each `.pr` as it is walked, and every list is walkable from C# as `IAsyncEnumerable<T>`, so a caller writes `await foreach (var p in list.all())`: no `await` on `all`, no `.Items()`, no `empty` passed:
 
 ```csharp
 // type/item/list/this.Generic.cs — NEW: every list takes the call's setting as it came
-public virtual ValueTask<list.@this<T>> all(data.@this setting) => ValueTask.FromResult<list.@this<T>>(this);   // the same list, wrapped
+public virtual list.@this<T> all(data.@this setting) => this;           // the same list
+public list.@this<T> all() => all(empty);                                // no setting: every default (empty = the shared empty setting)
+// list<T> : IAsyncEnumerable<T> — C# walks any list with await foreach; a lazy list loads as it goes
 
 // goal/list/setting/this.cs — NEW: what goal's list can be told; the defaults live here
 namespace app.goal.list.setting;
@@ -136,24 +138,22 @@ public interface ISetting<TSetting> where TSetting : item.@this, item.ICreate<TS
 // goal/list/this.cs
 public sealed class @this : item.list.@this<goal.@this>, item.ISetting<setting.@this>
 {
-    public override async ValueTask<list.@this<goal.@this>> all(data.@this setting)
-    {
-        var s = await setting.Value<setting.@this>();     // the typed ask: the setting class makes itself (data/this.cs:707)
-        … s.os … s.visibility …                           // lists .build/, loads on touch
-    }
+    // a lazy list: when walked, it reads the setting (the typed ask, `await setting.Value<setting.@this>()`,
+    // data/this.cs:707), then lists .build/ by s.os and s.visibility and loads each .pr as it's reached
+    public override list.@this<goal.@this> all(data.@this setting) => new all.@this(this, setting);
 }
 ```
 
   - plang: `%!app.goal.list.all%` (every default: the app's public goals, one per `.pr`, from the listing alone) and `%!app.goal.list.all(setting: {os: true, visibility: private})%`.
   - **The settings are a C# class (Ingi: "define the settings in c#, not get, because we can then build on top of that"):** `setting/this.cs` under its owner. A missing key is the property's own default (`= false`, `= Public`; Ingi: never an empty result). `visibility` writes its default because its enum's zero is `Private` (`goal/this.cs:16`).
   - **The builder reads the setting class** (named by `ISetting<TSetting>`) the way it reads a type's facts: properties, types, defaults (`os: bool = false, visibility: visibility = public`); a plang call with an unknown key fails at build. No generator step.
-  - One signature on every list, `all(setting)`: each list turns the call's dict into its own setting class; a list with none ignores it. The type's `Get(key)` calls `all` with the shared empty setting, so every default.
+  - One signature on every list, `all(setting)`: each list turns the call's dict into its own setting class; a list with none ignores it. `all()` is every default; the type's `Get(key)` walks it.
 - **`all` is one of the list's own words (round 6, Ingi).** Navigating a list knows only `count`/`length`, `first`, `last`, `random` and a number; an empty list answers NotFound first, and any other word goes to the first element (`type/item/list/this.cs:556-576`: `%list.street%` → `%list[0].street%`). So `all` joins them, before the empty check:
 
 ```csharp
 // type/item/list/this.cs — Get(parent, key), NEW, right after count/length
 if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
-    return new Data(key, await all(empty), parent: parent);    // goal's override runs; an empty list still answers
+    return new Data(key, all(), parent: parent);    // goal's override runs; an empty list still answers
 ```
 
   `.all` runs `all` with the shared empty setting (every layer's defaults); `all(setting: {…})` is a method step on the list (stage 6's `method` hop). `all` lives on the base list class, where `Get` is; the typed `list<T>` view over it is coder's. plang paths are written in lowercase (`%!app.goal["/show"].name%`); navigation ignores case.
@@ -395,7 +395,7 @@ A collected type's face is a summary (names only); detail comes by navigating to
 | a concept's list | `%!app.goal.list%` | `app.goal.list` | `app/goal/list/this.cs` | a `list<goal>`, like `step.list`; holds the concept's own work (loading) |
 | the one in play | `%!app.goal.current%` | `app.goal.current(context)` → `data<goal>` | `app/type/item/ICurrent.cs`; `goal.Current` | one item, the element's `static virtual`, the ICreate pattern; 404 when none |
 | which list holds them | `%!app.goal.list%` | `goal.List(app)` | `app/type/item/IList.cs` | its own interface, one question; default a plain `list<T>`; the name is shared with .NET's `IList<T>` |
-| picking one | `%!app.goal["/show"]%` | `await app.goal.Get("/show")` → `data<goal>` | `app/type/this.Generic.cs` | walks `list.all(empty)`, the first `Match` that answers; async (may load a `.pr`); no C# indexer; a miss is a 404 result |
+| picking one | `%!app.goal["/show"]%` | `await app.goal.Get("/show")` → `data<goal>` | `app/type/this.Generic.cs` | `await foreach (var p in list.all())`, the first `Match` that answers; async (may load a `.pr`); no C# indexer; a miss is a 404 result |
 | an item's history | `%config!history.list%` (the `!` hop reaches a value's members) | `item.history` | `app/type/item/history/this.cs` | its `list` is the values the item was made from (wire → source → dict); `list` itself is each type's own |
 | who a key names | — | `await x.Match(key)` → itself, one of its own, or none | `app/type/item/IMatch.cs` | the element's knowledge (goal: its address, a sub-goal `/start#show` through its parent; type: name or alias); no raw `bool` on an item's public member (PLNG003) |
 | a sub-goal's address | `%!app.goal["/start#show"]%` | `goal.Address` | `app/goal/this.cs` | the file's address + `#` + its name; the parent is set where the child is added; visibility derives from the parent |
