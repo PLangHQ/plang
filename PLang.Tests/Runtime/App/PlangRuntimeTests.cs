@@ -68,39 +68,28 @@ public class PlangRuntimeTests : IDisposable
     // --- Step 2: IEvent + Event resolution ---
 
     [Test]
-    public async Task Step_Event_Before_ReturnsEmptyWhenNoBindings()
+    public async Task Step_On_Start_Before_IsEmptyWhenNothingIsBound()
     {
         var step = new Step { Index = 0, Text = "test step" };
-        var context = _app.User.Context;
 
-        // Step implements IEvent — Event property should exist
-        await Assert.That(step.Events).IsNotNull();
-
-        // Inject context so Event can resolve bindings
-        step.Events.Context = context;
-
-        await Assert.That(step.Events.Before).IsNotNull();
-        await Assert.That(step.Events.Before.Count).IsEqualTo(0);
+        await Assert.That(step.on["start"]!.before.Count).IsEqualTo(0);
+        await Assert.That(_app.type.list["step"].on["start"]!.before.Count).IsEqualTo(0);
     }
 
     [Test]
-    public async Task Step_Event_Before_ReturnsMatchingBindings()
+    public async Task EventOn_BeforeStep_BindsOnTheStepTypesStart()
     {
         var context = _app.User.Context;
 
-        // Register a before-step event
         var onAction = new global::app.module.action.@event.On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
             Goal = Make.Call("LogBefore"),
             StepPattern = (global::app.type.item.text.@this)"*"
         };
         await onAction.Start();
 
-        var step = new Step { Index = 0, Text = "write hello" };
-        step.Events.Context = context;
-
-        var bindings = step.Events.Before;
-        await Assert.That(bindings.Count).IsGreaterThan(0);
-        await Assert.That(bindings[0]["Name"]!.Value?.ToString()).IsEqualTo("LogBefore");
+        var before = _app.type.list["step"].on["start"]!.before;
+        await Assert.That(before.Count).IsEqualTo(1);
+        await Assert.That(ReferenceEquals(before[0].Actor, _app.User)).IsTrue();
     }
 
     // --- Step 5: Full PLang runtime loop ---

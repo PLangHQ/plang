@@ -32,10 +32,11 @@ public partial class intercept : IContext
         var paramMatchers = Parameter == null || await Parameter.IsEmpty() ? null
             : (await Parameter.Value()).Clr<Dictionary<string, object?>>();
 
-        Func<actor.context.@this, app.goal.step.action.@this?, data.@this?, Task<data.@this>> handler = async (context, currentAction, _) =>
+        Func<global::app.type.item.@this, data.@this, actor.context.@this, Task<data.@this>> handler = async (item, _, context) =>
         {
-            // The action being intercepted is handed to the handler by the BeforeAction lifecycle
-            // (symmetry with the AfterAction side) — no guessing from the step.
+            // The action being intercepted is the item the action type's on.start fired for — no guessing
+            // from the step.
+            var currentAction = item as app.goal.step.action.@this;
 
             // Check parameter matching if specified
             if (paramMatchers != null && currentAction != null)
@@ -52,26 +53,32 @@ public partial class intercept : IContext
             if (call != null)
                 return await call.Start(context);
 
-            // Return value mock — skip action and return the value
+            // Return value mock — the value, marked Handled, cancels the action and is its result
             if (returnValue != null)
             {
-                context.EventOverride = Data(returnValue);
-                return Data(returnValue);
+                var mocked = Data(returnValue);
+                mocked.Handled = true;
+                return mocked;
             }
 
             // Spy mode — just tracked the call, let real action run
             return Data();
         };
 
+        // The registered binding carries the pattern and the id mock.reset finds; the mock itself is bound
+        // before the action type's start, for this actor, on the actions the pattern takes.
         var binding = new EventBinding(
             Trigger.BeforeAction,
-            handler,
+            (context, _, _) => Task.FromResult(context.Ok()),
             actionPattern: (await Pattern.Value())!.Clr<string>()!);
 
         handle.EventBindingId = binding.Id;
 
         // Tag binding so mock.reset can find all mock bindings
         binding.Targets.Add(handle);
+        binding.Targets.Add(Context.App.type.list["action"].Own().Bind("start", When.before, handler,
+            Context.Actor, global::app.@event.binding.Scope.actor,
+            (item, _) => item is app.goal.step.action.@this action && binding.MatchesAction(action.Module.Name, action.Name)));
 
         Context.Events.Register(binding);
 

@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using app.actor.context;
 using app.@event;
-using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.module.action.debug;
 
@@ -133,49 +132,40 @@ public sealed class @this
             catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(grep), RegexOptions.IgnoreCase); }
         }
 
-        // Debug watches user execution, so its step/goal(/action) bindings register on the
-        // User actor's context (where user goals fire) — Debug itself is born with System's context.
-        var events = _context.App.User.Context.Events;
-        var goal = Setting.Goal?.ToString() ?? "*";
+        // Debug watches user execution, so its bindings on the step, goal (and action) types' on.start are the
+        // User actor's (where user goals run) — Debug itself is born with System's context. They live as long
+        // as the app whose types they are bound on.
+        var user = _context.App.User;
+        var types = _context.App.type.list;
         var step = Setting.Step?.ToInt32();
 
-        events.Register(new EventBinding(
-            Trigger.BeforeStep,
-            (context, _, _) => BeforeStepHandler(context, step),
-            goalNamePattern: goal,
-            priority: int.MaxValue,
-            stopOnError: false));
+        var steps = types["step"].Own();
+        steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context, step), user, global::app.@event.binding.Scope.actor,
+            (item, _) => item is global::app.goal.step.@this s && Watches(s.Goal));
+        steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context, step), user, global::app.@event.binding.Scope.actor,
+            (item, _) => item is global::app.goal.step.@this s && Watches(s.Goal));
 
-        events.Register(new EventBinding(
-            Trigger.AfterStep,
-            (context, _, _) => AfterStepHandler(context, step),
-            goalNamePattern: goal,
-            priority: int.MaxValue,
-            stopOnError: false));
-
-        events.Register(new EventBinding(
-            Trigger.AfterGoal,
-            (context, _, _) => AfterGoalHandler(context),
-            goalNamePattern: goal,
-            priority: int.MaxValue,
-            stopOnError: false));
+        types["goal"].Own().Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
+            (item, _) => item is global::app.goal.@this g && Watches(g));
 
         if (Setting.Level.Value == global::app.module.action.debug.Level.Action)
         {
-            events.Register(new EventBinding(
-                Trigger.BeforeAction,
-                (context, _, _) => BeforeActionHandler(context, step),
-                goalNamePattern: goal,
-                priority: int.MaxValue,
-                stopOnError: false));
-
-            events.Register(new EventBinding(
-                Trigger.AfterAction,
-                (context, _, _) => AfterActionHandler(context, step),
-                goalNamePattern: goal,
-                priority: int.MaxValue,
-                stopOnError: false));
+            var actions = types["action"].Own();
+            actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
+            actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
         }
+    }
+
+    // Whether debug watches <paramref name="goal"/>: every goal (`*`), the goals a `prefix*` starts, or the one
+    // named (case aside).
+    private bool Watches(global::app.goal.@this? goal)
+    {
+        var pattern = Setting.Goal?.ToString();
+        if (string.IsNullOrEmpty(pattern) || pattern == "*") return true;
+        var name = goal?.Name ?? "";
+        return pattern.EndsWith('*')
+            ? name.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)
+            : string.Equals(name, pattern, StringComparison.OrdinalIgnoreCase);
     }
 
 

@@ -13,13 +13,6 @@ public sealed partial class @this
     // A step is a plain C# host — carried as clr<step>, reflected off its [Store] props.
 
 
-    private module.Events? _events;
-    [JsonIgnore]
-    public module.Events Events
-    {
-        get => _events ??= new module.Events(this);
-        set => _events = value;
-    }
     [Store, LlmBuilder, Debug, Default]
     public int Index { get; internal set; }
 
@@ -104,42 +97,46 @@ public sealed partial class @this
     [JsonIgnore]
     public global::app.goal.@this Goal { get; init; } = null!;
     /// <summary>
-    /// Starts this step: lifecycle events → actions.
-    /// Error handling, caching, and timeouts are per-action modifiers, not step-level.
+    /// Starts this step through its <c>on.start</c> — the step type's and its own: before runs the type's then
+    /// its own, then its actions, then after runs its own then the type's. A before that fails or cancels is the
+    /// result: the actions don't start, every after still runs on it. Error handling, caching, and timeouts are
+    /// per-action modifiers, not step-level.
     /// </summary>
     public async Task<data.@this> Start(actor.context.@this context)
     {
         context.Step = this;
-        var lifecycle = context.LifecycleFor(this);
+        global::app.type.item.@this[] level = [context.App.type.list["step"], this];
 
-        var beforeResult = await lifecycle.Before.Run(context, new app.@event.moment.@this(app.@event.Trigger.BeforeStep, this));
-        if (!beforeResult.Success) return beforeResult;
-        if (beforeResult.Handled) return beforeResult;
-
-        data.@this result;
-        try
+        var result = context.Ok();
+        foreach (var each in level)
         {
-            result = await Code.Start(context);   // action.list owns the chain loop + fire
+            result = await each.on["start"]!.before.Start(this, result, context);
+            if (!result.Success || result.Handled) break;
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
+        if (result.Success && !result.Handled)
         {
-            // Preserve the exception's class identity as the error Key so on-error
-            // handlers keyed on a typed exception (e.g. ChannelNotFoundException →
-            // "ChannelNotFound") still match. Falls back to "StepError" only when
-            // the exception is the bare base type. Trims trailing "Exception".
-            var typeName = ex.GetType().Name;
-            var key = typeName == nameof(Exception)
-                ? "StepError"
-                : (typeName.EndsWith("Exception", StringComparison.Ordinal)
-                    ? typeName[..^"Exception".Length]
-                    : typeName);
-            result = context.Error(new global::app.error.ServiceError(
-                ex.Message, key, 400) { Exception = ex });
+            try
+            {
+                result = await Code.Start(context);   // action.list owns the chain loop + fire
+            }
+            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
+            {
+                // Preserve the exception's class identity as the error Key so on-error
+                // handlers keyed on a typed exception (e.g. ChannelNotFoundException →
+                // "ChannelNotFound") still match. Falls back to "StepError" only when
+                // the exception is the bare base type. Trims trailing "Exception".
+                var typeName = ex.GetType().Name;
+                var key = typeName == nameof(Exception)
+                    ? "StepError"
+                    : (typeName.EndsWith("Exception", StringComparison.Ordinal)
+                        ? typeName[..^"Exception".Length]
+                        : typeName);
+                result = context.Error(new global::app.error.ServiceError(
+                    ex.Message, key, 400) { Exception = ex });
+            }
         }
-
-        var afterResult = await lifecycle.After.Run(context, new app.@event.moment.@this(app.@event.Trigger.AfterStep, this));
-        if (!afterResult.Success) return afterResult;
-
+        for (var i = level.Length - 1; i >= 0; i--)
+            result = await level[i].on["start"]!.after.Start(this, result, context);
         return result;
     }
 

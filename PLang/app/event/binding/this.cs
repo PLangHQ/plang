@@ -10,11 +10,11 @@ public sealed class @this : global::app.type.item.@this
     internal static readonly System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> Always = (_, _) => true;
 
     private readonly list.@this _list;
-    private readonly System.Func<global::app.type.item.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> _handler;
+    private readonly System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> _handler;
     private readonly System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> _filter;
 
     internal @this(list.@this list,
-        System.Func<global::app.type.item.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
+        System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
         global::app.actor.@this actor, Scope scope,
         System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
     {
@@ -36,9 +36,16 @@ public sealed class @this : global::app.type.item.@this
     internal bool For(global::app.type.item.@this item, global::app.actor.context.@this context)
         => (Scope == Scope.app || ReferenceEquals(context.Actor, Actor)) && _filter(item, context);
 
-    /// <summary>Starts the handler for the item the event fired for, in the asker's context.</summary>
-    internal System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item, global::app.actor.context.@this context)
-        => _handler(item, context);
+    /// <summary>Starts the handler for the item the event fired for, on the result as it stands, in the asker's
+    /// context. A binding does not fire inside its own handler (what it starts may fire its event again): there
+    /// it answers a plain success.</summary>
+    internal async System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context)
+    {
+        if (!context.TryEnterEvent(this)) return context.Ok();
+        try { return await _handler(item, result, context); }
+        finally { context.ExitEvent(this); }
+    }
 
     /// <summary>Takes it off its event: it fires no more.</summary>
     public void Remove() => _list.Remove(this);

@@ -104,12 +104,6 @@ public sealed class @this : IDisposable
     public Step? Step { get; set; }
 
     /// <summary>
-    /// Set by event.skipAction to override the current action's result.
-    /// Cleared by EventBinding.Run after reading.
-    /// </summary>
-    public data.@this? EventOverride { get; set; }
-
-    /// <summary>
     /// Test context — a Data with Properties for results, summary, etc.
     /// Set when --test flag is active. Accessible via %!test%.
     /// Properties are extensible — results, summary can be GoalCalls.
@@ -143,8 +137,6 @@ public sealed class @this : IDisposable
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(linkTo);
-        // Wire event registration to invalidate the resolved-events cache
-        Events.OnChanged = InvalidateEventCache;
 
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
@@ -398,126 +390,14 @@ public sealed class @this : IDisposable
         return (data.@this<T>)data;
     }
 
-    private readonly ConcurrentDictionary<object, object> _eventContainers = new();
-    private readonly ConcurrentDictionary<string, byte> _activeEventBindings = new();
+    // The bindings running in this context: a binding doesn't fire inside its own handler.
+    private readonly ConcurrentDictionary<object, byte> _activeEventBindings = new();
 
-    /// <summary>
-    /// Returns true if the event binding is not already running, and marks it as active.
-    /// Used to prevent re-entrant event handler execution.
-    /// </summary>
-    internal bool TryEnterEvent(string bindingId) => _activeEventBindings.TryAdd(bindingId, 0);
+    /// <summary>True, marking it running, when <paramref name="binding"/> is not already running here.</summary>
+    internal bool TryEnterEvent(object binding) => _activeEventBindings.TryAdd(binding, 0);
 
-    /// <summary>
-    /// Marks an event binding as no longer active.
-    /// </summary>
-    internal void ExitEvent(string bindingId) => _activeEventBindings.TryRemove(bindingId, out _);
-
-    /// <summary>
-    /// Clears the event resolution cache. Must be called when events are registered
-    /// during execution so newly added events are picked up on subsequent EventsFor() calls.
-    /// </summary>
-    public void InvalidateEventCache() => _eventContainers.Clear();
-
-    /// <summary>
-    /// Resolves per-context lifecycle for a Goal. Lazy-resolves from User.Events on first call, cached on context.
-    /// </summary>
-    public Lifecycle LifecycleFor(Goal goal)
-    {
-        return (Lifecycle)_eventContainers.GetOrAdd(goal, _ =>
-        {
-            var lifecycle = new Lifecycle();
-            var events = Events;
-
-            foreach (var b in events.GetMatchingBindings(Trigger.OnBeforeGoalLoad, goalName: goal.Name))
-                lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.OnAfterGoalLoad, goalName: goal.Name))
-                lifecycle.After.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.BeforeGoal, goalName: goal.Name))
-                lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.AfterGoal, goalName: goal.Name))
-                lifecycle.After.Add(b);
-
-            return lifecycle;
-        });
-    }
-
-    /// <summary>
-    /// Resolves per-context lifecycle for a Step. Lazy-resolves from User.Events on first call, cached on context.
-    /// </summary>
-    public Lifecycle LifecycleFor(Step step)
-    {
-        return (Lifecycle)_eventContainers.GetOrAdd(step, _ =>
-        {
-            var lifecycle = new Lifecycle();
-            var events = Events;
-            var goalName = step.Goal?.Name;
-
-            foreach (var b in events.GetMatchingBindings(Trigger.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
-                lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
-                lifecycle.After.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.BeforeStep, goalName: goalName, stepText: step.Text))
-                lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.AfterStep, goalName: goalName, stepText: step.Text))
-                lifecycle.After.Add(b);
-
-            return lifecycle;
-        });
-    }
-
-    /// <summary>
-    /// Resolves per-context lifecycle for an Action. Lazy-resolves from User.Events on first call, cached on context.
-    /// </summary>
-    public Lifecycle LifecycleFor(Action action)
-    {
-        return (Lifecycle)_eventContainers.GetOrAdd(action, _ =>
-        {
-            var lifecycle = new Lifecycle();
-            var events = Events;
-
-            foreach (var b in events.GetMatchingBindings(Trigger.BeforeAction, module: action.Module.Name, actionName: action.Name))
-                lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.AfterAction, module: action.Module.Name, actionName: action.Name))
-                lifecycle.After.Add(b);
-
-            return lifecycle;
-        });
-    }
-
-    /// <summary>
-    /// Returns the calls the matching event bindings run for the given owner and phase.
-    /// Owner type determines scope: Step → step bindings, Goal → goal bindings.
-    /// </summary>
-    public List<Action> GetEventBindings(object owner, module.EventPhase phase)
-    {
-        var events = Events;
-        var (beforeType, afterType) = owner switch
-        {
-            Action action => (Trigger.BeforeAction, Trigger.AfterAction),
-            Step step => (Trigger.BeforeStep, Trigger.AfterStep),
-            Goal goal => (Trigger.BeforeGoal, Trigger.AfterGoal),
-            _ => (Trigger.BeforeStep, Trigger.AfterStep) // fallback
-        };
-
-        var eventType = phase == module.EventPhase.Before ? beforeType : afterType;
-
-        string? goalName = owner switch
-        {
-            Action action => action.Step?.Goal?.Name,
-            Step step => step.Goal?.Name,
-            Goal goal => goal.Name,
-            _ => null
-        };
-        string? stepText = owner is Step s ? s.Text : null;
-        string? moduleName = owner is Action a ? a.Module.Name : null;
-        string? actionName = owner is Action a2 ? a2.Name : null;
-
-        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: moduleName, actionName: actionName);
-        return bindings
-            .Where(b => b.Call != null)
-            .Select(b => b.Call!)
-            .ToList();
-    }
+    /// <summary>Marks <paramref name="binding"/> as no longer running here.</summary>
+    internal void ExitEvent(object binding) => _activeEventBindings.TryRemove(binding, out _);
 
     /// <summary>
     /// Requests cancellation of this execution.

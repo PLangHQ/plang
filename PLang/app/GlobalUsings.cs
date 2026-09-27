@@ -4,10 +4,6 @@ global using Step = app.goal.step.@this;
 global using ErrorOrder = app.goal.step.ErrorOrder;
 global using CacheSettings = app.goal.step.CacheSettings;
 
-// Event types
-global using Lifecycle = app.@event.lifecycle.@this;
-global using Bindings = app.@event.lifecycle.binding.list.@this;
-
 // Event types WITH conflicts — require per-file handling:
 // global::app.@event.list.@this alias (not "Events") avoids collision with PLang.Events namespace
 // Trigger: v1 PLang.Events conflict — use: using app.@event; or per-file alias

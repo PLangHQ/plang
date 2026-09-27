@@ -11,8 +11,12 @@ public class OnTests
     private static global::app.type.item.dict.@this Item() => new();
 
     // A handler that records it ran and answers ok.
-    private static System.Func<global::app.type.item.@this, global::app.actor.context.@this, Task<global::app.data.@this>> Record(List<string> ran, string name)
-        => (_, ctx) => { lock (ran) ran.Add(name); return Task.FromResult(ctx.Ok()); };
+    private static System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, Task<global::app.data.@this>> Record(List<string> ran, string name)
+        => (_, _, ctx) => { lock (ran) ran.Add(name); return Task.FromResult(ctx.Ok()); };
+
+    // A handler that fails with key.
+    private static System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, Task<global::app.data.@this>> Fail(string key)
+        => (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", key, 400)));
 
     [Test] public async Task AnUnboundItem_HasTheSharedEmptyOn_WhoseEventsAreClosed()
     {
@@ -63,15 +67,14 @@ public class OnTests
         await Assert.That(ReferenceEquals(answered, result)).IsTrue();
     }
 
-    [Test] public async Task AFailingBinding_IsTheResult_AndStopsTheRest()
+    [Test] public async Task AFailingBeforeBinding_IsTheResult_AndStopsTheRest()
     {
         await using var app = TestApp.Create("/test");
         var context = app.User.Context;
         var item = Item();
         var ran = new List<string>();
         var own = item.Own();
-        own.Bind("start", When.before,
-            (_, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.User, Scope.actor);
+        own.Bind("start", When.before, Fail("Refused"), app.User, Scope.actor);
         own.Bind("start", When.before, Record(ran, "after the failure"), app.User, Scope.actor);
 
         var answered = await item.on["start"]!.before.Start(item, context.Ok(), context);
@@ -79,6 +82,102 @@ public class OnTests
         await answered.IsFailure();
         await Assert.That(answered.Error!.Key).IsEqualTo("Refused");
         await Assert.That(ran).IsEmpty();
+    }
+
+    [Test] public async Task AHandledBeforeAnswer_Cancels_AndIsTheResult()
+    {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        var item = Item();
+        var ran = new List<string>();
+        var own = item.Own();
+        own.Bind("start", When.before, (_, _, ctx) =>
+        {
+            var instead = ctx.Ok("instead");
+            instead.Handled = true;
+            return Task.FromResult(instead);
+        }, app.User, Scope.actor);
+        own.Bind("start", When.before, Record(ran, "after the cancel"), app.User, Scope.actor);
+
+        var answered = await item.on["start"]!.before.Start(item, context.Ok(), context);
+
+        await Assert.That(answered.Handled).IsTrue();
+        await Assert.That((await answered.Value())?.ToString()).IsEqualTo("instead");
+        await Assert.That(ran).IsEmpty();
+    }
+
+    [Test] public async Task AFailingAfterBinding_IsTheResult_AndTheRestStillRunOnIt()
+    {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        var item = Item();
+        global::app.data.@this? seen = null;
+        var own = item.Own();
+        own.Bind("start", When.after, Fail("Broke"), app.User, Scope.actor);
+        own.Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, app.User, Scope.actor);
+
+        var answered = await item.on["start"]!.after.Start(item, context.Ok("ran"), context);
+
+        await answered.IsFailure();
+        await Assert.That(answered.Error!.Key).IsEqualTo("Broke");
+        await Assert.That(seen).IsNotNull();
+        await Assert.That(seen!.Error?.Key).IsEqualTo("Broke");
+    }
+
+    [Test] public async Task AHandledAfterAnswer_MeansNothing()
+    {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        var item = Item();
+        var ran = new List<string>();
+        var own = item.Own();
+        own.Bind("start", When.after, (_, _, ctx) =>
+        {
+            var instead = ctx.Ok("instead");
+            instead.Handled = true;
+            return Task.FromResult(instead);
+        }, app.User, Scope.actor);
+        own.Bind("start", When.after, Record(ran, "still runs"), app.User, Scope.actor);
+
+        var result = context.Ok("ran");
+        var answered = await item.on["start"]!.after.Start(item, result, context);
+
+        await Assert.That(ReferenceEquals(answered, result)).IsTrue();
+        await Assert.That(ran).IsEquivalentTo(new[] { "still runs" });
+    }
+
+    [Test] public async Task AHandlerThatThrows_StillLetsItsBindingFireTheNextTime()
+    {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        var item = Item();
+        var calls = 0;
+        item.Own().Bind("start", When.before, (_, _, ctx) =>
+        {
+            if (++calls == 1) throw new InvalidOperationException("first call fails");
+            return Task.FromResult(ctx.Ok());
+        }, app.User, Scope.actor);
+
+        await Assert.That(async () => await item.on["start"]!.before.Start(item, context.Ok(), context)).Throws<InvalidOperationException>();
+        await (await item.on["start"]!.before.Start(item, context.Ok(), context)).IsSuccess();
+        await Assert.That(calls).IsEqualTo(2);
+    }
+
+    [Test] public async Task ABinding_DoesNotFireInsideItsOwnHandler()
+    {
+        await using var app = TestApp.Create("/test");
+        var context = app.User.Context;
+        var item = Item();
+        var times = 0;
+        item.Own().Bind("start", When.before, async (fired, result, ctx) =>
+        {
+            times++;
+            return await fired.on["start"]!.before.Start(fired, result, ctx);   // starts its own event again
+        }, app.User, Scope.actor);
+
+        await item.on["start"]!.before.Start(item, context.Ok(), context);
+
+        await Assert.That(times).IsEqualTo(1);
     }
 
     [Test] public async Task AnActorsBinding_FiresOnlyForThatActor_AnAppsForEvery()

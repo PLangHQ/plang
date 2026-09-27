@@ -5,6 +5,8 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.EventTests;
 
+// event.skipAction answers its value marked Handled: returned from a before-action handler, that answer cancels
+// the action and is its result.
 public class SkipActionTests
 {
     private PLangEngine _app = null!;
@@ -22,7 +24,7 @@ public class SkipActionTests
     }
 
     [Test]
-    public async Task SkipAction_SetsEventOverride()
+    public async Task SkipAction_AnswersItsValue_MarkedHandled()
     {
         var context = _app.User.Context;
 
@@ -30,12 +32,12 @@ public class SkipActionTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(context.EventOverride).IsNotNull();
-        await Assert.That((await context.EventOverride!.Value())?.ToString()).IsEqualTo("override-value");
+        await Assert.That(result.Handled).IsTrue();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("override-value");
     }
 
     [Test]
-    public async Task SkipAction_NullValue_SetsOverrideWithNull()
+    public async Task SkipAction_NullValue_AnswersEmpty_MarkedHandled()
     {
         var context = _app.User.Context;
 
@@ -43,8 +45,8 @@ public class SkipActionTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(context.EventOverride).IsNotNull();
-        await Assert.That(await (await context.EventOverride!.Value())!.IsEmpty()).IsTrue();
+        await Assert.That(result.Handled).IsTrue();
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -60,7 +62,7 @@ public class SkipActionTests
     }
 
     [Test]
-    public async Task SkipAction_ObjectValue_SetsOverride()
+    public async Task SkipAction_ObjectValue_IsTheAnswer()
     {
         var context = _app.User.Context;
         var obj = new Dictionary<string, object> { ["status"] = 200 };
@@ -69,6 +71,6 @@ public class SkipActionTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(Lower<object>(await context.EventOverride!.Value())).IsEqualTo(obj);
+        await Assert.That(Lower<object>(await result.Value())).IsEqualTo(obj);
     }
 }

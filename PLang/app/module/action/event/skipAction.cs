@@ -2,8 +2,8 @@ namespace app.module.action.@event;
 
 /// <summary>
 /// Skips the current action and returns a custom value instead.
-/// Use inside a beforeAction event handler to prevent the real action from running.
-/// Sets context.EventOverride so the action runner returns this value.
+/// Use inside a beforeAction event handler to prevent the real action from running: its value, marked Handled,
+/// travels back as the handler's answer, and a Handled answer before an action cancels it.
 /// </summary>
 [Action("skipAction", Cacheable = false)]
 public partial class SkipAction : IContext
@@ -13,7 +13,8 @@ public partial class SkipAction : IContext
 
     public async Task<data.@this> Start()
     {
-        Context.EventOverride = Data((Value == null ? null : await Value.Value()));
-        return Data((Value == null ? null : await Value.Value()));
+        var skipped = Data((Value == null ? null : await Value.Value()));
+        skipped.Handled = true;
+        return skipped;
     }
 }

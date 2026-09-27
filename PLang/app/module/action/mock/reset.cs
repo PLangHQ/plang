@@ -12,7 +12,7 @@ public partial class Reset : IContext
         var mock = Mock?.Peek() as global::app.mock.@this;
         if (mock != null)
         {
-            Context.Events.Unregister(mock.EventBindingId);
+            Unbind(mock.EventBindingId);
             mock.Calls.Clear();
         }
         else
@@ -22,11 +22,17 @@ public partial class Reset : IContext
             foreach (var binding in bindings)
             {
                 if (binding.Targets.OfType<global::app.mock.@this>().Any())
-                {
-                    Context.Events.Unregister(binding.Id);
-                }
+                    Unbind(binding.Id);
             }
         }
         return Task.FromResult(Data());
+    }
+
+    // Takes the registered binding off, and the on.start binding it holds.
+    private void Unbind(string id)
+    {
+        foreach (var bound in Context.Events.list.FirstOrDefault(b => b.Id == id)?.Targets.OfType<global::app.@event.binding.@this>() ?? [])
+            bound.Remove();
+        Context.Events.Unregister(id);
     }
 }

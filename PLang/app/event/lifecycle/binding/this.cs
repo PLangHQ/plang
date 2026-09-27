@@ -56,20 +56,6 @@ public sealed class @this
             context.ExitEvent(Id);
         }
 
-        // Check if handler set an override via event.skipAction.
-        // Only consume the override for action-level events (BeforeAction/AfterAction)
-        // to prevent step/goal-level events from accidentally eating the override.
-        if (Type == Trigger.BeforeAction || Type == Trigger.AfterAction)
-        {
-            var @override = context.EventOverride;
-            if (@override != null)
-            {
-                context.EventOverride = null;
-                @override.Handled = true;
-                return @override;
-            }
-        }
-
         if (!handlerResult.Success && !StopOnError)
             return context.Ok();
 

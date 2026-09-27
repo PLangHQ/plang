@@ -28,13 +28,6 @@ public sealed partial class @this
     // A goal is a plain C# host — carried by plang as clr<goal>, navigated/written/read by
     // reflection off its [Store]/[Out] props (the * kind's Output/Read). No item.@this base.
 
-    private module.Events? _events;
-    [JsonIgnore]
-    public module.Events Events
-    {
-        get => _events ??= new module.Events(this);
-        set => _events = value;
-    }
     // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
     // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the
     // stream. Immutable to everything outside the assembly.
@@ -331,8 +324,10 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Starts this goal: lifecycle events → its steps' Start → return handling.
-    /// Context travels as parameter — goals may be cached/shared.
+    /// Starts this goal through its <c>on.start</c> — the goal type's and its own: before runs the type's then
+    /// its own, then its steps, then after runs its own then the type's. A before that fails or cancels is the
+    /// result: the steps don't start, every after still runs on it. Context travels as parameter — goals may be
+    /// cached/shared.
     /// </summary>
     public async Task<data.@this> Start(actor.context.@this context)
     {
@@ -342,13 +337,29 @@ public sealed partial class @this
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
 
-        var lifecycle = context.LifecycleFor(this);
+        global::app.type.item.@this[] level = [context.App.type.list["goal"], this];
+        try
+        {
+            var result = context.Ok();
+            foreach (var each in level)
+            {
+                result = await each.on["start"]!.before.Start(this, result, context);
+                if (!result.Success || result.Handled) break;
+            }
+            if (result.Success && !result.Handled) result = await Enter(context);
+            for (var i = level.Length - 1; i >= 0; i--)
+                result = await level[i].on["start"]!.after.Start(this, result, context);
+            return result;
+        }
+        finally
+        {
+            context.Goal = previousGoal;
+        }
+    }
 
-        // BeforeGoal events
-        var beforeResult = await lifecycle.Before.Run(context, new global::app.@event.moment.@this(Trigger.BeforeGoal, this));
-        if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
-        if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
-
+    // Starts the steps inside the goal's own frame, and folds a return that ends here.
+    private async Task<data.@this> Enter(actor.context.@this context)
+    {
         // Goal-level Call frame. Step actions push under this; the goal frame outlives
         // any single action's pop, so things like `debug.tag` can attach metadata to a
         // scope that subsequent steps can still read (they navigate up via Current.Caller).
@@ -382,10 +393,6 @@ public sealed partial class @this
                     result.Returned = false;
             }
 
-            // AfterGoal events
-            var afterResult = await lifecycle.After.Run(context, new global::app.@event.moment.@this(Trigger.AfterGoal, this));
-            if (!afterResult.Success) return afterResult;
-
             return result;
         }
         catch (global::app.error.CallStackOverflowException ex)
@@ -401,10 +408,6 @@ public sealed partial class @this
                 ex.Message, goalEntryAction.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
             stack.Audit.Add(serviceErr);
             return context.Error(serviceErr);
-        }
-        finally
-        {
-            context.Goal = previousGoal;
         }
     }
 

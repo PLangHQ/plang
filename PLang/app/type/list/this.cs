@@ -63,8 +63,15 @@ public sealed partial class @this
     /// C# class. A spelled kind is not a name: <c>{text, md}</c> is asked by identity. Throws on a miss.
     /// </summary>
     public app.type.@this this[string name]
-        => Types.FirstOrDefault(t => t.Names(name))
-           ?? throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
+    {
+        get
+        {
+            // one walk of the list, no closure — events look their type up here on every start
+            foreach (var type in Types)
+                if (type.Names(name)) return type;
+            throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
+        }
+    }
 
     /// <summary>True when <paramref name="name"/> names a plang type — the presence question
     /// beside the indexer, which selects and throws on a miss.</summary>

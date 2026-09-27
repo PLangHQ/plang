@@ -38,17 +38,17 @@ public sealed class Coverage
             kvp => kvp.Key,
             kvp => (IReadOnlySet<int>)new HashSet<int>(kvp.Value.Keys));
 
-    /// <summary>Records what runs in <paramref name="context"/>'s actor from now on: every action that fires,
-    /// and the branch a condition takes when it fires (its own result is truthy), keyed by its position in
-    /// the step's action chain.</summary>
-    public void Watch(global::app.actor.context.@this context)
-        => context.Events.Register(new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.Trigger.AfterAction,
-            async (ctx, action, result) =>
+    /// <summary>Records what runs in <paramref name="context"/>'s actor from now on: every action that starts
+    /// (bound on the action type's <c>on.start.after</c>), and the branch a condition takes when it fires (its
+    /// own result is truthy), keyed by its position in the step's action chain. Answers the binding; whoever
+    /// watches removes it when the watch ends.</summary>
+    public global::app.@event.binding.@this Watch(global::app.actor.context.@this context)
+        => context.App.type.list["action"].Own().Bind("start", global::app.@event.When.after,
+            async (item, result, ctx) =>
             {
-                if (action == null) return ctx.Ok();
+                if (item is not global::app.goal.step.action.@this action) return ctx.Ok();
                 RecordModuleAction(action.Module.Name, action.Name);
-                if (action.IsCondition && result != null && await result.ToBooleanAsync())
+                if (action.IsCondition && await result.ToBooleanAsync())
                 {
                     var site = Site(action.Step?.Goal, action.Step?.Index.ToString());
                     RecordBranch(site, action.Step != null ? action.Step.Code.IndexOf(action) : -1);
@@ -56,8 +56,7 @@ public sealed class Coverage
                 }
                 return ctx.Ok();
             },
-            priority: int.MaxValue,
-            stopOnError: false));
+            context.Actor, global::app.@event.binding.Scope.actor);
 
     // A condition step's site — "goal:stepIndex", the goal by its path.
     private string Site(global::app.goal.@this? goal, string? index)

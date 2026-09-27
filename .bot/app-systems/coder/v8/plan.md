@@ -201,3 +201,28 @@ plang tests in `Tests/Modules/Modifiers/`.
 11. **Scope of program-bound `on.*` actions** (8g): the plan says they fire every time the action starts, unlike a
     runtime `on.event` (actor-scoped). The binding is on the action object itself (shared by every actor running the
     goal), so scope = every actor. Confirm.
+
+## 6. 8b-1 as built (decisions 87–88, plang-cd)
+
+- **Type lookup** `type.list[name]` is a plain `foreach` (no index, no LINQ closure); each Start looks its type up once.
+- **Levels, general wraps specific.** goal: `[type goal, goal]`; step: `[type step, step]`; action:
+  `[type action, module, catalog action (module[name]), action]` (catalog skipped when absent or the same object).
+  Before runs the levels in order, after in reverse. `LifecycleFor`, `lifecycle`, `module/Events.cs`, `GetEventBindings`,
+  `EventOverride`, the event-container cache and the `Events` property on goal/step/action are gone.
+- **The two sides are two list kinds** (`binding/list/before.cs`, `after.cs`; the base keeps storage): before stops on a
+  failure or a Handled answer (Handled = cancel); after runs every binding, a failure becomes the result and the rest run
+  on it, Handled means nothing (decision 88). A before that fails or cancels skips the inner befores and the dispatch;
+  every level's after still runs on that result. An action's cancelled result has Handled cleared (the chain goes on).
+- **Handler takes the result**: `Func<item, data, context, Task<data>>` (coverage's branch truthiness, `%!event%`'s
+  AfterAction result). The re-entrancy guard moved onto the binding (`context.TryEnterEvent(binding)`, object-keyed;
+  the channel bindings' string ids share the set until 8c).
+- **Consumers:** coverage (action type after) and `test.Time` (step type before/after) answer their bindings and the
+  test removes them when it ends; debug's five bind on the goal/step/action types for the User actor with a goal-name
+  filter (they live as long as the app whose types they're on). The per-modifier after fires on the action type's after.
+- **Adapters until 8f:** `event.on` registers the old binding (channel triggers fire from it; for goal/step/action it's
+  the id `event.remove` finds) and, for a goal/step/action trigger, binds on that type's `on.start` with a filter from
+  its patterns, setting `%!event%` first; Load triggers map to start as before. `Priority` is accepted and ignored (order
+  added). `skipAction` answers its value marked Handled. `mock.intercept` binds on the action type's before, its return
+  value marked Handled; `mock.reset` removes it.
+- **Not done:** `Of<T>()` → `Of(Type)` — `Of<T>` is sync and `Of(Type)` awaits `Load()`, so delegating makes every
+  `Of<T>` caller async (asked plang-cd).

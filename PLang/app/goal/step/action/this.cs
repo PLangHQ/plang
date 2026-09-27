@@ -137,13 +137,6 @@ public partial class @this
     [JsonIgnore]
     public Step? Step { get; internal set; }
 
-    private module.Events? _events;
-    [JsonIgnore]
-    public module.Events Events
-    {
-        get => _events ??= new module.Events(this);
-    }
-
     // Teaching prose (Description / Notes / Examples) is no longer stored on the action host — it lives
     // as lazy `file` handles on the class-zoom partial (this.Schema.cs), over
     // os/system/modules/{Module}/{Name}.{facet}.md. Templates read module-first + action through
@@ -183,34 +176,40 @@ public partial class @this
         }
         await using var _call = call;
 
-        var lifecycle = context.LifecycleFor(this);
+        // The action starts through four on.start levels, the general wrapping the specific: the action type's,
+        // its module's, its catalog action's, its own. Before runs them in that order; after in the reverse.
+        var type = context.App.type.list["action"];
+        var catalog = Module[Name];
+        global::app.type.item.@this[] level = catalog == null || ReferenceEquals(catalog, this)
+            ? [type, Module, this]
+            : [type, Module, catalog, this];
 
-        var beforeResult = await lifecycle.Before.Run(context, new app.@event.moment.@this(app.@event.Trigger.BeforeAction, this));
-        if (!beforeResult.Success) return beforeResult;
-
-        global::app.data.@this data;
-        if (beforeResult.Handled)
+        var data = context.Ok();
+        foreach (var each in level)
         {
-            // Override path: the BeforeAction binding supplied this action's result
-            // (mock.intercept, event.skipAction). Clear Handled so the outer step
-            // loop doesn't misread "dispatch was short-circuited" as "stop the step" —
-            // the next action in the chain still needs to run on this result.
-            data = beforeResult;
+            data = await each.on["start"]!.before.Start(this, data, context);
+            if (!data.Success || data.Handled) break;
+        }
+
+        if (data.Handled)
+        {
+            // Cancelled: a before-binding's answer is this action's result (mock.intercept, event.skipAction).
+            // Clear Handled so the outer step loop doesn't misread "dispatch was short-circuited" as "stop the
+            // step" — the next action in the chain still needs to run on this result.
             data.Handled = false;
         }
-        else if (Modifier.Count == 0)
+        else if (data.Success && Modifier.Count == 0)
             data = await DispatchAsync(context, call);
-        else
+        else if (data.Success)
         {
             // The modifiers wrap the action's own dispatch — the list composes them (outermost first,
-            // `on error` clauses written together as one try/catch); then AfterAction fires once per
-            // modifier so coverage tracks presence (a modifier wraps, it never runs the standalone path).
+            // `on error` clauses written together as one try/catch); then the action type's after fires once
+            // per modifier so coverage tracks presence (a modifier wraps, it never runs the standalone path).
             var (execute, wrapError) = await Modifier.Wrap(() => DispatchAsync(context, call), context);
             if (wrapError != null) return context.Error(wrapError);
             data = await execute!();
             foreach (var modifier in Modifier)
-                await context.LifecycleFor(modifier).After.Run(
-                    context, new app.@event.moment.@this(app.@event.Trigger.AfterAction, modifier, data));
+                await type.on["start"]!.after.Start(modifier, data, context);
         }
 
         // %!data% is the last action's result, stored AS-IS. A reference stays a
@@ -220,9 +219,8 @@ public partial class @this
         if (data.Success)
             await context.Variable.Set("!data", data);
 
-        var afterResult = await lifecycle.After.Run(context, new app.@event.moment.@this(app.@event.Trigger.AfterAction, this, data));
-        if (!afterResult.Success) return afterResult;
-
+        for (var i = level.Length - 1; i >= 0; i--)
+            data = await level[i].on["start"]!.after.Start(this, data, context);
         return data;
     }
 

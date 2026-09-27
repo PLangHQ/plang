@@ -38,16 +38,14 @@ public class ConditionIfBranchIndexTests
         _app.goal.list.Add(goal);
 
         Data? captured = null;
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) =>
+        _app.type.list["action"].Own().Bind("start", global::app.@event.When.after,
+            (item, result, context) =>
             {
-                if (action?.Module.Name == "condition" && action.Name == "if")
+                if (item is PrAction { Name: "if" } action && action.Module.Name == "condition")
                     captured = result;
-                return Task.FromResult(Data.Ok());
+                return Task.FromResult(context.Ok());
             },
-            priority: int.MaxValue,
-            stopOnError: false));
+            _app.User, global::app.@event.binding.Scope.actor);
 
         await _app.Start(goal, _app.User.Context);
         return captured!;
@@ -102,16 +100,14 @@ public class ConditionIfBranchIndexTests
         // LOADED instance, since the read borns fresh actions (the hand-built ones we
         // passed in are not what runs).
         var orchestrator = goal.Step[0].Code[0];
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) =>
+        _app.type.list["action"].Own().Bind("start", global::app.@event.When.after,
+            (item, result, context) =>
             {
-                if (ReferenceEquals(action, orchestrator))
+                if (ReferenceEquals(item, orchestrator))
                     captured = result;
-                return Task.FromResult(Data.Ok());
+                return Task.FromResult(context.Ok());
             },
-            priority: int.MaxValue,
-            stopOnError: false));
+            _app.User, global::app.@event.binding.Scope.actor);
 
         await _app.Start(goal, _app.User.Context);
         return captured!;

@@ -8,7 +8,7 @@ namespace app.@event;
 /// </summary>
 public abstract class @this : global::app.type.item.@this
 {
-    private protected @this(string name, binding.list.@this before, binding.list.@this after)
+    private protected @this(string name, binding.list.before before, binding.list.after after)
     {
         Name = name;
         this.before = before;
@@ -19,10 +19,10 @@ public abstract class @this : global::app.type.item.@this
     public string Name { get; }
 
     /// <summary>What is started before it.</summary>
-    public binding.list.@this before { get; }
+    public binding.list.before before { get; }
 
     /// <summary>What is started after it.</summary>
-    public binding.list.@this after { get; }
+    public binding.list.after after { get; }
 
     /// <summary>Every event is of the type <c>event</c>, whichever its class.</summary>
     protected internal override global::app.type.@this Type => new("event", typeof(@this));

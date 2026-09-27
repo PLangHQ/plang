@@ -153,9 +153,8 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
-            childApp.User.Context.Events.Register(new EventBinding(
-                Trigger.BeforeAction,
-                async (context, action, result) =>
+            childApp.type.list["action"].Own().Bind("start", global::app.@event.When.before,
+                async (_, _, context) =>
                 {
                     lock (depthLock)
                     {
@@ -166,10 +165,9 @@ public class RunActionTests
                     // 100ms is plenty for the scheduler to start the next task.
                     await Task.Delay(100);
                     lock (depthLock) currentDepth--;
-                    return Data.Ok();
+                    return context.Ok();
                 },
-                priority: int.MaxValue,
-                stopOnError: false));
+                childApp.User, global::app.@event.binding.Scope.actor);
         }
 
         _app.test.list.Made += Probe;

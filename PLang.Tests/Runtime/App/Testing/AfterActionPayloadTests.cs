@@ -3,13 +3,8 @@ using app.actor.context;
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
-/// Batch 6 — AfterAction event payload widening.
-/// Today: lifecycle.After.Run(context, Trigger.AfterAction).
-/// After:  lifecycle.After.Run(context, Trigger.AfterAction, this, result).
-/// Subscribers now receive (Context, Action, Data) — unlocking module.action coverage
-/// and branch coverage without touching the Data type itself. All call sites and
-/// subscribers updated in the same commit; no backward-compat shim.
-/// v1 widens only AfterAction; BeforeAction stays as-is.
+/// What a binding on the action type's <c>on.start</c> is handed: the action that started, and the result as it
+/// stands — the action's result after it, for coverage and branch tracking.
 /// </summary>
 public class AfterActionPayloadTests
 {
@@ -24,7 +19,12 @@ public class AfterActionPayloadTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    // Runs a simple goal with one action (variable.set) so a single AfterAction fires.
+    // Binds handler on the action type's start, before or after, for the User actor.
+    private void Bind(global::app.@event.When when,
+        Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
+        => _app.type.list["action"].Own().Bind("start", when, handler, _app.User, global::app.@event.binding.Scope.actor);
+
+    // Runs a simple goal with one action (variable.set) so a single action start fires.
     private async Task RunSimpleGoal(string varName = "x", int value = 42)
     {
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
@@ -34,17 +34,12 @@ public class AfterActionPayloadTests
         await _app.Start(goal, _app.User.Context);
     }
 
-    // Subscribers to AfterAction receive the Action that just ran — Action.Module,
-    // .Name, .Step, .Goal all accessible from the payload.
+    // An after-binding is handed the Action that just ran — Action.Module, .Name, .Step, .Goal all accessible.
     [Test]
     public async Task AfterAction_Fires_PassesActionInstanceInPayload()
     {
         PrAction? captured = null;
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
-            priority: int.MaxValue,
-            stopOnError: false));
+        Bind(global::app.@event.When.after, (item, _, context) => { captured = item as PrAction; return Task.FromResult(context.Ok()); });
 
         await RunSimpleGoal();
 
@@ -53,17 +48,12 @@ public class AfterActionPayloadTests
         await Assert.That(captured.Name).IsEqualTo("set");
     }
 
-    // Subscribers receive the Data the action returned — Data.Value, .Properties,
-    // .Error, .Success all readable for coverage and branch tracking.
+    // An after-binding is handed the Data the action returned.
     [Test]
     public async Task AfterAction_Fires_PassesResultDataInPayload()
     {
         Data? captured = null;
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
-            priority: int.MaxValue,
-            stopOnError: false));
+        Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
 
         await RunSimpleGoal();
 
@@ -71,14 +61,11 @@ public class AfterActionPayloadTests
         await captured!.IsSuccess();
     }
 
-    // timeout.after wrapping http.request emits two AfterAction events — one for the
-    // modifier itself, one for the inner action. Confirms coverage inventory includes
-    // modifiers (architect §5.6). Each Action.Start fires its own AfterAction.
+    // timeout.after wrapping variable.set: the action type's after fires for the modifier, then for the inner
+    // action. Confirms coverage inventory includes modifiers.
     [Test]
     public async Task AfterAction_ForModifierAction_FiresSeparatelyFromInnerAction()
     {
-        // Simpler fixture: variable.set wrapped by timeout.after. The modifier and the
-        // inner variable.set each go through Action.Start → fire their own AfterAction.
         var inner = Make.Modified(
             Make.Action("variable", "set", Make.Param("Name", "y", "variable"), ("Value", 7)),
             Make.Action("timeout", "after", ("Ms", 5000)));
@@ -88,72 +75,50 @@ public class AfterActionPayloadTests
         _app.goal.list.Add(goal);
 
         var observed = new List<(string Module, string Name)>();
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) =>
-            {
-                if (action != null) observed.Add((action.Module.Name, action.Name));
-                return Task.FromResult(Data.Ok());
-            },
-            priority: int.MaxValue,
-            stopOnError: false));
+        Bind(global::app.@event.When.after, (item, _, context) =>
+        {
+            if (item is PrAction action) observed.Add((action.Module.Name, action.Name));
+            return Task.FromResult(context.Ok());
+        });
 
         await _app.Start(goal, _app.User.Context);
 
-        // Exact count and order — Modifiers.RunAsync emits the modifier's AfterAction
-        // first (inside its own post-loop), then control returns to Action.Start which
-        // emits the inner action's AfterAction. Duplicate firings would corrupt
-        // coverage counts silently; unexpected order signals a lifecycle regression.
+        // Exact count and order — duplicate firings would corrupt coverage counts silently.
         await Assert.That(observed.Count).IsEqualTo(2);
         await Assert.That(observed[0]).IsEqualTo(("timeout", "after"));
         await Assert.That(observed[1]).IsEqualTo(("variable", "set"));
     }
 
-    // Regression guard: architect widened only AfterAction. BeforeAction stays at
-    // (context, Trigger). If BeforeAction is widened in the future, this test flags
-    // it as an intentional scope change.
+    // A before-binding is handed the action about to run, and the result as it stands: a plain success.
     [Test]
-    public async Task BeforeAction_SignatureUnchanged_NoPayloadWidening()
+    public async Task BeforeAction_IsHandedTheAction_AndTheResultAsItStands()
     {
-        // BeforeAction subscribers see null action/result — the emit site doesn't pass them.
-        // All other events share the same Handler type, but only AfterAction gets the payload.
         PrAction? seenAction = null;
         Data? seenResult = null;
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.BeforeAction,
-            (context, action, result) =>
-            {
-                seenAction = action;
-                seenResult = result;
-                return Task.FromResult(Data.Ok());
-            },
-            priority: int.MaxValue,
-            stopOnError: false));
+        Bind(global::app.@event.When.before, (item, result, context) =>
+        {
+            seenAction = item as PrAction;
+            seenResult = result;
+            return Task.FromResult(context.Ok());
+        });
 
         await RunSimpleGoal();
 
-        await Assert.That(seenAction).IsNull();
-        await Assert.That(seenResult).IsNull();
+        await Assert.That(seenAction?.Name).IsEqualTo("set");
+        await seenResult!.IsSuccess();
     }
 
-    // Failed action (data.Success == false) still triggers AfterAction — the error is
-    // visible to the user so the action "threw" from their perspective, and coverage
-    // tracks attempted execution. (independent — architect flagged as open question §5.6)
+    // A failed action still fires its after — coverage tracks attempted execution, and the binding sees the error.
     [Test]
     public async Task AfterAction_OnActionFailure_FiresWithErrorData()
     {
-        // Build a goal whose action will fail: assert.equals with mismatched values.
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("FailGoal",
             Make.Step("bad assert",
                 Make.Action("assert", "equals", ("Expected", 1), ("Actual", 2)))));
         _app.goal.list.Add(goal);
 
         Data? captured = null;
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
-            priority: int.MaxValue,
-            stopOnError: false));
+        Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
 
         await _app.Start(goal, _app.User.Context);
 
@@ -162,17 +127,13 @@ public class AfterActionPayloadTests
         await Assert.That(captured.Error).IsNotNull();
     }
 
-    // Action.Step.Goal navigation works from the payload — branch coverage keys sites
-    // as "goalName:stepIndex", which requires the Action to carry Step + Goal refs.
+    // Action.Step.Goal navigation works from the action handed over — branch coverage keys sites as
+    // "goalName:stepIndex".
     [Test]
     public async Task AfterAction_Payload_ActionCarriesStepAndGoalForSiteKey()
     {
         PrAction? captured = null;
-        _app.User.Context.Events.Register(new EventBinding(
-            Trigger.AfterAction,
-            (context, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
-            priority: int.MaxValue,
-            stopOnError: false));
+        Bind(global::app.@event.When.after, (item, _, context) => { captured = item as PrAction; return Task.FromResult(context.Ok()); });
 
         await RunSimpleGoal();
 

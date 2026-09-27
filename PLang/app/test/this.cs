@@ -92,8 +92,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var own = app.User.Context;
         Begin();
-        app.test.list.Report.Coverage.Watch(own);
-        Time(own);
+        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. Time(own)];
 
         var seconds = context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToDouble();
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
@@ -121,34 +120,32 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             own.PopCancellation();
             Stdout = app.test.list.Session?.Text;
+            foreach (var binding in watching) binding.Remove();
         }
     }
 
-    // Times each of this test's goal's own steps into Timings, from the step's start to its end.
-    private void Time(global::app.actor.context.@this context)
+    // Times each of this test's goal's own steps into Timings, from the step's start to its end — bound on the
+    // step type's on.start, before and after. Answers the two bindings.
+    private global::app.@event.binding.@this[] Time(global::app.actor.context.@this context)
     {
         var starts = new System.Collections.Concurrent.ConcurrentDictionary<int, long>();
         var entry = Goal.Path?.ToString();
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
-        context.Events.Register(new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.Trigger.BeforeStep,
-            (ctx, _, _) =>
+        var on = context.App.type.list["step"].Own();
+        return
+        [
+            on.Bind("start", global::app.@event.When.before, (item, _, ctx) =>
             {
-                if (ctx.Step is { } step && Own(step)) starts[step.Index] = Stopwatch.GetTimestamp();
+                if (item is global::app.goal.step.@this step && Own(step)) starts[step.Index] = Stopwatch.GetTimestamp();
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
-            },
-            priority: int.MaxValue,
-            stopOnError: false));
-        context.Events.Register(new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.Trigger.AfterStep,
-            (ctx, _, _) =>
+            }, context.Actor, global::app.@event.binding.Scope.actor),
+            on.Bind("start", global::app.@event.When.after, (item, _, ctx) =>
             {
-                if (ctx.Step is { } step && Own(step) && starts.TryRemove(step.Index, out var start))
+                if (item is global::app.goal.step.@this step && Own(step) && starts.TryRemove(step.Index, out var start))
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = Stopwatch.GetElapsedTime(start) });
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
-            },
-            priority: int.MaxValue,
-            stopOnError: false));
+            }, context.Actor, global::app.@event.binding.Scope.actor),
+        ];
     }
 
     /// <summary>
