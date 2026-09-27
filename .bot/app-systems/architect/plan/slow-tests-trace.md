@@ -25,6 +25,13 @@ Ruled out:
 - Key generation cost: Ed25519 (`signing/code/Ed25519.cs:163`).
 - Any `Task.Delay` on the path: the only ones are `timer.sleep` and the `on.error` retry.
 
+## Comparison with the coder's (its (e) report, 2026-09-27, read after this was pushed)
+
+- **The coder's is better. It measured.** A C# probe on a real app (deleted afterwards) split the first `save`: store open 53 ms, **first signature 4.8–5.0 s**, second signature 0–7 ms, saves 7–11 ms. The time is all the fresh app's first signature, which creates the identity.
+- **Mine was right about where** (hypothesis 1, the identity bootstrap per fresh test App) and about what isn't to blame (timeouts, key generation, delays). It had no numbers.
+- **Both suspect** that saving the new identity, itself a signed settings row, re-enters identity resolution. Not yet confirmed.
+- **Lesson:** a static trace narrows the search, and a measurement settles it. When the binary is available, one timing beats a page of hypotheses.
+
 ## Noticed on the way, for stage 12
 
 - `store/sqlite/this.cs:130,160,190` wrap Get, GetAll and Set in `catch (Exception ex)`. A bug's exception then becomes a `SettingsError` result along with SQLite's own failures.
