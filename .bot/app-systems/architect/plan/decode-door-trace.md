@@ -39,6 +39,18 @@ Five production places build a channel only to call its `Read(byte[])`, which tu
 - **Naming, for stage 9:** `path.ReadText` answers typed content (a goal, a dict), not only text. The honest name is `Read`.
 - **The consumers:** twins/goldens don't read decode paths. Run `plang --test`, the builder rebuild check, and the http/url/file tests.
 
-## Comparison with the coder's sketch
+## Comparison with the coder's sketch (read after mine was pushed, d13723a7b)
 
-(to fill in after reading it)
+**The coder's is better on these:**
+- **A side bug:** the throwaway's result is born with the channel's `Actor.Context`, not the caller's flow context.
+- **A security inconsistency:** a `url` read whose response is `Content-Type: application/plang` is deserialized as a container **unsigned**, while the http action refuses it (`UnsignedPlang` 403, `http/code/Default.cs:436`). The coder proposes that url refuses it too.
+- **What follows from it:** `channel/type/http` and `channel/type/file` exist only as throwaways (their Write/Ask are refusals), so they can be deleted. That goes to Ingi: the file channel's own doc says "a file is not a peer of channel — it IS a channel".
+- **A cleaner url fix:** its three branches only choose a MIME, so the door is called once.
+
+**Mine is better on these:**
+- **`path.ReadText` already decodes** (`type.list.Mime` → `Create`), so the one door must serve it too. It's a second decode door the coder didn't list.
+- **The url item and the http action duplicate "response → value"**, and the http path's own read is the natural single owner.
+- **file.read's `StartsWith("application/plang")` catches `.pr`** (`application/plang-goal`), not the transport. So the branch is simply dead weight.
+- The `ReadText` → `Read` naming note for stage 9.
+
+**Where the door lives changed underneath both of us:** the coder put it on the serializer list, and I put it on the type list with the transport inside. Ingi has since flagged the serializer list itself (plural, `GetByType` verb+noun, "every format should have a reader, many just fall to binary"). So the door's home is the coming format list (decision 111). Held until that shape is settled.
