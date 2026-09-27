@@ -23,6 +23,7 @@ public enum Visibility
 public sealed partial class @this
 {
     public static string Example => "Show";
+    public static string Description => "A goal: a named list of steps, called by its name.";
 
     // A goal is a plain C# host — carried by plang as clr<goal>, navigated/written/read by
     // reflection off its [Store]/[Out] props (the * kind's Output/Read). No item.@this base.
@@ -40,9 +41,7 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string Name { get; internal set; } = "";
 
-    [Store, LlmBuilder, Debug, Default]
-    public string? Description { get; set; }
-
+    /// <summary>The goal's description: the comment lines written above its name.</summary>
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
@@ -136,14 +135,15 @@ public sealed partial class @this
             if (_hash != null) return _hash;
             if (Step.Count == 0) return null;
 
-            // every step as written, in the order written: a step indented under a condition is folded
+            // the source as written, comments included: the goal's description and name, then every
+            // step with its comment, in the order written: a step indented under a condition is folded
             // into it (its body) and still counts; a condition's inline { } body is written on its
             // parent's line and is not a step of the source
             var sb = new StringBuilder();
-            sb.Append(Name);
+            sb.Append(Comment).Append('\n').Append(Name);
             void Written(global::app.goal.step.@this step)
             {
-                sb.Append(step.Text);
+                sb.Append('\n').Append(step.Comment).Append('\n').Append(step.Text);
                 foreach (var action in step.Code.Items())
                     foreach (var body in action.Child.Items())
                         if (body.Line.Number != step.Line.Number) Written(body);
@@ -401,7 +401,7 @@ public sealed partial class @this
     public static @this NotFound(string name) => new()
     {
         Name = name,
-        Description = "Goal not found"
+        Comment = "Goal not found"
     };
 
     /// <summary>

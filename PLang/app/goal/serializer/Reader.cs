@@ -51,7 +51,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (field)
             {
                 case "name": goal.Name = reader.String(); named = true; break;
-                case "description": goal.Description = reader.String(); break;
                 case "comment": goal.Comment = reader.String(); break;
                 case "step":
                     reader.BeginArray();

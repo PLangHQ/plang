@@ -203,16 +203,6 @@ public class Default : IBuilder
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
 
-        // Apply LLM-generated description if available in Variables
-        var stepResults = await context.Variable.Get("stepResults");
-        if ((await stepResults.Value()) is IDictionary<string, object?> resultsDict
-            && resultsDict.TryGetValue("description", out var desc)
-            && desc is string description
-            && !string.IsNullOrEmpty(description))
-        {
-            goal.Description = description;
-        }
-
         var prPath = goal.PrPath;
         if (prPath == null)
             return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));

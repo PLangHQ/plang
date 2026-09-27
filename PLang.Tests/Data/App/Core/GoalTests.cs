@@ -14,7 +14,6 @@ public class GoalTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "TestGoal",
-            Description = "A test goal",
             Comment = "This is a comment",
             Visibility = Visibility.Public,
             Path = global::app.type.item.path.@this.Resolve("/path/to/goal.goal", global::PLang.Tests.TestApp.SharedContext),
@@ -31,7 +30,6 @@ public class GoalTests : System.IAsyncDisposable
         };
 
         await Assert.That(goal.Name).IsEqualTo("TestGoal");
-        await Assert.That(goal.Description).IsEqualTo("A test goal");
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
         await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Public);
         await Assert.That(goal.Path?.ToString()).IsEqualTo("/path/to/goal.goal");
@@ -205,7 +203,7 @@ public class GoalTests : System.IAsyncDisposable
         var goal = Goal.NotFound("MissingGoal");
 
         await Assert.That(goal.Name).IsEqualTo("MissingGoal");
-        await Assert.That(goal.Description).IsEqualTo("Goal not found");
+        await Assert.That(goal.Comment).IsEqualTo("Goal not found");
     }
 
     [Test]
@@ -238,5 +236,21 @@ public class VisibilityTests
     public async Task Public_HasValueOne()
     {
         await Assert.That((int)Visibility.Public).IsEqualTo(1);
+    }
+
+    // The hash covers the source as written, comments included: a comment-only change is a change.
+    [Test]
+    public async Task Hash_CoversTheGoalsAndTheStepsComments()
+    {
+        Goal Written(string? goalComment, string? stepComment) => new()
+        {
+            Name = "Show",
+            Comment = goalComment,
+            Step = new GoalSteps { new Step { Index = 0, Text = "write out 'hi'", Comment = stepComment } },
+        };
+        var plain = Written(null, null).Hash;
+        await Assert.That(Written(null, null).Hash).IsEqualTo(plain);
+        await Assert.That(Written("Shows hi", null).Hash).IsNotEqualTo(plain);
+        await Assert.That(Written(null, "say hi").Hash).IsNotEqualTo(plain);
     }
 }

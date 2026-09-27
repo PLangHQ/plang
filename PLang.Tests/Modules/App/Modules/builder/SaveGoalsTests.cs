@@ -75,7 +75,7 @@ public class SaveGoalsTests
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Test.goal", _app.User.Context),
-            Description = null
+            Comment = null
         };
 
         var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };

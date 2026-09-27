@@ -279,14 +279,14 @@ public class GoalsTests
     public async Task Add_SamePathTwice_ReplacesGoal()
     {
         var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Description = "First" };
-        var goal2 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Description = "Second" };
+        var goal1 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "First" };
+        var goal2 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "Second" };
         goals.Add(goal1);
 
         goals.Add(goal2);
 
         await Assert.That(goals.Count).IsEqualTo(1);
-        await Assert.That((goals.Get("TestGoal"))!.Description).IsEqualTo("Second");
+        await Assert.That((goals.Get("TestGoal"))!.Comment).IsEqualTo("Second");
     }
 
     [Test]
@@ -477,14 +477,14 @@ public class GoalsTests
     public async Task Add_SamePrPath_ReplacesGoal()
     {
         var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Description = "First" };
-        var goal2 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Description = "Second" };
+        var goal1 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "First" };
+        var goal2 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "Second" };
 
         goals.Add(goal1);
         goals.Add(goal2);
 
         await Assert.That(goals.Count).IsEqualTo(1);
-        await Assert.That((goals.Get("Start"))!.Description).IsEqualTo("Second");
+        await Assert.That((goals.Get("Start"))!.Comment).IsEqualTo("Second");
     }
 
     [Test]
