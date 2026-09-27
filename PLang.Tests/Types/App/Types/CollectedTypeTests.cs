@@ -40,6 +40,9 @@ public class CollectedTypeTests
 
         var missing = await app.type.Get("csv");
         await Assert.That(missing.Error!.StatusCode).IsEqualTo(404);
+
+        await Assert.That(await app.type.Get("type") is var self && (await self.Value()) is { } entry
+            && ReferenceEquals(entry, app.type)).IsTrue();
     }
 
     [Test] public async Task AppType_Navigation_AMemberFirst_ThenAType()

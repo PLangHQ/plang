@@ -182,6 +182,20 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         return context.Ok(added);
     }
 
+    /// <summary>Replaces the type of <paramref name="type"/>'s name with <paramref name="type"/>
+    /// itself — the app's own type object for its concept (<c>app.type</c> is the entry named
+    /// <c>type</c>). Same name, same class: the guard holds.</summary>
+    internal void Replace(global::app.type.@this type)
+    {
+        lock (_lock)
+        {
+            Load();
+            var index = Items().ToList().FindIndex(t => t.Names(type.Name));
+            if (index >= 0) RemoveAt(index);
+            base.Add(type);
+        }
+    }
+
     /// <summary>Adds a kind to the type it is a kind of — a closed set to choice, a scheme to path.
     /// A kind of the same name on that type is replaced.</summary>
     public void Add(global::app.type.kind.@this kind)

@@ -278,6 +278,7 @@ public sealed partial class @this : IAsyncDisposable
         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         type = new(this);
+        type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
         Code = new AppCode(System.Context);
         _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
