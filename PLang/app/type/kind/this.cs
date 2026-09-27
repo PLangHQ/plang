@@ -35,24 +35,43 @@ public class @this
     /// this to bridge a raw host to its kind (exact wins, then assignable — <c>IList</c>→list).</summary>
     public virtual System.Type? ClrForm => null;
 
+    /// <summary>The other names this kind answers to (<c>integer</c> for int).</summary>
+    public virtual System.Collections.Generic.IReadOnlyList<string> Alias => [];
+
+    /// <summary>The name of the type this kind is a kind of, when its class declares it (number's
+    /// precisions are number's, json/list/dict/<c>*</c> are item's). Null for a kind with no class
+    /// of its own — a name from a file extension — whose type the readers and formats know.</summary>
+    protected internal virtual string? Owner => null;
+
     /// <summary>
-    /// The type this kind is a kind of — what its content is (md → text, json → item): the type
-    /// whose reader reads this kind, else the format family, else <c>binary</c>. <c>{binary, md}</c>
-    /// is bytes whose content is text.
+    /// The type this kind is a kind of — what its content is (md → text, json → item, int →
+    /// number): the type its class declares, else the type whose reader reads this kind, else the
+    /// format family, else <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.@this type
+        => Of(Context ?? throw new System.InvalidOperationException(
+               $"kind '{Name}' has no Context — resolving its type needs a stamped kind."));
+
+    /// <summary>
+    /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
+    /// <c>{number, long}</c>, … for a number kind; the formats that are text for a text kind.
+    /// </summary>
+    public global::app.type.item.list.@this<global::app.type.@this> list(actor.context.@this context)
     {
-        get
-        {
-            if (Context == null)
-                throw new System.InvalidOperationException(
-                    $"kind '{Name}' has no Context — resolving its type needs a stamped kind.");
-            string name = Context.App.Type.Reader.TypeOf(Name)
-                          ?? Context.App.Format.Kind(Name)
-                          ?? "binary";
-            return Context.App.Type[new global::app.type.@this(name, Name)];
-        }
+        var owner = Of(context);
+        return new(context.App.Type.Kind[owner]
+            .Select(k => (global::app.type.item.@this)context.App.Type[new global::app.type.@this(owner.Name, k.Name)]));
+    }
+
+    // The type this kind is a kind of, asked with the caller's context.
+    private global::app.type.@this Of(actor.context.@this context)
+    {
+        string name = Owner
+                      ?? context.App.Type.Reader.TypeOf(Name)
+                      ?? context.App.Format.Kind(Name)
+                      ?? "binary";
+        return context.App.Type[new global::app.type.@this(name)];
     }
 
     // --- Verbs: the kind owns what you can do with its values. Defaults here; kinds override. ---

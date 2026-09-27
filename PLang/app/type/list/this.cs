@@ -114,7 +114,9 @@ public sealed partial class @this
     {
         get
         {
-            var kind = type.Kind?.Name is { } k ? Context?.App.Format.CanonicaliseKind(k) ?? k : null;
+            // The kind by its own name: a format's canonical spelling (markdown → md), then the name
+            // of the kind an alias answers to (integer → int).
+            var kind = type.Kind?.Name is { } k ? Kind[Context?.App.Format.CanonicaliseKind(k) ?? k].Name : null;
             if (Array.Find(Types, t => t.Names(type.Name)) is not { } entry)
                 return new app.type.@this(type.Name, kind, type.Strict, type.Template);
             if (kind == null && !type.Strict && type.Template == null) return entry;

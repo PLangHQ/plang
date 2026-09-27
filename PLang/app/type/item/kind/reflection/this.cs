@@ -11,6 +11,8 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this(global::app.actor.context.@this? context = null) : base("*", context) { }
 
+    protected internal override string Owner => "item";
+
     // Descend one property. Bottom-up + DeclaredOnly + IgnoreCase so a shadowing derived
     // property wins and GetProperty never throws Ambiguous. List index / dict key are NOT here —
     // the list/dict kinds own those; navigation re-derives to them per hop.

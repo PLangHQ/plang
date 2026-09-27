@@ -14,6 +14,8 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this(global::app.actor.context.@this? context = null) : base("json", context) { }
 
+    protected internal override string Owner => "item";
+
     public override System.Type? ClrForm => typeof(JsonElement);
 
     // json self-dispatches on the element's ValueKind (object → property, array → index), so the

@@ -13,10 +13,12 @@ namespace app.type.item.number.kind;
 /// so each kind is one line (the four CLR can't reach own their parse arms and throw precise). The
 /// courier is the only caller that owns the error channel (it turns a thrown reason into data.Fail).</para>
 /// </summary>
-public abstract class @this
+public abstract class @this : global::app.type.kind.@this
 {
-    /// <summary>The kind's name token ("int", "long", …) — its identity (equality is by name).</summary>
-    public abstract string Name { get; }
+    protected @this(string name, global::app.actor.context.@this? context) : base(name, context) { }
+
+    /// <summary>A storage size is a kind of number.</summary>
+    protected internal override string Owner => "number";
 
     /// <summary>Build a number of this storage size from a plang value — plang in, plang out. The value
     /// lowers itself through its own <c>Clr</c> door; a value that can't be this kind throws loud there
@@ -29,6 +31,4 @@ public abstract class @this
     /// <summary>Read a number of this kind off the wire — the inverse of <see cref="Write"/>.</summary>
     public abstract global::app.type.item.@this Read<TReader>(ref TReader reader)
         where TReader : global::app.channel.serializer.IReader, allows ref struct;
-
-    public override string ToString() => Name;
 }

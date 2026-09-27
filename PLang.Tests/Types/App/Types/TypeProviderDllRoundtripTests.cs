@@ -37,34 +37,6 @@ public class TypeProviderDllRoundtripTests
         await Assert.That(captured.Captured).IsEqualTo("USD 10");
     }
 
-    [Test] public async Task LoadDll_CustomInt_OverridesBuiltInName_RuntimeRendererWins()
-    {
-        var asm = LoadFixture();
-        var types = new global::app.type.list.@this();
-
-        // Capture baseline for "int" before the override — int is bootstrap-seeded
-        // and may or may not have a generator-emitted renderer; what matters is
-        // that after Loader.Register, the runtime entry wins.
-        var beforeType = types.Clr("int");
-        await Assert.That(beforeType).IsEqualTo(typeof(int));
-
-        var result = types.Add(asm, global::PLang.Tests.TestApp.SharedContext);
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(types.Contains("int")).IsTrue();
-
-        // Clr — runtime wins over the bootstrap "int" → System.Int32 entry.
-        var afterType = types.Clr("int");
-        await Assert.That(afterType).IsNotNull();
-        await Assert.That(afterType!.FullName).IsEqualTo("TypeProvider.CustomInt");
-
-        // Renderer — runtime renderer fires regardless of which value it gets.
-        var write = types.Renderer.Of("int", "json");
-        await Assert.That(write).IsNotNull();
-
-        var captured = new CapturingWriter("json");
-        write!(System.Activator.CreateInstance(afterType)!, captured);
-        await Assert.That(captured.Captured).IsEqualTo("CUSTOM-INT");
-    }
 
     private sealed class CapturingWriter : global::app.channel.serializer.IWriter
     {

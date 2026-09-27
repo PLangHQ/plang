@@ -11,6 +11,8 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this(global::app.actor.context.@this? context = null) : base("list", context) { }
 
+    protected internal override string Owner => "item";
+
     // Claims IEnumerable (not just IList) so ANY sequence — HashSet, a LINQ enumerable — resolves
     // here and enumerates, instead of falling to the * kind and reflecting its C# properties. The
     // door prefers more-derived claims, so IDictionary → dict wins over IEnumerable → list.

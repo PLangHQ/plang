@@ -14,6 +14,8 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this(global::app.actor.context.@this? context = null) : base("dict", context) { }
 
+    protected internal override string Owner => "item";
+
     public override System.Type? ClrForm => typeof(System.Collections.IDictionary);
 
     // A dict keys by name whether the segment was `[k]` or `.k` — a dict key can be numeric,

@@ -16,23 +16,14 @@ namespace app.module.action.crypto.type.hash;
 /// <para>Scalar, string-shaped: the wire/render form is the base64 digest
 /// (matches the historical <c>crypto.verify</c> which round-trips through
 /// <c>Convert.FromBase64String</c>). Mirrors the <c>image</c> precedent —
-/// bytes-backed, base64-rendered — but the kind is <em>advertised</em>
-/// (<see cref="Kinds"/>), not extension-derived, so there is no <c>Build</c>
-/// hook. The supported-algorithm set IS the kind vocabulary; it lives here
-/// so the <c>crypto.hash</c> switch and the advertised list can't drift.</para>
+/// bytes-backed, base64-rendered — but the kind is an algorithm, one kind class
+/// per algorithm under <c>hash/kind/</c>, not extension-derived, so there is no
+/// <c>Build</c> hook.</para>
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "sha256 digest, base64";
     public static string Shape => "string";
-
-    /// <summary>
-    /// Advertised algorithm vocabulary the LLM catalog renders as the kinds of
-    /// <c>hash</c>. Single source of truth — <c>crypto.hash</c>'s algorithm
-    /// switch must stay a subset of this.
-    /// </summary>
-    public static System.Collections.Generic.IReadOnlyList<string> Kinds { get; }
-        = new[] { "keccak256", "sha256" };
 
     /// <summary>The raw digest bytes.</summary>
     [global::app.Out, global::app.Store]
