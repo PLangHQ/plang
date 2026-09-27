@@ -359,3 +359,63 @@ exactly what the plan says variable is. The `type` fact of `%!app.variable.user%
   doesn't build.
 - Seen, not changed: `app/this` DisposeAsync disposes the store's `Task`, not the store
   (`_store.Value.Dispose()`), so the sqlite store is never disposed — today's behaviour, kept.
+  (Fixed on plang-40's word in its own commit, 74f9dc8f9, with a test.)
+
+## 7e-2 trace — typed settings
+
+**Found while tracing:** `%!build.cache%` does not resolve today (probe: root `!build`, NotFound, value
+null). Executor's `userVars.Set("!build.cache", …)` stores one memory name `!build.cache`, but the parser
+reads root `!build` then `.cache`; `set default %!build.cache%` (Build.goal:7) writes the setting chain,
+which no `%…%` read reaches. So Properties.goal's `cache=%!build.cache%` hands llm.query nothing.
+The module-level settings written today: `llm.cache` (Executor, C#), `build.cache` / `build.summary`
+(Build.goal). `%!ask.answer%` is the callback sentinel, a variable, not a setting.
+
+**What a setting class is, and what one instance is** (proposal):
+- Each setting class has a path, its namespace under `app.` — `goal.list.setting`, `test.setting`,
+  `module.action.llm.setting` read as `llm` (a module's own), an action `module.action.llm.query` read as
+  `llm.query`. The app knows them by path: the owners that name one (`ISetting<T>`), every action class,
+  and each module's own where it has one (llm: `cache`; build: `cache`, `summary`, `files`).
+- One actor's instance of a class, in a context = the class's defaults ← the actor's saved row (user,
+  else system) ← this run's `set %!path.prop%` (the context's chain, as today) — built on read.
+- **An action's instance** is the action as the catalog has it (`app.module["llm"]["query"]`, its
+  `Property` rows with their defaults) copied, the layers written onto its rows: the same shape a
+  `.pr` action has, so its saved row is an action (`Data<action>`) and needs no new serialization.
+- **An owner's class** (goal.list.setting, test.setting, …) is an item: a small base
+  (`setting.@this : item`) writes its public properties (reflection kind, like module) and reads itself
+  back by property name through the same convert the CLI walk uses — so a row is `Data<the class>`.
+
+**Read path** (ruling 2): the root hop, for a `!` name the memory doesn't bind, asks the context's
+settings for that path's node; a node is a path prefix: `.x` on it is the class's property when the
+node is a class, else the child node (`!llm` is llm's own class and the parent of `llm.query`).
+`%!goal.list.setting.os%`, `%!llm.cache%`, `%!llm.query.cache%`, `%!build.cache%` all read through it.
+
+**Write / save / remove:** `set %!x%` unchanged (the run layer). `setting.save` (`- save
+%!goal.list.setting%`: the instance as read, stored as the actor's row) and `setting.remove` (the row
+deleted). `setting.get` / `setting.set` (the key-value table door) go; `Storage` goes — the run layer
+is the chain, the saved layer is rows.
+
+**The action-param seam** (generator): step value → the run layer (`module.action.param`,
+`module.param`) → the actor's rows (the action's row, then the module's) → `[Default]`. The actor's
+rows are read once per actor and held (refreshed by save/remove), so a param read doesn't hit the store.
+
+**CLI flags:** `--test={…}`, `--debug={…}`, `--build={…}`, `--callstack={…}`, `--app={…}` land as the
+system actor's run layer under their class's path (`test.setting.timeoutseconds`, …); each owner reads
+its instance (test.start reads `test.setting`, not `test.list.Setting`). The owner classes today are
+the objects themselves (`app.Build`'s `Files`/`Cache`, `callstack`'s `Timing`…`MaxFrames`, `app.Debug`,
+`app`'s `Create`): their settable properties move into `X/setting/this` classes.
+
+**Slices:**
+- **7e-2a** the classes by path + the `!` read path + instances built from defaults ← the run layer
+  (no rows yet). Fixes `%!build.cache%` (build's own class).
+- **7e-2b** rows: save/remove, the actor's rows in the instance and in the seam, user → system, `Storage`
+  and `setting.get/set` go.
+- **7e-2c** the CLI owners' classes; `test.list.Setting` goes; Executor's `!build.cache` sync goes.
+- The builder teaching setting classes to the LLM (properties and defaults) is builder-visible: 7f, with
+  its twins and eval.
+
+**Questions:**
+1. An action's instance is the catalog action copied with the layers on its rows, saved as
+   `Data<action>` — right, rather than an instance of the handler class?
+2. Owner setting classes are items through one small base (reflection output, reads itself by
+   property) — right?
+3. CLI flags as the system actor's run layer under the class path (not a walk onto an object) — right?
