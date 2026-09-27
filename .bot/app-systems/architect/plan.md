@@ -40,14 +40,28 @@ public sealed class @this<T> : @this
 {
     public @this(app.@this app) : base(item.@this.NameOf(typeof(T))) => list = T.List(app);   // base ctor: type/this.cs:105
     public item.list.@this<T> list { get; }
+
+    // C#'s door: one element by key. No context of its own (type/this.cs:192-193), so the result has none;
+    // a C# caller takes the value and already has its own context.
     public async ValueTask<data.@this<T>> Get(string key)
     {
         await foreach (var p in list.all())                                       // every default; a lazy list loads as it goes
             if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);  // data/this.cs:713
         return data.@this<T>.FromError(new Error($"no {Name} '{key}'", "NotFound", 404));   // :714
     }
+
+    // plang's door: one navigation step; the parent brings the asker's context (round 6, Ingi: (a))
+    public override async ValueTask<data.@this> Get(data.@this parent, string key)
+    {
+        if (await base.Get(parent, key) is { Success: true } member) return member;   // the type's own members first (type/this.cs:496-497)
+        var found = await Get(key);
+        if (!found.Success) return found;                                              // the 404
+        return new data.@this(key, (await found.Value())!, parent: parent);           // data/this.cs:223-233: context from the parent
+    }
+
+    // current has the asker's context in hand, so its Data is born with it
     public data.@this<T> current(actor.context.@this context)
-        => T.Current(context) is { } one ? data.@this<T>.Ok(one)
+        => T.Current(context) is { } one ? new data.@this<T>("current", one, context: context)   // data/this.cs:709
            : data.@this<T>.FromError(new Error($"no {Name} is current", "NotFound", 404));
 }
 
@@ -433,4 +447,4 @@ Round 6 (fresh eyes, in progress). Settled: the item's history is `item.history`
 7. ~~**test is a session**~~: settled (Ingi): test's settings (`test/setting/`), its list (`list<test>`), the test session (a session channel on the user actor; the tests' output goes into it) and test's report (`test/report/`: start time, coverage, summary, verdict; reads the session); `test.start` and `environment.start` (see stages 1 and 7).
 8. ~~**variable** needs the asker's context~~: settled (Ingi: "app.variable has the context, just use that"): `%!app%` sits in the actor's memory with its context (`actor/this.cs:90`) and every navigation step passes its parent Data with it (`type/item/this.cs:235`), so the variable type's navigation reads `parent.Context.Variable` (`actor/context/this.cs:43`); C# code uses its own `context.Variable`; `Get(key)` takes no context. The memory moves beside the element (Ingi): `app/variable/list/this.cs` → `app/type/item/variable/list/this.cs` (stage 6), so `%!app.variable.list%` and its folder agree.
 9. ~~**Registering `type<X>`**~~: settled (Ingi). The App constructor, which already builds everything in order (`app/this.cs:274-284`), builds `type = new(this)` first (the registry loads the plain types by its scan), then each concept type (`goal = new(this); type.list.Add(goal);`, and module, actor, test, variable the same way), each taking its name's scanned entry's place: one entry per name (stage 3's `Add`). A concept type's facts come from its class `T`, as a scanned type's do (stage 3). Equality by name/kind/strict (`type/this.cs:397-401`) makes `type<goal>` equal a plain `type("goal")`, which is right: a copy navigates to the registered one (`type/this.cs:496`). The scan's claim of `goal` for the value class `goal.@this` (`Registry.cs:214-223`) stays; the open generic claims nothing (`:237-238`).
-10. **Smaller:** ~~`First` would mean two things~~ (gone: `Get` walks the list, no new `First`); `data<T>.Ok` is born without context (`data/this.cs:713`), so navigation past `["key"]` continues context-less; ~~`Match` returns a raw `bool`~~ (gone: it answers the element); ~~the indexer as a middleman over `list`~~ (gone: `Get` walks the list and the element answers); `.pr` files named `NN. name.pr` (v0.1 step files, 552 of 584 tracked under `os/`) must be skipped by the waiting os listing. **Waiting (Ingi: "wait with 2"):** `goal["/system/…"]` doesn't find os goals, because `/system/…` isn't linked into the app: path resolution falls back to `<os>/system/…` one path at a time (`path/file/this.Validate.cs:50-58, 72-81`), and a listing of `.build/` doesn't. Proposed: `all` lists that same overlay (the app's goals, then `<os>/system`'s under `/system/`), and `os` defaults to true, so `all` is every goal an address reaches.
+10. **Smaller:** ~~`First` would mean two things~~ (gone: `Get` walks the list, no new `First`); ~~`data<T>.Ok` is born without context~~ (settled, Ingi: the type's navigation step builds its Data from the parent, `new data.@this(key, item, parent: parent)`, which takes the parent's context, `data/this.cs:223-233`; C#'s `Get(key)` stays context-less; `current(context)` births its Data with the context it was given); ~~`Match` returns a raw `bool`~~ (gone: it answers the element); ~~the indexer as a middleman over `list`~~ (gone: `Get` walks the list and the element answers); `.pr` files named `NN. name.pr` (v0.1 step files, 552 of 584 tracked under `os/`) must be skipped by the waiting os listing. **Waiting (Ingi: "wait with 2"):** `goal["/system/…"]` doesn't find os goals, because `/system/…` isn't linked into the app: path resolution falls back to `<os>/system/…` one path at a time (`path/file/this.Validate.cs:50-58, 72-81`), and a listing of `.build/` doesn't. Proposed: `all` lists that same overlay (the app's goals, then `<os>/system`'s under `/system/`), and `os` defaults to true, so `all` is every goal an address reaches.
