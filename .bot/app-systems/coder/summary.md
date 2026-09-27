@@ -1,6 +1,6 @@
 # coder — app-systems
 
-**Version:** v7 (in progress — stage 7)
+**Version:** v8 (in progress — stage 8; v7/stage 7 closed)
 
 ## What this is
 app-systems makes every `app.X` the type X (a generic `type<X>` over its concept's `list<X>`), so the
@@ -63,11 +63,23 @@ rulings and as-built notes for every slice are in `v7/plan.md`.
 - **Stage 8** (plan `v8/plan.md`, decision 75): c66b52541 **8a** — events and `on` on every object (classes,
   bindings, the shared empty `on`; nothing fires yet). 8b onward waits for 7f's eval.
 
+## Stage 8 so far (plan `v8/plan.md`)
+- **8b** — goal/step/action `on.start` fire (`Before`/`After` on the event, one call each); `goal.Load` via
+  `item.ILoad<T>`; app `on.start` around the entry goal (e75f05552).
+- **8c** (046ba8af6, 5f6b49433) — a channel is an item and fires only its own write/read/ask events
+  (decision 105); per-flow re-entrancy guard; `channel.WriteText` one non-virtual door (841fad1d7).
+- **8d** — variable set/remove events on the list; callstack diff capture and the debug watch bind to them.
+- **Naming (decision 100 B, 39345235d)** — `type.Namespace` is identity, `[PlangType("word")]` the name.
+- **No swallowed errors (decision 107)** — d8342f33e, 6d34adb92, 2a0d34828 (+ b6e7553b7 file.read probe
+  warning): exceptions bubble or become the error result; transport doors keep catching I/O into an error Data.
+  Build's create-app prompt goes through the ask door.
+- **Decision 110 (throwaway decode channels) — HELD** pending Ingi's one-format-list shape. Facts trace:
+  `v8/mime-registries-trace.md`. Already decided for the build: url refuses unsigned `application/plang` (same
+  as http); decoded Data must be born with the caller's context; deleting `channel/type/file|http` is Ingi's call.
+
 ## Next / waiting
-- 8b (goal/step/action `on.start`, load, app start; debug/test/coverage move) — stage 8 plan `v8/plan.md`.
-- **7e-2b-ii** (setting.save/remove in, get/set out) and **7f** (concept types in the type list, the
-  prompt line, teaching setting classes): builder-visible, one eval for stage 7.
-- Before stage 7 closes: fold `all`/`Every` into one lazy `all()`.
+- Ingi's format-list shape → then the decode door (decision 110).
+- 8e–8h per `v8/plan.md`.
 - **Waiting on Ingi:** kind faces; `SetTests.Validate_TypeMismatch_ReturnsError`; decision 38; the
   live-console change for tests; module settings under `%!app.module.<m>.setting…%`?
 
