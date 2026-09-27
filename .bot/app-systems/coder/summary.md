@@ -1,40 +1,42 @@
 # coder — app-systems
 
-**Version:** v2
+**Version:** v3
 
 ## What this is
 app-systems makes every `app.X` the type X (a generic `type<X>` over its concept's `list<X>`), so the
 plang path, the C# path and the file path agree. The architect's plan
-(`.bot/app-systems/architect/plan.md`) lays it out in 13 stages. v1 reviewed the plan against the
-code and did stage 0 (the base); v2 is stage 1: `Start` is the entry verb of everything that runs.
+(`.bot/app-systems/architect/plan.md`) lays it out in 13 stages.
+- v1: plan review and stage 0.
+- v2: stage 1, `Start` as the entry verb.
+- v3: stage 3, one set of types.
 
 ## What was done
-- **v1 — review and stage 0** (`v1/result.md`, `v1/baseline-tests.md`): the plan's claims for stages
-  1, 3, 4 checked (answers from the architect folded into plan.md). Compile re-recorded (python twin
-  now refuses a missing entry per step, as C# does); 552 v0.1 `NN. stepname.pr` and, on Ingi's ruling,
-  98 v0.1 `.dll`/`.pdb` deleted under `os/`.
-- **v2 — stage 1, Run → Start** (`8c135f519`):
-  - One verb end to end: `action.Start(context)` → `call.Start(handler, context)` →
-    `ICodeGenerated.Start()` (the generated dispatcher, an explicit interface member) → the handler's
-    own `Start()`. Generator: `PLang.Generators/Emission/Action/this.cs` (`EmitExecute`).
-  - Renamed: 125 handlers; goal/step/step list/action/action list; `call.ExecuteAsync`;
-    `ICodeGenerated.Execute`; `app.RunGoalAsync` → `app.Start(goal, context)`; setup's, the builder's
-    `RunAsync` and `Executor.Run`. Kept: `App.Run<TAction>` (stage 11), the event bindings' `Run` (stage 8).
-  - timer's class `Start` → `start`; test's stopwatch `Start()` → `Begin()`; `list.range`'s
-    `Start`/`End` → `From`/`To`.
-  - plang: `environment.run`, `test.run`, `callback.run` → `.start` with their teaching files;
-    `os/system/test.goal` rebuilt by the installed builder.
-  - The python twin reads `Start()`'s signature (`tools/decider/build_pr.py`); `pick_golden.json` regenerated.
-  - Six suites at baseline; `plang --test` unchanged (7 pass, 317 stale).
-- **Next:** stage 3 (one set of types), after the architect's go.
+- **v1, v2**: see `v1/result.md` and `v2/plan.md`; stage 1 is commit `8c135f519`.
+- **v3, stage 3** (details and commits in `v3/result.md`):
+  - The registry is one list of types. Each type owns its name, `Alias`, item class (`ClrType`), owned C# shapes and facts, and answers `Match(key)` (`IMatch<TSelf>`).
+  - `Add` is the one way in, answering errors as results. Types are born through the list.
+  - Kinds own their type. Number's precisions, hash's algorithms, choice's sets and path's schemes are all kinds; `kind.list(context)` lists a type's kinds.
+  - `type.kind` is never null (the empty kind).
+  - Results: the six suites are at or under the baseline, the prompt twins are byte-equal, and `plang --test` is unchanged.
+  - Files: `PLang/app/type/{this.cs, list/this.cs, list/Registry.cs, kind/**, item/**}`, `code/load.cs`, `variable/set.cs`, `Formal.cs`, `data/this.cs`, plus ~90 test files.
+- **Next:** stage 4, the collected type: `type.@this<T>`, `app.type` as `type<type>`, `item.history`, the strict `list<T>`, and the kind store moving under item.
 
 ## Code example
-The generated dispatcher and the handler's own method share the name (emitted by the generator):
+A type answers for itself, and the list walks it:
 ```csharp
-async Task<global::app.data.@this> global::app.module.ICodeGenerated.Start()
-{
-    if (await __Live() is { } __missing) return global::app.data.@this.FromError(__missing);
-    try { return await Start(); }   // the handler's own public Start()
-    ...
-}
+// type/this.cs
+public ValueTask<@this?> Match(string key) => new(Names(key) ? this : null);
+internal bool Names(string key)
+    => string.Equals(Name, key, StringComparison.OrdinalIgnoreCase)
+       || Alias.Contains(key, StringComparer.OrdinalIgnoreCase);
+
+// type/list/this.cs
+public app.type.@this this[string name]
+    => Array.Find(Types, t => t.Names(name))
+       ?? throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
+```
+A kind declares the type it is a kind of:
+```csharp
+// type/item/number/kind/this.cs
+protected internal override string Owner => "number";
 ```

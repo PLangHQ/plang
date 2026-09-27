@@ -114,7 +114,7 @@
       "id": "d71c2e58-4a3b-4f19-8c6e-2b9a0f5e7d34",
       "bot": "coder",
       "timestamp_start": "2026-09-27T02:15:00Z",
-      "timestamp_end": "",
+      "timestamp_end": "2026-09-27T04:35:05Z",
       "intent": "Stage 3: one set of types — trace first, bring back what doesn't hold, then implement",
       "before": {
         "assumptions": "the registry's seven stores can collapse into one list of types; the facts computed per type keep prompt C byte-equal",
@@ -128,9 +128,41 @@
           "category": "code",
           "confidence": "high",
           "context": "trace of the stage 3 row; four asks sent to plang-40: kind's owner vs decode target, bare type births, Primitive.Aliases' four groups, generics by name in variable.set"
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs", "PLang/app/type/item/IMatch.cs", "PLang/app/module/action/code/load.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "one set of types (4bfd09c61): seven stores → one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/item/", "PLang/app/data/this.cs", "PLang/app/module/action/variable/set.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) — ruling 2, taken to Ingi by plang-40"
+        },
+        {
+          "paths": ["PLang/app/type/kind/", "PLang/app/type/item/number/kind/", "PLang/app/module/action/crypto/type/hash/kind/", "PLang/app/type/item/choice/set/this.cs", "PLang/app/type/item/path/scheme/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "kinds own their type and aliases; number/hash kinds in the store; sets and schemes are kinds; kind.list(context); kind never null with the empty kind (d7c34770d, bfb8b1d8e, a56192aca)"
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "medium",
+          "context": "~90 test files moved to the new model by a helper agent over five rounds, reviewed; tests pinning removed spellings deleted (listed in result.md); KindListTests added"
         }
       ],
-      "after": {}
+      "after": {
+        "status": "stage 3 done and pushed (4bfd09c61 … f88e1f8d3)",
+        "health": "six suites at or under baseline (Types 23→19, Data 45→44); prompt twins byte-equal; plang --test 7/0/317 as baseline",
+        "notes": "next: stage 4 after the architect's go; fixture DLLs need rebuilding (pre-existing)"
+      }
     }
   ]
 }
