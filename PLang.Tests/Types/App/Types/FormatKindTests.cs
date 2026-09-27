@@ -98,6 +98,42 @@ public class FormatKindTests
         await Assert.That(formats).Contains("jpg");
     }
 
+    [Test] public async Task PlangsOwnFormat_IsTheWireTypesPlangKind()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        foreach (var mime in new[] { "application/plang", "application/plang+json", "application/plang; charset=utf-8" })
+        {
+            var type = app.type.list.Mime(mime, ctx);
+            await Assert.That(type.Name).IsEqualTo("wire");
+            await Assert.That(type.kind.Name).IsEqualTo("plang");
+        }
+        // a .pr is goal's, not plang's own format
+        await Assert.That(app.type.list.Mime("application/plang-goal", ctx).Name).IsEqualTo("goal");
+    }
+
+    [Test] public async Task PlangsOwnFormat_DecodesToTheWholeData()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var serializer = app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var bytes = System.Text.Encoding.UTF8.GetBytes((await serializer.Serialize(app.Ok("hello")).Value())!.Clr<string>()!);
+        var decoded = await app.type.list.Mime("application/plang", ctx).kind.Decode(bytes, ctx);
+        await Assert.That((await decoded.Value())?.ToString()).IsEqualTo("hello");
+    }
+
+    [Test] public async Task AValuesFormat_DecodesToTheUnreadValue_WithTheCallersContext()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var decoded = await app.type.list.Mime("text/plain", ctx).kind.Decode(System.Text.Encoding.UTF8.GetBytes("hi"), ctx, "greeting");
+        await Assert.That(decoded.Name).IsEqualTo("greeting");
+        await Assert.That(decoded.Type.Name).IsEqualTo("text");
+        await Assert.That(decoded.Raw is byte[]).IsTrue();
+        await Assert.That(ReferenceEquals(decoded.Context, ctx)).IsTrue();
+        await Assert.That((await decoded.Value())?.ToString()).IsEqualTo("hi");
+    }
+
     [Test] public async Task AFormatWithNoMimeOfItsOwn_ArrivesAsItsTypes()
     {
         await using var app = NewApp();

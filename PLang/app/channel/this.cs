@@ -206,43 +206,17 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     }
 
     /// <summary>
-    /// The one read boundary. A concrete kind reads its source bytes and hands
-    /// them here; the channel's <see cref="Mime"/> decides the value's
-    /// <c>{type, kind}</c> and the result is <em>lazy</em> Data — the value
-    /// materializes on first touch through the reader registry, never at read
-    /// time. Couriers (variable memory, callstack, routing) thus relay a value
-    /// without forcing a parse (the OBP courier rule holds by construction).
-    ///
-    /// <para>When the Mime resolves to the plang <em>transport</em> serializer,
-    /// the bytes are the self-describing Data container, not a value — the
-    /// serializer reconstructs the Data (whose own value slot stays lazy via
-    /// <c>Wire.Read</c>). Any other Mime names a value: the bytes are stamped
-    /// <c>{type, kind}</c> and held as the raw source form. The container is
-    /// recognised by <em>which serializer owns the Mime</em>, not by a name
-    /// match — so value MIMEs that merely share the <c>application/plang</c>
-    /// prefix (e.g. <c>application/plang-goal</c>, a goal source) correctly
-    /// stamp as values, with no per-extension special-casing anywhere.</para>
+    /// The one read boundary. A concrete kind reads its source bytes and hands them here; the channel's
+    /// <see cref="Mime"/> is a format, and the format decodes them (<c>kind.Decode</c>) — for a value's format
+    /// into <em>lazy</em> Data that materializes on first touch, never at read time, so couriers relay a
+    /// value without forcing a parse; for plang's own format (<c>application/plang</c>) into the whole Data
+    /// the bytes are. No format is special-cased here.
     /// </summary>
-    protected async Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
+    protected Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
     {
-        var serializers = Channels?.Serializers;
-        // Is this content the transport container, or a bare value? One boundary fact,
-        // compared against the named door — no `is plang.@this` type-check. Sibling MIMEs
-        // that aren't the container (application/plang-goal, application/json, …) are values.
-        if (serializers != null && serializers.GetByType(Mime ?? "") == serializers.Transport)
-        {
-            using var ms = new MemoryStream(raw);
-            // The container deserializer returns the reconstructed Data itself
-            // (never an envelope around it — the store seam rejects bare nesting).
-            return await serializers.Transport.DeserializeAsync(ms, cancellationToken: ct);
-        }
-        // Bare value content: the mime stamps the declaration — {binary, kind} (jpg→image,
-        // json→object via the kind narrowing); octet-stream / unset → binary, no kind. The
-        // type reads its own raw. Content off I/O is bytes and rides as bytes (no eager split).
-        var context = Actor?.Context;
-        var type = (context != null ? Channels?.App?.type.list.Mime(Mime ?? "", context) : null)
-                   ?? new global::app.type.@this("binary", typeof(global::app.type.item.binary.@this));
-        return new global::app.data.@this(Name, type.Create(raw, context), context: context);
+        var context = Context ?? throw new InvalidOperationException(
+            $"channel '{Name}' belongs to no list — it has no context to read in");
+        return context.App.type.list.Mime(Mime ?? "", context).kind.Decode(raw, context, Name, ct);
     }
 
     /// <summary>

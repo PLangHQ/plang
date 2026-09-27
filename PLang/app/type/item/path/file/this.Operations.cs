@@ -74,7 +74,7 @@ public sealed partial class @this
         {
             var snapshot = context.App.Build!.GetPrSnapshot(Absolute);
             if (snapshot != null)
-                return new global::app.data.@this(Raw, type.Create(snapshot, context), context: context);
+                return await type.kind.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), context, Raw);
         }
 
         if (!System.IO.File.Exists(Absolute))
@@ -90,10 +90,10 @@ public sealed partial class @this
             if (context.App.Mode.Value == global::app.Mode.Build && Extension == ".pr")
                 context.App.Build!.SnapshotPrFile(Absolute, System.Text.Encoding.UTF8.GetString(bytes));
 
-            // Deferred: the source holds the raw bytes under their declared {type, kind};
-            // the parse runs through the ONE reader on first touch (.Value()) — a .pr → the
-            // goal reader → clr<goal>, a .json → the json reader → clr(json). No eager convert.
-            return new global::app.data.@this(Raw, type.Create(bytes, context), context: context);
+            // The format decodes the bytes — the one door a channel read takes too: a value's format
+            // holds the raw bytes unread under its {type, kind} (a .pr → the goal reader on first
+            // touch, a .json → clr(json)); plang's own format is the whole Data they are.
+            return await type.kind.Decode(bytes, context, Raw);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

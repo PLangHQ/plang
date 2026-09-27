@@ -167,6 +167,19 @@ public class @this
     /// a kind that owns a real decode overrides (json → clr).</summary>
     public virtual global::app.type.item.@this? Parse(object raw, global::app.actor.context.@this ctx) => null;
 
+    /// <summary>
+    /// Content of this kind, read off I/O into a Data — the one decode door (a channel read, a file's or a
+    /// url's content, an http body). By default the bytes are a value of this kind's type, left unread until
+    /// touched (<c>{image, png}</c>, <c>{text}</c>); a kind whose content is a whole Data (plang's own
+    /// format) overrides it. Born with the caller's context.
+    /// </summary>
+    public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
+        global::app.actor.context.@this context, string name = "", System.Threading.CancellationToken ct = default)
+    {
+        var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name), context];
+        return global::System.Threading.Tasks.Task.FromResult(new global::app.data.@this(name, type.Create(raw, context), context: context));
+    }
+
     /// <summary>The async face over <see cref="Parse"/> — the materialization rung (<c>source.Value</c>)
     /// asks the kind first; a decline (null) falls to the family's type reader. No second decode
     /// lives here: Load wraps the one <see cref="Parse"/> body.</summary>

@@ -10,7 +10,11 @@ namespace app.type.item.wire;
 /// only a structured/number/bool/quoted slice rides here as its raw document bytes.
 /// (Unrelated to the input/output channels.) Stores no context: decoding is a use, and the one
 /// using it passes theirs.
+///
+/// <para>Its kind <c>plang</c> is plang's own format (<c>application/plang</c>): content that is a whole
+/// Data, decoded whole by the transport.</para>
 /// </summary>
+[global::app.Attributes.PlangType("wire")]
 public sealed class @this : global::app.type.item.source
 {
     /// <summary>A still-encoded slice is plang's own machinery; no program names it.</summary>
