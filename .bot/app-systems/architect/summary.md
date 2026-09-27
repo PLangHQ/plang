@@ -11,6 +11,7 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 | 5 | 3→4 | The global kind store stays at `app.type.kind` through stage 3 and moves in stage 4 to item's kind list | once `app.type` is `type<type>`, `app.type.kind` means the type `type`'s own kinds | plan stage 4 (as planned) |
 | 6 | 3 | Rebuild the stale fixture DLLs (TypeProvider, SignatureRendererShadow) as the close of stage 3 | they test `code.load` → `Add`, which stage 3 rewrote; red since before the branch | coder's stage 3 |
 | 7 | 3 | `set.@this`'s two private statics (the set's name for the base ctor) are accepted where C# forces them; preferred shape: the base takes the enum's type and names the set itself | no statics in OBP, but a base-ctor argument before the instance exists is C#'s constraint | coder's call |
+| 8 | 3 | Fixture DLLs: namespace fix, `TypeProvider.Money` becomes an item (and the in-test fixtures), `CustomInt` and its renderer deleted | only items are plang types since the one set; int is a kind (decision 3) | coder's stage 3 close |
 | 3 | 3 | Test `LoadDll_CustomInt_OverridesBuiltInName` (a DLL overriding "int") is deleted; what it guarded flips: a loaded DLL claiming a taken type name is refused (`Add` answers an error) | contradicts one name one type and "int is a kind"; already failing in the baseline | coder's stage 3 |
 
 ## 2026-09-27 — app-systems plan ready for coder
