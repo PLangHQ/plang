@@ -5,13 +5,13 @@ namespace app.goal.list.setting;
 /// app's own; <c>visibility</c> — which goals, a file's public goal and/or the private ones under it.
 /// A missing key is its default: every public goal, the system's included.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.item.setting.@this
 {
     /// <summary>The goals of <c>/system/</c> too, beside the app's own.</summary>
-    public global::app.type.item.@bool.@this Os { get; } = true;
+    [Out] public global::app.type.item.@bool.@this Os { get; set; } = true;
 
     /// <summary>Which goals: public (a file's first), private (the ones under it), or both.</summary>
-    public global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>> Visibility { get; }
+    [Out] public global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>> Visibility { get; set; }
         = new([(global::app.type.item.choice.@this<global::app.goal.Visibility>)global::app.goal.Visibility.Public]);
 
     /// <summary>Every default.</summary>

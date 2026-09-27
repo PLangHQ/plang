@@ -590,6 +590,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
             return new Data(key, await all(), parent: parent);
 
+        // an owner's settings (%!app.goal.list.setting%), before the empty check: they aren't its items
+        if (await Setting(parent, key) is { } setting) return setting;
+
         if (CountRaw == 0) return Data.NotFound(key);
 
         var context = parent.Context;

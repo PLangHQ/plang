@@ -10,7 +10,8 @@ namespace app.goal.list;
 /// of the app and of <c>/system/</c> (<see cref="Every"/>, reading each <c>.pr</c> as it is reached), and
 /// setup. One goal is picked by its address through the type: <c>app.goal.Get("/system/error/show")</c>.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<goal.@this>
+public sealed class @this : global::app.type.item.list.@this<goal.@this>,
+    global::app.type.item.setting.ISetting<global::app.goal.list.setting.@this>
 {
     internal app.@this App { get; }
 

@@ -419,3 +419,43 @@ the objects themselves (`app.Build`'s `Files`/`Cache`, `callstack`'s `Timing`…
 2. Owner setting classes are items through one small base (reflection output, reads itself by
    property) — right?
 3. CLI flags as the system actor's run layer under the class path (not a walk onto an object) — right?
+
+**Rulings (plang-40):** 1 yes; 2 yes, base at `app/type/item/setting/this` (the app's own class at
+`app/setting/this` derives from it, read `%!app.setting.create%` through `!app`); 3 yes (`--app` too).
+Setting classes are kinds of `setting`, rows `{setting, kind: <path>}`. An action's path is a settings
+**node** (`%!goal.call.name%` reads the Property row through it; `save %!goal.call%` stores the
+Data<action> the node builds). **Bindings collide** with owner paths (`!goal`, `!test`, `!step`,
+`!error`, `!event`, `!trace` are memory bindings): owner settings go through the owner's own path under
+app — `%!app.goal.list.setting.os%`, the owner answering `.setting` (`ISetting<T>`), a write being the
+variable's own last hop. Modules and actions keep the short node form (`%!llm.cache%`,
+`%!llm.query.cache%`, `%!build.cache%`). **Known gap:** a module named like a binding (test, error,
+event) can't be read by the short form; none has a module-level setting today (Ingi asked whether modules
+move to `%!app.module.llm.setting.cache%` too).
+
+## 7e-2a — as built
+
+- `app/type/item/setting/this` — the base: an item (reflection output, `[Out] Path`), a class's path from
+  its namespace (a module's own `module.action.<m>.setting` read as `<m>`), or a node's given path.
+  `.x` is a declared public settable option, else the asker's settings for `path.x`. Writing an option
+  lands in the writer's run layer under `path.option` (and on the instance).
+- `app/type/item/setting/kind/this` — a class as a kind of `setting` (name = path, `ClrForm` = the class,
+  `Create()` a fresh instance). The type list: `FamilyName` makes a setting subclass a kind of `setting`
+  (not a type named `setting` of its own); `Enlist` holds one kind per class.
+- `app/type/item/setting/ISetting` — an owner names its class; the item base's navigation (after its
+  members) and the list's (before the empty check) answer `.setting` with the asker's instance.
+  `goal.list : ISetting<goal.list.setting>`; `goal.list.setting` derives the base (`Os`, `Visibility`
+  settable, `[Out]`).
+- `actor.setting.Get(path)`: a class → its instance (defaults ← this run's values one level under the
+  path, through the convert walk); a module / an action → a node; an action's option (`m.a.p`) → this run's
+  (`m.a.p`, then `m.p`), else the catalog property's `Default`; a prefix of a class path → a node; else
+  NotFound.
+- Root hop: a `!` name the memory doesn't bind reads the asker's settings (bindings first).
+- Module classes where a module-level setting is set today: `module/action/llm/setting` (`Cache`),
+  `module/action/build/setting` (`Cache`).
+- `variable.set`: `set default` checks before the `!` branch (a setting's value counts), and the `!` branch
+  (run-layer key) only for a root the memory doesn't bind — `%!app.…%` writes through its hops.
+- Executor: `--build`'s cache lands as the system's run value `build.cache` (was a memory name
+  `!build.cache` no read reached). **Fix:** `%!build.cache%` resolves (was NotFound since stage 6).
+- Tests: `SettingReadTests` (10: class option default / this run / instance, module option falls back to
+  the system, build.cache, action option default → module → action, nodes, owner write, NotFound,
+  bindings first).

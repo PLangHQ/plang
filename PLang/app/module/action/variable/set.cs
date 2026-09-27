@@ -124,21 +124,25 @@ public partial class Set : IContext, IScope
             return Context.Error(Name.Error
                 ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
-        // %!path% write → a setting on context.Setting (the write side of the setting front door),
-        // not a variable: `set %!http.request.timeout% = 5` lands where the generator seam reads it
-        // (step → %!module.action.param% → %!module.param% → [Default]). The reserved !ask sentinel
-        // (callback resume) stays a variable. (Build-time schema validation of the path is deferred.)
-        if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask"))
-        {
-            await Context.Setting.Set(global::app.actor.setting.Storage.InMemory, name.Name[1..], Value);
-            return Value;
-        }
-
+        // `set default` writes only where nothing is — a setting included (%!build.cache% holds its
+        // class's default, or this run's value).
         if (await AsDefault.ToBooleanAsync())
         {
             var existing = await name.Start(Context);
             if (existing.IsInitialized)
                 return existing;
+        }
+
+        // %!path% write → a setting on context.Setting (the write side of the setting front door),
+        // not a variable: `set %!http.request.timeout% = 5` lands where the generator seam reads it
+        // (step → %!module.action.param% → %!module.param% → [Default]). A root the memory binds
+        // (%!app.goal.list.setting.os%) writes through its own hops — a setting instance writes the
+        // option itself. The reserved !ask sentinel (callback resume) stays a variable.
+        if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask")
+            && !(await Context.Variable.Get(name.Code.Root.Name)).IsInitialized)
+        {
+            await Context.Setting.Set(global::app.actor.setting.Storage.InMemory, name.Name[1..], Value);
+            return Value;
         }
 
         // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure

@@ -157,6 +157,61 @@ public sealed class @this
             : System.Activator.CreateInstance(t)!;
     }
 
+    /// <summary>
+    /// The setting <paramref name="path"/> names, as this scope sees it (<c>%!path%</c>): a class's instance
+    /// — its defaults, this run's values on it; an action's option (<c>llm.query.cache</c>) — this run's
+    /// value, else the action's default; a node for a path that leads to settings (<c>goal</c>,
+    /// <c>goal.list</c>, a module, an action). NotFound when the path names none.
+    /// </summary>
+    public async ValueTask<data.@this> Get(string path)
+    {
+        var classes = _context.App.type.list["setting"].kind as global::app.type.kind.empty.@this;
+        if (classes?[path] is global::app.type.item.setting.kind.@this kind)
+        {
+            var instance = kind.Create();
+            var run = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (option, value) in Under(path))
+                if (instance.Option(option) != null) run[option] = await value.Value();
+            var applied = Set(instance, run);
+            return applied.Success ? new data.@this(path, instance, context: _context) : applied;
+        }
+
+        var hop = path.Split('.');
+        if (_context.App.module.list.Items().FirstOrDefault(m => string.Equals(m.Name, hop[0], StringComparison.OrdinalIgnoreCase)) is { } module)
+        {
+            if (hop.Length == 1) return Node(path);
+            if (module[hop[1]] is { } action)
+            {
+                if (hop.Length == 2) return Node(path);
+                // an option of the action: this run's (the action's, then the module's), else its default
+                if (hop.Length == 3 && action.Property.FirstOrDefault(p => string.Equals(p.Name, hop[2], StringComparison.OrdinalIgnoreCase)) is { } row)
+                {
+                    var run = InMemory([$"{hop[0]}.{hop[1]}.{hop[2]}", $"{hop[0]}.{hop[2]}"]);
+                    return run.IsInitialized ? run : new data.@this(hop[2], row.Default, context: _context);
+                }
+            }
+        }
+
+        if (classes?.kinds.Any(k => k.Name.StartsWith(path + ".", StringComparison.OrdinalIgnoreCase)) == true)
+            return Node(path);
+        return _context.NotFound(path);
+    }
+
+    // A path that leads to settings, as a value.
+    private data.@this Node(string path) => new(path, new global::app.type.item.setting.@this(path), context: _context);
+
+    // This run's values under path (keys path.option, one level down), the closest scope winning.
+    private Dictionary<string, data.@this> Under(string path)
+    {
+        var under = new Dictionary<string, data.@this>(StringComparer.OrdinalIgnoreCase);
+        var prefix = path + ".";
+        for (@this? s = this; s != null; s = s._parent)
+            foreach (var (key, value) in s._values)
+                if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && key.IndexOf('.', prefix.Length) < 0)
+                    under.TryAdd(key[prefix.Length..], value);
+        return under;
+    }
+
     public bool Contains(string key) => _values.ContainsKey(key);
 
     /// <summary>An independent copy of this level; keeps the same parent link + context.</summary>

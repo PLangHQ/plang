@@ -228,6 +228,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 var kind = (global::app.type.kind.@this)Activator.CreateInstance(t)!;
                 if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
             }
+            // each class of settings, a kind of setting by its path (one of it says the path)
+            if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
+                && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null
+                && Items().Any(type => type.Names(InferName(typeof(global::app.type.item.setting.@this))!)))
+                Hold(new global::app.type.item.setting.kind.@this((global::app.type.item.setting.@this)Activator.CreateInstance(t)!));
             foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 var held = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
@@ -272,6 +277,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     {
         if (type.IsDefined(typeof(app.type.item.path.PathSchemeAttribute), inherit: false))
             return InferName(typeof(app.type.item.path.@this));
+        // a class of settings is a kind of setting, named by its path
+        if (type != typeof(app.type.item.setting.@this) && typeof(app.type.item.setting.@this).IsAssignableFrom(type))
+            return InferName(typeof(app.type.item.setting.@this));
         for (var b = type.BaseType; b != null; b = b.BaseType)
             if (b.IsGenericType && b.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
                 return InferName(typeof(app.type.item.list.@this));

@@ -13,9 +13,15 @@ public sealed class Variable : Hop
 
     protected override void Piece(global::app.channel.serializer.IWriter writer) => writer.String(Name);
 
+    /// <summary>What the name holds; a <c>!</c> name the memory doesn't bind (<c>%!goal.list.setting%</c>)
+    /// is the asker's settings' — the bindings (<c>!app</c>, <c>!data</c>, …) answer first.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
-        => await context.Variable.Get(Name);
+    {
+        var bound = await context.Variable.Get(Name);
+        if (bound.IsInitialized || !Name.StartsWith('!')) return bound;
+        return await context.Setting.Get(Name[1..]);
+    }
 
     /// <summary>The variable rebinds to <paramref name="value"/>.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
