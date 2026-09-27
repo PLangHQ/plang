@@ -1,7 +1,6 @@
 using app;
 using app.type.item.variable;
 using EngineType = global::app.@this;
-using Storage = global::app.actor.setting.Storage;
 
 namespace PLang.Tests.App.Settings;
 
@@ -23,7 +22,7 @@ public class SettingsTests
     public async Task Get_Unset_IsNotFound()
     {
         var ctx = Ctx();
-        var d = await ctx.Setting.Get(Storage.InMemory, "archive.max");
+        var d = await ctx.Setting.Get(new[] { "archive.max" });
         await Assert.That(d.IsInitialized).IsFalse();   // unset → NotFound → the seam falls to [Default]
     }
 
@@ -56,9 +55,9 @@ public class SettingsTests
     public async Task Set_ThenGet_ReturnsValue()
     {
         var ctx = Ctx();
-        await ctx.Setting.Set(Storage.InMemory, "archive.max", ctx.Ok(42L));
+        await ctx.Setting.Set("archive.max", ctx.Ok(42L));
 
-        var d = await ctx.Setting.Get(Storage.InMemory, "archive.max");
+        var d = await ctx.Setting.Get(new[] { "archive.max" });
         await Assert.That(d.IsInitialized).IsTrue();
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
     }
@@ -67,10 +66,10 @@ public class SettingsTests
     public async Task Child_InheritsParentSetting()
     {
         var parent = Ctx();
-        await parent.Setting.Set(Storage.InMemory, "archive.max", parent.Ok(50L));
+        await parent.Setting.Set("archive.max", parent.Ok(50L));
 
         var child = parent.CreateChild();
-        var d = await child.Setting.Get(Storage.InMemory, "archive.max");
+        var d = await child.Setting.Get(new[] { "archive.max" });
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("50");
     }
 
@@ -78,26 +77,26 @@ public class SettingsTests
     public async Task Child_Shadows_ParentUnaffected()
     {
         var parent = Ctx();
-        await parent.Setting.Set(Storage.InMemory, "archive.max", parent.Ok(50L));
+        await parent.Setting.Set("archive.max", parent.Ok(50L));
 
         var child = parent.CreateChild();
-        await child.Setting.Set(Storage.InMemory, "archive.max", child.Ok(10L));
+        await child.Setting.Set("archive.max", child.Ok(10L));
 
-        await Assert.That((await (await child.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("10");
-        await Assert.That((await (await parent.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("50");
+        await Assert.That((await (await child.Setting.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("10");
+        await Assert.That((await (await parent.Setting.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("50");
     }
 
     [Test]
     public async Task Clone_Isolates_Writes()
     {
         var ctx = Ctx();
-        await ctx.Setting.Set(Storage.InMemory, "archive.max", ctx.Ok(42L));
+        await ctx.Setting.Set("archive.max", ctx.Ok(42L));
 
         var clone = ctx.Setting.Clone();
-        await clone.Set(Storage.InMemory, "archive.max", ctx.Ok(999L));
+        await clone.Set("archive.max", ctx.Ok(999L));
 
-        await Assert.That((await (await clone.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("999");
-        await Assert.That((await (await ctx.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("42");
+        await Assert.That((await (await clone.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("999");
+        await Assert.That((await (await ctx.Setting.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("42");
     }
 
     // The user's settings fall back to the system's: a setting on the system reaches a user context.
@@ -105,9 +104,9 @@ public class SettingsTests
     public async Task UserContext_FallsBackTo_TheSystemsSetting()
     {
         var engine = new EngineType("/app");
-        await engine.System.Setting.Set(Storage.InMemory, "llm.cache", engine.System.Context.Ok(false));
+        await engine.System.Setting.Set("llm.cache", engine.System.Context.Ok(false));
 
-        var read = await engine.User.Context.Setting.Get(Storage.InMemory, "llm.cache");
+        var read = await engine.User.Context.Setting.Get(new[] { "llm.cache" });
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
     }
 
@@ -116,9 +115,9 @@ public class SettingsTests
     public async Task SystemContext_DoesNotSee_TheUsersSetting()
     {
         var engine = new EngineType("/app");
-        await engine.User.Setting.Set(Storage.InMemory, "llm.cache", engine.User.Context.Ok(false));
+        await engine.User.Setting.Set("llm.cache", engine.User.Context.Ok(false));
 
-        var read = await engine.System.Context.Setting.Get(Storage.InMemory, "llm.cache");
+        var read = await engine.System.Context.Setting.Get(new[] { "llm.cache" });
         await Assert.That(read.IsInitialized).IsFalse();
     }
 }

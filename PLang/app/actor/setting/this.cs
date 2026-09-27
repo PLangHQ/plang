@@ -2,77 +2,145 @@ using System.Collections.Concurrent;
 
 namespace app.actor.setting;
 
-/// <summary>Which backing a Get/Set targets: this-run memory, or the persistent store.</summary>
-public enum Storage { InMemory, Persistent }
-
 /// <summary>
-/// An actor's settings. Holds both lifetimes behind <see cref="Storage"/>: in-memory (this run — the
-/// <c>%!x%</c> + action-param cascade) and persistent (the app's store). Each actor has one
-/// (<c>app.System.Setting</c>, <c>app.User.Setting</c>); the user's falls back to the system's. A
-/// context's own layer (<c>context.Setting</c>) chains up to its actor's, so a read walks
-/// this → parent → … → the actor's → the system's, and a goal-local setting shadows the rest.
+/// Settings, in layers: a class's defaults ← the actor's saved row (the user's, else the system's) ←
+/// this run's values (<c>set %!x%</c>, the CLI flags) ← the step's own. Each actor has one
+/// (<c>app.System.Setting</c>, <c>app.User.Setting</c>, the user's falling back to the system's) that holds
+/// the actor's rows; a context's own layer (<c>context.Setting</c>) chains up to its actor's, so a
+/// goal-local value shadows the rest.
 /// </summary>
 public sealed class @this
 {
-    internal const string Table = "settings";                       // store table name (data-compat)
+    internal const string Table = "settings";                       // the store's table: one row per actor per setting
     private readonly @this? _parent;
-    private readonly actor.context.@this _context;                  // born-with-context (not-found Data + persistent reach)
+    private readonly actor.context.@this _context;                  // born-with-context (not-found Data, the store's reach)
     private readonly ConcurrentDictionary<string, data.@this> _values = new(StringComparer.OrdinalIgnoreCase);
+    private readonly global::app.actor.@this? _actor;               // an actor's own: the actor whose rows it holds
+    private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;
 
+    /// <summary>A context's layer, chaining up to <paramref name="parent"/>.</summary>
     public @this(actor.context.@this context, @this? parent = null)
     { _context = context; _parent = parent; }
 
-    private @this Root => _parent?.Root ?? this;                    // persistent resolves at the root (the system's)
+    /// <summary>An actor's own: holds the actor's saved rows (read from the app's store on first use),
+    /// falling back to <paramref name="parent"/> (the system's, for the user).</summary>
+    public @this(global::app.actor.@this actor, @this? parent) : this(actor.Context, parent)
+    {
+        _actor = actor;
+        _rows = new(Load);
+    }
 
     /// <summary>
-    /// The one reader — storage is the switch, the value is always Data. InMemory walks the scope
-    /// chain (this → parent → the system's); Persistent reads the store. <paramref name="keys"/> are
-    /// tried most-specific first (InMemory: <c>module.action.param</c> then <c>module.param</c>;
-    /// Persistent: the path).
+    /// The action-param seam's door: this run's value for the first of <paramref name="keys"/> that has
+    /// one, the closest scope first; else the actor's rows (the user's, then the system's), key by key.
+    /// The keys are the action's (<c>llm.query.cache</c>) then the module's (<c>llm.cache</c>). NotFound —
+    /// the seam falls to the <c>[Default]</c> — when none.
     /// </summary>
-    public ValueTask<data.@this> Get(Storage storage, params string[] keys)
-        => storage == Storage.InMemory ? new(InMemory(keys)) : Persistent(keys);
+    public async ValueTask<data.@this> Get(string[] keys)
+    {
+        var run = Run(keys);
+        if (run.IsInitialized) return run;
+        foreach (var key in keys)
+        {
+            var dot = key.LastIndexOf('.');
+            if (dot > 0 && await Saved(key[..dot]) is { } row && await Option(row, key[(dot + 1)..]) is { } saved)
+                return saved;
+        }
+        return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");
+    }
 
-    private data.@this InMemory(string[] keys)
+    // This run's value for the first key that has one, the closest scope first.
+    private data.@this Run(string[] keys)
     {
         for (@this? s = this; s != null; s = s._parent)
             foreach (var key in keys)
                 if (s._values.TryGetValue(key, out var hit)) return hit;
-        return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");   // unset everywhere → seam falls to [Default]
+        return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");
     }
 
-    private async ValueTask<data.@this> Persistent(string[] keys)
+    /// <summary>This run's value for <paramref name="key"/> in this scope; null clears it.</summary>
+    public ValueTask<data.@this> Set(string key, data.@this? value)
     {
-        var path = keys.Length > 0 ? keys[0] : "";
-        if (string.IsNullOrEmpty(path)) return _context.NotFound("setting");
-
-        var dot = path.IndexOf('.');
-        var key = dot >= 0 ? path[..dot] : path;
-        var remaining = dot >= 0 ? path[(dot + 1)..] : null;
-
-        var result = await (await Root._context.App.store).Get<global::app.type.item.@this>(Table, key);
-        if (!result.Success) return result;
-
-        var value = await result.Value();
-        if (value is null || await value.IsEmpty())                        // unset → ASK (prompt user), not [Default]
-            return _context.Error(new error.AskError($"Setting '{key}' is not set.", Table, key));
-
-        return string.IsNullOrEmpty(remaining) ? result : await result.Get(remaining);
-    }
-
-    /// <summary>The one writer — mirror of <see cref="Get"/>. Stores the whole Data (keeps its type/props).</summary>
-    public ValueTask<data.@this> Set(Storage storage, string key, data.@this? value)
-        => storage == Storage.InMemory ? new(SetInMemory(key, value)) : SetPersistent(key, value);
-
-    private data.@this SetInMemory(string key, data.@this? value)
-    {
-        if (value is null) { _values.TryRemove(key, out _); return _context.Ok(); }
+        if (value is null) { _values.TryRemove(key, out _); return new(_context.Ok()); }
         _values[key] = value;
-        return value;
+        return new(value);
     }
 
-    private async ValueTask<data.@this> SetPersistent(string key, data.@this? value)
-        => await (await Root._context.App.store).Set(Table, key, value ?? _context.Ok());
+    /// <summary>Stores <paramref name="value"/> — a setting whole, or an action — as the row for
+    /// <paramref name="path"/> of the actor this scope belongs to.</summary>
+    public async ValueTask<data.@this> Save(string path, data.@this value)
+    {
+        var owner = Owner;
+        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", value.Peek(), value.Type, context: _context);
+        var stored = await (await _context.App.store).Set(Table, row.Name, row);
+        if (stored.Success) (await owner._rows!.Value)[path] = row;
+        return stored.Success ? row : stored;
+    }
+
+    /// <summary>Deletes the actor's row for <paramref name="path"/> — back to the system's row, or the
+    /// defaults.</summary>
+    public async ValueTask<data.@this> Remove(string path)
+    {
+        var owner = Owner;
+        var removed = await (await _context.App.store).Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
+        if (removed.Success) (await owner._rows!.Value).TryRemove(path, out _);
+        return removed;
+    }
+
+    // The actor's own settings this scope chains up to — the one whose rows a save writes.
+    private @this Owner
+    {
+        get
+        {
+            for (var s = this; s != null; s = s._parent)
+                if (s._actor != null) return s;
+            throw new InvalidOperationException("these settings belong to no actor — there is no row to save");
+        }
+    }
+
+    // The saved row for path, the closest actor first (the user's, then the system's); null when none.
+    private async ValueTask<data.@this?> Saved(string path)
+    {
+        for (@this? s = this; s != null; s = s._parent)
+            if (s._rows != null && (await s._rows.Value).TryGetValue(path, out var row)) return row;
+        return null;
+    }
+
+    // One option of a saved row: a setting's (its property), or an action's (its Property row).
+    private async ValueTask<data.@this?> Option(data.@this row, string name) => await row.Value() switch
+    {
+        global::app.type.item.setting.@this setting when setting.Option(name) is { } option
+            => new data.@this(name, option.GetValue(setting), context: _context),
+        global::app.goal.step.action.@this action
+            when action.Property.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is { } property
+            => new data.@this(name, property.Value, context: _context),
+        _ => null,
+    };
+
+    // The actor's rows, read once from the app's store: its keys are "<actor>!<path>".
+    private async Task<ConcurrentDictionary<string, data.@this>> Load()
+    {
+        var rows = new ConcurrentDictionary<string, data.@this>(StringComparer.OrdinalIgnoreCase);
+        var prefix = _actor!.Name.ToLowerInvariant() + "!";
+        global::app.store.@this store;
+        // A store that can't open (an unwritable root) holds no rows: nothing was ever saved there.
+        try { store = await _context.App.store; }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or InvalidOperationException)
+        {
+            await (_context.App.Debug?.Write($"settings: the store could not open, so the {_actor.Name} actor has no saved rows — {ex.Message}") ?? Task.CompletedTask);
+            return rows;
+        }
+        var all = await store.GetAll<global::app.type.item.@this>(Table);
+        if (!all.Success)
+        {
+            await (_context.App.Debug?.Write($"settings: the {_actor.Name} actor's rows could not be read — {all.Error?.Message}") ?? Task.CompletedTask);
+            return rows;
+        }
+        foreach (var row in (await all.Value())!.Items(_context))
+            if (row.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                rows[row.Name[prefix.Length..]] = row;
+        return rows;
+    }
 
     /// <summary>
     /// Applies a raw settings dict onto <paramref name="node"/>'s public-settable properties (the CLI
@@ -168,7 +236,10 @@ public sealed class @this
         var classes = _context.App.type.list["setting"].kind as global::app.type.kind.empty.@this;
         if (classes?[path] is global::app.type.item.setting.kind.@this kind)
         {
+            // the defaults, the actor's saved row on them (the user's, else the system's), this run's on top
             var instance = kind.Create();
+            if (await Saved(path) is { } saved && await saved.Value() is global::app.type.item.setting.@this held)
+                foreach (var option in held.Options) option.SetValue(instance, option.GetValue(held));
             var run = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
             foreach (var (option, value) in Under(path))
                 if (instance.Option(option) != null) run[option] = await value.Value();
@@ -183,11 +254,12 @@ public sealed class @this
             if (module[hop[1]] is { } action)
             {
                 if (hop.Length == 2) return Node(path);
-                // an option of the action: this run's (the action's, then the module's), else its default
+                // an option of the action: as the seam reads it (this run's, the saved rows — the
+                // action's, then the module's), else its default
                 if (hop.Length == 3 && action.Property.FirstOrDefault(p => string.Equals(p.Name, hop[2], StringComparison.OrdinalIgnoreCase)) is { } row)
                 {
-                    var run = InMemory([$"{hop[0]}.{hop[1]}.{hop[2]}", $"{hop[0]}.{hop[2]}"]);
-                    return run.IsInitialized ? run : new data.@this(hop[2], row.Default, context: _context);
+                    var set = await Get([$"{hop[0]}.{hop[1]}.{hop[2]}", $"{hop[0]}.{hop[2]}"]);
+                    return set.IsInitialized ? set : new data.@this(hop[2], row.Default, context: _context);
                 }
             }
         }

@@ -141,7 +141,7 @@ public partial class Set : IContext, IScope
         if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask")
             && !(await Context.Variable.Get(name.Code.Root.Name)).IsInitialized)
         {
-            await Context.Setting.Set(global::app.actor.setting.Storage.InMemory, name.Name[1..], Value);
+            await Context.Setting.Set(name.Name[1..], Value);
             return Value;
         }
 

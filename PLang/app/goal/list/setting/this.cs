@@ -8,10 +8,10 @@ namespace app.goal.list.setting;
 public sealed class @this : global::app.type.item.setting.@this
 {
     /// <summary>The goals of <c>/system/</c> too, beside the app's own.</summary>
-    [Out] public global::app.type.item.@bool.@this Os { get; set; } = true;
+    [Out, Store] public global::app.type.item.@bool.@this Os { get; set; } = true;
 
     /// <summary>Which goals: public (a file's first), private (the ones under it), or both.</summary>
-    [Out] public global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>> Visibility { get; set; }
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>> Visibility { get; set; }
         = new([(global::app.type.item.choice.@this<global::app.goal.Visibility>)global::app.goal.Visibility.Public]);
 
     /// <summary>Every default.</summary>

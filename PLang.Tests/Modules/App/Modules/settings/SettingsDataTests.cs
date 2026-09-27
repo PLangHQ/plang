@@ -93,9 +93,8 @@ public class SettingsDataTests
         var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
         System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
 
-        // Settings.Get should surface the SettingsError from the store,
-        // not throw and not return AskError.
-        var resolved = await _app.System.Setting.Get(global::app.actor.setting.Storage.Persistent, "AnyKey");
+        // The store surfaces a SettingsError, not a throw.
+        var resolved = await (await _app.store).Get<global::app.type.item.@this>("settings", "AnyKey");
         await resolved.IsFailure();
         await Assert.That(resolved.Error is SettingsError).IsTrue();
     }

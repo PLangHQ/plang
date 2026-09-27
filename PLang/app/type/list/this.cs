@@ -216,9 +216,12 @@ public sealed partial class @this
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<,>)) return ("type", null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
             return ("choice", new global::app.type.item.choice.set.@this(type.GetGenericArguments()[0]).Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type)
-            && (Array.Find(types, t => t.ClrType == type)?.Name ?? FamilyName(type)) is { } declared)
-            return (declared, null);
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
+            return (own.Name, null);
+        // a kind of a family: the family, with the kind whose values are this class (a setting class)
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
+            return (family, (Array.Find(types, t => t.Names(family))?.kind as global::app.type.kind.empty.@this)?
+                .kinds.FirstOrDefault(k => k.ClrForm == type)?.Name);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
     }

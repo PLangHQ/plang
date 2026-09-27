@@ -7,5 +7,5 @@ namespace app.module.action.llm.setting;
 public sealed class @this : global::app.type.item.setting.@this
 {
     /// <summary>Whether an answer is cached. A build with <c>--build={"cache":false}</c> turns it off.</summary>
-    [Out] public global::app.type.item.@bool.@this Cache { get; set; } = true;
+    [Out, Store] public global::app.type.item.@bool.@this Cache { get; set; } = true;
 }

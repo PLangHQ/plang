@@ -145,10 +145,10 @@ public sealed record @this(
         // setting from the context.Setting up-walk, before falling to the [Default].
         var actionKey = $"{settingModule}.{settingAction}.{ParamName}".ToLowerInvariant();
         var moduleKey = $"{settingModule}.{ParamName}".ToLowerInvariant();
-        // The setting Get walks context → parents → the actor's → the system's (in-memory cascade); a
-        // set setting is an initialized Data, an unset one is NotFound (IsInitialized == false) → falls
-        // to [Default].
-        var settingGet = $"await context.Setting.Get(global::app.actor.setting.Storage.InMemory, \"{actionKey}\", \"{moduleKey}\")";
+        // The setting Get reads this run's value (context → parents → the actor's → the system's), then
+        // the actor's saved rows (the user's, then the system's); a set setting is an initialized Data, an
+        // unset one is NotFound (IsInitialized == false) → falls to [Default].
+        var settingGet = $"await context.Setting.Get(new[] {{ \"{actionKey}\", \"{moduleKey}\" }})";
 
         sb.AppendLine($"        {TypeName} {Local};");
         // A C#-composed Seed's SET value passes through untouched (no As<T> round-trip); only an

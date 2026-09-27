@@ -459,3 +459,39 @@ move to `%!app.module.llm.setting.cache%` too).
 - Tests: `SettingReadTests` (10: class option default / this run / instance, module option falls back to
   the system, build.cache, action option default → module → action, nodes, owner write, NotFound,
   bindings first).
+- Build check (plang-40): the builder's own 7 goals and Tests/Simple rebuilt byte-identical (cached);
+  `%!build.cache%` pinned by ExecutorTests (`--build` → true, `cache:false` → false) and SetTests (`set
+  default` keeps a false). A full `plang build` in os/ aborts after 3 goals on the old-format
+  `os/.build/start.pr` (re-decided, step 6 refused) — unrelated; restored.
+
+## 7e-2b — split
+
+7e-2b-i (runtime, no catalog change): rows, their layering, the seam, `Storage` goes. 7e-2b-ii: the
+`setting` module's actions — `save` / `remove` by setting, `get` / `set` go, their teaching files —
+changes the builder's catalog (builder-visible): into 7f's twins + eval.
+
+## 7e-2b-i — as built
+
+- Rows: the store's `settings` table, key `<actor>!<path>` (`user!goal.list.setting`), value the setting
+  whole (`{setting, kind: <path>}`) or an action (`Data<action>`). Each actor's own settings
+  (`actor.setting(actor, parent)`) read the actor's rows once (store `GetAll`, the actor's prefix) and hold
+  them; `Save(path, value)` / `Remove(path)` write through and update what's held (the actor the scope
+  belongs to). A store that can't open (unwritable root) holds no rows (debug note), as permission's.
+- Layers: a class instance = defaults ← the saved row (the user's, else the system's — the first actor up
+  the chain holding one) ← this run's; the seam `Get(string[] keys)` = this run's (action key, module key)
+  → the rows (the action's row's Property, then the module's row's option) → NotFound (`[Default]`); an
+  action option read (`%!llm.query.cache%`) goes through the same door, then the catalog default.
+- `Storage` gone: `Set(key, value)` is this run's; the persistent key-value read is gone (its one test
+  now asks the store directly). The generator's seam emits `context.Setting.Get(new[] { action, module })`.
+- A setting's type is `{setting, kind: <path>}` (`Type` override on the base — an item's type is its
+  namespace tail, which for every setting class is `setting`); the type list's class door names a family
+  member with the kind whose `ClrForm` is its class. `app/type/item/setting/serializer/Reader`: the kind
+  names the class; each option read through its type's reader, then into its slot through the CLI's
+  convert walk (a list read plain lifts to its `list<choice<…>>`); a row whose class is gone reads null.
+- Options are `[Out, Store]` (goal.list.setting, llm, build).
+- One small type switch: a row's option is a setting's property or an action's Property row
+  (`actor.setting.Option`) — the two row kinds the ruling gave.
+- Tests: `SettingRowTests` (5: a row read by the next App on the same folder, user falls back to system
+  and its own row wins, this run beats the row, remove → defaults, a module row reaches the seam and
+  `%!llm.query.cache%`).
+- Checks: suites no new failures; plang --test 7/0/317; the builder's 7 goals rebuilt byte-identical.

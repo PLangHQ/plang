@@ -35,6 +35,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         return null;
     }
 
+    /// <summary>A setting's type is <c>setting</c> with its path as the kind — <c>{setting, goal.list.setting}</c>:
+    /// the kind is what tells a saved row which class to read back.</summary>
+    protected internal override global::app.type.@this Type => new("setting", GetType(), Path);
+
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;
 
@@ -59,7 +63,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         if (Option(key) == null)
             throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
-        await context.Setting.Set(global::app.actor.setting.Storage.InMemory, $"{Path}.{key}",
+        await context.Setting.Set($"{Path}.{key}",
             value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
         return await base.Set(key, isIndex, value, context);
     }
@@ -67,11 +71,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>The option named <paramref name="key"/> — a public settable property this class declares
     /// (the base's own members are not options); null when there is none.</summary>
     internal System.Reflection.PropertyInfo? Option(string key)
+        => Options.FirstOrDefault(o => string.Equals(o.Name, key, System.StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>This class's options — the public settable properties it declares (the base's own
+    /// members are not options).</summary>
+    internal IEnumerable<System.Reflection.PropertyInfo> Options
     {
-        for (var t = GetType(); t != null && t != typeof(@this); t = t.BaseType)
-            if (t.GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
-                    | System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.DeclaredOnly) is { SetMethod.IsPublic: true } option)
-                return option;
-        return null;
+        get
+        {
+            for (var t = GetType(); t != null && t != typeof(@this); t = t.BaseType)
+                foreach (var option in t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                             | System.Reflection.BindingFlags.DeclaredOnly))
+                    if (option.SetMethod?.IsPublic == true) yield return option;
+        }
     }
 }

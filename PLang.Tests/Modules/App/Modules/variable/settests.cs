@@ -35,7 +35,7 @@ public class SetTests
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Setting.Get(global::app.actor.setting.Storage.InMemory, "http.request.timeout")).Success).IsTrue();
+        await Assert.That((await context.Setting.Get(new[] { "http.request.timeout" })).Success).IsTrue();
         await Assert.That((await context.Variable.GetValue("!http.request.timeout"))).IsNull();
     }
 
@@ -45,7 +45,7 @@ public class SetTests
     public async Task SetDefault_OnASetting_KeepsItsValue()
     {
         var context = _app.User.Context;
-        await _app.System.Setting.Set(global::app.actor.setting.Storage.InMemory, "build.cache", _app.System.Context.Ok(false));
+        await _app.System.Setting.Set("build.cache", _app.System.Context.Ok(false));
 
         var action = TestAction.Create("variable", "set", ("name", "%!build.cache%"), ("value", true), ("asDefault", true));
         var result = await action.Start(context);

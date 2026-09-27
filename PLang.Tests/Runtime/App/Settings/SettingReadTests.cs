@@ -1,4 +1,3 @@
-using Storage = global::app.actor.setting.Storage;
 
 namespace PLang.Tests.App.Settings;
 
@@ -23,7 +22,7 @@ public class SettingReadTests
     {
         await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
-        await ctx.Setting.Set(Storage.InMemory, "goal.list.setting.os", ctx.Ok(false));
+        await ctx.Setting.Set("goal.list.setting.os", ctx.Ok(false));
 
         var read = await Read("%!app.goal.list.setting.os%", ctx);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
@@ -41,7 +40,7 @@ public class SettingReadTests
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
         await using var app = TestApp.Create("/test");
-        await app.System.Setting.Set(Storage.InMemory, "llm.cache", app.System.Context.Ok(false));
+        await app.System.Setting.Set("llm.cache", app.System.Context.Ok(false));
 
         var read = await Read("%!llm.cache%", app.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
@@ -61,10 +60,10 @@ public class SettingReadTests
         var ctx = app.User.Context;
         await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
 
-        await ctx.Setting.Set(Storage.InMemory, "llm.cache", ctx.Ok(false));
+        await ctx.Setting.Set("llm.cache", ctx.Ok(false));
         await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("false");
 
-        await ctx.Setting.Set(Storage.InMemory, "llm.query.cache", ctx.Ok(true));
+        await ctx.Setting.Set("llm.query.cache", ctx.Ok(true));
         await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
     }
 

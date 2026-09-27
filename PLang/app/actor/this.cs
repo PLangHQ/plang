@@ -85,7 +85,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>This actor's settings — the root its contexts' layers chain to; the user's falls back
     /// to the system's (<c>app.System.Setting</c>).</summary>
-    public global::app.actor.setting.@this Setting => _setting ??= new(Context, _fallback?.Setting);
+    public global::app.actor.setting.@this Setting => _setting ??= new(this, _fallback?.Setting);
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
