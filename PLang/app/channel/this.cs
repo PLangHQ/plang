@@ -122,9 +122,9 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// A goal channel doesn't while its own goal body runs, so a body writing to its own name can't loop.</summary>
     public virtual bool Available => true;
 
-    /// <summary>Writes <paramref name="text"/> — as a write of that text through <see cref="WriteAsync"/>; a
-    /// stream writes the text's bytes itself.</summary>
-    public virtual Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
+    /// <summary>Writes <paramref name="text"/> — a write of that text through <see cref="WriteAsync"/>, so it fires
+    /// <c>on.write</c> as any write does. The channel frames it (a text channel ends the line).</summary>
+    public Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
         => WriteAsync((Context ?? throw new InvalidOperationException(
             $"channel '{Name}' belongs to no list — it has no context to write text in")).Ok(text), ct);
 

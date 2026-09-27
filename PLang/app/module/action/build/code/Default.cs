@@ -226,7 +226,7 @@ public class Default : IBuilder
 
         var elapsed = _buildTimer.Elapsed;
         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
-            $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
+            $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s)");
         _buildTimer.Restart();
 
         return saveResult.Success ? context.Ok(true) : saveResult;

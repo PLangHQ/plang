@@ -428,7 +428,7 @@ public sealed class OpenAi : ILlm
                     if (validationRetries >= (await action.MaxValidationRetries.Value())!.ToInt64())
                     {
                         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
-                            $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");
+                            $"  Validation failed (no retries left): {validationError}");
                         return context.Error(new ActionError(
                             $"LLM validation failed: {validationError}",
                             "ValidationFailed", 400));
@@ -436,7 +436,7 @@ public sealed class OpenAi : ILlm
 
                     validationRetries++;
                     await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
-                        $"  Validation failed (retry {validationRetries}/{(await action.MaxValidationRetries.Value())}): {validationError}{Environment.NewLine}");
+                        $"  Validation failed (retry {validationRetries}/{(await action.MaxValidationRetries.Value())}): {validationError}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",

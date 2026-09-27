@@ -50,6 +50,16 @@ public sealed class @this : global::app.channel.type.session.@this
 
         try
         {
+            // A text value on a text channel is its characters, in the channel's encoding — no serializer between.
+            if (Mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
+                && await data.Value() is global::app.type.item.text.@this text)
+            {
+                var encoding = ResolveEncoding();
+                await Stream.WriteAsync(encoding.GetBytes(text.ToString() + System.Environment.NewLine), ct);
+                await Stream.FlushAsync(ct);
+                return data.Context.Ok();
+            }
+
             // The stream owns its selector (its Mime); the registry just looks up.
             var serResult = await Channels!.Serializers.GetOrDefault(Mime).SerializeAsync(Stream, data, cancellationToken: ct);
             // Line framing is the channel's job (console/pipe ergonomics, NDJSON):
@@ -179,20 +189,6 @@ public sealed class @this : global::app.channel.type.session.@this
     {
         var bytes = await ReadAllBytesAsync(cancellationToken);
         return ResolveEncoding().GetString(bytes);
-    }
-
-    public async Task WriteTextAsync(string text, CancellationToken cancellationToken = default)
-    {
-        var bytes = ResolveEncoding().GetBytes(text);
-        await WriteBytesAsync(bytes, cancellationToken);
-    }
-
-    /// <summary>A stream writes the text's bytes itself, in its encoding — no serializer between.</summary>
-    public override async Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
-    {
-        await WriteTextAsync(text, ct);
-        return (Context ?? throw new InvalidOperationException(
-            $"channel '{Name}' belongs to no list — it has no context to answer in")).Ok();
     }
 
     public override void Close()

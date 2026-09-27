@@ -83,10 +83,9 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         app.User.Channel.Register(ch);
         var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
-        // Serializer-layer errors travel directly through Data.Error without
-        // wrapping — the underlying ThrowingStream IOException surfaces as
-        // TextSerializeError from the Text serializer, not a generic WriteError.
-        await Assert.That(result.Error!.Key).IsEqualTo("TextSerializeError");
+        // A text value on a text channel is written by the stream itself (no serializer), so the underlying
+        // ThrowingStream IOException surfaces as the stream's own transport failure.
+        await Assert.That(result.Error!.Key).IsEqualTo("WriteError");
     }
 
     [Test]
@@ -253,21 +252,42 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
-    // F5 regression — non-UTF-8 Encoding property must be honored by the convenience
-    // text helpers, not silently coerced to UTF-8.
+    // A text write on a text channel is its characters in the channel's Encoding, not silently UTF-8 — then the
+    // line the channel ends.
     [Test]
-    public async Task StreamChannel_WriteTextAsync_HonorsLatin1Encoding()
+    public async Task StreamChannel_WriteText_HonorsLatin1Encoding()
     {
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var capture = new MemoryStream();
         var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "iso-8859-1" };
+        app.User.Channel.Register(ch);
 
         // 'é' is one byte in latin-1 (0xE9) but two bytes in UTF-8.
-        await ch.WriteTextAsync("é");
-        var bytes = capture.ToArray();
+        await ch.WriteText("é");
 
-        await Assert.That(bytes.Length).IsEqualTo(1);
-        await Assert.That(bytes[0]).IsEqualTo((byte)0xE9);
+        var expected = global::System.Text.Encoding.Latin1.GetBytes("é" + global::System.Environment.NewLine);
+        await Assert.That(capture.ToArray()).IsEquivalentTo(expected);
+        await Assert.That(capture.ToArray()[0]).IsEqualTo((byte)0xE9);
+    }
+
+    // A text write fires the channel's on.write, as any write does.
+    [Test]
+    public async Task StreamChannel_WriteText_FiresOnWrite()
+    {
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
+        var ch = StreamChannel.Memory("output");
+        app.User.Channel.Register(ch);
+        string? seen = null;
+        ch.Own().Bind("write", global::app.@event.When.before, async (_, data, ctx) =>
+        {
+            seen = (await data.Value())?.ToString();
+            return ctx.Ok();
+        }, app.User, global::app.@event.binding.Scope.actor);
+
+        await ch.WriteText("  Saved Start");
+
+        await Assert.That(seen).IsEqualTo("  Saved Start");
     }
 
     [Test]
@@ -284,10 +304,12 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_UnknownEncoding_FallsBackToUtf8()
     {
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var capture = new MemoryStream();
         var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "totally-not-an-encoding" };
-        await ch.WriteTextAsync("hi");
-        await Assert.That(capture.ToArray()).IsEquivalentTo(new byte[] { (byte)'h', (byte)'i' });
+        app.User.Channel.Register(ch);
+        await ch.WriteText("hi");
+        await Assert.That(capture.ToArray()).IsEquivalentTo(global::System.Text.Encoding.UTF8.GetBytes("hi" + global::System.Environment.NewLine));
     }
 }

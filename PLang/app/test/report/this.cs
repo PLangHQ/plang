@@ -60,7 +60,8 @@ public sealed class @this
                 console.Append(test.Failure(context));
             }
             console.Append(Coverage.Text(context.App.module.list));
-            await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(console.ToString());
+            // the channel ends the line
+            await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(console.ToString().TrimEnd('\r', '\n'));
         }
 
         var run = new global::app.type.item.list.@this<global::app.test.@this>(tests);

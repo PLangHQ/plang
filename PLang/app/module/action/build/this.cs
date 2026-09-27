@@ -82,7 +82,7 @@ public sealed partial class @this
                 return Context.Error(new global::app.error.ServiceError(
                     "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
 
-            await outputChannel.WriteTextAsync($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n): ");
+            await outputChannel.WriteText($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n): ");
             using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
             var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
