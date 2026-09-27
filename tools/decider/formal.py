@@ -34,12 +34,10 @@ LITERAL value keeps untyped entries (`Value={"name": "a"}`): the dict is the typ
 """
 import json, re
 import build_pr as b
-import variables as v
+import variables as ref
 
 CONDITIONS = {('condition', 'if'), ('condition', 'elseif'), ('condition', 'else')}
 RECOVERY = 'Recovery'   # a modifier's property holding the actions it runs when the wrapped action fails
-VARIABLE = re.compile(r'%[^%\s]+%')
-BARE_NAME = re.compile(r'!?[A-Za-z_][\w.\[\]]*')   # a variable's name without its % signs
 SYMBOL = re.compile(r'[=!<>]+')                     # a choice's symbol option written bare: Operator=>=
 
 class FormalError(Exception):
@@ -95,7 +93,7 @@ def typed(declared, value, written=None):
     if isinstance(value, list): return {'name': 'list'}
     if isinstance(value, dict): return {'name': 'action'} if is_action(value) else {'name': 'dict'}
     if value is None: return {'name': 'item'}
-    return {'name': 'item'} if VARIABLE.fullmatch(value) else {'name': 'text'}
+    return {'name': 'item'} if ref.whole(value) else {'name': 'text'}
 
 def marked(t, value):
     """The row's type marked a template ("plang") when the programmer's literal holds a %variable%
@@ -103,12 +101,12 @@ def marked(t, value):
     names a variable, and a held action is an action — neither is a template."""
     if t.get('name') == 'variable' or isinstance(value, dict) and is_action(value): return t
     if isinstance(value, list) and any(isinstance(x, dict) and is_action(x) for x in value): return t
-    return {**t, 'template': 'plang'} if v.held(value) else t
+    return {**t, 'template': 'plang'} if ref.held(value) else t
 
 def listed(row):
     """The row with the variables its value holds, as the .pr writes them after the value (a template's,
     or the variable a variable slot names); a row holding none is as it was."""
-    held = v.held(row['value']) if row['type'].get('template') or row['type'].get('name') == 'variable' else []
+    held = ref.held(row['value']) if row['type'].get('template') or row['type'].get('name') == 'variable' else []
     if not held: return row
     out = {}
     for k, x in row.items():
@@ -296,9 +294,9 @@ class _Reader:
             self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{value}` is not', at)
         # A variable slot given the bare name as a text ("path") names the same variable as %path% —
         # the runtime reads both alike (Variable.Resolve). The writer always writes %path%.
-        if declared == 'variable' and isinstance(value, str) and BARE_NAME.fullmatch(value):
+        if declared == 'variable' and isinstance(value, str) and not value.startswith('%') and ref.whole(f'%{value}%'):
             value = f'%{value}%'
-        if declared == 'variable' and not (isinstance(value, str) and VARIABLE.fullmatch(value)):
+        if declared == 'variable' and not ref.whole(value):
             self.fail(f'`{prop}` names a variable: write it with its % signs', at)
         # A dict handed to a list property is its rows: Parameter={to: %x%} → [{name: to, …}], each
         # typed like any row — the written type, else the literal's (the slot is open).
@@ -325,11 +323,11 @@ class _Reader:
             self.pos = m.end()
             return json.loads(m.group())
         if c == '%':
-            m = VARIABLE.match(t, p)
-            if not m and t.startswith('%?', p): self.fail('a `?` is still there: fill it with the value the step gives')
-            if not m: self.fail('a %variable% is not closed')
-            self.pos = m.end()
-            return m.group()
+            found = ref.read(t, p)
+            if not found and t.startswith('%?', p): self.fail('a `?` is still there: fill it with the value the step gives')
+            if not found: self.fail('a %variable% is not closed')
+            self.pos = p + len(found['text'])
+            return found['text']
         if c == '[':
             self.pos += 1; items = []
             while not self.peek(']'):
@@ -440,7 +438,7 @@ def _literal(v, t=None, in_list=False):
     if isinstance(v, (int, float)): return repr(v)
     if isinstance(v, str):
         # A %variable% into a slot that is not text is the variable itself; anything else is a text.
-        if VARIABLE.fullmatch(v) and (t or {}).get('name') != 'text': return v
+        if ref.whole(v) and (t or {}).get('name') != 'text': return v
         return json.dumps(v, ensure_ascii=False)
     if isinstance(v, list):
         if v and all(isinstance(r, dict) and 'name' in r and 'value' in r and not is_action(r) for r in v):

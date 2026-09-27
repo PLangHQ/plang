@@ -27,13 +27,13 @@ public class JsonRebindPinTests : System.IAsyncDisposable
         await stack.Set("j", j);
 
         // One-level deep write — json host materialises into a dict, sets the key.
-        await stack.Set("j.a", "ONE");
+        await new global::app.type.item.variable.@this("j.a").Set("ONE", stack.Context);
 
-        var a = await stack.Get("j.a");
+        var a = await new global::app.type.item.variable.@this("j.a").Start(stack.Context);
         await Assert.That((await a!.Value())?.ToString()).IsEqualTo("ONE");
 
         // The sibling survives the materialisation (json content became the dict's keys).
-        var b = await stack.Get("j.b");
+        var b = await new global::app.type.item.variable.@this("j.b").Start(stack.Context);
         await Assert.That((await b!.Value())?.ToString()).IsEqualTo("two");
     }
 }

@@ -9,7 +9,7 @@ public partial class Group : IContext
 
     public async Task<data.@this<app.type.item.list.@this>> Start()
     {
-        var data = await Context.Variable.Get(await ListName.Value());
+        var data = await (await ListName.Value())!.Start(Context);
         var key = (await Key.Value())!.Clr<string>()!;
 
         // Buckets are native lists of the element Data — each bucket is itself

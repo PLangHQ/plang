@@ -27,7 +27,7 @@ public partial class Where : IContext
 
     public async Task<data.@this> Start()
     {
-        var subject = await Context.Variable.Get((await ListName.Value()) as app.type.item.variable.@this);
+        var subject = await (await ListName.Value())!.Start(Context);
         var field = (await Field.Value())!.Clr<string>()!;
         Operator op = (await Operator.Value())!;
         var subjectVal = await subject.Value();

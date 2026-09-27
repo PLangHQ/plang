@@ -10,9 +10,9 @@ public partial class Add : IContext
 
     public async Task<data.@this<app.type.item.list.@this>> Start()
     {
-        var listName = (await ListName.Value());
+        var listName = (await ListName.Value())!;
         // What %l% holds, or a new list stored in one step — runs adding at once all reach one list.
-        var data = await Context.Variable.Ensure(listName, () => new app.type.item.list.@this());
+        var data = await listName.Ensure(() => new app.type.item.list.@this(), Context);
         var existing = (await data.Value());
         var list = existing as app.type.item.list.@this;
 
@@ -22,7 +22,7 @@ public partial class Add : IContext
             list = new app.type.item.list.@this();
             if (data.HasValue)
                 list.Add(new data.@this("", existing, context: Context));
-            await Context.Variable.Set(listName, list);
+            await listName.Set(list, Context);
         }
 
         // The entry mints its OWN Data pointing at the value's current

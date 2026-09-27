@@ -3,7 +3,7 @@ namespace PLang.Tests.App.Serialization;
 // Template stamping at read — the trust rides the reader's mode, not the content.
 // The SAME %ref% bytes born a live template under the authored mode ("plang") and
 // a literal under runtime-ingest (null). The type owns the holes-decision, so a
-// holeless string never carries the stamp (HasVariableReference stays correct).
+// holeless string never carries the stamp (HasVariable stays correct).
 public class TemplateStampOnReadTests
 {
     private static global::app.type.item.text.@this ReadText(string json, string? mode)
@@ -40,13 +40,13 @@ public class TemplateStampOnReadTests
     [Test] public async Task AuthoredContainer_StampsRefSlot_LeavesLiteral()
     {
         var list = ReadList("[\"hi %name%\", \"literal\"]", "plang");
-        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).HasVariableReference).IsTrue();
-        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(1).HasVariableReference).IsFalse();
+        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).HasVariable).IsTrue();
+        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(1).HasVariable).IsFalse();
     }
 
     [Test] public async Task RuntimeContainer_DoesNotStampRefSlot()
     {
         var list = ReadList("[\"hi %name%\"]", null);
-        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).HasVariableReference).IsFalse();
+        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).HasVariable).IsFalse();
     }
 }

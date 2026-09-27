@@ -123,11 +123,11 @@ public class KeptStepTests
         await Assert.That(second.IsCached).IsTrue();
         await Assert.That(second.Cache!.Hash).IsEqualTo(second.Hash);
         await context.Variable.Set("goal", second);
-        await Assert.That((await (await context.Variable.Get("goal.IsCached")).Value())?.ToString()).IsEqualTo("true");
-        await Assert.That((await (await context.Variable.Get("goal.Step.IsCached")).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await new global::app.type.item.variable.@this("goal.IsCached").Start(context)).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await new global::app.type.item.variable.@this("goal.Step.IsCached").Start(context)).Value())?.ToString()).IsEqualTo("true");
 
         // the build's guard: `if %goal.IsCached%` — a bare if, Left's own truth
-        var guard = new global::app.module.action.condition.If(context) { Left = await context.Variable.Get("goal.IsCached") };
+        var guard = new global::app.module.action.condition.If(context) { Left = await new global::app.type.item.variable.@this("goal.IsCached").Start(context) };
         var answer = await new global::app.module.action.condition.code.Default().Evaluate(guard);
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("true");
     }

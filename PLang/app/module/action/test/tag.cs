@@ -15,7 +15,7 @@ public partial class Tag : IContext
     /// %variable% is only known at run, so it has nothing to stamp.</summary>
     public async Task<data.@this> Build()
     {
-        if (Tags == null || Tags.HasVariableReference) return Context.Ok();
+        if (Tags == null || Tags.HasVariable) return Context.Ok();
         if (await (await Context.Variable.Get("goal")).Value() is not global::app.goal.@this goal) return Context.Ok();
         if (await Tags.Value() is not { } tags) return Context.Ok();
 

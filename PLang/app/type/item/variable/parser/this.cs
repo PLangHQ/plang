@@ -30,6 +30,35 @@ public sealed class @this
         get { _ = Variable; return _error; }
     }
 
+    /// <summary>The text read as a path from a value — its hops with no root: <c>choices[0].message</c>,
+    /// <c>[0]</c>, <c>!type</c>. Null when it doesn't parse (the reason lands in <see cref="Error"/>).</summary>
+    public code.@this? Path()
+    {
+        _pos = 0;
+        _end = _text.Length;
+        var hops = new List<code.Hop>();
+        // A path that starts bare starts with a member, as if written after a dot.
+        if (_end > 0 && _text[0] is not ('.' or '!' or '['))
+        {
+            if (Named(0) is not { } first) { Fail(_text, "it starts with a name"); return null; }
+            hops.Add(first);
+        }
+        while (_pos < _end)
+        {
+            var start = _pos;
+            var hop = _text[_pos] switch
+            {
+                '.' => Member(start),
+                '!' => Binding(start),
+                '[' => Index(start),
+                _ => null,
+            };
+            if (hop == null) { Fail(_text, $"'{_text[_pos]}' can't follow '{_text[..start]}'"); return null; }
+            hops.Add(hop);
+        }
+        return new code.@this(hops);
+    }
+
     /// <summary>The reference whose opening <c>%</c> is at <paramref name="at"/>, or null: none opens
     /// there, or it doesn't parse (the reason lands in <see cref="Error"/>). Its <c>Text</c> is exactly
     /// what was written, so the reader continues after it.</summary>
@@ -130,6 +159,12 @@ public sealed class @this
     private code.Hop? Member(int start)
     {
         _pos++;
+        return Named(start);
+    }
+
+    // What follows a member's dot: a name, a quoted key, or a method with its values.
+    private code.Hop? Named(int start)
+    {
         if (_pos < _end && _text[_pos] is '"' or '\'')
             return Quoted() is { } key ? new code.Property(_text[start.._pos], key) : null;
         var name = Name();
@@ -185,7 +220,7 @@ public sealed class @this
         if (c is '"' or '\'') return Quoted() is { } s ? new global::app.type.item.text.@this(s) : null;
         if (char.IsDigit(c) || (c == '-' && _pos + 1 < _end && char.IsDigit(_text[_pos + 1]))) return Number();
         if (c == '%') return Nested(_pos);
-        if (bare) return Path();
+        if (bare) return Bare();
         var word = Name();
         return word switch
         {
@@ -206,7 +241,7 @@ public sealed class @this
     }
 
     // A bare path inside brackets: [idx], [askInfo.gui], [items[0]] — a variable.
-    private variable.@this? Path()
+    private variable.@this? Bare()
     {
         var start = _pos;
         int depth = 0;

@@ -63,7 +63,7 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
             context.App.type.list[new Type("object", "json"), context].Create(element, context), context: context);
 
         // The builder write: the STEP constructs its children from the incoming json.
-        await context.Variable.Set("goal.Step[0].Code", clrJsonActions);
+        await new global::app.type.item.variable.@this("goal.Step[0].Code").Set(clrJsonActions, context);
 
         await Assert.That(goal.Step[0].Code.Count).IsEqualTo(2);
         await Assert.That(goal.Step[0].Code[0].Module.Name).IsEqualTo("variable");

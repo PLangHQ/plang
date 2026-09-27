@@ -24,7 +24,7 @@ public partial class query : IContext
             return new global::app.error.ProgramError("Parameter 'Message' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}", key: "EmptyParameter");
 
         // a %variable% is unknown at build: its value is judged when the step runs
-        if (Message.HasVariableReference) return null;
+        if (Message.HasVariable) return null;
 
         if (value is not global::app.type.item.list.@this
             && value is not Clr { Value: System.Collections.IList }

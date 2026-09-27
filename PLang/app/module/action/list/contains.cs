@@ -8,7 +8,7 @@ public partial class Contains : IContext
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
-        var data = await Context.Variable.Get(await ListName.Value());
+        var data = await (await ListName.Value())!.Start(Context);
 
         // Membership through THE comparison entry: matches only on Equal, never
         // errors — a mixed list treats NotEqual/Incomparable as "not this one".

@@ -71,8 +71,8 @@ public partial class ask : IContext
     public async Task<data.@this<Ask>> Start()
     {
         // Resume path: channel pre-bound the answer under !ask.answer.
-        var answer = await Context.Variable.Get(AnswerVariableName);
-        if (answer != null && answer.IsInitialized)
+        var answer = await new global::app.type.item.variable.@this(AnswerVariableName).Start(Context);
+        if (answer.IsInitialized)
         {
             // The sentinel rides as the "answer" property of the infra root
             // variable "!ask". Variable.Remove only takes flat keys; removing

@@ -26,7 +26,7 @@ public class ChannelStreamLoadTests
         await Assert.That(property.Type.Name).IsEqualTo("text");
         // And the %ref% borns a live template — a goal is authored code, so the goal
         // read stamps (mode rides the goal type, not the read path).
-        await Assert.That(property.Data(app.User.Context).HasVariableReference).IsTrue();
+        await Assert.That(property.Data(app.User.Context).HasVariable).IsTrue();
     }
 
     [Test]

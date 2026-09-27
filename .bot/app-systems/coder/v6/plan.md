@@ -113,6 +113,28 @@ app/type/item/this.cs                   Variable (read-only, shared empty), HasV
 - Twin: `tools/decider/variables.py` is the parser's twin; formal.py/formal_check.py mark by it and
   write each row's list; formal_golden.json regenerated; `VariableListTwinTests` holds the two equal.
 
+## 6f decisions (as built)
+
+- Ruled: `data.Get(string path)` stays as the relative-path door, holding no walk of its own — the
+  parser reads the path (`parser.Path()`: hops, no root) and the code starts from this Data. Deleted:
+  `app/type/item/variable/path/` (Parse, Segment, Index.Key's re-parse), the walker's switch and the
+  clr/kind whole-path walk (a clr answers one step: `Get(parent, key, isIndex)`), `data.Set(path, …)`,
+  Data's private `!` lookup (the property hop owns it), `CleanName` ×2.
+- The variable store takes root names only (Get/Set/Peek/Contains/Ensure/Replace/Remove); the
+  `%setting.X%` navigable mount is gone (settings go through `%!…%`, stage 7). Consumers moved onto the
+  variable's doors: list.* (17), variable.get/exists/compress/decompress, loop.foreach (item/key as
+  variables), output.ask (`%!ask.answer%` is a path through the `!ask` root). New variable doors:
+  `Ensure(value, ctx)` / `Replace(expected, value, ctx)` — a bare name keeps the store's atomic ones.
+- The other definitions of a reference now run the parser: Formal's bare-name check and `%…%` read,
+  `step.Cover` (was `Marker`), `step.Scope` (was `Named`), the debug display (asks each value's
+  `Variable`), pick's First/Target/Assigned/`write to` (the grammar around a reference stays a regex;
+  the reference is the parser's: `variable.IsBare`, `variable.IsMembers`). The python twins
+  (formal.py, prompt_c.py) mirror each through `variables.py`; every fixture regenerates unchanged.
+- `data.HasVariableReference` → `data.HasVariable` (the item's answer), the generator's emitted guard too.
+  A file marked a template holds no variables until it is read (FileHandlerTests says so).
+- Tests: path strings handed to the store go through a variable; the `%setting.X%` tests and the
+  path-tokenizer parity test are deleted with their feature; Data no longer strips `%`/spaces from names.
+
 ## Questions for plang-40 (proceeding on 6a meanwhile)
 
 1. **Inner slots.** A marked dict/list row (`{"a":"%x%"}`) births its inner texts when it materializes,

@@ -86,7 +86,7 @@ public class HostCarrierKindTests
     public async Task Leaf_PeelsOffToRealItem_NotOpaqueItem()
     {
         // !app.Name is a string — it lands as the text family's item, never an item carrier.
-        var data = await _app.User.Context.Variable.Get("!app.Name");
+        var data = await new global::app.type.item.variable.@this("!app.Name").Start(_app.User.Context);
         await Assert.That(data).IsNotNull();
         await Assert.That(data!.Type.Name).IsEqualTo("text");
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("test");

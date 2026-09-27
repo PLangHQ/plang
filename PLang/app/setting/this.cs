@@ -7,8 +7,8 @@ public enum Storage { InMemory, Persistent }
 
 /// <summary>
 /// The single setting authority. Holds BOTH lifetimes behind <see cref="Storage"/>:
-/// in-memory (this run — the <c>%!x%</c> + action-param cascade) and persistent (sqlite —
-/// <c>%setting.X%</c>). Reached app-level as <c>app.Setting</c> (the chain root, <c>_parent == null</c>)
+/// in-memory (this run — the <c>%!x%</c> + action-param cascade) and persistent (sqlite).
+/// Reached app-level as <c>app.Setting</c> (the chain root, <c>_parent == null</c>)
 /// and scoped as <c>context.Setting</c> (chains up to the app root). A read walks
 /// this → parent → … → app root, so a goal-local setting shadows an app-level one.
 /// </summary>

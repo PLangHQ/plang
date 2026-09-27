@@ -12,13 +12,13 @@ public partial class Sort : IContext
     public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var listName = (await ListName.Value())!;
-        var held = await Context.Variable.Get(listName);
+        var held = await listName.Start(Context);
         if (await held.Value() is not app.type.item.list.@this nl)
             return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
         // Persist the retrieved instance so the in-place sort sticks — unless a newer value
         // took the name in between.
-        await Context.Variable.Replace(listName, held, nl);
+        await listName.Replace(held, nl, Context);
 
         // Thin dispatch — the list value type owns ordering, routed through the
         // one typed-compare path. `by "field"` keys each element. An unorderable

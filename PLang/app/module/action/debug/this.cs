@@ -501,8 +501,6 @@ public sealed class @this
         return context.Ok();
     }
 
-    private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);
-
     private static void AppendStepVariables(StringBuilder sb, actor.context.@this context)
     {
         var step = context.Step;
@@ -510,23 +508,17 @@ public sealed class @this
 
         var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        // the variables the step's values hold, each shown by the name it lives under
         foreach (var action in step.Code.Items())
-        {
             foreach (var p in action.Property)
-            {
-                if (p.Value is global::app.type.item.text.@this pt
-                    && pt.Clr<string>() is { } s)
-                {
-                    foreach (Match m in VarRefPattern.Matches(s))
-                        varNames.Add(m.Groups[1].Value);
-                }
-            }
-        }
+                if (p.Value is { } value)
+                    foreach (var v in value.Variable)
+                        varNames.Add(v.Code.Root.Name);
 
         // Add explicitly watched variables
         if (context.App?.Debug is { } debug)
             foreach (var name in debug.Watched)
-                varNames.Add(name);
+                varNames.Add(new global::app.type.item.variable.parser.@this($"%{name.Trim('%')}%").Read(0)?.Code.Root.Name ?? name);
 
         if (varNames.Count == 0) return;
 

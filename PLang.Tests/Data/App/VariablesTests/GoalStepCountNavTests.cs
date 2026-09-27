@@ -17,10 +17,10 @@ public class GoalStepCountNavTests : System.IAsyncDisposable
             Make.Step("write out %x%"),
             Make.Step("write out %y%"));
 
-        var stack = new Variables(_app.User.Context);
+        var stack = _app.User.Context.Variable;
         stack.Set("goal", goal);
 
-        var count = await stack.Get("goal.step.Count");
+        var count = await new global::app.type.item.variable.@this("goal.step.Count").Start(stack.Context);
 
         await Assert.That(count).IsNotNull();
         await Assert.That(count!.IsInitialized).IsTrue();

@@ -86,14 +86,47 @@ public sealed class @this
     public global::app.goal.step.action.list.@this Known { get; private set; } = new();
 
     // The step's words the known code reads: its first variable, a foreach's `as` name, and a
-    // `%x% = ` that ends in one literal (quoted text, a number, true/false) or one variable.
-    private static readonly System.Text.RegularExpressions.Regex First = new(@"%[A-Za-z_][\w.]*%");
+    // `%x% = ` that ends in one literal (quoted text, a number, true/false) or one variable. The
+    // variables are the parser's; the words around them are these.
     private static readonly System.Text.RegularExpressions.Regex As =
         new(@"\bas\s+%?([A-Za-z_]\w*)%?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    private static readonly System.Text.RegularExpressions.Regex Assigned =
-        new(@"(%[A-Za-z_]\w*%)\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$");
-    // the variable an assignment writes: `%x% = …` (not `==`), whatever it is set to
-    private static readonly System.Text.RegularExpressions.Regex Target = new(@"(%[A-Za-z_]\w*%)\s*=(?!=)");
+    private static readonly System.Text.RegularExpressions.Regex Assigns = new(@"^\s*=(?!=)");
+    private static readonly System.Text.RegularExpressions.Regex AssignsOne =
+        new(@"^\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%\S+%)\s*$");
+
+    // The step's variables in the order its words write them, each with where it ends in the words.
+    private IEnumerable<(global::app.type.item.variable.@this Variable, int End)> Placed()
+    {
+        var text = _step.Text;
+        int from = 0;
+        foreach (var v in new global::app.type.item.variable.parser.@this(text).Variable)
+        {
+            from = text.IndexOf(v.Text, from, StringComparison.Ordinal) + v.Text.Length;
+            yield return (v, from);
+        }
+    }
+
+    // The step's first variable that names a value by members.
+    private global::app.type.item.variable.@this? First()
+        => Placed().Select(p => p.Variable).FirstOrDefault(v => v.IsMembers);
+
+    // The variable an assignment writes: `%x% = …` (not `==`), whatever it is set to.
+    private global::app.type.item.variable.@this? Target()
+        => Placed().FirstOrDefault(p => p.Variable.IsBare && Assigns.IsMatch(_step.Text[p.End..])).Variable;
+
+    // `%x% = ` ending in one literal or one bare variable: the variable and what it is set to.
+    private (string Name, string Value)? Assigned()
+    {
+        foreach (var (v, end) in Placed())
+        {
+            if (!v.IsBare || AssignsOne.Match(_step.Text[end..]) is not { Success: true } m) continue;
+            var value = m.Groups[1].Value;
+            if (value.StartsWith('%')
+                && !(new global::app.type.item.variable.parser.@this(value).Read(0) is { IsBare: true } named && named.Text == value)) continue;
+            return (v.Text, value);
+        }
+        return null;
+    }
     // a goal the step's words call — plang's own `call X`, X a name or a /path/Name — and the quoted
     // texts, whose words are not the step's
     private static readonly System.Text.RegularExpressions.Regex Calls =
@@ -122,14 +155,20 @@ public sealed class @this
     /// <c>%x% = …</c> on a step that tests no condition (there `=` compares). Null when the words say none.</summary>
     private string? Writes()
     {
-        if (WriteTo.Match(_step.Text) is { Success: true } known) return known.Groups[1].Value;
-        return !Tests && Target.Match(_step.Text) is { Success: true } target ? target.Groups[1].Value : null;
+        if (Destination() is { } known) return known.Text;
+        return !Tests && Target() is { } target ? target.Text : null;
     }
 
     // The step's words that fill a value the decider can't: `write to %x%` is a known variable.set, `on
     // error … call` names what a recovery runs, `call X name=value` passes arguments.
     private static readonly System.Text.RegularExpressions.Regex WriteTo =
-        new(@"write to\s+(%[^%\s]+%)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        new(@"write to\s+(?=%)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    // The variable a `write to %x%` names.
+    private global::app.type.item.variable.@this? Destination()
+        => WriteTo.Match(_step.Text) is { Success: true } m
+            ? new global::app.type.item.variable.parser.@this(_step.Text).Read(m.Index + m.Length)
+            : null;
     private static readonly System.Text.RegularExpressions.Regex OnErrorCall =
         new(@"on error[^,;]*?\bcall\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     private static readonly System.Text.RegularExpressions.Regex Arguments =
@@ -254,7 +293,7 @@ public sealed class @this
         var shown = new List<(string Name, number Score)>();
         foreach (var p in _items)
             if (p.Score is { } s && s >= (number)Possible) shown.Add((p.Name, s));
-        var known = WriteTo.IsMatch(_step.Text);
+        var known = Destination() != null;
         if (known && shown.All(p => p.Name != "variable.set"))
             shown.Add(("variable.set", _items.FirstOrDefault(p => p.Name == "variable.set")?.Score ?? (number)0.0));
         var popular = Popular();
@@ -279,10 +318,10 @@ public sealed class @this
     private string? Prefill(global::app.actor.context.@this context)
     {
         var text = _step.Text;
-        var known = WriteTo.Match(text);
+        var known = Destination();
         // a certain condition chain leads, in chain order (if, elseif, else); the other certain actions
         // follow by score — a tie in the scores never puts a body's action before its if
-        var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known.Success))
+        var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known != null))
             .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!)
             .OrderBy(a => a.Link ?? 3).ToList();
         var filled = certain.Where(a => a is not global::app.goal.step.action.modifier.@this).Select(a => Call(a, text)).ToList();
@@ -297,7 +336,7 @@ public sealed class @this
             // a certain modifier is shown right after the step's first action — the action it modifies
             filled = [filled.Count > 0 ? filled[0] : "?", head, .. filled.Skip(1)];
         }
-        if (known.Success) filled.Add($"variable.set(Name={known.Groups[1].Value}, Value=%!data%)");
+        if (known != null) filled.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         return filled.Count > 0 ? string.Join("; ", filled) : null;
     }
 
@@ -306,7 +345,7 @@ public sealed class @this
     private async Task<global::app.goal.step.action.list.@this> Code(global::app.actor.context.@this context)
     {
         var text = _step.Text;
-        var known = WriteTo.Match(text);
+        var known = Destination();
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain).Select(l => Catalog(l.Name, context))
             .Where(a => a != null && a is not global::app.goal.step.action.modifier.@this).Select(a => a!).ToList();
         var line = new List<string>();
@@ -315,18 +354,18 @@ public sealed class @this
             var name = $"{action.Module.Name}.{action.Name}";
             if (name == "loop.foreach")
             {
-                if (First.Match(text) is not { Success: true } collection) continue;
+                if (First() is not { } collection) continue;
                 var item = As.Match(text) is { Success: true } named ? named.Groups[1].Value : "item";
-                line.Add($"loop.foreach(Collection={collection.Value}, Item=%{item}%)");
+                line.Add($"loop.foreach(Collection={collection.Text}, Item=%{item}%)");
             }
             else if (name == "variable.set")
             {
-                if (known.Success || Assigned.Match(text) is not { Success: true } set) continue;
-                line.Add($"variable.set(Name={set.Groups[1].Value}, Value={set.Groups[2].Value})");
+                if (known != null || Assigned() is not { } set) continue;
+                line.Add($"variable.set(Name={set.Name}, Value={set.Value})");
             }
             else line.Add($"{name}()");
         }
-        if (known.Success) line.Add($"variable.set(Name={known.Groups[1].Value}, Value=%!data%)");
+        if (known != null) line.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         if (line.Count == 0) return new();
         var read = new global::app.goal.step.action.serializer.Formal(_step).Read(string.Join("; ", line), context);
         if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;

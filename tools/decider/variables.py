@@ -174,6 +174,38 @@ def parse(text):
     return found
 
 
+def read(text, at):
+    """The reference whose opening % is at `at`, as its .pr entry, or None (none opens there, or it
+    doesn't parse). Its text is exactly what was written, so the reader continues after it."""
+    return _Reader(text).read(at)
+
+
+def placed(text):
+    """The text's references in the order written, each with where it ends in the text."""
+    out, start = [], 0
+    for v in parse(text):
+        start = text.index(v['text'], start) + len(v['text'])
+        out.append((v, start))
+    return out
+
+
+def is_bare(v):
+    """A bare name — %x% — not a setting (%!x%) and not a way into one (%x.y%) (variable.IsBare)."""
+    return len(v['code']) == 1 and not v['code'][0]['variable'].startswith('!')
+
+
+def is_members(v):
+    """A value reached by members only — %x%, %user.name% (variable.IsMembers)."""
+    return not v['code'][0]['variable'].startswith('!') and all(
+        'property' in h and not h['property'].startswith('!') for h in v['code'][1:])
+
+
+def whole(text):
+    """True when the text is one reference and nothing else."""
+    found = read(text, 0) if isinstance(text, str) else None
+    return found is not None and found['text'] == text
+
+
 def held(value):
     """The variables a value holds, each once, first written first: those in each of its texts (a
     dict's and a list's in document order)."""

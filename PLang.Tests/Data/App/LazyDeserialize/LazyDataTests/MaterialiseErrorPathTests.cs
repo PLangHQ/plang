@@ -75,7 +75,7 @@ public class MaterialiseErrorPathTests
         var ctx = app.User.Context;
         ctx.Variable.Set(MalformedJson(ctx, "cfg"));
 
-        var result = ctx.Variable.Set("cfg.host", "value");
+        var result = new global::app.type.item.variable.@this("cfg.host").Set("value", ctx);
 
         await Assert.That((await result).Error).IsNotNull();
         await Assert.That((await result).Error!.Key).IsEqualTo("MaterializeFailed");
@@ -91,7 +91,7 @@ public class MaterialiseErrorPathTests
         var ctx = app.User.Context;
         ctx.Variable.Set(MalformedJson(ctx, "cfg"));
 
-        var result = ctx.Variable.Set("cfg.a.host", "value");
+        var result = new global::app.type.item.variable.@this("cfg.a.host").Set("value", ctx);
 
         await Assert.That((await result).Error).IsNotNull();
         await Assert.That((await result).Error!.Key).IsEqualTo("MaterializeFailed");

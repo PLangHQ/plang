@@ -107,7 +107,7 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Build != null).IsTrue();
-        var cacheVar = await engine.User.Context.Variable.Get("!build.cache");
+        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine.User.Context);
         await Assert.That(cacheVar).IsNotNull();
         await using var _ = engine;
     }

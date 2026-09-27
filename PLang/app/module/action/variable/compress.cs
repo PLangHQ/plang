@@ -19,8 +19,8 @@ public partial class Compress : IContext
 
     public async Task<data.@this> Start()
     {
-        var target = await Context.Variable.Get((await Variable.Value())!.Name);
-        if (target == null || !target.IsInitialized)
+        var target = await (await Variable.Value())!.Start(Context);
+        if (!target.IsInitialized)
             return Context.Error(
                 new global::app.error.ServiceError($"Variable '{(await Variable.Value())!.Name}' is not set",
                     "VariableNotFound", 400));
@@ -42,8 +42,8 @@ public partial class Decompress : IContext
 
     public async Task<data.@this> Start()
     {
-        var target = await Context.Variable.Get((await Variable.Value())!.Name);
-        if (target == null || !target.IsInitialized)
+        var target = await (await Variable.Value())!.Start(Context);
+        if (!target.IsInitialized)
             return Context.Error(
                 new global::app.error.ServiceError($"Variable '{(await Variable.Value())!.Name}' is not set",
                     "VariableNotFound", 400));

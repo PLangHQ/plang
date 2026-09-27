@@ -7,7 +7,7 @@ public partial class First : IContext
 
     public async Task<data.@this> Start()
     {
-        var data = await Context.Variable.Get((await ListName.Value()));
+        var data = await (await ListName.Value())!.Start(Context);
         var first = await data.Get("[0]");
 
         return first.IsInitialized ? Context.Ok((await first.Value())) : Context.Ok();

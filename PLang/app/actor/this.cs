@@ -81,10 +81,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // produces Context-wired Paths on deserialize without any ambient state.
         _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
 
-        // Register %setting.X% as a navigable mount on this actor's Variables.
-        // Resolution dispatches to the persistent side of app.Setting (sqlite).
-        Context.Variable.RegisterNavigable("setting", path => app.Setting.Get(global::app.setting.Storage.Persistent, path));
-
         // Register %!app% — navigates the App object graph (e.g., %!app.test.Verbose%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));
 

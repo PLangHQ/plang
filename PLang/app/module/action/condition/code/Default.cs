@@ -24,7 +24,7 @@ public sealed class Default : IEvaluator
         if (op is not { IsInitialized: true })
             return !hasRight ? null : new ValidationError(
                 "Right is compared by an Operator — write the Operator, or leave Right out for Left's own truth", "OperandExtra");
-        if (op.HasVariableReference) return null;   // an operator named by a variable is known at run
+        if (op.HasVariable) return null;   // an operator named by a variable is known at run
         Operator written = (await op.Value())!;
         return written.Operands(hasRight);
     }

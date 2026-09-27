@@ -7,8 +7,8 @@ public partial class Unique : IContext
 
     public async Task<data.@this<app.type.item.list.@this>> Start()
     {
-        var name = await ListName.Value();
-        if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)
+        var name = (await ListName.Value())!;
+        if (await (await name.Start(Context)).Value() is not app.type.item.list.@this nl)
             return Context.Error<app.type.item.list.@this>(
                 new app.error.ValidationError($"Variable '{name}' is not a list"));
 

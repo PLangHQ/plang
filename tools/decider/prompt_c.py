@@ -16,11 +16,18 @@ import collections, copy, json, os, re
 import build_pr as b
 import formal as f
 import harness as h
+import variables as ref
 
 ROOT = b.ROOT
 SYSTEM_C = open(f'{ROOT}/os/system/builder/llm/Properties.llm', encoding='utf-8').read()
 CERTAIN, POSSIBLE = 0.9, 0.5
-WRITE_TO = re.compile(r'write to\s+(%[^%\s]+%)', re.I)
+WRITE_TO = re.compile(r'write to\s+(?=%)', re.I)
+
+def destination(text):
+    """The variable a `write to %x%` names, as written (pick.list Destination)."""
+    m = WRITE_TO.search(text)
+    found = ref.read(text, m.end()) if m else None
+    return found['text'] if found else None
 
 def listed(picks_i, text=''):
     """The step's picks shown to the LLM: ≥ 0.5, most certain first. A step that says `write to %x%`
@@ -28,7 +35,7 @@ def listed(picks_i, text=''):
     adds the top 3 of the decider's popular-action choice that reach the choice floor (h.RUNNER_UP, 0.2:
     an option worth considering); below it an option is not listed."""
     out = {a: p for a, p in picks_i.items() if not a.startswith('@') and p is not None and p >= POSSIBLE}
-    if WRITE_TO.search(text) and 'variable.set' not in out: out['variable.set'] = picks_i.get('variable.set') or 0.0
+    if destination(text) and 'variable.set' not in out: out['variable.set'] = picks_i.get('variable.set') or 0.0
     for a, p in popular(picks_i).items():
         if a not in out: out[a] = p
     return sorted(out.items(), key=lambda ap: -ap[1])
@@ -59,19 +66,40 @@ def prefill(action, text):
     says filled — `write to %x%` → variable.set(Name=%x%, Value=%!data%)."""
     module, name = action.split('.', 1)
     props, _ = b.declared(module, name)
-    if action == 'variable.set' and (m := WRITE_TO.search(text)):
-        return f'variable.set(Name={m.group(1)}, Value=%!data%)'
+    if action == 'variable.set' and (d := destination(text)):
+        return f'variable.set(Name={d}, Value=%!data%)'
     required = [f'{n}=?' for n, p in props.items() if not p['nullable'] and p['default'] is None]
     if action == 'goal.call' and ARGUMENTS.search(text): required.append('Parameter={?}')
     return f'{action}(' + ', '.join(required) + ')'
 
 # The known code's words (goal/step/pick/list Code): a step's first variable, a foreach's `as` name, and
-# a `%x% = ` ending in one literal (quoted text, a number, true/false) or one variable.
-FIRST = re.compile(r'%[A-Za-z_][\w.]*%')
+# a `%x% = ` ending in one literal (quoted text, a number, true/false) or one variable. The variables are
+# the parser's (variables.py); the words around them are these.
 AS = re.compile(r'\bas\s+%?([A-Za-z_]\w*)%?', re.I)
-ASSIGNED = re.compile(r'(%[A-Za-z_]\w*%)\s*=\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|%[A-Za-z_]\w*%)\s*$')
-MARKED = re.compile(r'%([A-Za-z_]\w*)%')
-TARGET = re.compile(r'(%[A-Za-z_]\w*%)\s*=(?!=)')   # the variable an assignment writes (pick.list Target)
+ASSIGNS = re.compile(r'\s*=(?!=)')
+ASSIGNS_ONE = re.compile(r'\s*=\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|%\S+%)\s*$')
+
+def first(text):
+    """The step's first variable that names a value by members, as written (pick.list First)."""
+    return next((v['text'] for v, _ in ref.placed(text) if ref.is_members(v)), None)
+
+def target(text):
+    """The variable an assignment writes: `%x% = …` (not `==`), as written (pick.list Target)."""
+    return next((v['text'] for v, end in ref.placed(text) if ref.is_bare(v) and ASSIGNS.match(text, end)), None)
+
+def assigned(text):
+    """`%x% = ` ending in one literal or one bare variable: (the variable, its value) (pick.list Assigned)."""
+    for v, end in ref.placed(text):
+        m = ASSIGNS_ONE.match(text, end) if ref.is_bare(v) else None
+        if not m: continue
+        value = m.group(1)
+        if value.startswith('%') and not ((n := ref.read(value, 0)) and n['text'] == value and ref.is_bare(n)): continue
+        return v['text'], value
+    return None
+
+def bare_names(text):
+    """The bare names the step's words write: %name% — not a setting, not a way in (step.Scope)."""
+    return [v['code'][0]['variable'] for v in ref.parse(text) if ref.is_bare(v)]
 CALLS = re.compile(r'\bcall\s+(/?[A-Za-z_][\w./]*)', re.I)   # a goal the step's words call (pick.list Calls)
 QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"|\'[^\']*\'')
 
@@ -99,17 +127,17 @@ def known_code(certain, text):
     """The code a step's certain picks already know, as (action, binds): the build's walk reads it
     (goal.step.list.Scope). A foreach first, binding its item to its collection's element; a
     `set %x% = literal|%y%`; each other action leaving its return as %!data%; a write to %x% last."""
-    code, write = [], WRITE_TO.search(text)
+    code, write = [], destination(text)
     for a in sorted(certain, key=lambda a: 0 if a == 'loop.foreach' else 1):
         if b.declared(*a.split('.', 1))[1]: continue   # a modifier binds nothing
         if a == 'loop.foreach':
-            if (c := FIRST.search(text)):
+            if (c := first(text)):
                 item = m.group(1) if (m := AS.search(text)) else 'item'
-                code.append(('foreach', c.group(0).strip('%'), item))
+                code.append(('foreach', c.strip('%'), item))
         elif a == 'variable.set':
-            if not write and (m := ASSIGNED.search(text)): code.append(('set', m.group(1).strip('%'), m.group(2)))
+            if not write and (m := assigned(text)): code.append(('set', m[0].strip('%'), m[1]))
         else: code.append(('data', b.returns(*a.split('.', 1))))
-    if write: code.append(('set', write.group(1).strip('%'), '%!data%'))
+    if write: code.append(('set', write.strip('%'), '%!data%'))
     return code
 
 CHAIN = {'condition.if': 0, 'condition.elseif': 1, 'condition.else': 2}
@@ -124,7 +152,7 @@ def literal_type(value):
 def scope(store, code, text):
     """One step at the build's walk over the scratch store (step.Scope): the variables its words name,
     typed as known before each of its actions (a name the step only writes is not shown; item is unknown)."""
-    names, known = list(dict.fromkeys(MARKED.findall(text))), {}
+    names, known = list(dict.fromkeys(bare_names(text))), {}
     # before each action — and once for a step whose code nothing knows yet
     for action in code or [None]:
         for n in names:
@@ -158,7 +186,7 @@ def user_message_c(goal, picks):
         if s.get('kept') or h.is_formal(s['text']):   # already built, or its own code: in the goal for context, not asked
             out += ' => cached'; continue
         step_picks = listed(picks.get(s['index'], {}), s['text'])
-        known = WRITE_TO.search(s['text'])
+        known = destination(s['text'])
         pop = popular_only(picks.get(s['index'], {}))
         decider = ', '.join(f'{a} {p:.2f}' + ('' if p >= CERTAIN else ' (write to)' if a == 'variable.set' and known
                                               else ' (possible, popular)' if a in pop else ' (possible)')
@@ -267,14 +295,14 @@ def disagreements(i, rows, picks_i, text=''):
     # the variable the step's words write (write to %x%, or %x% = … on a step that tests no condition —
     # there `=` compares) is written by a variable.set of the step's own code (pick.list Writes)
     tests = (picks_i.get('condition.if') or 0) >= POSSIBLE
-    target = WRITE_TO.search(text) or (not tests and TARGET.search(text))
-    if target:
-        name = target.group(1).strip('%').lower()
+    writes = destination(text) or (not tests and target(text))
+    if writes:
+        name = writes.strip('%').lower()
         if not any(a['module'] == 'variable' and a['name'] == 'set' and any(
                 r['name'] == 'Name' and str(r['value']).strip('%"').lower() == name for r in a.get('property') or [])
                 for a in every_action(rows)):
-            refused.append(f'step {i} says it writes {target.group(1)}, but no action writes it: '
-                           f'end the step with variable.set(Name={target.group(1)}, Value=%!data%)')
+            refused.append(f'step {i} says it writes {writes}, but no action writes it: '
+                           f'end the step with variable.set(Name={writes}, Value=%!data%)')
     # every goal the step's words call (`call X`, quoted texts left out) is called by the code, wherever
     # the goal.call sits (pick.list Calls)
     called = ['/' + n.lstrip('/') for n in called_goals(rows)]
@@ -285,7 +313,7 @@ def disagreements(i, rows, picks_i, text=''):
             refused.append(f'step {i} calls {goal}, but no action calls it')
     # unsure = built from a possible pick; a pick the known-value rule placed (write to → variable.set)
     # is not a guess, so it carries no warning
-    known = {'variable.set'} if WRITE_TO.search(text) else set()
+    known = {'variable.set'} if destination(text) else set()
     warnings = [f'step {i} uses {a}, which the decider was not sure of ({shown[a]:.2f})'
                 for a in dict.fromkeys(used) if a in shown and shown[a] < CERTAIN and a not in known and a not in popular]
     warnings += [f'step {i} uses {a} from the decider\'s popular-action choice ({shown[a]:.2f}): unsure' for a in popular]
@@ -363,7 +391,7 @@ def uncovered(text, rows):
     """The %variables% the step's text writes that its answer doesn't hold anywhere — a value, a Name,
     inside a quoted text. %x% is plang's own marker, so this reads no human language."""
     written = f.write_actions(rows, types=False)
-    return [v for v in dict.fromkeys(f.VARIABLE.findall(text)) if v not in written]
+    return [v for v in dict.fromkeys(x['text'] for x in ref.parse(text)) if v not in written]
 
 # A quoted literal in a step's text — "…" or '…' (a single quote only when not inside a word, so
 # `don't` is not one). Quotes are the programmer's literal marker, not a human language.

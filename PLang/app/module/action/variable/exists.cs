@@ -7,6 +7,6 @@ public partial class Exists : IContext
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
-        return Context.Ok<global::app.type.item.@bool.@this>(Context.Variable.Contains(await Name.Value()));
+        return Context.Ok<global::app.type.item.@bool.@this>((await (await Name.Value())!.Start(Context)).IsInitialized);
     }
 }

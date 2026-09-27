@@ -189,7 +189,7 @@ public sealed record @this(
         // A template or a variable is unknown at build (judging must not resolve); an absent
         // optional slot has nothing to judge. The typed view's own door is the verdict — a
         // decline lands on the view (Success false, the type's reason in Error).
-        sb.AppendLine($"        if (!{Name}.HasVariableReference && {Name}.Peek() is {{ IsNull: false }} and not global::app.type.item.variable.@this)");
+        sb.AppendLine($"        if (!{Name}.HasVariable && {Name}.Peek() is {{ IsNull: false }} and not global::app.type.item.variable.@this)");
         sb.AppendLine("        {");
         sb.AppendLine($"            await {Name}.Value();");
         sb.AppendLine($"            if (!{Name}.Success)");

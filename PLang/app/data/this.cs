@@ -122,14 +122,12 @@ public partial class @this
         => _item?.Get(ctx) ?? default;
 
     /// <summary>
-    /// True when the value carries any live <c>%variable%</c> reference (the
-    /// builder's template stamp). <see cref="IsVariable"/> is "%name%" (the
-    /// whole value IS a reference); this is "hello %name%" too.
+    /// True when the value holds a variable — the value's own answer (a template's <c>%…%</c>, a
+    /// variable itself). <see cref="IsVariable"/> is "%name%" (the whole value IS a reference);
+    /// this is "hello %name%" too.
     /// </summary>
-    // Read the template flag off the value's own type entity — a source answers via the declaration
-    // it holds whole (_type.Template), a text via its minted entity. Uniform: ".Type.Template".
     [JsonIgnore]
-    public bool HasVariableReference => _item?.Type.Template != null;
+    public bool HasVariable => _item.HasVariable;
 
     /// <summary>Is this value (now or in its narrow history) the given type? Asks the value's own
     /// type history.</summary>
@@ -163,7 +161,7 @@ public partial class @this
     public @this(string name, object? value = null, type? type = null, @this? parent = null,
         actor.context.@this? context = null)
     {
-        Name = CleanName(name);
+        Name = name;
         _context = context ?? parent?._context!;
         // A bare Data may not become a value — it would ride a Clr carrier and reflect
         // recursively on the wire ({name,value,{name,value,…}}). Same rule as SetValueDirect;
@@ -214,7 +212,7 @@ public partial class @this
     public @this(string name, global::app.type.item.@this instance, @this? parent = null,
         actor.context.@this? context = null)
     {
-        Name = CleanName(name);
+        Name = name;
         _item = instance ?? global::app.type.item.@null.@this.Instance;
         Parent = parent;
         Path = BuildPath(parent, Name);
@@ -617,12 +615,6 @@ public partial class @this
     public override string ToString() =>
         Success ? Peek()?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
 
-    private static string CleanName(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return name;
-        return name.Trim().TrimStart('%').TrimEnd('%');
-    }
 
     private static string BuildPath(@this? parent, string name)
     {

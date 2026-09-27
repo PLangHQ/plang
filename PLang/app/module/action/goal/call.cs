@@ -75,7 +75,7 @@ public partial class Call : IContext
     /// this call sits in — the selection <see cref="Start"/> makes. A %variable% name answers none.</summary>
     public async Task<global::app.goal.@this?> Callee()
     {
-        if (Name.HasVariableReference) return null;
+        if (Name.HasVariable) return null;
         var authored = (await Name.Value())?.RawText;
         return string.IsNullOrEmpty(authored) ? null : await Context.App.Goal.GetAsync(authored, __action?.Step?.Goal);
     }

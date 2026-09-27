@@ -189,7 +189,8 @@ public class FileHandlerTests : IDisposable
         await Assert.That(file).IsNotNull();
         await Assert.That(file!.IsLoaded).IsFalse();
         await Assert.That(result.Type.Template).IsEqualTo("plang");
-        await Assert.That(result.HasVariableReference).IsTrue();
+        // what the content holds is known once it is read — nothing is read yet
+        await Assert.That(result.HasVariable).IsFalse();
     }
 
     // The content renders when it is used, against the variables then — lazily.
@@ -498,7 +499,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync(_app.User.Context)).IsTrue();
 
-        var existsData = await context.Variable.Get("fileResult.Exists");
+        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("true");
 
@@ -529,7 +530,7 @@ public class FileHandlerTests : IDisposable
 
         await goalResult.IsSuccess();
 
-        var existsData = await context.Variable.Get("fileResult.Exists");
+        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("false");
 

@@ -30,10 +30,12 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     /// <summary>The root: the name the value lives under in memory.</summary>
     public Variable Root => (Variable)this[0];
 
-    /// <summary>Runs every hop: what the variable holds.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context)
+    /// <summary>Runs every hop: what the variable holds — or, for a path read from a value
+    /// (<see cref="parser.@this.Path"/>, no root), what <paramref name="from"/> holds there.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context,
+        global::app.data.@this? from = null)
     {
-        global::app.data.@this? current = null;
+        var current = from;
         foreach (var hop in Items())
         {
             current = await hop.Start(current, context);

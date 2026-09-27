@@ -28,6 +28,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Code = code;
     }
 
+    /// <summary>A bare name — <c>%x%</c> — not a setting (<c>%!x%</c>) and not a way into one
+    /// (<c>%x.y%</c>).</summary>
+    internal bool IsBare => Code.Count == 1 && !Code.Root.Name.StartsWith('!');
+
+    /// <summary>A value reached by members only — <c>%x%</c>, <c>%user.name%</c>.</summary>
+    internal bool IsMembers => !Code.Root.Name.StartsWith('!')
+        && Code.Items().Skip(1).All(h => h is code.Property { IsBinding: false });
+
     /// <summary>The text between the % signs (<c>user.name</c>, <c>!data</c>) — the form the variable
     /// store takes while callers still hand it names.</summary>
     public string Name => Text.Length >= 2 ? Text[1..^1] : Text;
@@ -40,6 +48,29 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// reaches the parent, and the last writes itself.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Set(object? value, actor.context.@this context)
         => Code.Set(value, context);
+
+    /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/>
+    /// makes, written there. A bare name does it in one step (runs asking at once all answer the same
+    /// Data); a deeper variable reads, then writes.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(
+        System.Func<global::app.type.item.@this> value, actor.context.@this context)
+    {
+        if (Code.Count == 1) return await context.Variable.Ensure(Code.Root.Name, value);
+        var held = await Start(context);
+        if (held.IsInitialized) return held;
+        await Set(value(), context);
+        return await Start(context);
+    }
+
+    /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/>
+    /// — the Data the caller read — so a newer value written in between is left alone; answers whether
+    /// it now holds the value. A deeper variable's Data is born per read, so there it just writes.</summary>
+    public async System.Threading.Tasks.ValueTask<bool> Replace(global::app.data.@this expected,
+        global::app.type.item.@this value, actor.context.@this context)
+    {
+        if (Code.Count == 1) return await context.Variable.Replace(Code.Root.Name, expected, value);
+        return (await Set(value, context)).Success;
+    }
 
     private static readonly System.Threading.AsyncLocal<int> _resolveDepth = new();
 

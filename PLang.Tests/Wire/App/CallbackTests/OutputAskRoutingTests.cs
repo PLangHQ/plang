@@ -32,13 +32,14 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var context = app.User.Context;
-        context.Variable.Set(ask.AnswerVariableName, "Alice");
+        var answer = new global::app.type.item.variable.@this(ask.AnswerVariableName);
+        await answer.Set("Alice", context);
 
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
         var result = await handler.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.Answer).IsEqualTo("Alice");
-        await Assert.That((await context.Variable.Get(ask.AnswerVariableName)).IsInitialized).IsFalse();
+        await Assert.That((await answer.Start(context)).IsInitialized).IsFalse();
     }
 
     [Test] public async Task OutputAsk_NoAnswerSentinel_DelegatesToChannelAsk()

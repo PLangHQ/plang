@@ -166,7 +166,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// The app-level setting authority (chain root, <c>_parent == null</c>). Holds both lifetimes
     /// behind <c>Storage</c>: in-memory (this-run cascade, CLI <c>--flags</c>) and persistent
-    /// (sqlite, <c>%setting.X%</c>, via <see cref="SettingsStore"/>). Every context's
+    /// (sqlite, via <see cref="SettingsStore"/>). Every context's
     /// <c>Setting</c> chains up to this one.
     /// </summary>
     public global::app.setting.@this Setting { get; }

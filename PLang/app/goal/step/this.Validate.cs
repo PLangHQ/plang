@@ -21,9 +21,8 @@ public sealed partial class @this
             $"step {Index} '{Text}': {string.Join("; ", causes.Select(c => c.Message))}", this, first.Key, first.StatusCode) { list = causes };
     }
 
-    // A %variable% in the step's words; a quoted literal ("…", or '…' when not inside a word, so `don't`
-    // is not one); a number that stands alone. These are plang's own markers — no human language is read.
-    private static readonly System.Text.RegularExpressions.Regex Marker = new(@"%[^%\s]+%");
+    // A quoted literal ("…", or '…' when not inside a word, so `don't` is not one); a number that stands
+    // alone. These, and a %variable% (the parser's), are plang's own markers — no human language is read.
     private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)");
     private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])");
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""");
@@ -38,11 +37,11 @@ public sealed partial class @this
         await Code.Output(writer, global::app.View.Store, context);
         var written = writer.ToString();
         var problems = new List<string>();
-        foreach (var v in Marker.Matches(Text).Select(m => m.Value).Distinct())
+        foreach (var v in new global::app.type.item.variable.parser.@this(Text).Variable.Select(x => x.Text).Distinct())
             if (!written.Contains(v)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
-        foreach (var v in Marker.Matches(written).Select(m => m.Value).Distinct())
+        foreach (var v in new global::app.type.item.variable.parser.@this(written).Variable.Select(x => x.Text).Distinct())
             if (!v.StartsWith("%!") && !Text.Contains(v)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
             if (l.Length > 0 && !written.Contains(l)) problems.Add($"step {Index}: \"{l}\" is in the step but not in your answer");

@@ -239,7 +239,7 @@ public class Stage3_PathDemolitionTests
         var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json")) {});
         await context.Variable.Set("config", result);
 
-        await context.Variable.Set("config.y", 1);
+        await new global::app.type.item.variable.@this("config.y").Set(1, context);
 
         var bound = await context.Variable.Get("config");
         await Assert.That(bound!.Type!.Is("dict")).IsTrue();

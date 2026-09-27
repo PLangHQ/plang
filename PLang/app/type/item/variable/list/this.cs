@@ -14,22 +14,7 @@ namespace app.type.item.variable.list;
 public partial class @this
 {
     private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, Func<string, System.Threading.Tasks.ValueTask<data.@this>>> _navigables
-        = new(StringComparer.OrdinalIgnoreCase);
     private actor.context.@this _context;
-
-    /// <summary>
-    /// Registers a navigable mount: when <see cref="Get"/> resolves <c>name.X</c>
-    /// and <c>name</c> isn't found in the regular variable scope, the resolver
-    /// is called with the full path remainder (e.g. <c>"X"</c> or <c>"X.Y"</c>)
-    /// and its result is returned. Used by Settings: each actor's Variables
-    /// registers <c>"setting"</c> with a resolver that delegates to
-    /// <c>app.Setting.Get(path, this.Context)</c>. Generalises to any future
-    /// non-Data navigable mount.
-    /// </summary>
-    public void RegisterNavigable(string name, Func<string, System.Threading.Tasks.ValueTask<data.@this>> resolver)
-        => _navigables[name] = resolver;
-
 
     /// <summary>
     /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
@@ -100,8 +85,7 @@ public partial class @this
     ///    producing handler set it to. Same object is reachable under both keys.
     ///  - non-Data → wrapped in a new `Data` named `name`. Existing entry, if any, is updated
     ///    in-place so readers holding the previous reference see the new value.
-    /// For dot/bracket paths (e.g. "user.name"), the root Data is returned.
-    /// Returns NotFound when the dot-path parent is absent or null.
+    /// <paramref name="name"/> is a variable's root; a write deeper in is the variable's own.
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
@@ -122,146 +106,124 @@ public partial class @this
             value = bound is { IsInitialized: true } ? bound.Copy(name) : bound;
         }
 
-        // Names arrive clean — the builder normalizes them before the .pr, and runtime C# callers
-        // construct clean names; the store does not re-process at runtime.
+        // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
-        // The path owns tokenization + per-hop index resolution (no regex pre-pass). A bare root
-        // (no dot/bracket) is a direct rebind of the variable; a deep path is write-at-path on the
-        // root's own value — the READ walk to the parent, then one Set at the leaf (data.Set).
-        var path = global::app.type.item.variable.path.@this.Parse(name);
+        // If a Calls overlay is active (we're inside a forked flow — channel fire,
+        // parallel foreach iteration, etc.), route the write into the overlay so
+        // siblings can't see it. Reads cascade overlay → caller chain → underlying
+        // dict, so subsequent gets here see the new value.
+        var frame = Calls.Current;
 
-        // Simple case: no dot/bracket path — set the root variable directly
-        if (path.Tail.IsEmpty)
+        // Data value: replace under `name`; the store announces the create or change (OnCreate /
+        // OnSet — the diff capture and the --debug watch listen there). In-place mutation of prev
+        // is wrong: a Data may be aliased under multiple keys (e.g. Action stores the step result
+        // both under its own name AND under "!data"), so mutating prev would bleed across keys.
+        // Properties stay attached to the Data instance — they're result metadata (e.g.
+        // condition.if's branchIndex), not binding metadata. A stored Data keeps the context it
+        // was born with.
+        if (value is data.@this dv)
         {
-            // If a Calls overlay is active (we're inside a forked flow — channel fire,
-            // parallel foreach iteration, etc.), route the write into the overlay so
-            // siblings can't see it. Reads cascade overlay → caller chain → underlying
-            // dict, so subsequent gets here see the new value.
-            var frame = Calls.Current;
-
-            // Data value: replace under `name`; the store announces the create or change (OnCreate /
-            // OnSet — the diff capture and the --debug watch listen there). In-place mutation of prev
-            // is wrong: a Data may be aliased under multiple keys (e.g. Action stores the step result
-            // both under its own name AND under "!data"), so mutating prev would bleed across keys.
-            // Properties stay attached to the Data instance — they're result metadata (e.g.
-            // condition.if's branchIndex), not binding metadata. A stored Data keeps the context it
-            // was born with.
-            if (value is data.@this dv)
+            if (frame != null)
             {
-                if (frame != null)
+                var hadPrev = frame.TryGet(name, out var prevFrame);
+                if (hadPrev && !ReferenceEquals(prevFrame, dv))
                 {
-                    var hadPrev = frame.TryGet(name, out var prevFrame);
-                    if (hadPrev && !ReferenceEquals(prevFrame, dv))
-                    {
-                        var prevValue = prevFrame.Peek();
-                        frame.Set(name, dv);
-                        OnSet?.Invoke(name, prevValue, dv.Peek());
-                        return dv;
-                    }
-                    else if (!hadPrev)
-                    {
-                        frame.Set(name, dv);
-                        OnCreate?.Invoke(name, dv.Peek());
-                        return dv;
-                    }
+                    var prevValue = prevFrame.Peek();
                     frame.Set(name, dv);
-                    return dv;
-                }
-
-                if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
-                {
-                    var prevValue = prev.Peek();
-                    _variables[name] = dv;
                     OnSet?.Invoke(name, prevValue, dv.Peek());
                     return dv;
                 }
-                else if (prev == null)
+                else if (!hadPrev)
                 {
-                    _variables[name] = dv;
+                    frame.Set(name, dv);
                     OnCreate?.Invoke(name, dv.Peek());
                     return dv;
                 }
-
-                _variables[name] = dv;
+                frame.Set(name, dv);
                 return dv;
             }
 
-            if (frame != null)
+            if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
             {
-                // If the binding already exists in *this* overlay, rebind it — mint a
-                // new Data, never mutate in place. This is the branch that bites inside
-                // channel-fire / parallel-foreach: a `set` in a forked flow mutating its
-                // overlay Data in place would rewrite a value the parent already stored.
-                // Rebinding keeps the captured value independent.
-                if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
-                {
-                    var rebound = new data.@this(name, value, context: _context);
-                    var prevValue = existingFrame.Peek();
-                    frame.Set(name, rebound);
-                    OnSet?.Invoke(name, prevValue, rebound.Peek());
-                    return rebound;
-                }
-
-                // Either nothing visible, or only visible via Caller chain — mint a
-                // fresh local entry that shadows. Mutating an inherited Data would
-                // bleed the write up to the caller's scope.
-                var data = new data.@this(name, value, context: _context);
-                if (frame.TryGet(name, out var inherited))
-                {
-                    OnSet?.Invoke(name, inherited.Peek(), value);
-                }
-                else
-                {
-                    OnCreate?.Invoke(name, value);
-                }
-                frame.Set(name, data);
-                return data;
+                var prevValue = prev.Peek();
+                _variables[name] = dv;
+                OnSet?.Invoke(name, prevValue, dv.Peek());
+                return dv;
+            }
+            else if (prev == null)
+            {
+                _variables[name] = dv;
+                OnCreate?.Invoke(name, dv.Peek());
+                return dv;
             }
 
-            if (_variables.TryGetValue(name, out var existing))
+            _variables[name] = dv;
+            return dv;
+        }
+
+        if (frame != null)
+        {
+            // If the binding already exists in *this* overlay, rebind it — mint a
+            // new Data, never mutate in place. This is the branch that bites inside
+            // channel-fire / parallel-foreach: a `set` in a forked flow mutating its
+            // overlay Data in place would rewrite a value the parent already stored.
+            // Rebinding keeps the captured value independent.
+            if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
             {
-                // Rebind, don't mutate: mint a new Data (mirrors the Data-value branch above).
-                // In-place mutation of `existing` is the alias bug — a Data the variable shared
-                // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot when the
-                // variable is re-set. Reassignment rebinds the binding; it does not reach back
-                // into a value already captured elsewhere.
                 var rebound = new data.@this(name, value, context: _context);
-                var prevValue = existing.Peek();
-                _variables[name] = rebound;
+                var prevValue = existingFrame.Peek();
+                frame.Set(name, rebound);
                 OnSet?.Invoke(name, prevValue, rebound.Peek());
                 return rebound;
             }
+
+            // Either nothing visible, or only visible via Caller chain — mint a
+            // fresh local entry that shadows. Mutating an inherited Data would
+            // bleed the write up to the caller's scope.
+            var data = new data.@this(name, value, context: _context);
+            if (frame.TryGet(name, out var inherited))
+            {
+                OnSet?.Invoke(name, inherited.Peek(), value);
+            }
             else
             {
-                var data = new data.@this(name, value, context: _context);
-                _variables[name] = data;
                 OnCreate?.Invoke(name, value);
-                return data;
             }
+            frame.Set(name, data);
+            return data;
         }
 
-        // Deep path: write-at-path on the root's own value. Create the root as a native dict when
-        // absent (so `set %x.a% = 1` on a fresh %x% works), then hand data.Set the tail — the read
-        // walk to the leaf's parent + one Set door. The value owns its own child write; there is no
-        // reflection fallback and no dict-conversion — an unsettable target throws, loud.
-        if (!_variables.TryGetValue(path.Root, out var root))
+        if (_variables.TryGetValue(name, out var existing))
         {
-            root = new data.@this(path.Root, new global::app.type.item.dict.@this(), context: _context);
-            _variables[path.Root] = root;
+            // Rebind, don't mutate: mint a new Data (mirrors the Data-value branch above).
+            // In-place mutation of `existing` is the alias bug — a Data the variable shared
+            // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot when the
+            // variable is re-set. Reassignment rebinds the binding; it does not reach back
+            // into a value already captured elsewhere.
+            var rebound = new data.@this(name, value, context: _context);
+            var prevValue = existing.Peek();
+            _variables[name] = rebound;
+            OnSet?.Invoke(name, prevValue, rebound.Peek());
+            return rebound;
         }
-
-        return await root.Set(path.Tail, value);
+        else
+        {
+            var data = new data.@this(name, value, context: _context);
+            _variables[name] = data;
+            OnCreate?.Invoke(name, value);
+            return data;
+        }
     }
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> makes, stored under it in one step: runs asking at once all answer
-    /// the same Data, never each a value of their own. A forked flow's own scope and a write at a
-    /// path keep <see cref="Set(string, object?)"/>'s rules.</summary>
+    /// the same Data, never each a value of their own. A forked flow's own scope keeps
+    /// <see cref="Set(string, object?)"/>'s rules.</summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Ensure(string name, System.Func<global::app.type.item.@this> value)
     {
         var existing = await Get(name);
         if (existing.IsInitialized) return existing;
-        if (Calls.Current != null || !global::app.type.item.variable.path.@this.Parse(name).Tail.IsEmpty)
+        if (Calls.Current != null)
             return await Set(name, value());
 
         data.@this? born = null;
@@ -273,17 +235,10 @@ public partial class @this
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
     /// holds <paramref name="expected"/> — the Data the caller read — in one step; a newer value set
     /// in between is left alone. Answers whether the name now holds the value. When
-    /// <paramref name="expected"/> already holds it there is nothing to write. A write at a path
-    /// keeps <see cref="Set(string, object?)"/>'s rules (a path's Data is born per read, so there
-    /// is nothing to compare).</summary>
+    /// <paramref name="expected"/> already holds it there is nothing to write.</summary>
     public async System.Threading.Tasks.ValueTask<bool> Replace(string name, data.@this expected, global::app.type.item.@this value)
     {
         if (ReferenceEquals(expected.Peek(), value)) return true;
-        if (!global::app.type.item.variable.path.@this.Parse(name).Tail.IsEmpty)
-        {
-            await Set(name, value);
-            return true;
-        }
 
         var frame = Calls.Current;
         if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
@@ -300,26 +255,16 @@ public partial class @this
 
 
     /// <summary>
-    /// Gets a variable by name (supports dot notation path).
-    /// </summary>
-    // --- Stage 3 accessor surface ---
-
-    /// <summary>Index by name. Returns the Data (NotFound shape when absent — Get is the canonical method).</summary>
-    // indexer removed — Get is async (ValueTask); use `await Get(name)`.
-
-    /// <summary>
-    /// Diagnostic sync lookup — the in-memory Data for a root name, no async navigation,
-    /// no GetChild, no navigable resolution. For `--debug` displays that must run on a
-    /// sync surface (event handlers, formatters). Returns null when absent. Content reads
-    /// still go through the async <see cref="Get"/> door; this is the in-memory rung only.
+    /// Diagnostic sync lookup — the in-memory Data a name holds, no async navigation. For
+    /// `--debug` displays that must run on a sync surface (event handlers, formatters). Returns
+    /// null when absent. Content reads still go through the async <see cref="Get"/> door; this is
+    /// the in-memory rung only.
     /// </summary>
     public data.@this? Peek(string name)
     {
         if (string.IsNullOrEmpty(name)) return null;
-        name = CleanName(name);
-        var rootName = global::app.type.item.variable.path.@this.Parse(name).Root;
-        if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed)) return framed;
-        return _variables.TryGetValue(rootName, out var v) ? v : null;
+        if (Calls.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
+        return _variables.TryGetValue(name, out var v) ? v : null;
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -328,50 +273,17 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(string name)
         => await (await Get(name)).Value();
 
-    public async System.Threading.Tasks.ValueTask<data.@this> Get(string name)
+    /// <summary>What <paramref name="name"/> holds — a variable's root; a variable reaches deeper
+    /// through its own code. A per-call parameter scope wins over the actor-shared variables
+    /// (<see cref="Calls"/>). NotFound when nothing is bound.</summary>
+    public System.Threading.Tasks.ValueTask<data.@this> Get(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return _context.NotFound(name ?? "");
-
-        name = CleanName(name);
-
-        // Bracket indices (`[planStep.index]`) resolve inside the walk now
-        // (Segment.Index.Key) — no pre-pass string rewrite.
-
-        // Handle paths like "user.name" or "items[0].value"
-        var rootName = global::app.type.item.variable.path.@this.Parse(name).Root;
-        string? remaining;
-        if (name.Length > rootName.Length)
-        {
-            var sep = name[rootName.Length];
-            // Strip leading . (but keep ! as it's the infrastructure marker for GetChild)
-            remaining = sep == '.'
-                ? name[(rootName.Length + 1)..]
-                : name[rootName.Length..];
-        }
-        else
-        {
-            remaining = null;
-        }
-
-        // Per-call parameter scope wins over actor-shared variables — see Calls.@this.
-        data.@this? root;
-        if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed))
-        {
-            root = framed;
-        }
-        else if (!_variables.TryGetValue(rootName, out root))
-        {
-            if (_navigables.TryGetValue(rootName, out var resolver))
-                return await resolver(remaining ?? "");
-            return _context.NotFound(name);
-        }
-
-        if (string.IsNullOrEmpty(remaining))
-            return root;
-
-        var child = await root.Get(remaining);
-        return child;
+            return System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name ?? ""));
+        if (Calls.Current is { } frame && frame.TryGet(name, out var framed))
+            return System.Threading.Tasks.ValueTask.FromResult(framed);
+        return System.Threading.Tasks.ValueTask.FromResult(
+            _variables.TryGetValue(name, out var root) ? root : _context.NotFound(name));
     }
 
     /// <summary>
@@ -402,11 +314,9 @@ public partial class @this
     /// </summary>
     public bool Contains(string name)
     {
-        name = CleanName(name);
-        var rootName = global::app.type.item.variable.path.@this.Parse(name).Root;
-        if (Calls.Current is { } frame && frame.TryGet(rootName, out _))
+        if (Calls.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(rootName);
+        return _variables.ContainsKey(name);
     }
 
     /// <summary>
@@ -414,7 +324,6 @@ public partial class @this
     /// </summary>
     public bool Remove(string name)
     {
-        name = CleanName(name);
         if (_variables.TryRemove(name, out _))
         {
             OnRemove?.Invoke(name);
@@ -489,10 +398,6 @@ public partial class @this
 
             clone._variables[kvp.Key] = kvp.Value.Clone();
         }
-        // Share navigable registrations by reference so the cloned Variables
-        // resolves %Settings.X% identically. The resolvers are stateless (they
-        // close over an actor + app); cloning them would be meaningless.
-        foreach (var nav in _navigables) clone._navigables[nav.Key] = nav.Value;
         clone.Context = Context;
         return clone;
     }
@@ -534,7 +439,6 @@ public partial class @this
     /// Excludes:
     ///  - infrastructure vars (!-prefixed, e.g. !app, !fileSystem)
     ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
-    /// (Settings is a navigable resolver, not a Data subclass — never appears in _variables.)
     /// Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
     /// name, so <c>%!error.Variables.foo%</c> navigates to it. Called when an error happens (assert,
     /// and every recorded error under --debug). ConcurrentDictionary enumeration is snapshot-style
@@ -550,12 +454,5 @@ public partial class @this
             vars.Set(kvp.Key, kvp.Value);
         }
         return vars;
-    }
-
-    private static string CleanName(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return name;
-        return name.Trim().TrimStart('%').TrimEnd('%');
     }
 }

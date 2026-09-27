@@ -16,7 +16,7 @@ public partial class Any : IContext
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
-        var data = await Context.Variable.Get(await ListName.Value());
+        var data = await (await ListName.Value())!.Start(Context);
         var key = (await Key.Value())!.Clr<string>()!;
         var rightVal = await Value.Value();
         var right = rightVal != null ? new data.@this("", rightVal, context: Context) : null;

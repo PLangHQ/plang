@@ -28,7 +28,7 @@ public partial class Set : IContext, IScope
             return;
         }
         // a text with variables inside is unknown; a literal is read as the value it is
-        if (Value.HasVariableReference) return;
+        if (Value.HasVariable) return;
         if (await Value.Value() is { IsNull: false }) await name.Set(Value, Context);
     }
 
@@ -41,7 +41,7 @@ public partial class Set : IContext, IScope
         // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
         // string) against the literal's content. %var% values defer to Run. The raw face is read only
         // here, where a strict type asks for it.
-        if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariableReference
+        if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariable
             && Value.Peek() is { } peeked
             && (peeked is global::app.type.item.@this value ? value.Backing : peeked) is { } valueBacking)
         {

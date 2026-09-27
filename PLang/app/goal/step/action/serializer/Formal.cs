@@ -308,7 +308,8 @@ public sealed class Formal
             if (declared.Type.Name == "variable")
             {
                 // a variable slot given the bare name ("path") names the same variable as %path%
-                if (raw != null && !raw.StartsWith('%') && System.Text.RegularExpressions.Regex.IsMatch(raw, @"^!?[A-Za-z_][\w.\[\]]*$"))
+                if (raw != null && !raw.StartsWith('%')
+                    && new global::app.type.item.variable.parser.@this($"%{raw}%").Read(0) is { } named && named.Text.Length == raw.Length + 2)
                     value = Scalar(System.Text.Json.JsonSerializer.Serialize($"%{raw}%"), System.Text.Json.JsonValueKind.String, variable: true);
                 else if (!value.IsVariable)
                     Fail($"`{prop}` names a variable: write it with its % signs", at);
@@ -454,10 +455,10 @@ public sealed class Formal
             }
             if (c == '%')
             {
-                var v = Match(@"%[^%\s]+%");
+                var v = new global::app.type.item.variable.parser.@this(_text).Read(_pos);
                 if (v == null) Fail(_text.AsSpan(_pos).StartsWith("%?") ? "a `?` is still there: fill it with the value the step gives" : "a %variable% is not closed");
-                _pos += v!.Length;
-                return Scalar(System.Text.Json.JsonSerializer.Serialize(v), System.Text.Json.JsonValueKind.String, variable: true);
+                _pos += v!.Text.Length;
+                return Scalar(System.Text.Json.JsonSerializer.Serialize(v.Text), System.Text.Json.JsonValueKind.String, variable: true);
             }
             if (c == '[')
             {

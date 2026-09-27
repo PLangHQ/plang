@@ -8,7 +8,7 @@ public partial class Get : IContext
 
     public async Task<data.@this> Start()
     {
-        var data = await Context.Variable.Get((await ListName.Value()));
+        var data = await (await ListName.Value())!.Start(Context);
         var item = await data.Get($"[{(await Index.Value())}]");
 
         if (!item.IsInitialized)

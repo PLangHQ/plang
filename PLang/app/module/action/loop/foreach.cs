@@ -19,8 +19,8 @@ public partial class Foreach : IContext, IStep, IScope
             || await source.Get(Context) is not { IsInitialized: true } known
             || known.Type?.kind is not { IsEmpty: false } kind || !Context.App.type.list.Contains(kind.Name)) return;
         var element = Context.App.type.list[kind.Name];
-        var name = (Item == null ? null : (await Item.Value())?.Name) ?? "item";
-        await Context.Variable.Set(name, new data.@this(name, element.Empty(Context), element, context: Context));
+        var named = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");
+        await named.Set(new data.@this(named.Name, element.Empty(Context), element, context: Context), Context);
     }
 
     public partial data.@this Collection { get; init; }
@@ -39,16 +39,16 @@ public partial class Foreach : IContext, IStep, IScope
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
             return Context.Ok(Result(itemCount: 0, completed: true));
 
-        var variableName = (Item == null ? null : (await Item.Value())?.Name) ?? "item";
-        var keyVariableName = Key is { IsInitialized: true } ? (await Key.Value())?.Name : null;
+        var itemVariable = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");
+        var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
         int count = 0;
 
         // Loop-in-a-loop: an inner loop reuses the same %item%/%key% names and would
         // leave them clobbered for the OUTER loop's body after it returns. Save the
         // outer bindings now and restore them when this loop exits — so a nested
         // `foreach` doesn't bleed its last item up into the enclosing loop.
-        var savedItem = await Context.Variable.Get(variableName);
-        var savedKey = keyVariableName != null ? await Context.Variable.Get(keyVariableName) : null;
+        var savedItem = await itemVariable.Start(Context);
+        var savedKey = keyVariable != null ? await keyVariable.Start(Context) : null;
 
         // The loop body — the actions after this foreach in the step's chain (v0.1 flat model).
         // Materialized once; the Handled flag below stops the outer chain from re-running them.
@@ -64,11 +64,11 @@ public partial class Foreach : IContext, IStep, IScope
             if (Context.CancellationToken.IsCancellationRequested)
                 return Context.Ok(Result(count, completed: false));
 
-            await Context.Variable.Set(variableName, item);
+            await itemVariable.Set(item, Context);
             // Optional param: absent slots are non-null Uninitialized (null model), so
             // "was a key named?" is IsInitialized, not a C# null check.
-            if (Key is { IsInitialized: true })
-                await Context.Variable.Set(await Key.Value(), key);
+            if (keyVariable != null)
+                await keyVariable.Set(key, Context);
 
             foreach (var action in bodyActions)
             {
@@ -81,8 +81,8 @@ public partial class Foreach : IContext, IStep, IScope
 
         // Restore the outer loop's bindings (see savedItem above) — a nested loop
         // must not leave its last item/key visible to the enclosing loop's body.
-        if (savedItem.IsInitialized) await Context.Variable.Set(variableName, savedItem);
-        if (keyVariableName != null && savedKey is { IsInitialized: true }) await Context.Variable.Set(keyVariableName, savedKey);
+        if (savedItem.IsInitialized) await itemVariable.Set(savedItem, Context);
+        if (keyVariable != null && savedKey is { IsInitialized: true }) await keyVariable.Set(savedKey, Context);
 
         var loopResult = Context.Ok(Result(count, completed: true));
         if (bodyActions.Count > 0)

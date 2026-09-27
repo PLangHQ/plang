@@ -72,37 +72,6 @@ public class @this
 
     // --- Verbs: the kind owns what you can do with its values. Defaults here; kinds override. ---
 
-    /// <summary>
-    /// Walk a value by the plang path, segment by segment, **re-deriving the node's kind after
-    /// every hop** — each node is descended by ITS own kind (a goal POCO by <c>*</c>, its Steps
-    /// list by the list kind, …). The final node's kind builds the child <c>Data</c>. A kind
-    /// whose path language is NOT plang (a future jsonpath) overrides this wholesale.
-    /// </summary>
-    public virtual async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
-        object obj, global::app.type.item.variable.path.@this path,
-        global::app.data.@this parent, global::app.actor.context.@this ctx)
-    {
-        object? node = obj;
-        @this kind = this;                                          // first hop: this carrier's kind
-        foreach (var seg in path.Segments)
-        {
-            if (node is null) return ctx.NotFound(seg.Raw);        // can't descend into null
-            // The grammar carries the ask: an Index segment (`[0]`, `[%i%]`) wants a positional
-            // answer; a Member segment (`.Count`, `.Name`) wants a named one. A kind that owns
-            // both faces (a sequence host: element vs .Count) needs the distinction, so it rides
-            // into Descend — the resolved key AND whether it came from an index bracket.
-            bool isIndex = seg is global::app.type.item.variable.path.Segment.Index;
-            string key = seg is global::app.type.item.variable.path.Segment.Index i
-                ? await i.Key(ctx.Variable)                        // the ONE bracket-variable resolver
-                : ((global::app.type.item.variable.path.Segment.Member)seg).Name;
-            var (found, next) = kind.Descend(node, key, isIndex, ctx);
-            if (!found) return ctx.NotFound(seg.Raw);
-            node = next;
-            if (node is not null) kind = ctx.App.type.list.Kind(node.GetType());   // re-derive for the next hop
-        }
-        return kind.Data(parent.Name, node, parent, ctx);
-    }
-
     /// <summary>Descend one level: the value at <paramref name="key"/> on <paramref name="obj"/>,
     /// or <c>(false, null)</c> when absent. <paramref name="isIndex"/> is true when the key came
     /// from an index bracket (`[0]`) rather than a member dot (`.Count`) — a sequence host answers

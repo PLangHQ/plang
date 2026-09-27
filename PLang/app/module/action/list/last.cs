@@ -7,7 +7,7 @@ public partial class Last : IContext
 
     public async Task<data.@this> Start()
     {
-        var data = await Context.Variable.Get((await ListName.Value()));
+        var data = await (await ListName.Value())!.Start(Context);
         var countData = await data.Get("Count");
 
         // The typed surface answers in a `number`; raw int covers IList infra.

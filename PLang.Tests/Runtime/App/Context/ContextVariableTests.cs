@@ -204,7 +204,7 @@ public class ContextVariableTests
     public async Task ContextVar_AppProperty_AccessibleViaDotNotation()
     {
         var vars = _app.User.Context.Variable;
-        var data = await vars.Get("!app.Name");
+        var data = await new global::app.type.item.variable.@this("!app.Name").Start(vars.Context);
 
         await Assert.That(data).IsNotNull();
         await Assert.That((await data!.Value())?.ToString()).IsEqualTo("test");

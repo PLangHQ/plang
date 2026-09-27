@@ -77,9 +77,9 @@ public class NowVariableTests
 
         // GetValue coerces item types to their CLR backing for C# callers; the typed
         // plang value is the navigated Data's own value — read it via Peek.
-        var date = (await vars.Get("Now.Date")).Peek();
-        var timeOfDay = (await vars.Get("Now.TimeOfDay")).Peek();
-        var offset = (await vars.Get("Now.Offset")).Peek();
+        var date = (await new global::app.type.item.variable.@this("Now.Date").Start(vars.Context)).Peek();
+        var timeOfDay = (await new global::app.type.item.variable.@this("Now.TimeOfDay").Start(vars.Context)).Peek();
+        var offset = (await new global::app.type.item.variable.@this("Now.Offset").Start(vars.Context)).Peek();
 
         await Assert.That(date).IsTypeOf<global::app.type.item.date.@this>();
         await Assert.That(timeOfDay).IsTypeOf<global::app.type.item.time.@this>();

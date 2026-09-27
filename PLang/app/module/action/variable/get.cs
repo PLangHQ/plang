@@ -10,6 +10,6 @@ public partial class Get : IContext
 
     public async Task<data.@this> Start()
     {
-        return await Context.Variable.Get(await Name.Value());
+        return await (await Name.Value())!.Start(Context);
     }
 }
