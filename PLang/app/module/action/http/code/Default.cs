@@ -493,21 +493,16 @@ public sealed class Default : IHttp
         }
         var body = (await bodyRead.Value())!.Clr<string>()!;
 
-        // The registered transport reads the wire — the plang serializer's own read door
-        // (buffer path, deferred verify, [In] signature inflow, one owner). Store view = an
-        // exact copy of the inbound message, not the Out wire view. A parse failure surfaces
-        // as a keyed Error (PlangDeserializeError), not a throw.
-        data.@this data;
-        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(body)))
+        // plang's own format reads the body — the whole Data, its signature layer verified ([In]
+        // signature inflow). Store view = an exact copy of the inbound message, not the Out wire view. A
+        // parse failure surfaces as a keyed Error (PlangDeserializeError), not a throw.
+        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(body), context, view: global::app.View.Store);
+        if (!read.Success)
         {
-            var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
-            if (!read.Success)
-            {
-                BuildProperties(read, request, response);
-                return read;
-            }
-            data = read;
+            BuildProperties(read, request, response);
+            return read;
         }
+        var data = read;
 
         // Data.Signature is populated from the wire via [In] — pass straight to verify
         var verifyAction = new signing.verify(context)
@@ -536,14 +531,10 @@ public sealed class Default : IHttp
         string errorBody, AppType app, actor.context.@this context)
     {
         // Try deserializing as data.@this with transport options (may have Signature via [In])
-        data.@this? data = null;
-        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(errorBody)))
-        {
-            // A non-plang error body reads back as a failure — data stays null and the
-            // legacy-format fallback below takes over.
-            var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
-            if (read.Success) data = read;
-        }
+        // A non-plang error body reads back as a failure — data stays null and the legacy-format
+        // fallback below takes over.
+        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(errorBody), context, view: global::app.View.Store);
+        data.@this? data = read.Success ? read : null;
 
         // A signed response body reads back as a `signature` layer wrapping the
         // inner data (the read boundary auto-verifies; verify peels it).
@@ -814,19 +805,13 @@ public sealed class Default : IHttp
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            // Each NDJSON line is a data object with Signature populated via [In] — read
-            // through the registered transport (one owner for the plang wire).
-            data.@this data;
-            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(line)))
+            // Each NDJSON line is a whole Data in plang's own format, its Signature populated via [In].
+            var data = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(line), context, view: global::app.View.Store, ct: ct);
+            if (!data.Success)
             {
-                var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
-                if (!read.Success)
-                {
-                    await app.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
-                        context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
-                    continue;
-                }
-                data = read;
+                await app.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
+                    context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                continue;
             }
 
             // Verify signature — pass Data straight to verify

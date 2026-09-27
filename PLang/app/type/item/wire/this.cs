@@ -20,11 +20,11 @@ public sealed class @this : global::app.type.item.source
     /// <summary>A still-encoded slice is plang's own machinery; no program names it.</summary>
     public static bool Internal => true;
 
-    // The serializer that sliced this raw — an object reference, never a format name. Held
-    // since birth; the read reaches it directly (the registry lookup is what died, not the door).
-    private readonly global::app.channel.serializer.ITransport _reader;
+    // The format that sliced this raw — an object reference, never a format name. Held since birth; the
+    // read reaches it directly.
+    private readonly kind.plang.@this _reader;
 
-    public @this(string slice, global::app.type.@this type, global::app.channel.serializer.ITransport reader,
+    public @this(string slice, global::app.type.@this type, kind.plang.@this reader,
         IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
         : base(slice, type, variable ?? [])   // an encoded slice is never parsed for its variables
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));

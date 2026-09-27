@@ -16,7 +16,7 @@ public class WireStoresNoContextTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     private global::app.type.item.@this Wire(string slice, string type)
-        => _app.type.list[type].Create(slice, Ctx.Actor!.Channel.Serializers!.Transport);
+        => _app.type.list[type].Create(slice, (global::app.type.item.wire.kind.plang.@this)_app.type.list["wire"].kind["plang"]!);
 
     [Test]
     public async Task UnloadedWire_LoweredThroughItsData_DecodesWithTheDatasContext()

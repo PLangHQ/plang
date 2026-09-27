@@ -55,11 +55,9 @@ public partial class @this
         if (_context == null || !_context.App.type.list[Type, _context].kind.Compressible)
             return this;
 
-        var serializer = _context.Actor?.Channel.Serializers.GetByType("application/plang")
-                         ?? new global::app.channel.serializer.plang.@this(_context);
-
+        // the archive holds this Data whole, in plang's own format
         using var ms = new MemoryStream();
-        await serializer.SerializeAsync(ms, this, cancellationToken: ct);
+        await _context.App.type.list["wire"].kind["plang"]!.Encode(ms, this, _context, ct: ct);
         var compressed = GZipCompress(ms.ToArray());
 
         // TODO: compression belongs in an `archive` module, not inlined here.
@@ -137,11 +135,11 @@ public partial class @this
         {
             var decompressed = GZipDecompress(compressed);
 
-            // Born with this Data's context: the recovered Data is created under it, not rebound after.
-            var serializer = new global::app.channel.serializer.plang.@this(_context);
-
-            using var ms = new MemoryStream(decompressed);
-            var deser = await serializer.DeserializeAsync(ms, cancellationToken: ct);
+            // The archive holds a whole Data in plang's own format; the recovered Data is born with this
+            // Data's context, not rebound after.
+            if (_context == null)
+                return FromError(new ServiceError("an archived Data with no context can't be read back", "DecompressError", 500));
+            var deser = await _context.App.type.list["wire"].kind["plang"]!.Decode(decompressed, _context, ct: ct);
             if (!deser.Success)
                 return FromError(new ServiceError(
                     "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),

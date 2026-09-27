@@ -74,9 +74,9 @@ public sealed class @this
         }
         else
         {
-            var serializer = new global::app.channel.serializer.plang.@this(context);
+            // the run written bare, in the program form a .pr is (goal's format), its Out face
             using var ms = new System.IO.MemoryStream();
-            await serializer.SerializeItemAsync(ms, run, global::app.View.Out);
+            await context.App.type.list["goal"].kind.Encode(ms, context.Ok(run), context, global::app.View.Out);
             content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
             target = global::app.type.item.path.@this.Resolve("/.test/results.json", context);
         }

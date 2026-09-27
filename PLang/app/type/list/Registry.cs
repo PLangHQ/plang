@@ -255,6 +255,17 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         => new($"'{key}' is already the format '{taken.Owner}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
                + $"'{kind.Owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
 
+    // How a type's class writes its formats — its IEncode, bound once into a delegate (no reflection per
+    // write); null when the class writes none.
+    private global::app.type.kind.@this.Encoder? Encoder(System.Type clr)
+        => clr.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IEncode<>))
+            ? (global::app.type.kind.@this.Encoder)GetType().GetMethod(nameof(Bound), BindingFlags.NonPublic | BindingFlags.Instance)!
+                .MakeGenericMethod(clr).Invoke(this, null)!
+            : null;
+
+    private global::app.type.kind.@this.Encoder Bound<T>() where T : global::app.type.item.@this, global::app.type.item.IEncode<T>
+        => T.Encode;
+
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
     // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
     // by its usage, so this reflects the assembly's property types.
@@ -269,11 +280,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 var kind = (global::app.type.kind.@this)Activator.CreateInstance(t)!;
                 if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
             }
-            // each format a type's class declares, a kind of that type
+            // each format a type's class declares, a kind of that type — written by the class's own encode
             if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false)
                 && global::app.type.item.@this.NameOf(t) is { } reads && Items().Any(type => type.Names(reads)))
+            {
+                var encode = Encoder(t);
                 foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
-                    Hold(new global::app.type.kind.@this(format, reads));
+                    Hold(new global::app.type.kind.@this(format, reads, encode));
+            }
             // each class of settings, a kind of setting by its path (one of it says the path)
             if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
                 && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null

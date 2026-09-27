@@ -20,7 +20,7 @@ public class WireForeignOutputTests
     {
         var ctx = app.User.Context;
         var type = new global::app.type.@this(typeName, kind);
-        var wire = new Wire(rawSlice, type, new Plang(ctx));   // packed slice, plang-captured
+        var wire = new Wire(rawSlice, type, (global::app.type.item.wire.kind.plang.@this)app.type.list["wire"].kind["plang"]!);   // packed slice, plang-captured
         var data = new global::app.data.@this("slot", wire, context: ctx);
 
         using var ms = new System.IO.MemoryStream();

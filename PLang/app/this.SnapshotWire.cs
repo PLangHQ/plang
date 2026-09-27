@@ -30,12 +30,12 @@ public sealed partial class @this
     /// </summary>
     public async Task<global::app.snapshot.@this> SnapshotFromWire(string json, global::app.actor.context.@this context)
     {
-        // A still-encoded slice born holding the serializer that reads it — the exact mirror of
-        // Serialize, which wrote through the same one. A structured payload rides here rather than
-        // as a bare source: a source decodes a scalar off its own token and has no document to walk.
+        // A still-encoded slice born holding the format that reads it — plang's own, the mirror of
+        // Serialize. A structured payload rides here rather than as a bare source: a source decodes a
+        // scalar off its own token and has no document to walk.
         var snapshotType = context.App.type.list["snapshot"];
         var slice = new global::app.type.item.wire.@this(
-            json, snapshotType, new global::app.channel.serializer.plang.@this(context));
+            json, snapshotType, (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!);
         var wire = new global::app.data.@this("", slice, snapshotType, context: context);
         var snapshot = await wire.Value<global::app.snapshot.@this>();
         // Carry the real reason. A decline here is a materialization failure with its own message;

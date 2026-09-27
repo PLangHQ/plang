@@ -25,6 +25,14 @@ public class @this
     private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
     private readonly bool _compressible;
+    // How the owning type writes this format — its class's IEncode, bound when the kind was made; null for a
+    // type that writes none of its formats.
+    private readonly Encoder? _encode;
+
+    /// <summary>How a type writes its formats: the value a Data holds onto a stream, in a view.</summary>
+    public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Encoder(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct);
 
     public @this(string name)
     {
@@ -32,13 +40,14 @@ public class @this
     }
 
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
-    /// MIMEs and extensions it answers to, and whether its content compresses.</summary>
-    public @this(global::app.Attributes.FormatAttribute format, string owner) : this(format.Name)
+    /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes it.</summary>
+    public @this(global::app.Attributes.FormatAttribute format, string owner, Encoder? encode = null) : this(format.Name)
     {
         _owner = owner;
         _mime = format.Mime is { } mime ? [mime] : [];
         _extension = format.Extension;
         _compressible = format.Compressible;
+        _encode = encode;
     }
 
     /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
@@ -174,11 +183,25 @@ public class @this
     /// format) overrides it. Born with the caller's context.
     /// </summary>
     public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", System.Threading.CancellationToken ct = default)
+        global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
+        System.Threading.CancellationToken ct = default)
     {
         var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name), context];
         return global::System.Threading.Tasks.Task.FromResult(new global::app.data.@this(name, type.Create(raw, context), context: context));
     }
+
+    /// <summary>
+    /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. The
+    /// type that declares the format writes it (bound once, when the kind was made); a kind whose content is
+    /// written its own way overrides it (json, plang's transport). A format no type writes answers an error.
+    /// With no <paramref name="view"/> the format writes its own face (a .pr its Store face).
+    /// </summary>
+    public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
+        => _encode != null ? _encode(stream, data, context, view, encoding, ct)
+            : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.Error(
+                $"nothing writes {Owner ?? "binary"}{(IsEmpty ? "" : "/" + Name)} content", "NoEncoder", 400)));
 
     /// <summary>The async face over <see cref="Parse"/> — the materialization rung (<c>source.Value</c>)
     /// asks the kind first; a decline (null) falls to the family's type reader. No second decode

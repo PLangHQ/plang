@@ -5,7 +5,7 @@ namespace app.store.sqlite;
 
 /// <summary>
 /// A store in SQLite, on disk or in memory.
-/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data via global::app.channel.serializer.plang.@this).
+/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (a whole Data in plang's own format).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>
@@ -13,12 +13,12 @@ public sealed class @this : global::app.store.@this
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
-    // The store is application/plang by construction and system-owned:
-    // it serializes through the system context so reads verify and route through
-    // the typed wire reader (no context-less narrow).
-    private readonly global::app.channel.serializer.plang.@this _serializer;
-    // The store's own context — system-owned. Its result Data is born from it.
+    // The store's own context — system-owned. Its result Data is born from it, and its rows are written
+    // and read (verified) with it.
     private readonly actor.context.@this Context;
+
+    // A row is a whole Data in plang's own format (application/plang).
+    private global::app.type.kind.@this Format => Context.App.type.list["wire"].kind["plang"]!;
     private bool _disposed;
 
     /// <summary>
@@ -28,7 +28,6 @@ public sealed class @this : global::app.store.@this
     /// </summary>
     private @this(string connectionString, actor.context.@this context)
     {
-        _serializer = new(context);
         Context = context;
         _connectionString = connectionString;
         EnableWalMode();
@@ -74,7 +73,6 @@ public sealed class @this : global::app.store.@this
     /// </summary>
     private @this(string name, bool inMemory, actor.context.@this context)
     {
-        _serializer = new(context);
         Context = context;
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -105,12 +103,12 @@ public sealed class @this : global::app.store.@this
         cmd.ExecuteNonQuery();
     }
 
-    // The store persists TEXT, the serializer speaks streams — so the store owns its own
-    // TEXT↔stream bridge (it chose the column type). Read: a stored string → a Data<T>.
+    // The store persists TEXT, the format speaks bytes — so the store owns its own TEXT↔bytes bridge (it
+    // chose the column type). Read: a stored string → a Data<T>, a typed face over the Data as read.
     private async Task<data.@this<T>> Hydrate<T>(string stored) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(stored));
-        return await _serializer.DeserializeAsync<T>(ms, global::app.View.Store);
+        var read = await Format.Decode(System.Text.Encoding.UTF8.GetBytes(stored), Context, view: global::app.View.Store);
+        return read.Success ? read.As<T>() : global::app.data.@this<T>.From(read);
     }
 
     public override async Task<data.@this<T>> Get<T>(string table, string key)
@@ -182,7 +180,7 @@ public sealed class @this : global::app.store.@this
             // Identity.PrivateKey). The store owns its TEXT↔stream bridge: serialize to a
             // buffer, bind the TEXT param (this is where the string lives — the column's choice).
             using var ms = new MemoryStream();
-            var serialized = await _serializer.SerializeAsync(ms, data, global::app.View.Store);
+            var serialized = await Format.Encode(ms, data, Context, global::app.View.Store);
             if (!serialized.Success) return Context.Error(serialized.Error!);
             cmd.Parameters.AddWithValue("@data", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
             cmd.ExecuteNonQuery();

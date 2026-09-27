@@ -188,11 +188,9 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// File-save action target. <paramref name="value"/> may carry bytes,
-    /// string, or an arbitrary object (serialized via the actor's
-    /// extension-keyed Serializers). Returns the resulting Path wrapped in
-    /// Data so the .pr's typed slot round-trips. Replaces today's
-    /// <c>file/code/Default.cs::Default.Save</c>.
+    /// The write door, <see cref="ReadText"/>'s mirror: the file's extension is a format, and the format
+    /// writes the value (<c>.pr</c> → goal's, <c>.json</c> → json). A caller says where, never how. Returns
+    /// the resulting Path wrapped in Data so the .pr's typed slot round-trips.
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Save(data.@this? value, actor.context.@this context)
     {
@@ -208,16 +206,21 @@ public sealed partial class @this
                 await System.IO.File.WriteAllBytesAsync(Absolute, binv.Value);
             else
             {
-                await using var stream = System.IO.File.Create(Absolute);
-                // file-save owns its selector (its Extension); the VALUE writes itself into that
-                // format's writer: a registered extension writes that format (a text value to
-                // .json is json-quoted, to .txt is bare); an unregistered one falls to Text —
-                // a leaf bare, a container as its json content. No special text arm, no shape branch.
-                var serializers = context.Actor.Channel.Serializers;
-                var serializer = serializers.GetByExtension(Extension) ?? serializers.Text;
-                var serResult = await serializer.SerializeAsync(stream, value!);
-                if (!serResult.Success)
-                    return context.Error<global::app.type.item.path.@this>(serResult.Error!);
+                // The file's extension is the format that writes the value (a goal to .pr its program
+                // form). A format that doesn't encode yet writes through the serializer its extension
+                // names, else text — a leaf bare, a container as its json content.
+                var format = Kind(context).kind;
+                using var encoded = new System.IO.MemoryStream();
+                var result = await format.Encode(encoded, value!, context);
+                if (!result.Success && result.Error?.Key == "NoEncoder")
+                {
+                    encoded.SetLength(0);
+                    var serializers = context.Actor.Channel.Serializers;
+                    result = await (serializers.GetByExtension(Extension) ?? serializers.Text).SerializeAsync(encoded, value!);
+                }
+                if (!result.Success)
+                    return context.Error<global::app.type.item.path.@this>(result.Error!);
+                await System.IO.File.WriteAllBytesAsync(Absolute, encoded.ToArray());
             }
             return context.Ok<global::app.type.item.path.@this>(this);
         }

@@ -332,7 +332,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// itself. Mints the lazy <see cref="item.wire.@this"/>; the parse stays at first touch. The
     /// capture door beside the content <see cref="Create(object?, actor.context.@this?)"/> door —
     /// same verb, the capture's knowledge as an argument, never a format name.</summary>
-    public item.@this Create(string slice, global::app.channel.serializer.ITransport reader)
+    public item.@this Create(string slice, global::app.type.item.wire.kind.plang.@this reader)
         => new item.wire.@this(slice, this, reader);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
@@ -348,10 +348,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (ctx.Context.App.type.list.Reader.Typed(Name, null) is { IsEager: true } eager)
             return eager.Read(ref reader, null, ctx);
 
-        var transport = ctx.Context.Actor?.Channel.Serializers?.Transport
-            ?? throw new JsonException(
-                "wire capture reached before the actor channel wired its transport serializer — "
-                + "cannot decode a .pr value slot.");
+        // The slot is captured in plang's own format — the wire type's plang kind, which reads it on first touch.
+        var transport = (global::app.type.item.wire.kind.plang.@this)ctx.Context.App.type.list["wire"].kind["plang"]!;
 
         if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
         {

@@ -216,7 +216,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     {
         var context = Context ?? throw new InvalidOperationException(
             $"channel '{Name}' belongs to no list — it has no context to read in");
-        return context.App.type.list.Mime(Mime ?? "", context).kind.Decode(raw, context, Name, ct);
+        return context.App.type.list.Mime(Mime ?? "", context).kind.Decode(raw, context, Name, ct: ct);
     }
 
     /// <summary>

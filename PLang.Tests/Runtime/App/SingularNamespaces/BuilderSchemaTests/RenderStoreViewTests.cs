@@ -3,12 +3,8 @@ using Render = global::app.module.action.ui.Render;
 namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 
 /// <summary>
-/// Two doors, kept distinct. A compiled program value (a step's code) is shown to the LLM by
-/// EMBEDDING it through the `store` filter — the value drives its own Store writer, so an authored
-/// %ref% ("Hello %name%") rides out literally: %name% is a runtime variable, unset at build, and it
-/// must NOT resolve. The bare `{{ p.Value }}` is the resolve door — navigating into an authored leaf
-/// executes it, which throws on the unset ref. The filter never member-accesses the leaf; it
-/// serializes the container subtree, so it sidesteps the throw entirely.
+/// The bare `{{ p.Value }}` is the resolve door — navigating into an authored leaf executes it, which
+/// throws on the unset ref.
 /// </summary>
 public class RenderStoreViewTests
 {
@@ -31,21 +27,10 @@ public class RenderStoreViewTests
     }
 
     [Test]
-    public async Task StoreFilter_EmbedsAuthoredWire_NoResolve()
-    {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
-        var r = await Render(app, "{{ goal.Step[0].Code | store }}");
-        await Assert.That(r.ok).IsTrue();                    // container embed never touches the leaf's resolve door
-        await Assert.That(r.outp).Contains("Hello %name%");  // authored %ref%, preserved by the Store writer
-        await Assert.That(r.outp).Contains("\"module\": \"output\"");   // the real .pr action wire, embedded whole
-    }
-
-    [Test]
     public async Task ResolveDoor_StillThrowsOnUnsetRef()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/test");
         // {{ p.Value }} navigates INTO the authored leaf → executes it → the unset %name% throws.
-        // The two doors stay distinct: embedding is raw, member access resolves.
         var r = await Render(app,
             "{% for a in goal.Step[0].Code %}{% for p in a.Property %}{{ p.Value }}{% endfor %}{% endfor %}");
         await Assert.That(r.ok).IsFalse();

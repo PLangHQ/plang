@@ -22,6 +22,13 @@ public sealed class @this : global::app.type.kind.@this
     public override System.Collections.Generic.IReadOnlyList<string> Extension => _format?.Extension ?? [];
     public override bool Compressible => _format?.Compressible ?? false;
 
+    /// <summary>The type's own format writes it (<c>.pr</c> for goal); a type with none writes nothing.</summary>
+    public override System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
+        => _format != null ? _format.Encode(stream, data, context, view, encoding, ct)
+            : base.Encode(stream, data, context, view, encoding, ct);
+
     // The kinds this type holds, in the order they came.
     private global::app.type.kind.@this[] Held
     {

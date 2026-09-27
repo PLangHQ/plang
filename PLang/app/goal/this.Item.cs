@@ -8,8 +8,34 @@ namespace app.goal;
 [global::app.Attributes.Format("", "application/plang-goal", ".pr")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.goal.list.@this>
+    global::app.type.item.IList<@this, global::app.goal.list.@this>, global::app.type.item.IEncode<@this>
 {
+    /// <summary>
+    /// The <c>.pr</c> form: the value written bare in plang's schema writer — a goal (or any program value:
+    /// app.pr) writes its own structure, no Data around it, unsigned. Its own face is Store — a .pr is what
+    /// plang keeps. Indented, every character as itself (a file is not a page), ending with a new line.
+    /// </summary>
+    public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? asked,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
+    {
+        var view = asked ?? global::app.View.Store;
+        if (data.Peek() is not global::app.type.item.@this item)
+            return context.Error(new global::app.error.Error($"%{data.Name}% holds no value to write as a .pr", "NothingToWrite", 400));
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions
+                     {
+                         Indented = true,
+                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                     }))
+        {
+            var writer = new global::app.channel.serializer.json.Writer(utf8, view, context.App.type.list.Renderer, emitsSchema: true);
+            await item.Output(writer, view, context);
+            await utf8.FlushAsync(ct);
+        }
+        stream.WriteByte((byte)'\n');
+        return context.Ok();
+    }
+
     /// <summary>A key names this goal by its address (<c>/system/error/show</c>), or one of its
     /// sub-goals by theirs (<c>/start#show</c>). Case is not the program's to get right.</summary>
     public System.Threading.Tasks.ValueTask<@this?> Match(string key)

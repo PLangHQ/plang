@@ -444,15 +444,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
-        // App writes its own app.pr through the SAME door a goal writes its .pr: wrap the host in
-        // a clr carrier and let the serializer write it as a file's text — its [Store] face. No
-        // hard-coded field list (add a [Store] prop → it persists), no json.Writer, no options bag;
-        // the file's form is the serializer's, not App's.
-        var serializer = (global::app.channel.serializer.plang.@this)
-            System.Context!.Actor!.Channel.Serializers.GetOrDefault("application/plang");
-        var text = await serializer.Text(new global::app.type.clr.@this<global::app.@this>(this, System.Context!));
+        // App says where; the file writes it — .pr is a program file, so its format writes the host's [Store]
+        // face. No hard-coded field list (add a [Store] prop → it persists).
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
-        var written = await prPath.WriteText(text, System.Context!);
+        var written = await prPath.Save(System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, System.Context!)), System.Context!);
         if (!written.Success) return written;
         return System.Context!.Ok(this);
     }

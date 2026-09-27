@@ -7,9 +7,8 @@ namespace app.snapshot;
 /// it captured (it alone knows the concrete CLR type behind each <c>object?</c>
 /// entry). The per-section dispatch order mirrors <see cref="global::app.@this.Restore"/>.
 ///
-/// <para>Non-signing Store view (<see cref="global::app.channel.serializer.plang.@this.SnapshotOptions"/>):
-/// a snapshot is internal in-process state replayed into the same actor, not an
-/// actor-boundary crossing.</para>
+/// <para>Non-signing Store view: a snapshot is internal in-process state replayed into the same actor,
+/// not an actor-boundary crossing.</para>
 /// </summary>
 public sealed partial class @this
 {
@@ -24,12 +23,12 @@ public sealed partial class @this
     /// </summary>
     public async System.Threading.Tasks.Task<string> Serialize(global::app.actor.context.@this context)
     {
-        var serializer = new global::app.channel.serializer.plang.@this(context);
-        // The snapshot writes ITSELF via Output — one object of entries, each writing its own value.
-        // The root rides bare (no Data envelope, unsigned: internal in-process state); a nested
-        // section rides as the entry that holds it, so it carries its own type on the wire.
+        // The snapshot writes ITSELF via Output — one object of entries, each writing its own value — in
+        // the program form a .pr is (goal's format). The root rides bare (no Data envelope, unsigned:
+        // internal in-process state); a nested section rides as the entry that holds it, so it carries
+        // its own type on the wire.
         using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, this, global::app.View.Store);
+        await context.App.type.list["goal"].kind.Encode(ms, context.Ok(this), context, global::app.View.Store);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
