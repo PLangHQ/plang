@@ -1,0 +1,198 @@
+# Baseline — app-systems at 6db8d5732 (+ stage 0's twin fix, no production code changed), 2026-09-27
+
+| suite | total | failed |
+|---|---|---|
+| Modules | 986 | 38 |
+| Types | 727 | 23 |
+| Wire | 507 | 18 |
+| Data | 870 | 45 |
+| Generator | 192 | 18 |
+| Runtime | 722 | 24 |
+
+plang --test (Tests/): 7 pass, 0 fail, 317 stale (316 have no .pr, 1 needs a rebuild).
+
+Known flakes: Run_ParallelExecution_RespectsSemaphoreLimit (load), ChannelEntity_Write_RoundTripsDataThroughTheElement (test order).
+
+## Modules failing
+
+- ActorDataSource_IsCreatedLazily
+- Discover_WithDotDotTraversal_DeniedByAuthGate
+- ErrorPropagation_VariablesGet_SettingsMissing_ReturnsAskError
+- FluidInclude_InRootTemplate_RendersSilently
+- Foreach_BodyInnerGoalFailsInsideConditionIf_PropagatesError
+- GenerateLlmFilePath_ProducedViaPathDerivationVerbs
+- GoalCall_StillIncluded
+- Hash_Keccak256_ProducesCorrectHash
+- Hash_SHA256_ProducesCorrectHash
+- IfFalse_Orchestrate_RunsElseBranch
+- IfTrue_Orchestrate_RunsThenBranch
+- If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep
+- If_OrchestratedSuccess_MarksResultHandled
+- LoadAction_NoCtorDll_ReturnsProviderConstructorError
+- LoadAction_ValidDll_RegistersProvider
+- ModuleActions_RenderTheirNames_ThroughFluid
+- MyIdentity_UpdatedAfterSetDefault
+- Query_CacheHit_PropertiesPreserved
+- ReflectionRead_ReproducesTheGoalGraph_LikeStj
+- Render_IncludeResolvesFromGoalDirectory
+- Render_Include_InheritsVariables
+- Render_Include_NestedPathResolvesRelativeToPartial
+- Render_Include_RendersPartialInline
+- Run_ConditionFalse_SkipsThenBranch
+- Run_ConditionTrue_OrchestrateThenBranch
+- Run_IfElse_FalseRunsElse
+- Run_IfElse_TrueRunsThen
+- Run_InnerGoalCondition_OrchestatesIndependently
+- SaveGoal_CamelCase_StoreOnly
+- SaveGoal_SerializesToPrPath
+- SaveGoal_WithSubGoals_SingleFile
+- Set_NameTypedAsText_DeclinesAtDispatch
+- Set_NullValue_StoresAndRetrieves
+- Settings_CorruptDatabase_ReturnsSettingsError
+- Settings_DotNotation_MissingKey_ReturnsAskError
+- TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText
+- Validate_TypeMismatch_ReturnsError
+- Variables_Clone_SettingsData_MissingKey_ReturnsAskError
+
+## Types failing
+
+- BuilderValidate_BuildReturnsOkWithTypeName_SetsTerminalVariableSetType
+- BuilderValidate_OnlyOneTerminalVariableSetPerStep_LastInChainWins
+- Data_Materialization_CachesResultOnFirstAccess
+- Data_PropertyAccess_UsesDeclaredTypeForMaterialization
+- Deserialize_FullDict_Works
+- Deserialize_JustName_Works
+- Entity_Kinds_PopulatedForNumber
+- LlmQuery_Build_NeitherSchemaNorFormat_ReturnsBareOk
+- LlmQuery_Build_WithFormatNoSchema_ReturnsOkWithFormatValue
+- LlmQuery_Build_WithSchema_ReturnsOkWithJson
+- LoadDll_CustomInt_OverridesBuiltInName_RuntimeRendererWins
+- LoadDll_Money_RegistersTypeAndRenderer_ProducesExpectedWireString
+- LoadDll_SealedNameAsRendererTypeName_FailsWith_TypeLoadCollision
+- Redirect_Signature_IsFreshForDestination_NotOriginalUrl
+- Resolve_Context_NotStored_OnInstance
+- Schema_Kinds_AdvertisesNumberPrecisions
+- Schema_Kinds_CoversAdvertisedAndExtensionFamilies
+- Serialize_PathBackedImage_EmitsRealBytes_NotEmpty
+- Serialize_StrictMismatch_FailsCleanly_BeforeStreamWrite
+- Serialize_WalksNestedImage_InsideDictionary
+- SetAsImage_MintsPathBackedHandle_NoReadAtSet
+- SetAsTextMd_NavigationResolvesKindFromVariableExpression
+- Wire_Write_OmitsTypeForNullSentinel
+
+## Wire failing
+
+- AssertionError_Message_MasksSensitiveViaDiagnosticOutput
+- Cut4_TamperingPropertyValue_FailsOuterSignatureVerify
+- MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal
+- NavigateAndEditCapturedVariable_ThenResumeToSuccess
+- OnAsk_OnMessageChannel_FiresPreSerialise
+- OuterSignature_AfterPropertiesValueTamper_FailsVerify
+- PlangPath_AsSnapshotConvert_EditSurvivesResume
+- Properties_RoundTrip_ListOfPrimitives
+- Properties_RoundTrip_NestedDictOfPrimitives
+- Roundtrip_PreservesData
+- Roundtrip_StreamBased_PreservesData
+- Serialize_Enum_UsesCamelCase
+- Serialize_Object_IgnoresNullProperties
+- Serialize_Object_ReturnsJson
+- SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess
+- Statics_RoundTrip_PreservesNameValuePairs
+- ThrowTimeSnapshot_EditSurvivesResume
+- TypedSnapshotString_NavigateEditResume_PersistsEdit
+
+## Data failing
+
+- Add_ThrowsWhenPathIsEmptyString
+- AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData
+- AsT_SameType_ReturnsSourceInstance
+- Cut1_UntouchedConfigJson_SerializesByteIdentical
+- Cut5_RoundTrip_PreservesExactKind_AcrossTower
+- ErrorWire_RegisteredOnlyWhereItApplies_Snapshot
+- FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash
+- FilePaths_FromSubfolder_AbsoluteRootWorks
+- FullPipeline_LoadAndExecute_VariablesOutputDefaults
+- GetValue_Generic_WrongType_ReturnsDefault
+- GetValue_WithMismatchedType_ReturnsDefault
+- IsEmpty_EmptyString_ReturnsTrue
+- Materialize_JsonArrayRoot_NarrowsToListValueType
+- Materialize_JsonObjectRoot_NarrowsToDict
+- MergeStep_EmptyActions_ClearsStepActions
+- Navigation_ReadsValueWhichMaterialises
+- NumberRead_MatchesPriorConvertOutput
+- Parse_yields_expected_token_stream(goal·Step[planStep·index],
+- Parse_yields_expected_token_stream(goal·Step[step·Index]·Action,
+- ReadFile_ReturnMapsResultToVariable
+- Read_NumberBigInteger_From22DigitString_LossLess
+- Read_NumberFloat_NegativeZero_PreservesSignAndKind
+- Read_NumberHalf_FromString_PreservesHalf
+- Read_NumberUInt_FromBigDecimalString_ProducesUInt
+- Reader_DoesNotSniffCsvByLookingForCommas
+- Reader_DoesNotSniffJsonByLookingForLeadingBrace
+- Reader_DoesNotSniffXmlByLookingForAngleBracket
+- Reader_DoesNotSniffYamlByLookingForColon
+- Reader_Of_NumberBigInteger_ReturnsDelegate
+- Reader_Of_NumberInt_ReturnsDelegate
+- ResolveValue_FullMissingVariable_FailsVariableNotFound
+- Set_StripsPercentFromName
+- Snapshot_FromWire_StillExists
+- Split_peels_head_from_tail
+- StepRunAsync_ActionNotFound_ReturnsError
+- StepRunAsync_ExceptionInHandler_ReturnsError
+- StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError
+- TableXlsx_HasNoReaderYet_ThrowsUntilOneIsAdded
+- TimeSpanIso8601_LivesInFormatLayer_NotOnType
+- ToDictionary_ReturnsAllVariables
+- Type_LazyDerivation_WithContext
+- ValidateActions_MixedValidAndInvalid_ReturnsActionNotFound
+- ValidateActions_OneInvalid_ReturnsActionNotFound
+- Value_AuthoredPath_NeverInvokesReader
+- VarReference_InAuthoredValue_StillResolvesFreshPerRead
+
+## Generator failing
+
+- AppRun_CalledTwiceByRetryModifier_TwoFramesAndSnapshots
+- AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate
+- AppRun_HandlerThrows_TranslatesToServiceError_AndPopsFrame
+- AppRun_OnSuccess_FinallySnapshotsAndPops
+- AppRun_PushesAndPopsCallstackFrame_AroundHandler
+- AppRun_SavesAndRestoresContextGoal
+- AppRun_SavesAndRestoresContextStep
+- DataWrappedDict_NestedVar_DeepResolves
+- DataWrappedList_NestedVarInDict_DeepResolvesAndTypes
+- DeepResolutionDict_NestedList_FullyWalked
+- DeepResolutionDict_PrimitiveVar_Substituted
+- DeepResolutionList_NestedDict_SubstitutesInside
+- DeepResolutionList_NestedListsAndDicts_FullyWalked
+- DoesNotFire_OnSystemIoFile_InsidePathTypesNamespace
+- IContextHandler_ContextSameInstance_AsExecuteAsyncArg
+- ReResolveAcrossCalls_SharedParameterData_RawValueUnchanged
+- StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate
+- StringPlain_ReadTwice_ReturnsCachedBackingField
+
+## Runtime failing
+
+- App_ReportsItemApex_KindApp
+- AtSchemaBlocked_AsDictKey_WireMarkerOnly
+- BeforeAction_SignatureUnchanged_NoPayloadWidening
+- BuilderCatalog_ForFixedTypeSet_RendersByteIdentical_BeforeAndAfterEntryFold
+- CallStack_ReportsItemApex_KindCallstack
+- ChannelEntity_Write_RoundTripsDataThroughTheElement
+- Directory_WriteOut_EmitsFlatListingOfLocations_NotContents
+- ErrorAsStringSlot_OriginalErrorStaysPrimary_ConversionFailureGoesOnChain
+- EveryInstanceField_IncludingInherited_IsReadonly
+- FileWriteOut_UnNarrowed_EmitsRawContentBytes
+- MultiBranch_FirstBranchMatches_BranchIndexIs0
+- MultiBranch_SecondBranchMatches_BranchIndexIs1
+- NewInstance_IsEnabled_FalseByDefault
+- NoInstanceProperty_HasASetter
+- PathIsUnder_ReplacesRelativeStartsWith
+- Pile2_SqliteSettings_BindsSerializedBlob_NoToRaw
+- RunAsync_FailedStepNotRecorded
+- Run_FixtureWithConditionIf_ProductionSubscriber_RecordsBranchLabelAndChain
+- Simple_IfFalse_BranchIndexIs1
+- Simple_IfTrue_BranchIndexIs0
+- Sort_TwoPhase_KeysMaterialiseAsync_OrderSync_NoGetResult
+- Trace_HandleReportsConceptName_NotNamespaceTail
+- VariableSet_BangSyntax_WritesProperty
+- Variables_HandleReportsConceptName_NotNamespaceTail

@@ -22,6 +22,46 @@
         }
       ],
       "after": {}
+    },
+    {
+      "id": "6f04eaf9-c49d-45e2-b3e5-bbfd0c4f74d4",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T01:24:44Z",
+      "timestamp_end": "2026-09-27T02:05:00Z",
+      "intent": "Review the app-systems plan against the code, then stage 0: re-record Compile, baseline, delete v0.1 .pr files under os/",
+      "before": {
+        "assumptions": "app-systems is off builder-formal and contains its work (48a30e041 is an ancestor); TypeSafe decider access is restored",
+        "risk": "the v0.1 file deletion must keep every v0.2 goal .pr and the .build folders"
+      },
+      "plan": ".bot/app-systems/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/app-systems/architect/plan.md", ".bot/app-systems/coder/v1/result.md"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 1, 3, 4 claims checked in the code (two read-only agents, key findings re-verified): generator's one await Run(), timer class named Start, callback.run, type navigation via clr reflection, registry context serves Format, extra alias/spelling sources and list mutators"
+        },
+        {
+          "paths": ["tools/decider/prompt_c.py", "tools/decider/out/bootstrap/os/system/builder/BuildGoal/Start.goal/Compile.json"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step — python now follows C#; BootstrapTests green"
+        },
+        {
+          "paths": ["os/"],
+          "type": "delete",
+          "category": "config",
+          "confidence": "high",
+          "context": "552 tracked v0.1 NN. stepname.pr / 00. Goal.pr removed; 32 v0.2 .pr and the folders kept; 98 v0.1 .dll/.pdb left for a ruling"
+        }
+      ],
+      "after": {
+        "status": "review delivered; stage 0 done and pushed",
+        "health": "six suites at baseline (Modules 38 / Types 23 / Wire 18 / Data 45 / Generator 18 / Runtime 24 failing); BootstrapTests green",
+        "notes": "waiting on the architect's answer to the review before stage 1"
+      }
     }
   ]
 }
