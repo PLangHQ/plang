@@ -107,9 +107,23 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Build != null).IsTrue();
+        // %!build.cache% — what the builder's goals hand llm.query (`cache=%!build.cache%`)
         var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine.User.Context);
-        await Assert.That(cacheVar).IsNotNull();
+        await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("true");
         await using var _ = engine;
+    }
+
+    // --build={"cache":false} reaches %!build.cache% — llm.query in the builder's goals gets false.
+    [Test]
+    public async Task Configure_BuildCacheOff_ReachesBuildCacheSetting()
+    {
+        var executor = NewExecutor();
+        var (engine, error) = executor.Configure(new[] { "--build={\"cache\":false}" });
+
+        await Assert.That(error).IsNull();
+        await using var _ = engine!;
+        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine!.User.Context);
+        await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("false");
     }
 
     // Positional "build" arg is normalized to --build — equivalent invocation.

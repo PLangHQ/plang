@@ -39,6 +39,22 @@ public class SetTests
         await Assert.That((await context.Variable.GetValue("!http.request.timeout"))).IsNull();
     }
 
+    // Build.goal's `set default %!build.cache% = true` leaves --build={"cache":false} standing: a
+    // setting's value counts as one already there.
+    [Test]
+    public async Task SetDefault_OnASetting_KeepsItsValue()
+    {
+        var context = _app.User.Context;
+        await _app.System.Setting.Set(global::app.actor.setting.Storage.InMemory, "build.cache", _app.System.Context.Ok(false));
+
+        var action = TestAction.Create("variable", "set", ("name", "%!build.cache%"), ("value", true), ("asDefault", true));
+        var result = await action.Start(context);
+
+        await result.IsSuccess();
+        var read = await new global::app.type.item.variable.@this("!build.cache").Start(context);
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
+    }
+
     [Test]
     public async Task Set_WithType_SetsTypeInfo()
     {
