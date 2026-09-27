@@ -598,6 +598,64 @@
           "category": "code",
           "confidence": "high",
           "context": "OBP cleanup slices 3-8 (4fff826d0..477caa145), each reviewed by plang-cd: one variable maker; asker's settings in Every; the walk on the setting; the variable routes %!..% writes; test run and report on their owners; choice type door (kind.Of); Debug reads its Setting; plang-typed debug options; test.start/test.report params moved to app.test.setting (builder-visible, rides 7f)"
+        },
+        {
+          "paths": [
+            "PLang/app/actor/setting",
+            "PLang/app/actor/permission",
+            "PLang/app/module/action/identity",
+            "PLang/app/type/item/list/serializer",
+            "PLang/app/type/item/serializer/json.cs",
+            "os/system/builder/Build.goal"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7e-3 (87b66b528): identity/permission into [Own] setting classes; unreadable rows refuse writes; typed-list rows read back; dead build.summary step removed (fixes a slice-4 builder regression)"
+        },
+        {
+          "paths": [
+            "PLang/app/module/action/setting",
+            "os/system/modules/setting",
+            "Tests/Modules/Settings",
+            "Tests/App/Actors/Datasource"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7e-2b-ii (bbbb45925): setting.save/remove in, get/set out; consumer sweep"
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/app/type/this.Generic.cs",
+            "os/system/builder/llm/Properties.llm",
+            "PLang/app/actor/setting"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7f 2a/2b/2d (ee9701612, 5f2dcd3ac, 36ce02507); 2c and the eval wait on Ingi"
+        },
+        {
+          "paths": [
+            ".bot/app-systems/coder/v8/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "stage 8 trace and plan; decision 75 answers folded in"
+        },
+        {
+          "paths": [
+            "PLang/app/event",
+            "PLang/app/type/item/this.cs",
+            "PLang.Tests/Runtime/App/Events/OnTests.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "8a (c66b52541): events and on on every object; shared empty on, bindings, clone starts unbound"
         }
       ]
     }

@@ -50,8 +50,22 @@ rulings and as-built notes for every slice are in `v7/plan.md`.
   on purpose until 7f regenerates it (catalog examples changed). 8 stale `.test.goal` files edited to the
   setting form need their first build with 7f.
 
+## After the cleanup (decisions 68–76)
+- 87b66b528 **7e-3** — identity (the system's row) and permission (per actor) are `[Own]` setting classes;
+  `Load()` answers an unreadable row and Save/Remove refuse to write over it; typed-list rows read back (the
+  kinded list reader reads the Data rows a list writes — decision 69); Build.goal's dead `%!build.summary%`
+  step removed (slice 4 had made every `plang build` fail there).
+- bbbb45925 **7e-2b-ii** — `setting.save` / `setting.remove` take a setting; `get`/`set` gone.
+- **7f** (plan `v7/7f-plan.md`): ee9701612 concept types are type-list entries (actor stays scanned: stage 10);
+  5f2dcd3ac the prompt line `%!app.goal["/start"]%`; 36ce02507 `Save(setting)`. **Waiting:** 2c (how setting
+  classes are taught — Ingi), then the round-16 render + diff + eval.
+- **Stage 8** (plan `v8/plan.md`, decision 75): c66b52541 **8a** — events and `on` on every object (classes,
+  bindings, the shared empty `on`; nothing fires yet). 8b onward waits for 7f's eval.
+
 ## Next / waiting
-- **7e-3** identity + permission into settings (storage move + no-fallback marker only).
+- Ingi: 7f's 2c; decision 36 (keep the lazy walk beside `all` as two jobs → rename `Every` → `Walk`).
+- Then: 7f render/diff/eval (round 16; baseline `rounds/round11-run1`, its raw folder lost), re-records, first
+  builds of the 10 rewritten test goals; then 8b.
 - **7e-2b-ii** (setting.save/remove in, get/set out) and **7f** (concept types in the type list, the
   prompt line, teaching setting classes): builder-visible, one eval for stage 7.
 - Before stage 7 closes: fold `all`/`Every` into one lazy `all()`.
