@@ -29,6 +29,75 @@ public sealed class @this
         return summary;
     }
 
+    /// <summary>
+    /// Writes the run out: to the console its summary, each test (a failure with why) and the coverage —
+    /// unless the run is nested in a test, whose verdict it is — and the artefact at the app root, in
+    /// <paramref name="format"/> (<c>junit</c>, else json), else the format test's setting says. The json
+    /// artefact is the tests' own wire form. Answers the tests, the artefact's facts on its Properties
+    /// (format, reportPath, content, the summary counts); a top-level run that didn't pass answers its
+    /// verdict — after the artefact is written.
+    /// </summary>
+    public async Task<global::app.data.@this> Write(global::app.type.item.text.@this? format,
+        global::app.actor.context.@this context)
+    {
+        var tests = _tests.Items().ToList();
+        var chosen = format == null ? (Format)context.Setting.Of<global::app.test.setting.@this>().Format
+            : string.Equals(format.ToString(), "junit", System.StringComparison.OrdinalIgnoreCase) ? Format.JUnit : Format.Json;
+        var nested = global::app.test.@this.Current(context) != null;
+        var summary = Summary();
+
+        if (!nested)
+        {
+            var console = new System.Text.StringBuilder();
+            console.AppendLine($"Test summary: {tests.Count} total, "
+                + $"{summary[Status.Pass]} pass, {summary[Status.Fail]} fail, "
+                + $"{summary[Status.Timeout]} timeout, {summary[Status.Stale]} stale, "
+                + $"{summary[Status.Skipped]} skipped");
+            var version = _tests.App.Version;
+            foreach (var test in tests)
+            {
+                var drift = !string.IsNullOrEmpty(test.Goal.BuilderVersion) && !string.IsNullOrEmpty(version)
+                    && !string.Equals(test.Goal.BuilderVersion, version, System.StringComparison.Ordinal);
+                console.AppendLine($"  [{test.Status}] {test.Goal.Path} ({test.Duration.TotalMilliseconds:F0}ms)"
+                    + (drift ? " [builder drift]" : ""));
+                console.Append(test.Failure(context));
+            }
+            console.Append(Coverage.Text(context.App.module.list));
+            await context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
+        }
+
+        var run = new global::app.type.item.list.@this<global::app.test.@this>(tests);
+        string content;
+        global::app.type.item.path.@this target;
+        if (chosen == Format.JUnit)
+        {
+            content = new global::app.test.junit.@this(tests).ToString();
+            target = global::app.type.item.path.@this.Resolve("/.test/junit.xml", context);
+        }
+        else
+        {
+            var serializer = new global::app.channel.serializer.plang.@this(context);
+            using var ms = new System.IO.MemoryStream();
+            await serializer.SerializeItemAsync(ms, run, global::app.View.Out);
+            content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            target = global::app.type.item.path.@this.Resolve("/.test/results.json", context);
+        }
+        var written = await target.WriteText(content, context);
+        if (!written.Success) return context.Error(written.Error!);
+
+        var result = context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(run);
+        result.Properties.Set("format", chosen.ToString());
+        result.Properties.Set("reportPath", target.Absolute);
+        result.Properties.Set("content", content);
+        result.Properties.Set("summaryTotal", tests.Count);
+        result.Properties.Set("summaryPass", summary[Status.Pass]);
+        result.Properties.Set("summaryFail", summary[Status.Fail]);
+        result.Properties.Set("variableSnapshotCount", tests.Count(t => t.Error?.Variables is { CountRaw: > 0 }));
+
+        if (!nested && Verdict() is { } failed) return context.Error(failed);
+        return result;
+    }
+
     /// <summary>Why this run did not pass, or null when it did — tests ran and each passed or was
     /// deliberately skipped. It fails when nothing was discovered, when a test could not load (grouped
     /// by reason: "12 tests could not load: old .pr format … — rebuild it."), when a test never ran,

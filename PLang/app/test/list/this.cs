@@ -62,8 +62,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     internal event System.Action<global::app.@this>? Made;
 
     /// <summary>
-    /// Runs <paramref name="tests"/>, as many at once as test's setting says (≤ 0: one per processor), each
-    /// under its timeout (≤ 0: none) in an App of its own — the file is the App boundary. A test that isn't
+    /// Runs the tests <paramref name="given"/> holds, as many at once as test's setting says (≤ 0: one per
+    /// processor), each running itself in an App of its own — the file is the App boundary. A test that isn't
     /// Ready is recorded, not run. A test's failure is its outcome, never the run's: the others run on.
     /// Answers the tests, each carrying its outcome; each is added to this list and its coverage merged
     /// into this run's.
@@ -77,17 +77,14 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests);
         if (tests.Count == 0) return executed;
 
-        var setting = context.Setting.Of<global::app.test.setting.@this>();
-        var seconds = setting.TimeoutSeconds.ToDouble();
-        var timeout = seconds <= 0 ? System.Threading.Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(seconds);
-        var parallel = setting.Parallel.ToInt32();
+        var parallel = context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32();
         if (parallel < 1) parallel = System.Environment.ProcessorCount;
 
         using var semaphore = new SemaphoreSlim(parallel);
         await Task.WhenAll(tests.Select(async test =>
         {
             await semaphore.WaitAsync(context.CancellationToken);
-            try { await Run(test, timeout, context); }
+            try { await Run(test, context); }
             finally { semaphore.Release(); }
         }));
         return executed;
@@ -95,15 +92,15 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 
     // One test: a test that isn't Ready is recorded, not run; a Ready one runs itself in an App of its
     // own, a child of this one, testing it (its session open) — the App lives exactly as long as the run.
-    private async Task Run(global::app.test.@this test, TimeSpan timeout, actor.context.@this context)
+    private async Task Run(global::app.test.@this test, actor.context.@this context)
     {
         if (test.Status == Status.Ready)
         {
             await using var app = new global::app.@this(_app);
             app.test.list.Open(test);
             Made?.Invoke(app);
-            await test.Start(app, timeout, context);
-            Report.Coverage.Merge(test.Coverage!);
+            await test.Start(app, context);
+            Report.Coverage.Merge(app.test.list.Report.Coverage);
         }
         Add(test);
     }

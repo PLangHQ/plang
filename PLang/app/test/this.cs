@@ -80,28 +80,24 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Per-step wall-clock for the entry goal's top-level steps, in source order.</summary>
     [Out] public global::app.type.item.list.@this<global::app.test.timing.@this> Timings { get; }
 
-    /// <summary>What ran while this test ran — its App's coverage, the tests that App ran in turn
-    /// included. Null until the test runs.</summary>
-    public Coverage? Coverage { get; private set; }
-
     /// <summary>
-    /// Runs this test's goal in <paramref name="app"/>, its own App (testing it), under
-    /// <paramref name="timeout"/>: the timeout rides the App's cancellation, so every action reading its
-    /// context's token (timer.sleep, http.request, …) honours it. Records its coverage, the time each of
-    /// its goal's own steps takes (a sub-goal's steps roll up into the step that called it), and what it
-    /// wrote. Its outcome is its status — a crash inside its App is a Fail, never the caller's.
+    /// Runs this test's goal in <paramref name="app"/>, its own App (testing it), under the timeout test's
+    /// setting says (≤ 0: none): the timeout rides the App's cancellation, so every action reading its
+    /// context's token (timer.sleep, http.request, …) honours it. Its App's coverage records what fires;
+    /// the test records the time each of its goal's own steps takes (a sub-goal's steps roll up into the
+    /// step that called it) and what it wrote. Its outcome is its status — a crash inside its App is a
+    /// Fail, never the caller's.
     /// </summary>
-    public async System.Threading.Tasks.Task Start(global::app.@this app, System.TimeSpan timeout,
-        global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task Start(global::app.@this app, global::app.actor.context.@this context)
     {
         var own = app.User.Context;
         Begin();
-        Coverage = app.test.list.Report.Coverage;
-        Coverage.Watch(own);
+        app.test.list.Report.Coverage.Watch(own);
         Time(own);
 
+        var seconds = context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToDouble();
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
-        cts.CancelAfter(timeout);
+        cts.CancelAfter(seconds <= 0 ? System.Threading.Timeout.InfiniteTimeSpan : System.TimeSpan.FromSeconds(seconds));
         own.PushCancellation(cts);
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
@@ -154,6 +150,42 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             priority: int.MaxValue,
             stopOnError: false));
     }
+
+    /// <summary>
+    /// Why this test failed, as the console shows it — an assertion's expected and actual and the
+    /// variables it captured, else the error's message — then what the test wrote, its ANSI escapes
+    /// stripped so a test can't forge the runner's own output. Empty unless it failed with an error.
+    /// </summary>
+    public string Failure(global::app.actor.context.@this context)
+    {
+        if (Status != Status.Fail || Error == null) return "";
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("    FAIL: " + Goal.Path);
+        if (Error is AssertionError assert)
+        {
+            sb.AppendLine($"      Expected: {(global::app.Diagnostics.Format.Value(assert.Expected))}");
+            sb.AppendLine($"      Actual:   {(global::app.Diagnostics.Format.Value(assert.Actual))}");
+            if (assert.Variables is { CountRaw: > 0 } variables)
+            {
+                sb.AppendLine("      Variables:");
+                foreach (var variable in variables.Entries(context))
+                    sb.AppendLine($"        %{variable.Name}% = {(global::app.Diagnostics.Format.Value(variable.HasValue ? variable.Peek() : null))}");
+            }
+        }
+        else
+            sb.AppendLine($"      Error: {Error.Message}");
+        var output = Stdout?.Clr<string>();
+        if (!string.IsNullOrEmpty(output))
+        {
+            sb.AppendLine("      Output:");
+            foreach (var line in Ansi.Replace(output, "").Split('\n'))
+                sb.AppendLine("        " + line);
+        }
+        return sb.ToString();
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex Ansi =
+        new(@"\x1B\[[0-?]*[ -/]*[@-~]", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>Self-write: a test is a structural item — its tagged [Out] fields ride the
     /// wire (the report serializes it), no hand-mapped shape.</summary>

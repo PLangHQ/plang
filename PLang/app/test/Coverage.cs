@@ -130,6 +130,106 @@ public sealed class Coverage
             kvp => kvp.Key,
             kvp => (IReadOnlyList<string>)kvp.Value);
 
+    /// <summary>
+    /// The coverage as the console shows it: every module.action of <paramref name="modules"/> marked when
+    /// it fired, then each condition site's branches (its declared chain, else what was observed) marked
+    /// hit or missed, with the totals and the branches no test took.
+    /// </summary>
+    public string Text(global::app.module.list.@this modules)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("Module.action coverage:");
+        var observed = ModuleActions.ToHashSet();
+        var universeCount = 0;
+        foreach (var module in modules.Items().OrderBy(m => m.Name))
+        {
+            foreach (var action in module.ActionNames.OrderBy(a => a))
+            {
+                universeCount++;
+                var hit = observed.Contains((module.Name, action)) ? "x" : " ";
+                sb.AppendLine($"  [{hit}] {module.Name}.{action}");
+            }
+        }
+        sb.AppendLine($"  total: {observed.Count}/{universeCount}");
+
+        sb.AppendLine();
+        sb.AppendLine("Branch coverage (condition.if):");
+
+        var chains = BranchChains;
+        var labelsMap = BranchLabels;
+        var indicesMap = Branches;
+        var allSites = new SortedSet<string>(chains.Keys.Concat(labelsMap.Keys).Concat(indicesMap.Keys), StringComparer.Ordinal);
+        if (allSites.Count == 0)
+        {
+            sb.AppendLine("  (no condition.if sites observed)");
+            return sb.ToString();
+        }
+
+        int sitesComplete = 0, sitesPartial = 0, sitesUnreached = 0;
+        int declaredTotal = 0, hitTotal = 0;
+        var untested = new List<(string Site, List<string> Missing)>();
+        foreach (var site in allSites)
+        {
+            var declared = chains.TryGetValue(site, out var chain) ? chain : null;
+            var observedLabels = labelsMap.TryGetValue(site, out var labels) ? labels : new HashSet<string>();
+
+            bool labelBacked = true;
+            if (declared == null || declared.Count == 0)
+            {
+                if (observedLabels.Count > 0)
+                    declared = observedLabels.OrderBy(Order).ToList();
+                else if (indicesMap.TryGetValue(site, out var indices))
+                {
+                    declared = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
+                    labelBacked = false;
+                }
+                else declared = new List<string>();
+            }
+
+            var missing = new List<string>();
+            var parts = new List<string>();
+            foreach (var branch in declared)
+            {
+                var hit = !labelBacked || observedLabels.Contains(branch);
+                parts.Add((hit ? "✅ " : "❌ ") + branch);
+                declaredTotal++;
+                if (hit) hitTotal++;
+                else missing.Add(branch);
+            }
+            sb.AppendLine($"  {site}: {{{string.Join(", ", parts)}}}");
+
+            if (missing.Count == 0) sitesComplete++;
+            else if (observedLabels.Count == 0) { sitesUnreached++; untested.Add((site, missing)); }
+            else { sitesPartial++; untested.Add((site, missing)); }
+        }
+
+        var percent = declaredTotal > 0 ? (int)Math.Round(100.0 * hitTotal / declaredTotal) : 0;
+        sb.AppendLine();
+        sb.AppendLine($"  Sites: {allSites.Count} total ({sitesComplete} complete, {sitesPartial} partial, {sitesUnreached} unreached)");
+        sb.AppendLine($"  Branches: {hitTotal}/{declaredTotal} covered ({percent}%)");
+        if (untested.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("  Untested branches:");
+            foreach (var (site, missing) in untested)
+                sb.AppendLine($"    {site}  {string.Join(", ", missing)}");
+        }
+        return sb.ToString();
+    }
+
+    // A branch label's place in a chain: "if" before "elseif[N]" before "else", "true" before "false" —
+    // alphabetical would scatter them.
+    private string Order(string label) => label switch
+    {
+        "if" => "0",
+        "true" => "0",
+        "false" => "1",
+        "else" => "Z",
+        _ when label.StartsWith("elseif[") => "5" + label,
+        _ => label
+    };
+
     /// <summary>Unions another Coverage's observations into this one. Called when a child App's coverage is merged into the parent after a test completes.</summary>
     public void Merge(Coverage other)
     {
