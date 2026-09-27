@@ -188,7 +188,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             // A value with no format to bridge (item.Read → null) keeps the Clr path.
             var entity = context.App.Type[prop.PropertyType];
             var reader = entity != null ? context.App.Type.Reader.Typed(entity.Name, null) : null;
-            var read = reader != null ? iv.Read(reader, entity!.Kind?.Name, context) : null;
+            var read = reader != null ? iv.Read(reader, entity!.kind.IsEmpty ? null : entity.kind.Name, context) : null;
             // The generic "list" reader produces a base list (its elements already read through their
             // own reader). A typed node slot (list<action>)
             // adopts those rows into ITS type: same rows, the declared container. No type-switch — any

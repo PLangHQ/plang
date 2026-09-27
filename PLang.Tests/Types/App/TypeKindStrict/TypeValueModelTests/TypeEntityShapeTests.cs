@@ -22,7 +22,7 @@ public class TypeEntityShapeTests
     [Test] public async Task Entity_HasKindAndStrict_AsTopLevelMembers()
     {
         var t = typeof(TypeEntity);
-        var kind = t.GetProperty("Kind", BindingFlags.Public | BindingFlags.Instance);
+        var kind = t.GetProperty("kind", BindingFlags.Public | BindingFlags.Instance);
         var strict = t.GetProperty("Strict", BindingFlags.Public | BindingFlags.Instance);
         await Assert.That(kind).IsNotNull();
         await Assert.That(kind!.PropertyType).IsEqualTo(typeof(global::app.type.kind.@this));
@@ -46,12 +46,12 @@ public class TypeEntityShapeTests
         // the identity door answers {image, jpeg} as {Name:"image", Kind:"jpg"} — Name
         // carries the family directly; Kind is the (canonical) subtype.
         var noSubtype = new TypeEntity("image");
-        await Assert.That(noSubtype.Kind?.Name).IsNull();
+        await Assert.That(noSubtype.kind.IsEmpty).IsTrue();
 
         await using var app = TestApp.Create("/test");
         var split = app.Type[new TypeEntity("image", "jpeg")];
         await Assert.That(split.Name).IsEqualTo("image");
-        await Assert.That(split.Kind?.Name).IsEqualTo("jpg");
+        await Assert.That(split.kind.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Entity_Compressible_DerivesFromName()

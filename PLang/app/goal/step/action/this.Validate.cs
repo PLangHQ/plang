@@ -52,7 +52,7 @@ public partial class @this
                         "UnknownProperty", 400));
                 // an action held as a value belongs only in a slot that takes actions (action, list<action>)
                 else if (property.Value is @this held && !(slot.Type.Name == "action"
-                         || (slot.Type.Name == "list" && slot.Type.Kind?.Name == "action")))
+                         || (slot.Type.Name == "list" && slot.Type.kind.Name == "action")))
                     causes.Add(new global::app.error.Error(
                         $"{Module}.{Name}'s {property.Name} holds an action ({held.Module.Name}.{held.Name}), but " +
                         $"{property.Name} takes a value. Write the action first, then {Module}.{Name}({property.Name}=%!data%).",

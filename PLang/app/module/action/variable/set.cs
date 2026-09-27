@@ -42,7 +42,7 @@ public partial class Set : IContext, IScope
         // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
         // string) against the literal's content. %var% values defer to Run. The raw face is read only
         // here, where a strict type asks for it.
-        if (Type?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null && !Value.HasVariableReference
+        if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariableReference
             && Value.Peek() is { } peeked
             && (peeked is global::app.type.item.@this value ? value.Backing : peeked) is { } valueBacking)
         {
@@ -52,10 +52,10 @@ public partial class Set : IContext, IScope
                 var probe = TryInstantiateValidator(clr, valueBacking);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(valueBacking, t.Kind?.Name);
+                    var (ok, actual) = v.ValidateKind(valueBacking, t.kind.Name);
                     if (!ok)
                         return new global::app.error.ProgramError(
-                            $"Strict kind mismatch: declared {t.Name}/{t.Kind}"
+                            $"Strict kind mismatch: declared {t.Name}/{t.kind}"
                             + (actual != null ? $" but content is {actual}." : "."),
                             key: "StrictKindMismatch");
                 }
@@ -230,10 +230,10 @@ public partial class Set : IContext, IScope
             // number reads the literal's precision → int). `text` has no kind for a literal
             // (a spelling is not a kind), so a text literal naturally derives nothing. A decline
             // (null / error on the throwaway carrier) → no kind.
-            if (type.Kind == null && targetType != null)
+            if (type.kind.IsEmpty && targetType != null)
             {
                 var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
-                if (Context.App.Type[typeName].Create(sourceValue, carrier)?.Type.Kind is { } derivedKind)
+                if (Context.App.Type[typeName].Create(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
                     type = Context.App.Type[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template)];
             }
             if (targetType == null)
@@ -248,17 +248,17 @@ public partial class Set : IContext, IScope
             // We construct a sample instance using the raw value as the first
             // ctor argument (image's primary ctor takes byte[]); a type without
             // a fitting ctor is treated as "no probe available".
-            if (type.Strict && type.Kind != null
+            if (type.Strict && !type.kind.IsEmpty
                 && typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
             {
                 var probe = TryInstantiateValidator(targetType, sourceValue);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(sourceValue!, type.Kind?.Name);
+                    var (ok, actual) = v.ValidateKind(sourceValue!, type.kind.Name);
                     if (!ok)
                         return Context.Error(
                             new global::app.error.ServiceError(
-                                $"Strict kind mismatch: declared {typeName}/{type.Kind}"
+                                $"Strict kind mismatch: declared {typeName}/{type.kind}"
                                 + (actual != null ? $" but content is {actual}." : "."),
                                 "StrictKindMismatch", 400));
                 }
@@ -272,7 +272,7 @@ public partial class Set : IContext, IScope
             // would parse it on store and defeat the whole lazy path.
             if (Value.RawUntouched && Value.Type is { } vt
                 && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(vt.Kind?.Name ?? "", type.Kind?.Name ?? "", StringComparison.OrdinalIgnoreCase))
+                && string.Equals(vt.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase))
             {
                 Value.Name = name!;
                 return await Context.Variable.Set(Value);
@@ -318,14 +318,14 @@ public partial class Set : IContext, IScope
             // now; a lazy path-backed value defers — its own load enforces (e.g.
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
             // separately above via the IKindValidatable probe.
-            if (type.Strict && type.Kind != null
+            if (type.Strict && !type.kind.IsEmpty
                 && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
             {
-                enforcer.RequireStrictKind(type.Kind?.Name);
+                enforcer.RequireStrictKind(type.kind.Name);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
                     return Context.Error(
                         new global::app.error.ServiceError(
-                            $"Strict kind mismatch: declared {typeName}/{type.Kind}"
+                            $"Strict kind mismatch: declared {typeName}/{type.kind}"
                             + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
                             "StrictKindMismatch", 400));
             }

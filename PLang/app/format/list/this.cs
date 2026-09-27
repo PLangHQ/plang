@@ -451,7 +451,7 @@ public sealed class @this
     /// </summary>
     public bool Compressible(global::app.type.@this type)
     {
-        var family = (type.Kind != null ? Kind(type.Kind.Name) : null) ?? FamilyOf(type.Name);
+        var family = (type.kind.IsEmpty ? null : Kind(type.kind.Name)) ?? FamilyOf(type.Name);
         return family != null && Compressible(family);
     }
 

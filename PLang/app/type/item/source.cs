@@ -139,7 +139,7 @@ public class source : @this
             // the REAL subclass via the one selection door; a decline (null) falls to the type
             // reader below (png→image, csv→table, …). Covers both entrances — a content source and
             // an inherited wire both parse here. A bad parse rides the catch → MaterializeFailed.
-            if (_type.Kind is { } kind
+            if (_type.kind is { IsEmpty: false } kind
                 && await asking.App.Type.Kind[kind.Name].Load(_value, asking) is { } loaded)
             {
                 var decoded = await loaded.Value();
@@ -176,7 +176,7 @@ public class source : @this
                 ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
                 : "";
             data.Fail(new global::app.error.Error(
-                $"failed to read %{data.Name}% as {_type.Name}{(_type.Kind?.Name is { } k ? $"/{k}" : "")}: {ex.Message}{where}",
+                $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
                 "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
@@ -190,9 +190,10 @@ public class source : @this
     /// binding-named failure story.)</summary>
     private protected virtual global::app.type.item.@this Read(actor.context.@this context)
     {
-        var typeReader = context.App.Type.Reader.Reader(_type.Name, _type.Kind?.Name, context);
+        var kind = _type.kind.IsEmpty ? null : _type.kind.Name;
+        var typeReader = context.App.Type.Reader.Reader(_type.Name, kind, context);
         var reader = new global::app.channel.serializer.value.Reader(_value);
-        return typeReader.Read(ref reader, _type.Kind?.Name,
+        return typeReader.Read(ref reader, kind,
             new global::app.type.reader.ReadContext(context, _type.Template));
     }
 

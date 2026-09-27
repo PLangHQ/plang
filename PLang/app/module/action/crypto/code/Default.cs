@@ -110,7 +110,7 @@ public class Default : ICrypto
         }
         else
         {
-            var hashKind = action.Hash.Type is { Name: "hash", Kind: { } k } && k.Name.Length > 0 ? k.Name : null;
+            var hashKind = action.Hash.Type is { Name: "hash", kind: { IsEmpty: false } k } ? k.Name : null;
             algorithm = hashKind ?? (await action.Algorithm.Value())!.Clr<string>()!;
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.

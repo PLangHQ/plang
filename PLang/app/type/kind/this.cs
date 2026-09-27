@@ -30,6 +30,9 @@ public class @this
         Context = context;
     }
 
+    /// <summary>True for a type's empty kind — the type has no kind.</summary>
+    public bool IsEmpty => Name.Length == 0;
+
     /// <summary>The CLR form values of this kind ride as (json → <c>JsonElement</c>), or null
     /// when the kind claims no single CLR carrier. The collection's <c>[clrType]</c> door reads
     /// this to bridge a raw host to its kind (exact wins, then assignable — <c>IList</c>→list).</summary>

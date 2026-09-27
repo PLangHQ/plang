@@ -461,7 +461,7 @@ public class DataTests : System.IAsyncDisposable
         // The family lives on the format registry, keyed by the kind (the
         // subtype) — jpg → image — not by the Name, which is just "binary".
         await Assert.That(ov.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Type.Kind[ov.Type!.Kind!.Name].type.Name).IsEqualTo("image");
+        await Assert.That(engine.Type.Kind[ov.Type!.kind.Name].type.Name).IsEqualTo("image");
     }
 
     [Test]
@@ -516,7 +516,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType, context: context);
 
         await Assert.That(ov.Type!.Name).IsEqualTo("binary");
-        await Assert.That(ov.Type!.Kind?.Name).IsEqualTo("jpg");
+        await Assert.That(ov.Type!.kind.Name).IsEqualTo("jpg");
     }
 
     [Test]
@@ -543,7 +543,7 @@ public class DataTests : System.IAsyncDisposable
         // Binary content; the kind (jpg) carries the family. The kind's family
         // is image, which is not compressible (already-compressed content).
         await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Type.Kind[data.Type!.Kind!.Name].type.Name).IsEqualTo("image");
+        await Assert.That(engine.Type.Kind[data.Type!.kind.Name].type.Name).IsEqualTo("image");
         await Assert.That(engine.Format.Compressible(data.Type!)).IsFalse();
     }
 
@@ -553,7 +553,7 @@ public class DataTests : System.IAsyncDisposable
         var imageType = new Type("image/jpeg");
 
         // Family-Kind accessor is gone — Kind is the subtype (null when unset).
-        await Assert.That(imageType.Kind?.Name).IsNull();
+        await Assert.That(imageType.kind.IsEmpty).IsTrue();
         // Compressibility is the format's knowledge — the type object carries no context for it.
         await Assert.That(new global::app.format.list.@this().Compressible(imageType)).IsFalse();
     }

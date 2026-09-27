@@ -67,7 +67,7 @@ public class RegistryFoldTests
         {
             var type = _app.Type.Extension(extension);
             await Assert.That(_app.Type.Contains(type.Name)).IsTrue();
-            await Assert.That(type.Kind).IsNotNull();   // the extension's canonical kind (.yaml → yml)
+            await Assert.That(type.kind.IsEmpty).IsFalse();   // the extension's canonical kind (.yaml → yml)
         }
     }
 }

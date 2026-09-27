@@ -18,7 +18,7 @@ public class KindViaCreateTests : System.IAsyncDisposable
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
         var built = ctx.App.Type[typeName].Create(raw, carrier);
         // A decline says why — the carrier holds the reason.
-        return built?.Type.Kind?.Name ?? $"<no value: {carrier.Error?.Key}: {carrier.Error?.Message}>";
+        return built?.Type.kind is { IsEmpty: false } kind ? kind.Name : $"<no value: {carrier.Error?.Key}: {carrier.Error?.Message}>";
     }
 
     [Test] public async Task Number_IntLiteral()     => await Assert.That(KindOf("number", (text)"42")).IsEqualTo("int");

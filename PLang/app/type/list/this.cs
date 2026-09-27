@@ -100,12 +100,15 @@ public sealed partial class @this
         {
             // The kind by its own name: a format's canonical spelling (markdown → md), then the name
             // of the kind an alias answers to (integer → int).
-            var kind = type.Kind?.Name is { } k ? Kind[Context?.App.Format.CanonicaliseKind(k) ?? k].Name : null;
+            // The type carries the kind itself, its behaviour with it.
+            var found = type.kind is { IsEmpty: false } k ? Kind[Context?.App.Format.CanonicaliseKind(k.Name) ?? k.Name] : null;
+            var kind = found?.Name;
             if (Array.Find(Types, t => t.Names(type.Name)) is not { } entry)
-                return new app.type.@this(type.Name, kind, type.Strict, type.Template);
+                return new app.type.@this(type.Name, kind, type.Strict, type.Template) { kind = found };
             if (kind == null && !type.Strict && type.Template == null) return entry;
             return new app.type.@this(entry.Name, entry.ClrType, kind, type.Strict, type.Template)
             {
+                kind = found,
                 Alias = entry.Alias,
                 Owned = entry.Owned,
                 Property = entry.Property,

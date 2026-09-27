@@ -87,9 +87,9 @@ public class FileHandlerTests : IDisposable
 
         await after.IsSuccess();
         await Assert.That(after.Type.Name).IsEqualTo("file");
-        await Assert.That(after.Type.Kind?.Name).IsEqualTo("abc");
+        await Assert.That(after.Type.kind.Name).IsEqualTo("abc");
         // Named at creation: a file made before the registration keeps its earlier answer.
-        await Assert.That(before.Type.Kind?.Name).IsEqualTo("abcdata");
+        await Assert.That(before.Type.kind.Name).IsEqualTo("abcdata");
     }
 
     [Test]
@@ -99,7 +99,7 @@ public class FileHandlerTests : IDisposable
         var result = await new Read(_app.User.Context) { Path = MakePath("photo.jpeg") }.Start();
 
         await result.IsSuccess();
-        await Assert.That(result.Type.Kind?.Name).IsEqualTo("jpg");
+        await Assert.That(result.Type.kind.Name).IsEqualTo("jpg");
     }
 
     [Test]
@@ -440,7 +440,7 @@ public class FileHandlerTests : IDisposable
         // Stage 3: a read is a `file` REFERENCE — name is the headline "file",
         // kind is the extension (md); the content family appears on narrow.
         await Assert.That(result.Type!.Name).IsEqualTo("file");
-        await Assert.That(result.Type!.Kind?.Name).IsEqualTo("md");
+        await Assert.That(result.Type!.kind.Name).IsEqualTo("md");
     }
 
     [Test]

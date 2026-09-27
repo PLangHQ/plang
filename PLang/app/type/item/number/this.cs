@@ -125,7 +125,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     //    (a thrown reason → data.Fail, PRESERVED, never swallowed). ──
     public static @this? Create(object? raw, global::app.data.@this data)
     {
-        var declared = data.Type?.Kind?.Name;
+        var declared = data.Type?.kind is { IsEmpty: false } k ? k.Name : null;
         if (declared is not null && raw is global::app.type.item.@this value)
         {
             if (!Kinds.TryGetValue(declared, out var kind))

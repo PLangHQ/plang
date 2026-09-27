@@ -262,7 +262,7 @@ public sealed class Formal
         }
 
         private static string Face(global::app.type.@this type)
-            => type.Kind is { } kind ? $"{type.Name}<{kind.Name}>" : type.Name;
+            => type.kind.IsEmpty ? type.Name : $"{type.Name}<{type.kind.Name}>";
 
         private (global::app.type.property.@this Row, bool Frozen) Row(string prop, global::app.type.property.@this declared)
         {
@@ -341,7 +341,7 @@ public sealed class Formal
         private global::app.type.item.@this Born(global::app.type.@this type, string json, string? template = "plang")
         {
             var marked = template != null && type.Template == null && global::app.type.item.text.@this.HasVariable(json)
-                ? _context.App.Type[new global::app.type.@this(type.Name, type.Kind?.Name, type.Strict, template)]
+                ? _context.App.Type[new global::app.type.@this(type.Name, type.kind.Name, type.Strict, template)]
                 : type;
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);

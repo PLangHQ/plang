@@ -22,7 +22,7 @@ public class TypeFactoryTests
     {
         var t = _app.Type[new TypeEntity("image", "gif", strict: true)];
         await Assert.That(t.Name).IsEqualTo("image");
-        await Assert.That(t.Kind?.Name).IsEqualTo("gif");
+        await Assert.That(t.kind.Name).IsEqualTo("gif");
         await Assert.That(t.Strict).IsTrue();
     }
 
@@ -36,14 +36,14 @@ public class TypeFactoryTests
     {
         var t = _app.Type[new TypeEntity("text", "markdown")];
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind?.Name).IsEqualTo("md");
+        await Assert.That(t.kind.Name).IsEqualTo("md");
     }
 
     [Test] public async Task Door_SingleStringNoSlash_KindIsNull()
     {
         var t = _app.Type["text"];
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind?.Name).IsNull();
+        await Assert.That(t.kind.IsEmpty).IsTrue();
     }
 
     [Test] public async Task Door_StrictDefaultsFalse()
@@ -78,7 +78,7 @@ public class TypeFactoryTests
     [Test] public async Task NullSentinel_NameKindStrictPreserved()
     {
         await Assert.That(TypeEntity.Null.Name).IsEqualTo("null");
-        await Assert.That(TypeEntity.Null.Kind?.Name).IsNull();
+        await Assert.That(TypeEntity.Null.kind.IsEmpty).IsTrue();
         await Assert.That(TypeEntity.Null.Strict).IsFalse();
     }
 
@@ -89,6 +89,6 @@ public class TypeFactoryTests
         var t = _app.Type[new TypeEntity("text", "md", strict: true)];
         await Assert.That(t.Strict).IsTrue();
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind?.Name).IsEqualTo("md");
+        await Assert.That(t.kind.Name).IsEqualTo("md");
     }
 }

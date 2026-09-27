@@ -20,7 +20,7 @@ public sealed class formal : global::app.channel.serializer.IOutput
             writerFormal.BeginRows();
             foreach (var arg in items)
             {
-                writerFormal.Row(arg.Name, arg.Type.Kind is { } kind ? $"{arg.Type.Name}<{kind.Name}>" : arg.Type.Name);
+                writerFormal.Row(arg.Name, arg.Type.kind.IsEmpty ? arg.Type.Name : $"{arg.Type.Name}<{arg.Type.kind.Name}>");
                 await arg.Output(writer, mode, context);
             }
             writerFormal.EndRows();

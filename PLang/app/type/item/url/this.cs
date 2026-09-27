@@ -30,7 +30,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
+        _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
         // Born from a path — inject its type into this value's history (`is path` from the chain).
         this.list.Add(path);
     }
@@ -44,7 +44,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A url's entity: name "url", kind = the canonical kind named at
     /// creation — location metadata, never fetches.</summary>
     protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("url", typeof(@this)) { Kind = _kind };
+        new global::app.type.@this("url", typeof(@this)) { kind = _kind };
 
     /// <summary>
     /// The value door — fetch + parse through the file channel (mime stamps the

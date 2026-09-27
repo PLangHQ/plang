@@ -32,7 +32,7 @@ public class Base64Tests : System.IAsyncDisposable
     {
         var b64 = base64.Parse("data:image/gif;base64,R0lGODdh");
         await Assert.That(b64.ToString()).IsEqualTo("R0lGODdh");
-        await Assert.That(b64.Type.Kind?.Name).IsEqualTo("gif");
+        await Assert.That(b64.Type.kind.Name).IsEqualTo("gif");
         await Assert.That(b64.Type.Name).IsEqualTo("base64");   // OWN name, never {image,gif}
     }
 

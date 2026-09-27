@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public string? Kind { get; init; }
 
     protected internal override global::app.type.@this Type
-        => new("base64", typeof(@this)) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null };
+        => new("base64", typeof(@this), Kind);
 
     public @this(string value) { _value = value; }
     private @this(global::app.type.item.@this source) { _source = source; }

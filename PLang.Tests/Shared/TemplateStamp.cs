@@ -29,7 +29,7 @@ public static class TemplateStamp
                 // Leaf: a %ref% text is declared a template, so its value is born one.
                 if (global::app.type.item.text.@this.HasVariable(raw))
                 {
-                    var declared = context.App.Type[new global::app.type.@this(p.Type.Name, p.Type.Kind?.Name, p.Type.Strict, "plang")];
+                    var declared = context.App.Type[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, "plang")];
                     properties.Set(new global::app.type.property.@this
                     {
                         Name = p.Name, Type = declared, Properties = p.Properties,
@@ -46,7 +46,7 @@ public static class TemplateStamp
                 properties.Set(new global::app.type.property.@this
                 {
                     Name = p.Name, Properties = p.Properties, Value = stamped,
-                    Type = context.App.Type[new global::app.type.@this(p.Type.Name, p.Type.Kind?.Name, p.Type.Strict, "plang")],
+                    Type = context.App.Type[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, "plang")],
                 });
         }
     }

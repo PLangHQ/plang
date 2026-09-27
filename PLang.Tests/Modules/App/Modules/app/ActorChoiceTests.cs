@@ -107,6 +107,6 @@ public class ActorChoiceTests
         var slot = typeof(global::app.module.action.goal.Call).GetProperty("Actor")!.PropertyType;
         var entity = _app.Type[slot];
         await Assert.That(entity.Name).IsEqualTo("choice");
-        await Assert.That(entity.Kind!.Name).IsEqualTo("actor");
+        await Assert.That(entity.kind.Name).IsEqualTo("actor");
     }
 }

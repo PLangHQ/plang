@@ -850,7 +850,7 @@ public sealed class OpenAi : ILlm
         {
             props[param.Name] = new Dictionary<string, string>
             {
-                ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name, param.Type?.Kind?.Name)
+                ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name, param.Type?.kind is { IsEmpty: false } kind ? kind.Name : null)
             };
             if (param.Peek().IsNull)
                 required.Add(param.Name);

@@ -242,12 +242,13 @@ public sealed class @this : ITransport
     public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
         var type = source.Type;
-        var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, type.Kind?.Name, ctx.Context);
+        var kind = type.kind.IsEmpty ? null : type.kind.Name;
+        var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, kind, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        return typeReader.Read(ref reader, type.Kind?.Name, ctx);
+        return typeReader.Read(ref reader, kind, ctx);
     }
 
     // A wire slice this transport captured is json/plang text — it rides verbatim into a json

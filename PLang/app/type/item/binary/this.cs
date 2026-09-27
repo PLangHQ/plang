@@ -18,7 +18,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public string? Kind { get; init; }
 
     protected internal override global::app.type.@this Type
-        => new("binary", typeof(@this)) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null };
+        => new("binary", typeof(@this), Kind);
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 

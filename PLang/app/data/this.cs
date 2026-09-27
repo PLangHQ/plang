@@ -368,7 +368,7 @@ public partial class @this
     /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind => _item?.Type.Kind?.Name;
+    public string? Kind => _item?.Type.kind is { IsEmpty: false } kind ? kind.Name : null;
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
@@ -805,7 +805,7 @@ public class DynamicData : @this
         // The declared type rides on the computed instance itself (its label),
         // not through the entry judgement — a computed answers fresh and must
         // stay reachable as the instance.
-        : this(name, new global::app.type.item.computed(valueFactory, type?.IsNull == false ? type.Name : null, type?.Kind?.Name), context)
+        : this(name, new global::app.type.item.computed(valueFactory, type?.IsNull == false ? type.Name : null, type?.kind is { IsEmpty: false } kind ? kind.Name : null), context)
     {
     }
 

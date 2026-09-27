@@ -17,7 +17,7 @@ public class FormatRemapTests
     {
         var t = Types.Mime("application/json");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsEqualTo("json");
+        await Assert.That(t.kind.Name).IsEqualTo("json");
     }
 
     // xml is also binary off the wire → `{binary, xml}`.
@@ -25,14 +25,14 @@ public class FormatRemapTests
     {
         var t = Types.Mime("application/xml");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsEqualTo("xml");
+        await Assert.That(t.kind.Name).IsEqualTo("xml");
     }
 
     [Test] public async Task Extension_DotJson_ReturnsBinaryJson()
     {
         var t = Types.Extension(".json");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsEqualTo("json");
+        await Assert.That(t.kind.Name).IsEqualTo("json");
     }
 
     // csv and xlsx are binary + the extension as kind; the kind narrows to a
@@ -41,14 +41,14 @@ public class FormatRemapTests
     {
         var t = Types.Extension(".csv");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsEqualTo("csv");
+        await Assert.That(t.kind.Name).IsEqualTo("csv");
     }
 
     [Test] public async Task Extension_DotXlsx_ReturnsBinaryXlsx()
     {
         var t = Types.Extension(".xlsx");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsEqualTo("xlsx");
+        await Assert.That(t.kind.Name).IsEqualTo("xlsx");
     }
 
     // png is binary + png kind; it narrows to an image only on Value() access.
@@ -56,7 +56,7 @@ public class FormatRemapTests
     {
         var t = Types.Extension(".png");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsEqualTo("png");
+        await Assert.That(t.kind.Name).IsEqualTo("png");
     }
 
     // octet-stream is genuinely opaque bytes → `{binary, null}`: the binary
@@ -65,7 +65,7 @@ public class FormatRemapTests
     {
         var t = Types.Mime("application/octet-stream");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind?.Name).IsNull();
+        await Assert.That(t.kind.IsEmpty).IsTrue();
         await Assert.That(t.Name).IsNotEqualTo("object");
     }
 
@@ -78,7 +78,7 @@ public class FormatRemapTests
         var byExt = Types.Extension(".json");
         var byMime = Types.Mime("application/json");
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
-        await Assert.That(byExt.Kind?.Name).IsEqualTo(byMime.Kind?.Name);
+        await Assert.That(byExt.kind.Name).IsEqualTo(byMime.kind.Name);
     }
 
     [Test] public async Task Extension_AgreesWith_Mime_ForDotCsv()
@@ -86,6 +86,6 @@ public class FormatRemapTests
         var byExt = Types.Extension(".csv");
         var byMime = Types.Mime("text/csv");
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
-        await Assert.That(byExt.Kind?.Name).IsEqualTo(byMime.Kind?.Name);
+        await Assert.That(byExt.kind.Name).IsEqualTo(byMime.kind.Name);
     }
 }

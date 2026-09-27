@@ -121,7 +121,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // data.Type is a pure forward — the instance mints its own entity.
         var n = new Data("n", 5, context: _app.User.Context);
         await Assert.That(n.Type.Name).IsEqualTo("number");
-        await Assert.That(n.Type.Kind?.Name).IsEqualTo("int");
+        await Assert.That(n.Type.kind.Name).IsEqualTo("int");
         var t = new Data("t", "hello", context: _app.User.Context);
         await Assert.That(t.Type.Name).IsEqualTo("text");
     }

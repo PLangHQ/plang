@@ -139,7 +139,7 @@ public sealed class @this
     public async System.Threading.Tasks.ValueTask Row(global::app.channel.serializer.formal.Writer writer,
         bool frozen, global::app.View mode, global::app.actor.context.@this? context)
     {
-        writer.Row(Name, Type.Kind is { } kind ? $"{Type.Name}<{kind.Name}>" : Type.Name, frozen);
+        writer.Row(Name, Type.kind.IsEmpty ? Type.Name : $"{Type.Name}<{Type.kind.Name}>", frozen);
         await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
     }
 

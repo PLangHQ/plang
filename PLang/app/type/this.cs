@@ -41,7 +41,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
-        if (Kind != null) { writer.Name("kind"); writer.String(Kind.Name); }
+        if (!kind.IsEmpty) { writer.Name("kind"); writer.String(kind.Name); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (!string.IsNullOrEmpty(Template)) { writer.Name("template"); writer.String(Template!); }
         writer.EndObject();
@@ -51,16 +51,22 @@ public sealed class @this : item.@this, item.IMatch<@this>
     public string Name { get; }
 
     /// <summary>
-    /// Build-time subtype refinement ("md", "gif", "int"). Null when the type
-    /// has no sub-kind. Read-only once born: a type object is shared (a program
-    /// row's declared type, the registry's entries), so a different kind is a
-    /// different type object. Serialized as part of the entity's
-    /// <c>{name, kind?, strict?}</c> JSON form (see <see cref="json"/>).
+    /// The subtype refinement ("md", "gif", "int"). Never null: a type with no kind has its empty
+    /// kind (<see cref="global::app.type.kind.@this.IsEmpty"/>), which knows this type and is never
+    /// written. Read-only once born: a type object is shared (a program row's declared type, the
+    /// registry's entries), so a different kind is a different type object. Given no kind, the type
+    /// takes its empty kind.
     /// </summary>
-    public global::app.type.kind.@this? Kind { get; init; }
+    [System.Diagnostics.CodeAnalysis.AllowNull]
+    public global::app.type.kind.@this kind
+    {
+        get => _kind;
+        init => _kind = value ?? new global::app.type.kind.empty.@this(Name);
+    }
+    private readonly global::app.type.kind.@this _kind;
 
     /// <summary>
-    /// When true, <see cref="Kind"/> is a requirement (enforced at build for
+    /// When true, <see cref="kind"/> is a requirement (enforced at build for
     /// literals via <c>app.data.IKindValidatable</c>; deferred to runtime for
     /// <c>%var%</c>). Default false — kind is a hint.
     /// </summary>
@@ -105,7 +111,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
     public @this(string name, string? kind = null, bool strict = false, string? template = null)
     {
         Name = name.ToLowerInvariant();
-        Kind = kind is null ? null : new global::app.type.kind.@this(kind);
+        _kind = string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(Name) : new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
         // The Create doors start pointing at the one-shot binder, which swaps itself for the
@@ -136,8 +142,8 @@ public sealed class @this : item.@this, item.IMatch<@this>
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
         // a kinded type is born with its kind (an empty list<goal>) when it takes one
-        if (Kind != null && clr.GetConstructor(any, [typeof(kind.@this)]) is { } kinded)
-            return (item.@this)kinded.Invoke([Kind]);
+        if (!kind.IsEmpty && clr.GetConstructor(any, [typeof(global::app.type.kind.@this)]) is { } kinded)
+            return (item.@this)kinded.Invoke([kind]);
         if (clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty)
             return (item.@this)empty.Invoke(null);
         return new item.@null.@this(this);
@@ -163,7 +169,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
     /// shape note, not a judgement; the entry fold skips it and the value's own truth stands.
     /// </summary>
     [JsonIgnore]
-    public bool Polymorphic => Kind == null && !Strict
+    public bool Polymorphic => kind.IsEmpty && !Strict
         && string.Equals(Name, "item", System.StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
@@ -241,7 +247,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
             var minted = leaf.Type;
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
-                var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
+                var refined = !kind.IsEmpty && minted.kind.IsEmpty ? leaf.Kinded(kind.Name) : leaf;
                 return refined;
             }
             // The value's type history already contains this type (an image born from a path
@@ -377,7 +383,7 @@ public sealed class @this : item.@this, item.IMatch<@this>
     // list<path>, a dict<number>, a choice<operator>), and stands alone for a scalar sub-kind (a
     // "text" with kind "md" is still "text" to the vocabulary). Templates and catalog text print this.
     public override string ToString()
-        => Kind != null && (Name == "list" || Name == "dict" || Name == "choice") ? $"{Name}<{Kind.Name}>" : Name;
+        => !kind.IsEmpty && (Name == "list" || Name == "dict" || Name == "choice") ? $"{Name}<{kind.Name}>" : Name;
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two
@@ -386,11 +392,11 @@ public sealed class @this : item.@this, item.IMatch<@this>
     public override bool Equals(object? obj) =>
         obj is @this other
         && string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
-        && string.Equals(Kind?.Name, other.Kind?.Name, System.StringComparison.OrdinalIgnoreCase)
+        && string.Equals(kind.Name, other.kind.Name, System.StringComparison.OrdinalIgnoreCase)
         && Strict == other.Strict;
 
     public override int GetHashCode() => System.HashCode.Combine(
-        Name.ToLowerInvariant(), Kind?.Name.ToLowerInvariant(), Strict);
+        Name.ToLowerInvariant(), kind.Name.ToLowerInvariant(), Strict);
 
     /// <summary>
     /// Does this type stand in for <paramref name="other"/> — is it the same

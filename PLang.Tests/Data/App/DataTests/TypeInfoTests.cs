@@ -22,7 +22,7 @@ public class TypeTests
         var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int")];
 
         await Assert.That(type.Name).IsEqualTo("number");
-        await Assert.That(type.Kind?.Name).IsEqualTo("int");
+        await Assert.That(type.kind.Name).IsEqualTo("int");
     }
 
     [Test]

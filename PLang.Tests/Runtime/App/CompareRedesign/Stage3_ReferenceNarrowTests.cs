@@ -80,7 +80,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("report.csv"), "name,age\nAda,42\n");
         var data = await Read("report.csv");
-        await Assert.That(data.Type!.Kind?.Name).IsEqualTo("csv");
+        await Assert.That(data.Type!.kind.Name).IsEqualTo("csv");
         var op = new global::app.module.action.condition.Operator("is");
         var right = new Data("", "table", context: _app.User.Context);
         var isTable = (await op.Evaluate(data, right, _app.User.Context)).ToBoolean();
@@ -107,7 +107,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task ContentKindInference_JsonExtension_StaysClrNavigable_ConvertsToDictOnAsk()
     {
         var data = JsonFile();
-        await Assert.That(data.Type!.Kind?.Name).IsEqualTo("json");
+        await Assert.That(data.Type!.kind.Name).IsEqualTo("json");
         // json content STAYS clr(json), navigated by the json kind — no automatic narrow.
         var child = await data.Get("database");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");

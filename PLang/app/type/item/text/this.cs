@@ -54,7 +54,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public string? Kind { get; init; }
 
     protected internal override global::app.type.@this Type
-        => new("text", typeof(@this)) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null, Template = Template };
+        => new("text", typeof(@this), Kind, template: Template);
 
     /// <summary>
     /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes

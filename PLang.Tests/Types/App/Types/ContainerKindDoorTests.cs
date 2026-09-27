@@ -14,7 +14,7 @@ public class ContainerKindDoorTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-1");
         var entity = app.Type[typeof(ItemList)];
         await Assert.That(entity.Name).IsEqualTo("list");
-        await Assert.That(entity.Kind?.Name).IsEqualTo("path");     // element rides as kind
+        await Assert.That(entity.kind.Name).IsEqualTo("path");     // element rides as kind
         await Assert.That(entity.ToString()).IsEqualTo("list<path>"); // face composes back
     }
 
@@ -30,7 +30,7 @@ public class ContainerKindDoorTests
         {
             var entity = app.Type[t];
             await Assert.That(entity.Name).IsEqualTo("list");
-            await Assert.That(entity.Kind).IsNotNull();
+            await Assert.That(entity.kind.IsEmpty).IsFalse();
         }
     }
 

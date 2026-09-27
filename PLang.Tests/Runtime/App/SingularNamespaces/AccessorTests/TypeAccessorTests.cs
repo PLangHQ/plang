@@ -41,7 +41,7 @@ public class TypeAccessorTests
         await using var app = TestApp.Create("/test");
         var t = app.Type[typeof(global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)];
         await Assert.That(t.Name).IsEqualTo("choice");
-        await Assert.That(t.Kind?.Name).IsEqualTo("operator");
+        await Assert.That(t.kind.Name).IsEqualTo("operator");
         await Assert.That(t.Values!).Contains("==");
     }
 

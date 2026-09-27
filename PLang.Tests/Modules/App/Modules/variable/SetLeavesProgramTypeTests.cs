@@ -35,7 +35,7 @@ public class SetLeavesProgramTypeTests
         await (await set.Start(_app.User.Context)).IsSuccess();
         await (await set.Start(_app.User.Context)).IsSuccess();
 
-        await Assert.That(rowType.Kind?.Name).IsEqualTo("markdown");
+        await Assert.That(rowType.kind.Name).IsEqualTo("markdown");
     }
 
     [Test]
@@ -58,6 +58,6 @@ public class SetLeavesProgramTypeTests
         await (await set.Start(_app.User.Context)).IsSuccess();
         await (await set.Start(_app.User.Context)).IsSuccess();
 
-        await Assert.That(rowType.Kind).IsNull();
+        await Assert.That(rowType.kind.IsEmpty).IsTrue();
     }
 }

@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, string? template = null)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
+        _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
         Template = template;
         // Born from a path — inject its type into this value's history so `is path` answers from
         // the type chain (no CLR-inheritance lattice). The type owns its history of types.
@@ -59,7 +59,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A file's entity: name "file", kind = the canonical kind named at
     /// creation — location metadata, never reads content.</summary>
     protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("file", typeof(@this)) { Kind = _kind, Template = Template };
+        new global::app.type.@this("file", typeof(@this)) { kind = _kind, Template = Template };
 
     /// <summary>
     /// The value door — read + parse through the file channel (mime stamps the

@@ -78,7 +78,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>An image's entity: name "image", kind = the canonical kind named at birth.</summary>
     protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("image", typeof(@this)) { Kind = _kind };
+        new global::app.type.@this("image", typeof(@this)) { kind = _kind };
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)
@@ -161,7 +161,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         _mime = path.MimeType(context);
-        _kind = path.Kind(context) is { IsNull: false } t ? t.Kind : null;
+        _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
         this.list.Add(path);   // born from a path → `is path` from the type history
     }
 
