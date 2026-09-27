@@ -45,6 +45,16 @@ The app's `on.start` needs `on`, and the event machinery is item-shaped all the 
 - The type list holds `app`.
 - `%!app.variable%` answers the concept.
 
-## Comparison with the coder's trace
+## Comparison with the coder's trace (read after the above was pushed, d561ac2f3)
 
-(to fill in after reading it)
+**The coder's is better on these:**
+- **The `%!app.variable%` clash is settled, not just flagged.** `clr` reflection walks DeclaredOnly from the most derived class, so the app's `variable` shadows item's `Variable` with no ambiguity. `type` doesn't clash (item's is protected internal). I only said to check it.
+- **No word needed.** The namespace is `app`, so Name = Namespace = `app`. My `[PlangType("app")]` would declare a word identical to the namespace, which says the same thing twice.
+- **One more reader found:** `ActorContext.test.goal` (`%!app% is not null`). Fluid's `AmbientValues` is traced to its one cast reader, and templates never see `%!app%` (`GetAll` excludes `!` names).
+
+**Mine is better on these, and it goes in:**
+- **`Clone`:** mine `=> this`, the coder's throws. A copy of the one root is the root, and a throw would be an exception on a path a program can reach (errors are results). `Clone => this`.
+- **Snapshot:** app is an `ISnapshot` (parked). Check that becoming an item doesn't route the app through item's snapshot or wire paths.
+- **A risk that predates this, found while checking Clone:** `callstack/call/this.cs:311-324` `CaptureBefore` with DeepDiff on deep-clones any non-scalar variable value with `DeepCloner`, bypassing `item.Clone`. So a variable holding `%!app%` would deep-clone the whole app graph. It happens today too (through the `clr` wrap). Logged; not 8b-3's.
+
+**The same in both:** the door (the DynamicData stays, and `item.Create` passes the item through), module-style Output, firing around Launch's entry goal only, app-scoped bindings, the `[this]` level, Fluid unchanged.
