@@ -29,7 +29,7 @@ namespace app.type;
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
-public sealed class @this : item.@this, item.IMatch<@this>
+public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>
 {
     /// <summary>Self-write (the sync core; base <c>Output</c> wraps it): the type entity's
     /// <c>{name, kind?, strict?}</c> identity — the same shape Data writes for its <c>type</c>

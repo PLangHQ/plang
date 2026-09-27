@@ -9,7 +9,7 @@ namespace app.test.timing;
 /// step (its index and text) and never writes its code: the code's %variables% would render
 /// in the runner's context. Named "timing" via the @this namespace-tail convention.
 /// </summary>
-public sealed class @this : global::app.type.item.@this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public required global::app.goal.step.@this Step { get; init; }
 

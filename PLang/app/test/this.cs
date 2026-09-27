@@ -13,7 +13,7 @@ namespace app.test;
 /// rides the wire directly (the report serializes it — no hand-mapped shape).
 /// The PLang name "test" derives from the @this namespace tail — no [PlangType] needed.
 /// </summary>
-public sealed class @this : global::app.type.item.@this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private Stopwatch? _stopwatch;
 

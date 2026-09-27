@@ -14,7 +14,7 @@ public static class CollectionTestExtensions
     }
 
     public static global::app.data.@this<global::app.type.item.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
-        where T : global::app.type.item.@this
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
         var l = new global::app.type.item.list.@this<T>();

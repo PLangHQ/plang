@@ -9,7 +9,7 @@ namespace app.module.action.llm;
 /// never set by the builder.
 /// </summary>
 [PlangType]
-public class LlmMessage : global::app.type.item.@this
+public class LlmMessage : global::app.type.item.@this, global::app.type.item.ICreate<LlmMessage>
 {
     [Store, LlmBuilder]
     public string Role { get; set; } = "";

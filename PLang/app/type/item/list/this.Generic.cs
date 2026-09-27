@@ -12,7 +12,7 @@ namespace app.type.item.list;
 /// navigators, comparison, <c>is app.type.item.list.@this</c> checks — sees the non-generic base.
 /// </summary>
 public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
-    where T : global::app.type.item.@this
+    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
 {
     public @this() { }
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
