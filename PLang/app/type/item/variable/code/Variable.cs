@@ -11,6 +11,8 @@ public sealed class Variable : Hop
 
     public override string Kind => "variable";
 
+    protected override void Piece(global::app.channel.serializer.IWriter writer) => writer.String(Name);
+
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
         => await context.Variable.Get(Name);

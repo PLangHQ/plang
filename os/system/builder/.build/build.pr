@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%path%"
+              "value": "%path%",
+              "variable": [
+                {
+                  "text": "%path%",
+                  "code": [
+                    {
+                      "variable": "path"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -55,7 +65,20 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%!build.cache%"
+              "value": "%!build.cache%",
+              "variable": [
+                {
+                  "text": "%!build.cache%",
+                  "code": [
+                    {
+                      "variable": "!build"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -92,7 +115,20 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%!build.summary%"
+              "value": "%!build.summary%",
+              "variable": [
+                {
+                  "text": "%!build.summary%",
+                  "code": [
+                    {
+                      "variable": "!build"
+                    },
+                    {
+                      "property": "summary"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -129,7 +165,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%traceGoals%"
+              "value": "%traceGoals%",
+              "variable": [
+                {
+                  "text": "%traceGoals%",
+                  "code": [
+                    {
+                      "variable": "traceGoals"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -226,15 +272,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [
-                {
-                  "name": "kind",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "build-path"
-                }
-              ]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"build-path"}]
             }
           ],
           "default": [
@@ -280,7 +318,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%app%"
+              "value": "%app%",
+              "variable": [
+                {
+                  "text": "%app%",
+                  "code": [
+                    {
+                      "variable": "app"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -288,7 +336,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -321,7 +379,17 @@
                 "name": "path",
                 "template": "plang"
               },
-              "value": "%path%"
+              "value": "%path%",
+              "variable": [
+                {
+                  "text": "%path%",
+                  "code": [
+                    {
+                      "variable": "path"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -334,7 +402,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%goals%"
+              "value": "%goals%",
+              "variable": [
+                {
+                  "text": "%goals%",
+                  "code": [
+                    {
+                      "variable": "goals"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -342,7 +420,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -381,15 +469,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [
-                {
-                  "name": "kind",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "goals-found"
-                }
-              ]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"goals-found"}]
             }
           ],
           "default": [
@@ -422,7 +502,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%goals%"
+              "value": "%goals%",
+              "variable": [
+                {
+                  "text": "%goals%",
+                  "code": [
+                    {
+                      "variable": "goals"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -431,7 +521,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%item%"
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -451,7 +551,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"goal","type":{"name":"item","template":"plang"},"value":"%item%"}]
+              "value": [{"name":"goal","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
             }
           ],
           "default": [
@@ -484,7 +584,20 @@
                 "name": "path",
                 "template": "plang"
               },
-              "value": "/.build/traces/%!trace.id%/manifest.json"
+              "value": "/.build/traces/%!trace.id%/manifest.json",
+              "variable": [
+                {
+                  "text": "%!trace.id%",
+                  "code": [
+                    {
+                      "variable": "!trace"
+                    },
+                    {
+                      "property": "id"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -492,7 +605,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%traceGoals%"
+              "value": "%traceGoals%",
+              "variable": [
+                {
+                  "text": "%traceGoals%",
+                  "code": [
+                    {
+                      "variable": "traceGoals"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

@@ -13,7 +13,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%path%"
+      "value": "%path%",
+      "variable": [
+       {
+        "text": "%path%",
+        "code": [
+         {
+          "variable": "path"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -50,7 +60,20 @@
       "type": {
        "name": "variable"
       },
-      "value": "%!build.cache%"
+      "value": "%!build.cache%",
+      "variable": [
+       {
+        "text": "%!build.cache%",
+        "code": [
+         {
+          "variable": "!build"
+         },
+         {
+          "property": "cache"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -87,7 +110,20 @@
       "type": {
        "name": "variable"
       },
-      "value": "%!build.summary%"
+      "value": "%!build.summary%",
+      "variable": [
+       {
+        "text": "%!build.summary%",
+        "code": [
+         {
+          "variable": "!build"
+         },
+         {
+          "property": "summary"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -188,7 +224,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%path%"
+        "value": "%path%",
+        "variable": [
+         {
+          "text": "%path%",
+          "code": [
+           {
+            "variable": "path"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -219,7 +265,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%app%"
+      "value": "%app%",
+      "variable": [
+       {
+        "text": "%app%",
+        "code": [
+         {
+          "variable": "app"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -227,7 +283,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -251,7 +317,17 @@
        "name": "path",
        "template": "plang"
       },
-      "value": "%path%"
+      "value": "%path%",
+      "variable": [
+       {
+        "text": "%path%",
+        "code": [
+         {
+          "variable": "path"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -265,7 +341,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%goals%"
+      "value": "%goals%",
+      "variable": [
+       {
+        "text": "%goals%",
+        "code": [
+         {
+          "variable": "goals"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -273,7 +359,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -317,7 +413,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%goals%"
+        "value": "%goals%",
+        "variable": [
+         {
+          "text": "%goals%",
+          "code": [
+           {
+            "variable": "goals"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -343,7 +449,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%goals%"
+      "value": "%goals%",
+      "variable": [
+       {
+        "text": "%goals%",
+        "code": [
+         {
+          "variable": "goals"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -371,7 +487,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%item%"
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -397,7 +523,20 @@
        "name": "path",
        "template": "plang"
       },
-      "value": "/.build/traces/%!trace.id%/manifest.json"
+      "value": "/.build/traces/%!trace.id%/manifest.json",
+      "variable": [
+       {
+        "text": "%!trace.id%",
+        "code": [
+         {
+          "variable": "!trace"
+         },
+         {
+          "property": "id"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -405,7 +544,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%traceGoals%"
+      "value": "%traceGoals%",
+      "variable": [
+       {
+        "text": "%traceGoals%",
+        "code": [
+         {
+          "variable": "traceGoals"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -464,7 +613,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%goal%"
+        "value": "%goal%",
+        "variable": [
+         {
+          "text": "%goal%",
+          "code": [
+           {
+            "variable": "goal"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -489,7 +648,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%buildStart%"
+      "value": "%buildStart%",
+      "variable": [
+       {
+        "text": "%buildStart%",
+        "code": [
+         {
+          "variable": "buildStart"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -497,7 +666,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%Now.Ticks%"
+      "value": "%Now.Ticks%",
+      "variable": [
+       {
+        "text": "%Now.Ticks%",
+        "code": [
+         {
+          "variable": "Now"
+         },
+         {
+          "property": "Ticks"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -520,7 +702,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%trace%"
+      "value": "%trace%",
+      "variable": [
+       {
+        "text": "%trace%",
+        "code": [
+         {
+          "variable": "trace"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -528,7 +720,36 @@
        "name": "text",
        "template": "plang"
       },
-      "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}"
+      "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+      "variable": [
+       {
+        "text": "%!trace.id%",
+        "code": [
+         {
+          "variable": "!trace"
+         },
+         {
+          "property": "id"
+         }
+        ]
+       },
+       {
+        "text": "%Now%",
+        "code": [
+         {
+          "variable": "Now"
+         }
+        ]
+       },
+       {
+        "text": "%goal%",
+        "code": [
+         {
+          "variable": "goal"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -597,7 +818,20 @@
       "type": {
        "name": "variable"
       },
-      "value": "%trace.menu%"
+      "value": "%trace.menu%",
+      "variable": [
+       {
+        "text": "%trace.menu%",
+        "code": [
+         {
+          "variable": "trace"
+         },
+         {
+          "property": "menu"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -605,7 +839,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%menu%"
+      "value": "%menu%",
+      "variable": [
+       {
+        "text": "%menu%",
+        "code": [
+         {
+          "variable": "menu"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -628,7 +872,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%parentGoal%"
+      "value": "%parentGoal%",
+      "variable": [
+       {
+        "text": "%parentGoal%",
+        "code": [
+         {
+          "variable": "parentGoal"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -636,7 +890,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%goal%"
+      "value": "%goal%",
+      "variable": [
+       {
+        "text": "%goal%",
+        "code": [
+         {
+          "variable": "goal"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -660,7 +924,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%parentGoal.Child%"
+      "value": "%parentGoal.Child%",
+      "variable": [
+       {
+        "text": "%parentGoal.Child%",
+        "code": [
+         {
+          "variable": "parentGoal"
+         },
+         {
+          "property": "Child"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -688,7 +965,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%item%"
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -713,7 +1000,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%goal%"
+      "value": "%goal%",
+      "variable": [
+       {
+        "text": "%goal%",
+        "code": [
+         {
+          "variable": "goal"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -721,7 +1018,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%parentGoal%"
+      "value": "%parentGoal%",
+      "variable": [
+       {
+        "text": "%parentGoal%",
+        "code": [
+         {
+          "variable": "parentGoal"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -745,7 +1052,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%Now.Ticks%"
+      "value": "%Now.Ticks%",
+      "variable": [
+       {
+        "text": "%Now.Ticks%",
+        "code": [
+         {
+          "variable": "Now"
+         },
+         {
+          "property": "Ticks"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "B",
@@ -753,7 +1073,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%buildStart%"
+      "value": "%buildStart%",
+      "variable": [
+       {
+        "text": "%buildStart%",
+        "code": [
+         {
+          "variable": "buildStart"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -767,7 +1097,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%elapsedTicks%"
+      "value": "%elapsedTicks%",
+      "variable": [
+       {
+        "text": "%elapsedTicks%",
+        "code": [
+         {
+          "variable": "elapsedTicks"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -775,7 +1115,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -799,7 +1149,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%elapsedTicks%"
+      "value": "%elapsedTicks%",
+      "variable": [
+       {
+        "text": "%elapsedTicks%",
+        "code": [
+         {
+          "variable": "elapsedTicks"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "B",
@@ -820,7 +1180,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%elapsedMs%"
+      "value": "%elapsedMs%",
+      "variable": [
+       {
+        "text": "%elapsedMs%",
+        "code": [
+         {
+          "variable": "elapsedMs"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -828,7 +1198,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -851,7 +1231,20 @@
       "type": {
        "name": "variable"
       },
-      "value": "%trace.durationMs%"
+      "value": "%trace.durationMs%",
+      "variable": [
+       {
+        "text": "%trace.durationMs%",
+        "code": [
+         {
+          "variable": "trace"
+         },
+         {
+          "property": "durationMs"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -859,7 +1252,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%elapsedMs%"
+      "value": "%elapsedMs%",
+      "variable": [
+       {
+        "text": "%elapsedMs%",
+        "code": [
+         {
+          "variable": "elapsedMs"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -883,7 +1286,31 @@
        "name": "path",
        "template": "plang"
       },
-      "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+      "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+      "variable": [
+       {
+        "text": "%!trace.id%",
+        "code": [
+         {
+          "variable": "!trace"
+         },
+         {
+          "property": "id"
+         }
+        ]
+       },
+       {
+        "text": "%goal.Name%",
+        "code": [
+         {
+          "variable": "goal"
+         },
+         {
+          "property": "Name"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -891,7 +1318,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%trace%"
+      "value": "%trace%",
+      "variable": [
+       {
+        "text": "%trace%",
+        "code": [
+         {
+          "variable": "trace"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -914,7 +1351,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%traceGoals%"
+      "value": "%traceGoals%",
+      "variable": [
+       {
+        "text": "%traceGoals%",
+        "code": [
+         {
+          "variable": "traceGoals"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -922,7 +1369,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%goal.Name%"
+      "value": "%goal.Name%",
+      "variable": [
+       {
+        "text": "%goal.Name%",
+        "code": [
+         {
+          "variable": "goal"
+         },
+         {
+          "property": "Name"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -946,7 +1406,17 @@
        "name": "goal",
        "template": "plang"
       },
-      "value": "%goal%"
+      "value": "%goal%",
+      "variable": [
+       {
+        "text": "%goal%",
+        "code": [
+         {
+          "variable": "goal"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": [
@@ -993,7 +1463,17 @@
        "name": "goal",
        "template": "plang"
       },
-      "value": "%goal%"
+      "value": "%goal%",
+      "variable": [
+       {
+        "text": "%goal%",
+        "code": [
+         {
+          "variable": "goal"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1016,7 +1496,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%threshold%"
+      "value": "%threshold%",
+      "variable": [
+       {
+        "text": "%threshold%",
+        "code": [
+         {
+          "variable": "threshold"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1046,7 +1536,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%modules%"
+      "value": "%modules%",
+      "variable": [
+       {
+        "text": "%modules%",
+        "code": [
+         {
+          "variable": "modules"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1054,7 +1554,23 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!app.module.list%"
+      "value": "%!app.module.list%",
+      "variable": [
+       {
+        "text": "%!app.module.list%",
+        "code": [
+         {
+          "variable": "!app"
+         },
+         {
+          "property": "module"
+         },
+         {
+          "property": "list"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1077,7 +1593,20 @@
       "type": {
        "name": "variable"
       },
-      "value": "%state.goal%"
+      "value": "%state.goal%",
+      "variable": [
+       {
+        "text": "%state.goal%",
+        "code": [
+         {
+          "variable": "state"
+         },
+         {
+          "property": "goal"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1085,7 +1614,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%goal.Name%"
+      "value": "%goal.Name%",
+      "variable": [
+       {
+        "text": "%goal.Name%",
+        "code": [
+         {
+          "variable": "goal"
+         },
+         {
+          "property": "Name"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1109,7 +1651,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%goal.Step%"
+      "value": "%goal.Step%",
+      "variable": [
+       {
+        "text": "%goal.Step%",
+        "code": [
+         {
+          "variable": "goal"
+         },
+         {
+          "property": "Step"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1137,7 +1692,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%item%"
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -1163,7 +1728,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%modules%"
+      "value": "%modules%",
+      "variable": [
+       {
+        "text": "%modules%",
+        "code": [
+         {
+          "variable": "modules"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1191,7 +1766,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%item%"
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -1230,7 +1815,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%moduleQuestions%"
+      "value": "%moduleQuestions%",
+      "variable": [
+       {
+        "text": "%moduleQuestions%",
+        "code": [
+         {
+          "variable": "moduleQuestions"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1238,7 +1833,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1262,7 +1867,17 @@
        "name": "text",
        "template": "plang"
       },
-      "value": "%state%"
+      "value": "%state%",
+      "variable": [
+       {
+        "text": "%state%",
+        "code": [
+         {
+          "variable": "state"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Question",
@@ -1270,7 +1885,17 @@
        "name": "dict",
        "template": "plang"
       },
-      "value": "%moduleQuestions%"
+      "value": "%moduleQuestions%",
+      "variable": [
+       {
+        "text": "%moduleQuestions%",
+        "code": [
+         {
+          "variable": "moduleQuestions"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1284,7 +1909,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%moduleAnswer%"
+      "value": "%moduleAnswer%",
+      "variable": [
+       {
+        "text": "%moduleAnswer%",
+        "code": [
+         {
+          "variable": "moduleAnswer"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1292,7 +1927,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1329,7 +1974,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%actionQuestions%"
+      "value": "%actionQuestions%",
+      "variable": [
+       {
+        "text": "%actionQuestions%",
+        "code": [
+         {
+          "variable": "actionQuestions"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1337,7 +1992,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1361,7 +2026,17 @@
        "name": "text",
        "template": "plang"
       },
-      "value": "%state%"
+      "value": "%state%",
+      "variable": [
+       {
+        "text": "%state%",
+        "code": [
+         {
+          "variable": "state"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Question",
@@ -1369,7 +2044,17 @@
        "name": "dict",
        "template": "plang"
       },
-      "value": "%actionQuestions%"
+      "value": "%actionQuestions%",
+      "variable": [
+       {
+        "text": "%actionQuestions%",
+        "code": [
+         {
+          "variable": "actionQuestions"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1383,7 +2068,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%actionAnswer%"
+      "value": "%actionAnswer%",
+      "variable": [
+       {
+        "text": "%actionAnswer%",
+        "code": [
+         {
+          "variable": "actionAnswer"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1391,7 +2086,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1435,7 +2140,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%goal%"
+        "value": "%goal%",
+        "variable": [
+         {
+          "text": "%goal%",
+          "code": [
+           {
+            "variable": "goal"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -1461,7 +2176,17 @@
        "name": "path",
        "template": "plang"
       },
-      "value": "orders/%orderId%.json"
+      "value": "orders/%orderId%.json",
+      "variable": [
+       {
+        "text": "%orderId%",
+        "code": [
+         {
+          "variable": "orderId"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1475,7 +2200,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%order%"
+      "value": "%order%",
+      "variable": [
+       {
+        "text": "%order%",
+        "code": [
+         {
+          "variable": "order"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1483,7 +2218,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1506,7 +2251,20 @@
       "type": {
        "name": "variable"
       },
-      "value": "%order.items%"
+      "value": "%order.items%",
+      "variable": [
+       {
+        "text": "%order.items%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "items"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1520,7 +2278,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%itemCount%"
+      "value": "%itemCount%",
+      "variable": [
+       {
+        "text": "%itemCount%",
+        "code": [
+         {
+          "variable": "itemCount"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -1528,7 +2296,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -1552,7 +2330,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%itemCount%"
+      "value": "%itemCount%",
+      "variable": [
+       {
+        "text": "%itemCount%",
+        "code": [
+         {
+          "variable": "itemCount"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -1603,7 +2391,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%itemCount%"
+      "value": "%itemCount%",
+      "variable": [
+       {
+        "text": "%itemCount%",
+        "code": [
+         {
+          "variable": "itemCount"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -1663,7 +2461,17 @@
            "name": "text",
            "template": "plang"
           },
-          "value": "%itemCount% items"
+          "value": "%itemCount% items",
+          "variable": [
+           {
+            "text": "%itemCount%",
+            "code": [
+             {
+              "variable": "itemCount"
+             }
+            ]
+           }
+          ]
          }
         ],
         "modifier": []
@@ -1691,7 +2499,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%order.email%"
+      "value": "%order.email%",
+      "variable": [
+       {
+        "text": "%order.email%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "email"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -1751,7 +2572,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%order.coupon%"
+      "value": "%order.coupon%",
+      "variable": [
+       {
+        "text": "%order.coupon%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "coupon"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -1790,7 +2624,20 @@
              "name": "item",
              "template": "plang"
             },
-            "value": "%order.coupon%"
+            "value": "%order.coupon%",
+            "variable": [
+             {
+              "text": "%order.coupon%",
+              "code": [
+               {
+                "variable": "order"
+               },
+               {
+                "property": "coupon"
+               }
+              ]
+             }
+            ]
            },
            {
             "name": "order",
@@ -1798,7 +2645,17 @@
              "name": "item",
              "template": "plang"
             },
-            "value": "%order%"
+            "value": "%order%",
+            "variable": [
+             {
+              "text": "%order%",
+              "code": [
+               {
+                "variable": "order"
+               }
+              ]
+             }
+            ]
            }
           ]
          }
@@ -1828,7 +2685,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%order.total%"
+      "value": "%order.total%",
+      "variable": [
+       {
+        "text": "%order.total%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "total"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -1888,7 +2758,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%order.country%"
+      "value": "%order.country%",
+      "variable": [
+       {
+        "text": "%order.country%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "country"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -1920,7 +2803,17 @@
           "type": {
            "name": "variable"
           },
-          "value": "%vat%"
+          "value": "%vat%",
+          "variable": [
+           {
+            "text": "%vat%",
+            "code": [
+             {
+              "variable": "vat"
+             }
+            ]
+           }
+          ]
          },
          {
           "name": "Value",
@@ -1954,7 +2847,17 @@
           "type": {
            "name": "variable"
           },
-          "value": "%vat%"
+          "value": "%vat%",
+          "variable": [
+           {
+            "text": "%vat%",
+            "code": [
+             {
+              "variable": "vat"
+             }
+            ]
+           }
+          ]
          },
          {
           "name": "Value",
@@ -1989,7 +2892,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%order.total%"
+      "value": "%order.total%",
+      "variable": [
+       {
+        "text": "%order.total%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "total"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "B",
@@ -1997,7 +2913,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%vat%"
+      "value": "%vat%",
+      "variable": [
+       {
+        "text": "%vat%",
+        "code": [
+         {
+          "variable": "vat"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -2011,7 +2937,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%vatAmount%"
+      "value": "%vatAmount%",
+      "variable": [
+       {
+        "text": "%vatAmount%",
+        "code": [
+         {
+          "variable": "vatAmount"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -2019,7 +2955,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -2043,7 +2989,20 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%order.note%"
+      "value": "%order.note%",
+      "variable": [
+       {
+        "text": "%order.note%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "note"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -2075,7 +3034,17 @@
           "type": {
            "name": "variable"
           },
-          "value": "%notes%"
+          "value": "%notes%",
+          "variable": [
+           {
+            "text": "%notes%",
+            "code": [
+             {
+              "variable": "notes"
+             }
+            ]
+           }
+          ]
          },
          {
           "name": "Value",
@@ -2083,7 +3052,20 @@
            "name": "item",
            "template": "plang"
           },
-          "value": "%order.note%"
+          "value": "%order.note%",
+          "variable": [
+           {
+            "text": "%order.note%",
+            "code": [
+             {
+              "variable": "order"
+             },
+             {
+              "property": "note"
+             }
+            ]
+           }
+          ]
          }
         ],
         "modifier": []
@@ -2111,7 +3093,28 @@
        "name": "text",
        "template": "plang"
       },
-      "value": "Total: %order.total%, VAT: %vatAmount%"
+      "value": "Total: %order.total%, VAT: %vatAmount%",
+      "variable": [
+       {
+        "text": "%order.total%",
+        "code": [
+         {
+          "variable": "order"
+         },
+         {
+          "property": "total"
+         }
+        ]
+       },
+       {
+        "text": "%vatAmount%",
+        "code": [
+         {
+          "variable": "vatAmount"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -2155,7 +3158,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%files%"
+      "value": "%files%",
+      "variable": [
+       {
+        "text": "%files%",
+        "code": [
+         {
+          "variable": "files"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -2163,7 +3176,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -2186,7 +3209,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%errors%"
+      "value": "%errors%",
+      "variable": [
+       {
+        "text": "%errors%",
+        "code": [
+         {
+          "variable": "errors"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -2217,7 +3250,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%files%"
+      "value": "%files%",
+      "variable": [
+       {
+        "text": "%files%",
+        "code": [
+         {
+          "variable": "files"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -2245,7 +3288,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%item%"
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -2271,7 +3324,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%errors%"
+      "value": "%errors%",
+      "variable": [
+       {
+        "text": "%errors%",
+        "code": [
+         {
+          "variable": "errors"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -2341,7 +3404,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%files%"
+      "value": "%files%",
+      "variable": [
+       {
+        "text": "%files%",
+        "code": [
+         {
+          "variable": "files"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Operator",
@@ -2416,7 +3489,17 @@
          "name": "item",
          "template": "plang"
         },
-        "value": "%errors%"
+        "value": "%errors%",
+        "variable": [
+         {
+          "text": "%errors%",
+          "code": [
+           {
+            "variable": "errors"
+           }
+          ]
+         }
+        ]
        }
       ]
      }
@@ -2432,7 +3515,17 @@
       "type": {
        "name": "variable"
       },
-      "value": "%html%"
+      "value": "%html%",
+      "variable": [
+       {
+        "text": "%html%",
+        "code": [
+         {
+          "variable": "html"
+         }
+        ]
+       }
+      ]
      },
      {
       "name": "Value",
@@ -2440,7 +3533,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%!data%"
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []
@@ -2471,7 +3574,17 @@
        "name": "item",
        "template": "plang"
       },
-      "value": "%html%"
+      "value": "%html%",
+      "variable": [
+       {
+        "text": "%html%",
+        "code": [
+         {
+          "variable": "html"
+         }
+        ]
+       }
+      ]
      }
     ],
     "modifier": []

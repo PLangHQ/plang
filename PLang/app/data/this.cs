@@ -404,24 +404,6 @@ public partial class @this
     }
     public static @this Uninitialized(string name) => NotFound(name);
 
-    private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
-        new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    /// <summary>
-    /// True when <paramref name="value"/> is a string of the exact shape <c>%name%</c> (no
-    /// surrounding text, no second variable). Returns the bare name in <paramref name="varName"/>.
-    /// Partial-interpolation strings like <c>"hello %name%"</c> or <c>"%a% and %b%"</c> return false.
-    /// Used by both As&lt;T&gt; and AsCanonical to decide whether to resolve through the live
-    /// variable (full match) or treat the value as opaque text (partial / literal).
-    /// </summary>
-    internal static bool TryFullVarMatch(string value, out string varName)
-    {
-        var m = FullVarMatchRegex.Match(value);
-        if (m.Success) { varName = m.Groups[1].Value; return true; }
-        varName = "";
-        return false;
-    }
-
     /// <summary>
     /// THE typed ask — "I need a T." One branchless line: the door makes the
     /// value ready (load/parse/render — the TYPE does everything), then the

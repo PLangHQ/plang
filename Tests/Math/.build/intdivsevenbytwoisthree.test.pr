@@ -56,7 +56,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%quotient%"
+              "value": "%quotient%",
+              "variable": [
+                {
+                  "text": "%quotient%",
+                  "code": [
+                    {
+                      "variable": "quotient"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -64,7 +74,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -104,7 +124,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%quotient%"
+              "value": "%quotient%",
+              "variable": [
+                {
+                  "text": "%quotient%",
+                  "code": [
+                    {
+                      "variable": "quotient"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

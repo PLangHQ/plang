@@ -31,7 +31,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%msg%"
+              "value": "%msg%",
+              "variable": [
+                {
+                  "text": "%msg%",
+                  "code": [
+                    {
+                      "variable": "msg"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -39,7 +49,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -72,7 +92,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%msg%"
+              "value": "%msg%",
+              "variable": [
+                {
+                  "text": "%msg%",
+                  "code": [
+                    {
+                      "variable": "msg"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "channel",

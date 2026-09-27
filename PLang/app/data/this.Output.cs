@@ -57,8 +57,8 @@ public partial class @this
             }
             try
             {
-                var resolved = await context.Variable.Get(vref.Name);
-                if (resolved == null || !resolved.IsInitialized)
+                var resolved = await vref.Start(context);
+                if (!resolved.IsInitialized)
                     throw new global::app.error.VariableNotFoundException(vref.Name);
                 await resolved.Output(writer, mode, context, layer);
                 return;
@@ -113,6 +113,14 @@ public partial class @this
 
         if (writer.EmitsSchema)
         {
+            // A stored row names the variables its value holds, each as its text and code, parsed
+            // once at build: loading reads them, never parses.
+            if (mode == View.Store && _item.HasVariable)
+            {
+                writer.Name("variable");
+                new global::app.type.item.variable.serializer.Entry().Write(writer, _item.Variable);
+            }
+
             // properties — nested object, omitted when empty.
             if (Properties.Count > 0)
             {

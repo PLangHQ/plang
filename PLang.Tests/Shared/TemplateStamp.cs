@@ -27,7 +27,7 @@ public static class TemplateStamp
             if (raw != null)
             {
                 // Leaf: a %ref% text is declared a template, so its value is born one.
-                if (global::app.type.item.text.@this.HasVariable(raw))
+                if (new global::app.type.item.variable.parser.@this(raw).Variable.Count > 0)
                 {
                     var declared = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, "plang"), context];
                     properties.Set(new global::app.type.property.@this
@@ -59,7 +59,7 @@ public static class TemplateStamp
         switch (instance)
         {
             case global::app.type.item.text.@this t:
-                return t.Template == null && global::app.type.item.text.@this.HasVariable(t.ToString())
+                return t.Template == null && new global::app.type.item.variable.parser.@this(t.ToString()).Variable.Count > 0
                     ? new global::app.type.item.text.@this(t.ToString(), "plang") { Kind = t.Kind }
                     : null;
 
@@ -114,7 +114,7 @@ public static class TemplateStamp
     {
         switch (raw)
         {
-            case string s when global::app.type.item.text.@this.HasVariable(s):
+            case string s when new global::app.type.item.variable.parser.@this(s).Variable.Count > 0:
                 return new global::app.type.item.text.@this(s, "plang");
 
             case IDictionary<string, object?> d:

@@ -93,6 +93,26 @@ app/type/item/this.cs                   Variable (read-only, shared empty), HasV
 - Still running beside the new code until 6f: `data.Get(path)`'s walker (its `!` lookup and
   IndexNotSet are duplicated in the hops), the store's path handling, text's RefRx render.
 
+## 6d/6e decisions (as built)
+
+- `item.Variable` (read-only, each variable once, first written first; `[]` when none) and
+  `item.HasVariable`. text holds its own; a stamped dict/list its entries'; source/wire the row's list;
+  a variable holds itself. step's build-walk list is now `step.Typed` (ruled; properties.template too —
+  the rendered prompt is unchanged, line 7 is inside a template comment).
+- A stored row (Data's and an action property's) writes `"variable"` after `"value"` when its value
+  holds any — a marked template, and a variable slot too (its one variable), so loading never parses a
+  name either. Both readers hold the value's bytes until the row closes, then birth it with the list
+  (`ReadContext.Variable`); a text inside a container takes the ones written in it.
+- Refusal (PrFormatOutdated): an authored read (`ctx.Template` set, the .pr load) of a marked row
+  without its list, and any action property row marked without one.
+- Build side: `Formal.Born` hands the value its variables (the parser over each of the json's texts);
+  `Formal.Arguments` embeds each argument row's list. Writing a list is synchronous (hops write leaves).
+- The 16 tracked .pr with marked rows were rewritten by a throwaway pass (insert lists, then load and
+  save through `serializer.Text`); `plang build` of Tests/Simple writes the same bytes. Relayed wire
+  slices are now compact (the form the build writes); a bare variable name is written `%name%`.
+- Twin: `tools/decider/variables.py` is the parser's twin; formal.py/formal_check.py mark by it and
+  write each row's list; formal_golden.json regenerated; `VariableListTwinTests` holds the two equal.
+
 ## Questions for plang-40 (proceeding on 6a meanwhile)
 
 1. **Inner slots.** A marked dict/list row (`{"a":"%x%"}`) births its inner texts when it materializes,

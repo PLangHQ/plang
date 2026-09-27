@@ -41,8 +41,11 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
         // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
-        // a source IS an item, so one local carries every arm.
+        // a source IS an item, so one local carries every arm. Its bytes are held until the row
+        // closes: the "variable" list written after it is what the value is born with.
         global::app.type.item.@this? value = null;
+        byte[]? raw = null;
+        IReadOnlyList<global::app.type.item.variable.@this>? variables = null;
 
         reader.BeginObject();
         while (reader.NextName(out var key))
@@ -71,7 +74,10 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     // Loud, never a guess — plang is strongly typed. The build's retry hands this
                     // message to the LLM, so it says what every row must carry.
                     if (typeRef is not { IsNull: false }) throw new UntypedValueException(name, reader.RawValue());
-                    value = typeRef.Read(ref reader, ctx);
+                    raw = reader.Slice();
+                    break;
+                case "variable":
+                    variables = new global::app.type.item.variable.serializer.Entry().Read(ref reader, ctx);
                     break;
                 case "properties":
                     properties = Properties.Read(ref reader.Inner);
@@ -82,6 +88,17 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             }
         }
         reader.EndObject();
+        if (raw != null)
+        {
+            // An authored row marked a template names its variables; one without the list is an older
+            // .pr (rebuild), never parsed on load.
+            if (ctx.Template != null && typeRef!.Template != null && variables == null)
+                throw new global::app.error.PrFormatOutdatedException($"'{name}' is a template without its variable list");
+            var utf8 = new System.Text.Json.Utf8JsonReader(raw);
+            utf8.Read();
+            var held = new global::app.channel.serializer.json.Reader(utf8, raw);
+            value = typeRef!.Read(ref held, ctx with { Variable = variables });
+        }
         if (value != null)
         {
             // One arm: goal.call (eager), a content source, or a wire — all items. A value Data is

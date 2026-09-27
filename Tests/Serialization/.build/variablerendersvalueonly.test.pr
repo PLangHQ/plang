@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%response%"
+              "value": "%response%",
+              "variable": [
+                {
+                  "text": "%response%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -57,7 +67,20 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%response!cost%"
+              "value": "%response!cost%",
+              "variable": [
+                {
+                  "text": "%response!cost%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    },
+                    {
+                      "property": "!cost"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -104,7 +127,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%response%"
+              "value": "%response%",
+              "variable": [
+                {
+                  "text": "%response%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

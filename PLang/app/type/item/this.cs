@@ -324,6 +324,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // is set in place rather than re-minting the whole value.
     public string? Template { get; internal set; }
 
+    /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
+    /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>
+    public virtual IReadOnlyList<global::app.type.item.variable.@this> Variable => [];
+
+    /// <summary>Whether the value holds a variable.</summary>
+    public bool HasVariable => Variable.Count > 0;
+
     /// <summary>
     /// True when the value is already its own final answer — opening its door
     /// (<see cref="Value"/>) returns itself, no resolve/render/load. A literal

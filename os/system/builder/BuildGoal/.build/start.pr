@@ -20,7 +20,20 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%goal.IsCached%"
+              "value": "%goal.IsCached%",
+              "variable": [
+                {
+                  "text": "%goal.IsCached%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    },
+                    {
+                      "property": "IsCached"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "child": [
@@ -41,7 +54,20 @@
                         "name": "item",
                         "template": "plang"
                       },
-                      "value": "%goal.Cache%"
+                      "value": "%goal.Cache%",
+                      "variable": [
+                        {
+                          "text": "%goal.Cache%",
+                          "code": [
+                            {
+                              "variable": "goal"
+                            },
+                            {
+                              "property": "Cache"
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ],
                   "default": [
@@ -91,15 +117,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [
-                {
-                  "name": "kind",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "goalHeader"
-                }
-              ]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"goalHeader"}]
             }
           ],
           "default": [
@@ -137,7 +155,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%buildStart%"
+              "value": "%buildStart%",
+              "variable": [
+                {
+                  "text": "%buildStart%",
+                  "code": [
+                    {
+                      "variable": "buildStart"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -145,7 +173,20 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%Now.Ticks%"
+              "value": "%Now.Ticks%",
+              "variable": [
+                {
+                  "text": "%Now.Ticks%",
+                  "code": [
+                    {
+                      "variable": "Now"
+                    },
+                    {
+                      "property": "Ticks"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -177,7 +218,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%trace%"
+              "value": "%trace%",
+              "variable": [
+                {
+                  "text": "%trace%",
+                  "code": [
+                    {
+                      "variable": "trace"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -185,7 +236,39 @@
                 "name": "dict",
                 "template": "plang"
               },
-              "value": {"id":"%!trace.id%","timestamp":"%Now%","goal":"%goal.Name%","subGoals":[],"durationMs":0}
+              "value": {"id":"%!trace.id%","timestamp":"%Now%","goal":"%goal.Name%","subGoals":[],"durationMs":0},
+              "variable": [
+                {
+                  "text": "%!trace.id%",
+                  "code": [
+                    {
+                      "variable": "!trace"
+                    },
+                    {
+                      "property": "id"
+                    }
+                  ]
+                },
+                {
+                  "text": "%Now%",
+                  "code": [
+                    {
+                      "variable": "Now"
+                    }
+                  ]
+                },
+                {
+                  "text": "%goal.Name%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -289,7 +372,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%parentGoal%"
+              "value": "%parentGoal%",
+              "variable": [
+                {
+                  "text": "%parentGoal%",
+                  "code": [
+                    {
+                      "variable": "parentGoal"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -297,7 +390,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%goal%"
+              "value": "%goal%",
+              "variable": [
+                {
+                  "text": "%goal%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -330,7 +433,20 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%parentGoal.Child%"
+              "value": "%parentGoal.Child%",
+              "variable": [
+                {
+                  "text": "%parentGoal.Child%",
+                  "code": [
+                    {
+                      "variable": "parentGoal"
+                    },
+                    {
+                      "property": "Child"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -339,7 +455,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%item%"
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -359,7 +485,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"subGoal","type":{"name":"item","template":"plang"},"value":"%item%"}]
+              "value": [{"name":"subGoal","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
             }
           ],
           "default": [
@@ -391,7 +517,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%goal%"
+              "value": "%goal%",
+              "variable": [
+                {
+                  "text": "%goal%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -399,7 +535,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%parentGoal%"
+              "value": "%parentGoal%",
+              "variable": [
+                {
+                  "text": "%parentGoal%",
+                  "code": [
+                    {
+                      "variable": "parentGoal"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -432,7 +578,20 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%Now.Ticks%"
+              "value": "%Now.Ticks%",
+              "variable": [
+                {
+                  "text": "%Now.Ticks%",
+                  "code": [
+                    {
+                      "variable": "Now"
+                    },
+                    {
+                      "property": "Ticks"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "B",
@@ -440,7 +599,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%buildStart%"
+              "value": "%buildStart%",
+              "variable": [
+                {
+                  "text": "%buildStart%",
+                  "code": [
+                    {
+                      "variable": "buildStart"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -471,7 +640,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%elapsedTicks%"
+              "value": "%elapsedTicks%",
+              "variable": [
+                {
+                  "text": "%elapsedTicks%",
+                  "code": [
+                    {
+                      "variable": "elapsedTicks"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -479,7 +658,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -512,7 +701,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%elapsedTicks%"
+              "value": "%elapsedTicks%",
+              "variable": [
+                {
+                  "text": "%elapsedTicks%",
+                  "code": [
+                    {
+                      "variable": "elapsedTicks"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "B",
@@ -550,7 +749,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%elapsedMs%"
+              "value": "%elapsedMs%",
+              "variable": [
+                {
+                  "text": "%elapsedMs%",
+                  "code": [
+                    {
+                      "variable": "elapsedMs"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -558,7 +767,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -590,7 +809,20 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%trace.durationMs%"
+              "value": "%trace.durationMs%",
+              "variable": [
+                {
+                  "text": "%trace.durationMs%",
+                  "code": [
+                    {
+                      "variable": "trace"
+                    },
+                    {
+                      "property": "durationMs"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -598,7 +830,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%elapsedMs%"
+              "value": "%elapsedMs%",
+              "variable": [
+                {
+                  "text": "%elapsedMs%",
+                  "code": [
+                    {
+                      "variable": "elapsedMs"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -631,7 +873,31 @@
                 "name": "path",
                 "template": "plang"
               },
-              "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+              "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+              "variable": [
+                {
+                  "text": "%!trace.id%",
+                  "code": [
+                    {
+                      "variable": "!trace"
+                    },
+                    {
+                      "property": "id"
+                    }
+                  ]
+                },
+                {
+                  "text": "%goal.Name%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -639,7 +905,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%trace%"
+              "value": "%trace%",
+              "variable": [
+                {
+                  "text": "%trace%",
+                  "code": [
+                    {
+                      "variable": "trace"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -662,7 +938,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%traceGoals%"
+              "value": "%traceGoals%",
+              "variable": [
+                {
+                  "text": "%traceGoals%",
+                  "code": [
+                    {
+                      "variable": "traceGoals"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -670,7 +956,20 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%goal.Name%"
+              "value": "%goal.Name%",
+              "variable": [
+                {
+                  "text": "%goal.Name%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -704,7 +1003,17 @@
                 "name": "goal",
                 "template": "plang"
               },
-              "value": "%goal%"
+              "value": "%goal%",
+              "variable": [
+                {
+                  "text": "%goal%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "modifier": [
@@ -768,7 +1077,17 @@
                 "name": "goal",
                 "template": "plang"
               },
-              "value": "%goal%"
+              "value": "%goal%",
+              "variable": [
+                {
+                  "text": "%goal%",
+                  "code": [
+                    {
+                      "variable": "goal"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -799,7 +1118,23 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%goal.Step.IsCached%"
+                  "value": "%goal.Step.IsCached%",
+                  "variable": [
+                    {
+                      "text": "%goal.Step.IsCached%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        },
+                        {
+                          "property": "Step"
+                        },
+                        {
+                          "property": "IsCached"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Operator",
@@ -871,7 +1206,23 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%goal.Step.IsAnswered%"
+                  "value": "%goal.Step.IsAnswered%",
+                  "variable": [
+                    {
+                      "text": "%goal.Step.IsAnswered%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        },
+                        {
+                          "property": "Step"
+                        },
+                        {
+                          "property": "IsAnswered"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "child": [
@@ -892,7 +1243,17 @@
                             "name": "goal",
                             "template": "plang"
                           },
-                          "value": "%goal%"
+                          "value": "%goal%",
+                          "variable": [
+                            {
+                              "text": "%goal%",
+                              "code": [
+                                {
+                                  "variable": "goal"
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "name": "Answer",
@@ -1006,7 +1367,17 @@
                     "name": "goal",
                     "template": "plang"
                   },
-                  "value": "%goal%"
+                  "value": "%goal%",
+                  "variable": [
+                    {
+                      "text": "%goal%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Answer",
@@ -1014,7 +1385,17 @@
                     "name": "text",
                     "template": "plang"
                   },
-                  "value": "%answer%"
+                  "value": "%answer%",
+                  "variable": [
+                    {
+                      "text": "%answer%",
+                      "code": [
+                        {
+                          "variable": "answer"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "modifier": [
@@ -1161,7 +1542,7 @@
                   "type": {
                     "name": "list"
                   },
-                  "value": [{"name":"kind","type":{"name":"text"},"value":"properties-rejected"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%"}]
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"properties-rejected"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%","variable":[{"text":"%!error.Message%","code":[{"variable":"!error"},{"property":"Message"}]}]}]
                 }
               ],
               "default": [
@@ -1193,7 +1574,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%fixMessages%"
+                  "value": "%fixMessages%",
+                  "variable": [
+                    {
+                      "text": "%fixMessages%",
+                      "code": [
+                        {
+                          "variable": "fixMessages"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1201,7 +1592,34 @@
                     "name": "list",
                     "template": "plang"
                   },
-                  "value": [{"Role":"user","Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
+                  "value": [{"Role":"user","Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}],
+                  "variable": [
+                    {
+                      "text": "%!error.Details.steps%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Details"
+                        },
+                        {
+                          "property": "steps"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%!error.Message%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Message"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1235,7 +1653,17 @@
                     "kind": "llmmessage",
                     "template": "plang"
                   },
-                  "value": "%fixMessages%"
+                  "value": "%fixMessages%",
+                  "variable": [
+                    {
+                      "text": "%fixMessages%",
+                      "code": [
+                        {
+                          "variable": "fixMessages"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Model",
@@ -1250,7 +1678,20 @@
                     "name": "bool",
                     "template": "plang"
                   },
-                  "value": "%!build.cache%"
+                  "value": "%!build.cache%",
+                  "variable": [
+                    {
+                      "text": "%!build.cache%",
+                      "code": [
+                        {
+                          "variable": "!build"
+                        },
+                        {
+                          "property": "cache"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "ContinuePreviousConversation",
@@ -1300,7 +1741,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%answer%"
+                  "value": "%answer%",
+                  "variable": [
+                    {
+                      "text": "%answer%",
+                      "code": [
+                        {
+                          "variable": "answer"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1308,7 +1759,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!data%"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1355,7 +1816,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%goal%"
+                  "value": "%goal%",
+                  "variable": [
+                    {
+                      "text": "%goal%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1363,7 +1834,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%subGoal%"
+                  "value": "%subGoal%",
+                  "variable": [
+                    {
+                      "text": "%subGoal%",
+                      "code": [
+                        {
+                          "variable": "subGoal"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1402,15 +1883,7 @@
                   "type": {
                     "name": "list"
                   },
-                  "value": [
-                    {
-                      "name": "kind",
-                      "type": {
-                        "name": "text"
-                      },
-                      "value": "subGoalHeader"
-                    }
-                  ]
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"subGoalHeader"}]
                 }
               ],
               "default": [
@@ -1448,7 +1921,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%subgoalStart%"
+                  "value": "%subgoalStart%",
+                  "variable": [
+                    {
+                      "text": "%subgoalStart%",
+                      "code": [
+                        {
+                          "variable": "subgoalStart"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1456,7 +1939,20 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%Now.Ticks%"
+                  "value": "%Now.Ticks%",
+                  "variable": [
+                    {
+                      "text": "%Now.Ticks%",
+                      "code": [
+                        {
+                          "variable": "Now"
+                        },
+                        {
+                          "property": "Ticks"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1560,7 +2056,20 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%trace.subGoals%"
+                  "value": "%trace.subGoals%",
+                  "variable": [
+                    {
+                      "text": "%trace.subGoals%",
+                      "code": [
+                        {
+                          "variable": "trace"
+                        },
+                        {
+                          "property": "subGoals"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1568,7 +2077,20 @@
                     "name": "dict",
                     "template": "plang"
                   },
-                  "value": {"goal":"%goal.Name%"}
+                  "value": {"goal":"%goal.Name%"},
+                  "variable": [
+                    {
+                      "text": "%goal.Name%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        },
+                        {
+                          "property": "Name"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1601,7 +2123,20 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%Now.Ticks%"
+                  "value": "%Now.Ticks%",
+                  "variable": [
+                    {
+                      "text": "%Now.Ticks%",
+                      "code": [
+                        {
+                          "variable": "Now"
+                        },
+                        {
+                          "property": "Ticks"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "B",
@@ -1609,7 +2144,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%subgoalStart%"
+                  "value": "%subgoalStart%",
+                  "variable": [
+                    {
+                      "text": "%subgoalStart%",
+                      "code": [
+                        {
+                          "variable": "subgoalStart"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1640,7 +2185,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%elapsedTicks%"
+                  "value": "%elapsedTicks%",
+                  "variable": [
+                    {
+                      "text": "%elapsedTicks%",
+                      "code": [
+                        {
+                          "variable": "elapsedTicks"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1648,7 +2203,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!data%"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1681,7 +2246,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%elapsedTicks%"
+                  "value": "%elapsedTicks%",
+                  "variable": [
+                    {
+                      "text": "%elapsedTicks%",
+                      "code": [
+                        {
+                          "variable": "elapsedTicks"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "B",
@@ -1719,7 +2294,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%subgoalMs%"
+                  "value": "%subgoalMs%",
+                  "variable": [
+                    {
+                      "text": "%subgoalMs%",
+                      "code": [
+                        {
+                          "variable": "subgoalMs"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1727,7 +2312,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!data%"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1766,15 +2361,7 @@
                   "type": {
                     "name": "list"
                   },
-                  "value": [
-                    {
-                      "name": "kind",
-                      "type": {
-                        "name": "text"
-                      },
-                      "value": "subGoalDone"
-                    }
-                  ]
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"subGoalDone"}]
                 }
               ],
               "default": [
@@ -1840,7 +2427,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%sourceFixSystem%"
+                  "value": "%sourceFixSystem%",
+                  "variable": [
+                    {
+                      "text": "%sourceFixSystem%",
+                      "code": [
+                        {
+                          "variable": "sourceFixSystem"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1848,7 +2445,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!data%"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1880,7 +2487,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%sourceFixMessages%"
+                  "value": "%sourceFixMessages%",
+                  "variable": [
+                    {
+                      "text": "%sourceFixMessages%",
+                      "code": [
+                        {
+                          "variable": "sourceFixMessages"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1888,7 +2505,47 @@
                     "name": "list",
                     "template": "plang"
                   },
-                  "value": [{"Role":"system","Content":"%sourceFixSystem%"},{"Role":"user","Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]
+                  "value": [{"Role":"system","Content":"%sourceFixSystem%"},{"Role":"user","Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}],
+                  "variable": [
+                    {
+                      "text": "%sourceFixSystem%",
+                      "code": [
+                        {
+                          "variable": "sourceFixSystem"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%!error.Message%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Message"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%goal%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1922,7 +2579,17 @@
                     "kind": "llmmessage",
                     "template": "plang"
                   },
-                  "value": "%sourceFixMessages%"
+                  "value": "%sourceFixMessages%",
+                  "variable": [
+                    {
+                      "text": "%sourceFixMessages%",
+                      "code": [
+                        {
+                          "variable": "sourceFixMessages"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Model",
@@ -1937,7 +2604,20 @@
                     "name": "bool",
                     "template": "plang"
                   },
-                  "value": "%!build.cache%"
+                  "value": "%!build.cache%",
+                  "variable": [
+                    {
+                      "text": "%!build.cache%",
+                      "code": [
+                        {
+                          "variable": "!build"
+                        },
+                        {
+                          "property": "cache"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1987,7 +2667,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%sourceFix%"
+                  "value": "%sourceFix%",
+                  "variable": [
+                    {
+                      "text": "%sourceFix%",
+                      "code": [
+                        {
+                          "variable": "sourceFix"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -1995,7 +2685,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!data%"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -2028,7 +2728,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!error%"
+                  "value": "%!error%",
+                  "variable": [
+                    {
+                      "text": "%!error%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "FixSuggestion",
@@ -2036,7 +2746,17 @@
                     "name": "text",
                     "template": "plang"
                   },
-                  "value": "%sourceFix%"
+                  "value": "%sourceFix%",
+                  "variable": [
+                    {
+                      "text": "%sourceFix%",
+                      "code": [
+                        {
+                          "variable": "sourceFix"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -2097,7 +2817,7 @@
                   "type": {
                     "name": "list"
                   },
-                  "value": [{"name":"kind","type":{"name":"text"},"value":"goalError"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%"},{"name":"fix","type":{"name":"item","template":"plang"},"value":"%!error.FixSuggestion%"}]
+                  "value": [{"name":"kind","type":{"name":"text"},"value":"goalError"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%","variable":[{"text":"%!error.Message%","code":[{"variable":"!error"},{"property":"Message"}]}]},{"name":"fix","type":{"name":"item","template":"plang"},"value":"%!error.FixSuggestion%","variable":[{"text":"%!error.FixSuggestion%","code":[{"variable":"!error"},{"property":"FixSuggestion"}]}]}]
                 }
               ],
               "default": [
@@ -2135,7 +2855,20 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%trace.buildError%"
+                  "value": "%trace.buildError%",
+                  "variable": [
+                    {
+                      "text": "%trace.buildError%",
+                      "code": [
+                        {
+                          "variable": "trace"
+                        },
+                        {
+                          "property": "buildError"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -2143,7 +2876,42 @@
                     "name": "dict",
                     "template": "plang"
                   },
-                  "value": {"key":"%!error.Key%","message":"%!error.Message%","goal":"%goal.Name%"}
+                  "value": {"key":"%!error.Key%","message":"%!error.Message%","goal":"%goal.Name%"},
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%!error.Message%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Message"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%goal.Name%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        },
+                        {
+                          "property": "Name"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -2176,7 +2944,31 @@
                     "name": "path",
                     "template": "plang"
                   },
-                  "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
+                  "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+                  "variable": [
+                    {
+                      "text": "%!trace.id%",
+                      "code": [
+                        {
+                          "variable": "!trace"
+                        },
+                        {
+                          "property": "id"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%goal.Name%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        },
+                        {
+                          "property": "Name"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -2184,7 +2976,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%trace%"
+                  "value": "%trace%",
+                  "variable": [
+                    {
+                      "text": "%trace%",
+                      "code": [
+                        {
+                          "variable": "trace"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -2208,7 +3010,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!error%"
+                  "value": "%!error%",
+                  "variable": [
+                    {
+                      "text": "%!error%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [

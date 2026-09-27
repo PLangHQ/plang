@@ -123,6 +123,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.@this? type = null;
         global::app.type.item.@this? value = null;
         global::app.data.Properties? properties = null;
+        // The value's bytes are held until the row closes: the "variable" list after it is what the
+        // value is born with.
+        byte[]? held = null;
+        IReadOnlyList<global::app.type.item.variable.@this>? variables = null;
         row.BeginObject();
         while (row.NextName(out var key))
         {
@@ -136,13 +140,26 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "value":
                     if (type is not { IsNull: false })
                         throw new global::app.data.reader.UntypedValueException(name, row.RawValue());
-                    value = type.Name == "action" ? Read(ref row, null, ctx) : type.Read(ref row, ctx);
+                    held = row.Slice();
                     break;
+                case "variable": variables = new global::app.type.item.variable.serializer.Entry().Read(ref row, ctx); break;
                 case "properties": properties = global::app.data.Properties.Read(ref row.Inner); break;
                 default: throw new global::app.error.PrFormatOutdatedException($"property key '{key}' isn't in this .pr format");
             }
         }
         row.EndObject();
+        if (held != null)
+        {
+            // A row marked a template names its variables; one without the list is an older .pr
+            // (rebuild), never parsed on load.
+            if (type!.Template != null && variables == null)
+                throw new global::app.error.PrFormatOutdatedException($"property '{name}' is a template without its variable list");
+            var bytes = new System.Text.Json.Utf8JsonReader(held);
+            bytes.Read();
+            var slot = new global::app.channel.serializer.json.Reader(bytes, held);
+            var born = ctx with { Variable = variables };
+            value = type!.Name == "action" ? Read(ref slot, null, born) : type.Read(ref slot, born);
+        }
         // No value slot — a typed absence under its declared type.
         if (value == null && type is { IsNull: false })
             value = new global::app.type.item.@null.@this(type);

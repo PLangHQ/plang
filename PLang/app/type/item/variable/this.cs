@@ -98,11 +98,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ?? new global::app.error.Error($"'{raw}' is not a variable.", "InvalidVariable", 400));
     }
 
-    /// <summary>The raw-name callsites (<c>Data.As&lt;T&gt;</c>, the type's <c>Create</c>, the
-    /// variable reader) — throw boundaries: the variable <paramref name="raw"/> writes, or the
-    /// parser's reason thrown.</summary>
-    public static @this Resolve(string raw, actor.context.@this context)
+    /// <summary>The raw-name callsites (<c>Data.As&lt;T&gt;</c>, the type's <c>Create</c> and
+    /// <c>Read</c>, the variable reader) — throw boundaries: the variable <paramref name="raw"/> writes,
+    /// or the parser's reason thrown. A <c>.pr</c> row's list (<paramref name="given"/>) already holds
+    /// it, parsed at build.</summary>
+    public static @this Resolve(string raw, actor.context.@this context, IReadOnlyList<@this>? given = null)
     {
+        var text = raw.StartsWith('%') ? raw : "%" + raw + "%";
+        if (given?.FirstOrDefault(v => v.Text == text) is { } held) return held;
         var born = Convert(raw, null, context);
         return born.Peek() as @this
                ?? throw new global::app.error.AppException(born.Error?.Message ?? $"'{raw}' is not a variable.", "InvalidVariable", 400);
@@ -127,6 +130,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A variable IS a reference (it resolves to what the binding holds). The instance-bind
     /// in Variable.Set reads this to alias the target.</summary>
     public override bool IsVariable => true;
+
+    /// <summary>A variable holds itself.</summary>
+    public override IReadOnlyList<@this> Variable => [this];
 
     /// <inheritdoc/>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)

@@ -8,9 +8,8 @@ namespace app.type.item.text.serializer;
 /// type instance, the same for every format.
 ///
 /// <para>A value slot of <c>text</c> permits a <c>%var%</c> reference, so the
-/// text is built with <c>canTemplate:true</c> — text itself decides whether the
-/// raw actually carries a template (<see cref="app.type.item.text.@this.HasVariable"/>);
-/// resolution stays lazy at the door. No <c>Write</c> here — text renders through
+/// text is built with the read's template mode and the row's variables — text itself
+/// decides whether the raw actually holds one; resolution stays lazy at the door. No <c>Write</c> here — text renders through
 /// its own <see cref="app.type.item.text.@this.Write"/> / json converter; this file
 /// only adds the read side.</para>
 /// </summary>
@@ -23,7 +22,7 @@ public static class Default
             global::app.type.item.text.@this t => t,
             // A string is the value; binary bytes off I/O decode in the text ctor
             // (the text class owns bytes→string — born only from a decoded string).
-            string or byte[] => new global::app.type.item.text.@this(raw, ctx.Template) { Kind = kind },
-            _ => new global::app.type.item.text.@this(raw.ToString() ?? "", ctx.Template) { Kind = kind },
+            string or byte[] => new global::app.type.item.text.@this(raw, ctx.Template, ctx.Variable) { Kind = kind },
+            _ => new global::app.type.item.text.@this(raw.ToString() ?? "", ctx.Template, ctx.Variable) { Kind = kind },
         };
 }

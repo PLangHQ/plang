@@ -14,5 +14,5 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
-        => global::app.type.item.variable.@this.Resolve(reader.String(), ctx.Context);
+        => global::app.type.item.variable.@this.Resolve(reader.String(), ctx.Context, ctx.Variable);
 }

@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%count%"
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -57,7 +67,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%words%"
+              "value": "%words%",
+              "variable": [
+                {
+                  "text": "%words%",
+                  "code": [
+                    {
+                      "variable": "words"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -97,7 +117,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%words%"
+              "value": "%words%",
+              "variable": [
+                {
+                  "text": "%words%",
+                  "code": [
+                    {
+                      "variable": "words"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -106,7 +136,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%item%"
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -126,7 +166,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%word%"}]
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%word%","variable":[{"text":"%word%","code":[{"variable":"word"}]}]}]
             }
           ],
           "default": [
@@ -166,7 +206,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%count%"
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -195,7 +245,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%count%"
+                  "value": "%count%",
+                  "variable": [
+                    {
+                      "text": "%count%",
+                      "code": [
+                        {
+                          "variable": "count"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "B",
@@ -233,7 +293,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%count%"
+                  "value": "%count%",
+                  "variable": [
+                    {
+                      "text": "%count%",
+                      "code": [
+                        {
+                          "variable": "count"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -241,7 +311,17 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!data%"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [

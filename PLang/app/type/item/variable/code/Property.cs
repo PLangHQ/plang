@@ -16,6 +16,8 @@ public sealed class Property : Hop
 
     public override string Kind => "property";
 
+    protected override void Piece(global::app.channel.serializer.IWriter writer) => writer.String(Name);
+
     internal bool IsBinding => Name.StartsWith('!');
 
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(

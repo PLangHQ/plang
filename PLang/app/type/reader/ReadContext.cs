@@ -30,4 +30,8 @@ public sealed record ReadContext(
     // transport, nested), verify runs inline as before. The reader stamps the unverified
     // signature layer onto the peeled Data via Data.PendingVerification; the async caller
     // verifies and clears it.
-    bool DeferVerify = false);
+    bool DeferVerify = false,
+    // The variables the row being read holds, as its .pr "variable" list says — each template
+    // born under this read takes the ones written in it, so loading never parses. Null outside a
+    // .pr row: a template born at build or at run parses itself.
+    IReadOnlyList<global::app.type.item.variable.@this>? Variable = null);

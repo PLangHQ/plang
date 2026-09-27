@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%truthyRan%"
+              "value": "%truthyRan%",
+              "variable": [
+                {
+                  "text": "%truthyRan%",
+                  "code": [
+                    {
+                      "variable": "truthyRan"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -57,7 +67,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%negatedRan%"
+              "value": "%negatedRan%",
+              "variable": [
+                {
+                  "text": "%negatedRan%",
+                  "code": [
+                    {
+                      "variable": "negatedRan"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -96,7 +116,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%b%"
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -136,7 +166,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%b%"
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Operator",
@@ -172,7 +212,17 @@
                       "type": {
                         "name": "variable"
                       },
-                      "value": "%truthyRan%"
+                      "value": "%truthyRan%",
+                      "variable": [
+                        {
+                          "text": "%truthyRan%",
+                          "code": [
+                            {
+                              "variable": "truthyRan"
+                            }
+                          ]
+                        }
+                      ]
                     },
                     {
                       "name": "Value",
@@ -217,7 +267,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%b%"
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Operator",
@@ -253,7 +313,17 @@
                       "type": {
                         "name": "variable"
                       },
-                      "value": "%negatedRan%"
+                      "value": "%negatedRan%",
+                      "variable": [
+                        {
+                          "text": "%negatedRan%",
+                          "code": [
+                            {
+                              "variable": "negatedRan"
+                            }
+                          ]
+                        }
+                      ]
                     },
                     {
                       "name": "Value",
@@ -305,7 +375,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%truthyRan%"
+              "value": "%truthyRan%",
+              "variable": [
+                {
+                  "text": "%truthyRan%",
+                  "code": [
+                    {
+                      "variable": "truthyRan"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -336,7 +416,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%negatedRan%"
+              "value": "%negatedRan%",
+              "variable": [
+                {
+                  "text": "%negatedRan%",
+                  "code": [
+                    {
+                      "variable": "negatedRan"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

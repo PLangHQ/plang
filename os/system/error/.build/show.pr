@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "template"
+              "value": "%template%",
+              "variable": [
+                {
+                  "text": "%template%",
+                  "code": [
+                    {
+                      "variable": "template"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -26,7 +36,20 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "/system/error/%error.StatusCode%.txt"
+              "value": "/system/error/%error.StatusCode%.txt",
+              "variable": [
+                {
+                  "text": "%error.StatusCode%",
+                  "code": [
+                    {
+                      "variable": "error"
+                    },
+                    {
+                      "property": "StatusCode"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -50,23 +73,24 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%template%"
+              "value": "%template%",
+              "variable": [
+                {
+                  "text": "%template%",
+                  "code": [
+                    {
+                      "variable": "template"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Parameter",
               "type": {
                 "name": "list"
               },
-              "value": [
-                {
-                  "name": "error",
-                  "type": {
-                    "name": "text",
-                    "template": "plang"
-                  },
-                  "value": "%error%"
-                }
-              ]
+              "value": [{"name":"error","type":{"name":"text","template":"plang"},"value":"%error%","variable":[{"text":"%error%","code":[{"variable":"error"}]}]}]
             }
           ],
           "modifier": [
@@ -125,7 +149,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "text"
+              "value": "%text%",
+              "variable": [
+                {
+                  "text": "%text%",
+                  "code": [
+                    {
+                      "variable": "text"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -133,7 +167,17 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -157,7 +201,17 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%text%"
+              "value": "%text%",
+              "variable": [
+                {
+                  "text": "%text%",
+                  "code": [
+                    {
+                      "variable": "text"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "channel",
@@ -193,7 +247,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "template"
+                  "value": "%template%",
+                  "variable": [
+                    {
+                      "text": "%template%",
+                      "code": [
+                        {
+                          "variable": "template"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",
@@ -224,7 +288,20 @@
                     "name": "text",
                     "template": "plang"
                   },
-                  "value": "%error.StatusCode%"
+                  "value": "%error.StatusCode%",
+                  "variable": [
+                    {
+                      "text": "%error.StatusCode%",
+                      "code": [
+                        {
+                          "variable": "error"
+                        },
+                        {
+                          "property": "StatusCode"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Operator",
@@ -301,7 +378,17 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "template"
+                  "value": "%template%",
+                  "variable": [
+                    {
+                      "text": "%template%",
+                      "code": [
+                        {
+                          "variable": "template"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 {
                   "name": "Value",

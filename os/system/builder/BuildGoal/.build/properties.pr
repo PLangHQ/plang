@@ -31,7 +31,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%propertiesUserMsg%"
+              "value": "%propertiesUserMsg%",
+              "variable": [
+                {
+                  "text": "%propertiesUserMsg%",
+                  "code": [
+                    {
+                      "variable": "propertiesUserMsg"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -39,7 +49,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -84,7 +104,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%propertiesSystemMsg%"
+              "value": "%propertiesSystemMsg%",
+              "variable": [
+                {
+                  "text": "%propertiesSystemMsg%",
+                  "code": [
+                    {
+                      "variable": "propertiesSystemMsg"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -92,7 +122,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -124,7 +164,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%messages%"
+              "value": "%messages%",
+              "variable": [
+                {
+                  "text": "%messages%",
+                  "code": [
+                    {
+                      "variable": "messages"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -132,7 +182,25 @@
                 "name": "list",
                 "template": "plang"
               },
-              "value": [{"Role":"system","Content":"%propertiesSystemMsg%"},{"Role":"user","Content":"%propertiesUserMsg%"}]
+              "value": [{"Role":"system","Content":"%propertiesSystemMsg%"},{"Role":"user","Content":"%propertiesUserMsg%"}],
+              "variable": [
+                {
+                  "text": "%propertiesSystemMsg%",
+                  "code": [
+                    {
+                      "variable": "propertiesSystemMsg"
+                    }
+                  ]
+                },
+                {
+                  "text": "%propertiesUserMsg%",
+                  "code": [
+                    {
+                      "variable": "propertiesUserMsg"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -166,7 +234,17 @@
                 "kind": "llmmessage",
                 "template": "plang"
               },
-              "value": "%messages%"
+              "value": "%messages%",
+              "variable": [
+                {
+                  "text": "%messages%",
+                  "code": [
+                    {
+                      "variable": "messages"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Model",
@@ -181,7 +259,20 @@
                 "name": "bool",
                 "template": "plang"
               },
-              "value": "%!build.cache%"
+              "value": "%!build.cache%",
+              "variable": [
+                {
+                  "text": "%!build.cache%",
+                  "code": [
+                    {
+                      "variable": "!build"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -231,7 +322,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%answer%"
+              "value": "%answer%",
+              "variable": [
+                {
+                  "text": "%answer%",
+                  "code": [
+                    {
+                      "variable": "answer"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -239,7 +340,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -278,15 +389,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [
-                {
-                  "name": "kind",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "goal-properties"
-                }
-              ]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"goal-properties"}]
             }
           ],
           "default": [

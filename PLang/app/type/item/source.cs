@@ -21,34 +21,42 @@ public class source : @this
     // directly). Name/Kind/Strict/Template all read off this one object.
     private protected readonly global::app.type.@this _type;
 
+    // The variables a template source holds — the row's, as its .pr list says (or parsed, for a
+    // template born at run). Empty for a plain source.
+    private readonly IReadOnlyList<global::app.type.item.variable.@this> _variable = [];
+
+    /// <inheritdoc/>
+    public override IReadOnlyList<global::app.type.item.variable.@this> Variable => _variable;
+
     // A full-match %ref% (`%!data%`, `%messages%`) is a REFERENCE, not content — decided ONCE
     // at birth: the raw form and the authored-template flag are immutable, so reading it back is
-    // a bool check, never a per-read regex (references re-resolve every read — Cacheable=false).
-    // When true, _varName holds the bare name to resolve through Variable.Get at .Value().
+    // a bool check (references re-resolve every read — Cacheable=false).
     public override bool IsVariable { get; }
 
     /// <inheritdoc/>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
-        => await ctx.Variable.Get((string)_value);   // _value is the raw "%!data%"; the store strips the %
+        => IsVariable ? await _variable[0].Start(ctx) : null;
 
     /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
     /// <c>Create</c> door shares. The source holds the declaration WHOLE (Name/Kind/Strict/Template
     /// all live on it) and reads its own raw through the (type, kind) reader — no format name. It
-    /// stores no context: the load uses the asking Data's.</summary>
-    public source(object value, global::app.type.@this type)
+    /// stores no context: the load uses the asking Data's. A template source takes the
+    /// <paramref name="variable"/>s its row's list says it holds; without one it parses its raw.</summary>
+    public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
-        // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
-        // .Value(), never parsed through the type reader. Trust the builder's template flag (on the
-        // declaration), not the content: a structural string the builder did not mark stays literal
-        // content. A BUILD-TIME security gate — content that merely looks like "%x%" must NOT
-        // auto-resolve to a variable; only a builder-marked template does. Decided ONCE at birth.
-        if (type.Template != null && value is string reference
-            && global::app.data.@this.TryFullVarMatch(reference, out _))
-        {
-            IsVariable = true;
-        }
+        // Trust the builder's template flag (on the declaration), not the content: a structural
+        // string the builder did not mark stays literal content. A BUILD-TIME security gate —
+        // content that merely looks like "%x%" must NOT auto-resolve to a variable; only a
+        // builder-marked template does. Decided ONCE at birth.
+        if (type.Template == null) return;
+        var raw = value as string;
+        _variable = (variable ?? (raw != null ? new global::app.type.item.variable.parser.@this(raw).Variable : []))
+            .DistinctBy(v => v.Text).ToList();
+        // A full-match %ref% on ANY declared type is a reference to a binding — resolved at
+        // .Value(), never parsed through the type reader.
+        IsVariable = _variable is [var only] && only.Text == raw;
     }
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
@@ -194,13 +202,13 @@ public class source : @this
         var typeReader = context.App.type.list.Reader.Reader(_type.Name, kind, context);
         var reader = new global::app.channel.serializer.value.Reader(_value);
         return typeReader.Read(ref reader, kind,
-            new global::app.type.reader.ReadContext(context, _type.Template));
+            new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable));
     }
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type);
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),
@@ -272,7 +280,7 @@ public class source : @this
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
         }
         // a partial template is a text's to render: hand over to one
-        await new global::app.type.item.text.@this(template, _type.Template).Output(writer, mode, context);
+        await new global::app.type.item.text.@this(template, _type.Template, _variable).Output(writer, mode, context);
     }
 
 

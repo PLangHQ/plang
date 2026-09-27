@@ -19,7 +19,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%message%"
+              "value": "%message%",
+              "variable": [
+                {
+                  "text": "%message%",
+                  "code": [
+                    {
+                      "variable": "message"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Operator",
@@ -48,7 +58,17 @@
                         "name": "item",
                         "template": "plang"
                       },
-                      "value": "%message%"
+                      "value": "%message%",
+                      "variable": [
+                        {
+                          "text": "%message%",
+                          "code": [
+                            {
+                              "variable": "message"
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }

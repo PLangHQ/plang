@@ -7,8 +7,8 @@ namespace app.type.item.text.serializer;
 /// <see cref="Default.Read"/>, born with the reader's template mode
 /// (<c>ctx.Template</c>): an authored goal read carries <c>"plang"</c> and a
 /// <c>%ref%</c> leaf borns a live template; a runtime-ingest read carries null and
-/// the same bytes print literally. Text owns the holes-decision
-/// (<see cref="app.type.item.text.@this.HasVariable"/>); resolution stays lazy at the door.
+/// the same bytes print literally. Text owns the holes-decision, taking the row's variables
+/// (<c>ctx.Variable</c>); resolution stays lazy at the door.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
@@ -19,5 +19,5 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.channel.serializer.IReader, allows ref struct
         => reader.Null()
             ? new global::app.type.item.@null.@this("text", kind)
-            : new global::app.type.item.text.@this(reader.String(), ctx.Template) { Kind = kind };
+            : new global::app.type.item.text.@this(reader.String(), ctx.Template, ctx.Variable) { Kind = kind };
 }

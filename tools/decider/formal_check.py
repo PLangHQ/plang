@@ -31,10 +31,10 @@ def rows_of(a):
         if f.is_action(v): v = rows_of(v)
         elif spec['type'].startswith('list') and isinstance(v, list) and v and isinstance(v[0], dict) and 'name' in v[0]:
             # argument rows: each marked on its own row (a %variable% in its value); the list is not
-            v = [{'name': r['name'], 'type': f.marked(f.typed('item', r['value']), r['value']), 'value': r['value']} for r in v]
+            v = [f.listed({'name': r['name'], 'type': f.marked(f.typed('item', r['value']), r['value']), 'value': r['value']}) for r in v]
             arguments = True
         typed = f.typed(spec['type'], v)
-        props.append({'name': name, 'type': typed if arguments else f.marked(typed, v), 'value': v})
+        props.append(f.listed({'name': name, 'type': typed if arguments else f.marked(typed, v), 'value': v}))
     out = {'module': a['module'], 'name': a['name'], 'property': props,
            'modifier': [rows_of(m) for m in a.get('modifier') or []]}
     if a.get('recovery'): out['recovery'] = [rows_of(r) for r in a['recovery']]

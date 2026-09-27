@@ -63,11 +63,10 @@ public partial class json
     // A %ref% string slot in an authored container rides as a stamped text item (so the
     // template survives the container's fresh-per-read); a literal slot stays a raw scalar
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
-    // never a template (injection-safe). The per-slot HasVariable here goes once the builder
-    // stamps inside containers — Documentation/v0.2/todos.md 2026-07-01.
+    // never a template (injection-safe). The text takes the row's variables it holds.
     private static object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
-        => ctx?.Template != null && global::app.type.item.text.@this.HasVariable(s)
-            ? new text.@this(s, ctx.Template)
+        => ctx?.Template != null && new text.@this(s, ctx.Template, ctx.Variable) is { HasVariable: true } held
+            ? held
             : s;
 
     // A typed value WITHOUT the @schema layer marker — a dict/list entry's {type:{name,…}, value:…}
@@ -191,8 +190,13 @@ public partial class json
     {
         // if/return, NOT a ternary: the common type of (string, text.@this)
         // would silently convert the wrapper back via text's implicit operator.
-        if (global::app.type.item.text.@this.HasVariable(s))
-            return ctx?.Template != null ? new text.@this(s, ctx.Template) : (object)s;
+        if (ctx?.Template != null)
+        {
+            var held = new text.@this(s, ctx.Template, ctx.Variable);
+            if (held.HasVariable) return held;
+        }
+        else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s).Variable.Count > 0)
+            return s;
         return new text.@this(s);
     }
 

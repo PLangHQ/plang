@@ -21,6 +21,31 @@ public sealed class Method : Hop
 
     public override string Kind => "method";
 
+    /// <summary>Its name, then its values as rows: <c>"replace", "parameter": [{"type": {"name": "text"},
+    /// "value": "-"}, …]</c>; a variable's row names it, as every stored row does.</summary>
+    protected override void Piece(global::app.channel.serializer.IWriter writer)
+    {
+        writer.String(Name);
+        writer.Name("parameter");
+        var values = Parameter.Slots().Cast<global::app.type.item.@this>().ToList();
+        writer.BeginArray(values.Count);
+        foreach (var value in values)
+        {
+            writer.BeginObject();
+            writer.Name("type");
+            value.Type.Write(writer);
+            writer.Name("value");
+            value.Write(writer);
+            if (value.HasVariable)
+            {
+                writer.Name("variable");
+                new variable.serializer.Entry().Write(writer, value.Variable);
+            }
+            writer.EndObject();
+        }
+        writer.EndArray();
+    }
+
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
     {

@@ -341,19 +341,21 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
         {
             var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
-            // A SEMANTIC string — a template (its row's marker; the IsVariable birth gate needs the
-            // decoded content) or a variable NAME (type.Create resolves it to its binding) — takes the
-            // content door; the kind-parse stays lazy on the content source. A literal string under
-            // any other type rides the wire (strict, byte-identical).
+            // A SEMANTIC string — a variable NAME, or a template (its row's marker) — takes the
+            // content door, with the variables its row's list says it holds; the kind-parse stays
+            // lazy on the content source. A literal string under any other type rides the wire
+            // (strict, byte-identical).
+            if (ClrType == typeof(global::app.type.item.variable.@this))
+                return global::app.type.item.variable.@this.Resolve(JsonSerializer.Deserialize<string>(slice)!, ctx.Context, ctx.Variable);
             return Template != null
-                    || ClrType == typeof(global::app.type.item.variable.@this)
-                ? Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
+                ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable)
                 : Create(slice, transport);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
-        // A container is a template only by its own row's marker.
-        return Create(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport);
+        // A container is a template only by its own row's marker, holding its row's variables.
+        var encoded = System.Text.Encoding.UTF8.GetString(reader.Slice());
+        return Template != null ? new item.wire.@this(encoded, this, transport, ctx.Variable) : Create(encoded, transport);
     }
 
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared

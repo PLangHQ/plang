@@ -34,6 +34,7 @@ LITERAL value keeps untyped entries (`Value={"name": "a"}`): the dict is the typ
 """
 import json, re
 import build_pr as b
+import variables as v
 
 CONDITIONS = {('condition', 'if'), ('condition', 'elseif'), ('condition', 'else')}
 RECOVERY = 'Recovery'   # a modifier's property holding the actions it runs when the wrapped action fails
@@ -96,17 +97,24 @@ def typed(declared, value, written=None):
     if value is None: return {'name': 'item'}
     return {'name': 'item'} if VARIABLE.fullmatch(value) else {'name': 'text'}
 
-# text.HasVariable's detector — a value the programmer wrote holding a %variable%
-HOLE = re.compile(r'%[^%]+%')
-
 def marked(t, value):
     """The row's type marked a template ("plang") when the programmer's literal holds a %variable%
     (Formal.Born, Formal.Arguments): the marker is born at build, and only here. A variable-name slot
     names a variable, and a held action is an action — neither is a template."""
     if t.get('name') == 'variable' or isinstance(value, dict) and is_action(value): return t
     if isinstance(value, list) and any(isinstance(x, dict) and is_action(x) for x in value): return t
-    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
-    return {**t, 'template': 'plang'} if HOLE.search(text) else t
+    return {**t, 'template': 'plang'} if v.held(value) else t
+
+def listed(row):
+    """The row with the variables its value holds, as the .pr writes them after the value (a template's,
+    or the variable a variable slot names); a row holding none is as it was."""
+    held = v.held(row['value']) if row['type'].get('template') or row['type'].get('name') == 'variable' else []
+    if not held: return row
+    out = {}
+    for k, x in row.items():
+        out[k] = x
+        if k == 'value': out['variable'] = held
+    return out
 
 class Args(dict):
     """A `{ }` value as read: its entries, and the types written on any of them (`kind: text = "x"`)."""
@@ -296,13 +304,13 @@ class _Reader:
         # typed like any row — the written type, else the literal's (the slot is open).
         if declared.startswith('list') and isinstance(value, dict) and not is_action(value):
             types = getattr(value, 'types', {})
-            value = [{'name': k, 'type': marked(typed('item', v, types.get(k)), v), 'value': v} for k, v in value.items()]
+            value = [listed({'name': k, 'type': marked(typed('item', x, types.get(k)), x), 'value': x}) for k, x in value.items()]
         elif getattr(value, 'types', None):
             self.fail(f'`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments', at)
         if isinstance(value, Args): value = dict(value)
         rows = isinstance(value, list) and declared.startswith('list') and all(isinstance(r, dict) and 'name' in r and 'type' in r for r in value)
         # argument rows are each marked on their own row; the list holding them is not
-        out = {'name': prop, 'type': typed(declared, value, written) if rows else marked(typed(declared, value, written), value), 'value': value}
+        out = listed({'name': prop, 'type': typed(declared, value, written) if rows else marked(typed(declared, value, written), value), 'value': value})
         if frozen: out['frozen'] = True
         return out
 

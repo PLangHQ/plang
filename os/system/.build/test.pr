@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "path"
+              "value": "%path%",
+              "variable": [
+                {
+                  "text": "%path%",
+                  "code": [
+                    {
+                      "variable": "path"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -56,7 +66,17 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%path%"
+              "value": "%path%",
+              "variable": [
+                {
+                  "text": "%path%",
+                  "code": [
+                    {
+                      "variable": "path"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Recursive",
@@ -76,7 +96,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "tests"
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -84,7 +114,17 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%!data%"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -109,7 +149,17 @@
                 "kind": "test",
                 "template": "plang"
               },
-              "value": "%tests%"
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

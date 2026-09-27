@@ -20,12 +20,13 @@ public sealed class @this : global::app.type.item.source
     // since birth; the read reaches it directly (the registry lookup is what died, not the door).
     private readonly global::app.channel.serializer.ITransport _reader;
 
-    public @this(string slice, global::app.type.@this type, global::app.channel.serializer.ITransport reader)
-        : base(slice, type)
+    public @this(string slice, global::app.type.@this type, global::app.channel.serializer.ITransport reader,
+        IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+        : base(slice, type, variable ?? [])   // an encoded slice is never parsed for its variables
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
 
     private protected override global::app.type.item.@this Read(actor.context.@this context)
-        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template));
+        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable));
 
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
@@ -67,5 +68,5 @@ public sealed class @this : global::app.type.item.source
         "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.");
 
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => new @this((string)Raw, type, _reader);
+        => new @this((string)Raw, type, _reader, Variable);
 }

@@ -390,6 +390,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A stamped container's render depends on outside state — never kept.</summary>
     public override bool Cacheable => Template == null;
 
+    /// <summary>A stamped container holds the variables its entries hold.</summary>
+    public override IReadOnlyList<global::app.type.item.variable.@this> Variable
+        => Template == null ? [] : _value.Values
+            .SelectMany(slot => slot switch
+            {
+                global::app.data.@this held => held.Peek().Variable,
+                global::app.type.item.@this item => item.Variable,
+                _ => [],
+            })
+            .DistinctBy(v => v.Text).ToList();
+
     /// <summary>
     /// THE door — a stamped container renders its entries, each through its
     /// own door (door recursion; string re-scanning never happens). An entry

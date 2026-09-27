@@ -198,7 +198,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
 
     /// <summary>The build's walk over the steps, in order, before the LLM answers: each step's code
     /// — or the code its certain picks know — walked over one scratch store, so each step is left the
-    /// variables it reads with their known types (<c>step.Variable</c>). Nothing runs.</summary>
+    /// variables it reads with their known types (<c>step.Typed</c>). Nothing runs.</summary>
     public async System.Threading.Tasks.Task Scope(actor.context.@this context)
     {
         using var scratch = Scratch(context);

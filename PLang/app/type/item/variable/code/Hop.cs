@@ -29,5 +29,17 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
         => System.Threading.Tasks.ValueTask.FromResult(context.Error(new global::app.error.Error(
             $"'{Text}' can't be written to — a {Kind} answers a value, it holds none.", "VariableNotWritable", 400)));
 
+    /// <summary>Its <c>.pr</c> form: one object under its kind — <c>{"property": "address"}</c>.</summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+    {
+        writer.BeginObject();
+        writer.Name(Kind);
+        Piece(writer);
+        writer.EndObject();
+    }
+
+    /// <summary>What it writes under its kind.</summary>
+    protected abstract void Piece(global::app.channel.serializer.IWriter writer);
+
     public override string ToString() => Text;
 }

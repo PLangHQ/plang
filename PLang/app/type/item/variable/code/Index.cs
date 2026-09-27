@@ -14,6 +14,23 @@ public sealed class Index : Hop
 
     public override string Kind => "index";
 
+    /// <summary><c>{"number": 0}</c>, <c>{"text": "k"}</c>, or <c>{"variable": [the key]}</c>.</summary>
+    protected override void Piece(global::app.channel.serializer.IWriter writer)
+    {
+        writer.BeginObject();
+        if (Key is variable.@this named)
+        {
+            writer.Name("variable");
+            new variable.serializer.Entry().Write(writer, [named]);
+        }
+        else
+        {
+            writer.Name(Key.Type.Name);
+            Key.Write(writer);
+        }
+        writer.EndObject();
+    }
+
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
     {

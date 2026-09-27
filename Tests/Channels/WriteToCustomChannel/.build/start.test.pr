@@ -100,7 +100,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%loggerCalled%"
+              "value": "%loggerCalled%",
+              "variable": [
+                {
+                  "text": "%loggerCalled%",
+                  "code": [
+                    {
+                      "variable": "loggerCalled"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

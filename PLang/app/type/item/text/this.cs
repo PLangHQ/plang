@@ -49,6 +49,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // door; a .NET edge lowers through Clr.
     private readonly string _value;
 
+    // The variables the template holds, each once — empty for plain text.
+    private readonly IReadOnlyList<global::app.type.item.variable.@this> _variable = [];
+
+    /// <inheritdoc/>
+    public override IReadOnlyList<global::app.type.item.variable.@this> Variable => _variable;
+
     /// <summary>The value's kind — the file-extension vocabulary (md, csv, …).
     /// An ordinary typed property stamped at creation, never after.</summary>
     public string? Kind { get; init; }
@@ -105,13 +111,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Template == null) return this;
         var context = data.Context;
         if (context?.Variable == null) return this;
-        if (global::app.data.@this.TryFullVarMatch(_value, out var varName))
+        if (IsVariable)
         {
-            var resolved = await context.Variable.Get(varName);
-            if (resolved == null || !resolved.IsInitialized)
+            var resolved = await _variable[0].Start(context);
+            if (!resolved.IsInitialized)
             {
                 data.Fail(new global::app.error.Error(
-                    $"%{varName}% is not set — nothing to answer for {_value}.",
+                    $"%{_variable[0].Name}% is not set — nothing to answer for {_value}.",
                     "VariableNotFound", 404));
                 return Absent;
             }
@@ -120,8 +126,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new @this(await Rendered(context));
     }
 
-    // The template rendered: one pass in order — each literal written as it is, each %var% written
-    // in place through the variable's own door (its Output into a text writer: a wire materializes to
+    // The template rendered: one pass in order — each literal written as it is, each variable written
+    // in place through its value's own door (its Output into a text writer: a wire materializes to
     // bare content, a container renders its json text). An unset variable is an error at the
     // reference; an unset %!x% (an optional engine internal) stays as written.
     private async System.Threading.Tasks.ValueTask<string> Rendered(global::app.actor.context.@this context)
@@ -129,43 +135,49 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
         int pos = 0;
-        foreach (System.Text.RegularExpressions.Match m in RefRx.Matches(_value))
+        for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {
-            w.String(_value[pos..m.Index]);
-            pos = m.Index + m.Length;
-            var name = m.Value[1..^1];
-            var bound = await context.Variable.Get(name);
-            if (bound == null || !bound.IsInitialized)
+            var found = At(at);
+            if (found == null) continue;
+            w.String(_value[pos..at]);
+            pos = at + found.Text.Length;
+            var bound = await found.Start(context);
+            if (!bound.IsInitialized)
             {
-                if (name.StartsWith('!')) { w.String(m.Value); continue; }
-                throw await Unreachable(name, context);
+                if (found.Code.Root.Name.StartsWith('!')) { w.String(found.Text); at = pos - 1; continue; }
+                throw await Unreachable(found, context);
             }
             await bound.Output(w, global::app.View.Out, context);
+            at = pos - 1;
         }
         w.String(_value[pos..]);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
-    // Why a %path% didn't resolve: the deepest prefix that did, and the segment that returned nothing
-    // on it. A bare root gets the plain "not set" form.
+    // The variable written at `at`, the longest when one's text starts another's.
+    private global::app.type.item.variable.@this? At(int at)
+        => _variable.Where(v => string.CompareOrdinal(_value, at, v.Text, 0, v.Text.Length) == 0)
+                    .MaxBy(v => v.Text.Length);
+
+    // Why a variable didn't resolve: how far its hops reached, and the hop that answered nothing.
+    // A bare root gets the plain "not set" form.
     private async System.Threading.Tasks.ValueTask<global::app.error.VariableNotFoundException> Unreachable(
-        string name, global::app.actor.context.@this context)
+        global::app.type.item.variable.@this variable, global::app.actor.context.@this context)
     {
-        var segments = global::app.type.item.variable.path.@this.Parse(name).Segments;
-        if (segments.Count <= 1) return new global::app.error.VariableNotFoundException(name);
-        string reachedPrefix = "(root)", reachedType = "nothing";
-        var prefix = new System.Text.StringBuilder();
-        for (int i = 0; i < segments.Count; i++)
+        var hops = variable.Code.Items().ToList();
+        if (hops.Count <= 1) return new global::app.error.VariableNotFoundException(variable.Name);
+        string reachedPrefix = "(root)", reachedType = "nothing", reached = "";
+        global::app.data.@this? current = null;
+        foreach (var hop in hops)
         {
-            var seg = segments[i];
-            prefix.Append(i > 0 && seg is global::app.type.item.variable.path.Segment.Member ? "." + seg.Raw : seg.Raw);
-            var hop = await context.Variable.Get(prefix.ToString());
-            if (hop == null || !hop.IsInitialized)
-                return new global::app.error.VariableNotFoundException(name, reachedPrefix, reachedType, seg.Raw);
-            reachedPrefix = prefix.ToString();
-            reachedType = hop.Peek()?.GetType().Name ?? "null";
+            current = await hop.Start(current, context);
+            if (!current.IsInitialized)
+                return new global::app.error.VariableNotFoundException(variable.Name, reachedPrefix, reachedType, hop.Text.TrimStart('.'));
+            reached += hop.Text;
+            reachedPrefix = reached;
+            reachedType = current.Peek()?.GetType().Name ?? "null";
         }
-        return new global::app.error.VariableNotFoundException(name);
+        return new global::app.error.VariableNotFoundException(variable.Name);
     }
 
     /// <summary>
@@ -200,11 +212,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// (it resolves to the named binding, not renders). A partial template
     /// (<c>"hello %name%"</c>) is content — it renders, so it is NOT a variable.</summary>
     public override bool IsVariable
-        => Template != null && global::app.data.@this.TryFullVarMatch(_value, out _);
+        => Template != null && _variable is [var only] && only.Text == _value;
 
     /// <inheritdoc/>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
-        => await ctx.Variable.Get(_value);   // _value is the raw "%name%"; the store strips the %
+        => IsVariable ? await _variable[0].Start(ctx) : null;
 
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value);
 
@@ -234,37 +246,51 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// Construction with a template mode. <paramref name="template"/> is the
     /// authored-content mode the reader carries — <c>"plang"</c> when the bytes are
     /// developer-authored (a goal/<c>.pr</c>), null for runtime-ingest. Text decides
-    /// for itself whether there is actually a template to stamp: only a value with a
-    /// <c>%var%</c> (<see cref="HasVariable"/>) keeps the mode, so a plain string
-    /// never reports as a variable reference. Resolution stays lazy — nothing renders
-    /// until the door (<see cref="Value"/>). The trust is the mode, not the content:
-    /// a structural text (a dict key, a type name) or a runtime-ingest value is born
-    /// with a null mode and prints literally.
+    /// for itself whether there is actually a template to stamp: only a value holding a
+    /// variable keeps the mode, so a plain string never reports as a variable reference.
+    /// Resolution stays lazy — nothing renders until the door (<see cref="Value"/>). The
+    /// trust is the mode, not the content: a structural text (a dict key, a type name) or a
+    /// runtime-ingest value is born with a null mode and prints literally.
+    /// <para><paramref name="variable"/> is what the <c>.pr</c> row says its value holds (the
+    /// ones written in this text are taken); without it — a template born at build or at run —
+    /// the text is parsed.</para>
     /// </summary>
-    public @this(string value, string? template)
+    public @this(string value, string? template, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
     {
         _value = value ?? string.Empty;
         // Container inner slots (list/dict entries) have no per-slot .pr flag; the authored
-        // read mode + a %var% in the content marks them. This gate stays until the builder
-        // stamps per-slot inside containers (Documentation/v0.2/todos.md 2026-07-01) —
-        // flagging literal slots changes their canonicalization/signing. Top-level params
-        // are flagged by the builder (a holey value passes this gate anyway).
-        if (template != null && HasVariable(_value)) Template = template;
+        // read mode + a variable in the content marks them. Flagging literal slots would change
+        // their canonicalization/signing.
+        if (template == null || !_value.Contains('%')) return;
+        var held = variable?.Where(v => _value.Contains(v.Text, System.StringComparison.Ordinal)).ToList()
+                   ?? (IReadOnlyList<global::app.type.item.variable.@this>)new global::app.type.item.variable.parser.@this(_value).Variable;
+        if (held.Count == 0) return;
+        _variable = held.DistinctBy(v => v.Text).ToList();
+        Template = template;
+    }
+
+    // A re-kinded copy: the same content and variables, the declared kind stamped.
+    private @this(@this source, string? kind)
+    {
+        _value = source._value;
+        _variable = source._variable;
+        Template = source.Template;
+        Kind = kind;
     }
 
     /// <summary>
     /// Construction from a raw form — a string is the value as-is; binary bytes
     /// off I/O decode as UTF-8. Text is only ever born from a string, so this is
     /// the one place bytes become that string (a reader handed raw stream bytes
-    /// reaches the text here). <paramref name="template"/> as above.
+    /// reaches the text here). <paramref name="template"/> and <paramref name="variable"/> as above.
     /// </summary>
-    public @this(object raw, string? template = null)
+    public @this(object raw, string? template = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
         : this(raw switch
         {
             byte[] b => System.Text.Encoding.UTF8.GetString(b),
             string s => s,
             _ => raw?.ToString() ?? string.Empty,
-        }, template)
+        }, template, variable)
     { }
 
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
@@ -341,17 +367,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(string.IsNullOrWhiteSpace(_value));
 
-    private static readonly System.Text.RegularExpressions.Regex RefRx =
-        new("%[^%]+%", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    /// <summary>THE detector: true when <paramref name="s"/> contains a <c>%var%</c>
-    /// reference — the authored-template seam (deterministic code, never the LLM). One
-    /// home; every %var% check routes here.</summary>
-    internal static bool HasVariable(string s) => RefRx.IsMatch(s);
-
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (values immutable, never restamped in place).</summary>
-    public override global::app.type.item.@this Kinded(string? kind) => new @this(_value) { Kind = kind, Template = Template };
+    public override global::app.type.item.@this Kinded(string? kind) => new @this(this, kind);
 
     /// <summary>text's raw string face — its characters.</summary>
     public override string? RawText => _value;

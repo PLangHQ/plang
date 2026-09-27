@@ -18,7 +18,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%iso%"
+              "value": "%iso%",
+              "variable": [
+                {
+                  "text": "%iso%",
+                  "code": [
+                    {
+                      "variable": "iso"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -64,7 +74,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%dotcolon%"
+              "value": "%dotcolon%",
+              "variable": [
+                {
+                  "text": "%dotcolon%",
+                  "code": [
+                    {
+                      "variable": "dotcolon"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
@@ -111,7 +131,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%iso%"
+              "value": "%iso%",
+              "variable": [
+                {
+                  "text": "%iso%",
+                  "code": [
+                    {
+                      "variable": "iso"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -135,7 +165,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%dotcolon%"
+              "value": "%dotcolon%",
+              "variable": [
+                {
+                  "text": "%dotcolon%",
+                  "code": [
+                    {
+                      "variable": "dotcolon"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -159,7 +199,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%iso%"
+              "value": "%iso%",
+              "variable": [
+                {
+                  "text": "%iso%",
+                  "code": [
+                    {
+                      "variable": "iso"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Actual",
@@ -167,7 +217,17 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%dotcolon%"
+              "value": "%dotcolon%",
+              "variable": [
+                {
+                  "text": "%dotcolon%",
+                  "code": [
+                    {
+                      "variable": "dotcolon"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

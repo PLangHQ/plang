@@ -6,7 +6,7 @@ namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 
 /// <summary>The build's walk over a scratch store (<c>goal.step.list.Scope</c>): no action runs; each
 /// leaves its return's empty value as %!data%, variable.set and loop.foreach bind into the store, and
-/// each step is left the known types of the variables it reads (<c>step.Variable</c>). After the parse,
+/// each step is left the known types of the variables it reads (<c>step.Typed</c>). After the parse,
 /// each property holding a known variable opens it through its own typed view — a decline refuses the
 /// step.</summary>
 public class ScopeTests
@@ -43,7 +43,7 @@ public class ScopeTests
     }
 
     private static string Shown(global::app.goal.step.@this step) =>
-        string.Join(", ", step.Variable.Select(v => $"%{v.Name}% {v.Type}"));
+        string.Join(", ", step.Typed.Select(v => $"%{v.Name}% {v.Type}"));
 
     [Test]
     public async Task TheEmptyListOfAKind_AnswersItsKind()

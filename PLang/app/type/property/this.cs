@@ -119,6 +119,12 @@ public sealed class @this
         }
         writer.Name("value");
         await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
+        // A stored row names the variables its value holds, parsed once at build.
+        if (mode == global::app.View.Store && Value is { HasVariable: true } held)
+        {
+            writer.Name("variable");
+            new global::app.type.item.variable.serializer.Entry().Write(writer, held.Variable);
+        }
         if (Properties.Count > 0)
         {
             writer.Name("properties");

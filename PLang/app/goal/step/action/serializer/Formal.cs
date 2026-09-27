@@ -340,14 +340,41 @@ public sealed class Formal
         // %variables% is typed a template ("plang"); its row carries the mark from then on.
         private global::app.type.item.@this Born(global::app.type.@this type, string json, string? template = "plang")
         {
-            var marked = template != null && type.Template == null && global::app.type.item.text.@this.HasVariable(json)
+            var variables = Variables(json);
+            var marked = template != null && type.Template == null && variables.Count > 0
                 ? _context.App.type.list[new global::app.type.@this(type.Name, type.kind.Name, type.Strict, template), _context]
                 : type;
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
             utf8.Read();
             var reader = new global::app.channel.serializer.json.Reader(utf8, bytes);
-            return marked.Read(ref reader, new global::app.type.reader.ReadContext(_context, marked.Template));
+            return marked.Read(ref reader, new global::app.type.reader.ReadContext(_context, marked.Template,
+                Variable: marked.Template != null ? variables : null));
+        }
+
+        // The variables a value written as json holds: those in each of its texts, as written.
+        private List<global::app.type.item.variable.@this> Variables(string json)
+        {
+            var found = new List<global::app.type.item.variable.@this>();
+            if (!json.Contains('%')) return found;
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var open = new Stack<System.Text.Json.JsonElement>([doc.RootElement]);
+            while (open.TryPop(out var element))
+            {
+                switch (element.ValueKind)
+                {
+                    case System.Text.Json.JsonValueKind.String:
+                        found.AddRange(new global::app.type.item.variable.parser.@this(element.GetString()!).Variable);
+                        break;
+                    case System.Text.Json.JsonValueKind.Object:
+                        foreach (var p in element.EnumerateObject().Reverse()) open.Push(p.Value);
+                        break;
+                    case System.Text.Json.JsonValueKind.Array:
+                        foreach (var e in element.EnumerateArray().Reverse()) open.Push(e);
+                        break;
+                }
+            }
+            return found;
         }
 
         private static string LiteralType(Literal v)
@@ -374,13 +401,25 @@ public sealed class Formal
             var rows = v.Entries!.Select(e =>
             {
                 var json = Json(e.Value);
+                var variables = Variables(json).DistinctBy(x => x.Text).ToList();
                 return "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
                     + ",\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(e.Type ?? LiteralType(e.Value)))
                     + (TypeKind(e.Type ?? LiteralType(e.Value)) is { } k ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(k) : "")
-                    + (global::app.type.item.text.@this.HasVariable(json) ? ",\"template\":\"plang\"" : "")
-                    + "},\"value\":" + json + "}";
+                    + (variables.Count > 0 ? ",\"template\":\"plang\"" : "")
+                    + "},\"value\":" + json
+                    + (variables.Count > 0 ? ",\"variable\":" + Json(variables) : "")
+                    + "}";
             });
             return "[" + string.Join(",", rows) + "]";
+        }
+
+        // A row's variable list as the .pr writes it.
+        private string Json(IReadOnlyList<global::app.type.item.variable.@this> variables)
+        {
+            using var ms = new System.IO.MemoryStream();
+            using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
+                new global::app.type.item.variable.serializer.Entry().Write(new global::app.channel.serializer.json.Writer(utf8), variables);
+            return Encoding.UTF8.GetString(ms.ToArray());
         }
 
         private static string TypeName(string face) => face.Contains('<') ? face[..face.IndexOf('<')] : face;
