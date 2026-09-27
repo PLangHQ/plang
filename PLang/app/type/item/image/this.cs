@@ -124,13 +124,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw) return null;
         try
         {
-            var path = data.Context.App.Type.Scheme.From(raw, data.Context);
+            var path = global::app.type.item.path.@this.Resolve(raw, data.Context);
             return new @this(path, data.Context);
         }
         catch (global::app.type.item.path.scheme.SchemeNotRegistered snr)
         {
             data.Fail(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
-                { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}', or use a bare/file:// path." });
+                { FixSuggestion = $"Add a path kind for scheme '{snr.Scheme}', or use a bare/file:// path." });
             return null;
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))

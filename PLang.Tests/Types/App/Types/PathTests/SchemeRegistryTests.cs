@@ -4,12 +4,13 @@ using TUnit.Assertions.Extensions;
 using global::app.type.item.path.scheme;
 using PLangPath = global::app.type.item.path.@this;
 using FilePath = global::app.type.item.path.file.@this;
+using SchemeKind = global::app.type.item.path.scheme.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// The per-App scheme registry (<c>app.type.item.path.scheme.@this</c>), reachable as
-/// <c>app.Type.Scheme</c>.
+/// Path schemes are kinds of path, held per App in the kind store (<c>app.Type.Kind</c>);
+/// <c>path.Resolve</c> routes a raw path through the scheme kind it names.
 /// </summary>
 public class SchemeRegistryTests
 {
@@ -24,8 +25,8 @@ public class SchemeRegistryTests
     [Test] public async Task Register_ThenFrom_ReturnsRegisteredSubclass()
     {
         var (app, context) = MakeApp();
-        app.Type.Scheme.Register("test", (raw, c) => new FilePath(raw) { Raw = raw });
-        var p = app.Type.Scheme.From("test://hello", context);
+        app.Type.Kind.Add(new SchemeKind("test", (raw, c) => new FilePath(raw) { Raw = raw }));
+        var p = PLangPath.Resolve("test://hello", context);
         await Assert.That(p).IsNotNull();
         await Assert.That(p is FilePath).IsTrue();
     }
@@ -35,16 +36,16 @@ public class SchemeRegistryTests
         var (app, context) = MakeApp();
         var first = new FilePath("/first");
         var second = new FilePath("/second");
-        app.Type.Scheme.Register("dup", (raw, c) => first);
-        app.Type.Scheme.Register("dup", (raw, c) => second);
-        var p = app.Type.Scheme.From("dup://x", context);
+        app.Type.Kind.Add(new SchemeKind("dup", (raw, c) => first));
+        app.Type.Kind.Add(new SchemeKind("dup", (raw, c) => second));
+        var p = PLangPath.Resolve("dup://x", context);
         await Assert.That(object.ReferenceEquals(p, second)).IsTrue();
     }
 
     [Test] public async Task From_BareAbsolutePath_RoutesToFilePath()
     {
         var (app, context) = MakeApp();
-        var p = app.Type.Scheme.From("/tmp/anywhere/x.txt", context);
+        var p = PLangPath.Resolve("/tmp/anywhere/x.txt", context);
         await Assert.That(p is FilePath).IsTrue();
         await Assert.That(p.Scheme).IsEqualTo("file");
     }
@@ -52,7 +53,7 @@ public class SchemeRegistryTests
     [Test] public async Task From_BareRelativePath_RoutesToFilePath()
     {
         var (app, context) = MakeApp();
-        var p = app.Type.Scheme.From("relative.txt", context);
+        var p = PLangPath.Resolve("relative.txt", context);
         await Assert.That(p is FilePath).IsTrue();
     }
 
@@ -60,14 +61,14 @@ public class SchemeRegistryTests
     {
         var (app, context) = MakeApp();
         // C:\... has a colon but is NOT "scheme://" — must not be treated as a scheme.
-        var p = app.Type.Scheme.From("C:\\Users\\x.txt", context);
+        var p = PLangPath.Resolve("C:\\Users\\x.txt", context);
         await Assert.That(p is FilePath).IsTrue();
     }
 
     [Test] public async Task From_ExplicitFileScheme_RoutesToFilePath()
     {
         var (app, context) = MakeApp();
-        var p = app.Type.Scheme.From("file:///home/user/x.txt", context);
+        var p = PLangPath.Resolve("file:///home/user/x.txt", context);
         await Assert.That(p is FilePath).IsTrue();
         await Assert.That(p.Scheme).IsEqualTo("file");
     }
@@ -75,15 +76,15 @@ public class SchemeRegistryTests
     [Test] public async Task From_SchemeMatching_IsCaseInsensitive()
     {
         var (app, context) = MakeApp();
-        // Built-in "file" registered lowercase; FILE:// must resolve to it.
-        var p = app.Type.Scheme.From("FILE:///x.txt", context);
+        // Built-in "file" is lowercase; FILE:// must resolve to it.
+        var p = PLangPath.Resolve("FILE:///x.txt", context);
         await Assert.That(p is FilePath).IsTrue();
     }
 
     [Test] public async Task From_UnknownScheme_ThrowsTypedSchemeNotRegistered()
     {
         var (app, context) = MakeApp();
-        var ex = await Assert.That(() => app.Type.Scheme.From("s3://bucket/key", context)).Throws<SchemeNotRegistered>();
+        var ex = await Assert.That(() => PLangPath.Resolve("s3://bucket/key", context)).Throws<SchemeNotRegistered>();
         await Assert.That(ex!.Scheme).IsEqualTo("s3");
     }
 
@@ -91,18 +92,15 @@ public class SchemeRegistryTests
     {
         var (a, _) = MakeApp();
         var (b, ctxB) = MakeApp();
-        a.Type.Scheme.Register("zzz", (raw, c) => new FilePath(raw));
-        await Assert.That(a.Type.Scheme.IsRegistered("zzz")).IsTrue();
-        await Assert.That(b.Type.Scheme.IsRegistered("zzz")).IsFalse();
-        await Assert.That(() => b.Type.Scheme.From("zzz://x", ctxB)).Throws<SchemeNotRegistered>();
+        a.Type.Kind.Add(new SchemeKind("zzz", (raw, c) => new FilePath(raw)));
+        await Assert.That(a.Type.Kind["zzz"] is SchemeKind).IsTrue();
+        await Assert.That(b.Type.Kind["zzz"] is SchemeKind).IsFalse();
+        await Assert.That(() => PLangPath.Resolve("zzz://x", ctxB)).Throws<SchemeNotRegistered>();
     }
 
-    [Test] public async Task SchemeRegistry_ExposedAt_AppTypesScheme()
+    [Test] public async Task BuiltInSchemes_AreKindsOfTheApp()
     {
         var (app, _) = MakeApp();
-        var r1 = app.Type.Scheme;
-        var r2 = app.Type.Scheme;
-        await Assert.That(r1).IsNotNull();
-        await Assert.That(object.ReferenceEquals(r1, r2)).IsTrue();
+        await Assert.That(app.Type.Kind["file"] is SchemeKind).IsTrue();
     }
 }

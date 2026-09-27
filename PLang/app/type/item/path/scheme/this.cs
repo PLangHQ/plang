@@ -1,65 +1,27 @@
-using System.Collections.Concurrent;
-
 namespace app.type.item.path.scheme;
 
 /// <summary>
-/// Per-App scheme registry. Maps scheme name ("file", "http", "https", …) to
-/// a factory that mints the corresponding <see cref="Path"/> subclass.
+/// A path scheme ("file", "http", "https", …) — a kind of path, holding the factory that mints the
+/// corresponding <see cref="global::app.type.item.path.@this"/> subclass. Added to the app's kinds
+/// at App construction (built-in file/http/https); an assembly loaded via <c>code.load</c> adds its
+/// own. Per-App, so multi-App test harnesses add different schemes per App without bleed.
 /// </summary>
-/// <remarks>
-/// <para>
-/// Registry is per-App, not static — multi-App test harnesses register
-/// different schemes per App without bleed. Internal store is a
-/// <see cref="ConcurrentDictionary{TKey,TValue}"/> so reads are lock-free
-/// and registrations are atomic.
-/// </para>
-/// <para>
-/// Bare paths (no <c>scheme://</c> prefix) default to the <c>file</c>
-/// factory. Unknown schemes throw <see cref="SchemeNotRegistered"/>;
-/// callers (PLang type-mapper) translate it into <c>data.@this.Fail</c>.
-/// </para>
-/// </remarks>
-public sealed class @this
+public sealed class @this : global::app.type.kind.@this
 {
-    private readonly ConcurrentDictionary<string, Func<string, actor.context.@this, global::app.type.item.path.@this>> _factories
-        = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Func<string, actor.context.@this, global::app.type.item.path.@this> _factory;
 
-    /// <summary>
-    /// Registers (or replaces) the factory for <paramref name="scheme"/>.
-    /// Scheme names are case-insensitive ("HTTP" and "http" collapse).
-    /// </summary>
-    public void Register(string scheme, Func<string, actor.context.@this, global::app.type.item.path.@this> factory)
+    public @this(string scheme, Func<string, actor.context.@this, global::app.type.item.path.@this> factory,
+        actor.context.@this? context = null) : base(scheme.ToLowerInvariant(), context)
     {
         ArgumentException.ThrowIfNullOrEmpty(scheme);
-        ArgumentNullException.ThrowIfNull(factory);
-        _factories[scheme] = factory;
+        _factory = factory ?? throw new ArgumentNullException(nameof(factory));
     }
 
-    /// <summary>
-    /// True when <paramref name="scheme"/> has a registered factory.
-    /// </summary>
-    public bool IsRegistered(string scheme) => _factories.ContainsKey(scheme);
+    /// <summary>A scheme is a kind of path.</summary>
+    protected internal override string Owner => "path";
 
-    /// <summary>
-    /// Constructs a Path from a raw string. Bare paths route to the
-    /// <c>file</c> factory. Unknown schemes throw <see cref="SchemeNotRegistered"/>.
-    /// </summary>
-    public global::app.type.item.path.@this From(string raw, actor.context.@this context)
-    {
-        ArgumentNullException.ThrowIfNull(raw);
-        ArgumentNullException.ThrowIfNull(context);
-
-        var scheme = ParseScheme(raw);
-        if (scheme.Length == 0)
-        {
-            if (_factories.TryGetValue("file", out var fileFactory))
-                return fileFactory(raw, context);
-            throw new SchemeNotRegistered("file");
-        }
-        if (_factories.TryGetValue(scheme, out var factory))
-            return factory(raw, context);
-        throw new SchemeNotRegistered(scheme);
-    }
+    /// <summary>The path <paramref name="raw"/> names under this scheme.</summary>
+    public global::app.type.item.path.@this Create(string raw, actor.context.@this context) => _factory(raw, context);
 
     /// <summary>
     /// Returns the scheme portion of <paramref name="raw"/> (everything
@@ -81,9 +43,8 @@ public sealed class @this
 }
 
 /// <summary>
-/// Thrown by <see cref="@this.From"/> when no factory is registered for the
-/// requested scheme. The PLang type-mapper catches it and shapes it as
-/// <c>data.@this.Fail</c>.
+/// Thrown when a raw path names a scheme that is not one of the app's path kinds. The PLang
+/// type-mapper catches it and shapes it as <c>data.@this.Fail</c>.
 /// </summary>
 public sealed class SchemeNotRegistered : Exception
 {

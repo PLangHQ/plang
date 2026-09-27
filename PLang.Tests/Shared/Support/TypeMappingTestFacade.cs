@@ -20,8 +20,18 @@ internal static class TypeMapping
     public static void Register(string plangName, System.Type clrType) => _app.Type.Add(clrType, _app.User.Context, plangName);
 
     /// <summary>The options of the closed set <paramref name="type"/> draws from, or null when it has none.</summary>
+    /// A nullable, a <c>data&lt;T&gt;</c> or a <c>choice&lt;T&gt;</c> reads through to the set it holds.
     public static IReadOnlyList<string>? Values(System.Type type)
-        => _app.Type.Choice.Contains(type) ? _app.Type.Choice[type].Values : null;
+    {
+        var held = System.Nullable.GetUnderlyingType(type) ?? type;
+        if (held.IsGenericType && held.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+            held = held.GetGenericArguments()[0];
+        if (held.IsGenericType && held.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>))
+            held = held.GetGenericArguments()[0];
+        var closed = held.IsEnum || held.GetMethod("Choices", System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy) != null;
+        return closed && new global::app.type.item.choice.set.@this(held) is { IsClosed: true } set ? set.Values : null;
+    }
 
 
     public static List<global::app.type.@this> BuildTypeEntries(global::app.module.list.@this? modules)

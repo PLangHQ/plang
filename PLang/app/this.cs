@@ -285,13 +285,14 @@ public sealed partial class @this : IAsyncDisposable
 
         Code.RegisterDefaults();
         // Closed sets (choice<T>: operator, httpmethod, …) surface only through handler params
-        // and enum choices carry no [Choices] marker, so the choice registry discovers them by
-        // scanning the assembly's choice<T> usages — reverse-resolvable ("operator" → choice<T>)
-        // + readable. code.load re-runs this for a late-loaded assembly (Discover below).
-        Type.Choice.Register(typeof(global::app.@this).Assembly);
-        Type.Scheme.Register("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context));
-        Type.Scheme.Register("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context));
-        Type.Scheme.Register("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context));
+        // and enum choices carry no [Choices] marker, so choice's kinds are found by scanning the
+        // assembly's choice<T> usages — reverse-resolvable ("operator" → choice<T>) + readable.
+        // code.load re-runs this for a late-loaded assembly (Discover below).
+        Type.Kind.Add(typeof(global::app.@this).Assembly);
+        // path's schemes, each a kind of path that builds its own path subclass.
+        Type.Kind.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
+        Type.Kind.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        Type.Kind.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child

@@ -491,9 +491,9 @@ public sealed class @this : item.@this, item.IMatch<@this>
 
         var example = Declared<string>("Example");
         var description = Declared<string>("Description");
-        if (types.Choice.Contains(clr))
+        if (new global::app.type.item.choice.set.@this(clr) is { IsClosed: true } set)
         {
-            Values = types.Choice[clr].Values;
+            Values = set.Values;
             Description = description;
             Example = example;
             return;

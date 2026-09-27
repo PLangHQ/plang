@@ -26,30 +26,14 @@ public sealed partial class @this
         Kind = new kind.list.@this(context);   // per-App, born with context → its kinds are stamped
     }
 
-    public @this()
-    {
-        Choice = new global::app.type.item.choice.list.@this(this);
-    }
-
-    /// <summary>The choice registry — the closed-set vocabulary. Owns discovering closed sets
-    /// and registering each set's name + reader. Reachable as <c>app.type.choice</c>.</summary>
-    public global::app.type.item.choice.list.@this Choice { get; }
+    public @this() { }
 
     /// <summary>
-    /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
-    /// construction with built-in factories (<c>"file"</c>; later <c>"http"</c>
-    /// and <c>"https"</c>). External DLLs loaded via <c>code.load</c> add their
-    /// own schemes via <see cref="global::app.type.item.path.scheme.@this.Register"/>.
+    /// The kinds: every kind class (json, list, dict, <c>*</c>, number's precisions, hash's
+    /// algorithms), the kinds added as instances (choice's closed sets, path's schemes), and the
+    /// formats. A kind knows the type it is a kind of.
     /// </summary>
-    public global::app.type.item.path.scheme.@this Scheme { get; } = new();
-
-    /// <summary>
-    /// The singleton store of kind behaviors (navigate / enumerate / load / convert), one
-    /// <see cref="kind.behavior.@this"/> per format. INTERNAL plumbing — reached only
-    /// through the kind token (<c>value.Kind.Navigate(…)</c>), never a flat
-    /// <c>App.Type.&lt;plural&gt;</c>.
-    /// </summary>
-    internal kind.list.@this Kind { get; private set; } = new(null);
+    public kind.list.@this Kind { get; private set; } = new(null);
 
     /// <summary>
     /// Per-(type, format) renderer table. Vestigial now that a value renders
@@ -125,7 +109,7 @@ public sealed partial class @this
                 Alias = entry.Alias,
                 Owned = entry.Owned,
                 Property = entry.Property,
-                Values = entry.Name == "choice" && kind != null && Choice.Contains(kind) ? Choice[kind].Values : entry.Values,
+                Values = kind != null && Kind[kind] is global::app.type.item.choice.set.@this set ? set.Values : entry.Values,
                 Shape = entry.Shape,
                 ConstructorSignature = entry.ConstructorSignature,
                 Example = entry.Example,
@@ -219,7 +203,7 @@ public sealed partial class @this
         if (Array.Find(types, t => t.Owned.Any(o => !o.Assignable && o.Clr == type)) is { } owner)
             return (owner.Name, null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-            return ("choice", Choice[type].Name);
+            return ("choice", new global::app.type.item.choice.set.@this(type.GetGenericArguments()[0]).Name);
         if (typeof(app.type.item.@this).IsAssignableFrom(type)
             && (Array.Find(types, t => t.ClrType == type)?.Name ?? FamilyName(type)) is { } declared)
             return (declared, null);

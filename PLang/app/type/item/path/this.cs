@@ -88,7 +88,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public static @this? Create(object? value) => value as @this;
 
     /// <summary>The ICreate courier face — a <c>path</c> passes through; a string builds a scheme
-    /// path via <c>Scheme.From</c> (uses <c>data.Context</c>); a wrong type or an unregistered
+    /// path via <see cref="Resolve"/> (uses <c>data.Context</c>); a wrong type or an unregistered
     /// scheme declines with the reason on <paramref name="data"/>.</summary>
     public static @this? Create(object? value, global::app.data.@this data)
     {
@@ -98,11 +98,11 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             data.Fail(new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
             return null;
         }
-        try { return data.Context.App.Type.Scheme.From(raw, data.Context); }
+        try { return Resolve(raw, data.Context); }
         catch (scheme.SchemeNotRegistered snr)
         {
             data.Fail(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
-                { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path." });
+                { FixSuggestion = $"Add a path kind for scheme '{snr.Scheme}' (app.Type.Kind.Add(new path.scheme.@this(…))), or use a bare/file:// path." });
             return null;
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
@@ -137,15 +137,19 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     /// <summary>
-    /// Source generator convention — auto-wraps string parameters. Routes
-    /// through the per-App scheme registry so the right subclass is built
-    /// (file → FilePath, http → HttpPath, ...). Bare paths default to file.
+    /// Source generator convention — auto-wraps string parameters. The raw path's scheme is one
+    /// of path's kinds, which builds the right subclass (file → FilePath, http → HttpPath, ...).
+    /// Bare paths are file. A scheme that is not one of path's kinds throws
+    /// <see cref="scheme.SchemeNotRegistered"/>.
     /// </summary>
     public static @this Resolve(string rawPath, actor.context.@this context)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
-        return context.App.Type.Scheme.From(rawPath, context);
+        var name = scheme.@this.ParseScheme(rawPath) is { Length: > 0 } s ? s : "file";
+        return context.App.Type.Kind[name] is scheme.@this kind
+            ? kind.Create(rawPath, context)
+            : throw new scheme.SchemeNotRegistered(name);
     }
 
     // --- Path properties ---

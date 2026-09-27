@@ -25,15 +25,61 @@ public sealed class @this
         = new(System.StringComparer.OrdinalIgnoreCase);
     private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, global::app.type.kind.@this> _byClr
         = new();
+    // Kinds that are instances, not classes of their own: closed sets (choice), path schemes.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.type.kind.@this> _added
+        = new(System.StringComparer.OrdinalIgnoreCase);
 
     public @this(global::app.actor.context.@this? context) => _context = context;
 
-    /// <summary>The kind for a name or alias — a known name → its subclass; an unknown name → a
-    /// base instance carrying the name (the defaults are its behavior). Never null.</summary>
+    /// <summary>The kind for a name or alias — a kind class; else a kind added as an instance; else
+    /// a base instance carrying the name (the defaults are its behavior). Never null.</summary>
     public global::app.type.kind.@this this[string name]
-        => _shared[name] is { } t
-            ? _byClr.GetOrAdd(t, Mint)
+        => _shared[name] is { } t ? _byClr.GetOrAdd(t, Mint)
+            : _added.TryGetValue(name, out var added) ? added
             : _byName.GetOrAdd(name, n => new global::app.type.kind.@this(n, _context));
+
+    /// <summary>Adds a kind that is an instance rather than a class of its own — a closed set, a
+    /// path scheme. A second kind under the same name replaces the first.</summary>
+    public void Add(global::app.type.kind.@this kind)
+    {
+        _added[kind.Name] = kind;
+        foreach (var alias in kind.Alias) _added[alias] = kind;
+    }
+
+    /// <summary>
+    /// Adds the closed sets every <c>choice&lt;T&gt;</c> in <paramref name="assembly"/> draws on, each a
+    /// kind of choice with its reader. A set is only identifiable by its usage, so this reflects the
+    /// assembly's property types; it runs when an assembly is discovered (boot, <c>code.load</c>).
+    /// </summary>
+    public void Add(Assembly assembly)
+    {
+        var seen = new System.Collections.Generic.HashSet<System.Type>();
+        foreach (var t in SafeTypes(assembly))
+            foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var held = System.Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                if (held.IsGenericType && held.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                    held = held.GetGenericArguments()[0];
+                if (!held.IsGenericType || held.GetGenericTypeDefinition() != typeof(global::app.type.item.choice.@this<>)
+                    || !seen.Add(held)) continue;
+                var inner = held.GetGenericArguments()[0];
+                var set = new global::app.type.item.choice.set.@this(inner, _context);
+                if (!set.IsClosed)
+                    throw new System.InvalidOperationException($"{inner.FullName} is not a closed set — no enum members, no Choices(context?).");
+                Add(set);
+                // the closed reader for this set — one reflective instantiation, then typed reads.
+                _context!.App.Type.Reader.Register("choice", set.Name,
+                    (global::app.type.reader.ITypeReader)System.Activator.CreateInstance(
+                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), set.Name)!);
+            }
+    }
+
+    // A code.load'd assembly may reference types it can't fully load; keep the ones that resolve.
+    private static System.Collections.Generic.IEnumerable<System.Type> SafeTypes(Assembly assembly)
+    {
+        try { return assembly.GetTypes(); }
+        catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null)!; }
+    }
 
     /// <summary>The kind a host object of <paramref name="clrType"/> is — a claimed CLR form
     /// (exact wins, then assignable: <c>JsonElement</c>→json, <c>IList</c>→list, <c>IDictionary</c>
@@ -50,6 +96,9 @@ public sealed class @this
             var seen = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var t in _shared.Of(type.Name))
                 if (_byClr.GetOrAdd(t, Mint) is var kind && seen.Add(kind.Name)) yield return kind;
+            foreach (var added in _added.Values)
+                if (string.Equals(added.Owner, type.Name, System.StringComparison.OrdinalIgnoreCase) && seen.Add(added.Name))
+                    yield return added;
             if (_context?.App.Format.KindsByFamily() is { } families && families.TryGetValue(type.Name, out var formats))
                 foreach (var name in formats)
                     if (seen.Add(name)) yield return this[name];
@@ -70,9 +119,12 @@ public sealed class @this
 
         public Discovered(Assembly assembly)
         {
+            // A kind class is born from the context alone; a kind that is an instance (a closed set,
+            // a path scheme) is added to its app's kinds, not discovered.
             foreach (var t in assembly.GetTypes())
                 if (typeof(global::app.type.kind.@this).IsAssignableFrom(t)
-                    && t is { IsAbstract: false } && t != typeof(global::app.type.kind.@this))
+                    && t is { IsAbstract: false } && t != typeof(global::app.type.kind.@this)
+                    && t.GetConstructor([typeof(global::app.actor.context.@this)]) != null)
                 {
                     var probe = (global::app.type.kind.@this)System.Activator.CreateInstance(t, new object?[] { null })!;
                     _byName[probe.Name] = t;

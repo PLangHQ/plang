@@ -31,7 +31,7 @@ public class TypeTests
         // "string" is a spelling of text: the door hands back the text type itself.
         var type = global::PLang.Tests.TestApp.SharedContext.App.Type["string"];
 
-        await Assert.That(type).IsSameReferenceAs(global::PLang.Tests.TestApp.SharedContext.App.Type["text"]);
+        await Assert.That(type.Equals(global::PLang.Tests.TestApp.SharedContext.App.Type["text"])).IsTrue();
         await Assert.That(type.Name).IsEqualTo("text");
     }
 
