@@ -1,41 +1,35 @@
 # coder — app-systems
 
-**Version:** v4
+**Version:** v5
 
 ## What this is
 app-systems makes every `app.X` the type X (a generic `type<X>` over its concept's `list<X>`), so the
 plang path, the C# path and the file path agree. The architect's plan
-(`.bot/app-systems/architect/plan.md`) lays it out in 13 stages.
-- v1: plan review and stage 0.
-- v2: stage 1 (`Start`).
-- v3: stage 3 (one set of types).
-- v4: stage 4 (the collected type).
+(`.bot/app-systems/architect/plan.md`) lays it out in 13 stages. v1–v4 covered stages 0, 1, 3 and 4;
+v5 is stage 5, faces and honest facts.
 
 ## What was done
-- **v1–v3**: see `v1/result.md`, `v2/plan.md`, `v3/result.md`.
-- **v4, stage 4** (details, commits and decisions in `v4/result.md`):
-  - `item.history`.
-  - Strict `list<T>`.
-  - `type<T, L>` with `list`, `Get(key)` (async, 404 on a miss) and `current(context)`; `IMatch`/`ICurrent`/`IList`.
-  - The types are a `list<type>` behind one `Admit` guard, holding no context.
-  - Kinds live on their types.
-  - `app.type` is the type named `type` (`%!app.type%`), its `list` the types.
-  - Programmer-written type names ask `await app.type.Get`.
-- **Results:** six suites at or under the baseline, prompt twins byte-equal, `plang --test` unchanged, no timing regression.
-- **Next:** stage 5, faces and honest facts. Trace first.
+- **v1–v4:** see `v1/result.md` … `v4/result.md`.
+- **v5, stage 5** (details, commits, the eval and the decisions in `v5/result.md`):
+  - Every type has a real description and example (one eval run: 58/58 on the golden goals).
+  - A type written out shows its face (Out view only); type slots stay the identity.
+  - The obsolete view is gone.
+  - `goal.Comment` is the one description, and the hash covers comments.
+  - 342 goal files put the description above the name, with the `.pr` re-saved (comment and hash only).
+  - The cache merge now counts a folded body as cached.
+  - `start.md` docs.
+- **Results:** six suites at or under the baseline, twins equal, `plang --test` 7/0/317.
+- **Waiting on Ingi:** the kind faces. A kind needs to become navigable; the cost is in `v5/plan.md`.
+- **Next:** stage 6, the reference (the variable parser, `"variable"` lists in the `.pr`). Trace first.
 
 ## Code example
-The app's types, as C# reaches them:
+A type's face, and the identity every other view keeps:
 ```csharp
-// app/this.cs
-public global::app.type.@this<global::app.type.@this, global::app.type.list.@this> type { get; }
-type = new(this);
-type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
-
-// a name the programmer wrote — a miss is a result, not a throw
-var named = await context.App.type.Get(typeName);
-if (!named.Success) return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
-
-// a lookup by another key, on the list
-var type = context.App.type.list.Mime(mime, context);
+// type/this.cs
+public override async ValueTask Output(IWriter writer, View mode, actor.context.@this? context)
+{
+    if (mode != View.Out || context == null) { Write(writer); return; }   // the identity
+    var full = context.App.type.list[this, context];
+    // name, description, example, alias, kind names …
+}
 ```

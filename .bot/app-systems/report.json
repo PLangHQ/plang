@@ -210,6 +210,53 @@
         "health": "six suites at or under baseline (Types 17, Data 44); prompt twins byte-equal; plang --test 7/0/317; no timing regression",
         "notes": "next: stage 5 trace"
       }
+    },
+    {
+      "id": "5c1e9a3d-7b2f-4e60-a8d4-2f6b1c9e0a57",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T07:10:00Z",
+      "timestamp_end": "2026-09-27T09:30:00Z",
+      "intent": "Stage 5: faces and honest facts — trace, one eval, goal descriptions above names",
+      "before": {
+        "assumptions": "facts change prompt C's text (one eval run); a comment move re-saves .pr with every step cached",
+        "risk": "the face leaking onto the wire; steps re-asking the decider on re-save"
+      },
+      "plan": ".bot/app-systems/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/type/item/", "PLang/app/variable/this.cs", "PLang/app/goal/", "tools/decider/build_pr.py", "PLang.Tests/Wire/App/Decider/pick_golden.json"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "honest facts; python twin finds a type's class anywhere; one eval (58/58 golden; builder 11/12, 1 refused on a dict literal)"
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/this.Generic.cs", "PLang/app/data/this.Output.cs", "PLang/app/type/property/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "faces in the Out view; type slots written with Write (identity) in every view; Internal on wire and clr"
+        },
+        {
+          "paths": ["PLang/app/type/list/view/", "PLang/app/goal/this.cs", "PLang/app/goal/serializer/Reader.cs", "PLang/app/module/action/build/code/Default.cs"],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "view/BuildTypeEntries/module Schema gone; goal.Description gone; hash covers comments; cache merge counts folded bodies"
+        },
+        {
+          "paths": ["os/", "Tests/", "start.md", "PLang/start.md", "PlangConsole/start.md", "Skill/start.md", "tools/decider/start.md", "Documentation/v0.2/goals-steps.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "342 goal files: description above the name (os by hand, Tests by two agents); .pr re-saved comment/hash only; start.md docs and pairs"
+        }
+      ],
+      "after": {
+        "status": "stage 5 done and pushed except the kind faces (waiting on Ingi)",
+        "health": "six suites at or under baseline; twins equal; plang --test 7/0/317",
+        "notes": "next: stage 6 trace"
+      }
     }
   ]
 }

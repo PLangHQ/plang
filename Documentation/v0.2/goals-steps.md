@@ -13,14 +13,13 @@ These are the three entity types that form the execution model. Each is a **seal
 | Property | Type | Stored | Description |
 |----------|------|--------|-------------|
 | `Name` | `string` | Yes | Goal name (from file heading) |
-| `Description` | `string?` | Yes | Optional description |
-| `Comment` | `string?` | Yes | Builder comment |
+| `Comment` | `string?` | Yes | The goal's description: the comment lines written above its name |
 | `Steps` | `Steps` | Yes | Ordered step collection |
 | `SubGoals` | `List<string>` | Yes | Referenced sub-goal names |
 | `Visibility` | `Visibility` | Yes | `Private` (0) or `Public` (1) |
 | `Path` | `string?` | Yes | Relative path to `.goal` file |
 | `PrPath` | `string?` | Yes | Computed from `Path` (inserts `.build/`, lowercases, `.pr` extension) |
-| `Hash` | `string?` | Yes | Content hash for change detection |
+| `Hash` | `string?` | Yes | Hash of the source as written, comments included (a comment-only change re-saves the `.pr`, every step still cached) |
 | `IsSetup` | `bool` | Yes | Runs during setup phase |
 | `IsEvent` | `bool` | Yes | This goal is an event handler |
 | `InputParameters` | `Dictionary<string, string>?` | Yes | Named input parameters |
@@ -30,6 +29,21 @@ These are the three entity types that form the execution model. Each is a **seal
 | `Errors` | `List<Info>` | Yes | Build errors |
 | `Warnings` | `List<Info>` | Yes | Build warnings |
 | `FullPath` | `string` | No | Computed: `Parent.FullPath/Name` |
+
+### Comments say what the next line does
+
+A comment line (`/ …`) belongs to the code line right under it. A goal's description goes above
+its name; a step's comment goes above the step:
+
+```plang
+/ Shows the greeting, then logs that it did.
+Show
+/ the user sees this
+- write out "hello"
+- log "greeted"
+```
+
+Lines written under the goal's name are the first step's comment, not the goal's description.
 
 ### PrPath Computation
 
@@ -91,7 +105,7 @@ static Goal NotFound(string name)
 | `Text` | `string` | Yes | The PLang step text |
 | `LineNumber` | `int` | Yes | Line in source file |
 | `Indent` | `int` | Yes | Indentation level |
-| `Comment` | `string?` | Yes | Builder comment |
+| `Comment` | `string?` | Yes | The comment lines written above the step |
 | `Actions` | `Actions` | Yes | Action bindings for this step |
 | `Hash` | `string?` | Yes | Content hash |
 | `Intent` | `string?` | Yes | LLM-inferred intent |
