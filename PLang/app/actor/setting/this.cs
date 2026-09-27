@@ -114,18 +114,19 @@ public sealed class @this
         }
     }
 
-    /// <summary>Stores <paramref name="value"/> — a setting whole, or an action — as the row for
-    /// <paramref name="path"/> of the actor this scope belongs to.</summary>
-    public async ValueTask<data.@this> Save(string path, data.@this value)
+    /// <summary>Stores <paramref name="setting"/> whole as the row, under its own path, of the actor this
+    /// scope belongs to.</summary>
+    public async ValueTask<data.@this> Save(global::app.type.item.setting.@this setting)
     {
+        var path = setting.Path;
         // a node that leads to settings (%!http%, %!llm.query%) is no class: its row could not be read back
-        if (value.Peek() is global::app.type.item.setting.@this { } setting && Class(setting.Path) == null)
+        if (Class(path) == null)
             return _context.Error(new global::app.error.Error(
-                $"'{setting.Path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
+                $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
         var owner = Owner;
         // rows that could not be read are never written over
         if (await owner.Load() is { Success: false } unread) return unread;
-        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", value.Peek(), value.Type, context: _context);
+        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", setting, context: _context);
         var stored = await (await _context.App.store).Set(Table, row.Name, row);
         if (!stored.Success) return stored;
         owner._held![path] = row;
@@ -133,10 +134,11 @@ public sealed class @this
         return row;
     }
 
-    /// <summary>Deletes the actor's row for <paramref name="path"/> — back to the system's row, or the
+    /// <summary>Deletes the actor's row for <paramref name="setting"/> — back to the system's row, or the
     /// defaults.</summary>
-    public async ValueTask<data.@this> Remove(string path)
+    public async ValueTask<data.@this> Remove(global::app.type.item.setting.@this setting)
     {
+        var path = setting.Path;
         var owner = Owner;
         if (await owner.Load() is { Success: false } unread) return unread;
         var removed = await (await _context.App.store).Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");

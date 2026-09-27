@@ -125,7 +125,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     private async Task<global::app.data.@this> Save(setting.@this setting, List<Grant> grants)
     {
         setting.Grant = new global::app.type.item.list.@this<Grant>(grants);
-        return await _actor.Setting.Save(setting.Path, new global::app.data.@this(setting.Path, setting, context: _actor.Context));
+        return await _actor.Setting.Save(setting);
     }
 
     private async Task<bool> TryCover(global::app.data.@this grantData, Grant request)

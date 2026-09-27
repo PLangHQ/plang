@@ -248,7 +248,7 @@ public sealed class Default : IIdentity
     private async Task<data.@this> Store(IContext action, setting.@this setting, List<Identity> identities)
     {
         setting.Identity = new global::app.type.item.list.@this<Identity>(identities);
-        return await action.Context.App.System.Setting.Save(setting.Path, new data.@this(setting.Path, setting, context: action.Context));
+        return await action.Context.App.System.Setting.Save(setting);
     }
 
     /// <summary>

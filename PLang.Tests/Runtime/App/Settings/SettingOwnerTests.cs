@@ -76,7 +76,7 @@ public class SettingOwnerTests
             await using (var first = new global::app.@this(dir))
             {
                 var saved = new global::app.test.setting.@this { TimeoutSeconds = 7 };
-                await (await first.System.Setting.Save("app.test.setting", new global::app.data.@this("s", saved, context: first.System.Context))).IsSuccess();
+                await (await first.System.Setting.Save(saved)).IsSuccess();
             }
 
             await using var app = new global::app.@this(dir);

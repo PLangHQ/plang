@@ -10,5 +10,5 @@ public partial class Remove : IContext
     public partial data.@this<global::app.type.item.setting.@this> Setting { get; init; }
 
     public async Task<data.@this> Start()
-        => await Context.Setting.Remove((await Setting.Value())!.Path) is { Success: false } failed ? failed : Context.Ok();
+        => await Context.Setting.Remove((await Setting.Value())!) is { Success: false } failed ? failed : Context.Ok();
 }

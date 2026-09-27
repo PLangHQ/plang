@@ -13,5 +13,5 @@ public partial class Save : IContext
     /// <summary>Returns no value — a setting may hold secrets (an identity's keys), and a result would
     /// carry them onto %!data%, the debug output and the wire.</summary>
     public async Task<data.@this> Start()
-        => await Context.Setting.Save((await Setting.Value())!.Path, Setting) is { Success: false } failed ? failed : Context.Ok();
+        => await Context.Setting.Save((await Setting.Value())!) is { Success: false } failed ? failed : Context.Ok();
 }

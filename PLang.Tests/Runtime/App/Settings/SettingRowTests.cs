@@ -32,7 +32,7 @@ public class SettingRowTests
     {
         var setting = (global::app.goal.list.setting.@this)(await Read("%!app.goal.list.setting%", actor.Context)).Peek()!;
         setting.Os = os;
-        var saved = await actor.Setting.Save("app.goal.list.setting", new global::app.data.@this("s", setting, context: actor.Context));
+        var saved = await actor.Setting.Save(setting);
         await saved.IsSuccess();
     }
 
@@ -66,7 +66,7 @@ public class SettingRowTests
             var setting = app.User.Setting.Of<global::app.goal.list.setting.@this>();
             setting.Visibility = new global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>(
                 new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private });
-            await (await app.User.Setting.Save(setting.Path, new global::app.data.@this("s", setting, context: app.User.Context))).IsSuccess();
+            await (await app.User.Setting.Save(setting)).IsSuccess();
         }
 
         await using var again = new global::app.@this(_dir);
@@ -82,7 +82,7 @@ public class SettingRowTests
             var setting = app.User.Setting.Of<global::app.test.setting.@this>();
             setting.Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
                 new global::app.type.item.text.@this[] { "smoke", "fast" });
-            await (await app.User.Setting.Save(setting.Path, new global::app.data.@this("s", setting, context: app.User.Context))).IsSuccess();
+            await (await app.User.Setting.Save(setting)).IsSuccess();
         }
 
         await using var again = new global::app.@this(_dir);
@@ -116,7 +116,7 @@ public class SettingRowTests
     {
         await using var app = TestApp.Create(_dir);
         await Save(app.User, os: false);
-        await (await app.User.Setting.Remove("app.goal.list.setting")).IsSuccess();
+        await (await app.User.Setting.Remove(app.User.Setting.Of<global::app.goal.list.setting.@this>())).IsSuccess();
         await Assert.That(await Os(app.User.Context)).IsEqualTo("true");
     }
 
@@ -126,7 +126,7 @@ public class SettingRowTests
         await using var app = TestApp.Create(_dir);
         var llm = (global::app.module.action.llm.setting.@this)(await Read("%!llm%", app.User.Context)).Peek()!;
         llm.Cache = false;
-        await (await app.User.Setting.Save("llm", new global::app.data.@this("s", llm, context: app.User.Context))).IsSuccess();
+        await (await app.User.Setting.Save(llm)).IsSuccess();
 
         var seam = await app.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");
         await Assert.That((await seam.Value())?.ToString()).IsEqualTo("false");
