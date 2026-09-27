@@ -448,7 +448,7 @@ WHOLE = ('has no entry', 'is extra', 'is labelled', 'has no index', 'is not an o
 
 def check(goal, picks, parsed):
     """(whole-answer refusals, {step: refusals}, warnings) of a parsed formal answer {i: rows}.
-    Whole: the answer doesn't line up with the goal (a step missing, extra, renumbered). Per step:
+    Whole: the answer doesn't line up with the goal (an extra or renumbered entry). Per step: no entry,
     no actions, the chain rule, a body over indented steps that isn't a copy (fold), the agreement
     with the decider, a %variable% of the step's text missing from its answer. Nulls on optional
     properties are dropped first."""
@@ -456,8 +456,10 @@ def check(goal, picks, parsed):
     for rows in parsed.values(): drop_nulls(rows); drop_defaults(rows)
     per_step = fold(goal, parsed)
     steps = goal['steps']
-    whole = [f'step {i} ("{steps[i]["text"]}") has no entry' for i in range(len(steps)) if i not in parsed]
-    whole += [f'entry {i} is extra: the goal has {len(steps)} steps' for i in parsed if i >= len(steps)]
+    # a step the answer leaves out is that step's refusal, as step.list.Read has it — the others stand
+    for i in range(len(steps)):
+        if i not in parsed: per_step.setdefault(i, []).append(f'step {i} ("{steps[i]["text"]}") has no entry')
+    whole = [f'entry {i} is extra: the goal has {len(steps)} steps' for i in parsed if i >= len(steps)]
     warnings = []
     for i, rows in parsed.items():
         if i >= len(steps): continue

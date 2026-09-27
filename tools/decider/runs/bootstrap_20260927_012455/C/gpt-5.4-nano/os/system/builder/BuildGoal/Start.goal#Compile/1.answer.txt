@@ -1,0 +1,1 @@
+[0] condition.if(Left=%goal.Step.IsCached%) { goal.return() }
