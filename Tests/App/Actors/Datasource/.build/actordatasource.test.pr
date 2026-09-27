@@ -1,0 +1,208 @@
+{
+  "name": "Start",
+  "comment": "actor datasource: a setting saved as the actor's row, then removed",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %!app.goal.list.setting.os% = false",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!app.goal.list.setting.os%",
+              "variable": [
+                {
+                  "text": "%!app.goal.list.setting.os%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "list"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "os"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "save %!app.goal.list.setting%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "save",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!app.goal.list.setting%",
+              "variable": [
+                {
+                  "text": "%!app.goal.list.setting%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "list"
+                    },
+                    {
+                      "property": "setting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!app.goal.list.setting.os% is false",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.goal.list.setting.os%",
+              "variable": [
+                {
+                  "text": "%!app.goal.list.setting.os%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "list"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "os"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "remove %!app.goal.list.setting%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "remove",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!app.goal.list.setting%",
+              "variable": [
+                {
+                  "text": "%!app.goal.list.setting%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "list"
+                    },
+                    {
+                      "property": "setting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/App/Actors/Datasource/ActorDatasource.test.goal",
+  "prPath": "/App/Actors/Datasource/.build/actordatasource.test.pr",
+  "hash": "6e33c15d6cc36af6bdd513dde88f7a59a81f6e2e681ff95016fb1a08854bc312",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}
