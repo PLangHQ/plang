@@ -18,11 +18,17 @@ public class SettingsTests
         return new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
     }
 
+    // The action an option is read for — the settings build its keys from the module's and the action's names.
+    private static global::app.goal.step.action.@this Request(global::app.actor.setting.@this _)
+        => global::PLang.Tests.TestApp.SharedContext.App.Module("http")["request"]!;
+
+    private static global::app.goal.step.action.@this Query(EngineType engine) => engine.Module("llm")["query"]!;
+
     [Test]
     public async Task Get_Unset_IsNotFound()
     {
         var ctx = Ctx();
-        var d = await ctx.Setting.Get(new[] { "archive.max" });
+        var d = await ctx.Setting.Get(Request(ctx.Setting), "timeout");
         await Assert.That(d.IsInitialized).IsFalse();   // unset → NotFound → the seam falls to [Default]
     }
 
@@ -54,9 +60,9 @@ public class SettingsTests
     public async Task Set_ThenGet_ReturnsValue()
     {
         var ctx = Ctx();
-        await ctx.Setting.Set("archive.max", ctx.Ok(42L));
+        await ctx.Setting.Set("http.request.timeout", ctx.Ok(42L));
 
-        var d = await ctx.Setting.Get(new[] { "archive.max" });
+        var d = await ctx.Setting.Get(Request(ctx.Setting), "timeout");
         await Assert.That(d.IsInitialized).IsTrue();
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
     }
@@ -65,10 +71,10 @@ public class SettingsTests
     public async Task Child_InheritsParentSetting()
     {
         var parent = Ctx();
-        await parent.Setting.Set("archive.max", parent.Ok(50L));
+        await parent.Setting.Set("http.request.timeout", parent.Ok(50L));
 
         var child = parent.CreateChild();
-        var d = await child.Setting.Get(new[] { "archive.max" });
+        var d = await child.Setting.Get(Request(child.Setting), "timeout");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("50");
     }
 
@@ -76,26 +82,26 @@ public class SettingsTests
     public async Task Child_Shadows_ParentUnaffected()
     {
         var parent = Ctx();
-        await parent.Setting.Set("archive.max", parent.Ok(50L));
+        await parent.Setting.Set("http.request.timeout", parent.Ok(50L));
 
         var child = parent.CreateChild();
-        await child.Setting.Set("archive.max", child.Ok(10L));
+        await child.Setting.Set("http.request.timeout", child.Ok(10L));
 
-        await Assert.That((await (await child.Setting.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("10");
-        await Assert.That((await (await parent.Setting.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("50");
+        await Assert.That((await (await child.Setting.Get(Request(child.Setting), "timeout")).Value())?.ToString()).IsEqualTo("10");
+        await Assert.That((await (await parent.Setting.Get(Request(parent.Setting), "timeout")).Value())?.ToString()).IsEqualTo("50");
     }
 
     [Test]
     public async Task Clone_Isolates_Writes()
     {
         var ctx = Ctx();
-        await ctx.Setting.Set("archive.max", ctx.Ok(42L));
+        await ctx.Setting.Set("http.request.timeout", ctx.Ok(42L));
 
         var clone = ctx.Setting.Clone();
-        await clone.Set("archive.max", ctx.Ok(999L));
+        await clone.Set("http.request.timeout", ctx.Ok(999L));
 
-        await Assert.That((await (await clone.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("999");
-        await Assert.That((await (await ctx.Setting.Get(new[] { "archive.max" })).Value())?.ToString()).IsEqualTo("42");
+        await Assert.That((await (await clone.Get(Request(clone), "timeout")).Value())?.ToString()).IsEqualTo("999");
+        await Assert.That((await (await ctx.Setting.Get(Request(ctx.Setting), "timeout")).Value())?.ToString()).IsEqualTo("42");
     }
 
     // The user's settings fall back to the system's: a setting on the system reaches a user context.
@@ -105,7 +111,7 @@ public class SettingsTests
         var engine = new EngineType("/app");
         await engine.System.Setting.Set("llm.cache", engine.System.Context.Ok(false));
 
-        var read = await engine.User.Context.Setting.Get(new[] { "llm.cache" });
+        var read = await engine.User.Context.Setting.Get(Query(engine), "cache");
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
     }
 
@@ -116,7 +122,7 @@ public class SettingsTests
         var engine = new EngineType("/app");
         await engine.User.Setting.Set("llm.cache", engine.User.Context.Ok(false));
 
-        var read = await engine.System.Context.Setting.Get(new[] { "llm.cache" });
+        var read = await engine.System.Context.Setting.Get(Query(engine), "cache");
         await Assert.That(read.IsInitialized).IsFalse();
     }
 }

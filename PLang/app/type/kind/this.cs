@@ -43,6 +43,10 @@ public class @this
     /// this to bridge a raw host to its kind (exact wins, then assignable — <c>IList</c>→list).</summary>
     public virtual System.Type? ClrForm => null;
 
+    /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
+    /// <see cref="ClrForm"/> takes it.</summary>
+    public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
+
     /// <summary>The other names this kind answers to (<c>integer</c> for int).</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string> Alias => [];
 
@@ -70,21 +74,7 @@ public class @this
     /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
     /// <c>{number, long}</c>, … for a number kind; the formats that are text for a text kind.
     /// </summary>
-    public virtual list.@this list(actor.context.@this context)
-    {
-        // the type holds its kinds: its own kind (the empty one) answers
-        var owner = type(context);
-        return ReferenceEquals(owner.kind, this) ? Listed(owner.Name, [], context) : owner.kind.list(context);
-    }
-
-    /// <summary>The kinds <paramref name="held"/> and the formats of <paramref name="owner"/>'s family, each
-    /// as the full type it makes.</summary>
-    protected list.@this Listed(string owner, System.Collections.Generic.IEnumerable<string> held, actor.context.@this context)
-    {
-        var formats = context.App.Format.KindsByFamily().TryGetValue(owner, out var family) ? family : [];
-        return new(held.Concat(formats).Distinct(System.StringComparer.OrdinalIgnoreCase)
-            .Select(name => context.App.type.list[new global::app.type.@this(owner, name), context]));
-    }
+    public virtual list.@this list(actor.context.@this context) => type(context).kind.list(context);
 
     // --- Verbs: the kind owns what you can do with its values. Defaults here; kinds override. ---
 

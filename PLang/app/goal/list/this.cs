@@ -173,7 +173,15 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// </summary>
     internal override async IAsyncEnumerable<goal.@this> Every(global::app.type.item.dict.@this? setting = null)
     {
-        var wants = new setting.@this(setting);
+        // goal.list's setting as the system sees it (its defaults, a saved row, this run's), the call's own
+        // values on top through the one convert walk
+        var wants = App.System.Context.Setting.Of<setting.@this>();
+        if (setting != null)
+        {
+            var given = setting.KeyNames.ToDictionary(k => k, k => setting.Stored(k), StringComparer.OrdinalIgnoreCase);
+            var applied = App.System.Context.Setting.Apply(wants, given);
+            if (!applied.Success) throw new ArgumentException(applied.Error!.Message, nameof(setting));
+        }
         var held = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
         foreach (var goal in held)
             foreach (var one in wants.Of(goal)) yield return one;

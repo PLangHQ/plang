@@ -82,6 +82,16 @@ public class SettingReadTests
         }
     }
 
+    // Writing an option a setting doesn't have is an error result, not a crash.
+    [Test] public async Task UnknownOption_WriteIsAnError()
+    {
+        await using var app = TestApp.Create("/test");
+        var ctx = app.User.Context;
+        var set = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.foo%").Variable.Single()
+            .Set(new global::app.data.@this("foo", 1, context: ctx), ctx);
+        await set.IsFailure();
+    }
+
     // An action's option named like an action member (variable.set's Name) reads the option, not the action.
     [Test] public async Task ActionOption_NotTheActionsMember()
     {
@@ -108,6 +118,7 @@ public class SettingReadTests
     [Test] public async Task UnknownPath_IsNotFound()
     {
         await using var app = TestApp.Create("/test");
+        // a name that is no module's names no setting: unset, not an error
         var read = await Read("%!nothing.here%", app.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }

@@ -42,7 +42,14 @@ public partial class @this
         if (target is null)
             return _context?.NotFound(key) ?? this;
 
-        var written = await target.Set(key, isIndex, value, _context);
+        // A value that can't take this child says so (NotSupported) — the write answers that as an error,
+        // not a crash: `set %!app.goal.list.setting.foo% = 1` is a program's mistake.
+        global::app.type.item.@this written;
+        try { written = await target.Set(key, isIndex, value, _context); }
+        catch (System.NotSupportedException ex)
+        {
+            return _context?.Error(new global::app.error.Error(ex.Message, "CannotSetChild", 400)) ?? this;
+        }
         if (!ReferenceEquals(written, Peek())) SetValue(written);
         return this;
     }

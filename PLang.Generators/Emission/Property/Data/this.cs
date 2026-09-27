@@ -127,7 +127,7 @@ public sealed record @this(
     /// failure short-circuits Resolve with the prefixed error. The object initializer
     /// then binds <see cref="InitAssignment"/> onto the fresh instance.
     /// </summary>
-    public override void EmitResolveLocal(StringBuilder sb, string settingModule, string settingAction)
+    public override void EmitResolveLocal(StringBuilder sb)
     {
         if (IsPlainData)
         {
@@ -140,15 +140,10 @@ public sealed record @this(
             return;
         }
 
-        // An action param IS the innermost scope of a setting. When the step gives no value,
-        // resolve the %!module.action.param% (action key) then %!module.param% (module key)
-        // setting from the context.Setting up-walk, before falling to the [Default].
-        var actionKey = $"{settingModule}.{settingAction}.{ParamName}".ToLowerInvariant();
-        var moduleKey = $"{settingModule}.{ParamName}".ToLowerInvariant();
-        // The setting Get reads this run's value (context → parents → the actor's → the system's), then
-        // the actor's saved rows (the user's, then the system's); a set setting is an initialized Data, an
-        // unset one is NotFound (IsInitialized == false) → falls to [Default].
-        var settingGet = $"await context.Setting.Get(new[] {{ \"{actionKey}\", \"{moduleKey}\" }})";
+        // An action param IS the innermost scope of a setting. When the step gives no value, the
+        // settings answer this action's option (this run's, then the saved rows — the action's before the
+        // module's); a set setting is an initialized Data, an unset one is NotFound → falls on down.
+        var settingGet = $"await context.Setting.Get(action, \"{ParamName}\")";
 
         sb.AppendLine($"        {TypeName} {Local};");
         // A C#-composed Seed's SET value passes through untouched (no As<T> round-trip); only an

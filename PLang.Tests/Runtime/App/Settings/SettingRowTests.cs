@@ -85,7 +85,7 @@ public class SettingRowTests
         llm.Cache = false;
         await (await app.User.Setting.Save("llm", new global::app.data.@this("s", llm, context: app.User.Context))).IsSuccess();
 
-        var seam = await app.User.Context.Setting.Get(new[] { "llm.query.cache", "llm.cache" });
+        var seam = await app.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");
         await Assert.That((await seam.Value())?.ToString()).IsEqualTo("false");
         await Assert.That((await (await Read("%!llm.query.cache%", app.User.Context)).Value())?.ToString()).IsEqualTo("false");
     }

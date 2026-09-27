@@ -14,22 +14,6 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>> Visibility { get; set; }
         = new([(global::app.type.item.choice.@this<global::app.goal.Visibility>)global::app.goal.Visibility.Public]);
 
-    /// <summary>Every default.</summary>
-    public @this() { }
-
-    /// <summary>The call's dict read as this setting — each key it gives, the rest their defaults.</summary>
-    public @this(global::app.type.item.dict.@this? given)
-    {
-        if (given == null) return;
-        if (given.Has("os")) Os = given.Clr("os", typeof(bool)) is true;
-        if (!given.Has("visibility")) return;
-        var named = given.Stored("visibility") is global::app.type.item.list.@this many
-            ? many.Slots().Select(s => s?.ToString() ?? "")
-            : [given.Stored("visibility")?.ToString() ?? ""];
-        Visibility = new(named.Select(n => (global::app.type.item.@this)(global::app.type.item.choice.@this<global::app.goal.Visibility>)
-            System.Enum.Parse<global::app.goal.Visibility>(n, ignoreCase: true)));
-    }
-
     /// <summary>The goals of one file this setting lists: its public goal, the private ones under it,
     /// or both.</summary>
     internal IEnumerable<global::app.goal.@this> Of(global::app.goal.@this file)
@@ -39,6 +23,8 @@ public sealed class @this : global::app.type.item.setting.@this
             foreach (var sub in file.Child.Items()) yield return sub;
     }
 
+    // Each row compared by what it names — a row given as text (the call's "private") names it as a
+    // choice does; a re-tagged list converts its rows only when they are taken out.
     private bool Lists(global::app.goal.Visibility visibility)
-        => Visibility.Items().Any(v => Equals(v.Value, visibility));
+        => Visibility.Slots().Any(v => string.Equals(v?.ToString(), visibility.ToString(), System.StringComparison.OrdinalIgnoreCase));
 }

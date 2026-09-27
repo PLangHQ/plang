@@ -17,7 +17,7 @@ public sealed class @this : global::app.type.item.setting.@this
     {
         if (_action.Property.FirstOrDefault(p => string.Equals(p.Name, key, System.StringComparison.OrdinalIgnoreCase)) is not { } option)
             return parent.Context.NotFound(key);
-        var set = await parent.Context.Setting.Get([$"{Path}.{option.Name}", $"{_action.Module.Name}.{option.Name}"]);
+        var set = await parent.Context.Setting.Get(_action, option.Name);
         return set.IsInitialized ? set : new global::app.data.@this(key, option.Default, parent: parent);
     }
 }

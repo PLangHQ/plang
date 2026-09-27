@@ -18,6 +18,9 @@ public sealed class @this : global::app.type.kind.@this
     // door prefers more-derived claims, so IDictionary → dict wins over IEnumerable → list.
     public override System.Type? ClrForm => typeof(System.Collections.IEnumerable);
 
+    /// <summary>Any sequence but a string — a string is a scalar, though it enumerates its characters.</summary>
+    public override bool Carries(System.Type clr) => clr != typeof(string) && base.Carries(clr);
+
     // Index (`[0]`) → the element at that position. A member (`.Count`, `.Length`) → a real
     // property on the host's class, which the * kind reflects — the host declares it, the grammar
     // said "named, not positional". Positional access spans a non-generic IList (arrays, List<T>)

@@ -13,9 +13,12 @@ public class @this : global::app.type.item.setting.@this
     protected @this() { }
 
     /// <summary>An action of this module, as its settings (<c>%!llm.query%</c>).</summary>
-    protected override System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
-        => System.Threading.Tasks.ValueTask.FromResult(
-            parent.Context.App.module.list.Items().FirstOrDefault(m => string.Equals(m.Name, Path, System.StringComparison.OrdinalIgnoreCase))?[key] is { } action
-                ? new global::app.data.@this(key, new global::app.type.item.setting.action.@this(action), parent: parent)
-                : parent.Context.NotFound(key));
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
+    {
+        var module = await parent.Context.App.module.Get(Path);
+        if (!module.Success) return module;
+        return (await module.Value())![key] is { } action
+            ? new global::app.data.@this(key, new global::app.type.item.setting.action.@this(action), parent: parent)
+            : parent.Context.NotFound(key);
+    }
 }

@@ -49,23 +49,20 @@ public sealed class @this
     }
 
     /// <summary>
-    /// The action-param seam's door: this run's value for the first of <paramref name="keys"/> that has
-    /// one, the closest scope first; else the actor's rows (the user's, then the system's), key by key.
-    /// The keys are the action's (<c>llm.query.cache</c>) then the module's (<c>llm.cache</c>). NotFound —
-    /// the seam falls to the <c>[Default]</c> — when none.
+    /// An action's option as the settings hold it — the action-param seam's rung and
+    /// <c>%!llm.query.cache%</c>'s: this run's value (the action's key <c>llm.query.cache</c>, then the
+    /// module's <c>llm.cache</c>), the closest scope first; else the saved rows (the action's row, then the
+    /// module's own), the user's before the system's. NotFound when none.
     /// </summary>
-    public async ValueTask<data.@this> Get(string[] keys)
+    public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
         await Load();
-        var run = Run(keys);
+        var module = action.Module.Name;
+        var run = Run([$"{module}.{action.Name}.{option}", $"{module}.{option}"]);
         if (run.IsInitialized) return run;
-        foreach (var key in keys)
-        {
-            var dot = key.LastIndexOf('.');
-            if (dot > 0 && Saved(key[..dot]) is { } row && Option(row, key[(dot + 1)..]) is { } saved)
-                return saved;
-        }
-        return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");
+        if (Saved($"{module}.{action.Name}") is { } row && Option(row, option) is { } saved) return saved;
+        if (Saved(module) is { } own && Option(own, option) is { } kept) return kept;
+        return _context.NotFound($"{module}.{action.Name}.{option}");
     }
 
     // This run's value for the first key that has one, the closest scope first.
@@ -261,8 +258,9 @@ public sealed class @this
     /// </summary>
     public async ValueTask<data.@this> Get(string name)
     {
-        if (!_context.App.module.list.Items().Any(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)))
-            return _context.NotFound(name);
+        // a name that is no module's names no setting: unset, as an unbound %!x% has always read (a
+        // template leaves it as written, the ask sentinel reads its absence)
+        if (!(await _context.App.module.Get(name)).Success) return _context.NotFound(name);
         await Load();
         return Class(name) != null
             ? Instance(name)

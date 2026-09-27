@@ -27,19 +27,18 @@ public sealed class @this : global::app.type.kind.@this
         => Held.FirstOrDefault(k => string.Equals(k.Name, name, System.StringComparison.OrdinalIgnoreCase)
                                     || k.Alias.Contains(name, System.StringComparer.OrdinalIgnoreCase));
 
-    /// <summary>One of this type's kinds by the C# form its values ride as — exact wins, then the most
-    /// derived assignable (a string is a scalar, never a sequence's form); null when none claims it.</summary>
+    /// <summary>One of this type's kinds by the C# form its values ride as — each kind says whether it
+    /// carries the class; exact wins, then the most derived; null when none carries it.</summary>
     public override global::app.type.kind.@this? this[System.Type clr]
     {
         get
         {
-            if (clr == typeof(string)) return null;
             global::app.type.kind.@this? best = null;
             foreach (var k in Held)
             {
-                if (k.ClrForm is not { } form || !form.IsAssignableFrom(clr)) continue;
-                if (form == clr) return k;
-                if (best is null || best.ClrForm!.IsAssignableFrom(form)) best = k;
+                if (!k.Carries(clr)) continue;
+                if (k.ClrForm == clr) return k;
+                if (best is null || best.ClrForm!.IsAssignableFrom(k.ClrForm!)) best = k;
             }
             return best;
         }
@@ -47,7 +46,11 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>This type's kinds, each as the full type it makes, with its family's formats.</summary>
     public override global::app.type.kind.list.@this list(global::app.actor.context.@this context)
-        => Listed(_owner, Held.Select(k => k.Name), context);
+    {
+        var formats = context.App.Format.KindsByFamily().TryGetValue(_owner, out var family) ? family : [];
+        return new(Held.Select(k => k.Name).Concat(formats).Distinct(System.StringComparer.OrdinalIgnoreCase)
+            .Select(name => context.App.type.list[new global::app.type.@this(_owner, name), context]));
+    }
 
     /// <summary>Adds a kind of this type; a kind of the same name replaces the one before it.</summary>
     internal void Add(global::app.type.kind.@this kind)
