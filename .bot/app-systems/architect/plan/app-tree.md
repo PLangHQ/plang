@@ -105,6 +105,17 @@ The rule: the plang path, the C# namespace + class, and the file path name the s
     
     The `serializer/` folders (34) keep the old word. The static `Read` classes and `Reader.cs` there are live (the reader registry).
 
+## Rulings (decision 129)
+
+- **1–3:** they stay (Ingi: code, cache, debug, build; I'm treating statics and services the same).
+- **4:** stage 10 (the store opens itself).
+- **5:** Ingi yes. `app.System` and `app.User` go in stage 11.
+- **6 narrowed:** a node typed by another concept's class is fine. That leaves identity's three names and the module action paths (stage 9).
+- **7:** stage 10, trace first. **8:** Ingi yes, `code`, `clr` and `table` go under `app.type.item` (stage 10).
+- **9:** the literal point is withdrawn (same shape as decision 5's `app.type.kind`). Where the machinery lives is a suggestion waiting for Ingi (summary.md).
+- **10:** stage 10, trace first (security-relevant). **11** and **12:** stage 10.
+- **13:** noted for Ingi. **14:** formats (f).
+
 ## Already planned vs new
 
 - **Already planned:**
