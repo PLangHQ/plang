@@ -10,6 +10,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     System.IEquatable<@this>
 {
     public static string Example => "10:30:00";
+    public static string Description => "A time of day.";
     public static string Shape => "string";
 
     public System.TimeOnly Value { get; }

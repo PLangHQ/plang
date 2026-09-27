@@ -14,6 +14,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     System.IEquatable<@this>
 {
     public static string Example => "2024-03-15T10:30:00+00:00";
+    public static string Description => "A date and a time of day, with its offset from UTC.";
     public static string Shape => "string";
 
     public System.DateTimeOffset Value { get; }

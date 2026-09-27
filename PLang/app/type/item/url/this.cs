@@ -11,6 +11,7 @@ namespace app.type.item.url;
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "https://example.com/data.json";
+    public static string Description => "A web address; its content is fetched when it is used.";
     public static string Shape => "string";
 
 

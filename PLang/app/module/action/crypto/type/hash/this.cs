@@ -22,7 +22,8 @@ namespace app.module.action.crypto.type.hash;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "sha256 digest, base64";
+    public static string Example => "n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=";
+    public static string Description => "A cryptographic digest in base64, with the algorithm that made it (sha256, keccak256).";
     public static string Shape => "string";
 
     /// <summary>The raw digest bytes.</summary>

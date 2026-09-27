@@ -10,6 +10,7 @@ namespace app.type.item.directory;
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "/docs";
+    public static string Description => "A folder, by its path.";
     public static string Shape => "string";
 
     /// <summary>The is-a lattice — a directory is-a path.</summary>

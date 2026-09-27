@@ -252,14 +252,27 @@ def signature(choice):
         parts.append(f'{name}{optional}: {p["type"]}{default}')
     return f'{choice}({", ".join(parts)})'
 
+def type_files(name):
+    """The files of the class a type name names — the @this class whose namespace ends in the name,
+    all its partials: app.type.item.<name> when there is one, else the shortest such namespace
+    (app.goal over app.channel.type.goal, app.goal.step.action, app.type.item for `item`)."""
+    spaces = {}
+    for path in sorted(glob.glob(f'{ROOT}/PLang/app/**/this*.cs', recursive=True)):
+        head = open(path, encoding='utf-8').read(4000)
+        m = re.search(r'^namespace\s+([\w.@]+)\s*;', head, re.M)
+        if m and m.group(1).split('.')[-1].lstrip('@') == name: spaces.setdefault(m.group(1), []).append(path)
+    if not spaces: return []
+    best = min(spaces, key=lambda ns: (ns.lstrip('@').replace('.@', '.') != f'app.type.item.{name}', ns.count('.')))
+    return spaces[best]
+
 def type_static(name, member):
-    """A type's `public static string <member> => "…" + "…";` — what the registry folds into
-    app.Type[name] (Example, Description). None when the class declares none."""
-    path = f'{ROOT}/PLang/app/type/item/{name}/this.cs'
-    if not os.path.exists(path): return None
-    m = re.search(rf'public\s+static\s+string\s+{member}\s*=>\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+)',
-                  open(path, encoding='utf-8').read(), re.S)
-    return ''.join(json.loads(s) for s in re.findall(r'"(?:[^"\\]|\\.)*"', m.group(1))) if m else None
+    """A type's `public static string <member> => "…" + "…";` — what the types fold into the type
+    named `name` (Example, Description). None when the class declares none."""
+    for path in type_files(name):
+        m = re.search(rf'public\s+static\s+string\s+{member}\s*=>\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+)',
+                      open(path, encoding='utf-8').read(), re.S)
+        if m: return ''.join(json.loads(s) for s in re.findall(r'"(?:[^"\\]|\\.)*"', m.group(1)))
+    return None
 
 def type_line(face, options):
     """One Types line as propertiesUserB.template writes it: the type's Description, a choice's

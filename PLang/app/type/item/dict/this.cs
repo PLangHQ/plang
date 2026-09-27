@@ -23,7 +23,8 @@ namespace app.type.item.dict;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
-    public static string Example => "{\"name\":\"a\"}";
+    public static string Example => "{\"name\":\"Ada\",\"age\":36}";
+    public static string Description => "Named values: each key holds a value of any type.";
     public static IReadOnlyList<string> Alias { get; } = ["dictionary", "map"];
 
     // The single backing — key → raw-or-wrapped slot, mirroring list's _items. A

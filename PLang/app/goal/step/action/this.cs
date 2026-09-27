@@ -8,6 +8,8 @@ namespace app.goal.step.action;
 /// </summary>
 public partial class @this
 {
+    public static string Example => "goal.call(Name=\"Show\")";
+
     // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
 
     private global::app.module.@this? _module;

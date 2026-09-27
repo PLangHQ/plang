@@ -19,6 +19,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     System.IEquatable<@this>
 {
     public static string Example => "PT5M";
+    public static string Description => "A length of time, written in ISO 8601 (PT5M is five minutes).";
     public static string Shape => "string";
 
     public System.TimeSpan Value { get; }

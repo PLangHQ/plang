@@ -11,6 +11,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     System.IEquatable<@this>
 {
     public static string Example => "2024-03-15";
+    public static string Description => "A calendar date.";
     public static string Shape => "string";
 
     public System.DateOnly Value { get; }

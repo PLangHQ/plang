@@ -16,7 +16,7 @@ namespace app.type.item.archive;
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "(archive)";
+    public static string Description => "Compressed bytes; its kind is the compression (gzip, …).";
     public static string Shape => "string";
 
     /// <summary>The compressed bytes — the layer's payload.</summary>

@@ -14,7 +14,8 @@ namespace app.type.item.file;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "/some/config.json";
+    public static string Example => "/config/settings.json";
+    public static string Description => "A file, by its path; its content is read when it is used.";
     public static string Shape => "string";
 
 

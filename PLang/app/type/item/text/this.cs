@@ -30,7 +30,7 @@ namespace app.type.item.text;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "readme.md";
+    public static string Example => "Hello, world";
     public static IReadOnlyList<string> Alias { get; } = ["string"];
     public static string Shape => "string";
     /// <summary>

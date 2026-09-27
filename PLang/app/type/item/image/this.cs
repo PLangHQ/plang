@@ -17,7 +17,8 @@ namespace app.type.item.image;
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer
 {
-    public static string Example => "/some/photo.jpg";
+    public static string Example => "/images/photo.jpg";
+    public static string Description => "An image: its bytes, or where they are. Its kind is its format (png, jpg, gif, …).";
     public static string Shape => "string";
 
     // Null until loaded — a path-backed image reads nothing until first content

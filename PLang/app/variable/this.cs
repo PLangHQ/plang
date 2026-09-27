@@ -19,6 +19,9 @@ namespace app.variable;
 [global::app.Attributes.PlangType]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IName
 {
+    public static string Example => "%user%";
+    public static string Description => "A variable, named between % signs, that holds a value.";
+
     /// <summary>The canonical variable name (percent-stripped).</summary>
     [Out] public string Name { get; }
     /// <summary>The raw reference as emitted (e.g. <c>%x%</c> or bare <c>x</c>).</summary>

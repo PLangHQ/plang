@@ -7,7 +7,7 @@ namespace app.type.item.binary;
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "(bytes)";
+    public static string Description => "Bytes. Its kind is what they hold, when known (png, pdf, json, …).";
     public static IReadOnlyList<string> Alias { get; } = ["bytes"];
     public static string Shape => "string";
 
