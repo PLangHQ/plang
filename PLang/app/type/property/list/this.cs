@@ -71,6 +71,9 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
 
         foreach (var prop in handler.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
+            // An action's properties are its slots — a Data or Data<T> (PLNG001) — never a member the class
+            // has for being something else too (an action that is also an item: its on, Template, Rank, …).
+            if (!typeof(global::app.data.@this).IsAssignableFrom(prop.PropertyType)) continue;
             if (prop.Name == "EqualityContract") continue;
             if (capabilityProps.Contains(prop.Name)) continue;
             if (prop.GetCustomAttribute<global::app.module.CodeAttribute>() != null) continue;
