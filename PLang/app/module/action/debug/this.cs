@@ -486,7 +486,7 @@ public sealed class @this
         // Add explicitly watched variables
         if (context.App?.Debug is { } debug)
             foreach (var name in debug.Watched)
-                varNames.Add(new global::app.type.item.variable.parser.@this($"%{name.Trim('%')}%").Read(0)?.Code.Root.Name ?? name);
+                varNames.Add(new global::app.type.item.variable.parser.@this(name).Whole?.Code.Root.Name ?? name);
 
         if (varNames.Count == 0) return;
 

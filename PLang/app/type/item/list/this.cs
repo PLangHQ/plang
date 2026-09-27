@@ -568,10 +568,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>
     /// Every item of the list — the list itself. A list that loads its items (goal's: the <c>.pr</c> files
     /// of the app and of <c>/system/</c>) answers them all; one with a setting class reads
-    /// <paramref name="setting"/> as it (every default when absent), one without ignores it.
+    /// <paramref name="setting"/> over its setting as <paramref name="context"/>'s actor sees it, one
+    /// without ignores both.
     /// </summary>
     [LlmBuilder]
-    public virtual System.Threading.Tasks.ValueTask<@this> all(global::app.type.item.dict.@this? setting = null)
+    public virtual System.Threading.Tasks.ValueTask<@this> all(global::app.actor.context.@this context,
+        global::app.type.item.dict.@this? setting = null)
         => System.Threading.Tasks.ValueTask.FromResult(this);
 
     /// <summary>
@@ -588,7 +590,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
         // every item, before the empty check: a list that loads its items answers even when it holds none yet
         if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
-            return new Data(key, await all(), parent: parent);
+            return new Data(key, await all(parent.Context), parent: parent);
 
         // an owner's settings (%!app.goal.list.setting%), before the empty check: they aren't its items
         if (await Setting(parent, key) is { } setting) return setting;

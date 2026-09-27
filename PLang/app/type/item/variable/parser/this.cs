@@ -59,6 +59,26 @@ public sealed class @this
         return new code.@this(hops);
     }
 
+    /// <summary>The one variable the whole text is — written with its % signs (<c>%user.name%</c>), or a bare
+    /// name (<c>user</c>, the form a name slot may carry) read as <c>%user%</c>. The one way a variable is made
+    /// from text. Null when the text is not exactly one variable; the reason is in <see cref="Error"/>.</summary>
+    public variable.@this? Whole
+    {
+        get
+        {
+            if (!_text.StartsWith('%'))
+            {
+                var named = new @this($"%{_text}%");
+                var whole = named.Whole;
+                _error.AddRange(named.Error);
+                return whole;
+            }
+            if (Read(0) is { } one && one.Text.Length == _text.Length) return one;
+            if (_error.Count == 0) _error.Add(new global::app.error.Error($"'{_text}' is not one variable.", "InvalidVariable", 400));
+            return null;
+        }
+    }
+
     /// <summary>The reference whose opening <c>%</c> is at <paramref name="at"/>, or null: none opens
     /// there, or it doesn't parse (the reason lands in <see cref="Error"/>). Its <c>Text</c> is exactly
     /// what was written, so the reader continues after it.</summary>

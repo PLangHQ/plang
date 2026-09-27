@@ -93,7 +93,7 @@ public sealed class @this
     {
         if (Class(path)?.Create() is not { } sample)
             return _context.Error(new global::app.error.Error($"'{path}' names no setting class.", "UnknownSetting", 400));
-        var fits = Apply(sample, values);
+        var fits = sample.Apply(values, _context);
         if (!fits.Success) return fits;
         Flatten(path, values);
         Tell(path);
@@ -218,7 +218,7 @@ public sealed class @this
             // this run's values for its own options — a longer path under it (llm.query.cache under llm)
             // is another setting's
             var own = Under(path).Where(kv => instance.Option(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
-            var applied = Apply(instance, own);
+            var applied = instance.Apply(own, _context);
             if (!applied.Success) throw new InvalidOperationException(applied.Error!.Message);
             return instance;
         }
@@ -290,91 +290,6 @@ public sealed class @this
             }
         return under;
     }
-
-    /// <summary>
-    /// Applies raw values onto <paramref name="node"/>'s public settable properties — the convert walk a
-    /// setting takes this run's values (and a saved row its options) through. Each leaf converts through
-    /// the plang catalog; a nested dict onto an owned composite descends field-by-field, constructing the
-    /// child if absent.
-    /// </summary>
-    internal data.@this Apply(object node, IDictionary<string, object?> settings)
-    {
-        foreach (var kvp in settings)
-        {
-            var prop = node.GetType().GetProperty(kvp.Key,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-            if (prop?.SetMethod?.IsPublic != true)
-                return _context.Error(new global::app.error.Error(
-                    $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
-                    "UnknownSetting", 400));
-
-            if (kvp.Value is IDictionary<string, object?> sub && IsComposite(prop.PropertyType))
-            {
-                var child = prop.GetValue(node) ?? Construct(prop.PropertyType);
-                var r = Apply(child, sub);
-                if (!r.Success) return r;
-                prop.SetValue(node, child);
-            }
-            else
-            {
-                // Lift the raw setting to its plang value. A plang-typed property (a native
-                // list<path>, a number) stores the plang value DIRECTLY — no Clr boundary to cross; it
-                // holds lazy and materializes at the CONSUMER's door (row.Value<path>()). Only a CLR
-                // slot (bool/string) or a typed-generic plang slot the born native value can't fit
-                // lowers via Clr (the value owns its projection).
-                object? val;
-                try
-                {
-                    var built = global::app.type.item.@this.Create(kvp.Value, _context);
-                    // a plang-typed slot the born value doesn't fit (a choice from its text) is made by
-                    // the slot's own type, through its own Create
-                    if (typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
-                        && !prop.PropertyType.IsInstanceOfType(built)
-                        && prop.PropertyType.GetMethod("Create", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                               [typeof(object), typeof(data.@this)]) is { } create
-                        && create.Invoke(null, [kvp.Value, new data.@this(kvp.Key, context: _context)]) is global::app.type.item.@this made
-                        && prop.PropertyType.IsInstanceOfType(made))
-                        built = made;
-                    val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
-                          && prop.PropertyType.IsInstanceOfType(built)
-                        ? built
-                        : built.Clr(prop.PropertyType);
-                }
-                catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
-                    or System.OverflowException or System.NotSupportedException)
-                {
-                    return _context.Error(new global::app.error.Error(
-                        $"setting '{kvp.Key}' cannot bind to {prop.PropertyType.Name}: {ex.Message}",
-                        "TypeConversionFailed", 400) { Exception = ex });
-                }
-                prop.SetValue(node, val);
-            }
-        }
-        return _context.Ok();
-    }
-
-    /// <summary>Descend into a class with public setters that isn't a plang leaf (string/primitive/enum/collection).</summary>
-    private static bool IsComposite(System.Type t)
-    {
-        var u = System.Nullable.GetUnderlyingType(t) ?? t;
-        if (u.IsPrimitive || u.IsEnum || u == typeof(string) || u == typeof(decimal)) return false;
-        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(u)) return false;
-        if (!u.IsClass) return false;
-        foreach (var p in u.GetProperties())
-            if (p.SetMethod?.IsPublic == true) return true;
-        return false;
-    }
-
-    /// <summary>Construct a null composite: subsystem nodes take a context; config records are parameterless.</summary>
-    private object Construct(System.Type t)
-    {
-        var withContext = t.GetConstructor(new[] { typeof(actor.context.@this) });
-        return withContext != null
-            ? withContext.Invoke(new object[] { _context })
-            : System.Activator.CreateInstance(t)!;
-    }
-
-    public bool Contains(string key) => _values.ContainsKey(key);
 
     /// <summary>An independent copy of this level; keeps the same parent link + context.</summary>
     public @this Clone()

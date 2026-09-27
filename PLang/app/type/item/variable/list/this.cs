@@ -25,6 +25,10 @@ public partial class @this
     [JsonIgnore]
     public call.list.@this Calls { get; } = new();
 
+    /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
+    /// the variable's read counts it, and a chain past its limit is a cycle.</summary>
+    internal System.Threading.AsyncLocal<int> Resolving { get; } = new();
+
     /// <summary>True when the current flow's frame was pushed for <paramref name="call"/> and its
     /// runner supplied <paramref name="name"/> — the supplied value wins over the call's own row.</summary>
     public bool Supplies(global::app.goal.step.action.@this call, string name)
@@ -361,7 +365,7 @@ public partial class @this
             foreach (var name in names)
                 // a name the parser doesn't read back whole (stored by C#, not written in plang) isn't
                 // one a program can name
-                if (new parser.@this($"%{name}%").Read(0) is { } variable && variable.Text.Length == name.Length + 2)
+                if (new parser.@this(name).Whole is { } variable)
                     held.Add(variable);
             return held;
         }

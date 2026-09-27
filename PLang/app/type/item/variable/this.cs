@@ -86,17 +86,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return (await Set(value, context)).Success;
     }
 
-    private static readonly System.Threading.AsyncLocal<int> _resolveDepth = new();
-
     /// <summary>What the variable holds, through that value's own door (a container deep-renders, a
     /// template renders, a scalar answers itself). Loud: a variable that holds nothing throws — a
     /// referenced value that isn't there is a bug at the reference. Boolean questions (conditions)
-    /// tolerate absence through their own path (condition.code.Default), never here.</summary>
+    /// tolerate absence through their own path (condition.code.Default), never here. A chain of
+    /// references deeper than the memory allows is a cycle.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (_resolveDepth.Value++ > 50)
+        var resolving = data.Context.Variable.Resolving;
+        if (resolving.Value++ > 50)
         {
-            _resolveDepth.Value = 0;
+            resolving.Value = 0;
             throw new global::app.error.AppException($"variable resolve cycle on '{Text}'", "VarResolveCycle", 500);
         }
         try
@@ -106,7 +106,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 throw new global::app.error.VariableNotFoundException(Name);
             return await resolved.Value();
         }
-        finally { _resolveDepth.Value--; }
+        finally { resolving.Value--; }
     }
 
     /// <summary>
@@ -127,20 +127,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static implicit operator string(@this v) => v.Name;
 
     /// <summary>
-    /// variable's family <c>Convert</c> hook: a variable is born from its text — <c>%x%</c>, or the
-    /// bare name <c>x</c> a name slot may carry — through the parser. Text that isn't a variable is a
-    /// decline with the parser's reason.
+    /// variable's family <c>Convert</c> hook: the text a value holds, read as a variable
+    /// (<see cref="parser.@this.Whole"/>); text that isn't one is a decline with the parser's reason.
     /// </summary>
     public static global::app.data.@this Convert(object? value, string? kind, actor.context.@this context)
     {
         var raw = value as string
             ?? (value as global::app.type.item.@this)?.Clr<string>()
             ?? value?.ToString() ?? "";
-        var text = raw.StartsWith('%') ? raw : "%" + raw + "%";
-        var parser = new parser.@this(text);
-        if (parser.Read(0) is { } born && born.Text.Length == text.Length) return context.Ok(born);
-        return context.Error(parser.Error.FirstOrDefault()
-            ?? new global::app.error.Error($"'{raw}' is not a variable.", "InvalidVariable", 400));
+        var parser = new parser.@this(raw);
+        return parser.Whole is { } born ? context.Ok(born) : context.Error(parser.Error[0]);
     }
 
     /// <summary>The raw-name callsites (<c>Data.As&lt;T&gt;</c>, the type's <c>Create</c> and
@@ -149,22 +145,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// it, parsed at build.</summary>
     public static @this Resolve(string raw, actor.context.@this context, IReadOnlyList<@this>? given = null)
     {
-        var text = raw.StartsWith('%') ? raw : "%" + raw + "%";
-        if (given?.FirstOrDefault(v => v.Text == text) is { } held) return held;
-        var born = Convert(raw, null, context);
-        return born.Peek() as @this
-               ?? throw new global::app.error.AppException(born.Error?.Message ?? $"'{raw}' is not a variable.", "InvalidVariable", 400);
+        // a row's list holds it already — as written (%x%) or as its bare name (x)
+        if (given?.FirstOrDefault(v => v.Text == raw || v.Name == raw) is { } held) return held;
+        var parser = new parser.@this(raw);
+        return parser.Whole ?? throw new global::app.error.AppException(parser.Error[0].Message, "InvalidVariable", 400);
     }
 
     /// <summary>A variable born from its text, for direct C# composition (tests, App.Run):
     /// <c>new variable("myList")</c> names <c>%myList%</c>.</summary>
-    public @this(string name) : this(Born(name)) { }
+    public @this(string name) : this(new parser.@this(name).Whole
+                                     ?? throw new System.ArgumentException($"'{name}' is not a variable name.", nameof(name))) { }
 
     private @this(@this born) : this(born.Text, born.Code) { }
-
-    private static @this Born(string name)
-        => new parser.@this("%" + name + "%").Read(0)
-           ?? throw new System.ArgumentException($"'{name}' is not a variable name.", nameof(name));
 
     public override string ToString() => Name;
 

@@ -67,18 +67,24 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
 
     /// <summary>Every item, one at a time — the ones held. A list that loads its items (goal's) reads
     /// each as the walk reaches it, so a walk that stops early (the type's <c>Get(key)</c>) reads no
-    /// further. <paramref name="setting"/> as <see cref="all"/>.</summary>
-    internal virtual async System.Collections.Generic.IAsyncEnumerable<T> Every(global::app.type.item.dict.@this? setting = null)
+    /// further. With no asker: the app's own walk.</summary>
+    internal virtual async System.Collections.Generic.IAsyncEnumerable<T> Every()
     {
         foreach (var item in Items()) yield return item;
         await System.Threading.Tasks.Task.CompletedTask;
     }
 
-    /// <summary>Every item, as a list: <see cref="Every"/> gathered.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.list.@this> all(global::app.type.item.dict.@this? setting = null)
+    /// <summary>Every item, as <paramref name="context"/>'s actor asks for them; <paramref name="setting"/>
+    /// as <see cref="all"/>. A list with no setting class walks the same for every asker.</summary>
+    internal virtual System.Collections.Generic.IAsyncEnumerable<T> Every(global::app.type.item.dict.@this? setting,
+        global::app.actor.context.@this context) => Every();
+
+    /// <summary>Every item, as a list: the asker's walk gathered.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.list.@this> all(global::app.actor.context.@this context,
+        global::app.type.item.dict.@this? setting = null)
     {
         var every = new @this<T>();
-        await foreach (var item in Every(setting)) every.Add(item);
+        await foreach (var item in Every(setting, context)) every.Add(item);
         return every;
     }
 }

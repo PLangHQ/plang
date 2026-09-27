@@ -36,7 +36,7 @@ public sealed class Formal
     private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
 
     /// <summary>Born with the step it reads for and the modules its actions are picked from — the
-    /// caller awaited them once (<c>app.module.list.all()</c>); the read itself stays synchronous.</summary>
+    /// caller awaited them once (<c>app.module.list.all(context)</c>); the read itself stays synchronous.</summary>
     public Formal(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
     {
         _step = step;
@@ -321,7 +321,7 @@ public sealed class Formal
             {
                 // a variable slot given the bare name ("path") names the same variable as %path%
                 if (raw != null && !raw.StartsWith('%')
-                    && new global::app.type.item.variable.parser.@this($"%{raw}%").Read(0) is { } named && named.Text.Length == raw.Length + 2)
+                    && new global::app.type.item.variable.parser.@this(raw).Whole is not null)
                     value = Scalar(System.Text.Json.JsonSerializer.Serialize($"%{raw}%"), System.Text.Json.JsonValueKind.String, variable: true);
                 else if (!value.IsVariable)
                     Fail($"`{prop}` names a variable: write it with its % signs", at);

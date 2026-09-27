@@ -74,6 +74,93 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         return await base.Set(key, isIndex, value, context);
     }
 
+    /// <summary>
+    /// Takes raw <paramref name="values"/> into this setting's options — the one convert walk this run's
+    /// values, a saved row's options and a call's own go through. Each leaf converts through the plang
+    /// catalog; a nested dict onto an owned composite descends field by field, making the child when
+    /// absent. A key that is no option, or a value its option can't take, is the error.
+    /// </summary>
+    public global::app.data.@this Apply(IDictionary<string, object?> values, global::app.actor.context.@this context)
+        => Apply(this, values, context);
+
+    private global::app.data.@this Apply(object node, IDictionary<string, object?> values, global::app.actor.context.@this context)
+    {
+        foreach (var kvp in values)
+        {
+            var prop = node.GetType().GetProperty(kvp.Key,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop?.SetMethod?.IsPublic != true)
+                return context.Error(new global::app.error.Error(
+                    $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
+                    "UnknownSetting", 400));
+
+            if (kvp.Value is IDictionary<string, object?> sub && IsComposite(prop.PropertyType))
+            {
+                var child = prop.GetValue(node) ?? Construct(prop.PropertyType, context);
+                var r = Apply(child, sub, context);
+                if (!r.Success) return r;
+                prop.SetValue(node, child);
+            }
+            else
+            {
+                // Lift the raw setting to its plang value. A plang-typed property (a native
+                // list<path>, a number) stores the plang value DIRECTLY — no Clr boundary to cross; it
+                // holds lazy and materializes at the CONSUMER's door (row.Value<path>()). Only a CLR
+                // slot (bool/string) or a typed-generic plang slot the born native value can't fit
+                // lowers via Clr (the value owns its projection).
+                object? val;
+                try
+                {
+                    var built = global::app.type.item.@this.Create(kvp.Value, context);
+                    // a plang-typed slot the born value doesn't fit (a choice from its text) is made by
+                    // the slot's own type, through its own Create
+                    if (typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
+                        && !prop.PropertyType.IsInstanceOfType(built)
+                        && prop.PropertyType.GetMethod("Create", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                               [typeof(object), typeof(global::app.data.@this)]) is { } create
+                        && create.Invoke(null, [kvp.Value, new global::app.data.@this(kvp.Key, context: context)]) is global::app.type.item.@this made
+                        && prop.PropertyType.IsInstanceOfType(made))
+                        built = made;
+                    val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
+                          && prop.PropertyType.IsInstanceOfType(built)
+                        ? built
+                        : built.Clr(prop.PropertyType);
+                }
+                catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
+                    or System.OverflowException or System.NotSupportedException)
+                {
+                    return context.Error(new global::app.error.Error(
+                        $"setting '{kvp.Key}' cannot bind to {prop.PropertyType.Name}: {ex.Message}",
+                        "TypeConversionFailed", 400) { Exception = ex });
+                }
+                prop.SetValue(node, val);
+            }
+        }
+        return context.Ok();
+    }
+
+    // A class with public setters that isn't a plang leaf (string/primitive/enum/collection) — the walk
+    // descends into it.
+    private bool IsComposite(System.Type t)
+    {
+        var u = System.Nullable.GetUnderlyingType(t) ?? t;
+        if (u.IsPrimitive || u.IsEnum || u == typeof(string) || u == typeof(decimal)) return false;
+        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(u)) return false;
+        if (!u.IsClass) return false;
+        foreach (var p in u.GetProperties())
+            if (p.SetMethod?.IsPublic == true) return true;
+        return false;
+    }
+
+    // A composite the walk found null: one that takes a context gets the asker's; else parameterless.
+    private object Construct(System.Type t, global::app.actor.context.@this context)
+    {
+        var withContext = t.GetConstructor(new[] { typeof(global::app.actor.context.@this) });
+        return withContext != null
+            ? withContext.Invoke(new object[] { context })
+            : System.Activator.CreateInstance(t)!;
+    }
+
     /// <summary>The option named <paramref name="key"/> — a public settable property this class declares
     /// (the base's own members are not options); null when there is none.</summary>
     internal System.Reflection.PropertyInfo? Option(string key)

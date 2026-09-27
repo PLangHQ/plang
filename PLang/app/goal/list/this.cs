@@ -163,6 +163,10 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         return result.Success && await result.Value() is goal.@this { IsSetup: false } goal ? goal : null;
     }
 
+    /// <summary>Every goal, with no asker: a C# lookup without a request is the app asking as itself,
+    /// which is the system actor.</summary>
+    internal override IAsyncEnumerable<goal.@this> Every() => Every(null, App.System.Context);
+
     /// <summary>
     /// Every goal of the app — and of <c>/system/</c>, unless the setting says <c>os: false</c> — one per
     /// <c>.pr</c>, the app's copy of a system goal winning; the private goals under each too when the
@@ -171,24 +175,26 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// no further. A <c>.pr</c> that doesn't read (an older format) is left out, and said so on the debug
     /// channel.
     /// </summary>
-    internal override async IAsyncEnumerable<goal.@this> Every(global::app.type.item.dict.@this? setting = null)
+    internal override async IAsyncEnumerable<goal.@this> Every(global::app.type.item.dict.@this? setting,
+        global::app.actor.context.@this context)
     {
-        // goal.list's setting as the system sees it (its defaults, a saved row, this run's), the call's own
-        // values on top through the one convert walk
-        var wants = App.System.Context.Setting.Of<setting.@this>();
+        // goal.list's setting as the asker's actor sees it (its defaults, a saved row, this run's), the
+        // call's own values on top through the one convert walk
+        var wants = context.Setting.Of<setting.@this>();
         if (setting != null)
         {
             var given = setting.KeyNames.ToDictionary(k => k, k => setting.Stored(k), StringComparer.OrdinalIgnoreCase);
-            var applied = App.System.Context.Setting.Apply(wants, given);
+            var applied = wants.Apply(given, context);
             if (!applied.Success) throw new ArgumentException(applied.Error!.Message, nameof(setting));
         }
         var held = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
         foreach (var goal in held)
             foreach (var one in wants.Of(goal)) yield return one;
 
-        var context = App.System.Context!;
-        _app ??= await Listed(global::app.type.item.path.@this.Resolve("/", context));
-        _system ??= await Listed(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + "/system", context));
+        // the .pr files are the app's own: listed once, as the system
+        var system = App.System.Context!;
+        _app ??= await Listed(global::app.type.item.path.@this.Resolve("/", system));
+        _system ??= await Listed(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + "/system", system));
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var pr in wants.Os.Value ? _app.Concat(_system) : _app)

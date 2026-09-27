@@ -107,7 +107,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         // Each open step's line, read.
         var read = new Dictionary<int, global::app.goal.step.action.list.@this>();
         // The modules every line is read against, awaited once.
-        var modules = (global::app.type.item.list.@this<global::app.module.@this>)await context.App.module.list.all();
+        var modules = (global::app.type.item.list.@this<global::app.module.@this>)await context.App.module.list.all(context);
         for (int i = 0; i < CountRaw; i++)
         {
             var step = this[i];
