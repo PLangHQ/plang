@@ -55,7 +55,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step \u2014 python now follows C#; BootstrapTests green"
+          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step — python now follows C#; BootstrapTests green"
         },
         {
           "paths": [
@@ -78,7 +78,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T01:35:00Z",
       "timestamp_end": "2026-09-27T02:10:00Z",
-      "intent": "Stage 1: Run \u2192 Start, the entry verb of everything that runs",
+      "intent": "Stage 1: Run → Start, the entry verb of everything that runs",
       "before": {
         "assumptions": "the generator emits one await Run() for every handler, so all 125 are renamed together; callback.run and the v0.1 dll/pdb follow Ingi's rulings",
         "risk": "a stale PlangConsole binary rebuilding os/system/test.goal with the old action name"
@@ -96,7 +96,7 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "Run \u2192 Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
+          "context": "Run → Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
         },
         {
           "paths": [
@@ -110,7 +110,7 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "environment/test/callback .run \u2192 .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
+          "context": "environment/test/callback .run → .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
         },
         {
           "paths": [
@@ -142,7 +142,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T02:15:00Z",
       "timestamp_end": "2026-09-27T04:35:05Z",
-      "intent": "Stage 3: one set of types \u2014 trace first, bring back what doesn't hold, then implement",
+      "intent": "Stage 3: one set of types — trace first, bring back what doesn't hold, then implement",
       "before": {
         "assumptions": "the registry's seven stores can collapse into one list of types; the facts computed per type keep prompt C byte-equal",
         "risk": "kind never null ripples to ~110 null checks; types born bare still need the registry for their C# class"
@@ -173,7 +173,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "one set of types (4bfd09c61): seven stores \u2192 one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
+          "context": "one set of types (4bfd09c61): seven stores → one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
         },
         {
           "paths": [
@@ -185,7 +185,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) \u2014 ruling 2, taken to Ingi by plang-40"
+          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) — ruling 2, taken to Ingi by plang-40"
         },
         {
           "paths": [
@@ -211,8 +211,8 @@
         }
       ],
       "after": {
-        "status": "stage 3 done and pushed (4bfd09c61 \u2026 f88e1f8d3)",
-        "health": "six suites at or under baseline (Types 23\u219219, Data 45\u219244); prompt twins byte-equal; plang --test 7/0/317 as baseline",
+        "status": "stage 3 done and pushed (4bfd09c61 … f88e1f8d3)",
+        "health": "six suites at or under baseline (Types 23→19, Data 45→44); prompt twins byte-equal; plang --test 7/0/317 as baseline",
         "notes": "next: stage 4 after the architect's go; fixture DLLs need rebuilding (pre-existing)"
       }
     },
@@ -221,7 +221,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T04:40:00Z",
       "timestamp_end": "2026-09-27T07:10:00Z",
-      "intent": "Stage 4: the collected type \u2014 trace, bring back what doesn't hold, implement",
+      "intent": "Stage 4: the collected type — trace, bring back what doesn't hold, implement",
       "before": {
         "assumptions": "the registry can become a list<type>; App.Type sites move mechanically",
         "risk": "list walks under the lock on every type lookup; two ways into the types' slots"
@@ -274,11 +274,11 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "App.Type \u2192 app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
+          "context": "App.Type → app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
         }
       ],
       "after": {
-        "status": "stage 4 done and pushed (010bfa885 \u2026 0af97062c)",
+        "status": "stage 4 done and pushed (010bfa885 … 0af97062c)",
         "health": "six suites at or under baseline (Types 17, Data 44); prompt twins byte-equal; plang --test 7/0/317; no timing regression",
         "notes": "next: stage 5 trace"
       }
@@ -288,7 +288,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T07:10:00Z",
       "timestamp_end": "2026-09-27T09:30:00Z",
-      "intent": "Stage 5: faces and honest facts \u2014 trace, one eval, goal descriptions above names",
+      "intent": "Stage 5: faces and honest facts — trace, one eval, goal descriptions above names",
       "before": {
         "assumptions": "facts change prompt C's text (one eval run); a comment move re-saves .pr with every step cached",
         "risk": "the face leaking onto the wire; steps re-asking the decider on re-save"
@@ -474,6 +474,109 @@
           "category": "code",
           "confidence": "high",
           "context": "7a trace: goal collection, callers, sub-goal parent/address"
+        },
+        {
+          "paths": [
+            "PLang/app/goal/list/this.cs",
+            "PLang/app/goal/child/this.cs",
+            "PLang/app/goal/list/setting/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7a (da26b54dd): goal is its type; goal.list a list<goal>; all() lists .pr lazily; sub-goal address parent#name"
+        },
+        {
+          "paths": [
+            "PLang/app/actor/list/this.cs",
+            "PLang/app/module/this.cs",
+            "PLang/app/module/list/this.cs",
+            "PLang/app/goal/step/action/serializer/Formal.cs",
+            "PLang/app/goal/step/pick/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7b (bbc9fc71b, 48aa863d3): actor and module are their types; Formal born with the awaited modules; .pr reader uses module.list internal lookup (ruling b)"
+        },
+        {
+          "paths": [
+            "PLang/app/test",
+            "PLang/app/channel/type/test/this.cs",
+            "PLang/app/channel/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7c (0bb5f21b1): test is its type; testing = an open test session (a channel kind), one by-class door on channel.list; BeforeWrite capture gone"
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.Generic.cs",
+            "PLang/app/type/item/IList.cs",
+            "PLang/app/type/item/variable"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7d (a2493fc74): IList.Of(context) — the asker's list; app.variable over context.Variable.list (a view); C# app.variable.list throws"
+        },
+        {
+          "paths": [
+            "PLang/app/store",
+            "PLang/app/actor/setting/this.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "medium",
+          "context": "7e-1 (664dfc3a4 deletions only — a failed git add in an && chain; d4de3fb80 the rest): app.store; settings machinery per actor; 74f9dc8f9 store dispose fix"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/setting",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/type/item/variable/code/Variable.cs",
+            "PLang/app/module/action/variable/set.cs",
+            "PLang/Executor.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "7e-2a (6b58ae446): setting classes as kinds of setting; %!path% reads; owners answer .setting (ISetting); fixes %!build.cache% (NotFound since stage 6); set default respects a setting"
+        },
+        {
+          "paths": [
+            "PLang/app/actor/setting/this.cs",
+            "PLang/app/type/item/setting/serializer/Reader.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7e-2b-i (6db190aaf): rows per actor per setting, layered; seam reads rows; Storage gone; setting type {setting, kind: path}"
+        },
+        {
+          "paths": [
+            "PLang/app/test/setting/this.cs",
+            "PLang/app/callstack/setting/this.cs",
+            "PLang/app/module/action/debug/setting/this.cs",
+            "PLang/app/setting/this.cs",
+            "PLang/app/this.cs",
+            "PLang/.gitignore"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "7e-2c (e04572810): CLI owners read their settings; rows load at app start; app.Refresh rebuilds held instances; path = namespace; re-entrant row load fixed; debug gitignore rule fixed"
+        },
+        {
+          "paths": [
+            ".bot/app-systems/coder/v7/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Builder-visible changes (setting.save/remove, get/set out; concept types in the type list; setting classes taught) batched into 7f: one eval for stage 7"
         }
       ]
     }
