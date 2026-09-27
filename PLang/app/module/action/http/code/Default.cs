@@ -416,8 +416,14 @@ public sealed class Default : IHttp
 
             if (!unsigned && !string.IsNullOrEmpty(errorBody))
             {
+                // A failure reading the signed identity is a cause of the error it came with — never masking it,
+                // never dropped.
                 try { await TryExtractSignedErrorIdentity(errorBody, app, context); }
-                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — don't mask the original error */ }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+                {
+                    errorData.Error?.list.Add(new ServiceError(
+                        $"the signed identity in the error response couldn't be read: {ex.Message}", "SignedIdentityUnreadable", 500) { Exception = ex });
+                }
             }
 
             return errorData;
@@ -558,16 +564,23 @@ public sealed class Default : IHttp
         HttpResponseMessage response, HttpRequestMessage request, actor.context.@this context, CancellationToken ct = default)
     {
         var errorBody = "";
+        global::app.error.Error? unread = null;
+        // An error body that can't be read (size cap, slow sender, network) is said on the error — the status
+        // still answers, and why its body is missing isn't lost.
         try
         {
             var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, context, ct);
-            // Best effort: ignore size-cap / slow-loris failures here, proceed with empty body.
             if (read.Success) errorBody = (await read.Value())!.Clr<string>()!;
+            else unread = read.Error;
         }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — read failed (network/IO), proceed with empty */ }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            unread = new ServiceError($"the error response's body couldn't be read: {ex.Message}", "HttpBodyUnreadable", 500) { Exception = ex };
+        }
         var err = context.Error(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));
+        if (unread != null) err.Error!.list.Add(unread);
         BuildProperties(err, request, response);
         return (err, errorBody);
     }

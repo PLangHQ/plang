@@ -430,13 +430,11 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// <summary>
     /// Signs the request with PLang's built-in identity via the
     /// <c>signing.sign</c> action — same mechanism the http module uses — as the
-    /// caller. Adds the <c>X-Signature</c> header. Best-effort: if signing fails the
-    /// request still goes out unsigned (the server decides — "let the server
-    /// respond").
+    /// caller. Adds the <c>X-Signature</c> header. A request that can't be signed doesn't go out: the
+    /// signing failure is its error.
     /// </summary>
     private async Task SignRequest(HttpRequestMessage request, string? body, string method, actor.context.@this context)
     {
-        try
         {
             // Sign over a canonical request line — method, path, then the body. This
             // binds WHAT the request does (method + path) into the signed value, so it
@@ -449,15 +447,11 @@ public sealed partial class @this : global::app.type.item.path.@this
                 Data = new data.@this("", canonical, context: context),
             };
             var signResult = await context.App.Run<module.action.signing.sign>(sign, context);
-            if (signResult.Success)
-            {
-                var json = JsonSerializer.Serialize(signResult);
-                request.Headers.TryAddWithoutValidation("X-Signature", json);
-            }
-        }
-        catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            // Signing is best-effort — an unsigned request lets the server respond.
+            // a request asked to be signed and not signed doesn't go out unsigned: the signing failure is the request's
+            if (!signResult.Success)
+                throw new InvalidOperationException($"the request to {_uri} couldn't be signed: {signResult.Error?.Message}");
+            var json = JsonSerializer.Serialize(signResult);
+            request.Headers.TryAddWithoutValidation("X-Signature", json);
         }
     }
 

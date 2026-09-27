@@ -720,9 +720,14 @@ public sealed class OpenAi : ILlm
         // verb). AuthGate(Read) fires inside; in-root fast-passes, out-of-root
         // surfaces as a permission prompt or denial. Sync-wait: message
         // formatting is sync and the bytes-then-encode pipeline is cheap.
-        try
+        // The probe is whether the image names a file: a string that can't be a path at all (a base64 payload
+        // too long or with characters no path takes) is no file, and neither is a path to nothing (404). Any
+        // other failure — a denied read, an IO error — is the query's, not a guess at base64.
+        global::app.type.item.path.@this? imgPath = null;
+        try { imgPath = global::app.type.item.path.@this.Resolve(image, context); }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { }
+        if (imgPath != null)
         {
-            var imgPath = global::app.type.item.path.@this.Resolve(image, context);
             var dataUri = imgPath.ReadAsDataUri(context).GetAwaiter().GetResult();
             if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Peek()?.ToString()))
             {
@@ -735,10 +740,8 @@ public sealed class OpenAi : ILlm
                     }
                 };
             }
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            // Fall through to base64 assumption
+            if (!dataUri.Success && dataUri.Error?.StatusCode != 404)
+                throw new InvalidOperationException($"the image '{imgPath}' couldn't be read: {dataUri.Error?.Message}");
         }
 
         // Assume base64

@@ -61,7 +61,11 @@ public sealed partial class @this
     internal static byte[] SafeBase64(string? s)
     {
         if (string.IsNullOrEmpty(s)) return System.Array.Empty<byte>();
+        // a hash or signature that isn't base64 is a malformed signature — not one that merely doesn't verify
         try { return System.Convert.FromBase64String(s); }
-        catch (System.FormatException) { return System.Array.Empty<byte>(); }
+        catch (System.FormatException ex)
+        {
+            throw new global::app.error.AppException($"a signature field isn't base64: {ex.Message}", ex, "SignatureMalformed", 400);
+        }
     }
 }

@@ -56,15 +56,13 @@ public class PlangTypesCut3_CompositionNavigationTests
         await Assert.That(((global::app.type.item.path.file.@this)img.Path!).Exists).IsFalse();
     }
 
-    [Test] public async Task ImageFromBase64_PathIsNull_NoCrashOnNavigation()
+    [Test] public async Task ImageFromBase64_PathIsNull_AndBytesThatDontDecode_HaveNoSize()
     {
         var img = new image(PngBytes, "image/png");
         await Assert.That(img.Path).IsNull();
-        // Reading Width/Height on a base64-only image — no crash, just (0,0)
-        // for non-decoding bytes (the 8-byte signature isn't a full image).
-        var _ = img.Width;
-        var __ = img.Height;
-        await Assert.That(true).IsTrue();
+        // The 8-byte signature isn't a full image: its size is an error, never a 0×0 image.
+        await Assert.That(() => { _ = img.Width; return Task.CompletedTask; })
+            .Throws<SixLabors.ImageSharp.InvalidImageContentException>();
     }
 
     [Test] public async Task RoutingKey_StaysImage_NoPathImageUnion_AnywhereInRegistry()

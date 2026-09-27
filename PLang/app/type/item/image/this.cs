@@ -273,22 +273,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return (true, null);
             return (false, actual);
         }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+        // bytes that are no image format ImageSharp knows are the probe's "no" — anything else bubbles
+        catch (System.Exception ex) when (ex is SixLabors.ImageSharp.UnknownImageFormatException or SixLabors.ImageSharp.InvalidImageContentException)
         {
             return (false, null);
         }
     }
 
+    // An image's size, read from its header. Bytes that can't be identified are an error, never a 0×0 image.
     private (int w, int h) ProbeDimensions()
     {
         if (Bytes.Length == 0) return (0, 0);
-        try
-        {
-            var info = SixLabors.ImageSharp.Image.Identify(Bytes);
-            if (info != null) return (info.Width, info.Height);
-        }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        { /* probe failure → (0,0); never throw */ }
-        return (0, 0);
+        var info = SixLabors.ImageSharp.Image.Identify(Bytes);
+        return (info.Width, info.Height);
     }
 }
