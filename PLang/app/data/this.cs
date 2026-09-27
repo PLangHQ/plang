@@ -139,7 +139,7 @@ public partial class @this
     public bool Is(string typeName)
     {
         if (_item == null || string.IsNullOrWhiteSpace(typeName) || _context == null!) return false;
-        return _item.Is(_context.App.Type[typeName]);
+        return _item.Is(_context.App.type.list[typeName]);
     }
 
     /// <summary>Is this value (now or in its narrow history) the given type? Asks the value's own
@@ -198,7 +198,7 @@ public partial class @this
         if (type is { IsNull: false } && !type.Polymorphic)
             // A declared type that doesn't know its class is born through the types with this
             // Data's context, so it does.
-            _item = (type.ClrType == null && _context != null ? _context.App.Type[type, _context] : type).Create(parsed, _context);
+            _item = (type.ClrType == null && _context != null ? _context.App.type.list[type, _context] : type).Create(parsed, _context);
         // A value that needs no lift is context-free — the null citizen (every sentinel:
         // NotFound/Uninitialized/`new Data(name)`) and an already-native item pass through
         // without consulting the registry. Only a raw value to lift reaches the collection.

@@ -103,9 +103,9 @@ public class ActorChoiceTests
     [Test]
     public async Task Registry_ActorStaysTheActorItem_SlotNamesChoiceOfActor()
     {
-        await Assert.That(_app.Type["actor"].ClrType).IsEqualTo(typeof(global::app.actor.@this));
+        await Assert.That(_app.type.list["actor"].ClrType).IsEqualTo(typeof(global::app.actor.@this));
         var slot = typeof(global::app.module.action.goal.Call).GetProperty("Actor")!.PropertyType;
-        var entity = _app.Type[slot];
+        var entity = _app.type.list[slot];
         await Assert.That(entity.Name).IsEqualTo("choice");
         await Assert.That(entity.kind.Name).IsEqualTo("actor");
     }

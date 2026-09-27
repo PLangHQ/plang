@@ -28,7 +28,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // → a goal.call param dispatches). Otherwise the element streams as a raw slot (a list of
         // scalars / dicts). Generic — the list is about type X, never a specific element.
         var elementReader = kind is { } elementType
-            ? ctx.Context.App.Type.Reader.Typed(elementType, null)
+            ? ctx.Context.App.type.list.Reader.Typed(elementType, null)
             : null;
         while (reader.NextElement())
             list.AddRaw(elementReader is { } er

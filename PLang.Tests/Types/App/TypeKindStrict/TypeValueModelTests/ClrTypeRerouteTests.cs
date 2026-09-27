@@ -3,10 +3,10 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using PLangEngine = global::app.@this;
 
-namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
+namespace PLang.Tests.App.type.listKindStrict.TypeValueModelTests;
 
 // Three call-sites read `type.ClrType` today. After the reroute, ClrType is
-// non-public and these sites resolve via App.Type.Clr(name) / .Get(name):
+// non-public and these sites resolve via App.type.list.Clr(name) / .Get(name):
 //   - app.module.action.file.read    (CLR type for read-back conversion)
 //   - app.module.action.variable.set (CLR type for value conversion before mint)
 //   - app.module.action.setting.Sqlite (CLR type for column mapping)
@@ -19,23 +19,23 @@ public class ClrTypeRerouteTests
         // Surface check: registry's Clr() handles every name the old call-site
         // would have asked the entity's ClrType for.
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
-        await Assert.That(app.Type.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
+        await Assert.That(app.type.list.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(app.type.list.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
     }
 
     [Test] public async Task VariableSet_StillResolves_ClrTypeViaRegistry()
     {
-        // variable.set reroutes value.Type.ClrType to value.Context.App.Type.Clr(value.Type.Name).
+        // variable.set reroutes value.Type.ClrType to value.Context.App.type.list.Clr(value.Type.Name).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
-        await Assert.That(app.Type.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
+        await Assert.That(app.type.list.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(app.type.list.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
     }
 
     [Test] public async Task SettingsSqlite_StillResolves_ClrTypeViaRegistry()
     {
-        // Sqlite reroutes data.Type.ClrType to data.Context.App.Type.Clr(data.Type.Name).
+        // Sqlite reroutes data.Type.ClrType to data.Context.App.type.list.Clr(data.Type.Name).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("guid")).IsEqualTo(typeof(global::app.type.item.guid.@this));
-        await Assert.That(app.Type.Clr("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));
+        await Assert.That(app.type.list.Clr("guid")).IsEqualTo(typeof(global::app.type.item.guid.@this));
+        await Assert.That(app.type.list.Clr("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));
     }
 }

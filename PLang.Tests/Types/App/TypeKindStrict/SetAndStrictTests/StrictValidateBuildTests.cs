@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 
-namespace PLang.Tests.App.TypeKindStrict.SetAndStrictTests;
+namespace PLang.Tests.App.type.listKindStrict.SetAndStrictTests;
 
 public class StrictValidateBuildTests
 {
@@ -37,7 +37,7 @@ public class StrictValidateBuildTests
         return new(ctx)
         {
             Value = new global::app.data.@this("Value", value, context: ctx),
-            Type = new global::app.data.@this("Type", ctx.App.Type[typeEntity, ctx], context: ctx),
+            Type = new global::app.data.@this("Type", ctx.App.type.list[typeEntity, ctx], context: ctx),
         };
     }
 

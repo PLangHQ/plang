@@ -29,8 +29,12 @@ namespace app.type;
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
-public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>
+public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.ICurrent<@this>,
+    item.IList<@this, list.@this>
 {
+    /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
+    public static list.@this List(global::app.@this app) => new();
+
     /// <summary>Self-write (the sync core; base <c>Output</c> wraps it): the type entity's
     /// <c>{name, kind?, strict?}</c> identity — the same shape Data writes for its <c>type</c>
     /// slot. Used both when a type entity rides as a VALUE (a <c>variable.set</c> <c>Type</c>
@@ -295,7 +299,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>
         global::app.type.reader.ReadContext ctx)
     {
         // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names.
-        if (ctx.Context.App.Type.Reader.Typed(Name, null) is { IsEager: true } eager)
+        if (ctx.Context.App.type.list.Reader.Typed(Name, null) is { IsEager: true } eager)
             return eager.Read(ref reader, null, ctx);
 
         var transport = ctx.Context.Actor?.Channel.Serializers?.Transport
@@ -564,5 +568,5 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>
     /// <summary>A type answers navigation as its full type — the registry's, found with the
     /// asker's context. A full type is its own answer.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => new global::app.type.clr.@this(parent.Context.App.Type[this, parent.Context], parent.Context).Get(parent, key);
+        => new global::app.type.clr.@this(parent.Context.App.type.list[this, parent.Context], parent.Context).Get(parent, key);
 }

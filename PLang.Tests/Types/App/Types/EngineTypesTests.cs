@@ -523,14 +523,14 @@ public class EngineTypesTests
         engine.Format.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::app.data.@this("test", new byte[] { 1 },
-            engine.Type.Mime("application/custom", context), context: context);
+            engine.type.list.Mime("application/custom", context), context: context);
 
         // Bytes off I/O are binary; the kind names the subtype. The custom mime
         // only resolves to its family through the ENGINE'S registry (the runtime
         // Add), which the static TypeMapping lacks — proving lazy derivation
         // walks the engine types, not the static map.
         await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Type.Kind(data.Type!.kind.Name).type(context).Name).IsEqualTo("custom-kind");
+        await Assert.That(engine.type.list.Kind(data.Type!.kind.Name).type(context).Name).IsEqualTo("custom-kind");
     }
 
     // --- Engine integration ---
@@ -540,8 +540,8 @@ public class EngineTypesTests
     {
         await using var engine = TestApp.Create("/test");
 
-        await Assert.That(engine.Type).IsNotNull();
-        await Assert.That(engine.Type.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
+        await Assert.That(engine.type.list).IsNotNull();
+        await Assert.That(engine.type.list.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     // --- v5: Depth limit ---

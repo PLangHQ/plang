@@ -6,13 +6,14 @@ namespace app.type;
 /// class serves every concept. Its members: <see cref="list"/> (the X's), <see cref="Get(string)"/>
 /// (the one by key), <see cref="current"/> (the one in play for the asker).
 /// </summary>
-public sealed class @this<T> : @this
-    where T : item.@this, item.ICreate<T>, item.IMatch<T>, item.ICurrent<T>, item.IList<T>
+public sealed class @this<T, L> : @this
+    where T : item.@this, item.ICreate<T>, item.IMatch<T>, item.ICurrent<T>, item.IList<T, L>
+    where L : item.list.@this<T>
 {
     public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T)) => list = T.List(app);
 
-    /// <summary>The X's loaded so far.</summary>
-    public item.list.@this<T> list { get; }
+    /// <summary>The X's loaded so far — the list class T names, with its own work.</summary>
+    public L list { get; }
 
     /// <summary>
     /// The one <paramref name="key"/> names — the first of <see cref="list"/> whose own

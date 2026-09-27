@@ -12,7 +12,7 @@ public class ContainerKindDoorTests
     public async Task PlangList_ResolvesToListWithElementKind()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-1");
-        var entity = app.Type[typeof(ItemList)];
+        var entity = app.type.list[typeof(ItemList)];
         await Assert.That(entity.Name).IsEqualTo("list");
         await Assert.That(entity.kind.Name).IsEqualTo("path");     // element rides as kind
         await Assert.That(entity.ToString()).IsEqualTo("list<path>"); // face composes back
@@ -28,7 +28,7 @@ public class ContainerKindDoorTests
             typeof(string[]),
             typeof(System.Collections.Generic.IReadOnlyList<long>) })
         {
-            var entity = app.Type[t];
+            var entity = app.type.list[t];
             await Assert.That(entity.Name).IsEqualTo("list");
             await Assert.That(entity.kind.IsEmpty).IsFalse();
         }
@@ -38,6 +38,6 @@ public class ContainerKindDoorTests
     public async Task ByteArray_IsBytes_NotList()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-4");
-        await Assert.That(app.Type[typeof(byte[])].Name).IsNotEqualTo("list");
+        await Assert.That(app.type.list[typeof(byte[])].Name).IsNotEqualTo("list");
     }
 }

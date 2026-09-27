@@ -80,7 +80,7 @@ public class TemplateFlagTests
     {
         var app = global::PLang.Tests.TestApp.Create("/t");
         var context = app.User.Context;
-        var unopened = new global::app.type.item.source("[1] output.write(Data=\"hello %name%\")", context.App.Type["text"]);
+        var unopened = new global::app.type.item.source("[1] output.write(Data=\"hello %name%\")", context.App.type.list["text"]);
         await context.Variable.Set("reply", new global::app.data.@this("reply", unopened, context: context));
 
         var goal = Make.Goal("G", "/g.goal",

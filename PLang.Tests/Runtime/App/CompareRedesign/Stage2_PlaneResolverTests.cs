@@ -41,7 +41,7 @@ public class Stage2_PlaneResolverTests
         // %x!type% → headline type name (post-narrow: `dict`)
         await using var app = NewApp();
         var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
-            global::PLang.Tests.TestApp.SharedContext.App.Type["dict"], context: app.User.Context);
+            global::PLang.Tests.TestApp.SharedContext.App.type.list["dict"], context: app.User.Context);
         var t = await d.Get("!type");
         await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
@@ -51,7 +51,7 @@ public class Stage2_PlaneResolverTests
     {
         // the runtime registration check rejects a shadower; every built-in
         // value family is clean (statics like the lattice `Type` are exempt)
-        var reserved = global::PLang.Tests.TestApp.SharedContext.App.Type.Reserved;
+        var reserved = global::PLang.Tests.TestApp.SharedContext.App.type.list.Reserved;
         await Assert.That(Shadows(typeof(ReservedShadower), reserved)).IsEqualTo("Error");
         await Assert.That(Shadows(typeof(global::app.type.item.text.@this), reserved)).IsNull();
         await Assert.That(Shadows(typeof(global::app.type.item.dict.@this), reserved)).IsNull();

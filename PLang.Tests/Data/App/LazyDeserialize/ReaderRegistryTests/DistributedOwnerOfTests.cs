@@ -14,7 +14,7 @@ public class DistributedOwnerOfTests
     private static System.Type[] Clrs(System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr> d)
         => d.Select(o => o.Clr).ToArray();
 
-    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
+    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
 
     // The central switch is gone; routing composes from declarations. Pinned by
     // behaviour: the ownership door's answer for a CLR type is the owning family's

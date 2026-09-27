@@ -43,7 +43,7 @@ public partial class Where : IContext
                 if (!keepItem.Success) return Context.Error(keepItem.Error!);
                 if (keepItem.ToBoolean()) kept.Add(item);
             }
-            return Context.Ok(kept, Context.App.Type["list"]);
+            return Context.Ok(kept, Context.App.type.list["list"]);
         }
 
         if (subjectVal is app.type.item.dict.@this)
@@ -52,7 +52,7 @@ public partial class Where : IContext
             var keep = await Keep(subject, field, op);
             if (!keep.Success) return Context.Error(keep.Error!);
             return Context.Ok(keep.ToBoolean() ? subjectVal : null,
-                Context.App.Type["dict"]);
+                Context.App.type.list["dict"]);
         }
 
         // The apex has no fields to scope into — `5 where age > 20` is meaningless.

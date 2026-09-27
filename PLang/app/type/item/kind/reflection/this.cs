@@ -160,7 +160,7 @@ public sealed class @this : global::app.type.kind.@this
         // symbol. Never reflect-construct it as an object host below (no parameterless ctor).
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>))
         {
-            var entity = ctx.Context.App.Type[t];
+            var entity = ctx.Context.App.type.list[t];
             // The symbol rides as a string; a numeric ordinal (an enum member written by value) becomes
             // its member first. choice.Create takes either the member or the symbol.
             object member = reader.Peek() == global::app.channel.serializer.TokenKind.Number

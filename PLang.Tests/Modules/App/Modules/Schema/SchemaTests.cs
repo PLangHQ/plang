@@ -42,7 +42,7 @@ public class SchemaTests
     // {choice, kind} entity of the slot (goal.call's Actor: choice<actor> {system, user}), so no
     // catalog entry is a closed set.
     private global::app.type.@this ActorSlot()
-        => _app.Type[typeof(global::app.module.action.goal.Call).GetProperty("Actor")!.PropertyType];
+        => _app.type.list[typeof(global::app.module.action.goal.Call).GetProperty("Actor")!.PropertyType];
 
     [Test]
     public async Task Build_ClosedSets_RideOnTheirSlot_NotAsTypes()

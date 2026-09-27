@@ -4,11 +4,11 @@ using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 
-// app.Type.Mime / app.Type.Extension — the type content off I/O arrives as:
+// app.type.list.Mime / app.type.list.Extension — the type content off I/O arrives as:
 // binary, with the MIME subtype / file extension as its kind.
 public class FormatRemapTests
 {
-    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
+    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
     private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
 
     // The flip: content off I/O IS binary; the mime subtype is the decode hint

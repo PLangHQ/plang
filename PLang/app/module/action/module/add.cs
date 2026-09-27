@@ -30,7 +30,7 @@ public partial class Add : IContext
         var count = app.Module.Discover(assembly, ns);
         // The assembly's plang types and kinds (the closed sets its choice<T> params draw on) come in
         // through the types' one way in.
-        var types = app.Type.Add(assembly, Context);
+        var types = app.type.list.Add(assembly, Context);
         if (!types.Success) return types;
         return Data(new type.module { name = dllPath.FileNameWithoutExtension, actions = count });
     }

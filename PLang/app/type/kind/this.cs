@@ -51,10 +51,10 @@ public class @this
     public global::app.type.@this type(actor.context.@this context)
     {
         string name = Owner
-                      ?? context.App.Type.Reader.TypeOf(Name)
+                      ?? context.App.type.list.Reader.TypeOf(Name)
                       ?? context.App.Format.Kind(Name)
                       ?? "binary";
-        return context.App.Type[new global::app.type.@this(name), context];
+        return context.App.type.list[new global::app.type.@this(name), context];
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public class @this
         var held = owner.kind is empty.@this root ? root.kinds.Select(k => k.Name) : [];
         var formats = context.App.Format.KindsByFamily().TryGetValue(owner.Name, out var family) ? family : [];
         return new(held.Concat(formats).Distinct(System.StringComparer.OrdinalIgnoreCase)
-            .Select(name => context.App.Type[new global::app.type.@this(owner.Name, name), context]));
+            .Select(name => context.App.type.list[new global::app.type.@this(owner.Name, name), context]));
     }
 
     // --- Verbs: the kind owns what you can do with its values. Defaults here; kinds override. ---
@@ -98,7 +98,7 @@ public class @this
             var (found, next) = kind.Descend(node, key, isIndex, ctx);
             if (!found) return ctx.NotFound(seg.Raw);
             node = next;
-            if (node is not null) kind = ctx.App.Type.Kind(node.GetType());   // re-derive for the next hop
+            if (node is not null) kind = ctx.App.type.list.Kind(node.GetType());   // re-derive for the next hop
         }
         return kind.Data(parent.Name, node, parent, ctx);
     }
@@ -195,7 +195,7 @@ public class @this
             // any sequence → array, an object → the * kind's declared-face Output). One rule, no
             // categories: the kind decides; an undeclared plang type throws there, loud.
             default:
-                if (value.GetType().IsClass) await ctx.App.Type.Kind(value.GetType()).Output(value, writer, mode, ctx);
+                if (value.GetType().IsClass) await ctx.App.type.list.Kind(value.GetType()).Output(value, writer, mode, ctx);
                 else writer.Value(value);
                 break;
         }

@@ -30,7 +30,7 @@ public class NumberDeclaresClrTypesTests
     // is in number's own declaration — so the kind was added by editing number alone.
     [Test] public async Task Number_AddingNewCrlType_RequiresOnlyNumberEdit()
     {
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type[typeof(uint)]?.Name).IsEqualTo("number");
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.type.list[typeof(uint)]?.Name).IsEqualTo("number");
         await Assert.That(number.OwnedClrTypes.Any(o => o.Clr == typeof(uint))).IsTrue();
     }
 }

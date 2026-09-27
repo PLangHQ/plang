@@ -9,7 +9,7 @@ namespace PLang.Tests.App.SingularNamespaces.NullabilityTests;
 //
 // Production producers always stamp Context downstream of mint (Variables.Set,
 // Action.RunAsync, snapshot restore); a type's class is answered by the registry
-// (`app.Type`), never by a static no-context lookup.
+// (`app.type.list`), never by a static no-context lookup.
 //
 // The 5 structural back-refs (step.Goal, channel.Actor, channel.Channels and
 // the App back-refs on module/goal/error) are flipped non-null.
@@ -27,7 +27,7 @@ public class NonNullInvariantTests
     [Test] public async Task DataType_OnStampedData_ResolvesDomainType_ViaRegistry_NotStaticFallback()
     {
         // `path` lives only in the per-App catalog, so resolving its ClrType proves the
-        // read went through Context.App.Type.Clr.
+        // read went through Context.App.type.list.Clr.
         await using var app = new PLangEngine("/test");
 
         // A declared type that doesn't know its class is born through the types by the Data,
@@ -36,7 +36,7 @@ public class NonNullInvariantTests
             new global::app.type.@this("path"), context: app.User.Context);
         await Assert.That(d.Type.ClrType).IsEqualTo(typeof(global::app.type.item.path.@this))
             .Because("the Data births its declared type through the types, which know path's class.");
-        var clr = d.Context!.App.Type.Clr(d.Type.Name);
+        var clr = d.Context!.App.type.list.Clr(d.Type.Name);
         await Assert.That(clr).IsNotNull()
             .Because("registry knows 'path' → typeof(global::app.type.item.path.@this); static fallback returns null.");
         await Assert.That(clr!.Name).IsEqualTo("this")

@@ -86,7 +86,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     public async Task PrimitiveMap_DictRegistered_RawDictionaryEntryRetired()
     {
         // "dict" and its aliases name the dict value type, not a raw Dictionary.
-        var types = global::PLang.Tests.TestApp.SharedContext.App.Type;
+        var types = global::PLang.Tests.TestApp.SharedContext.App.type.list;
         await Assert.That(types.Clr("dict")).IsEqualTo(typeof(Dict));
         await Assert.That(types.Clr("dictionary")).IsEqualTo(typeof(Dict));
         await Assert.That(types.Clr("map")).IsEqualTo(typeof(Dict));

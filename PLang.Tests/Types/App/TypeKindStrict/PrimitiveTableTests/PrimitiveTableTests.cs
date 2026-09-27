@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 
-namespace PLang.Tests.App.TypeKindStrict.PrimitiveTableTests;
+namespace PLang.Tests.App.type.listKindStrict.PrimitiveTableTests;
 
 // text owns "string" as its alias; BuilderNames trimmed (text in, string/numerics out).
 public class PrimitiveTableTests
@@ -10,7 +10,7 @@ public class PrimitiveTableTests
 #pragma warning disable CS0618
     private static readonly global::app.type.list.view.@this View = new(null!);
 #pragma warning restore CS0618
-    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
+    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
 
     [Test] public async Task String_NamesText()
         => await Assert.That(Types["string"].Name).IsEqualTo("text");

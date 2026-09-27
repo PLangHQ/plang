@@ -140,7 +140,7 @@ public class source : @this
             // reader below (png→image, csv→table, …). Covers both entrances — a content source and
             // an inherited wire both parse here. A bad parse rides the catch → MaterializeFailed.
             if (_type.kind is { IsEmpty: false } kind
-                && await asking.App.Type.Kind(kind.Name).Load(_value, asking) is { } loaded)
+                && await asking.App.type.list.Kind(kind.Name).Load(_value, asking) is { } loaded)
             {
                 var decoded = await loaded.Value();
                 decoded.history.Add(this);   // the source rides the materialized value's history
@@ -191,7 +191,7 @@ public class source : @this
     private protected virtual global::app.type.item.@this Read(actor.context.@this context)
     {
         var kind = _type.kind.IsEmpty ? null : _type.kind.Name;
-        var typeReader = context.App.Type.Reader.Reader(_type.Name, kind, context);
+        var typeReader = context.App.type.list.Reader.Reader(_type.Name, kind, context);
         var reader = new global::app.channel.serializer.value.Reader(_value);
         return typeReader.Read(ref reader, kind,
             new global::app.type.reader.ReadContext(context, _type.Template));

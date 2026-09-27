@@ -16,7 +16,7 @@ public class TypeIsTests
     [Test] public async Task Is_SameName_True()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type["image"].Is(app.Type["image"])).IsTrue();
+        await Assert.That(app.type.list["image"].Is(app.type.list["image"])).IsTrue();
     }
 
     [Test] public async Task Is_ImageBornFromPath_IsPath()
@@ -27,21 +27,21 @@ public class TypeIsTests
         // entry, so the value answers `is path`. (A bare type entity does NOT — no history.)
         var path = new global::app.type.item.path.file.@this("/test/photo.png");
         var img = new image(new byte[] { 1, 2, 3 }, path, ctx);
-        await Assert.That(img.Is(app.Type["path"])).IsTrue();
-        await Assert.That(app.Type["image"].Is(app.Type["path"])).IsFalse();   // bare type: no history
+        await Assert.That(img.Is(app.type.list["path"])).IsTrue();
+        await Assert.That(app.type.list["image"].Is(app.type.list["path"])).IsFalse();   // bare type: no history
     }
 
     [Test] public async Task Is_NonFacet_ImageIsNotText()
     {
         await using var app = TestApp.Create("/test");
         // image has a Mime string but does NOT declare text as a facet.
-        await Assert.That(app.Type["image"].Is(app.Type["text"])).IsFalse();
+        await Assert.That(app.type.list["image"].Is(app.type.list["text"])).IsFalse();
     }
 
     [Test] public async Task Is_NotSymmetric_PathIsNotImage()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type["path"].Is(app.Type["image"])).IsFalse();
+        await Assert.That(app.type.list["path"].Is(app.type.list["image"])).IsFalse();
     }
 
     [Test] public async Task Set_ImageBoundToPathSlot_KeptAsImage_NotDowngraded()

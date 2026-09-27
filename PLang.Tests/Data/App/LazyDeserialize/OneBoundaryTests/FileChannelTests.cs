@@ -44,7 +44,7 @@ public class FileChannelTests
     }
 
     // file.read opens the file channel and reads — no read-time
-    // `Context.App.Type.Convert(...)`. The result is LAZY: raw set, value
+    // `Context.App.type.list.Convert(...)`. The result is LAZY: raw set, value
     // unmaterialized, so the conversion that ReadText used to do at read time
     // is gone (it now fires on first touch).
     [Test] public async Task FileRead_OpensFileChannel_NoReadTimeConvertInFilePathReadText()

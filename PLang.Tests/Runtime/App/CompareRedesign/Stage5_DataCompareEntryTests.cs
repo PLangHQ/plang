@@ -17,7 +17,7 @@ public class Stage5_DataCompareEntryTests
     }
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.Type[typeName], context: app.User.Context);
+        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.User.Context);
 
     [Test]
     public async Task DataCompare_CallerOrder_LessMeansThisLessThanOther()
@@ -59,7 +59,7 @@ public class Stage5_DataCompareEntryTests
     [Test]
     public async Task DataCompare_NoTypeNameSwitch_RoutesViaNameFamily()
     {
-        // analyzer/grep gate: dispatch has no `Type.Name == "..."` switch; reuses App.Type[Name] routing
+        // analyzer/grep gate: dispatch has no `Type.Name == "..."` switch; reuses App.type.list[Name] routing
         // grep gate: the dispatch (type entity Rank/Compare + the registry) carries no
         // `Name == "..."` type-name switch — routing reuses the name→family registry.
         var dir = System.AppContext.BaseDirectory;

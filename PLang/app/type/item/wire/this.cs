@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.source
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
     private global::app.type.item.@this Decoded(actor.context.@this context)
-        => (Type.kind is { IsEmpty: false } k ? context.App.Type.Kind(k.Name).Parse(Raw, context) : null) ?? Read(context);
+        => (Type.kind is { IsEmpty: false } k ? context.App.type.list.Kind(k.Name).Parse(Raw, context) : null) ?? Read(context);
 
     // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
     // slice). Any other writer is a USE — decoding needs a context, which this context-free door

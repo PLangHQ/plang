@@ -194,7 +194,7 @@ public sealed record @this(
         sb.AppendLine($"            await {Name}.Value();");
         sb.AppendLine($"            if (!{Name}.Success)");
         sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
-        sb.AppendLine($"                    $\"property '{Name}' cannot be a {{Context.App.Type[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
+        sb.AppendLine($"                    $\"property '{Name}' cannot be a {{Context.App.type.list[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
         sb.AppendLine($"                    \"PropertyValue\", 400));");
         sb.AppendLine("        }");
     }
@@ -210,7 +210,7 @@ public sealed record @this(
         sb.AppendLine($"            await {Name}.Value();");
         sb.AppendLine($"            if (!{Name}.Success)");
         sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
-        sb.AppendLine($"                    $\"property '{Name}' is {{__ref{Name}}} ({{__known{Name}.Type}}), which can't be a {{Context.App.Type[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
+        sb.AppendLine($"                    $\"property '{Name}' is {{__ref{Name}}} ({{__known{Name}.Type}}), which can't be a {{Context.App.type.list[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
         sb.AppendLine($"                    \"PropertyType\", 400));");
         sb.AppendLine("        }");
     }

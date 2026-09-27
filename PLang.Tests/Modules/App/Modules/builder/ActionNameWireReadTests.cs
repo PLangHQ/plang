@@ -28,7 +28,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
 
         var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();
         var clrJsonActions = new global::app.data.@this("actions",
-            context.App.Type[new Type("object", "json"), context].Create(element, context), context: context);
+            context.App.type.list[new Type("object", "json"), context].Create(element, context), context: context);
         await context.Variable.Set("goal.Step[0].Code", clrJsonActions);
         return goal;
     }

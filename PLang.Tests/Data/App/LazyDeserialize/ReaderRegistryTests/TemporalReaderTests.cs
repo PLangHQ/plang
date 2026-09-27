@@ -29,7 +29,7 @@ public class TemporalReaderTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("2026-01-01", ctx.App.Type["date"], ctx, "d");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("2026-01-01", ctx.App.type.list["date"], ctx, "d");
         var item = await d.Value();
         await Assert.That(item).IsTypeOf<global::app.type.item.date.@this>();
         await Assert.That(((global::app.type.item.date.@this)item!).Clr<System.DateOnly>())
@@ -40,7 +40,7 @@ public class TemporalReaderTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("2026-01-01T12:30:00+00:00", ctx.App.Type["datetime"], ctx, "dt");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("2026-01-01T12:30:00+00:00", ctx.App.type.list["datetime"], ctx, "dt");
         var item = await d.Value();
         await Assert.That(item).IsTypeOf<global::app.type.item.datetime.@this>();
         await Assert.That(((global::app.type.item.datetime.@this)item!).Clr<System.DateTimeOffset>())
@@ -52,7 +52,7 @@ public class TemporalReaderTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("12:30:00", ctx.App.Type["time"], ctx, "t");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("12:30:00", ctx.App.type.list["time"], ctx, "t");
         var item = await d.Value();
         await Assert.That(item).IsTypeOf<global::app.type.item.time.@this>();
         await Assert.That(((global::app.type.item.time.@this)item!).Clr<System.TimeOnly>())
@@ -63,7 +63,7 @@ public class TemporalReaderTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("not-a-date", ctx.App.Type["date"], ctx, "bad");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("not-a-date", ctx.App.type.list["date"], ctx, "bad");
         await d.Value();
         await Assert.That(d.Success).IsFalse();
         await Assert.That(d.Error!.Key).IsEqualTo("MaterializeFailed");

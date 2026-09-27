@@ -56,7 +56,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // variable.set returns bare Task<Data>.
         var row = Find("variable", "set");
-        await Assert.That(row.Return).IsEqualTo(_app.Type["item"]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list["item"]);
     }
 
     // Data<global::app.type.item.@bool.@this>
@@ -66,7 +66,7 @@ public class ModulesDescribeReturnTypeTests
         // file.exists.Start() returns Task<Data<path>> — the path is the value;
         // condition.compare returns Data<global::app.type.item.@bool.@this>. Use compare to pin "bool".
         var row = Find("condition", "compare");
-        await Assert.That(row.Return).IsEqualTo(_app.Type["bool"]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list["bool"]);
     }
 
     // Data<path>
@@ -75,7 +75,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.save → Task<Data<path>>.
         var row = Find("file", "save");
-        await Assert.That(row.Return).IsEqualTo(_app.Type["path"]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list["path"]);
     }
 
     // Data<global::app.type.item.list.@this<path>> — generic collection rendering.
@@ -84,7 +84,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.list → Task<Data<global::app.type.item.list.@this<path>>>.
         var row = Find("file", "list");
-        await Assert.That(row.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "path"), _app.User.Context]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "path"), _app.User.Context]);
     }
 
     // Data<Identity> — domain type. [PlangType("identity")] on the class
@@ -93,7 +93,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_DataOfIdentity_IsIdentity()
     {
         var row = Find("identity", "get");
-        await Assert.That(row.Return).IsEqualTo(_app.Type["identity"]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list["identity"]);
     }
 
     // Data<global::app.type.item.list.@this<Identity>> — list of domain type.
@@ -101,7 +101,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_DataOfListOfIdentity_IsListOfIdentity()
     {
         var row = Find("identity", "list");
-        await Assert.That(row.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "identity"), _app.User.Context]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "identity"), _app.User.Context]);
     }
 
     // Sanity: every catalog row carries a type — item or a real T.

@@ -30,7 +30,7 @@ public sealed class Json : ISerializer
             // so the value rides alone (type inferred on read).
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, view, _context.App.Type.Renderer, emitsSchema: false);
+                utf8, view, _context.App.type.list.Renderer, emitsSchema: false);
             await data.Output(writer, view, _context);
             await utf8.FlushAsync(cancellationToken);
             return data.Context.Ok();
@@ -52,7 +52,7 @@ public sealed class Json : ISerializer
             if (ms.Length == 0) return _context.Ok();
             // A bare json payload — the json kind owns its parse (structured → clr(json),
             // scalar → its native leaf). One decode, no STJ serializer layer.
-            var item = _context.App.Type.Kind("json").Parse(ms.ToArray(), _context);
+            var item = _context.App.type.list.Kind("json").Parse(ms.ToArray(), _context);
             return _context.Ok(item);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)

@@ -36,7 +36,7 @@ public partial class load : IContext
         // The assembly's plang types and their renderers come in through the types' one way in.
         // They add new resolution and rendering, but cannot rewrite what the source generator
         // already baked into compiled handler slots.
-        var typeLoad = Context.App.Type.Add(assembly, Context);
+        var typeLoad = Context.App.type.list.Add(assembly, Context);
         if (!typeLoad.Success) return typeLoad;
 
         var providerTypes = assembly.GetExportedTypes()

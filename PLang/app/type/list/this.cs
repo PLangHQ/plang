@@ -212,7 +212,7 @@ public sealed partial class @this
         if (Array.Find(types, t => t.Owned.Any(o => !o.Assignable && o.Clr == type)) is { } owner)
             return (owner.Name, null);
         // A collected type (type<goal>, type<type>) is a type.
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<>)) return ("type", null);
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<,>)) return ("type", null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
             return ("choice", new global::app.type.item.choice.set.@this(type.GetGenericArguments()[0]).Name);
         if (typeof(app.type.item.@this).IsAssignableFrom(type)

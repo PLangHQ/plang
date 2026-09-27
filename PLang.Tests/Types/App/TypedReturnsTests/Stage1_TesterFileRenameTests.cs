@@ -52,7 +52,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task TesterTest_PlangTypeName_IsTest_Not_TestFile()
     {
-        var name = _app.Type[typeof(global::app.test.@this)].ToString();
+        var name = _app.type.list[typeof(global::app.test.@this)].ToString();
         await Assert.That(name).IsEqualTo("test");
         await Assert.That(name).IsNotEqualTo("testfile");
     }
@@ -61,7 +61,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task NoSourceFile_ReferencesTestfileString()
     {
-        var resolved = _app.Type.Clr("testfile");
+        var resolved = _app.type.list.Clr("testfile");
         await Assert.That(resolved).IsNull()
             .Because("No [PlangType(\"testfile\")] override exists — only 'test' resolves.");
     }

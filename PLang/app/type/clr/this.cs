@@ -51,7 +51,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // Born kind: an explicit stamp, else the kind that CLAIMS this CLR form (json → its
         // JsonElement, a list → IList, …), else the `*` reflection kind. The one door answers
         // all three (exact → assignable → catch-all) and never null.
-        Kind = kind ?? context.App.Type.Kind(value.GetType());
+        Kind = kind ?? context.App.type.list.Kind(value.GetType());
     }
 
     /// <summary>

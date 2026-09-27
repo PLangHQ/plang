@@ -145,7 +145,7 @@ public class SetTests
     private global::app.module.action.variable.Set WithValue(object value, global::app.type.@this type)
         => new(_app.User.Context)
         {
-            Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.App.Type[type, _app.User.Context], context: _app.User.Context)
+            Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.App.type.list[type, _app.User.Context], context: _app.User.Context)
         };
 
     [Test]

@@ -4,7 +4,7 @@ namespace PLang.Tests.App.CompareRedesign;
 
 // Stage 7 — `path`'s interior string-math moves onto the type (OBP smell #5).
 // `path.IsUnder(root)` replaces `f.Relative.StartsWith(rootRel)`; `path.Kind`
-// answers its extension's type (`app.Type.Extension`). Raw `.Relative` /
+// answers its extension's type (`app.type.list.Extension`). Raw `.Relative` /
 // `.Extension` become `internal`, feeding the new methods + the `!relative` /
 // `!extension` derived projections.
 public class Stage7_PathGrowthTests
@@ -41,7 +41,7 @@ public class Stage7_PathGrowthTests
         var p = global::app.type.item.path.@this.Resolve("/data/config.json", context);
         var kind = p.Kind(context);
         await Assert.That(kind.IsNull).IsFalse();
-        await Assert.That(kind).IsEqualTo(app.Type.Extension(".json", context));
+        await Assert.That(kind).IsEqualTo(app.type.list.Extension(".json", context));
     }
 
     [Test]

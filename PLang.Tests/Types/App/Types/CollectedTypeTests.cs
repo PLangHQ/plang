@@ -8,7 +8,7 @@ public class CollectedTypeTests
     [Test] public async Task Get_AnswersTheMatchingElement_Or404()
     {
         await using var app = TestApp.Create("/test");
-        var probes = new global::app.type.@this<Probe.@this>(app);
+        var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         probes.list.Add(new Probe.@this("a"));
         probes.list.Add(new Probe.@this("b"));
 
@@ -24,15 +24,15 @@ public class CollectedTypeTests
     [Test] public async Task TheCollectedType_IsNamedByItsElement_AndItsClassIsAType()
     {
         await using var app = TestApp.Create("/test");
-        var probes = new global::app.type.@this<Probe.@this>(app);
+        var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         await Assert.That(probes.Name).IsEqualTo("probe");
-        await Assert.That(app.Type[probes.GetType()].Name).IsEqualTo("type");
+        await Assert.That(app.type.list[probes.GetType()].Name).IsEqualTo("type");
     }
 
     [Test] public async Task Current_WithNothingInside_IsNotFound()
     {
         await using var app = TestApp.Create("/test");
-        var probes = new global::app.type.@this<Probe.@this>(app);
+        var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         var current = probes.current(app.User.Context);
         await Assert.That(current.Success).IsFalse();
         await Assert.That(current.Error!.StatusCode).IsEqualTo(404);

@@ -130,7 +130,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             {
                 case "name": name = row.Null() ? "" : row.String(); break;
                 case "type":
-                    type = row.Null() ? null : ctx.Context.App.Type.Reader.Reader("type", null, ctx.Context)
+                    type = row.Null() ? null : ctx.Context.App.type.list.Reader.Reader("type", null, ctx.Context)
                         .Read(ref row, null, ctx) as global::app.type.@this;
                     break;
                 case "value":
@@ -149,7 +149,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         return new global::app.type.property.@this
         {
             Name = name,
-            Type = type ?? ctx.Context.App.Type["item"],
+            Type = type ?? ctx.Context.App.type.list["item"],
             Value = value,
             Properties = properties ?? new(),
         };

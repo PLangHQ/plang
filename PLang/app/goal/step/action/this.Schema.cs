@@ -58,11 +58,11 @@ public partial class @this
             if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
                 ret = ret.GetGenericArguments()[0];
 
-            if (ret == typeof(global::app.data.@this)) return _return = App.Type["item"];
+            if (ret == typeof(global::app.data.@this)) return _return = App.type.list["item"];
             if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
                 return null;
             var t = ret.GetGenericArguments()[0];
-            return _return = t == typeof(object) ? App.Type["item"] : App.Type[t];
+            return _return = t == typeof(object) ? App.type.list["item"] : App.type.list[t];
         }
     }
 

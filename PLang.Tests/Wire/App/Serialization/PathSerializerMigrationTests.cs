@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Serialization;
 // The wire shape (portable Relative / Raw / Absolute fallback) is preserved
 // exactly — byte-for-byte parity against the legacy JsonConverter.
 //
-// A path's kind is its scheme, read off the built value (App.Type["path"].Create) — no
+// A path's kind is its scheme, read off the built value (App.type.list["path"].Create) — no
 // build-time hook. https stays https (scheme-accurate).
 
 public class PathSerializerMigrationTests
@@ -60,7 +60,7 @@ public class PathSerializerMigrationTests
     {
         var ctx = app.User.Context;
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
-        var built = ctx.App.Type[typeName].Create(raw, carrier);
+        var built = ctx.App.type.list[typeName].Create(raw, carrier);
         // A decline says why — the carrier holds the reason.
         return built?.Type.kind is { IsEmpty: false } kind ? kind.Name : $"<no value: {carrier.Error?.Key}: {carrier.Error?.Message}>";
     }
@@ -100,7 +100,7 @@ public class PathSerializerMigrationTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.channel.serializer.json.Writer(utf,
-                view: global::app.View.Out, renderers: app.Type.Renderer);
+                view: global::app.View.Out, renderers: app.type.list.Renderer);
             w.Value(p);
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());

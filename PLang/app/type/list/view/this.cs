@@ -78,7 +78,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this Build()
     {
         var primitives = BuilderNames;
-        var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
+        var types = _modules.App?.type.list.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
         // name → kind vocabulary the LLM may emit, scoped to the FUNDAMENTAL
         // vocabulary only, filtered to fundamentals:

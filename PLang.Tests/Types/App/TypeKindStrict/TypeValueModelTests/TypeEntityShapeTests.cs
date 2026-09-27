@@ -5,11 +5,11 @@ using TUnit.Assertions.Extensions;
 using TypeEntity = global::app.type.@this;
 using PLangEngine = global::app.@this;
 
-namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
+namespace PLang.Tests.App.type.listKindStrict.TypeValueModelTests;
 
 // Public surface of `app.type.@this`. Name is the family (e.g. "image"); Kind
 // is the subtype (e.g. "gif"); Strict is a bool; ClrType is non-public
-// (interior callers reach it via the registry App.Type.Get/.Clr).
+// (interior callers reach it via the registry App.type.list.Get/.Clr).
 public class TypeEntityShapeTests
 {
     [Test] public async Task Entity_HasName_NotValue()
@@ -34,9 +34,9 @@ public class TypeEntityShapeTests
     {
         var t = typeof(TypeEntity);
         await Assert.That(t.GetProperty("ClrType", BindingFlags.Public | BindingFlags.Instance)).IsNull();
-        // Interior access still works through the registry — App.Type.Clr(name).
+        // Interior access still works through the registry — App.type.list.Clr(name).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(app.type.list.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test] public async Task Entity_FamilyKindAccessor_Removed()
@@ -49,7 +49,7 @@ public class TypeEntityShapeTests
         await Assert.That(noSubtype.kind.IsEmpty).IsTrue();
 
         await using var app = TestApp.Create("/test");
-        var split = app.Type[new TypeEntity("image", "jpeg"), app.User.Context];
+        var split = app.type.list[new TypeEntity("image", "jpeg"), app.User.Context];
         await Assert.That(split.Name).IsEqualTo("image");
         await Assert.That(split.kind.Name).IsEqualTo("jpg");
     }
@@ -58,7 +58,7 @@ public class TypeEntityShapeTests
     {
         await using var app = TestApp.Create("/test");
         // Compressibility is the format's knowledge about a type: image is already compressed.
-        var image = app.Type["image"];
+        var image = app.type.list["image"];
         await Assert.That(app.Format.Compressible(image)).IsFalse();
     }
 
@@ -68,6 +68,6 @@ public class TypeEntityShapeTests
         await using var app = TestApp.Create("/test");
         var bare = new global::app.type.@this("identity");
         await Assert.That(bare.Property).IsNull();
-        await Assert.That(app.Type[bare, app.User.Context].Property).IsNotNull();
+        await Assert.That(app.type.list[bare, app.User.Context].Property).IsNotNull();
     }
 }

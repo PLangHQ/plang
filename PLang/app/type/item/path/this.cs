@@ -147,7 +147,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
         var name = scheme.@this.ParseScheme(rawPath) is { Length: > 0 } s ? s : "file";
-        return context.App.Type.Kind(name) is scheme.@this kind
+        return context.App.type.list.Kind(name) is scheme.@this kind
             ? kind.Create(rawPath, context)
             : throw new scheme.SchemeNotRegistered(name);
     }
@@ -250,7 +250,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// Owned by the path + the type registry.
     /// </summary>
     public global::app.type.@this Kind(actor.context.@this context) =>
-        context.App?.Type.Extension(Extension, context) ?? global::app.type.@this.Null;
+        context.App?.type.list.Extension(Extension, context) ?? global::app.type.@this.Null;
 
     // --- Live filesystem state ---
     //

@@ -31,6 +31,6 @@ public partial class Any : IContext
             if (!matched.Success || matched.ToBoolean()) return matched;
         }
 
-        return Context.Ok<global::app.type.item.@bool.@this>(false, Context.App.Type["bool"]);
+        return Context.Ok<global::app.type.item.@bool.@this>(false, Context.App.type.list["bool"]);
     }
 }

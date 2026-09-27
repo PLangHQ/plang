@@ -32,10 +32,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// The inferred lift — "build WHATEVER this raw is". The apex's OWN ICreate face: for the
     /// UNDECLARED raw (no target type in hand), <c>item</c> is the produced type, so <c>item</c>
     /// owns the construction. Infers the owner via the collection's CONVERSION-ownership door
-    /// (<c>App.Type[clrType]</c>) and builds through that entity's own <c>Create</c>; a CLR type no
+    /// (<c>App.type.list[clrType]</c>) and builds through that entity's own <c>Create</c>; a CLR type no
     /// type owns rides a <c>Clr</c> carrier. Rungs: <c>is item</c> → container narrowing → ownership
     /// lift → enum→choice → <c>Clr</c>. Navigated, not switched. The DECLARED ask is a different door:
-    /// <c>App.Type[name].Create(raw, ctx)</c> (the entity door) builds the type the caller named.
+    /// <c>App.type.list[name].Create(raw, ctx)</c> (the entity door) builds the type the caller named.
     /// ALWAYS returns a value (never null); a bare <c>Data</c> is a producer bug and throws.
     /// </summary>
     public static @this Create(object? raw, global::app.actor.context.@this? context)
@@ -87,7 +87,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         // Create thunk (int → number, string → text). The door is never null — a CLR type no value
         // type owns answers the clr entity, whose Create builds the carrier — so this is the single
         // terminal rung; the old separate Clr fallback dissolves into entity dispatch.
-        return context!.App.Type[raw.GetType()].Create(raw, context);
+        return context!.App.type.list[raw.GetType()].Create(raw, context);
     }
 
     /// <summary>
@@ -186,8 +186,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             // entity names WHICH reader (list<action> → the "list" reader) and the element kind
             // ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
             // A value with no format to bridge (item.Read → null) keeps the Clr path.
-            var entity = context.App.Type[prop.PropertyType];
-            var reader = entity != null ? context.App.Type.Reader.Typed(entity.Name, null) : null;
+            var entity = context.App.type.list[prop.PropertyType];
+            var reader = entity != null ? context.App.type.list.Reader.Typed(entity.Name, null) : null;
             var read = reader != null ? iv.Read(reader, entity!.kind.IsEmpty ? null : entity.kind.Name, context) : null;
             // The generic "list" reader produces a base list (its elements already read through their
             // own reader). A typed node slot (list<action>)
@@ -617,7 +617,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             // (string/int/date/…) keep the writer's rendering.
             default:
                 if (context != null && value is not System.IConvertible
-                    && context.App.Type[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
+                    && context.App.type.list[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
                 {
                     await global::app.type.item.@this.Create(value, context).Output(writer, mode, context);
                     break;

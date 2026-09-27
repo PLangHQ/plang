@@ -78,7 +78,7 @@ public class TypeOwnedReadParityTests
         // lazily. The same values are reachable; nothing builds a parallel tree.
         const string json = "{\"a\":1,\"b\":[1,2],\"c\":{\"d\":true}}";
         var actor = global::PLang.Tests.TestApp.SharedContext;
-        var d = (await actor.App.Type.Kind("json").Load(json, actor))!;
+        var d = (await actor.App.type.list.Kind("json").Load(json, actor))!;
         await Assert.That(await d.Value()).IsTypeOf<global::app.type.clr.@this>();
 
         await Assert.That((await (await d.Get("a")).Value())?.ToString()).IsEqualTo("1");

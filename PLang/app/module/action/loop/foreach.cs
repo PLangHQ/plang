@@ -18,8 +18,8 @@ public partial class Foreach : IContext, IStep, IScope
     {
         if (Collection.Peek() is not global::app.type.item.source { IsVariable: true } source
             || await source.Get(Context) is not { IsInitialized: true } known
-            || known.Type?.kind is not { IsEmpty: false } kind || !Context.App.Type.Contains(kind.Name)) return;
-        var element = Context.App.Type[kind.Name];
+            || known.Type?.kind is not { IsEmpty: false } kind || !Context.App.type.list.Contains(kind.Name)) return;
+        var element = Context.App.type.list[kind.Name];
         var name = (Item == null ? null : (await Item.Value())?.Name) ?? "item";
         await Context.Variable.Set(name, new data.@this(name, element.Empty(Context), element, context: Context));
     }

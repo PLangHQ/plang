@@ -157,7 +157,7 @@ public sealed class Operator
     {
         var typeName = right?.Peek()?.ToString();
         if (left == null || string.IsNullOrWhiteSpace(typeName)) return Answer(context, false);
-        if (!context.App.Type.Contains(typeName.Split('/')[0]))
+        if (!context.App.type.list.Contains(typeName.Split('/')[0]))
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
         // Ask the VALUE — it walks its own provenance chain (a narrowed dict still answers `is file`).
         if (left.Is(typeName)) return Answer(context, true);

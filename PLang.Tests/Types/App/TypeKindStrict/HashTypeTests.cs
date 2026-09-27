@@ -13,7 +13,7 @@ public class HashTypeTests
     [Test] public async Task HashType_Resolves_ViaRegistry()
     {
         await using var app = TestApp.Create("/test");
-        var t = app.Type["hash"];
+        var t = app.type.list["hash"];
         await Assert.That(t.Name).IsEqualTo("hash");
         await Assert.That(t.ClrType).IsEqualTo(typeof(hash));
     }

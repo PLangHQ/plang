@@ -29,10 +29,10 @@ public class TypeEntityHomeTests
         // `: item` wrapper), so the value door's ClrType is the wrapper class while
         // the registry door's ClrType is the bare CLR type — a legitimate
         // name/@this duality. The stable identity a stamped Data resolves by is the
-        // NAME, so that is what the app.Type indexer round-trips on.
+        // NAME, so that is what the app.type.list indexer round-trips on.
         await using var app = TestApp.Create("/test");
         var d = new global::app.data.@this("", System.Guid.NewGuid(), context: app.User.Context);
-        var fromRegistry = app.Type[d.Type!.Name];
+        var fromRegistry = app.type.list[d.Type!.Name];
         await Assert.That(d.Type.Name).IsEqualTo(fromRegistry.Name);
     }
 
@@ -51,7 +51,7 @@ public class TypeEntityHomeTests
         await using var app = TestApp.Create("/test");
         var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
         var typeFromData = d.Type;
-        var entityFromRegistry = app.Type[new global::app.type.@this("number", "int"), app.User.Context];
+        var entityFromRegistry = app.type.list[new global::app.type.@this("number", "int"), app.User.Context];
         await Assert.That(typeFromData).IsNotNull();
         await Assert.That(typeFromData!.GetType()).IsEqualTo(typeof(global::app.type.@this));
         await Assert.That(typeFromData.ClrType).IsEqualTo(entityFromRegistry.ClrType);
@@ -60,7 +60,7 @@ public class TypeEntityHomeTests
     [Test] public async Task TypeEntity_OnRecordType_FoldedEntryFields_AreReadableOffTheEntity()
     {
         await using var app = TestApp.Create("/test");
-        var entries = app.Type.BuildTypeEntries(app.Module);
+        var entries = app.type.list.BuildTypeEntries(app.Module);
         var record = entries.FirstOrDefault(e => e.Property != null && e.Property.Count > 0);
         await Assert.That(record).IsNotNull();
         await Assert.That(record!.Property).IsNotNull();

@@ -53,7 +53,7 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
             lock (_rows)
             {
                 if (_module == null) return _rows;
-                Reflect(_module.Handler(_action!), _module.App.Type);
+                Reflect(_module.Handler(_action!), _module.App.type.list);
                 _module = null;
             }
             return _rows;

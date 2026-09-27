@@ -100,10 +100,10 @@ public partial class Set : IContext, IScope
         var source = (await Context.Variable.Get("!buildData")).Peek();
         var inferred = source as global::app.type.@this
             ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
-                && Context.App.Type.Contains(n) ? Context.App.Type[n] : null);
+                && Context.App.type.list.Contains(n) ? Context.App.type.list[n] : null);
         if (inferred is { IsNull: false })
             __action.Property.Add(new global::app.type.property.@this
-                { Name = "Type", Type = Context.App.Type["type"], Value = inferred });
+                { Name = "Type", Type = Context.App.type.list["type"], Value = inferred });
         return Context.Ok();
     }
 
@@ -215,13 +215,13 @@ public partial class Set : IContext, IScope
             // still names a type by name. No dict rebuild — that was the pre-reader path.
             // The developer named the type — an unknown name is their error, answered as plang's.
             var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
-            if (!Context.App.Type.Contains(declaredName))
+            if (!Context.App.type.list.Contains(declaredName))
                 return Context.Error(
                     new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = Context.App.Type[typeValue as global::app.type.@this ?? new global::app.type.@this(declaredName), Context];
+            var type = Context.App.type.list[typeValue as global::app.type.@this ?? new global::app.type.@this(declaredName), Context];
             var typeName = type.Name;
             var targetType = type.ClrType;
 
@@ -233,8 +233,8 @@ public partial class Set : IContext, IScope
             if (type.kind.IsEmpty && targetType != null)
             {
                 var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
-                if (Context.App.Type[typeName].Create(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
-                    type = Context.App.Type[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template), Context];
+                if (Context.App.type.list[typeName].Create(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
+                    type = Context.App.type.list[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template), Context];
             }
             if (targetType == null)
             {

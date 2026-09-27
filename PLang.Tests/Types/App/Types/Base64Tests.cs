@@ -18,7 +18,7 @@ public class Base64Tests : System.IAsyncDisposable
     { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52 };
 
     [Test] public async Task Registered_AsAType()
-        => await Assert.That(app.Type["base64"]).IsNotNull();
+        => await Assert.That(app.type.list["base64"]).IsNotNull();
 
     // --- Parse: the validate door (reader / born path) ---
 

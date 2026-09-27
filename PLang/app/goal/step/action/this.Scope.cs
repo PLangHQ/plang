@@ -20,7 +20,7 @@ public partial class @this
             await scope.Scope();
         else
         {
-            var returned = Return ?? scratch.App.Type["item"];
+            var returned = Return ?? scratch.App.type.list["item"];
             await scratch.Variable.Set("!data", new global::app.data.@this("!data", returned.Empty(scratch), returned, context: scratch));
         }
         for (int i = 0; i < Child.Count; i++)

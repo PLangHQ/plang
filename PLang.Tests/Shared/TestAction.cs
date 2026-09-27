@@ -17,7 +17,7 @@ public static class TestAction
         foreach (var p in parameters)
             act.Property.Add(global::PLang.Tests.Shared.Make.Property(new global::app.data.@this(p.name, p.value,
                 PrParam.IsVarNameSlot(module, action, p.name)
-                    ? global::PLang.Tests.TestApp.SharedContext.App.Type["variable"] : null,
+                    ? global::PLang.Tests.TestApp.SharedContext.App.type.list["variable"] : null,
                 context: global::PLang.Tests.TestApp.SharedContext)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.

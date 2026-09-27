@@ -88,7 +88,7 @@ public sealed class @this : ITransport
             }
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, view, _context.App.Type.Renderer, emitsSchema: true);
+                utf8, view, _context.App.type.list.Renderer, emitsSchema: true);
             // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
             // writes the @schema:data layer. The layer-vs-data choice lives here, at the
             // serializer boundary — data.Output stays clean (@schema:data only).
@@ -116,7 +116,7 @@ public sealed class @this : ITransport
     {
         await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
         var writer = new global::app.channel.serializer.json.Writer(
-            utf8, view, _context.App.Type.Renderer, emitsSchema: true);
+            utf8, view, _context.App.type.list.Renderer, emitsSchema: true);
         await item.Output(writer, view, _context);
         await utf8.FlushAsync(cancellationToken);
     }
@@ -137,7 +137,7 @@ public sealed class @this : ITransport
                      }))
         {
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, global::app.View.Store, _context.App.Type.Renderer, emitsSchema: true);
+                utf8, global::app.View.Store, _context.App.type.list.Renderer, emitsSchema: true);
             await item.Output(writer, global::app.View.Store, _context);
             await utf8.FlushAsync(cancellationToken);
         }
@@ -157,7 +157,7 @@ public sealed class @this : ITransport
     {
         await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
         var writer = new global::app.channel.serializer.json.Writer(
-            utf8, view, _context.App.Type.Renderer, emitsSchema: true);
+            utf8, view, _context.App.type.list.Renderer, emitsSchema: true);
         var list = items as IReadOnlyList<global::app.type.item.@this> ?? items.ToList();
         writer.BeginArray(list.Count);
         foreach (var item in list) await item.Output(writer, view, _context);
@@ -243,7 +243,7 @@ public sealed class @this : ITransport
     {
         var type = source.Type;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
-        var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, kind, ctx.Context);
+        var typeReader = ctx.Context.App.type.list.Reader.Reader(type.Name, kind, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();

@@ -19,7 +19,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CanonicalisesToNumberOfKindInt()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.type.list[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.Name).IsEqualTo("number");
         await Assert.That(type.kind.Name).IsEqualTo("int");
@@ -29,16 +29,16 @@ public class TypeTests
     public async Task FromName_WithString_CreatesType()
     {
         // "string" is a spelling of text: the door hands back the text type itself.
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["string"];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.type.list["string"];
 
-        await Assert.That(type.Equals(global::PLang.Tests.TestApp.SharedContext.App.Type["text"])).IsTrue();
+        await Assert.That(type.Equals(global::PLang.Tests.TestApp.SharedContext.App.type.list["text"])).IsTrue();
         await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test]
     public async Task FromName_WithInt_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.type.list[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
@@ -46,7 +46,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithList_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["list"];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.type.list["list"];
 
         await Assert.That(type.Name).IsEqualTo("list");
     }
@@ -54,7 +54,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithDict_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["dict"];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.type.list["dict"];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.item.dict.@this));
     }
@@ -63,14 +63,14 @@ public class TypeTests
     public async Task FromName_WithUnknownType_ReturnsNullClrType()
     {
         // The name door throws on a miss; a bare type of an unknown name knows no class.
-        await Assert.That(() => global::PLang.Tests.TestApp.SharedContext.App.Type["unknowntype"]).Throws<KeyNotFoundException>();
+        await Assert.That(() => global::PLang.Tests.TestApp.SharedContext.App.type.list["unknowntype"]).Throws<KeyNotFoundException>();
         var type = new Type("unknowntype");
 
         await Assert.That(type.Name).IsEqualTo("unknowntype");
         await Assert.That(type.ClrType).IsNull();
     }
 
-    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
+    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
 
     [Test]
     public async Task Text_FromList_ReturnsTextType()
@@ -129,7 +129,7 @@ public class TypeTests
     [Test]
     public async Task ToString_ReturnsValue()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["string"];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.type.list["string"];
 
         var str = type.ToString();
 

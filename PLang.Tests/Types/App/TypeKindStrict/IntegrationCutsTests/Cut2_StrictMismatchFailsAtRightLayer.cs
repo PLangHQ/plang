@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 
-namespace PLang.Tests.App.TypeKindStrict.IntegrationCutsTests;
+namespace PLang.Tests.App.type.listKindStrict.IntegrationCutsTests;
 
 public class Cut2_StrictMismatchFailsAtRightLayer
 {
@@ -37,7 +37,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         return new(ctx)
         {
             Value = new global::app.data.@this("Value", value, context: ctx),
-            Type = new global::app.data.@this("Type", ctx.App.Type[Type("image", "gif", true), ctx], context: ctx),
+            Type = new global::app.data.@this("Type", ctx.App.type.list[Type("image", "gif", true), ctx], context: ctx),
         };
     }
 

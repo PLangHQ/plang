@@ -1,9 +1,9 @@
 using text = global::app.type.item.text.@this;
 
-namespace PLang.Tests.App.Types;
+namespace PLang.Tests.App.type.lists;
 
 // W8 — KindHooks + the four X.Build statics are deleted. The kind now derives by building
-// through the family's eager door (App.Type[name].Create) and reading it off the built value.
+// through the family's eager door (App.type.list[name].Create) and reading it off the built value.
 // This pins the architect's representative literals through that one door, using the same input
 // shape the build site holds (a text.@this literal).
 public class KindViaCreateTests : System.IAsyncDisposable
@@ -16,7 +16,7 @@ public class KindViaCreateTests : System.IAsyncDisposable
     {
         var ctx = app.User.Context;
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
-        var built = ctx.App.Type[typeName].Create(raw, carrier);
+        var built = ctx.App.type.list[typeName].Create(raw, carrier);
         // A decline says why — the carrier holds the reason.
         return built?.Type.kind is { IsEmpty: false } kind ? kind.Name : $"<no value: {carrier.Error?.Key}: {carrier.Error?.Message}>";
     }

@@ -62,7 +62,7 @@ public class Default : ICrypto
             {
                 var writer = new global::app.channel.serializer.json.Writer(
                     utf8, view,
-                    action.Context?.App?.Type?.Renderer, emitsSchema: true);
+                    action.Context?.App?.type.list.Renderer, emitsSchema: true);
                 await data.Output(writer, view, action.Context, layer: true);
             }
             bytes = hashStream.ToArray();
@@ -84,7 +84,7 @@ public class Default : ICrypto
         // value's KIND; stamp {name: hash, kind: <algorithm>} so verify reads
         // the algorithm off the value instead of a loose, mismatch-prone param.
         return action.Context.Ok<global::app.module.action.crypto.type.hash.@this>(new global::app.module.action.crypto.type.hash.@this(hashBytes, algorithm),
-            action.Context.App.Type[new global::app.type.@this("hash", algorithm), action.Context]);
+            action.Context.App.type.list[new global::app.type.@this("hash", algorithm), action.Context]);
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Verify(Verify action)

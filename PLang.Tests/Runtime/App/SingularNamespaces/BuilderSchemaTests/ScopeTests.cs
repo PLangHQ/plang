@@ -49,7 +49,7 @@ public class ScopeTests
     public async Task TheEmptyListOfAKind_AnswersItsKind()
     {
         await using var app = TestApp.Create("/test");
-        var type = app.System.Context.App.Type[typeof(global::app.type.item.list.@this<Goal>)];
+        var type = app.System.Context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)];
 
         var empty = new global::app.data.@this("goals", type.Empty(app.System.Context), context: app.System.Context);
 

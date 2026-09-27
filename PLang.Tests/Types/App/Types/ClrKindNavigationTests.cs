@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PLang.Tests.App.Types;
+namespace PLang.Tests.App.type.lists;
 
 // A clr carrying a JsonElement navigates by its KIND (json), not by C# reflection —
 // so %doc.steps[0].index% walks the json instead of reflecting a nonexistent property.
@@ -52,7 +52,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
-        var dict = await d.Convert(ctx.App.Type.Kind("dict"));
+        var dict = await d.Convert(ctx.App.type.list.Kind("dict"));
         await Assert.That(dict.Success).IsTrue();
         await Assert.That((await (await dict.Get("a")).Value())?.ToString()).IsEqualTo("1");
     }
@@ -73,7 +73,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         // The identity door's last rung returns this["clr"] — so "clr" MUST resolve to the carrier
         // entity, else the door throws on the name miss. ClrType is the carrier so its Create builds one.
-        var entity = _app.Type["clr"];
+        var entity = _app.type.list["clr"];
         await Assert.That(entity.Name).IsEqualTo("clr");
         await Assert.That(entity.ClrType).IsEqualTo(typeof(global::app.type.clr.@this));
     }
@@ -83,7 +83,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         // A CLR type no value type owns is not an item and not _clr-owned → the door's third rung
         // answers the clr entity (never null), whose Create builds the carrier.
-        var entity = _app.Type[typeof(Poco)];
+        var entity = _app.type.list[typeof(Poco)];
         await Assert.That(entity.Name).IsEqualTo("clr");
     }
 
@@ -115,12 +115,12 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
         // The build-time kind probe stamps a param ONLY when the built value has its own item type.
         // An unowned param answers the clr entity → a clr carrier → the probe's `is not clr` guard
         // leaves the param on its declared type instead of stamping a bogus item/* kind.
-        var clrEntity = _app.Type[typeof(Poco)];
+        var clrEntity = _app.type.list[typeof(Poco)];
         var built = clrEntity.Create("anything", ctx.Ok(new global::app.type.item.@null.@this(clrEntity.Name)));
         await Assert.That(built).IsTypeOf<global::app.type.clr.@this>();
 
         // Contrast: an owned type builds its own value with a real kind → the probe stamps it.
-        var numBuilt = _app.Type["number"].Create("5", ctx.Ok(new global::app.type.item.@null.@this("number")));
+        var numBuilt = _app.type.list["number"].Create("5", ctx.Ok(new global::app.type.item.@null.@this("number")));
         await Assert.That(numBuilt is global::app.type.clr.@this).IsFalse();
         await Assert.That(numBuilt!.Type.kind.IsEmpty).IsFalse();
     }

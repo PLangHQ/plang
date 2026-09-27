@@ -1,6 +1,6 @@
 // Test-only compatibility facade for the former `App.Utils.TypeMapping` and
 // `App.Utils.Json` static classes. Production callers were migrated to
-// `app.Type.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
+// `app.type.list.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
 // tests retain the flat static-call shape for ergonomics.
 
 namespace app.Utils;
@@ -12,12 +12,12 @@ internal static class TypeMapping
     /// <summary>For tests that need the live App backing this facade (e.g. Register that must persist across calls).</summary>
     internal static global::app.@this App => _app;
 
-    public static System.Type? GetType(string typeName) => global::PLang.Tests.TypeListExtensions.Clr(_app.Type, typeName);
+    public static System.Type? GetType(string typeName) => global::PLang.Tests.TypeListExtensions.Clr(_app.type.list, typeName);
 
     /// <summary>The face of the entity the CLR type names — what a catalog prints.</summary>
-    public static string GetTypeName(System.Type type) => _app.Type[type].ToString();
+    public static string GetTypeName(System.Type type) => _app.type.list[type].ToString();
 
-    public static void Register(string plangName, System.Type clrType) => _app.Type.Add(clrType, _app.User.Context, plangName);
+    public static void Register(string plangName, System.Type clrType) => _app.type.list.Add(clrType, _app.User.Context, plangName);
 
     /// <summary>The options of the closed set <paramref name="type"/> draws from, or null when it has none.</summary>
     /// A nullable, a <c>data&lt;T&gt;</c> or a <c>choice&lt;T&gt;</c> reads through to the set it holds.
@@ -35,7 +35,7 @@ internal static class TypeMapping
 
 
     public static List<global::app.type.@this> BuildTypeEntries(global::app.module.list.@this? modules)
-        => _app.Type.BuildTypeEntries(modules);
+        => _app.type.list.BuildTypeEntries(modules);
 
 }
 
