@@ -214,6 +214,12 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
     /// </summary>
     public global::app.type.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
+    // The types a step and an action start through — the type list's own entries, held because every step and
+    // action start reaches their events and a walk of the list copies it. Not a second store: a type's name
+    // can't be registered twice, so these can't drift from the list.
+    internal global::app.type.@this step { get; }
+    internal global::app.type.@this action { get; }
+
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
     /// Cancelling System cascades to User and Service.
@@ -294,6 +300,8 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
         type.list.Replace(goal);
         type.list.Replace(test);
         type.list.Replace(variable);
+        step = type.list["step"];
+        action = type.list["action"];
         System.Setting.Written += Refresh;
         User.Setting.Written += Refresh;
 

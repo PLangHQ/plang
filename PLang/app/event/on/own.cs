@@ -10,7 +10,12 @@ public sealed class own : @this
 {
     private readonly ConcurrentDictionary<string, global::app.@event.@this> _events = new(StringComparer.OrdinalIgnoreCase);
 
+    private start? _start;
+
     internal own() { }
+
+    /// <summary>This item's own start — the one its indexer answers under <c>start</c>, held.</summary>
+    public override start start => _start ??= (start)this["start"]!;
 
     /// <summary>The event named <paramref name="name"/>, this item's own; null when there is no event of that name.</summary>
     public override global::app.@event.@this? this[string name]

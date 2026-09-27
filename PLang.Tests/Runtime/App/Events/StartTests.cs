@@ -65,6 +65,32 @@ public class StartTests
         }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
     }
 
+    [Test] public async Task FiringAStepOrAnAction_WithNothingBound_AllocatesNothing()
+    {
+        var (_, step, _) = Program();
+        // an action on this app's own module: the shared app's module is bound on by the other tests here
+        var set = new global::app.goal.step.action.@this { Module = _app.Module("variable"), Name = "set" };
+        var context = _app.User.Context;
+        var result = context.Ok();
+        // once first: the JIT and the statics
+        await step.on.start.Before(step, context);
+        await step.on.start.After(step, result, context);
+        await set.on.start.Before(set, context);
+        await set.on.start.After(set, result, context);
+
+        var from = GC.GetAllocatedBytesForCurrentThread();
+        var stepAnswer = await step.on.start.Before(step, context);
+        var stepResult = await step.on.start.After(step, result, context);
+        var setAnswer = await set.on.start.Before(set, context);
+        var setResult = await set.on.start.After(set, result, context);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - from;
+
+        await Assert.That(allocated).IsEqualTo(0L);
+        await Assert.That(stepAnswer).IsNull();
+        await Assert.That(setAnswer).IsNull();
+        await Assert.That(ReferenceEquals(stepResult, result) && ReferenceEquals(setResult, result)).IsTrue();
+    }
+
     [Test] public async Task AGoalAndAStep_StartThroughTheirTypeThenTheirOwn()
     {
         var (goal, step, _) = Program();

@@ -323,11 +323,18 @@ public sealed partial class @this
         foreach (var subGoal in Child.Items()) await subGoal.Reopen(context);
     }
 
+    /// <summary>A goal starts through the goal type's events, then its own.</summary>
+    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
+    {
+        0 => context.App.goal,
+        1 => this,
+        _ => null,
+    };
+
     /// <summary>
-    /// Starts this goal through its <c>on.start</c> — the goal type's and its own: before runs the type's then
-    /// its own, then its steps, then after runs its own then the type's. A before that fails or cancels is the
-    /// result: the steps don't start, every after still runs on it. Context travels as parameter — goals may be
-    /// cached/shared.
+    /// Starts this goal through its <c>on.start</c>: what is bound before it, then its steps, then what is bound
+    /// after it (<see cref="Level"/>). A before that fails or cancels is the result: the steps don't start, every
+    /// after still runs on it. Context travels as parameter — goals may be cached/shared.
     /// </summary>
     public async Task<data.@this> Start(actor.context.@this context)
     {
@@ -337,19 +344,11 @@ public sealed partial class @this
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
 
-        global::app.type.item.@this[] level = [context.App.type.list["goal"], this];
         try
         {
-            var result = context.Ok();
-            foreach (var each in level)
-            {
-                result = await each.on["start"]!.before.Start(this, result, context);
-                if (!result.Success || result.Handled) break;
-            }
-            if (result.Success && !result.Handled) result = await Enter(context);
-            for (var i = level.Length - 1; i >= 0; i--)
-                result = await level[i].on["start"]!.after.Start(this, result, context);
-            return result;
+            var answer = await on.start.Before(this, context);
+            var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
+            return await on.start.After(this, result, context);
         }
         finally
         {

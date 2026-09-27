@@ -96,24 +96,28 @@ public sealed partial class @this
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
     [JsonIgnore]
     public global::app.goal.@this Goal { get; init; } = null!;
+    /// <summary>A step starts through the step type's events, then its own.</summary>
+    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
+    {
+        0 => context.App.step,
+        1 => this,
+        _ => null,
+    };
+
     /// <summary>
-    /// Starts this step through its <c>on.start</c> — the step type's and its own: before runs the type's then
-    /// its own, then its actions, then after runs its own then the type's. A before that fails or cancels is the
-    /// result: the actions don't start, every after still runs on it. Error handling, caching, and timeouts are
-    /// per-action modifiers, not step-level.
+    /// Starts this step through its <c>on.start</c>: what is bound before it, then its actions, then what is
+    /// bound after it (<see cref="Level"/>). A before that fails or cancels is the result: the actions don't
+    /// start, every after still runs on it. Error handling, caching, and timeouts are per-action modifiers, not
+    /// step-level.
     /// </summary>
     public async Task<data.@this> Start(actor.context.@this context)
     {
         context.Step = this;
-        global::app.type.item.@this[] level = [context.App.type.list["step"], this];
 
-        var result = context.Ok();
-        foreach (var each in level)
-        {
-            result = await each.on["start"]!.before.Start(this, result, context);
-            if (!result.Success || result.Handled) break;
-        }
-        if (result.Success && !result.Handled)
+        var answer = await on.start.Before(this, context);
+        data.@this result;
+        if (answer is { Success: false } or { Handled: true }) result = answer;
+        else
         {
             try
             {
@@ -135,8 +139,7 @@ public sealed partial class @this
                     ex.Message, key, 400) { Exception = ex });
             }
         }
-        for (var i = level.Length - 1; i >= 0; i--)
-            result = await level[i].on["start"]!.after.Start(this, result, context);
+        result = await on.start.After(this, result, context);
         return result;
     }
 

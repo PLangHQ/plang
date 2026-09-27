@@ -333,6 +333,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.@event.on.@this on => _on;
 
+    /// <summary>The item whose events this one's fire through at <paramref name="depth"/>, outermost first — the
+    /// general wrapping the specific, the last being the item itself; null past the last. An item on its own has
+    /// one level, itself.</summary>
+    protected internal virtual @this? Level(int depth, global::app.actor.context.@this context) => depth == 0 ? this : null;
+
     /// <summary>This value's own events, given to it by its first binding — what a binding is added to.</summary>
     internal global::app.@event.on.own Own()
     {

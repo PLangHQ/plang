@@ -36,8 +36,14 @@ public class @this : global::app.type.item.@this
 
     private protected @this() { }
 
+    // The shared empty start, typed.
+    private static readonly start NoStart = (start)None["start"];
+
     /// <summary>The event named <paramref name="name"/>; null when there is no event of that name.</summary>
     public virtual global::app.@event.@this? this[string name] => None.GetValueOrDefault(name);
+
+    /// <summary>The start — what runs before and after the item starts.</summary>
+    public virtual start start => NoStart;
 
     /// <summary>One step down: the event by its name (<c>.start</c>).</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)

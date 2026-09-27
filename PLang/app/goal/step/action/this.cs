@@ -149,8 +149,25 @@ public partial class @this
     /// </summary>
     public global::app.type.property.@this? this[string name] => Property[name];
 
+    /// <summary>An action starts through four levels, the general wrapping the specific: the action type's
+    /// events, its module's, its catalog action's (when it is another object than this one), its own.</summary>
+    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
+    {
+        var catalog = Module[Name] is { } found && !ReferenceEquals(found, this) ? found : null;
+        return depth switch
+        {
+            0 => context.App.action,
+            1 => Module,
+            2 => catalog ?? this,
+            3 => catalog != null ? this : null,
+            _ => null,
+        };
+    }
+
     /// <summary>
-    /// Starts this action: lifecycle events → dispatch → return mapping.
+    /// Starts this action through its <c>on.start</c> (<see cref="Level"/>): what is bound before it, then its
+    /// dispatch, then what is bound after it. A before that fails or cancels is the result; every after still
+    /// runs on it.
     /// Context travels as parameter — actions are shared objects, not per-request.
     /// Owns its own callstack push/pop, anchor save/restore and exception translation.
     /// </summary>
@@ -176,31 +193,21 @@ public partial class @this
         }
         await using var _call = call;
 
-        // The action starts through four on.start levels, the general wrapping the specific: the action type's,
-        // its module's, its catalog action's, its own. Before runs them in that order; after in the reverse.
-        var type = context.App.type.list["action"];
-        var catalog = Module[Name];
-        global::app.type.item.@this[] level = catalog == null || ReferenceEquals(catalog, this)
-            ? [type, Module, this]
-            : [type, Module, catalog, this];
-
-        var data = context.Ok();
-        foreach (var each in level)
-        {
-            data = await each.on["start"]!.before.Start(this, data, context);
-            if (!data.Success || data.Handled) break;
-        }
-
-        if (data.Handled)
+        var answer = await on.start.Before(this, context);
+        global::app.data.@this data;
+        if (answer is { Handled: true })
         {
             // Cancelled: a before-binding's answer is this action's result (mock.intercept, event.skipAction).
             // Clear Handled so the outer step loop doesn't misread "dispatch was short-circuited" as "stop the
             // step" — the next action in the chain still needs to run on this result.
+            data = answer;
             data.Handled = false;
         }
-        else if (data.Success && Modifier.Count == 0)
+        else if (answer is { Success: false })
+            data = answer;
+        else if (Modifier.Count == 0)
             data = await DispatchAsync(context, call);
-        else if (data.Success)
+        else
         {
             // The modifiers wrap the action's own dispatch — the list composes them (outermost first,
             // `on error` clauses written together as one try/catch); then the action type's after fires once
@@ -209,7 +216,7 @@ public partial class @this
             if (wrapError != null) return context.Error(wrapError);
             data = await execute!();
             foreach (var modifier in Modifier)
-                await type.on["start"]!.after.Start(modifier, data, context);
+                await context.App.action.on.start.after.Start(modifier, data, context);
         }
 
         // %!data% is the last action's result, stored AS-IS. A reference stays a
@@ -219,9 +226,7 @@ public partial class @this
         if (data.Success)
             await context.Variable.Set("!data", data);
 
-        for (var i = level.Length - 1; i >= 0; i--)
-            data = await level[i].on["start"]!.after.Start(this, data, context);
-        return data;
+        return await on.start.After(this, data, context);
     }
 
     /// <summary>

@@ -4,4 +4,6 @@ namespace app.@event.on;
 public sealed class start : global::app.@event.@this
 {
     internal start(binding.list.before before, binding.list.after after) : base("start", before, after) { }
+
+    protected override global::app.@event.@this Of(global::app.@event.on.@this on) => on.start;
 }
