@@ -234,7 +234,7 @@ Each stage is its own commits, green against the baseline before the next starts
 - **The hop kinds**, each a small class that parses, writes and runs its own piece; the JSON key is the kind:
   - `variable`: the root, read from the memory (`user`, `!app`);
   - `property`: a member (`.address`). A name starting with `!` is born a `!` hop, and at run it looks in today's order (`data/this.Navigation.cs:240-287`): the Properties bag, then Data's own members (`!type`, `!error`, `!success`), then the value's members (`!path`, `!size`), then the value's methods that take a context (`!relative`). Whether `cost` is in Properties is only known at run, so that order is the hop's own lookup;
-  - `index`: `[…]`. Its key is a typed value, keyed by its type (`{"number": "%i%"}`, `{"text": "k"}`), and a variable key carries its own code;
+  - `index`: `[…]`. A literal key is typed, keyed by its type (`[0]` → `{"number": 0}`, `["k"]` → `{"text": "k"}`); a bare path inside the brackets (`[idx]`, `[askInfo.gui]`, or `[%i%]`) is a variable key carrying its own code and no type (a list wants a number, a dict a text; it resolves at run and hands the container its text form). **The silent literal fallback goes (stage 6 trace, architect while Ingi slept):** today an unset bare index variable is quietly used as a literal key (`Segment.Index.Key`); now it's the `IndexNotSet` error, and a literal key is written quoted (`%dict["key"]%`). os/ and Tests/ have 9 bare indexes, all real variables;
   - `method`: a call (`.replace("-", " ")`), whose values are its `parameter` list, parsed at build. **The value owns its methods (Ingi):** today's string switch on Data over 7 names with regex argument parsing (`data/this.Navigation.cs:143-233`: grep, grepcount, maxlength, trim, tolower, toupper, replace) becomes text's own methods (a datetime owns its own, and so on); a method the value doesn't have is an error ("text has no method 'foo'").
 - **The same variable reads and writes (Ingi: it's a variable, not a "target").** `Value()` runs every hop. `variable.Set(value, context)` runs every hop but the last to reach the parent, and the last hop writes itself: a property hop sets that member, an index hop that key, a `!` hop the Properties bag, a bare root rebinds the variable in memory; a method hop can't be written (an error). This is today's `data.Set(path, …)` (`data/this.Navigation.cs:104-137`: read walk to the parent, one `Set` at the leaf) moved onto the variable. A property that names where to write (`variable.set`'s `Name`, `Data<Variable>` slots) holds the same variable class.
 - **In the .pr:**
@@ -247,7 +247,7 @@ Each stage is its own commits, green against the baseline before the next starts
     "code": [{"variable": "name"}, {"method": "replace", "parameter": [{"type": {"name": "text"}, "value": "-"}, {"type": {"name": "text"}, "value": " "}]}]},
    {"text": "%user.address[%i%].city%",
     "code": [{"variable": "user"}, {"property": "address"},
-             {"index": {"number": "%i%", "variable": [{"text": "%i%", "code": [{"variable": "i"}]}]}},
+             {"index": {"variable": [{"text": "%i%", "code": [{"variable": "i"}]}]}},
              {"property": "city"}]},
    {"text": "%order!cost%", "code": [{"variable": "order"}, {"property": "!cost"}]}]}
 ```
