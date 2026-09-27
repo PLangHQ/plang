@@ -1,6 +1,6 @@
 # app-systems — every `app.X` is the type X
 
-Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the parked draft `.bot/goal-graph-singular/architect/app-systems-draft.md`), 2026-09-26 and 2026-09-27. **Under review with Ingi, round by round, until a round passes without comment. Coder does not start before that.**
+Branch `app-systems`, off `builder-formal`. Designed with Ingi, 2026-09-24 (the parked draft `.bot/goal-graph-singular/architect/app-systems-draft.md`), 2026-09-26 and 2026-09-27. **Ready for coder (Ingi, 2026-09-27: "I believe we are ready").** Reviewed round by round; round 8 passed without comment.
 
 > **Coder, you own the code.** The shapes below are sketches: names, members and file:line are the architect's reading on 2026-09-26. Trace before each stage and bring back what doesn't hold.
 
