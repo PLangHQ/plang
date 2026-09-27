@@ -128,10 +128,10 @@ public sealed class @this : IDisposable
     /// access. Keys are the full tree path (e.g., "http.request.timeout"). A read walks
     /// this → Parent → … → root; a goal-local setting shadows an app-level one.
     /// </summary>
-    private app.setting.@this? _setting;
-    // Scoped door: chains to the parent context's door, or (at a root context) to the app-level
-    // root App.Setting — so an in-memory read walks this → parents → app root → [Default].
-    public app.setting.@this Setting => _setting ??= new(this, Parent?.Setting ?? App.Setting);
+    private global::app.actor.setting.@this? _setting;
+    // Scoped door: chains to the parent context's door, or (at a root context) to its actor's — so an
+    // in-memory read walks this → parents → the actor's → the system's → [Default].
+    public global::app.actor.setting.@this Setting => _setting ??= new(this, Parent?.Setting ?? Actor.Setting);
 
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null)
     {

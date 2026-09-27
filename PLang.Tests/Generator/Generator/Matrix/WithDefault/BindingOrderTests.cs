@@ -24,14 +24,14 @@ public class BindingOrderTests
     [Test] public async Task Setting_BeatsAFrozenDefault()
     {
         await using var app = TestApp.Create("/app");
-        await app.User.Context.Setting.Set(global::app.setting.Storage.InMemory, Key, app.User.Context.Ok(5L));
+        await app.User.Context.Setting.Set(global::app.actor.setting.Storage.InMemory, Key, app.User.Context.Ok(5L));
         await Assert.That(await Count(app, frozen: new[] { ("count", (object?)30L) })).IsEqualTo(5L);
     }
 
     [Test] public async Task StepValue_BeatsTheSetting()
     {
         await using var app = TestApp.Create("/app");
-        await app.User.Context.Setting.Set(global::app.setting.Storage.InMemory, Key, app.User.Context.Ok(5L));
+        await app.User.Context.Setting.Set(global::app.actor.setting.Storage.InMemory, Key, app.User.Context.Ok(5L));
         await Assert.That(await Count(app, step: new[] { ("count", (object?)7L) })).IsEqualTo(7L);
     }
 

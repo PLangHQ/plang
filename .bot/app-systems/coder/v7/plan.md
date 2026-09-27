@@ -327,3 +327,35 @@ exactly what the plan says variable is. The `type` fact of `%!app.variable.user%
    property. Or is the whole class path one key (`!goal.list.setting`), read as one hop?
 3. **Row key's actor.** `user!goal.list.setting` — the actor's name (`system`/`user`), matching
    `actor.Name`, lowercase?
+
+## 7e-2 answers (plang-40)
+
+1. (a) An action's own class is its setting class: its settable properties are the options,
+   `%!llm.query%` one instance of them. A module-wide default (today's `%!llm.cache%`) is the module's
+   own class `module/action/<m>/setting/this.cs`, added only where a module-level setting is set today
+   (grep goals + C# for `%!<module>.<param>%` writes and Executor's; llm's `cache`, identity's planned).
+   The seam: step value → this run's `set %!x%` → the actor's rows (user, then system) → the class default.
+2. A `!` name the memory doesn't bind goes to the actor's settings; navigation steps down the class path
+   (`!goal` → `.list` → `.setting` → `.os`): plang path = class path. Bound `!` names (`!app`, `!event`,
+   `!data`, …) answer from memory first.
+3. Row key's actor: the lowercase choice name, `user!goal.list.setting`.
+- 7e-3 (identity, permission): its own slice; diff limited to moving storage + the no-fallback marker —
+  no change to how grants are checked or keys used.
+
+## 7e-1 — as built
+
+- `app.store` (`app/store/this`, abstract: `Get<T>`, `GetAll<T>`, `Set`, `Remove`, `Exists`, `Tables`,
+  `Dispose`) with its kind `app/store/sqlite/this` (on disk, or in memory while testing); `IStore`,
+  `Sqlite` and `App.SettingsStore` gone. Callers: setup, the LLM cache (OpenAi, TypeSafe), identity,
+  permission, the `setting` actions. `IStore.ResolveTableName` (no production caller) and its test gone.
+- The machinery is `actor/setting/this` (`app.actor.setting`): each actor's `Setting`
+  (`app.System.Setting`, `app.User.Setting` falling back to the system's through the actor list's
+  `fallback`); a context's layer chains `Parent?.Setting ?? Actor.Setting`. `App.Setting` gone. The
+  generator's seam emits `global::app.actor.setting.Storage.InMemory`. Executor's convert-walks and
+  `llm.cache` go through `app.System.Setting` (the callstack walk per actor).
+- Tests: `SettingsTests` +2 (user falls back to system; system doesn't see the user's).
+- Committed in two: 664dfc3a4 holds only the three deletions (a failed `git add` in an `&&` chain let
+  the commit run with just the earlier `git rm`s); the follow-up commit holds the rest. 664dfc3a4 alone
+  doesn't build.
+- Seen, not changed: `app/this` DisposeAsync disposes the store's `Task`, not the store
+  (`_store.Value.Dispose()`), so the sqlite store is never disposed — today's behaviour, kept.

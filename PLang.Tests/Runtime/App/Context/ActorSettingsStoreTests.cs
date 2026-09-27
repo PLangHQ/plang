@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Context;
 /// <summary>
 /// Coverage for the app-level SettingsStore. Per-actor allocation was dead drift
 /// — only System's store ever had real consumers. After stage 13's settings
-/// rework, there's a single shared <c>app.SettingsStore</c> backed by
+/// rework, there's a single shared <c>app.store</c> backed by
 /// <c>.db/system.sqlite</c> (or in-memory under Testing).
 /// </summary>
 public class ActorSettingsStoreTests
@@ -34,13 +34,13 @@ public class ActorSettingsStoreTests
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
             engine.Build = new global::app.module.action.build.@this(engine.System.Context);
-            await (await engine.SettingsStore).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
+            await (await engine.store).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
             engine2.Build = new global::app.module.action.build.@this(engine2.System.Context);
-            var result = await (await engine2.SettingsStore).Get<global::app.type.item.@this>("LlmCache", "testkey");
+            var result = await (await engine2.store).Get<global::app.type.item.@this>("LlmCache", "testkey");
             await Assert.That((await result.Value())).IsNotNull();
             await Assert.That((await result.Value())!.ToString()).IsEqualTo("cached_response");
         }
@@ -55,13 +55,13 @@ public class ActorSettingsStoreTests
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
             engine.test.list.Open();
-            await (await engine.SettingsStore).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
+            await (await engine.store).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
             engine2.test.list.Open();
-            var result = await (await engine2.SettingsStore).Get<global::app.type.item.@this>("LlmCache", "testkey");
+            var result = await (await engine2.store).Get<global::app.type.item.@this>("LlmCache", "testkey");
             // A missing key yields an empty value (the plang null/absent citizen),
             // never C# null — assert emptiness the plang way, not TUnit IsNull.
             await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
@@ -79,10 +79,10 @@ public class ActorSettingsStoreTests
 
         var original = new global::app.module.action.identity.Identity("work")
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };
-        await (await engine.SettingsStore).Set("identity", "work",
+        await (await engine.store).Set("identity", "work",
             new Data("work", original));
 
-        var data   = await (await engine.SettingsStore).Get<global::app.module.action.identity.Identity>("identity", "work");
+        var data   = await (await engine.store).Get<global::app.module.action.identity.Identity>("identity", "work");
         var loaded = await data.Value();
 
         await Assert.That((object?)loaded).IsNotNull();

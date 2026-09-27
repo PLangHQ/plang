@@ -18,7 +18,7 @@ namespace app.module.action.llm.code;
 /// <summary>
 /// OpenAI-compatible LLM provider. Owns the full lifecycle:
 /// config, message formatting, HTTP calls (via http module), tool loop,
-/// caching (via SettingsStore), streaming, validation, conversation continuity.
+/// caching (via the app's store), streaming, validation, conversation continuity.
 /// </summary>
 public sealed class OpenAi : ILlm
 {
@@ -63,7 +63,7 @@ public sealed class OpenAi : ILlm
         var context = action.Context;
 
         // --- Config ---
-        var settings = await app.SettingsStore;
+        var settings = await app.store;
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
@@ -913,7 +913,7 @@ public sealed class OpenAi : ILlm
 
     // --- Config resolution ---
 
-    private static async Task<string> ResolveConfigAsync(IStore settings, string settingKey,
+    private static async Task<string> ResolveConfigAsync(global::app.store.@this settings, string settingKey,
         string? envVar, string? defaultValue)
     {
         // Try settings store. A missing key returns the null citizen (Peek is
@@ -970,7 +970,7 @@ public sealed class OpenAi : ILlm
     // --- Helpers ---
 
     /// <summary>
-    /// Restores a cached result from the SettingsStore.
+    /// Restores a cached result from the app's store.
     /// The cache stores metadata as a dictionary since Data.Properties is [JsonIgnore].
     /// </summary>
     private static async Task<data.@this> RestoreFromCache(data.@this cached)

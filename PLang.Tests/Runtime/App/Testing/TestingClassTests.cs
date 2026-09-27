@@ -116,7 +116,7 @@ public class TestingClassTests
             ["exclude"] = new List<object?> { "slow" },
         };
 
-        var result = _app.Setting.Set(_app.test.list.Setting, config);
+        var result = _app.System.Setting.Set(_app.test.list.Setting, config);
 
         await result.IsSuccess();
         await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(60);
@@ -129,7 +129,7 @@ public class TestingClassTests
     [Test]
     public async Task Configure_AChoiceFromItsText()
     {
-        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["format"] = "junit" });
+        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["format"] = "junit" });
 
         await result.IsSuccess();
         await Assert.That(_app.test.list.Setting.Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
@@ -143,7 +143,7 @@ public class TestingClassTests
         _app.test.list.Setting.Include.Add(new global::app.type.item.text.@this("oldInclude"));
         _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("oldExclude"));
 
-        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
+        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
@@ -163,7 +163,7 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_UnknownKey_Rejected()
     {
-        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
+        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
         {
             ["timeoutSeconds"] = 10,
             ["futureOption"] = "not a valid key yet"
@@ -199,7 +199,7 @@ public class TestingClassTests
     [Test]
     public async Task Create_ExcludeSetThroughTheWalk_Filters()
     {
-        var set = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        var set = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await set.IsSuccess();
 
         var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);

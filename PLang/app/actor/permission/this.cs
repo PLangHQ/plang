@@ -10,7 +10,7 @@ namespace app.actor.permission;
 ///   - <b>Session ("y")</b> — unsigned, lives in an in-memory list, dies
 ///     when the App exits.
 ///   - <b>Persisted ("a")</b> — Ed25519-signed with <c>Expires == null</c>
-///     (permanent), routed to <c>app.SettingsStore</c> under the
+///     (permanent), routed to <c>app.store</c> under the
 ///     <c>permission</c> table. Verified with <c>SkipFreshnessCheck=true</c>
 ///     so the wire-freshness window doesn't apply; the signature's own
 ///     <c>Expires</c> field is the only time bound.
@@ -54,12 +54,12 @@ public sealed class @this
         }
 
         // 2) Persisted grants (client-side actor filter). Tolerant of
-        // SettingsStore creation failure — test fixtures with unwriteable App
+        // Store creation failure — test fixtures with unwriteable App
         // roots ("/dst" et al.) shouldn't crash here when only in-memory
         // grants were ever used.
         try
         {
-            var stored = await (await _actor.App.SettingsStore).GetAll<Grant>(PermissionTable);
+            var stored = await (await _actor.App.store).GetAll<Grant>(PermissionTable);
             if (stored.Success && await stored.Value() is { } list)
             {
                 // Each grant is handed out under the actor's context.
@@ -73,7 +73,7 @@ public sealed class @this
         }
         catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            // SettingsStore unavailable (unwriteable root, etc.) — only
+            // Store unavailable (unwriteable root, etc.) — only
             // in-memory grants searchable. Caller will fall through to the
             // prompt path.
         }
@@ -96,7 +96,7 @@ public sealed class @this
         // settings store; an in-memory grant is local and unsigned.
         if (persist)
         {
-            await (await _actor.App.SettingsStore).Set(PermissionTable, key, grant);
+            await (await _actor.App.store).Set(PermissionTable, key, grant);
             return;
         }
 
@@ -126,7 +126,7 @@ public sealed class @this
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
         }
 
-        var sqliteResult = await (await _actor.App.SettingsStore).Remove(PermissionTable, match.Path);
+        var sqliteResult = await (await _actor.App.store).Remove(PermissionTable, match.Path);
         if (sqliteResult.Success) removed = true;
         return removed;
     }
@@ -141,7 +141,7 @@ public sealed class @this
         // on-read peels + validates its signature layer); an in-memory grant is
         // local and trusted. So the record reaching here is already trustworthy —
         // no per-cover re-verification in memory.
-        // SECURITY REVIEW (signature-as-layer): this relies on SettingsStore reads
+        // SECURITY REVIEW (signature-as-layer): this relies on store reads
         // of signed grants going through application/plang auto-verify-on-read.
         return true;
     }

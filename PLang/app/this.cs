@@ -154,22 +154,12 @@ public sealed partial class @this : IAsyncDisposable
     public ICache Cache { get; internal set; } = new global::app.module.action.cache.Memory();
 
     /// <summary>
-    /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
-    /// (or in-memory when Test is active). One per app — actors share it.
-    /// Modules own their tables (<c>encryption</c>, <c>settings</c>, <c>llm-cache</c>, etc.).
-    /// Created lazily on first access so tests with fictional paths and apps
-    /// that never touch settings don't pay for SQLite-file creation at boot.
+    /// The app's store — <c>.db/system.sqlite</c> (in memory while testing). One per app — actors
+    /// share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
+    /// Made on first use, so an app that never touches it pays for no SQLite file.
     /// </summary>
-    public Task<global::app.module.action.setting.IStore> SettingsStore => _settingsStore.Value;
-    private Lazy<Task<global::app.module.action.setting.IStore>> _settingsStore = null!;
-
-    /// <summary>
-    /// The app-level setting authority (chain root, <c>_parent == null</c>). Holds both lifetimes
-    /// behind <c>Storage</c>: in-memory (this-run cascade, CLI <c>--flags</c>) and persistent
-    /// (sqlite, via <see cref="SettingsStore"/>). Every context's
-    /// <c>Setting</c> chains up to this one.
-    /// </summary>
-    public global::app.setting.@this Setting { get; }
+    public Task<global::app.store.@this> store => _store.Value;
+    private Lazy<Task<global::app.store.@this>> _store = null!;
 
     /// <summary>
     /// Debug mode controller. null = off; non-null = on (born under --debug).
@@ -290,8 +280,7 @@ public sealed partial class @this : IAsyncDisposable
         type = new(this);
         type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
         Code = new AppCode(System.Context);
-        _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
-        Setting = new global::app.setting.@this(System.Context);
+        _store = new Lazy<Task<global::app.store.@this>>(Open);
         module = new(this);
         goal = new(this);
         test = new(this);
@@ -564,19 +553,20 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.Start(context);
     }
 
-    private async Task<global::app.module.action.setting.IStore> CreateSettingsStoreAsync()
+    // The store, opened on first use: in memory while testing, else .db/system.sqlite.
+    private async Task<global::app.store.@this> Open()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Mode.Value == global::app.Mode.Test)
-            return global::app.module.action.setting.Sqlite.InMemory($"system-{Id}", System.Context);
+            return global::app.store.sqlite.@this.InMemory($"system-{Id}", System.Context);
 
-        // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,
+        // Lift to Path: AuthGate fires inside CreateAsync on Write,
         // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
         // so parallel App constructions never starve the threadpool.
         var dbPath = global::app.type.item.path.@this.Resolve("/.db/system.sqlite", System.Context);
-        return await global::app.module.action.setting.Sqlite.CreateAsync(dbPath, System.Context);
+        return await global::app.store.sqlite.@this.CreateAsync(dbPath, System.Context);
     }
 
     public async ValueTask DisposeAsync()
@@ -595,6 +585,6 @@ public sealed partial class @this : IAsyncDisposable
         await module.list.DisposeAsync();
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
-        if (_settingsStore.IsValueCreated) _settingsStore.Value.Dispose();
+        if (_store.IsValueCreated) _store.Value.Dispose();
     }
 }

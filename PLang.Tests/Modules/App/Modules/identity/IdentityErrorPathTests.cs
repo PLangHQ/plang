@@ -50,7 +50,7 @@ public class IdentityErrorPathTests
     {
         // No identities exist → auto-create path → save fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var getHandler = new global::app.module.action.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
@@ -70,7 +70,7 @@ public class IdentityErrorPathTests
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var getHandler = new global::app.module.action.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
@@ -86,7 +86,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new global::app.module.action.identity.Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
@@ -102,7 +102,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
@@ -118,7 +118,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save before %MyIdentity% resolves
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         // Access %MyIdentity% — the computed cell calls the provider, which
         // fails; the answer is the present-null VALUE (the singleton).
@@ -140,7 +140,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"new", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, Ctx);
@@ -156,7 +156,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — saving the new identity fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"newid", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await handler.Attach(null, Ctx);
@@ -180,7 +180,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"new" };
         await handler.Attach(null, Ctx);
@@ -201,7 +201,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving the new default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"target" };
         await handler.Attach(null, Ctx);
@@ -221,7 +221,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving with new name fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
@@ -241,7 +241,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing remove — save succeeds but remove fails
         SwapDataSource(_app, new FailingRemoveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
@@ -261,7 +261,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"toarchive" };
         await handler.Attach(null, Ctx);
@@ -285,7 +285,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.SettingsStore));
+            await _app.store));
 
         var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"tounarchive" };
         await handler.Attach(null, Ctx);
@@ -320,7 +320,7 @@ public class IdentityErrorPathTests
         // store hands back a typed FACE with no processing; a corrupt entry (a raw
         // number, not an identity) surfaces its decline only when the developer LIFTS
         // it — never inside the store.
-        var ds = await _app.SettingsStore;
+        var ds = await _app.store;
         await ds.Set("identity", "weird", new Data("weird", 42, context: Ctx));
 
         var data   = await ds.Get<Identity>("identity", "weird");
@@ -333,7 +333,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_SkipsUndeserializableEntries()
     {
-        var ds = await _app.SettingsStore;
+        var ds = await _app.store;
 
         // Store a valid identity via Create action
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"valid", SetAsDefault = (global::app.type.item.@bool.@this)true };
@@ -356,79 +356,74 @@ public class IdentityErrorPathTests
     // --- Helpers ---
 
     /// <summary>
-    /// Swaps the SettingsStore on App via reflection on the auto-property
-    /// backing field. After stage 13's settings rework the store moved from
-    /// per-actor to app-level — there's a single shared <c>app.SettingsStore</c>.
+    /// Swaps the app's store via reflection on its lazy backing field — there's a single shared
+    /// <c>app.store</c>.
     /// </summary>
-    private static void SwapDataSource(global::app.@this app, global::app.module.action.setting.IStore newDataSource)
+    private static void SwapDataSource(global::app.@this app, global::app.store.@this newDataSource)
     {
-        var field = typeof(global::app.@this).GetField("_settingsStore",
+        var field = typeof(global::app.@this).GetField("_store",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(app, new Lazy<System.Threading.Tasks.Task<global::app.module.action.setting.IStore>>(
+        field!.SetValue(app, new Lazy<System.Threading.Tasks.Task<global::app.store.@this>>(
             () => System.Threading.Tasks.Task.FromResult(newDataSource)));
     }
 
     /// <summary>
-    /// DataSource wrapper that delegates all operations except Set, which always fails.
+    /// A store that delegates all operations except Set, which always fails.
     /// </summary>
-    private class FailingSaveDataSource : global::app.module.action.setting.IStore
+    private class FailingSaveDataSource : global::app.store.@this
     {
-        private readonly global::app.module.action.setting.IStore _inner;
-        public FailingSaveDataSource(global::app.module.action.setting.IStore inner) => _inner = inner;
+        private readonly global::app.store.@this _inner;
+        public FailingSaveDataSource(global::app.store.@this inner) => _inner = inner;
 
-        public Task<global::app.data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.Get<T>(table, key);
-        public Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.GetAll<T>(table);
-        public Task<Data> Set(string table, string key, Data data)
+        public override Task<global::app.data.@this<T>> Get<T>(string table, string key) => _inner.Get<T>(table, key);
+        public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) => _inner.GetAll<T>(table);
+        public override Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated save failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
-        public Task<Data> Remove(string table, string key) => _inner.Remove(table, key);
-        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
-        public Task<global::app.data.@this<global::app.type.item.list.@this>> Tables() => _inner.Tables();
-        public void Dispose() { }
+        public override Task<Data> Remove(string table, string key) => _inner.Remove(table, key);
+        public override Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
+        public override Task<global::app.data.@this<global::app.type.item.list.@this>> Tables() => _inner.Tables();
+        public override void Dispose() { }
     }
 
     /// <summary>
-    /// Settings store wrapper that delegates all operations except Remove, which always fails.
+    /// A store that delegates all operations except Remove, which always fails.
     /// </summary>
-    private class FailingRemoveDataSource : global::app.module.action.setting.IStore
+    private class FailingRemoveDataSource : global::app.store.@this
     {
-        private readonly global::app.module.action.setting.IStore _inner;
-        public FailingRemoveDataSource(global::app.module.action.setting.IStore inner) => _inner = inner;
+        private readonly global::app.store.@this _inner;
+        public FailingRemoveDataSource(global::app.store.@this inner) => _inner = inner;
 
-        public Task<global::app.data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.Get<T>(table, key);
-        public Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.GetAll<T>(table);
-        public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
-        public Task<Data> Remove(string table, string key)
+        public override Task<global::app.data.@this<T>> Get<T>(string table, string key) => _inner.Get<T>(table, key);
+        public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) => _inner.GetAll<T>(table);
+        public override Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
+        public override Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated remove failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
-        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
-        public Task<global::app.data.@this<global::app.type.item.list.@this>> Tables() => _inner.Tables();
-        public void Dispose() { }
+        public override Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
+        public override Task<global::app.data.@this<global::app.type.item.list.@this>> Tables() => _inner.Tables();
+        public override void Dispose() { }
     }
 
     /// <summary>
-    /// Settings store where GetAll always returns an error.
+    /// A store where every operation fails.
     /// </summary>
-    private class FailingGetAllDataSource : global::app.module.action.setting.IStore
+    private class FailingGetAllDataSource : global::app.store.@this
     {
-        public Task<Data> Get(string table, string key)
-            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<global::app.data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        public override Task<global::app.data.@this<T>> Get<T>(string table, string key)
             => Task.FromResult(global::app.data.@this<T>.FromError(new SettingsError("Simulated failure")));
-        public Task<Data> GetAll(string table)
-            => Task.FromResult(Data.FromError(new SettingsError("Simulated GetAll failure")));
-        public Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
             => Task.FromResult(global::app.data.@this<global::app.type.item.list.@this>.FromError(new SettingsError("Simulated GetAll failure")));
-        public Task<Data> Set(string table, string key, Data data)
+        public override Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<Data> Remove(string table, string key)
+        public override Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
+        public override Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
             => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new SettingsError("Simulated failure")));
-        public Task<global::app.data.@this<global::app.type.item.list.@this>> Tables()
+        public override Task<global::app.data.@this<global::app.type.item.list.@this>> Tables()
             => Task.FromResult(global::app.data.@this<global::app.type.item.list.@this>.FromError(new SettingsError("Simulated failure")));
-        public void Dispose() { }
+        public override void Dispose() { }
     }
 }

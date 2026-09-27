@@ -130,7 +130,7 @@ public partial class Set : IContext, IScope
         // (callback resume) stays a variable. (Build-time schema validation of the path is deferred.)
         if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask"))
         {
-            await Context.Setting.Set(global::app.setting.Storage.InMemory, name.Name[1..], Value);
+            await Context.Setting.Set(global::app.actor.setting.Storage.InMemory, name.Name[1..], Value);
             return Value;
         }
 

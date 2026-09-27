@@ -11,7 +11,7 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     public @this(global::app.@this app) : base(new List<object?>())
     {
         System = new actor.@this("System", app, app.ShutdownToken);
-        User = new actor.@this("User", app, System.CancellationToken);
+        User = new actor.@this("User", app, System.CancellationToken, fallback: System);
         Add(System);
         Add(User);
     }

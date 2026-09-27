@@ -35,7 +35,7 @@ public class SetTests
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Setting.Get(global::app.setting.Storage.InMemory, "http.request.timeout")).Success).IsTrue();
+        await Assert.That((await context.Setting.Get(global::app.actor.setting.Storage.InMemory, "http.request.timeout")).Success).IsTrue();
         await Assert.That((await context.Variable.GetValue("!http.request.timeout"))).IsNull();
     }
 

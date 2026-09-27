@@ -33,7 +33,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_ExistingKey_ReturnsValue()
     {
-        await (await _app.SettingsStore).Set("settings", "TestKey", new global::app.data.@this("TestKey", "TestValue", context: _app.System.Context));
+        await (await _app.store).Set("settings", "TestKey", new global::app.data.@this("TestKey", "TestValue", context: _app.System.Context));
 
         var handler = new global::app.module.action.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"TestKey"
         };
@@ -57,7 +57,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Remove_DeletesKey()
     {
-        await (await _app.SettingsStore).Set("settings", "ToRemove", new global::app.data.@this("ToRemove", "value", context: _app.System.Context));
+        await (await _app.store).Set("settings", "ToRemove", new global::app.data.@this("ToRemove", "value", context: _app.System.Context));
 
         var handler = new global::app.module.action.setting.Remove(_app.System.Context) { Key = (global::app.type.item.text.@this)"ToRemove"
         };
@@ -66,7 +66,7 @@ public class SettingsDataTests
         await result.IsSuccess();
 
         // Verify removed
-        var getResult = await (await _app.SettingsStore).Get<global::app.type.item.@this>("settings", "ToRemove");
+        var getResult = await (await _app.store).Get<global::app.type.item.@this>("settings", "ToRemove");
         await Assert.That(await (await getResult.Value())!.IsEmpty()).IsTrue();
     }
 
@@ -74,7 +74,7 @@ public class SettingsDataTests
     public async Task ActorDataSource_IsCreatedLazily()
     {
         // Accessing DataSource should create the .db directory
-        var ds = await _app.SettingsStore;
+        var ds = await _app.store;
         await Assert.That(ds).IsNotNull();
 
         var dbDir = System.IO.Path.Combine(_tempDir, ".db");
@@ -87,7 +87,7 @@ public class SettingsDataTests
     public async Task Settings_CorruptDatabase_ReturnsSettingsError()
     {
         // Trigger DataSource creation so the DB file exists
-        _ = await _app.SettingsStore;
+        _ = await _app.store;
 
         // Corrupt the database file — overwrite with garbage
         var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
@@ -95,7 +95,7 @@ public class SettingsDataTests
 
         // Settings.Get should surface the SettingsError from the store,
         // not throw and not return AskError.
-        var resolved = await _app.Setting.Get(global::app.setting.Storage.Persistent, "AnyKey");
+        var resolved = await _app.System.Setting.Get(global::app.actor.setting.Storage.Persistent, "AnyKey");
         await resolved.IsFailure();
         await Assert.That(resolved.Error is SettingsError).IsTrue();
     }

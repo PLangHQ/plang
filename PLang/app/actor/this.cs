@@ -48,7 +48,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// Per-actor permission view — signed grants on paths, keyed by verb
     /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
     /// in-memory list (live for the App's lifetime) and "a" grants to
-    /// <c>App.SettingsStore</c> under the <c>permission</c> table.
+    /// <c>app.store</c> under the <c>permission</c> table.
     /// </summary>
     public permission.@this Permission { get; private set; } = null!;
 
@@ -80,10 +80,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public Identity? Identity { get; set; }
 
-    public @this(string name, app.@this app, CancellationToken parentToken = default)
+    private readonly @this? _fallback;
+    private global::app.actor.setting.@this? _setting;
+
+    /// <summary>This actor's settings — the root its contexts' layers chain to; the user's falls back
+    /// to the system's (<c>app.System.Setting</c>).</summary>
+    public global::app.actor.setting.@this Setting => _setting ??= new(Context, _fallback?.Setting);
+
+    /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
+    public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
     {
         Name = name;
         App = app;
+        _fallback = fallback;
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);

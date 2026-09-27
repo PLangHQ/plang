@@ -61,7 +61,7 @@ namespace PLang
 				app.Debug = new Debug(app.System.Context);
 				if (debugValue is IDictionary<string, object?> debugDict)
 				{
-					var debugResult = app.Setting.Set(app.Debug, debugDict);
+					var debugResult = app.System.Setting.Set(app.Debug, debugDict);
 					if (!debugResult.Success) return (null, debugResult);
 				}
 				app.Debug.Activate();
@@ -76,7 +76,7 @@ namespace PLang
 				// The setting first: it names the actor the run's session opens on.
 				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var applyResult = app.Setting.Set(app.test.list.Setting, testDict);
+					var applyResult = app.System.Setting.Set(app.test.list.Setting, testDict);
 					if (!applyResult.Success) return (null, applyResult);
 				}
 				app.test.list.Open();
@@ -86,7 +86,7 @@ namespace PLang
 			// TryConvert), not the lift-then-lower catalog.Populate.
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
 			{
-				var appResult = app.Setting.Set(app, appDict);
+				var appResult = app.System.Setting.Set(app, appDict);
 				if (!appResult.Success) return (null, appResult);
 			}
 
@@ -96,9 +96,9 @@ namespace PLang
 			// later — carrying the flag to them is a separate concern, TODO.)
 			if (parameters.TryGetValue("!callstack", out var callstackValue) && callstackValue is IDictionary<string, object?> callstackDict)
 			{
-				var systemResult = app.Setting.Set(app.System.CallStack, callstackDict);
+				var systemResult = app.System.Setting.Set(app.System.CallStack, callstackDict);
 				if (!systemResult.Success) return (null, systemResult);
-				var userResult = app.Setting.Set(app.User.CallStack, callstackDict);
+				var userResult = app.User.Setting.Set(app.User.CallStack, callstackDict);
 				if (!userResult.Success) return (null, userResult);
 			}
 
@@ -114,7 +114,7 @@ namespace PLang
 
 				if (buildValue is IDictionary<string, object?> buildDict)
 				{
-					var buildResult = app.Setting.Set(app.Build, buildDict);
+					var buildResult = app.System.Setting.Set(app.Build, buildDict);
 					if (!buildResult.Success) return (null, buildResult);
 				}
 
@@ -128,7 +128,7 @@ namespace PLang
 				// the cache-off default now reaches every llm.query without threading. InMemory Set
 				// completes synchronously (no I/O), so unwrapping here in the sync Configure is safe.
 				if (!app.Build.Cache)
-					app.Setting.Set(global::app.setting.Storage.InMemory, "llm.cache", app.System.Context.Ok(false))
+					app.System.Setting.Set(global::app.actor.setting.Storage.InMemory, "llm.cache", app.System.Context.Ok(false))
 						.GetAwaiter().GetResult();
 			}
 

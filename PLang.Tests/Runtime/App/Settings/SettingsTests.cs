@@ -1,13 +1,13 @@
 using app;
 using app.type.item.variable;
 using EngineType = global::app.@this;
-using Storage = global::app.setting.Storage;
+using Storage = global::app.actor.setting.Storage;
 
 namespace PLang.Tests.App.Settings;
 
 /// <summary>
-/// The in-memory setting cascade on the unified <c>app.Setting</c> (<c>app.setting.@this</c>):
-/// scope shadowing (context → parent → app root) and clone isolation. Type conversion and the
+/// The in-memory setting cascade (<c>app.actor.setting.@this</c>): scope shadowing (context → parent →
+/// the actor's → the system's) and clone isolation. Type conversion and the
 /// <c>[Default]</c> fallback moved onto the generator seam (exercised by the action tests), so
 /// these tests assert scope resolution only, in Data terms.
 /// </summary>
@@ -40,7 +40,7 @@ public class SettingsTests
             ["files"] = new List<object?> { "a.goal", "b.goal" },
         };
 
-        var result = app.Setting.Set(node, settings);
+        var result = app.System.Setting.Set(node, settings);
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
@@ -98,5 +98,27 @@ public class SettingsTests
 
         await Assert.That((await (await clone.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("999");
         await Assert.That((await (await ctx.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("42");
+    }
+
+    // The user's settings fall back to the system's: a setting on the system reaches a user context.
+    [Test]
+    public async Task UserContext_FallsBackTo_TheSystemsSetting()
+    {
+        var engine = new EngineType("/app");
+        await engine.System.Setting.Set(Storage.InMemory, "llm.cache", engine.System.Context.Ok(false));
+
+        var read = await engine.User.Context.Setting.Get(Storage.InMemory, "llm.cache");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
+    }
+
+    // The system does not see the user's: a setting on the user stays the user's.
+    [Test]
+    public async Task SystemContext_DoesNotSee_TheUsersSetting()
+    {
+        var engine = new EngineType("/app");
+        await engine.User.Setting.Set(Storage.InMemory, "llm.cache", engine.User.Context.Ok(false));
+
+        var read = await engine.System.Context.Setting.Get(Storage.InMemory, "llm.cache");
+        await Assert.That(read.IsInitialized).IsFalse();
     }
 }
