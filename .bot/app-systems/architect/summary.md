@@ -5,8 +5,8 @@ Eight review rounds with Ingi on `plan.md` (2026-09-24, -26, -27); round 8 passe
 Stage status:
 | Stage | What | Status |
 |-------|------|--------|
-| 0 | Base: re-record Compile, baseline, delete v0.1 .pr files | pending |
-| 1 | `Run` → `Start` | pending |
+| 0 | Base: re-record Compile, baseline, delete v0.1 .pr, .dll, .pdb files | complete (57d180afe, 9ee92ac9c, c918a9a1b) |
+| 1 | `Run` → `Start` (+ test/environment/callback.start, range From/To, test stopwatch Begin) | complete (4b396e780) |
 | 2 | folded into 4 | — |
 | 3 | One set of types | pending |
 | 4 | The collected type | pending |
