@@ -7,9 +7,12 @@ namespace app.type;
 /// (the one by key), <see cref="current"/> (the one in play for the asker).
 /// </summary>
 public sealed class @this<T, L> : @this
-    where T : item.@this, item.ICreate<T>, item.IMatch<T>, item.ICurrent<T>, item.IList<T, L>
+    where T : item.@this, item.ICreate<T>, item.IMatch<T>, item.ICurrent<T>, item.ILoad<T>, item.IList<T, L>
     where L : item.list.@this<T>
 {
+    // The app the concept is born with — used only for the app's own work (its list, reading its own files
+    // as the system), never in place of an asker's context.
+    private readonly global::app.@this _app;
     private readonly System.Lazy<L> _list;
     // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>).
     private readonly System.Type? _setting;
@@ -19,7 +22,8 @@ public sealed class @this<T, L> : @this
     /// to read through, and is its identity alone.</summary>
     public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T), app.type?.list)
     {
-        _list = new(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+        _app = app;
+        _list = new(() => T.List(_app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
         _setting = typeof(T).GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
             ?.GetGenericArguments()[0];
@@ -67,6 +71,11 @@ public sealed class @this<T, L> : @this
             if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);
         return data.@this<T>.FromError(new global::app.error.Error($"no {Name} '{key}'", "NotFound", 404));
     }
+
+    /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/.build/show.pr")</c>),
+    /// resolved and read as the app itself; the element says how it loads.</summary>
+    public System.Threading.Tasks.Task<data.@this> Load(string location)
+        => T.Load(item.path.@this.Resolve(location, _app.System.Context), _app);
 
     /// <summary>The one in play for the asker — the running goal, the acting actor; NotFound where
     /// nothing is inside one. Its Data is born with the asker's context.</summary>

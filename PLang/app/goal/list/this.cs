@@ -159,8 +159,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var context = App.System.Context!;
         var exists = await pr.ExistsAsync(context);
         if (!exists.Success || !await exists.ToBooleanAsync()) return null;
-        var result = await Read(pr, cancellationToken: ct);
-        return result.Success && await result.Value() is goal.@this { IsSetup: false } goal ? goal : null;
+        var result = await global::app.goal.@this.Load(pr, App);
+        return result.Success && await result.Value() is goal.@this goal ? goal : null;
     }
 
     /// <summary>Every goal, with no asker: a C# lookup without a request is the app asking as itself,
@@ -200,7 +200,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         foreach (var pr in wants.Os.Value ? _app.Concat(_system) : _app)
         {
             if (!seen.Add(pr.ToString()!) || held.Any(g => Equals(g.PrPath, pr))) continue;
-            var loaded = await Load(pr);
+            var loaded = await global::app.goal.@this.Load(pr, App);
             if (!loaded.Success)
             {
                 await (App.Debug?.Write($"goal.list: {pr} left out — {loaded.Error?.Message}") ?? Task.CompletedTask);
@@ -224,66 +224,6 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 && p.IndexOf('/', at + "/.build/".Length) < 0).ToList();
     }
 
-    /// <summary>
-    /// The goal a .pr holds, by its location (<c>/system/error/.build/show.pr</c>, or absolute): the
-    /// collection resolves it with the context it reads with, answers the goal already read from there,
-    /// else reads the .pr and adds it. A setup goal is refused — it runs only through Setup.
-    /// </summary>
-    public async Task<data.@this> Load(string pr, CancellationToken cancellationToken = default)
-        => await Load(global::app.type.item.path.@this.Resolve(pr, App.System.Context), cancellationToken);
-
-    private async Task<data.@this> Load(global::app.type.item.path.@this location, CancellationToken cancellationToken = default)
-    {
-        var context = App.System.Context;
-        var loaded = Items().FirstOrDefault(g => Equals(g.PrPath, location)) is { } held
-            ? context.Ok(held)
-            : await Read(location, cancellationToken);
-        if (loaded.Success && await loaded.Value() is global::app.goal.@this { IsSetup: true })
-            return context.Error(new Error($"{location}: a setup goal runs only through setup.", "SetupGoal", 400));
-        return loaded;
-    }
-
-    /// <summary>
-    /// Reads a goal from a .pr file and adds it to this collection, through its <c>on.load</c>: what is bound
-    /// before a goal loads is the goal type's, handed the .pr (there is no goal yet) — a failure or a Handled
-    /// answer is the load's answer and nothing is read; what is bound after it runs across the goal's levels,
-    /// handed the goal.
-    /// </summary>
-    private async Task<data.@this> Read(global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
-    {
-        var context = App.System.Context;
-        var before = App.goal.on.load.before;
-        if (before.Count > 0 && await before.Start(prPath, context.Ok(), context) is { } answer
-            && (!answer.Success || answer.Handled))
-            return answer;
-        try
-        {
-            // The path reads itself AND parses by MIME — a .pr reads back as a goal.
-            var readResult = await prPath.ReadText(App.System.Context);
-            if (!readResult.Success || readResult.Peek().IsNull)
-                return App.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
-            var materialized = await readResult.Value();
-            if (materialized as global::app.goal.@this is not { } primary)
-                return App.System.Context.Error(readResult.Error ?? new Error(
-                    $"Failed to parse goal file: {prPath} — read produced {materialized.GetType().Name}, not a goal"));
-
-            // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
-            // relative file.read resolves against the goal's actual on-disk folder.
-            primary.LoadedFromPrPath = prPath;
-            foreach (var child in primary.Child.Items()) child.LoadedFromPrPath = prPath;
-
-            Add(primary);
-            return await primary.on.load.After(primary, readResult, context);
-        }
-        // The reader doesn't know its file; the load does — a refused .pr names itself.
-        catch (global::app.error.PrFormatOutdatedException outdated)
-        {
-            return App.System.Context.Error(new Error($"{prPath}: {outdated.Message}", outdated.Key, outdated.StatusCode)
-                { Exception = outdated });
-        }
-        catch (Exception ex)
-        {
-            return App.System.Context.Error(Error.FromException(ex));
-        }
-    }
+    /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't.</summary>
+    public goal.@this? this[global::app.type.item.path.@this pr] => Items().FirstOrDefault(g => Equals(g.PrPath, pr));
 }

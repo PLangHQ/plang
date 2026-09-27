@@ -9,7 +9,7 @@ namespace app.actor;
 /// Represents an actor in the system with its own context and IO channels.
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.actor.list.@this>
 {
     private readonly CancellationTokenSource _cts;

@@ -9,7 +9,7 @@ namespace app.module;
 /// (<c>app.module.Get("file")</c>). Navigated by reflection, read by templates through its own doors.
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, list.@this>
 {
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>

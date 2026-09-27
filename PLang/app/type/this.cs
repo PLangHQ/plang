@@ -29,7 +29,7 @@ namespace app.type;
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
-public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.ICurrent<@this>,
+public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.ICurrent<@this>, item.ILoad<@this>,
     item.IList<@this, list.@this>
 {
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>

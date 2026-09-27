@@ -26,7 +26,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.goal.list.Load("/.build/start.pr");
+        var result = await app.goal.Load("/.build/start.pr");
         await result.IsSuccess();
         var goal = (await result.Value()) as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -42,9 +42,9 @@ public class AppGoalsThroughPathVerbsTests
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
 
-        var byRel = await app.goal.list.Load("/.build/start.pr");
+        var byRel = await app.goal.Load("/.build/start.pr");
         await byRel.IsSuccess();
-        var byAbs = await app.goal.list.Load(prAbs);
+        var byAbs = await app.goal.Load(prAbs);
         await byAbs.IsSuccess();
         await Assert.That(await byAbs.Value()).IsSameReferenceAs(await byRel.Value());
     }

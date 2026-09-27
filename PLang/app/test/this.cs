@@ -13,7 +13,7 @@ namespace app.test;
 /// The PLang name "test" derives from the @this namespace tail — no [PlangType] needed.
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, list.@this>, global::app.type.item.setting.IConcept<setting.@this>
 {
     private Stopwatch? _stopwatch;
@@ -101,7 +101,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
         {
-            var loaded = await app.goal.list.Load(Goal.PrPath!.ToString());
+            var loaded = await app.goal.Load(Goal.PrPath!.ToString());
             var result = loaded.Success
                 ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(own)
                 : loaded;

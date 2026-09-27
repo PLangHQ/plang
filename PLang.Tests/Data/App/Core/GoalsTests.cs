@@ -169,7 +169,7 @@ public class GoalsTests
             var pr = System.IO.Path.Combine(dir, ".build", "setupdb.pr");
             System.IO.File.WriteAllText(pr, """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
 
-            var result = await engine.goal.list.Load(pr);
+            var result = await engine.goal.Load(pr);
 
             await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
         }
@@ -179,10 +179,11 @@ public class GoalsTests
     [Test]
     public async Task Load_RefusesAHeldSetupGoal()
     {
-        var goals = Goals();
-        goals.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
+        // rooted where Named's paths resolve, so the held goal's .pr is the one loaded
+        await using var app = TestApp.Create(global::PLang.Tests.TestApp.SharedContext.App.AbsolutePath);
+        app.goal.list.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
 
-        var result = await goals.Load("/.build/setupdb.pr");
+        var result = await app.goal.Load("/.build/setupdb.pr");
 
         await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
     }

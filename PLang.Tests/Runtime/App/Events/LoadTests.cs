@@ -39,7 +39,7 @@ public class LoadTests
         on.Bind("load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.System, Scope.app);
         on.Bind("load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.System, Scope.app);
 
-        var loaded = await app.goal.list.Load(Pr);
+        var loaded = await app.goal.Load(Pr);
 
         await loaded.IsSuccess();
         await Assert.That(handed.Count).IsEqualTo(2);
@@ -54,7 +54,7 @@ public class LoadTests
         app.goal.Own().Bind("load", When.before,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.System, Scope.app);
 
-        var loaded = await app.goal.list.Load(Pr);
+        var loaded = await app.goal.Load(Pr);
 
         await loaded.IsFailure();
         await Assert.That(loaded.Error!.Key).IsEqualTo("Refused");
@@ -71,7 +71,7 @@ public class LoadTests
             return Task.FromResult(instead);
         }, app.System, Scope.app);
 
-        var loaded = await app.goal.list.Load(Pr);
+        var loaded = await app.goal.Load(Pr);
 
         await Assert.That((await loaded.Value())?.ToString()).IsEqualTo("instead");
         await Assert.That(app.goal.list.Count.ToInt32()).IsEqualTo(0);
@@ -83,7 +83,7 @@ public class LoadTests
         app.goal.Own().Bind("load", When.after,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), app.System, Scope.app);
 
-        var loaded = await app.goal.list.Load(Pr);
+        var loaded = await app.goal.Load(Pr);
 
         await loaded.IsFailure();
         await Assert.That(loaded.Error!.Key).IsEqualTo("Broke");
@@ -95,8 +95,8 @@ public class LoadTests
         var loads = 0;
         app.goal.Own().Bind("load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.System, Scope.app);
 
-        await (await app.goal.list.Load(Pr)).IsSuccess();
-        await (await app.goal.list.Load(Pr)).IsSuccess();
+        await (await app.goal.Load(Pr)).IsSuccess();
+        await (await app.goal.Load(Pr)).IsSuccess();
 
         await Assert.That(loads).IsEqualTo(1);
     }

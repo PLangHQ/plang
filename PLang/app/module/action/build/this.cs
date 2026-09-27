@@ -94,7 +94,7 @@ public sealed partial class @this
         // through it; no global "current actor" switch needed. Its goal loads through the goal
         // collection, which registers what it loads.
         var user = _context.App.User.Context;
-        var loaded = await _context.App.goal.list.Load("/system/builder/.build/build.pr");
+        var loaded = await _context.App.goal.Load("/system/builder/.build/build.pr");
         if (!loaded.Success) return loaded;
         return await ((await loaded.Value()) as global::app.goal.@this)!.Start(user);
     }

@@ -323,6 +323,60 @@ public sealed partial class @this
         foreach (var subGoal in Child.Items()) await subGoal.Reopen(context);
     }
 
+    /// <summary>
+    /// The goal <paramref name="pr"/> holds, loaded as <paramref name="app"/> itself: the one already held from
+    /// there, else read through its <c>on.load</c> — what is bound before a goal loads is the goal type's, handed
+    /// the .pr (there is no goal yet), and a failure or a Handled answer is the load's answer with nothing read;
+    /// the path reads itself into a goal, the app's goals hold it, and what is bound after it runs across the
+    /// goal's levels, handed the goal. A setup goal is refused — it runs only through setup.
+    /// </summary>
+    public static async Task<data.@this> Load(global::app.type.item.path.@this pr, global::app.@this app)
+    {
+        var context = app.System.Context;
+        var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
+        if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
+            return context.Error(new global::app.error.Error($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
+        return loaded;
+    }
+
+    // One .pr read into a goal and held, through the goal's load.
+    private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
+    {
+        var context = app.System.Context;
+        var before = app.goal.on.load.before;
+        if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
+            && (!answer.Success || answer.Handled))
+            return answer;
+        try
+        {
+            // The path reads itself AND parses by MIME — a .pr reads back as a goal.
+            var read = await pr.ReadText(context);
+            if (!read.Success || read.Peek().IsNull)
+                return context.Error(read.Error ?? new global::app.error.Error($"Failed to read goal file: {pr}"));
+            if (await read.Value() is not @this goal)
+                return context.Error(read.Error ?? new global::app.error.Error(
+                    $"Failed to parse goal file: {pr} — read produced {(await read.Value()).GetType().Name}, not a goal"));
+
+            // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
+            // relative file.read resolves against the goal's actual on-disk folder.
+            goal.LoadedFromPrPath = pr;
+            foreach (var child in goal.Child.Items()) child.LoadedFromPrPath = pr;
+
+            app.goal.list.Add(goal);
+            return await goal.on.load.After(goal, read, context);
+        }
+        // The reader doesn't know its file; the load does — a refused .pr names itself.
+        catch (global::app.error.PrFormatOutdatedException outdated)
+        {
+            return context.Error(new global::app.error.Error($"{pr}: {outdated.Message}", outdated.Key, outdated.StatusCode)
+                { Exception = outdated });
+        }
+        catch (Exception ex)
+        {
+            return context.Error(global::app.error.Error.FromException(ex));
+        }
+    }
+
     /// <summary>A goal starts through the goal type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
     {

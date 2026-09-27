@@ -12,7 +12,7 @@ namespace app.type.item.variable;
 /// </summary>
 [global::app.Attributes.PlangType]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IName,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.type.item.list.@this<@this>>
 {
     public static string Example => "%user%";

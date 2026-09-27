@@ -542,7 +542,7 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
     {
         if (failed.Error is not { } error) return failed;
         var context = User.Context;
-        var loaded = await goal.list.Load("/system/error/.build/show.pr");
+        var loaded = await goal.Load("/system/error/.build/show.pr");
         if (!loaded.Success || await loaded.Value() is not Goal show)
         {
             await (Debug?.Write($"error show: /system/error/Show could not load — {loaded.Error}") ?? Task.CompletedTask);
@@ -583,7 +583,7 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         // The goal file is loaded through the goal collection, which registers what it loads.
-        var loaded = await this.goal.list.Load(goalFile);
+        var loaded = await this.goal.Load(goalFile);
         if (!loaded.Success) return loaded;
 
         var goal = ((await loaded.Value()) as Goal)!;
