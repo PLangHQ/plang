@@ -62,6 +62,53 @@
         "health": "six suites at baseline (Modules 38 / Types 23 / Wire 18 / Data 45 / Generator 18 / Runtime 24 failing); BootstrapTests green",
         "notes": "waiting on the architect's answer to the review before stage 1"
       }
+    },
+    {
+      "id": "b3e1f9a4-2c7d-4e58-9a0b-5d6f7e8a9c21",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T01:35:00Z",
+      "timestamp_end": "2026-09-27T02:10:00Z",
+      "intent": "Stage 1: Run → Start, the entry verb of everything that runs",
+      "before": {
+        "assumptions": "the generator emits one await Run() for every handler, so all 125 are renamed together; callback.run and the v0.1 dll/pdb follow Ingi's rulings",
+        "risk": "a stale PlangConsole binary rebuilding os/system/test.goal with the old action name"
+      },
+      "plan": ".bot/app-systems/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang.Generators/Emission/Action/this.cs", "PLang/app/module/ICodeGenerated.cs", "PLang/app/callstack/call/this.cs", "PLang/app/goal/", "PLang/app/module/action/"],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "Run → Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
+        },
+        {
+          "paths": ["PLang/app/module/action/environment/start.cs", "PLang/app/module/action/test/start.cs", "PLang/app/module/action/callback/start.cs", "os/system/modules/", "os/system/test.goal", "os/system/.build/test.pr"],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "environment/test/callback .run → .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "~145 test files follow the rename (agent), reflection by name updated; pick_golden.json regenerated after the python twin's Start() regex fix"
+        },
+        {
+          "paths": ["os/apps/"],
+          "type": "delete",
+          "category": "config",
+          "confidence": "high",
+          "context": "98 v0.1 NN. stepname.dll/.pdb deleted on Ingi's ruling"
+        }
+      ],
+      "after": {
+        "status": "stage 1 done and pushed (8c135f519, be6667215)",
+        "health": "six suites at baseline (known flakes only); plang --test 7 pass / 0 fail / 317 stale, as baseline",
+        "notes": "next: stage 3 after the architect's go"
+      }
     }
   ]
 }
