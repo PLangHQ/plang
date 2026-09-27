@@ -495,3 +495,37 @@ changes the builder's catalog (builder-visible): into 7f's twins + eval.
   and its own row wins, this run beats the row, remove → defaults, a module row reaches the seam and
   `%!llm.query.cache%`).
 - Checks: suites no new failures; plang --test 7/0/317; the builder's 7 goals rebuilt byte-identical.
+
+## 7e-2c trace — the CLI owners
+
+**The owners and where their config is read today:**
+- `--test` → `test.list.Setting` (interim): read by `test.start` (async, at start), `test.report`
+  (async), and `test.list.Session`'s actor (sync — `Mode` asks it).
+- `--debug` → `app.Debug` (`module/action/debug/this`): `Goal`, `Step`, `Variables`, `MaxLength`,
+  `Grep`, `Level`, `Verbose`, `Llm` (a nested class), set by the walk, then `Activate()`; the filters are
+  read synchronously at every step / action hook.
+- `--build` → `app.Build` (`module/action/build/this`): `Files` (read by the build's goal listing,
+  `build/code/Default:73`), `Cache` (Executor copies it to `build.cache` / `llm.cache`).
+- `--callstack` → each actor's `CallStack`: `Timing`, `Diff`, `DeepDiff`, `Tags`, `History`,
+  `MaxFrames`, read synchronously at every call push (`callstack/call/this:126-135,307`,
+  `call/child/list:34`).
+- `--app` → `app` itself: `Create` (read by `build.Start`).
+
+**The snag:** `Executor.Configure` is synchronous, and an instance is built asynchronously (the actor's
+rows load from the store); Debug's and CallStack's flags are read synchronously on the hot path, so an
+owner can't ask for its instance there.
+
+**Options:**
+- **(a) Each owner reads its instance once, at its first async moment, and holds it for the run:**
+  test.start at its start, the build at `Build.Start`, Debug and each CallStack when the app starts its
+  first goal (`app.Start`, async) — the CLI values are already this run's by then. A `set %!…%` later in
+  the run doesn't reach a held instance.
+- **(b) The actor's rows load at app start (async, once); after that an instance builds synchronously**
+  (the run layer is in memory already), so an owner asks for its instance where it reads it — no holding,
+  a later `set %!app.x.setting.y%` reaches it. The hot paths (per step, per call) then build an instance
+  per read, so Debug and CallStack would still hold theirs, refreshed when their path is written.
+- **(c) As (a), but refreshed:** an owner holding an instance is told when a value under its path is
+  written (this run's `set`, a save).
+
+I lean to (b) with (c)'s refresh for the two hot-path owners: one async moment (rows at app start), sync
+reads after, and Debug / CallStack hold theirs because they're read on every step.
