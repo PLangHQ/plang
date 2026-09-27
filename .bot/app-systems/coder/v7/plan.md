@@ -41,6 +41,44 @@ Goes: `_goals`/`_byPath`/`_byName`, `Get(string)`'s form scans, `this[string]`, 
 `Clear`, the stale "no app-level current" comment. Stays on the list as its work: `Load(pr)`, `Setup`,
 call's lookup.
 
+## 7b trace — module and actor
+
+**module** — `app.Module` is `module.list.@this`, a registry over a name → module dictionary: `Discover`,
+`RegisterType`, `Register` (the registry's own work), `this[name]` (throws), `Contains`, `Names`, `list`
+(a fresh plang list per ask), `GetActions`, `GetActionType`, `int Count` (counts actions), `All`
+(instances, for disposal), `Remove`, `Clear`, `Teaching`. `module.@this` is a plain host class (not an
+item). Production uses of the collection: `this[name]` ×12, `Contains` ×5, `Remove`, `Discover` — in
+the step list's validation (`goal/step/list/this.cs:131`), the `.pr` reader
+(`action/serializer/Reader.cs:53`), `goal.Parse` (`goal/this.cs:366`), pick (×8), Formal (×2), module.add /
+module.remove, test.report. Tests: `this[…]` ×172, `Register`/`RegisterType` ×21, `Contains` ×10.
+
+**actor** — `app.Actor` is `actor.list.@this`: `System`, `User`, `this[Name]` (a `choice<actor.Name>`),
+`DisposeAsync`. actor is already an ICreate item. Production `this[Name]` ×6 (goal.call, event.on,
+environment.start, channel.set/remove), all in async handlers.
+
+**Shape:**
+```
+app.module   type<module, module.list>   module.list : list<module>; Discover/Register/RegisterType/Teaching stay
+module       an ICreate item (declines creation), Match by Name; Action / Modifier / this[action] stay its own
+app.actor    type<actor, actor.list>     actor.list : list<actor> holding System and User (still named members)
+actor        Match by name (system / user); Current = the asker's actor
+```
+Goes: module.list's `this[name]`, `Contains`, `Names`, `list` (the class is the list), `GetActions`,
+`GetActionType`, `int Count`, `All` (→ the disposal walks the modules' instances itself), `Remove`/`Clear`
+as the registry's own names (a module's removal empties it, as today); actor.list's `this[Name]`.
+
+## 7b — what doesn't hold as written
+
+1. **Synchronous callers of a module by name.** The `.pr` reader is a synchronous ref-struct pass, and
+   Formal, `goal.Parse`, pick and the step list's validation run synchronously; `app.module.Get(key)` is
+   async (it walks `Every`). Six production paths can't await it without sync-over-async. Proposal: the
+   module list keeps one synchronous door by name — `module.list.Named(name)`, null on a miss (no throw),
+   the walk over its items that `Match` would do — used by those callers; `app.module.Get(key)` is the
+   door for everything else (handlers, plang navigation). Alternative: make those paths async (the `.pr`
+   reader can't be: it is a `ref` reader).
+2. **Tests' `app.Module["x"]["y"]` ×172** become `app.module.list.Named("x")!["y"]` (a script), or, if you
+   rule the sync door out, a test extension in `PLang.Tests/Shared/`.
+
 ## 7a — as built (commit da26b54dd; its message wrongly repeats "stage 7 plan, 7a trace" — the scratch
 message file didn't update; not rewritten, it's pushed)
 
