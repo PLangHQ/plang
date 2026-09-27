@@ -132,7 +132,37 @@ plang tests in `Tests/Modules/Modifiers/`.
 - **8h — the one eval** for 8f + 8g (golden + bootstrap, the 7f procedure), then the dead `Trigger` values that are
   new features (app start, error outcome, load) if ruled in (Q6).
 
-## 4. Questions
+## 4. Answers (decision 75, plang-cd; plang-visible ones go to Ingi)
+
+- **Q5's timing, fixed:** a program-bound `on.*` binds when the program is **read** (the step's code), onto the action
+  before it — not at run (in `[file.read, on.cache, on.timeout, on.error, variable.set]` file.read would already have
+  started). The exact place (the action list's read, or the step's load) is 8g's trace; no pre-pass in the step runner
+  (a *fork*). The rest of Q5 stands: ordinary siblings in `code`, `"modifier"` goes, `recovery` becomes on.error's
+  `goal.call`, the 2 built `.pr` rebuilt.
+1. Yes — a type's `on` fires for every item of the type, an item's own for that item: `%!app.type.step.on.start.before%`.
+2. Yes — one filter on a binding (a predicate its creator writes); the pattern language goes.
+3. Yes — one binding kind, one `Func`; `on.event`'s is `action.Start`.
+4. Debug's watch → bindings. The call stack's diff: if it's the store's own bookkeeping, the store does it directly (no
+   event); if it's an observer, it binds like debug — never a C# event beside `on.set`. **Trace which** (in 8d). Same
+   sweep: `actor.setting.Written` → `app.Refresh` becomes an `on.set.after` binding (decision 51); OpenAi's two C# events
+   (debug's LLM trace) become bindings on the llm actions' `on.start`.
+5. Yes, with the timing fix.
+6. Nothing stays dead: goal/step `on.load` and the app's `on.start` in 8b; error, variable, cache hit/miss in their slices.
+7. A binding is an item; removing is its own verb, actor-scoped; ids go. The plang action must **not** be `on.remove`
+   (under `on` an action's name is its event). Proposed name: **`on.unbind`** — no item has an `unbind` verb, so it can't
+   read as an event. (To confirm.)
+8. Order added; `Priority` and `StopOnError` go. A handler's error is the result's error: a failing before stops the
+   action, a failing after makes the action's result that error — loud, a program error. The C# infrastructure bindings
+   (debug, test, coverage) return no errors, so they never fail a program.
+9. An `on.*` action is covered when the action it's bound on starts (it was in effect); whether its handler fired is the
+   event's outcome.
+10. `Made` stays a C# test hook.
+11. A program-bound `on.*` fires for every actor; a runtime `on.event(item: …)` is scoped to its actor.
+
+**Sequencing:** 8a now (the classes and `on`, no consumer moved, no behaviour change). 8b and later wait for 7f's eval —
+8b changes how goals/steps/actions start, so the builder's own run changes, and a drop couldn't be traced otherwise.
+
+## 5. The questions as asked
 
 1. **"Each goal / step / action" bindings.** Today a pattern over every node (`before each goal`, debug's `*`). In the
    new model an item's own `on` fires for that item; I read "`app.type.text.on…` binds every text" as: a **type's `on`
