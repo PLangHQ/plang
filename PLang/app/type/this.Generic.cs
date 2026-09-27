@@ -50,7 +50,7 @@ public sealed class @this<T, L> : @this
     /// <c>Match(key)</c> answers (a goal by its address, a type by its name or alias). No match is a
     /// NotFound result. C#'s door; plang's <c>["key"]</c> and <c>.key</c> reach it through navigation.
     /// </summary>
-    public System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key) => Find(list.Every(), key);
+    public System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key) => Find(list.Walk(), key);
 
     // The one key names among the items given — walked as the list reaches them, so a list that
     // reads them (goal's) stops at the match.
@@ -81,7 +81,7 @@ public sealed class @this<T, L> : @this
         // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
         if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
         if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
-        var found = await Find(Of(parent.Context).Every(null, parent.Context), key);
+        var found = await Find(Of(parent.Context).Walk(null, parent.Context), key);
         if (!found.Success) return found;
         return new data.@this(key, (await found.Value())!, parent: parent);
     }

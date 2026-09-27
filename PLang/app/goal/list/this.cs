@@ -7,7 +7,7 @@ namespace app.goal.list;
 /// <summary>
 /// The app's goals — the goals read so far, one per <c>.pr</c>. Its own work: reading a <c>.pr</c>
 /// (<see cref="Load"/>), the goal a call names from where it is called (<see cref="Find"/>), every goal
-/// of the app and of <c>/system/</c> (<see cref="Every"/>, reading each <c>.pr</c> as it is reached), and
+/// of the app and of <c>/system/</c> (<see cref="Walk()"/>, reading each <c>.pr</c> as it is reached), and
 /// setup. One goal is picked by its address through the type: <c>app.goal.Get("/system/error/show")</c>.
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<goal.@this>,
@@ -165,7 +165,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     /// <summary>Every goal, with no asker: a C# lookup without a request is the app asking as itself,
     /// which is the system actor.</summary>
-    internal override IAsyncEnumerable<goal.@this> Every() => Every(null, App.System.Context);
+    internal override IAsyncEnumerable<goal.@this> Walk() => Walk(null, App.System.Context);
 
     /// <summary>
     /// Every goal of the app — and of <c>/system/</c>, unless the setting says <c>os: false</c> — one per
@@ -175,7 +175,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// no further. A <c>.pr</c> that doesn't read (an older format) is left out, and said so on the debug
     /// channel.
     /// </summary>
-    internal override async IAsyncEnumerable<goal.@this> Every(global::app.type.item.dict.@this? setting,
+    internal override async IAsyncEnumerable<goal.@this> Walk(global::app.type.item.dict.@this? setting,
         global::app.actor.context.@this context)
     {
         // goal.list's setting as the asker's actor sees it (its defaults, a saved row, this run's), the
