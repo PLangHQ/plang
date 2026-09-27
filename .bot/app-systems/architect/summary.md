@@ -11,6 +11,8 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 - A full `plang build` in `os/` stops after 3 of 70 goals: `os/.build/start.pr` and `test.pr` are old-format files, so the build re-decides them, nano's answer for Start.goal step 6 is refused (StepsRefused), and one refused step aborts the whole build. The coder built the builder with a file list instead and restored both files. Two questions: rebuild those two root goals (costs an LLM run), and should one refused step abort a whole build rather than skip its goal?
 - The debug watch resolves `%!x%` names through the memory only, not the settings, so `--debug` can't show a setting's value (found checking `%!build.cache%`; pinned by tests instead).
 
+**OBP review per coder report (Ingi, 2026-09-27: "give coder review of obpv after each time he reports back"):** every reported slice gets an obp-scan pass (`Documentation/v0.2/obp-scan.md` triage + `Tools/ObpScan`) over its commits before it's accepted, with the findings sent back by smell name. **Last OBP-reviewed commit: `e04572810`** (7e-2c, reviewed as decisions 53 + 56).
+
 **Decisions made while Ingi slept:**
 | # | Stage | Decision | Why | Where |
 |---|-------|----------|-----|-------|
