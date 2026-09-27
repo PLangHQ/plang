@@ -1,11 +1,9 @@
-using app.variable;
-
 namespace app.module.action.list;
 
 [Action("join")]
 public partial class Join : IContext
 {
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     [Default(",")]
     public partial data.@this<global::app.type.item.text.@this> Separator { get; init; }
 

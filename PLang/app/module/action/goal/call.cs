@@ -1,6 +1,5 @@
 using app;
 using app.actor.context;
-using app.variable;
 
 namespace app.module.action.goal;
 

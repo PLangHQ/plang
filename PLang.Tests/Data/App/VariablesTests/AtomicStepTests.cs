@@ -1,4 +1,4 @@
-using app.variable;
+using app.type.item.variable;
 using List = global::app.type.item.list.@this;
 
 namespace PLang.Tests.App.VariablesTests;

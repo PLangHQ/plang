@@ -1,5 +1,5 @@
 using app.actor.context;
-using app.variable;
+using app.type.item.variable;
 using app.module.action.llm;
 using app.module.action.llm.code;
 using app.goal;

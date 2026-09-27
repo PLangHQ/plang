@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using app;
-using app.variable;
 using app.@event;
 using Goal = app.goal.@this;
 using Action = app.goal.step.action.@this;

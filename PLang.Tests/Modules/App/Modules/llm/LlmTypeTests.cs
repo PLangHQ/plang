@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using app;
 using app.goal;
-using app.variable;
+using app.type.item.variable;
 using app.module.action.code;
 using app.module.action.llm;
 using app.module.action.llm.code;

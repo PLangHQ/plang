@@ -1,6 +1,5 @@
 using app;
 using app.error;
-using app.variable;
 
 namespace app.module.action.channel;
 
@@ -28,8 +27,8 @@ public partial class Set : IContext
     /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless
     /// the channel name is "input" or "output", in which case the name decides.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Direction { get; init; }
-    public partial data.@this<app.variable.@this>? Encryption { get; init; }
-    public partial data.@this<app.variable.@this>? Signing { get; init; }
+    public partial data.@this<app.type.item.variable.@this>? Encryption { get; init; }
+    public partial data.@this<app.type.item.variable.@this>? Signing { get; init; }
 
     public async Task<data.@this> Start()
     {

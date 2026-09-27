@@ -1,4 +1,4 @@
-using app.variable;
+using app.type.item.variable;
 using ListV = global::app.type.item.list.@this;
 using DictV = global::app.type.item.dict.@this;
 using Op = global::app.module.action.condition.Operator;
@@ -23,7 +23,7 @@ public class Stage5_ListDictOpsTests
     private DictV Person(string field, object? val) { var d = new DictV(); d.Set(_app.Data(field, val)); return d; }
 
     private Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
-        => new(ctx) {  ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.item.text.@this>("", field, context: ctx),
+        => new(ctx) {  ListName = new app.type.item.variable.@this(var), Field = new global::app.data.@this<global::app.type.item.text.@this>("", field, context: ctx),
                    Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op(op), context: ctx), Value = D(value) };
 
     [Test]
@@ -78,7 +78,7 @@ public class Stage5_ListDictOpsTests
         people.Add(_app.Data("", Person("age", 20L)));
         vars.Set("people", people);
 
-        var action = new Sort(ctx) { ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
+        var action = new Sort(ctx) { ListName = new app.type.item.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
         await (await action.Start()).IsSuccess();
         var sorted = (ListV)(await (await vars.Get("people")).Value())!;
         await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
@@ -96,7 +96,7 @@ public class Stage5_ListDictOpsTests
         dicts.Add(_app.Data("", Person("city", "Reyk")));
         dicts.Add(_app.Data("", Person("city", "Oslo")));
         vars.Set("dicts", dicts);
-        var action = new Sort(ctx) { ListName = new app.variable.@this("dicts") };
+        var action = new Sort(ctx) { ListName = new app.type.item.variable.@this("dicts") };
         var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("order");
@@ -111,7 +111,7 @@ public class Stage5_ListDictOpsTests
         values.Add(_app.Data("", Person("city", "Reyk")));   // structurally equal
         values.Add(_app.Data("", Person("city", "Oslo")));
         vars.Set("values", values);
-        var action = new Unique(ctx) { ListName = new app.variable.@this("values") };
+        var action = new Unique(ctx) { ListName = new app.type.item.variable.@this("values") };
         var result = await action.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value()) as ListV).IsNotNull();
@@ -127,7 +127,7 @@ public class Stage5_ListDictOpsTests
         people.Add(_app.Data("", Person("city", "Oslo")));
         people.Add(_app.Data("", Person("city", "Reyk")));
         vars.Set("people", people);
-        var action = new Group(ctx) { ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.item.text.@this>("", "city", context: ctx) };
+        var action = new Group(ctx) { ListName = new app.type.item.variable.@this("people"), Key = new global::app.data.@this<global::app.type.item.text.@this>("", "city", context: ctx) };
         var result = await action.Start();
         await result.IsSuccess();
         var groups = (ListV)(await result.Value())!;

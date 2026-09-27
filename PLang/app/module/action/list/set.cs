@@ -1,11 +1,9 @@
-using app.variable;
-
 namespace app.module.action.list;
 
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     public partial data.@this<global::app.type.item.number.@this> Index { get; init; }
     public partial data.@this Value { get; init; }
 

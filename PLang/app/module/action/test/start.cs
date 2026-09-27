@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Text;
 using app.error;
 using app.test;
-using app.variable;
 using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.module.action.test;

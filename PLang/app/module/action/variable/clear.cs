@@ -1,5 +1,3 @@
-using app.variable;
-
 namespace app.module.action.variable;
 
 [Action("clear", Cacheable = false)]

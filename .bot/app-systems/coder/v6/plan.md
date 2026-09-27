@@ -61,6 +61,16 @@ app/type/item/this.cs                   Variable (read-only, shared empty), HasV
 - **6f — consumers onto the variable**, old parsers deleted (the demolition list), `data.HasVariable`.
 - **6g — twins + one eval run.**
 
+## Answers (plang-40)
+
+1. Yes: the row's list rides on the ReadContext; an inner text takes the variables whose text it holds.
+2. Yes: value before variable; hold the raw until the object closes, birth whole.
+3. **Delete `%setting.X%`** in stage 6 (actor/this.cs:87, and `RegisterNavigable` if nothing else uses it).
+4. Yes: the store's Get/Set(string) take root names; list the path-passing callers in 6f.
+5. Yes, interim: the text form at the container; a typed container door is later work (note in write-up).
+6. **Explicit opt-in:** a method is reachable from a variable only when its type marks it (`[LlmBuilder]`
+   if it fits, else one small attribute). Unmarked or missing → "text has no method 'foo'".
+
 ## Questions for plang-40 (proceeding on 6a meanwhile)
 
 1. **Inner slots.** A marked dict/list row (`{"a":"%x%"}`) births its inner texts when it materializes,

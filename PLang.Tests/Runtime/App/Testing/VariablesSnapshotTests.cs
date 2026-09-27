@@ -1,5 +1,5 @@
 using PLang.Tests.Shared;
-using app.variable;
+using app.type.item.variable;
 
 namespace PLang.Tests.App.Tester;
 

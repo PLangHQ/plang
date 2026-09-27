@@ -35,7 +35,7 @@ public static class PrParam
         var t = System.Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
         if (!t.IsGenericType || t.GetGenericTypeDefinition() != typeof(global::app.data.@this<>)) return false;
 
-        return t.GetGenericArguments()[0] == typeof(global::app.variable.@this);
+        return t.GetGenericArguments()[0] == typeof(global::app.type.item.variable.@this);
     }
 
     // (module, action) → handler type, discovered once by reflecting [Action] over

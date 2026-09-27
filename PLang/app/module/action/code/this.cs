@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using app.error;
-using app.variable;
 using app.module.action.crypto.code;
 using app.module.action.identity.code;
 using app.module.action.signing.code;

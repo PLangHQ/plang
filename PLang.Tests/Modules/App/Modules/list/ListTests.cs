@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.variable;
+using app.type.item.variable;
 using app.module.action.list;
 
 namespace PLang.Tests.App.actions.list;
@@ -26,7 +26,7 @@ public class ListTests
     {
         var (context, memory) = CreateContext();
 
-        var action = new Add(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "first", context: context)};
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "first", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -42,7 +42,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Add(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "c", context: context)};
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "c", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -57,7 +57,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context), AtIndex = (global::app.type.item.number.@this)1 };
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context), AtIndex = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -79,7 +79,7 @@ public class ListTests
         memory.Set("a", aList);
         memory.Set("b", bList);
 
-        var action = new Add(context) { ListName = new app.variable.@this("a"), Value = await memory.Get("b") };
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("a"), Value = await memory.Get("b") };
         await (await action.Start()).IsSuccess();
 
         var a = (await memory.GetValue("a")) as global::app.type.item.list.@this;
@@ -104,7 +104,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
+        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -118,7 +118,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove(context) { ListName = new app.variable.@this("myList"), AtIndex = (global::app.type.item.number.@this)0 };
+        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList"), AtIndex = (global::app.type.item.number.@this)0 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -134,7 +134,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Get(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)1 };
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -147,7 +147,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Get(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)5 };
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)5 };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -163,7 +163,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Count(context) { ListName = new app.variable.@this("myList") };
+        var action = new Count(context) { ListName = new app.type.item.variable.@this("myList") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -178,7 +178,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "a", context: context)};
+        var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "a", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -191,7 +191,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "z", context: context)};
+        var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "z", context: context)};
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -205,7 +205,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "x", "y", "z" });
 
-        var action = new First(context) { ListName = new app.variable.@this("myList") };
+        var action = new First(context) { ListName = new app.type.item.variable.@this("myList") };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("x");
@@ -217,7 +217,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "x", "y", "z" });
 
-        var action = new Last(context) { ListName = new app.variable.@this("myList") };
+        var action = new Last(context) { ListName = new app.type.item.variable.@this("myList") };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("z");
@@ -231,7 +231,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new IndexOf(context) { ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
+        var action = new IndexOf(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("1");
@@ -245,7 +245,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "c", "a", "b" });
 
-        var action = new Sort(context) { ListName = new app.variable.@this("myList"), Descending = (global::app.type.item.@bool.@this)false };
+        var action = new Sort(context) { ListName = new app.type.item.variable.@this("myList"), Descending = (global::app.type.item.@bool.@this)false };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -262,7 +262,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Join(context) { ListName = new app.variable.@this("myList"), Separator = (global::app.type.item.text.@this)"-" };
+        var action = new Join(context) { ListName = new app.type.item.variable.@this("myList"), Separator = (global::app.type.item.text.@this)"-" };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("a-b-c");
@@ -291,7 +291,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { 1, 2, 3 });
 
-        var action = new Reverse(context) { ListName = new app.variable.@this("myList") };
+        var action = new Reverse(context) { ListName = new app.type.item.variable.@this("myList") };
         var result = await action.Start();
 
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
@@ -307,7 +307,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "a", "c", "b" });
 
-        var action = new Unique(context) { ListName = new app.variable.@this("myList") };
+        var action = new Unique(context) { ListName = new app.type.item.variable.@this("myList") };
         var result = await action.Start();
 
         var list = (await result.Value()) as global::app.type.item.list.@this;
@@ -345,7 +345,7 @@ public class ListTests
             new Dictionary<string, object?> { ["level"] = "high" }
         });
 
-        var action = new Any(context) { ListName = new app.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"level",
             Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
@@ -366,7 +366,7 @@ public class ListTests
             new Dictionary<string, object?> { ["level"] = "medium" }
         });
 
-        var action = new Any(context) { ListName = new app.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"level",
             Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
@@ -383,7 +383,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("items", new List<object?>());
 
-        var action = new Any(context) { ListName = new app.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"level",
             Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
@@ -404,7 +404,7 @@ public class ListTests
             new Dictionary<string, object?> { ["status"] = "inactive" }
         });
 
-        var action = new Any(context) { ListName = new app.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"status",
             Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("!="),
             Value = new global::app.data.@this("", "active", context: context)
@@ -428,7 +428,7 @@ public class ListTests
             new Dictionary<string, object?> { ["customer"] = "Alice", ["total"] = 20 }
         });
 
-        var action = new Group(context) { ListName = new app.variable.@this("orders"), Key = (global::app.type.item.text.@this)"customer" };
+        var action = new Group(context) { ListName = new app.type.item.variable.@this("orders"), Key = (global::app.type.item.text.@this)"customer" };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -458,7 +458,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("items", new List<object?>());
 
-        var action = new Group(context) { ListName = new app.variable.@this("items"), Key = (global::app.type.item.text.@this)"category" };
+        var action = new Group(context) { ListName = new app.type.item.variable.@this("items"), Key = (global::app.type.item.text.@this)"category" };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -476,7 +476,7 @@ public class ListTests
             new Dictionary<string, object?> { ["name"] = "Bob" }
         });
 
-        var action = new Group(context) { ListName = new app.variable.@this("items"), Key = (global::app.type.item.text.@this)"category" };
+        var action = new Group(context) { ListName = new app.type.item.variable.@this("items"), Key = (global::app.type.item.text.@this)"category" };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -495,7 +495,7 @@ public class ListTests
         var nested = new List<object?> { 1, new List<object?> { 2, 3 }, new List<object?> { 4, new List<object?> { 5 } } };
         memory.Set("myList", nested);
 
-        var action = new Flatten(context) { ListName = new app.variable.@this("myList") };
+        var action = new Flatten(context) { ListName = new app.type.item.variable.@this("myList") };
         var result = await action.Start();
 
         var listResult = (await result.Value()) as global::app.type.item.list.@this;

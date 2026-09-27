@@ -44,7 +44,7 @@ global using AppTypes = app.type.list.@this;
 global using AppCode = app.module.action.code.@this;
 
 // Variables (was MemoryStack)
-global using Variables = app.variable.list.@this;
+global using Variables = app.type.item.variable.list.@this;
 
 // Snapshot subsystem
 global using Snapshot = app.snapshot.@this;

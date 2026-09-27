@@ -3,7 +3,6 @@ using app.Attributes;
 using app.error;
 using app.test;
 using app.Utils;
-using app.variable;
 using Goal = app.goal.@this;
 using FilePath = app.type.item.path.file.@this;
 

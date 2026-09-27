@@ -1,11 +1,9 @@
-using app.variable;
-
 namespace app.module.action.list;
 
 [Action("group")]
 public partial class Group : IContext
 {
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 

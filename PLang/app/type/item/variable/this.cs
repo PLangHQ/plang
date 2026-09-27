@@ -1,4 +1,4 @@
-namespace app.variable;
+namespace app.type.item.variable;
 
 /// <summary>
 /// Identifies a variable by name. Used as the wrapped type in <c>Data&lt;Variable&gt;</c>
@@ -54,7 +54,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>
     /// Convenience for direct C# composition (tests, App.Run):
-    /// <c>new global::app.variable.@this("myList")</c> is equivalent to a bare-name slot.
+    /// <c>new global::app.type.item.variable.@this("myList")</c> is equivalent to a bare-name slot.
     /// Records' primary constructor is inherited; this overload chains into it.
     /// </summary>
     public @this(string name) : this(name ?? "", name ?? "", false) { }
@@ -76,7 +76,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>
     /// Resolve: hand back what the named variable holds, through its own door
-    /// (<see cref="global::app.variable.list.@this.Value(string)"/>). A bound
+    /// (<see cref="global::app.type.item.variable.list.@this.Value(string)"/>). A bound
     /// binding's door terminates; the goal-call by-value injection keeps the
     /// stored value's context, so a <c>%x%</c>-into-<c>x</c> pass resolves against
     /// the caller's binding — no Get cycle.

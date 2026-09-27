@@ -1,6 +1,6 @@
 using System.Reflection;
 using app;
-using app.variable;
+using app.type.item.variable;
 using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.DataTests;

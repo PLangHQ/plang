@@ -1,5 +1,3 @@
-using app.variable;
-
 using number = global::app.type.item.number.@this;
 
 namespace app.module.action.math;

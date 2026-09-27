@@ -29,7 +29,7 @@ public class ItemConstraintTests
             typeof(global::app.type.item.@bool.@this), typeof(global::app.type.item.@null.@this),
             typeof(global::app.type.item.dict.@this), typeof(global::app.type.item.list.@this),
             typeof(global::app.type.item.path.@this), typeof(global::app.type.item.image.@this),
-            typeof(global::app.type.code.@this), typeof(global::app.variable.@this),
+            typeof(global::app.type.code.@this), typeof(global::app.type.item.variable.@this),
             typeof(global::app.module.action.output.Ask), typeof(global::app.snapshot.@this),
         };
         foreach (var t in wrappers)
@@ -59,9 +59,9 @@ public class ItemConstraintTests
     {
         // Variable : item (slot-fit) AND still IName (raw-name binding).
         // Orthogonal concerns, both held.
-        await Assert.That(IsItem(typeof(global::app.variable.@this))).IsTrue();
-        await Assert.That(typeof(global::app.variable.IName)
-            .IsAssignableFrom(typeof(global::app.variable.@this))).IsTrue();
+        await Assert.That(IsItem(typeof(global::app.type.item.variable.@this))).IsTrue();
+        await Assert.That(typeof(global::app.type.item.variable.IName)
+            .IsAssignableFrom(typeof(global::app.type.item.variable.@this))).IsTrue();
     }
 
     [Test]

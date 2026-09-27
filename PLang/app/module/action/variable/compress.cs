@@ -1,5 +1,4 @@
 using app.Attributes;
-using app.variable;
 
 namespace app.module.action.variable;
 
@@ -16,7 +15,7 @@ public partial class Compress : IContext
 {
     /// <summary>The variable to compress.</summary>
     [IsNotNull]
-    public partial data.@this<app.variable.@this> Variable { get; init; }
+    public partial data.@this<app.type.item.variable.@this> Variable { get; init; }
 
     public async Task<data.@this> Start()
     {
@@ -39,7 +38,7 @@ public partial class Decompress : IContext
 {
     /// <summary>The variable holding the archived Data to decompress.</summary>
     [IsNotNull]
-    public partial data.@this<app.variable.@this> Variable { get; init; }
+    public partial data.@this<app.type.item.variable.@this> Variable { get; init; }
 
     public async Task<data.@this> Start()
     {

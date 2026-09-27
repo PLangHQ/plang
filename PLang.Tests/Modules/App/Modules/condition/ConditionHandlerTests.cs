@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.variable;
+using app.type.item.variable;
 using app.module.action.condition;
 using app.type.item.path;
 using Action = global::app.goal.step.action.@this;

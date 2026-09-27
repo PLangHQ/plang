@@ -6,7 +6,6 @@ using app.channel.serializer;
 using app.actor.context;
 using app.error;
 using app.goal;
-using app.variable;
 using PlangType = app.type.@this;
 using app.module.action.signing;
 using AppType = app.@this;

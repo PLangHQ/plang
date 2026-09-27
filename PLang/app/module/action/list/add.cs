@@ -1,11 +1,9 @@
-using app.variable;
-
 namespace app.module.action.list;
 
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
     [Default(-1)]
     public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }

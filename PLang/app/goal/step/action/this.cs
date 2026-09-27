@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using app.variable;
 namespace app.goal.step.action;
 
 /// <summary>

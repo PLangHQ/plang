@@ -67,7 +67,7 @@
     <Using Include="app.data.@this" Alias="Data" />
     <Using Include="app.data.Properties" Alias="Properties" />
     <Using Include="app.data.DynamicData" Alias="DynamicData" />
-    <Using Include="app.variable.list.@this" Alias="Variables" />
+    <Using Include="app.type.item.variable.list.@this" Alias="Variables" />
     <Using Include="app.type.item.path" Alias="FileSystem" />
     <Using Include="app.type.item.path.@this" Alias="path" />
     <Using Include="app.type.item.path.file.@this" Alias="filepath" />

@@ -2,7 +2,6 @@ using System.Diagnostics;
 using app.Utils;
 using System.Text.Json;
 using app.goal;
-using app.variable;
 using Goal = app.goal.@this;
 using Actions = System.Collections.Generic.List<app.goal.step.action.@this>;
 

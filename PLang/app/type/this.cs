@@ -246,8 +246,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
         // A raw-name declared type (variable) NAMES a thing — the name IS the variable (a write-target),
         // not a value to defer. Before the string→source branch (else the name becomes a deferred source).
-        if (raw is string rawName && ClrType == typeof(app.variable.@this))
-            return app.variable.@this.Resolve(rawName, context);
+        if (raw is string rawName && ClrType == typeof(app.type.item.variable.@this))
+            return app.type.item.variable.@this.Resolve(rawName, context);
 
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
         // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw.
@@ -275,8 +275,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         {
             // A raw-name declared type (variable) NAMES a thing — the leaf's raw string is the variable.
             var backing = leaf.RawText;
-            if (ClrType == typeof(app.variable.@this) && backing != null)
-                return app.variable.@this.Resolve(backing, context);
+            if (ClrType == typeof(app.type.item.variable.@this) && backing != null)
+                return app.type.item.variable.@this.Resolve(backing, context);
 
             // Already this type → hold; refine a matching leaf to the declared kind.
             var minted = leaf.Type;
@@ -346,7 +346,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // content door; the kind-parse stays lazy on the content source. A literal string under
             // any other type rides the wire (strict, byte-identical).
             return Template != null
-                    || ClrType == typeof(global::app.variable.@this)
+                    || ClrType == typeof(global::app.type.item.variable.@this)
                 ? Create(JsonSerializer.Deserialize<string>(slice)!, ctx.Context)
                 : Create(slice, transport);
         }

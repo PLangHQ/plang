@@ -19,18 +19,18 @@ public partial class @this
         if (string.IsNullOrEmpty(path))
             return this;
 
-        // The path owns its tokenization (app.variable.path) — parse once into
+        // The path owns its tokenization (app.type.item.variable.path) — parse once into
         // typed segments, then walk. No free-function re-tokenizer per hop.
-        return await Get(global::app.variable.path.@this.Parse(path));
+        return await Get(global::app.type.item.variable.path.@this.Parse(path));
     }
 
     /// <summary>
-    /// Walks a parsed navigation <see cref="global::app.variable.path.@this">path</see>:
+    /// Walks a parsed navigation <see cref="global::app.type.item.variable.path.@this">path</see>:
     /// navigate this value by the head segment, recurse on the tail. Each segment kind
     /// owns what its key IS — a member name, a resolved bracket index, an infrastructure
     /// plane hop, or a method call.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> Get(global::app.variable.path.@this path)
+    public async System.Threading.Tasks.ValueTask<@this> Get(global::app.type.item.variable.path.@this path)
     {
         if (path.IsEmpty) return this;
 
@@ -40,7 +40,7 @@ public partial class @this
         // generic per-hop walk below (which owns those planes + the rich IndexNotSet diagnostic).
         if (_item is global::app.type.clr.@this clr
             && System.Linq.Enumerable.All(path.Segments,
-                   s => s is global::app.variable.path.Segment.Member or global::app.variable.path.Segment.Index))
+                   s => s is global::app.type.item.variable.path.Segment.Member or global::app.type.item.variable.path.Segment.Index))
             return await clr.Get(this, path);
 
         var (head, tail) = path.Split();
@@ -50,13 +50,13 @@ public partial class @this
         @this child;
         switch (head)
         {
-            case global::app.variable.path.Segment.Infra infra:
+            case global::app.type.item.variable.path.Segment.Infra infra:
                 child = await GetInfrastructureValue(infra.Name);
                 break;
-            case global::app.variable.path.Segment.Call call:
+            case global::app.type.item.variable.path.Segment.Call call:
                 child = InvokeMethod(call.Method, call.Args);
                 break;
-            case global::app.variable.path.Segment.Index index:
+            case global::app.type.item.variable.path.Segment.Index index:
                 child = await _item.Get(this, await index.Key(_context?.Variable));
                 // A non-literal index (`[planStep.index]`) that the container couldn't use:
                 // distinguish the common, confusing cause — the index variable itself is unset
@@ -84,7 +84,7 @@ public partial class @this
                 }
                 break;
             default: // Member (plain or quoted) — the VALUE owns navigation by key
-                child = await _item.Get(this, ((global::app.variable.path.Segment.Member)head!).Name);
+                child = await _item.Get(this, ((global::app.type.item.variable.path.Segment.Member)head!).Name);
                 break;
         }
 
@@ -95,13 +95,13 @@ public partial class @this
 
 
     /// <summary>
-    /// Write-at-path — the READ walk (<see cref="Get(global::app.variable.path.@this)"/>) for all
+    /// Write-at-path — the READ walk (<see cref="Get(global::app.type.item.variable.path.@this)"/>) for all
     /// but the last segment, then ONE <c>Set</c> at the leaf. The value owns the write exactly as
     /// it owns the read: navigate to the parent, hand its item the leaf key + the grammar's
     /// index-vs-member fact, rebind the parent when the item comes back replaced (a json host
     /// materialises into a dict; a clr host mutates in place, so identity holds).
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> Set(global::app.variable.path.@this path, object? value)
+    public async System.Threading.Tasks.ValueTask<@this> Set(global::app.type.item.variable.path.@this path, object? value)
     {
         if (path.IsEmpty) return this;                     // no leaf to write — nothing to do
 
@@ -122,11 +122,11 @@ public partial class @this
         // bracket index resolves against the store; a member is its own name.
         var leaf = path.Last;
         string key;
-        bool isIndex = leaf is global::app.variable.path.Segment.Index;
-        if (leaf is global::app.variable.path.Segment.Index idx)
+        bool isIndex = leaf is global::app.type.item.variable.path.Segment.Index;
+        if (leaf is global::app.type.item.variable.path.Segment.Index idx)
             key = await idx.Key(_context?.Variable);
         else
-            key = ((global::app.variable.path.Segment.Member)leaf).Name;
+            key = ((global::app.type.item.variable.path.Segment.Member)leaf).Name;
 
         if (target is null)
             return _context?.NotFound(key) ?? parent;

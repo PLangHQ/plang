@@ -1,5 +1,4 @@
 using app;
-using app.variable;
 using Action = app.goal.step.action.@this;
 
 namespace app.module.action.loop;
@@ -27,9 +26,9 @@ public partial class Foreach : IContext, IStep, IScope
     public partial data.@this Collection { get; init; }
     /// <summary>The variable each element is bound to — <c>%item%</c> when not named.</summary>
     [Default("item")]
-    public partial data.@this<app.variable.@this>? Item { get; init; }
+    public partial data.@this<app.type.item.variable.@this>? Item { get; init; }
     /// <summary>The variable each key (dict key or list index) is bound to — unbound when not named.</summary>
-    public partial data.@this<app.variable.@this>? Key { get; init; }
+    public partial data.@this<app.type.item.variable.@this>? Key { get; init; }
 
     public async Task<data.@this> Start()
     {

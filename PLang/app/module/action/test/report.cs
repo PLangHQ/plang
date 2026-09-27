@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using app.error;
-using app.variable;
 
 namespace app.module.action.test;
 

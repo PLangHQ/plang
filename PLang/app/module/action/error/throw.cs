@@ -1,5 +1,4 @@
 using app.error;
-using app.variable;
 using List = global::app.type.item.list.@this;
 
 namespace app.module.action.error;

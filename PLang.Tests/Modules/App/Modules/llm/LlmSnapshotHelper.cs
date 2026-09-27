@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using app.goal;
-using app.variable;
+using app.type.item.variable;
 using app.module.action.llm;
 using app.module.action.llm.code;
 

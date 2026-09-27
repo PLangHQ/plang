@@ -1,4 +1,3 @@
-using app.variable;
 using app.type;
 
 namespace app.module.action.file;

@@ -1,4 +1,4 @@
-namespace app.variable;
+namespace app.type.item.variable;
 
 /// <summary>
 /// A value of this type IS a name — it refers to a variable/slot by name, not by
@@ -14,7 +14,7 @@ namespace app.variable;
 /// </para>
 /// <para>
 /// Empty marker — no methods. Runtime code that has the loaded type compares against
-/// <c>typeof(app.variable.@this)</c> directly; the interface exists for the generator.
+/// <c>typeof(app.type.item.variable.@this)</c> directly; the interface exists for the generator.
 /// </para>
 /// </summary>
 public interface IName { }

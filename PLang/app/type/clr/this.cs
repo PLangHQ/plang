@@ -94,14 +94,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// </summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => Get(parent, global::app.variable.path.@this.Parse(key));
+        => Get(parent, global::app.type.item.variable.path.@this.Parse(key));
 
     /// <summary>The whole-path handoff — the carrier hands its <see cref="Kind"/> the entire
     /// tail so the kind walks it in ONE call (and, later, in its OWN path language:
     /// jsonpath/css). <c>data.Get</c> hands the value-plane path here; infra/method
     /// segments stay on the generic per-hop walk.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
-        global::app.data.@this parent, global::app.variable.path.@this path)
+        global::app.data.@this parent, global::app.type.item.variable.path.@this path)
         => Kind.Get(Value, path, parent, parent.Context);
 
     /// <summary>The format→type read door — the carrier hands its <see cref="Kind"/> its own content,

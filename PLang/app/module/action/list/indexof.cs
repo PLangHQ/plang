@@ -1,11 +1,9 @@
-using app.variable;
-
 namespace app.module.action.list;
 
 [Action("indexof")]
 public partial class IndexOf : IContext
 {
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
     public async Task<data.@this<global::app.type.item.number.@this>> Start()

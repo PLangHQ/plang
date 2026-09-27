@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using app.actor.context;
 using app.error;
-using app.variable;
 using Error = app.error.Error;
 
 namespace app.goal.list;

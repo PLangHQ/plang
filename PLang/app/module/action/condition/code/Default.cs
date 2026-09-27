@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using app.error;
-using app.variable;
 
 namespace app.module.action.condition.code;
 
@@ -78,7 +77,7 @@ public sealed class Default : IEvaluator
     /// </summary>
     private static async Task<data.@this?> TolerateAbsentVariable(data.@this? d)
     {
-        if (d?.Peek() is global::app.variable.@this v && d.Context != null
+        if (d?.Peek() is global::app.type.item.variable.@this v && d.Context != null
             && !(await d.Context.Variable.Get(v.Name)).IsInitialized)
             return null;
         return d;

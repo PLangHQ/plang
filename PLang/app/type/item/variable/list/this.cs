@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using Force.DeepCloner;
 using app.actor.context;
 
-namespace app.variable.list;
+namespace app.type.item.variable.list;
 
 /// <summary>
 /// Thread-safe variable storage for App. This is the STORE (a collection), not a value
@@ -128,7 +128,7 @@ public partial class @this
         // The path owns tokenization + per-hop index resolution (no regex pre-pass). A bare root
         // (no dot/bracket) is a direct rebind of the variable; a deep path is write-at-path on the
         // root's own value — the READ walk to the parent, then one Set at the leaf (data.Set).
-        var path = global::app.variable.path.@this.Parse(name);
+        var path = global::app.type.item.variable.path.@this.Parse(name);
 
         // Simple case: no dot/bracket path — set the root variable directly
         if (path.Tail.IsEmpty)
@@ -261,7 +261,7 @@ public partial class @this
     {
         var existing = await Get(name);
         if (existing.IsInitialized) return existing;
-        if (Calls.Current != null || !global::app.variable.path.@this.Parse(name).Tail.IsEmpty)
+        if (Calls.Current != null || !global::app.type.item.variable.path.@this.Parse(name).Tail.IsEmpty)
             return await Set(name, value());
 
         data.@this? born = null;
@@ -279,7 +279,7 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<bool> Replace(string name, data.@this expected, global::app.type.item.@this value)
     {
         if (ReferenceEquals(expected.Peek(), value)) return true;
-        if (!global::app.variable.path.@this.Parse(name).Tail.IsEmpty)
+        if (!global::app.type.item.variable.path.@this.Parse(name).Tail.IsEmpty)
         {
             await Set(name, value);
             return true;
@@ -317,7 +317,7 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(name)) return null;
         name = CleanName(name);
-        var rootName = global::app.variable.path.@this.Parse(name).Root;
+        var rootName = global::app.type.item.variable.path.@this.Parse(name).Root;
         if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed)) return framed;
         return _variables.TryGetValue(rootName, out var v) ? v : null;
     }
@@ -339,7 +339,7 @@ public partial class @this
         // (Segment.Index.Key) — no pre-pass string rewrite.
 
         // Handle paths like "user.name" or "items[0].value"
-        var rootName = global::app.variable.path.@this.Parse(name).Root;
+        var rootName = global::app.type.item.variable.path.@this.Parse(name).Root;
         string? remaining;
         if (name.Length > rootName.Length)
         {
@@ -403,7 +403,7 @@ public partial class @this
     public bool Contains(string name)
     {
         name = CleanName(name);
-        var rootName = global::app.variable.path.@this.Parse(name).Root;
+        var rootName = global::app.type.item.variable.path.@this.Parse(name).Root;
         if (Calls.Current is { } frame && frame.TryGet(rootName, out _))
             return true;
         return _variables.ContainsKey(rootName);

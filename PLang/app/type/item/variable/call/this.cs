@@ -1,4 +1,4 @@
-namespace app.variable.call;
+namespace app.type.item.variable.call;
 
 /// <summary>
 /// One forked flow's variable scope — a mutable overlay over the actor-shared

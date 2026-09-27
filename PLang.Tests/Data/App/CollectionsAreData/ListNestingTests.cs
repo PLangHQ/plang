@@ -76,7 +76,7 @@ public class ListNestingTests
 
         var result = await app.Run(new global::app.module.action.list.Flatten(ctx)
         {
-            ListName = new global::app.variable.@this("l"),
+            ListName = new global::app.type.item.variable.@this("l"),
         }, ctx);
 
         await result.IsSuccess();

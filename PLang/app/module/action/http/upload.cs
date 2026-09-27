@@ -1,6 +1,5 @@
 using app.Attributes;
 using app.goal;
-using app.variable;
 using app.module.action.http.code;
 using app.module.action.signing;
 

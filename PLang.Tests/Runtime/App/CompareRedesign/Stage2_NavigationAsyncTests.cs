@@ -66,7 +66,7 @@ public class Stage2_NavigationAsyncTests
         var navSources = new[]
         {
             "PLang/app/data/this.Navigation.cs",
-            "PLang/app/variable/list/this.cs",
+            "PLang/app/type/item/variable/list/this.cs",
             "PLang/app/snapshot/this.Variables.cs", // snapshot owns its Navigate now
         };
         var repoRoot = FindRepoRoot();

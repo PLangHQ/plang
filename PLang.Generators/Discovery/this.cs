@@ -38,7 +38,7 @@ public static class @this
     /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
     /// Post-v5 contract: every action property must be <c>Data&lt;T&gt;</c>, plain <c>Data</c>,
     /// or <c>[Code]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
-    /// (app.variable.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
+    /// (app.type.item.variable.@this) — the former <c>[VariableName] string</c> carve-out is gone.
     /// </summary>
     internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",
@@ -187,7 +187,7 @@ public static class @this
                     && namedType.TypeArguments[0] is INamedTypeSymbol innerNamed
                     && innerNamed.AllInterfaces.Any(i =>
                         i.Name == "IName"
-                        && i.ContainingNamespace.ToDisplayString() == "app.variable"))
+                        && i.ContainingNamespace.ToDisplayString() == "app.type.item.variable"))
                 {
                     isName = true;
                 }

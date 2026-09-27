@@ -1,4 +1,3 @@
-using app.variable;
 using app.@event;
 
 namespace app.module.action.mock;

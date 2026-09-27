@@ -1,5 +1,4 @@
 using app;
-using app.variable;
 
 namespace app.module.action.module;
 

@@ -151,14 +151,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private async System.Threading.Tasks.ValueTask<global::app.error.VariableNotFoundException> Unreachable(
         string name, global::app.actor.context.@this context)
     {
-        var segments = global::app.variable.path.@this.Parse(name).Segments;
+        var segments = global::app.type.item.variable.path.@this.Parse(name).Segments;
         if (segments.Count <= 1) return new global::app.error.VariableNotFoundException(name);
         string reachedPrefix = "(root)", reachedType = "nothing";
         var prefix = new System.Text.StringBuilder();
         for (int i = 0; i < segments.Count; i++)
         {
             var seg = segments[i];
-            prefix.Append(i > 0 && seg is global::app.variable.path.Segment.Member ? "." + seg.Raw : seg.Raw);
+            prefix.Append(i > 0 && seg is global::app.type.item.variable.path.Segment.Member ? "." + seg.Raw : seg.Raw);
             var hop = await context.Variable.Get(prefix.ToString());
             if (hop == null || !hop.IsInitialized)
                 return new global::app.error.VariableNotFoundException(name, reachedPrefix, reachedType, seg.Raw);

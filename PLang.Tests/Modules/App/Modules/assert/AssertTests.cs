@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.error;
-using app.variable;
+using app.type.item.variable;
 using AssertEquals = global::app.module.action.assert.Equals;
 using AssertNotEquals = global::app.module.action.assert.NotEquals;
 using AssertIsTrue = global::app.module.action.assert.IsTrue;

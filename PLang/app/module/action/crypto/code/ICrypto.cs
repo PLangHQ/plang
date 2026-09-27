@@ -1,4 +1,3 @@
-using app.variable;
 using app.module.action.code;
 
 namespace app.module.action.crypto.code;

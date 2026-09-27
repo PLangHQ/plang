@@ -1,6 +1,5 @@
 using app.Attributes;
 using app.goal;
-using app.variable;
 using app.module.action.llm.code;
 
 namespace app.module.action.llm;

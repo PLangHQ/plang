@@ -1,6 +1,6 @@
 namespace PLang.Tests.App.VariablesTests;
 
-using Variables = global::app.variable.list.@this;
+using Variables = global::app.type.item.variable.list.@this;
 
 /// <summary>
 /// Pin test (architect acceptance, stage1-navigation-write-answer.md): a write into an immutable

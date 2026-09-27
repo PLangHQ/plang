@@ -1,5 +1,5 @@
-using app.variable;
-using @this = global::app.variable.@this;
+using app.type.item.variable;
+using @this = global::app.type.item.variable.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -95,7 +95,7 @@ public class VariableResolveTests
     [Test]
     public async Task ImplicitConversion_ToString_ReturnsName()
     {
-        @this v = new global::app.variable.@this("x", "%x%", true);
+        @this v = new global::app.type.item.variable.@this("x", "%x%", true);
 
         string s = v;
 
@@ -107,7 +107,7 @@ public class VariableResolveTests
     [Test]
     public async Task ToString_ReturnsName_ForInterpolationFriendliness()
     {
-        var v = new global::app.variable.@this("listName", "%listName%", true);
+        var v = new global::app.type.item.variable.@this("listName", "%listName%", true);
 
         var formatted = $"Variable '{v}' was missing";
 

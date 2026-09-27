@@ -1,6 +1,5 @@
 using app.actor.context;
 using app.error;
-using app.variable;
 
 namespace app.goal.setup;
 

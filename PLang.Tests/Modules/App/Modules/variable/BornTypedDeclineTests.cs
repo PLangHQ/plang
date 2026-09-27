@@ -10,7 +10,7 @@ public class BornTypedDeclineTests
     private global::app.@this _app = null!;
     [Before(Test)] public void Setup() => _app = TestApp.Create("/app");
 
-    // Direct unit test on the decline seam (Variable.Create, app/variable/this.cs:67).
+    // Direct unit test on the decline seam (Variable.Create, app/type/item/variable/this.cs).
     [Test]
     public async Task Create_TextValue_DeclinesWithCreateVariableDeclined()
     {
@@ -18,7 +18,7 @@ public class BornTypedDeclineTests
         global::app.type.item.@this textValue = new global::app.type.item.text.@this("some value");
         var asking = new Data("Name", "Name", context: ctx);
 
-        var result = global::app.variable.@this.Create(textValue, asking);
+        var result = global::app.type.item.variable.@this.Create(textValue, asking);
 
         // cast to object: Variable has an implicit string operator that NREs on null
         await Assert.That((object?)result).IsNull();
@@ -30,10 +30,10 @@ public class BornTypedDeclineTests
     public async Task Create_VariableValue_PassesThrough()
     {
         var ctx = _app.User.Context;
-        var v = global::app.variable.@this.Resolve("%x%", ctx);
+        var v = global::app.type.item.variable.@this.Resolve("%x%", ctx);
         var asking = new Data("Name", "x", context: ctx);
 
-        var result = global::app.variable.@this.Create(v, asking);
+        var result = global::app.type.item.variable.@this.Create(v, asking);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(asking.Error).IsNull();

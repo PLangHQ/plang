@@ -1,4 +1,3 @@
-using app.variable;
 using app.module.action.condition;
 
 namespace app.module.action.list;
@@ -17,7 +16,7 @@ namespace app.module.action.list;
 public partial class Where : IContext
 {
     [IsNotNull]
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     /// <summary>The bare field name the predicate scopes against (e.g. "age").</summary>
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Field { get; init; }
@@ -28,7 +27,7 @@ public partial class Where : IContext
 
     public async Task<data.@this> Start()
     {
-        var subject = await Context.Variable.Get((await ListName.Value()) as app.variable.@this);
+        var subject = await Context.Variable.Get((await ListName.Value()) as app.type.item.variable.@this);
         var field = (await Field.Value())!.Clr<string>()!;
         Operator op = (await Operator.Value())!;
         var subjectVal = await subject.Value();

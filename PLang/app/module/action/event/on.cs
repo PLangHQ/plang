@@ -1,5 +1,4 @@
 using app;
-using app.variable;
 using app.@event;
 using EventBinding = app.@event.lifecycle.binding.@this;
 

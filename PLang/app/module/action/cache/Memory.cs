@@ -1,5 +1,4 @@
 using System.Runtime.Caching;
-using app.variable;
 
 namespace app.module.action.cache;
 

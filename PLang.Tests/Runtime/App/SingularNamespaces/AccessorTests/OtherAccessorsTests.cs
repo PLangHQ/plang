@@ -49,7 +49,7 @@ public class OtherAccessorsTests
         // Variables.Set is a mutation verb. The registry has NO indexer at all —
         // reads are async (Get returns ValueTask), so an indexer can't exist, and
         // mutation routes through Set so events/lifecycle fire correctly.
-        var t = typeof(global::app.variable.list.@this);
+        var t = typeof(global::app.type.item.variable.list.@this);
         var indexer = t.GetProperty("Item", new[] { typeof(string) });
         await Assert.That(indexer).IsNull();
     }

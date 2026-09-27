@@ -14,7 +14,7 @@ namespace PLang.Tests.Shared;
 public static class VariablesTestExtensions
 {
     public static async System.Threading.Tasks.ValueTask<object?> GetValue(
-        this global::app.variable.list.@this vars, string name)
+        this global::app.type.item.variable.list.@this vars, string name)
     {
         // The door, not Materialize — a reference (file/url) yields its raw content.
         var v = await (await vars.Get(name)).Value();

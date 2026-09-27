@@ -34,7 +34,7 @@ public class SnapshotAtErrorTests
             vars.Set("x", 2);
 
             var projection = vars.SnapshotAt(error);
-            await Assert.That(projection).IsTypeOf<global::app.variable.list.@this>();
+            await Assert.That(projection).IsTypeOf<global::app.type.item.variable.list.@this>();
             await Assert.That((await (await projection.Get("x")).Value())?.ToString()).IsEqualTo("1");
         }
     }

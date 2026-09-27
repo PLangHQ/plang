@@ -168,7 +168,7 @@ public class HostRenderSpikeTests
         var wanted = new ItemList(new List<object?> { "read", "set" });
         var where = new Where(ctx)
         {
-            ListName = new global::app.variable.@this("actions"),
+            ListName = new global::app.type.item.variable.@this("actions"),
             Field = new global::app.data.@this<global::app.type.item.text.@this>("", "Name", context: ctx),
             Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op("in"), context: ctx),
             Value = new Data("", wanted, context: ctx),

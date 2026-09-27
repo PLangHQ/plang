@@ -8,7 +8,6 @@ using app.type.item.path;
 using app.error;
 using app.type.item.path;
 using app.goal;
-using app.variable;
 
 namespace app.module.action.ui.code;
 

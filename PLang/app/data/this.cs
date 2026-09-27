@@ -440,7 +440,7 @@ public partial class @this
         // NOT open the door (the door resolves a reference to what it points at). Every
         // other slot opens the door: a reference resolves through it, a container
         // deep-renders, and the resolved value's own type then converts to T.
-        if (typeof(T) == typeof(global::app.variable.@this) && Peek() is global::app.variable.@this nameRef)
+        if (typeof(T) == typeof(global::app.type.item.variable.@this) && Peek() is global::app.type.item.variable.@this nameRef)
             return T.Create(nameRef, this);
         return T.Create(await Value(), this);
     }
@@ -514,7 +514,7 @@ public partial class @this
         // A variable reference → the canonical IS the variable's own current Data (mutations stay
         // visible through Variables.Get). _context is never null (born-with-context) — a null here
         // is a violated invariant, so let it crash rather than nurse it with `?.`.
-        if (_item is global::app.variable.@this v)
+        if (_item is global::app.type.item.variable.@this v)
         {
             var resolved = await _context.Variable.Get(v.Name);
             if (resolved == null || !resolved.IsInitialized)

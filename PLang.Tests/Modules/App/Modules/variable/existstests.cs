@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.variable;
+using app.type.item.variable;
 using app.module.action.variable;
 
 namespace PLang.Tests.App.actions.variable;
@@ -19,7 +19,7 @@ public class ExistsTests
         var (context, _) = CreateContext();
         context.Variable.Set("testVar", "testValue");
 
-        var action = new Exists(context) { Name = new app.variable.@this("testVar") };
+        var action = new Exists(context) { Name = new app.type.item.variable.@this("testVar") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -31,7 +31,7 @@ public class ExistsTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Exists(context) { Name = new app.variable.@this("nonexistent") };
+        var action = new Exists(context) { Name = new app.type.item.variable.@this("nonexistent") };
         var result = await action.Start();
 
         await result.IsSuccess();

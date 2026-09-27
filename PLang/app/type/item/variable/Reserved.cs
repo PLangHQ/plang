@@ -1,4 +1,4 @@
-namespace app.variable;
+namespace app.type.item.variable;
 
 /// <summary>
 /// Well-known variable names. <c>!</c>-prefixed entries are PLang infrastructure

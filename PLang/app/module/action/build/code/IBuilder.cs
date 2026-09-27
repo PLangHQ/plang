@@ -1,4 +1,3 @@
-using app.variable;
 using app.module.action.code;
 using app.Utils;
 using Goal = app.goal.@this;

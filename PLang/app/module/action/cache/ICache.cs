@@ -1,5 +1,3 @@
-using app.variable;
-
 namespace app.module.action.cache;
 
 /// <summary>

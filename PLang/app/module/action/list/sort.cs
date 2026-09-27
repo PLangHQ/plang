@@ -1,11 +1,9 @@
-using app.variable;
-
 namespace app.module.action.list;
 
 [Action("sort", Cacheable = false)]
 public partial class Sort : IContext
 {
-    public partial data.@this<app.variable.@this> ListName { get; init; }
+    public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Descending { get; init; }
     /// <summary>Optional element field to sort by — `sort %people% by "age"`. Sorts by element value when absent.</summary>

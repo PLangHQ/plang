@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using app.actor.context;
 using app.data;
-using app.variable;
 using app.module;
 
 namespace app.goal.step;

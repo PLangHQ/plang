@@ -1,4 +1,3 @@
-using app.variable;
 using app.module.action.signing.code;
 
 namespace app.module.action.signing;

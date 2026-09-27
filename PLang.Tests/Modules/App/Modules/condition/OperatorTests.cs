@@ -1,4 +1,4 @@
-using app.variable;
+using app.type.item.variable;
 using app.module.action.condition;
 
 namespace PLang.Tests.App.Modules.condition;

@@ -1,5 +1,4 @@
 using app;
-using app.variable;
 using app.module.action.condition.code;
 
 namespace app.module.action.condition;

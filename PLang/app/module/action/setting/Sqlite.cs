@@ -2,7 +2,6 @@ using Microsoft.Data.Sqlite;
 using app.type.item.path;
 using app.channel.serializer;
 using app.error;
-using app.variable;
 using app.Utils;
 
 namespace app.module.action.setting;

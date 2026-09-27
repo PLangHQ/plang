@@ -1,4 +1,4 @@
-using app.variable;
+using app.type.item.variable;
 using app.module.action.crypto;
 using app.module.action.crypto.code;
 using hash = global::app.module.action.crypto.type.hash.@this;

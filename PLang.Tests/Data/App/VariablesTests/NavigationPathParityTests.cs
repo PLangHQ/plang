@@ -1,9 +1,9 @@
-using NavPath = global::app.variable.path.@this;
-using Segment = global::app.variable.path.Segment;
+using NavPath = global::app.type.item.variable.path.@this;
+using Segment = global::app.type.item.variable.path.Segment;
 
 namespace PLang.Tests.App.VariablesTests;
 
-// Tokenization spec for the navigation `path` value (app.variable.path). A reference
+// Tokenization spec for the navigation `path` value (app.type.item.variable.path). A reference
 // string parses ONCE into typed segments. These expected token streams were pinned
 // equal to the legacy free-function Data.ParseNextSegment (redesign step 1, before it
 // was deleted in step 2), so they double as the parity record proving the reroute is

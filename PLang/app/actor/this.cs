@@ -1,6 +1,5 @@
 using app;
 using app.module.action.setting;
-using app.variable;
 using app.module.action.identity;
 using app.module.action.identity.code;
 

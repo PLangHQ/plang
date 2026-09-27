@@ -19,7 +19,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// <summary>
     /// Throw-time snapshot for an error callback. By the time an error reaches its handler the live
     /// CallStack has unwound past the failing action, so the variables and the call stack are taken
-    /// as they stood at the throw (<see cref="global::app.variable.list.@this.SnapshotAt"/>, the chain
+    /// as they stood at the throw (<see cref="global::app.type.item.variable.list.@this.SnapshotAt"/>, the chain
     /// the error carried). Everything else is unchanged across handling, so it captures live.
     /// </summary>
     public snapshot.@this Snapshot(global::app.error.Error error, actor.context.@this context)

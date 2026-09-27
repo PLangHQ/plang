@@ -1,5 +1,4 @@
 using app.Attributes;
-using app.variable;
 
 namespace app.module.action.variable;
 
@@ -69,7 +68,7 @@ public partial class Set : IContext, IScope
         return null;
     }
 
-    public partial data.@this<app.variable.@this> Name { get; init; }
+    public partial data.@this<app.type.item.variable.@this> Name { get; init; }
     public partial data.@this Value { get; init; }
     /// <summary>
     /// Optional <c>as</c> clause. Carries the whole <c>type</c> entity (Name,

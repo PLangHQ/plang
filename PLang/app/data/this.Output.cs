@@ -47,7 +47,7 @@ public partial class @this
         // the authored ref verbatim. This resolution is the ONE output recursion that can cycle
         // (a=%b%, b=%a%) — guarded so it fails typed, not via stack overflow. Every other value graph
         // is a tree (the writer fail-closes on any non-plang value), so nothing else recurses unbounded.
-        if (_item is global::app.variable.@this vref && context != null && mode != View.Store)
+        if (_item is global::app.type.item.variable.@this vref && context != null && mode != View.Store)
         {
             if (_outputDepth.Value++ > MaxResolveDepth)
             {

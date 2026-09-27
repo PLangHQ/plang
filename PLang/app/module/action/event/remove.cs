@@ -1,5 +1,3 @@
-using app.variable;
-
 namespace app.module.action.@event;
 
 [Action("remove", Cacheable = false)]

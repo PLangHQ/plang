@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using Nethereum.Util;
 using app.error;
-using app.variable;
 
 namespace app.module.action.crypto.code;
 

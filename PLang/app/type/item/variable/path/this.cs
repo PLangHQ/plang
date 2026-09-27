@@ -1,4 +1,4 @@
-namespace app.variable.path;
+namespace app.type.item.variable.path;
 
 /// <summary>
 /// A navigation path — the parsed form of a reference string like

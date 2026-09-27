@@ -79,7 +79,7 @@ public class @this
     /// whose path language is NOT plang (a future jsonpath) overrides this wholesale.
     /// </summary>
     public virtual async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
-        object obj, global::app.variable.path.@this path,
+        object obj, global::app.type.item.variable.path.@this path,
         global::app.data.@this parent, global::app.actor.context.@this ctx)
     {
         object? node = obj;
@@ -91,10 +91,10 @@ public class @this
             // answer; a Member segment (`.Count`, `.Name`) wants a named one. A kind that owns
             // both faces (a sequence host: element vs .Count) needs the distinction, so it rides
             // into Descend — the resolved key AND whether it came from an index bracket.
-            bool isIndex = seg is global::app.variable.path.Segment.Index;
-            string key = seg is global::app.variable.path.Segment.Index i
+            bool isIndex = seg is global::app.type.item.variable.path.Segment.Index;
+            string key = seg is global::app.type.item.variable.path.Segment.Index i
                 ? await i.Key(ctx.Variable)                        // the ONE bracket-variable resolver
-                : ((global::app.variable.path.Segment.Member)seg).Name;
+                : ((global::app.type.item.variable.path.Segment.Member)seg).Name;
             var (found, next) = kind.Descend(node, key, isIndex, ctx);
             if (!found) return ctx.NotFound(seg.Raw);
             node = next;
