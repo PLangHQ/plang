@@ -1,5 +1,6 @@
 {
   "name": "IfBoolTruthy",
+  "comment": "`if %b%` with %b% = true is truthy; `if !%b%` is falsy. bool.@this implements\nIBooleanResolvable; this is the load-bearing runtime path for conditions. The\ntruthy branch runs, the negated (falsy) branch does not.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 5
       },
-      "comment": "`if %b%` with %b% = true is truthy; `if !%b%` is falsy. bool.@this implements\nIBooleanResolvable; this is the load-bearing runtime path for conditions. The\ntruthy branch runs, the negated (falsy) branch does not.",
       "code": [
         {
           "module": "variable",
@@ -348,7 +348,7 @@
   "visibility": "Public",
   "path": "/ScalarsAsNative/Stage5/IfBoolTruthy.test.goal",
   "prPath": "/ScalarsAsNative/Stage5/.build/ifbooltruthy.test.pr",
-  "hash": "7355010b5d500988d3dcde5b942be9c5c229b5600fe6eefbe21e9cd9c1c83917",
+  "hash": "6d2c63ae1a211ba059618f5449a41eafba1421310c8f875b91f01006b8ab0065",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

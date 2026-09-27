@@ -1,5 +1,5 @@
-Start
 / call goal by variable name
+Start
 - set %goalName% = "TargetGoal"
 - call %goalName%
 - assert %dynamicResult% equals "reached"

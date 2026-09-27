@@ -1,6 +1,6 @@
-NullsSortLast
 / Sorting a list that contains a null keeps every element (no drop, no throw) and orders the
 / null to the end — the last item of the sorted list is the null value.
+NullsSortLast
 - set %xs% = [3, null, 1]
 - sort %xs%, write to %sorted%
 - assert %sorted.Count% equals 3

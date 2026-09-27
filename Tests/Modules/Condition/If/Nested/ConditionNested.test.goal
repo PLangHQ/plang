@@ -1,5 +1,5 @@
-Start
 / Test: nested conditions — inner false only skips inner block, outer continues
+Start
 - set %x% = 10
 - set %y% = 3
 - set %innerRan% = "no"

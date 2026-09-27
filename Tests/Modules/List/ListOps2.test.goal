@@ -1,5 +1,5 @@
-Start
 / Test: list.range generates a sequence
+Start
 - generate range from 1 to 5, write to %rangeResult%
 - assert %rangeResult% is not null
 / Test: list.set mutates by index

@@ -1,5 +1,5 @@
-Start
 / Test: variable exists after set
+Start
 - set %myVar% = "hello"
 - check if variable %myVar% exists, write to %existsResult%
 - assert %existsResult% is true

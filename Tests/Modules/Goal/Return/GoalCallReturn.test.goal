@@ -1,4 +1,4 @@
-Start
 / goal call with return value
+Start
 - call ComputeAnswer, write to %answer%
 - assert %answer% is not null

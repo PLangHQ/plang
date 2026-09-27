@@ -1,5 +1,5 @@
-Start
 / channel.remove unregisters a custom-named channel — subsequent write to it errors.
+Start
 - set channel "logger" call Logger
 - remove channel "logger"
 - write 'hi' to logger, on error set %writeFailed% = true

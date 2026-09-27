@@ -1,5 +1,6 @@
 {
   "name": "TextForEachDoesNotIterateChars",
+  "comment": "text is atomic — a list of two texts iterates as TWO items, not the 5 characters of\n\"abc\"+\"de\". text.@this is not IEnumerable; a text is never char-decomposed.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 4
       },
-      "comment": "text is atomic — a list of two texts iterates as TWO items, not the 5 characters of\n\"abc\"+\"de\". text.@this is not IEnumerable; a text is never char-decomposed.",
       "code": [
         {
           "module": "variable",
@@ -262,7 +262,7 @@
       "visibility": "Private",
       "path": "/ScalarsAsNative/Stage2/TextForEachDoesNotIterateChars.test.goal",
       "prPath": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr",
-      "hash": "1ec328764ea9f4e717c675666a3e2853acdb3b663fce3f5ec671fed507431b30",
+      "hash": "e1695628d824bd1273a90d9972af9706333043a88c2c860330b191a51b2ef4d7",
       "isSetup": false,
       "isEvent": false,
       "isSystem": false,
@@ -272,7 +272,7 @@
   "visibility": "Public",
   "path": "/ScalarsAsNative/Stage2/TextForEachDoesNotIterateChars.test.goal",
   "prPath": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr",
-  "hash": "91ffe0dde920cf8932bf7a6ab2de04d51e89fc60ee48cf06fa4579f6b7c1aae4",
+  "hash": "ca9a4858abf2e47971c59896d76f15077f62860fe38cf8a5778bc38d73ad7818",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

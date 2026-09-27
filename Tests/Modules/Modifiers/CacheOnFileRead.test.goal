@@ -1,5 +1,5 @@
-TestCacheOnFileRead
 / Verifies that cache.wrap modifier caches a file.read result
+TestCacheOnFileRead
 - save 'testdata/cache_test.txt' with content 'cached content'
 - read file 'testdata/cache_test.txt'
     cache for 60 seconds

@@ -1,5 +1,5 @@
-Start
 / Failure — if %dict% < %dict% (ordering on equality-only type) → boundary maps NotEqual → PLang error.
+Start
 - set %d1% = '{"a": 1}', type=json
 - set %d2% = '{"a": 2}', type=json
 - set %caught% = ""

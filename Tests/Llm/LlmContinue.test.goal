@@ -1,5 +1,5 @@
-Start
 / Two queries — second uses continuePreviousConversation, verify LLM remembers context
+Start
 - [llm] system: 'You are a helpful assistant'
     user: 'My favorite color is blue. Remember that.'
     write to %first%

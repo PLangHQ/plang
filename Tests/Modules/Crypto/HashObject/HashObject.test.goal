@@ -1,5 +1,5 @@
-Start
 / Test: hash a JSON object, verify consistency on re-hash
+Start
 - set %obj% = { "name": "Alice", "age": 30 }
 - hash %obj%, write to %hash1%
 - hash %obj%, write to %hash2%

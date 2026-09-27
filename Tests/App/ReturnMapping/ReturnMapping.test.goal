@@ -1,5 +1,5 @@
-Start
 / return value mapped to variable via write to
+Start
 - read file 'testfile.txt', write to %content%
 - assert %content% equals "hello from file"
 

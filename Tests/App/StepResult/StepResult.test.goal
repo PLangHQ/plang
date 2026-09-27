@@ -1,4 +1,4 @@
-Start
 / !data available after step
+Start
 - set %x% = "hello"
 - assert %!data% is not null

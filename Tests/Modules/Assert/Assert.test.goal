@@ -1,5 +1,5 @@
-Start
 / notEquals
+Start
 - assert 5 not equals 10
 / isFalse
 - set %flag% = false

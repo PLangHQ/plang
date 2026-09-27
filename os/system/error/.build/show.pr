@@ -1,5 +1,6 @@
 {
   "name": "Show",
+  "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 5
       },
-      "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error.",
       "code": [
         {
           "module": "variable",
@@ -175,6 +175,7 @@
   "child": [
     {
       "name": "Fallback",
+      "comment": "No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.",
       "step": [
         {
           "index": 0,
@@ -182,7 +183,6 @@
           "line": {
             "number": 11
           },
-          "comment": "No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.",
           "code": [
             {
               "module": "variable",
@@ -274,12 +274,12 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/Show.goal",
-      "prPath": "/.build/show.pr",
-      "hash": "4742e679f1d5fb071f1c32b6c1b5ae1da00d252ef626c3c0b16ae9e3592b5eb1",
+      "path": "/system/error/Show.goal",
+      "prPath": "/system/error/.build/show.pr",
+      "hash": "f93891911ba00df83413c5da71c4384869f2fbf48205288dd35c9c38bdf15c70",
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false
     },
     {
@@ -318,21 +318,21 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/Show.goal",
-      "prPath": "/.build/show.pr",
-      "hash": "4e744d16d411f9bd6d846e120353410edb484d2c02573faa16028cfb50f360da",
+      "path": "/system/error/Show.goal",
+      "prPath": "/system/error/.build/show.pr",
+      "hash": "611a6eef195e5b9f76992f1ffd7b24b4b0907f4902a59255799195c736d41c12",
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false
     }
   ],
-  "visibility": "Private",
-  "path": "/Show.goal",
-  "prPath": "/.build/show.pr",
-  "hash": "cb40ff1c999c7b16681329fd2bcd019e0cee96290ac187438f0b8598bbb70dde",
+  "visibility": "Public",
+  "path": "/system/error/Show.goal",
+  "prPath": "/system/error/.build/show.pr",
+  "hash": "c4962471b01abc133e75c1864f09945922a1fa9a902498f27fa827715034284e",
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false
 }

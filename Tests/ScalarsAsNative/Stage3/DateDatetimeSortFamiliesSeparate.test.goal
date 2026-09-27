@@ -1,6 +1,6 @@
-DateDatetimeSortFamiliesSeparate
 / date and datetime are distinct families — a `date` value is NOT classed `datetime`, and a
 / `datetime` value is NOT classed `date`. Their orderings live on their own wrappers.
+DateDatetimeSortFamiliesSeparate
 - set %d% = "2026-06-01" as date
 - assert %d.Type.Name% equals "date"
 - set %dt% = "2026-06-01T00:00:00Z" as datetime

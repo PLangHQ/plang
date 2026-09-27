@@ -1,6 +1,6 @@
-AssertIsTrueOnBoolResult
 / assert.isTrue accepts a bool.@this result directly — the truthiness reads off the
 / wrapper, not a raw CLR bool.
+AssertIsTrueOnBoolResult
 - set %b% = true
 - assert %b% is true
 - set %c% = false

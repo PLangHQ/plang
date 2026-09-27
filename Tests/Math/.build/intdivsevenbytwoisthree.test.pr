@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "comment": "math.intdiv is the named opt-in for truncating integer division: 7 intdiv 2 → 3.\nThis goal exists so devs reaching for C# integer-division semantics have a clear surface.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 4
       },
-      "comment": "math.intdiv is the named opt-in for truncating integer division: 7 intdiv 2 → 3.\nThis goal exists so devs reaching for C# integer-division semantics have a clear surface.",
       "code": [
         {
           "module": "math",
@@ -116,7 +116,7 @@
   "visibility": "Public",
   "path": "/Math/IntDivSevenByTwoIsThree.test.goal",
   "prPath": "/Math/.build/intdivsevenbytwoisthree.test.pr",
-  "hash": "18fc09878ff5bcc33cefeabc998de166c555813b8c3b6288d620089f3cc2b34e",
+  "hash": "db97d6903e636881146cb142d520f7ae79e8ec283c4be5b4ac0e48f6c7d4ebdc",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

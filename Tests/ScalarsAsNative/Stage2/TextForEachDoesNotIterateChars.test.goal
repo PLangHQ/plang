@@ -1,6 +1,6 @@
-TextForEachDoesNotIterateChars
 / text is atomic — a list of two texts iterates as TWO items, not the 5 characters of
 / "abc"+"de". text.@this is not IEnumerable; a text is never char-decomposed.
+TextForEachDoesNotIterateChars
 - set %count% = 0
 - set %words% = ["abc", "de"]
 - foreach %words%, call CountWord item=%word%

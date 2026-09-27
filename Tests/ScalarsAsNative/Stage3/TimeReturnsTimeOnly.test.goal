@@ -1,5 +1,5 @@
-TimeReturnsTimeOnly
 / time is backed by TimeOnly — its H/M/S parts read off the wrapper, no date component.
+TimeReturnsTimeOnly
 - set %t% = "14:30:00" as time
 - assert %t.Type.Name% equals "time"
 - assert %t.Hour% equals 14

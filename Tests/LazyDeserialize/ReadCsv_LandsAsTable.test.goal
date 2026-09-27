@@ -1,9 +1,9 @@
-Start
 / Stage 3 → value model: read yields a `file` reference (headline "file",
 / kind "csv"); metadata reads never parse. Scalar equality is a USE — the csv
 / compares as its parsed table, not raw text (PROVISIONAL: model position,
 / pending Ingi's scalar-equality decision). The row/column navigation surface
 / lives in C# Cut2 / TableTypeTests.
+Start
 - read file 'report.csv', write to %report%
 - assert %report.Type.Name% equals "file"
 - assert %report.Type.Kind% equals "csv"

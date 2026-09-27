@@ -1,5 +1,6 @@
 {
   "name": "BuilderChannel",
+  "comment": "Builder channel sink. Goal-backed channel registered at Build start so all\nbuild-time output flows through one named seam — later we can swap the consumer\n(file log, TUI, structured stream) without touching the call sites.\nWhat the builder writes reaches this goal as its argument %message%.\nAn event the output template has no line for renders empty, and prints nothing.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 7
       },
-      "comment": "Builder channel sink. Goal-backed channel registered at Build start so all\nbuild-time output flows through one named seam — later we can swap the consumer\n(file log, TUI, structured stream) without touching the call sites.\nWhat the builder writes reaches this goal as its argument %message%.\nAn event the output template has no line for renders empty, and prints nothing.",
       "code": [
         {
           "module": "condition",
@@ -65,7 +65,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuilderChannel.goal",
   "prPath": "/system/builder/.build/builderchannel.pr",
-  "hash": "4f5a1d7136a18101a715b0dd622b2af517cc728177ac7d0d70aa5251f25fb483",
+  "hash": "0d8d9ca1c92b0324a65475daa84e9b762080e50f68b9feb106efcf0ad347ae66",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

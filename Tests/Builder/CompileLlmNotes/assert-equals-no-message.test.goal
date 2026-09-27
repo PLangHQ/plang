@@ -1,4 +1,3 @@
-TestAssertEqualsOmitsMessageWhenNotInStepText
 / Drift case 2 — the load-bearing reason this branch exists.
 /
 / Step text `- assert %message% equals 'hello plang'` (Tests/Simple/Start.goal:6)
@@ -16,6 +15,7 @@ TestAssertEqualsOmitsMessageWhenNotInStepText
 / Companion C# tests in DriftCaseArtifactTests.cs do the structural check too.
 /
 / Architect's 3-fresh-cache rule runs externally (see sibling drift case).
+TestAssertEqualsOmitsMessageWhenNotInStepText
 - copy file '../../Simple/.build/start.test.pr' to 'start-eq.txt', overwrite
 - read file 'start-eq.txt', write to %pr%
 - assert %pr% contains '"value": "hello plang"'

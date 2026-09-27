@@ -1,5 +1,5 @@
-Start
 / Verify response properties accessible via %result!TotalTokens%, %result!Model%, etc.
+Start
 - [llm] system: 'You are a helpful assistant'
     user: 'Say hello'
     temperature: 0.5

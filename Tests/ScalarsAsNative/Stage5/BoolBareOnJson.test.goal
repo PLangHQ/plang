@@ -1,6 +1,6 @@
-BoolBareOnJson
 / A bool rides the json wire bare — `{"flag": true}` parses so %d.flag% navigates to
 / the bool.@this true, no envelope around the scalar.
+BoolBareOnJson
 - set %d% = {"flag": true}
 - set %flag% = %d.flag%
 - assert %flag% equals true

@@ -1,5 +1,5 @@
-DatetimeReturnsDateTimeOffset
 / datetime is backed by DateTimeOffset (tz-aware) — its parts read off the wrapper.
+DatetimeReturnsDateTimeOffset
 - set %dt% = "2026-03-15T10:30:00+00:00" as datetime
 - assert %dt.Type.Name% equals "datetime"
 - assert %dt.Year% equals 2026

@@ -1,5 +1,6 @@
 {
   "name": "BuildGoal",
+  "comment": "Bootstrap shim — Build.goal calls this with goal=%goal%; delegates to BuildGoal/Start.",
   "step": [
     {
       "index": 0,
@@ -45,7 +46,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal.goal",
   "prPath": "/system/builder/.build/buildgoal.pr",
-  "hash": "bc83d1783dcac14d9afd312e91b7d2153e865e23a38ecbf26af6198e1ae16fd7",
+  "hash": "dd1bd4b1906f7fa357c8e6c7dd2e3c750402da379fbb41e1f2ac67eb1ea166ae",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

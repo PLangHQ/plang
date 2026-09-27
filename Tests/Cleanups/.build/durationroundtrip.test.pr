@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "comment": "Both the ISO-8601 form (PT5M) and the dot:colon form (0.00:05:00) parse to\nthe same TimeSpan. duration values compare structurally — ToString collapses\nto canonical \"00:05:00\", so equals across the two input forms passes.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 5
       },
-      "comment": "Both the ISO-8601 form (PT5M) and the dot:colon form (0.00:05:00) parse to\nthe same TimeSpan. duration values compare structurally — ToString collapses\nto canonical \"00:05:00\", so equals across the two input forms passes.",
       "code": [
         {
           "module": "variable",
@@ -179,7 +179,7 @@
   "visibility": "Public",
   "path": "/Cleanups/DurationRoundTrip.test.goal",
   "prPath": "/Cleanups/.build/durationroundtrip.test.pr",
-  "hash": "a4fd7a04c0ded88bfd113dcf77798f7792d73621e644c37849fae20b89185784",
+  "hash": "123f0063318a9a1e49144743f037301068ebd893a196b55fdc5baec95920ee69",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

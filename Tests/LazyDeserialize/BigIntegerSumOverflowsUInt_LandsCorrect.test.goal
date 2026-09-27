@@ -1,9 +1,9 @@
-Start
 / The Stage 2 marquee row at the goal surface. 3_000_000_000 + 2_000_000_000
 / overflows uint(uint.MaxValue ~ 4.29e9). Under Way 3 the addition promotes
 / to BigInteger, computes 5_000_000_000, and narrows the result to long —
 / no silent uint wrap. The goal test pins the sum's value; the kind-on-the-
 / result test (`%sum.Type.Kind%` == "long") sits in C# NumberArithmeticTests.
+Start
 - set %a% = 3000000000
 - set %b% = 2000000000
 - set %sum% = %a% + %b%

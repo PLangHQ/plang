@@ -1,5 +1,5 @@
-Start
 / Test: verify data that was never signed
+Start
 - set %data% = { "payload": "unsigned" }
 - verify %data% with contracts ['C0'], on error call HandleNoSig
 - assert %noSig% is true, "verify unsigned data should fail"

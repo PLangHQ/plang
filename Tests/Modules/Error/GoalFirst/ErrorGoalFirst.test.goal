@@ -1,5 +1,5 @@
-Start
 / GoalFirst order — call error handler first, then retry
+Start
 - set %goalFirstHandled% = false
 - set %goalFirstAttempts% = 0
 - call AlwaysFails, on error call GoalFirstHandler, then retry 2 times

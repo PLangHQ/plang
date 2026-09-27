@@ -1,5 +1,5 @@
-Start
 / Failure — if %dict% > %number% (order, non-coercible cross-type) → boundary maps Incomparable → PLang error.
+Start
 - set %d% = '{"a": 1}', type=json
 - set %n% = 5
 - set %caught% = ""

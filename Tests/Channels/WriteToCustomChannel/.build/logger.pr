@@ -45,7 +45,7 @@
   "visibility": "Public",
   "path": "/Channels/WriteToCustomChannel/Logger.goal",
   "prPath": "/Channels/WriteToCustomChannel/.build/logger.pr",
-  "hash": "5ee893a6cdfb3f82baeeac34895818ace1026b53bd9da0ed346c679cd7e1a48d",
+  "hash": "c125c4dbd12f970fe8e5547eb01f7901bd13c5e91b0a45800f9c10af855d6d60",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

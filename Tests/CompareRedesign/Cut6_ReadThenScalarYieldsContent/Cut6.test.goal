@@ -1,7 +1,7 @@
-Start
 / Cut 6 — read-then-scalar yields content (the inversion guard).
 / read now returns a file reference. Scalar use of %c% — assert, interpolation —
 / must still emit the file's CONTENT, never the location "cut6.txt".
+Start
 - save 'cut6.txt' with content 'plain cut6 content'
 - read file 'cut6.txt', write to %c%
 - assert %c% equals "plain cut6 content"

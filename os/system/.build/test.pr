@@ -1,5 +1,6 @@
 {
   "name": "Test",
+  "comment": "Replacement for the iteration-based runner — uses C# test.discover/start/report.\nThe C# test.start loop ensures one test's failure can't silent-skip the rest.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 4
       },
-      "comment": "Replacement for the iteration-based runner — uses C# test.discover/start/report.\nThe C# test.start loop ensures one test's failure can't silent-skip the rest.",
       "code": [
         {
           "module": "variable",
@@ -142,7 +142,7 @@
   "visibility": "Public",
   "path": "/system/test.goal",
   "prPath": "/system/.build/test.pr",
-  "hash": "1956b28d62041d77abb9de585adce47b645ea184609b1f559a63c08088c3eed5",
+  "hash": "2a0089465daefedf3717cc5dcd54cc9af29f1b290f1be230c79bfa1aeb4c1ac8",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

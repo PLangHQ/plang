@@ -1,5 +1,5 @@
-TimeIsTimeNotUnhandled
 / A value cast `as time` lands as `time`, a first-class born-native wrapper (not
 / unhandled, not folded into datetime).
+TimeIsTimeNotUnhandled
 - set %t% = "14:30:00" as time
 - assert %t.Type.Name% equals "time"

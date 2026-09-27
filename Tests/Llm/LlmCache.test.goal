@@ -1,5 +1,5 @@
-Start
 / Cache hit — same query twice, verify second returns cached result
+Start
 - [llm] system: 'You are a helpful assistant'
     user: 'What is the capital of Iceland?'
     cache: true

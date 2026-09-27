@@ -1,5 +1,5 @@
-Start
 / Failure — sort %mixed-incomparable% (list containing non-coercible cross-type pair) → sort surfaces Incomparable/NotEqual as PLang error.
+Start
 - set %d% = '{"a": 1}', type=json
 - set %mixed% = [5]
 - add %d% to %mixed%

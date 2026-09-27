@@ -1,4 +1,4 @@
-DatetimeAcceptsClrDateTime
 / datetime accepts a tz-less CLR DateTime on construction — it is stored as an offset.
+DatetimeAcceptsClrDateTime
 - set %dt% = "2026-01-01T12:00:00" as datetime
 - assert %dt.Type.Name% equals "datetime"

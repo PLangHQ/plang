@@ -1,5 +1,5 @@
-Start
 / Test: verify with wrong hash returns false
+Start
 - set %data% = "hello world"
 - hash %data%, write to %correctHash%
 - set %wrongHash% = "0000000000000000000000000000000000000000000000000000000000000000"

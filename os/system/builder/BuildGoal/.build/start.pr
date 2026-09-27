@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "comment": "Build one .goal file: decide which actions each step uses, let the LLM write each step's actions in\nformal, read them into the steps, then recurse into sub-goals.",
   "step": [
     {
       "index": 0,
@@ -778,6 +779,7 @@
   "child": [
     {
       "name": "Compile",
+      "comment": "The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider\nanswers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read\nthe answer, each checking its own line, and take their code. A step refused goes back to the LLM\nalone; an else written apart from its if is the programmer's to fix, not the LLM's.",
       "step": [
         {
           "index": 0,
@@ -785,7 +787,7 @@
           "line": {
             "number": 34
           },
-          "comment": "The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider\nanswers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read\nthe answer, each checking its own line, and take their code. A step refused goes back to the LLM\nalone; an else written apart from its if is the programmer's to fix, not the LLM's.\nSteps that are all cached have nothing to ask.",
+          "comment": "Steps that are all cached have nothing to ask.",
           "code": [
             {
               "module": "condition",
@@ -1126,7 +1128,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "7fd38e10b530d1d6fc6944553ef37dfd0dec34824b0221e57b9ae2df7c6cb30e",
+      "hash": "de16083b460e614b6a718c1295fa0b803d730509e6ca9900a063b199191a0752",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -1134,6 +1136,7 @@
     },
     {
       "name": "FixSteps",
+      "comment": "The answer was refused for some steps — each refusal names its step and every problem at once.\nContinue the conversation with them; only those steps are answered again, and the others keep the\ncode they took.",
       "step": [
         {
           "index": 0,
@@ -1141,7 +1144,6 @@
           "line": {
             "number": 46
           },
-          "comment": "The answer was refused for some steps — each refusal names its step and every problem at once.\nContinue the conversation with them; only those steps are answered again, and the others keep the\ncode they took.",
           "code": [
             {
               "module": "goal",
@@ -1327,7 +1329,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "62ccf27b7a4bea21b8a96a2bb201f87fe92c14955c69024ae21b6eb76c822049",
+      "hash": "ed384ba9d3947da05e855b64bfecb073c2cd95ea918373a14be0b5ec27ccae0a",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -1335,6 +1337,7 @@
     },
     {
       "name": "BuildSubGoal",
+      "comment": "Sub-goal recursion — the same three stages, attached to the parent trace.",
       "step": [
         {
           "index": 0,
@@ -1342,7 +1345,6 @@
           "line": {
             "number": 53
           },
-          "comment": "Sub-goal recursion — the same three stages, attached to the parent trace.",
           "code": [
             {
               "module": "variable",
@@ -1799,7 +1801,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "b95860fba66875c5e198ba0cfee7ff3ef7031034f86aa0bd6f98de507e6da12e",
+      "hash": "7fe72a52c2a0099e0061db12f1d753dfe16fdf2efce639212dd1787625581187",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -1807,6 +1809,7 @@
     },
     {
       "name": "SourceError",
+      "comment": "The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the\ncorrected plang for the programmer; the same error is raised again carrying it, and the build of\nthis goal stops there.",
       "step": [
         {
           "index": 0,
@@ -1814,7 +1817,6 @@
           "line": {
             "number": 67
           },
-          "comment": "The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the\ncorrected plang for the programmer; the same error is raised again carrying it, and the build of\nthis goal stops there.",
           "code": [
             {
               "module": "ui",
@@ -2062,7 +2064,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "07a52d62020ebfbd4adaeda341e2d609a99bb04ad2c9459dbe46599c8223981a",
+      "hash": "82dcb8f2acc2c45477bddcc1447ffa7787b0811fd9718f33087e939709e70826",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -2070,6 +2072,7 @@
     },
     {
       "name": "HandleBuildFailure",
+      "comment": "Capture error onto trace, save, rethrow. No null-pass inference.",
       "step": [
         {
           "index": 0,
@@ -2077,7 +2080,6 @@
           "line": {
             "number": 75
           },
-          "comment": "Capture error onto trace, save, rethrow. No null-pass inference.",
           "code": [
             {
               "module": "goal",
@@ -2234,7 +2236,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "2b326705548e05ffc800e14fd02d96114dbdfea532cbab22c04777f741343cc0",
+      "hash": "7cc7495e97295315ff0409e4eeee37a6d2d113ef7eb2cf6e0efa88d1bdd95201",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -2244,7 +2246,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Start.goal",
   "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "a7263bf588df8e272e11f183906419e803e9c63177d23f8a13b36835a775a80e",
+  "hash": "0ef6dcc3a38143e7caa19b914d893dfaf16a406285128aad466cdb08019ab14e",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

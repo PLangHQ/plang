@@ -1,6 +1,6 @@
-Start
 / Cut 3 — write out %dir% is a listing, not a content dump.
 / A directory with files. Serialising %dir% emits paths/names, NOT the files' contents.
+Start
 - save 'cut3dir/a.txt' with content 'CUT3-SECRET-ALPHA'
 - save 'cut3dir/b.txt' with content 'CUT3-SECRET-BETA'
 - read file 'cut3dir', write to %dir%

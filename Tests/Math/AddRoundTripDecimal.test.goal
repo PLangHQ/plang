@@ -1,7 +1,7 @@
-Start
 / Decimal exactness is opt-in: bare literals are double (0.1 + 0.2 → 0.30000…4),
 / so for exact decimal arithmetic both operands are cast `as number/decimal`. Pins
 / that decimal operands stay decimal and add exactly (0.1 + 0.2 = 0.3).
+Start
 - set %a% = "0.1" as number/decimal
 - set %b% = "0.2" as number/decimal
 - math.add A=%a% B=%b%, write to %sum%

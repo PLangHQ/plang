@@ -1,5 +1,5 @@
-TestOnErrorCallGoal
 / Verifies on.error modifier calls error goal and provides error details
+TestOnErrorCallGoal
 - call FailWithDetails
     on error call CaptureError
 - assert %capturedMessage% equals 'specific failure'

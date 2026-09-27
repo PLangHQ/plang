@@ -1,5 +1,5 @@
-Start
 / Test: compound OR condition — first false, second true → goal called
+Start
 - set %a% = 99
 - set %b% = 2
 - if %a% == 1 or %b% == 2, call DoThing

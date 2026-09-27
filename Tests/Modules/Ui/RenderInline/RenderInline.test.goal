@@ -1,5 +1,5 @@
-Start
 / Test: render inline template content with variable substitution
+Start
 - set %name% = 'World'
 - render 'Hello {{ name }}!', write to %result%
 - assert %result% equals 'Hello World!'

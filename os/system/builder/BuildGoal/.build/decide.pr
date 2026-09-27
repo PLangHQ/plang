@@ -1,5 +1,6 @@
 {
   "name": "Decide",
+  "comment": "Decide which actions every step of this goal uses — the whole goal in two exchanges with the\ndecider, not one LLM call per step.\n\nThe decider is generic: it takes a state and typed questions and answers them. It knows nothing\nabout goals or steps. Everything goal-shaped is composed HERE: the state and the questions are\ntemplates (the words), and each step's Pick reads the answers (the numbers).\n\nStage 1 asks, per step, one choice — which module does the main work — and a yes/no per common\naction (decider.json). Stage 2 asks only what stage 1 left open, which each step's Pick decides:\nthe main module's action, a runner-up module, whether the step uses a module it scored under\ncertain, an if's branches, and on a step stage 1 was unsure of, which popular action it uses.",
   "step": [
     {
       "index": 0,
@@ -677,7 +678,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Decide.goal",
   "prPath": "/system/builder/BuildGoal/.build/decide.pr",
-  "hash": "3d7d128da670476f633642eb862a7f4538c6c3a76db36bc7e695a11f2849122b",
+  "hash": "09fe926fe798b2b26fdb776ec952666a3495e58b2fba00854e31c043123d56cd",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

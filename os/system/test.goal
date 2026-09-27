@@ -1,6 +1,6 @@
-Test
 / Replacement for the iteration-based runner — uses C# test.discover/start/report.
 / The C# test.start loop ensures one test's failure can't silent-skip the rest.
+Test
 - set default %path% = '.'
 - test.discover tests in %path% recursive, write to %tests%
 - test.start tests %tests%

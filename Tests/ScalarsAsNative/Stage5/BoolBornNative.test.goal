@@ -1,6 +1,6 @@
-BoolBornNative
 / `set %b% = true` lands %b% with type "bool" — the value is bool.@this, not a
 / raw CLR bool mid-flight. Same for false. JSON True/False arms emit the wrapper.
+BoolBornNative
 - set %b% = true
 - assert %b.Type.Name% equals "bool"
 - assert %b% equals true

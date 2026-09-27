@@ -1,5 +1,5 @@
-Start
 / same step with same input hits cache
+Start
 - save 'cachekey.txt' with content 'value1'
 - call ReadCachedFile
 - set %first% = %cachedContent%

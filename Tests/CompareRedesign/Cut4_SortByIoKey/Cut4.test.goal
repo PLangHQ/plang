@@ -1,6 +1,6 @@
-Start
 / Cut 4 — sort by an I/O key. sort %files% by size: keys materialise async
 / (stat in phase 1), order runs sync (phase 2), result correct, no hang.
+Start
 - save 'cut4/small.txt' with content 'a'
 - save 'cut4/medium.txt' with content 'bbbbbbbbbb'
 - save 'cut4/large.txt' with content 'cccccccccccccccccccccccccccccc'

@@ -1,7 +1,7 @@
-TestAssertFailureSnapshotsVariables
 / Fixture sets %foo%=42 then asserts %foo% equals 99 — forces AssertSnapshot
 / to attach the Variables map to the AssertionError. Run via test.run, then
 / confirm both Status=Fail AND the %foo%=42 snapshot survived end-to-end.
+TestAssertFailureSnapshotsVariables
 - test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%
 - list.count %tests%, write to %count%
 - assert %count% equals 1

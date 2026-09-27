@@ -1,6 +1,6 @@
-BoolReturnsBool
 / A bool read back from a json payload is a bool.@this (type "bool"), proving the
 / wrapper crosses the value boundary, not a raw CLR bool.
+BoolReturnsBool
 - set %d% = {"flag": false}
 - set %r% = %d.flag%
 - assert %r% equals false

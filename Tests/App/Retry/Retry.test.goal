@@ -1,5 +1,5 @@
-Start
 / Test 1: retry exhaustion + ignore continues execution
+Start
 - set %beforeRetry% = true
 - assert %beforeRetry% is true
 - throw error "temporary failure", on error retry 2 times, ignore

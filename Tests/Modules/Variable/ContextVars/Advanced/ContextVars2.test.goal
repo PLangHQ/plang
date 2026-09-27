@@ -1,5 +1,5 @@
-Start
 / Test: goal name is accessible
+Start
 - assert %!goal.Name% equals "Start"
 / Test: step is accessible
 - assert %!step% is not null

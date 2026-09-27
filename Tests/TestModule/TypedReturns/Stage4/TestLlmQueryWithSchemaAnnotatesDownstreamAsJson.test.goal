@@ -1,7 +1,7 @@
-TestLlmQueryWithSchemaAnnotatesDownstreamAsJson
 / llm.query.Build() returns "json" when a Schema parameter is set.
 / Downstream snapshot must read %y%(json), not (object) — the typed
 / schema contract flows through Build() into the .pr Type stamp.
+TestLlmQueryWithSchemaAnnotatesDownstreamAsJson
 - builder.goals from 'probes/llm/', write to %goals%
 - goal.getTypes %goals[0]%, write to %snapshot%
 - set %annot% = %snapshot[1].y%

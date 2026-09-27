@@ -1,9 +1,9 @@
-TestReportMasksSensitiveVariablesJunit
 / Companion to TestReportMasksSensitiveVariables — same fixture, but with
 / format='junit' so the committed junit.xml snapshot can be eyeballed.
 / Proves the JUnit XML path also masks [Sensitive] PrivateKey — BuildJUnit
 / emits run.Error?.Message directly, so AssertionError.Message itself must
 / be sanitised (not just the structured JSON envelope).
+TestReportMasksSensitiveVariablesJunit
 - test.discover tests in '_fixtures_sensitive', pattern='*.fixture.goal', recursive, write to %tests%
 - test.run tests %tests%, write to %results%
 - test.report format='junit', write to %report%

@@ -1,5 +1,5 @@
-Start
 / Test: math.random returns a value in range
+Start
 - get random number between 1 and 100, write to %rand%
 - assert %rand% is not null
 - assert %rand% is greater than 0

@@ -1,7 +1,7 @@
-DateBareIsoOnJson
 / A date coerces against its ISO string in the language `==` path — `if %d% equals "2026-01-01"`
 / holds, the same cross-type coercion that makes `5 == "5"` true, extended to temporal types.
 / (Parts confirm the value; the equals shows coercion.)
+DateBareIsoOnJson
 - set %d% = "2026-01-01" as date
 - set %coerced% = false
 - if %d% equals "2026-01-01"

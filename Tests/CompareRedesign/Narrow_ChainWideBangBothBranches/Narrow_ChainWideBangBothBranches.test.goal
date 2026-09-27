@@ -1,6 +1,6 @@
-Start
 / Narrow — %config!file!path% resolves whether config narrowed to dict or not.
 / Chain-wide !, never headline-only — no flow-dependent crash on the un-examined branch.
+Start
 - save 'narrowchain.json' with content '{"db":"plang"}'
 / un-examined branch: the file facet answers from the headline
 - read file 'narrowchain.json', write to %config%

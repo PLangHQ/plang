@@ -1,5 +1,5 @@
-Start
 / after step fires after each step
+Start
 - set %afterCount% = 0
 - after step call TrackAfterStep
 - set %value% = "hello"

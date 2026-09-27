@@ -1,4 +1,4 @@
-Start
 / calling non-existent goal should error
+Start
 - call NonExistentGoal, on error call HandleMissing
 - assert %missingCaught% equals true

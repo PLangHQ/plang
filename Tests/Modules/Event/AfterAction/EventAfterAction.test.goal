@@ -1,5 +1,5 @@
-Start
 / after action captures that action fired
+Start
 - set %actionFired% = false
 - after action output.write call CaptureWrite
 - write out "hello world"

@@ -1,5 +1,5 @@
-DurationBareOnJson
 / A duration's component parts read off the wrapper — a 45-second duration is Seconds=45.
+DurationBareOnJson
 - set %dur% = "PT45S" as duration
 - assert %dur.Type.Name% equals "duration"
 - assert %dur.Seconds% equals 45

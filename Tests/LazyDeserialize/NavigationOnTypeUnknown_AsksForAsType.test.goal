@@ -1,7 +1,7 @@
-Start
 / Navigation into a type-unknown value yields `item`, NOT an error — we don't know the
 / shape at build time, so %x.port% is typed `item` (no guessing). At runtime the value
 / resolves through to its item (here 8080); the point is that navigation does not raise.
+Start
 - set %x% = "{\"port\":8080}"
 - set %p% = %x.port%
 - assert %p% equals 8080

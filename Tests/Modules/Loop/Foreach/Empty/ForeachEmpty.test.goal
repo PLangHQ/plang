@@ -1,5 +1,5 @@
-Start
 / empty list foreach
+Start
 - set %items% = []
 - set %count% = 0
 - foreach %items%, call ProcessItem item=%item%

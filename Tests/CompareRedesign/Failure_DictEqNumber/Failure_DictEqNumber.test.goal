@@ -1,5 +1,5 @@
-Start
 / Failure — if %dict% == %number% (equality, non-coercible cross-type) → Incomparable → PLang error.
+Start
 - set %d% = '{"a": 1}', type=json
 - set %n% = 5
 - set %caught% = ""

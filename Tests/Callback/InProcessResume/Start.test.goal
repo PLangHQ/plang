@@ -1,7 +1,7 @@
-Start
 / First integration cut — set %x%=1, throw, recovery sets %x%=2; the captured
 / callback's snapshot reflects the throw-time view (%x%==1) via
 / Variables.SnapshotAt(error). After recovery, live %x% is 2.
+Start
 - set %x% = 1
 - throw error "boom", on error call CaptureAndRecover
 - assert %x% equals 2, "live x should be 2 after recovery"

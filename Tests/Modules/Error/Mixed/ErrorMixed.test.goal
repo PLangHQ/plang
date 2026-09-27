@@ -1,5 +1,5 @@
-Start
 / ignore error — execution continues
+Start
 - throw error "ignored", on error ignore
 - set %afterIgnore% = true
 - assert %afterIgnore% is true, "should continue after ignored error"

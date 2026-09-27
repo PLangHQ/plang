@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "comment": "%response% (no operator) must render the Value, not the whole Data. Properties must\nNOT bleed into the variable's primary render. Coverage row 4.14.",
   "step": [
     {
       "index": 0,
@@ -7,7 +8,6 @@
       "line": {
         "number": 4
       },
-      "comment": "%response% (no operator) must render the Value, not the whole Data. Properties must\nNOT bleed into the variable's primary render. Coverage row 4.14.",
       "code": [
         {
           "module": "variable",
@@ -116,7 +116,7 @@
   "visibility": "Public",
   "path": "/Serialization/VariableRendersValueOnly.test.goal",
   "prPath": "/Serialization/.build/variablerendersvalueonly.test.pr",
-  "hash": "658aaefdcd2da3cbf035f2a64b33b47064d9cb4d216af9e0d1ffcc65e8b50982",
+  "hash": "9d312a43a2a5947c840dbb9c32b9fd2b2d6219fce25af6111fc13fc6fc7e09a7",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

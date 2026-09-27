@@ -1,7 +1,7 @@
-TestTagAccumulatesUserTagsOnRun
 / Calls test.tag (module test, action tag) twice. The handler returns the
 / accumulated UserTags. Capture into %tags% and verify union semantics:
 / three unique tags across both calls.
+TestTagAccumulatesUserTagsOnRun
 - tag this test 'http'
 - tag this test 'fast', 'slow', write to %tags%
 - list.count %tags%, write to %count%

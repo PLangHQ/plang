@@ -1,6 +1,6 @@
-NumberArithmeticUnchanged
 / number is the reference wrapper. After `: item`, %a% + %b% and compare behave
 / identically — the rewire adds nothing user-visible.
+NumberArithmeticUnchanged
 - set %a% = 2
 - set %b% = 3
 - math.add A=%a% B=%b%, write to %sum%

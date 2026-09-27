@@ -1,5 +1,5 @@
-Start
 / Test 1: file.read with cache - proves cache hit skips re-reading changed file
+Start
 - save "first-value" to file 'testdata.txt'
 - call ReadCached
 - write out "  1st call returned: %fileData.Value%"

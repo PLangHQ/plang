@@ -1,7 +1,7 @@
-TestMultipleModifiersCompose
 / Verifies that cache + error modifiers compose correctly on one action.
 / Both reads use the same explicit cache key so the second hits the cache
 / even after the file is deleted.
+TestMultipleModifiersCompose
 - save 'testdata/compose_test.txt' with content 'hello compose'
 - read file 'testdata/compose_test.txt'
     cache for 60 seconds key='compose-key'

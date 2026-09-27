@@ -1,6 +1,6 @@
-Start
 / Materialize a callback via %!error.callback%, then dispatch it via callback.start.
 / The original failing action re-runs through the live execution path.
+Start
 - throw error "boom", on error call CaptureCallback
 - assert %ranCallback% is true, "callback dispatch should have completed"
 

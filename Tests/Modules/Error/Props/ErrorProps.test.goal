@@ -1,5 +1,5 @@
-Start
 / error variables accessible in handler
+Start
 - call ThrowCustomError, on error call InspectError
 - assert %errorMessage% equals "bad thing"
 - assert %errorKey% equals "CustomKey"

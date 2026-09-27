@@ -1,5 +1,5 @@
-DateIsDateNotDatetime
 / A value cast `as date` lands as `date`, NOT `datetime` — the two are distinct
 / born-native wrappers. Type.Name is the observable proof at the PLang surface.
+DateIsDateNotDatetime
 - set %d% = "2026-01-01" as date
 - assert %d.Type.Name% equals "date"

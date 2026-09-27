@@ -1,4 +1,4 @@
-BuildGoal
 / Bootstrap shim — Build.goal calls this with goal=%goal%; delegates to BuildGoal/Start.
+BuildGoal
 
 - call BuildGoal/Start goal=%goal%

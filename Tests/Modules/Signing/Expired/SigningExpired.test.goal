@@ -1,5 +1,5 @@
-Start
 / Test: sign with short TTL, wait, verify fails as expired
+Start
 - archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "payload": "expiring" }

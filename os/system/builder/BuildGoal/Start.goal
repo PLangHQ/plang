@@ -1,6 +1,6 @@
-Start
 / Build one .goal file: decide which actions each step uses, let the LLM write each step's actions in
 / formal, read them into the steps, then recurse into sub-goals.
+Start
 
 / A cached goal — the source its .pr was built from, every step and sub-goal cached — isn't built:
 / its cache stands.
@@ -25,11 +25,11 @@ Start
 - build.goalsSave Goal=%goal%
 
 
-Compile
 / The three stages for the goal in %goal% — shared by the top goal and every sub-goal. The decider
 / answers WHICH actions a step may use; the LLM writes each step's actions in formal; the steps read
 / the answer, each checking its own line, and take their code. A step refused goes back to the LLM
 / alone; an else written apart from its if is the programmer's to fix, not the LLM's.
+Compile
 / Steps that are all cached have nothing to ask.
 - if %goal.Step.IsCached%, return
 / Steps each cached or written in formal need no answer: the formal ones read their own text.
@@ -39,17 +39,17 @@ Compile
 - build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Order="GoalFirst", RetryCount=1, Recovery=[goal.call(Name="FixSteps")])
 
 
-FixSteps
 / The answer was refused for some steps — each refusal names its step and every problem at once.
 / Continue the conversation with them; only those steps are answered again, and the others keep the
 / code they took.
+FixSteps
 - call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
 - set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
 - llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%
 
 
-BuildSubGoal
 / Sub-goal recursion — the same three stages, attached to the parent trace.
+BuildSubGoal
 - set %goal% = %subGoal%
 - call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
 - set %subgoalStart% = %Now.Ticks%
@@ -60,18 +60,18 @@ BuildSubGoal
 - call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
 
 
-SourceError
 / The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the
 / corrected plang for the programmer; the same error is raised again carrying it, and the build of
 / this goal stops there.
+SourceError
 - render template "/system/builder/llm/SourceFix.llm", write to %sourceFixSystem%
 - set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]
 - llm.query Message=%sourceFixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, write to %sourceFix%
 - throw %!error%, fix suggestion %sourceFix%
 
 
-HandleBuildFailure
 / Capture error onto trace, save, rethrow. No null-pass inference.
+HandleBuildFailure
 - call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%
 - set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'

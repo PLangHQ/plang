@@ -1,4 +1,3 @@
-Properties
 / Stage 3 — write each step's actions, in formal: which of the decider's picks, in what order, how
 / many times, and with what property values.
 /
@@ -8,6 +7,7 @@ Properties
 /
 / The answer is text, one line per step in formal (`[i] module.action(Name=value); …`); build.match
 / reads it into each step's code.
+Properties
 
 - render template "/system/builder/llm/templates/properties.template", write to %propertiesUserMsg%
 - render template "/system/builder/llm/Properties.llm", write to %propertiesSystemMsg%

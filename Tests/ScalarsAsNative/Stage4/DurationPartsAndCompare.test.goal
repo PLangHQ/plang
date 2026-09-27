@@ -1,6 +1,6 @@
-DurationPartsAndCompare
 / Durations expose component parts and are orderable by total length — a 90s duration is
 / Minutes=1 Seconds=30 and is longer than a 30s duration.
+DurationPartsAndCompare
 - set %long% = "PT90S" as duration
 - set %short% = "PT30S" as duration
 - assert %long.Minutes% equals 1

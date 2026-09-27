@@ -1,7 +1,7 @@
-ListIsItemSortsAsBefore
 / A list is `: item` AND still sorts. list owns IOrderableValue (item does not),
 / so the inheritance is no-op for ordering — the sort produces the same shape
 / collections-are-data shipped.
+ListIsItemSortsAsBefore
 - set %nums% = [3, 1, 2]
 - sort %nums%
 - get first item from %nums%, write to %first%

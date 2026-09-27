@@ -1,6 +1,6 @@
-DurationReturnsTimeSpan
 / duration is backed by TimeSpan — it accepts .NET timespan text (HH:mm:ss) as well as ISO-8601,
 / and the seconds part reads off the wrapper.
+DurationReturnsTimeSpan
 - set %dur% = "00:00:30" as duration
 - assert %dur.Type.Name% equals "duration"
 - assert %dur.Seconds% equals 30

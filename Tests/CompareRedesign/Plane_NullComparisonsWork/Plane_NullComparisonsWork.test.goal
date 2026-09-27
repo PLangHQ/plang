@@ -1,5 +1,5 @@
-Start
 / Plane — every %x% == null works regardless of x's type (null is never Incomparable; equality carve-out).
+Start
 - set %d% = '{"a": 1}', type=json
 - set %n% = 5
 - set %t% = "hello"

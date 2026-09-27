@@ -1,6 +1,6 @@
-Start
 / Signs a Data and verifies, exercises the sign→canonicalize→hash→sign→verify path
 / end-to-end. A clean pass means the typed signing surface is intact.
+Start
 - archive identity 'roundtripSigner', force, on error ignore
 - create identity roundtripSigner
 - set %data% = { "message": "round-trip me" }

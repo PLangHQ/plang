@@ -1,5 +1,6 @@
 {
   "name": "EmitBuildEvent",
+  "comment": "One-call helper for build-time output. Caller passes %event% (name) plus any\nvariables the template needs:\n- call EmitBuildEvent event=\"build-path\"                              (path is already in scope at the caller? still passes as goal param)\n- call EmitBuildEvent event=\"step-fresh\", step=%step%\n- call EmitBuildEvent event=\"build-error\", goal=%goal%, errorMessage=%!error.Message%\nRenders /system/builder/templates/output/build-output.template (one\ntemplate, one case-block per event) and writes the result to the \"builder\"\nchannel. Swap the channel's backing goal to redirect all build output.",
   "step": [
     {
       "index": 0,
@@ -90,7 +91,7 @@
   "visibility": "Public",
   "path": "/system/builder/EmitBuildEvent.goal",
   "prPath": "/system/builder/.build/emitbuildevent.pr",
-  "hash": "a202f14a1c677ab9b18d4032ffc771bd2832c31ec69feaa669dae86f35533532",
+  "hash": "90dfe35d60846fbd04e8ac2db9d8d3b4bcefce08c153e353f7f7a2e858445dc3",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

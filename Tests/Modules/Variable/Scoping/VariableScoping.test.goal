@@ -1,5 +1,5 @@
-Start
 / inner goal sets variable visible to caller — fresh-name leak (LoadUser pattern)
+Start
 - set %x% = "before"
 - call InnerGoal
 - assert %x% equals "modified"

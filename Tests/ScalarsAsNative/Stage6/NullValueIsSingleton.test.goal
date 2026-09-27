@@ -1,6 +1,6 @@
-NullValueIsSingleton
 / `set %x% = null` lands the born-native null value — Type "null" and `is null` true. It is a
 / real typed value (the one canonical null), not a typeless CLR hole.
+NullValueIsSingleton
 - set %x% = null
 - assert %x.Type.Name% equals "null"
 - assert %x% is null

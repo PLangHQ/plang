@@ -1,5 +1,5 @@
-Start
 / equals
+Start
 - assert 5 equals 5
 
 / isTrue

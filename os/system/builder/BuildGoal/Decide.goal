@@ -1,4 +1,3 @@
-Decide
 / Decide which actions every step of this goal uses — the whole goal in two exchanges with the
 / decider, not one LLM call per step.
 /
@@ -10,6 +9,7 @@ Decide
 / action (decider.json). Stage 2 asks only what stage 1 left open, which each step's Pick decides:
 / the main module's action, a runner-up module, whether the step uses a module it scored under
 / certain, an if's branches, and on a step stage 1 was unsure of, which popular action it uses.
+Decide
 
 - set %modules% = %!app.module.list%
 - read "/system/builder/llm/decider.json", write to %decider%

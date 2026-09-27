@@ -1,5 +1,5 @@
-Start
 / save and read
+Start
 - save "hello world" to file 'test_output.txt'
 - read file 'test_output.txt', write to %content%
 - assert %content% equals "hello world"

@@ -1,5 +1,6 @@
 {
   "name": "Properties",
+  "comment": "Stage 3 — write each step's actions, in formal: which of the decider's picks, in what order, how\nmany times, and with what property values.\n\nThis one IS an LLM call, not a decider question: order and property values are written, not\npicked from a closed set. One request for the whole goal, because the steps refer to each other —\n`%!data%` means the action before it, and a model shown one step alone cannot see that.\n\nThe answer is text, one line per step in formal (`[i] module.action(Name=value); …`); build.match\nreads it into each step's code.",
   "step": [
     {
       "index": 0,
@@ -312,7 +313,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Properties.goal",
   "prPath": "/system/builder/BuildGoal/.build/properties.pr",
-  "hash": "d2300ee40ec90d412688bc216db29abece768e5897d91dfe9872931621010b68",
+  "hash": "426d93328fb419b3304cc780a37a6d8f65e38c7a7f2aea0c2953188409d1f398",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

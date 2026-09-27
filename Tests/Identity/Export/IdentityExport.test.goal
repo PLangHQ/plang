@@ -1,5 +1,5 @@
-Start
 / Test: export identity and verify non-empty result
+Start
 - archive identity 'TestExportId', force, on error ignore, force
 - create identity 'TestExportId', set as default
 - export identity 'TestExportId', write to %exported%

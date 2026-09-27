@@ -1,5 +1,5 @@
-Start
 / on error expressed in multiple languages should all produce onError in .pr
+Start
 - call ThrowError, on error call CatchEnglish
 - call ThrowError, a villu kalla i CatchIcelandic
 - call ThrowError, エラー時に CatchJapanese を呼ぶ

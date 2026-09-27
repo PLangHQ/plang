@@ -1,7 +1,7 @@
-TestRunReportsAssertionFailure
 / Discover a fixture that deliberately fails (assert 1 equals 2). Run it.
 / Expected TestStatus.Fail carrying an AssertionError. Proves the runner
 / translates assert failures to Fail status without escaping as an exception.
+TestRunReportsAssertionFailure
 - test.discover tests in '_fail' recursive, pattern='*.fixture.goal', write to %tests%
 - list.count %tests%, write to %count%
 - assert %count% equals 1

@@ -1,7 +1,7 @@
-TestPerActionErrorScope
 / Verifies error modifier applies only to its action, not subsequent actions.
 / Step 1's handler (MarkHandled) fires because MayFail throws.
 / Step 2's handler (ignore) is independent — doesn't use step 1's handler.
+TestPerActionErrorScope
 - set %handled% = false
 - call MayFail
     on error call MarkHandled
@@ -9,8 +9,8 @@ TestPerActionErrorScope
     on error ignore
 - assert %handled% equals true
 
-MayFail
 / This goal fails — error modifier on step 1 should catch it
+MayFail
 - throw error 'first action error'
 
 MarkHandled

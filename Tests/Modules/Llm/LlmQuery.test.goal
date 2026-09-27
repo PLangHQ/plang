@@ -1,5 +1,5 @@
-Start
 / Simple system+user query — verify we get a non-null response from the LLM
+Start
 - [llm] system: 'You are a helpful assistant'
     user: 'What is 2+2? Reply with just the number'
     write to %result%

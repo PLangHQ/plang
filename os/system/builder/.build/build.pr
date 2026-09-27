@@ -1,5 +1,6 @@
 {
   "name": "Build",
+  "comment": "Main entry point for the PLang builder\nTransforms .goal files (natural language) into .pr files (JSON the Runtime executes)\nParameters: %path% - folder to build (default: \".\")",
   "step": [
     {
       "index": 0,
@@ -518,7 +519,7 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "e48b5a0478e99a76967f562e1a2adbefb82aa5c003f4bde87652963e0164ebda",
+  "hash": "ae5c439151bc441e8ba10d144d88597bafcb65993fbca62b3059faf39d94cab8",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

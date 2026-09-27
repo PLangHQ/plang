@@ -1,5 +1,5 @@
-﻿Hello
-/ This is a comment
+﻿/ This is a comment
+Hello
 - write out "Hello plang world", type = warning
 - call goal Bye
 

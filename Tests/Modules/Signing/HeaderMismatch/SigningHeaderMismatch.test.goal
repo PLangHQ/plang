@@ -1,5 +1,5 @@
-Start
 / Test: verify fails when expected headers don't match signed headers
+Start
 - archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "body": "content" }

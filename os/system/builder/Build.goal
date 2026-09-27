@@ -1,7 +1,7 @@
-Build
 / Main entry point for the PLang builder
 / Transforms .goal files (natural language) into .pr files (JSON the Runtime executes)
 / Parameters: %path% - folder to build (default: ".")
+Build
 
 - set default %path% = "/"
 - set default %!build.cache% = true
