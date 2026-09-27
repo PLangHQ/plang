@@ -42,8 +42,9 @@ public sealed class @this<T, L> : @this
     {
         if (string.Equals(key, "current", System.StringComparison.OrdinalIgnoreCase))
             return current(parent.Context);
-        if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true } member) return member;
-        if (await base.Get(parent, key) is { Success: true } fact) return fact;
+        // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
+        if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
+        if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
         var found = await Get(key);
         if (!found.Success) return found;
         return new data.@this(key, (await found.Value())!, parent: parent);

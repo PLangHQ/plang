@@ -29,6 +29,35 @@ public class CollectedTypeTests
         await Assert.That(app.type.list[probes.GetType()].Name).IsEqualTo("type");
     }
 
+    [Test] public async Task AppType_IsTheTypeNamedType_ItsGetAnswersByNameOrAlias()
+    {
+        await using var app = TestApp.Create("/test");
+        await Assert.That(app.type.Name).IsEqualTo("type");
+
+        var text = await app.type.Get("string");
+        await Assert.That(text.Success).IsTrue();
+        await Assert.That((await text.Value())!.Name).IsEqualTo("text");
+
+        var missing = await app.type.Get("csv");
+        await Assert.That(missing.Error!.StatusCode).IsEqualTo(404);
+    }
+
+    [Test] public async Task AppType_Navigation_AMemberFirst_ThenAType()
+    {
+        await using var app = TestApp.Create("/test");
+        var parent = new global::app.data.@this("type", app.type, context: app.User.Context);
+
+        var list = await app.type.Get(parent, "list");
+        await Assert.That(list.Peek()).IsSameReferenceAs(app.type.list);
+
+        var number = await app.type.Get(parent, "number");
+        await Assert.That(((global::app.type.@this)number.Peek()).Name).IsEqualTo("number");
+        await Assert.That(number.Context).IsSameReferenceAs(app.User.Context);
+
+        var none = await app.type.Get(parent, "nope");
+        await Assert.That(none.Success).IsFalse();
+    }
+
     [Test] public async Task Current_WithNothingInside_IsNotFound()
     {
         await using var app = TestApp.Create("/test");

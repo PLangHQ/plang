@@ -157,17 +157,18 @@ public sealed class Operator
     {
         var typeName = right?.Peek()?.ToString();
         if (left == null || string.IsNullOrWhiteSpace(typeName)) return Answer(context, false);
-        if (!context.App.type.list.Contains(typeName.Split('/')[0]))
+        var named = await context.App.type.Get(typeName);
+        if (!named.Success || await named.Value() is not { } type)
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
         // Ask the VALUE — it walks its own provenance chain (a narrowed dict still answers `is file`).
-        if (left.Is(typeName)) return Answer(context, true);
+        if (left.Is(type)) return Answer(context, true);
         if (left.Peek() is global::app.type.item.file.@this or global::app.type.item.url.@this
             || left.RawUntouched)
         {
             // `is <type>` IS an examination — the door parses + narrows, then
             // the value answers deterministically from its retained provenance.
             _ = await left.Value();
-            return Answer(context, left.Is(typeName));
+            return Answer(context, left.Is(type));
         }
         return Answer(context, false);
     }

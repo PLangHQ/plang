@@ -131,17 +131,6 @@ public partial class @this
     [JsonIgnore]
     public bool HasVariableReference => _item?.Type.Template != null;
 
-    /// <summary>Is this value (now or in its narrow history) a <paramref name="typeName"/>? Asks the
-    /// VALUE, which walks its own provenance chain (a narrowed <c>dict</c> still answers <c>is file</c>).
-    /// Resolves the name through this Data's own type registry, so an alias lands on its type.
-    /// False for a value-less Data or one with no context. A caller holding a developer's type
-    /// name asks <c>app.Type.Contains</c> first — an unknown name reaching here is unexpected.</summary>
-    public bool Is(string typeName)
-    {
-        if (_item == null || string.IsNullOrWhiteSpace(typeName) || _context == null!) return false;
-        return _item.Is(_context.App.type.list[typeName]);
-    }
-
     /// <summary>Is this value (now or in its narrow history) the given type? Asks the value's own
     /// type history.</summary>
     public bool Is(type other) => _item?.Is(other) ?? false;

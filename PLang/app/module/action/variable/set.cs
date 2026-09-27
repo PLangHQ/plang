@@ -98,9 +98,10 @@ public partial class Set : IContext, IScope
         if (__action["Type"] != null) return Context.Ok();
 
         var source = (await Context.Variable.Get("!buildData")).Peek();
-        var inferred = source as global::app.type.@this
-            ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
-                && Context.App.type.list.Contains(n) ? Context.App.type.list[n] : null);
+        var inferred = source as global::app.type.@this;
+        if (inferred == null && source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
+            && await Context.App.type.Get(n) is { Success: true } named)
+            inferred = await named.Value();
         if (inferred is { IsNull: false })
             __action.Property.Add(new global::app.type.property.@this
                 { Name = "Type", Type = Context.App.type.list["type"], Value = inferred });
@@ -215,13 +216,14 @@ public partial class Set : IContext, IScope
             // still names a type by name. No dict rebuild — that was the pre-reader path.
             // The developer named the type — an unknown name is their error, answered as plang's.
             var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
-            if (!Context.App.type.list.Contains(declaredName))
+            var named = await Context.App.type.Get(declaredName);
+            if (!named.Success || await named.Value() is not { } declared)
                 return Context.Error(
                     new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = Context.App.type.list[typeValue as global::app.type.@this ?? new global::app.type.@this(declaredName), Context];
+            var type = typeValue is global::app.type.@this written ? Context.App.type.list[written, Context] : declared;
             var typeName = type.Name;
             var targetType = type.ClrType;
 
