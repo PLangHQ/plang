@@ -1,13 +1,12 @@
 namespace TypeProvider;
 
 /// <summary>
-/// A minimal [PlangType] that ships in a separate assembly. Loaded at
-/// runtime via `- load TypeProvider.dll` — the Stage 7 Loader scans the
-/// assembly, registers <c>money</c> in the registry, and instantiates the
-/// renderer below to serve <c>(money, *)</c>.
+/// A minimal plang type that ships in a separate assembly. Loaded at runtime via
+/// `- load TypeProvider.dll` — the type list adds <c>money</c> and registers the renderer below to
+/// serve <c>(money, *)</c>.
 /// </summary>
 [global::app.Attributes.PlangType("money")]
-public sealed class Money
+public sealed class Money : global::app.type.item.@this
 {
     public static string Example => "$10.00";
     public static string Shape => "string";
@@ -18,7 +17,7 @@ public sealed class Money
     public Money(decimal amount, string currency) { Amount = amount; Currency = currency; }
 }
 
-public sealed class MoneyRenderer : global::app.type.catalog.ITypeRenderer
+public sealed class MoneyRenderer : global::app.type.list.ITypeRenderer
 {
     public string TypeName => "money";
     public string Format => global::app.type.renderer.@this.AnyFormat;
@@ -30,23 +29,4 @@ public sealed class MoneyRenderer : global::app.type.catalog.ITypeRenderer
         else
             writer.Null();
     }
-}
-
-/// <summary>
-/// Overrides the built-in <c>int</c> with a custom CLR type + renderer to
-/// exercise the runtime-wins precedence at the registry + dispatch table.
-/// </summary>
-[global::app.Attributes.PlangType("int")]
-public sealed class CustomInt
-{
-    public static string Example => "0";
-    public static string Shape => "string";
-}
-
-public sealed class CustomIntRenderer : global::app.type.catalog.ITypeRenderer
-{
-    public string TypeName => "int";
-    public string Format => global::app.type.renderer.@this.AnyFormat;
-    public void Write(object value, global::app.channel.serializer.IWriter writer)
-        => writer.String("CUSTOM-INT");
 }
