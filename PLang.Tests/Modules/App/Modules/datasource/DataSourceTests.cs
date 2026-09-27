@@ -31,6 +31,22 @@ public class DataSourceTests
         catch { /* best effort cleanup */ }
     }
 
+    // Disposing the app disposes its store: the in-memory database a test App opens is let go, so a
+    // row written before is gone after (a store held open would still answer it).
+    [Test]
+    public async Task AppDispose_DisposesItsStore()
+    {
+        var app = TestApp.Create(_tempDir);
+        var store = await app.store;
+        await store.Set("probe", "k", new Data("k", "held", context: app.System.Context));
+        await Assert.That((await (await store.Get<global::app.type.item.@this>("probe", "k")).Value())?.ToString()).IsEqualTo("held");
+
+        await app.DisposeAsync();
+
+        var after = await store.Get<global::app.type.item.@this>("probe", "k");
+        await Assert.That((await after.Value())?.ToString() ?? "").IsNotEqualTo("held");
+    }
+
     private async System.Threading.Tasks.Task<global::app.store.sqlite.@this> CreateDataSource()
     {
         var dbPath = global::app.type.item.path.@this.Resolve("/.db/test.sqlite", _app.System.Context!);

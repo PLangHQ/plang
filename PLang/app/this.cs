@@ -585,6 +585,9 @@ public sealed partial class @this : IAsyncDisposable
         await module.list.DisposeAsync();
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
-        if (_store.IsValueCreated) _store.Value.Dispose();
+        // The store, if it was opened: awaited (an open still under way finishes first) and disposed, so
+        // its database is let go. One that failed to open holds nothing.
+        if (_store.IsValueCreated && _store.Value is { IsFaulted: false, IsCanceled: false } opening)
+            (await opening).Dispose();
     }
 }
