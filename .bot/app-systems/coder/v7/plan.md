@@ -215,3 +215,47 @@ it with the open session.
 
 - `PLang.Tests/Shared/ModuleTestExtensions.cs` `app.Module(name)` is one of the test helpers that goes
   when tests use the app's own doors.
+
+## For 7e (plang-40)
+
+- `test.list.Setting` is interim: in 7e test's setting class is loaded the way every setting is (the
+  actor's saved row or its defaults, this run's `set %!x%`, the step's values; `--test={…}` landing on it
+  as the CLI flags do), not held on the list.
+
+## 7d trace — variable
+
+**Today** there is no `app.variable`; `%!app.variable…%` doesn't navigate. The memory is
+`type/item/variable/list/this.cs` (moved in stage 6), one per context (`actor/context/this.cs:42`,
+`context.Variable`): a `ConcurrentDictionary<string, data>` (name → Data, ignore case) plus per-call
+overlay frames (`Calls`, 25 uses: goal-call parameters, forked flows), `OnSet`/`OnCreate`/`OnRemove`
+(diff capture, `--debug` watch), snapshot (`ISnapshot`, `SnapshotAt`), `Clone`/`Save`/`Restore`. Its
+production surface: `Set` ×26, `Get` ×10, `Snapshot`/`Remove`/`Ensure`/`Calls` ×2, `Replace`/`Count`/`Clear`
+×1. `variable.@this` (the element class) is the *reference* — `Text` + `Code` — with `Name`, `Start`,
+`Set`, `Ensure`, `Replace`; it has `ICreate` but no `IMatch`/`ICurrent`/`IList`.
+
+**What the plan asks:** `app.variable` a `type<variable>`, "its list is the memory of the actor in
+play, reached through navigation's context"; `Get(key)` takes no context (decision 8);
+`%!app.variable%` → `list` (names), `%!app.variable.user%` → `name`, `type`; `on.event(item:
+%!app.variable.user%, …)` binds to that one variable.
+
+**Where it doesn't fit `type<T, L>` as built (stages 4 and 7a–c):**
+1. `type<T, L>` builds its list once per app (`T.List(app)`, `type/this.Generic.cs:13`); `Get(key)` walks
+   that list. Variable's list is per asker — there is no app-wide one to build.
+2. `L : list<T>` — the memory isn't a list of `variable`s: its rows are Data named by the variable, with
+   frames layered over them. Making it a `list<variable>` means reworking the store (and storage by
+   identity is Ingi's parked item).
+
+**Options:**
+- **(a) The generic type learns the asker's list.** `IList<T, L>` gains `static virtual L Of(context)`
+  (default: the app's list); navigation (`Get(parent, key)`, the `list` member) asks `T.Of(parent.Context)`;
+  C#'s `app.X.list` stays for the app-wide concepts. The memory gets a *view* that is a `list<variable>`:
+  `context.Variable.list` — one `variable` per name held (overlay first), born on read, not stored (the
+  dictionary stays the one store). `variable` gets `Match(name)`, `Current` none. C#'s `app.variable.list`
+  has no asker: it throws, or isn't offered for this concept (a C# caller uses `context.Variable`).
+- **(b) Variable's type is its own small class** with the generic's face (`list`, `Get`, no `current`),
+  navigating through `parent.Context.Variable`; the generic stays as is. Simpler; a second type class.
+- **(c) Make the memory a `list<variable>`** — out of bounds (storage by identity is parked).
+
+I lean to (a): one type class, and the only new thing it learns (a list that belongs to the asker) is
+exactly what the plan says variable is. The `type` fact of `%!app.variable.user%` is its value's type
+(the variable reads its row's Data).
