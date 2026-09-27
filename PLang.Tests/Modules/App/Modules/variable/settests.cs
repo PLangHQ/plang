@@ -43,7 +43,7 @@ public class SetTests
     public async Task Set_WithType_SetsTypeInfo()
     {
         var context = _app.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "int"));
+        var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", new global::app.type.@this("number", "int")));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -68,7 +68,7 @@ public class SetTests
     public async Task Set_WithType_SetsTypeOnStoredVariable()
     {
         var context = _app.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "int"));
+        var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "number"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -140,7 +140,9 @@ public class SetTests
 
     // --- Validate tests (the bound handler judging its own properties) ---
 
-    private global::app.module.action.variable.Set WithValue(object value, string type)
+    private static readonly global::app.type.@this NumberInt = new("number", "int");
+
+    private global::app.module.action.variable.Set WithValue(object value, global::app.type.@this type)
         => new(_app.User.Context)
         {
             Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.App.Type[type], context: _app.User.Context)
@@ -149,7 +151,7 @@ public class SetTests
     [Test]
     public async Task Validate_VariableReference_ReturnsNull()
     {
-        var result = await WithValue("%myVar%", "int").Validate();
+        var result = await WithValue("%myVar%", NumberInt).Validate();
 
         await Assert.That(result).IsNull();
     }
@@ -157,7 +159,7 @@ public class SetTests
     [Test]
     public async Task Validate_TypeMismatch_ReturnsError()
     {
-        var result = await WithValue("not a number", "int").Validate();
+        var result = await WithValue("not a number", NumberInt).Validate();
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Message).Contains("type=number");
@@ -166,7 +168,7 @@ public class SetTests
     [Test]
     public async Task Validate_ValidTypeMatch_ReturnsNull()
     {
-        var result = await WithValue(42, "int").Validate();
+        var result = await WithValue(42, NumberInt).Validate();
 
         await Assert.That(result).IsNull();
     }

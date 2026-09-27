@@ -61,7 +61,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task NoSourceFile_ReferencesTestfileString()
     {
-        var resolved = _app.Type.Get("testfile");
+        var resolved = _app.Type.Clr("testfile");
         await Assert.That(resolved).IsNull()
             .Because("No [PlangType(\"testfile\")] override exists — only 'test' resolves.");
     }

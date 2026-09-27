@@ -31,6 +31,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     System.IEquatable<@this>
 {
     public static string Example => "readme.md";
+    public static IReadOnlyList<string> Alias { get; } = ["string"];
     public static string Shape => "string";
     /// <summary>
     /// LLM-facing teaching: text's kind comes from the file extension

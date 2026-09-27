@@ -6,7 +6,7 @@ using TypeEntity = global::app.type.@this;
 namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
 // `app.Type[...]` is the one door for a type by name: it takes the spelled forms ("string",
-// "text/markdown", any case) and hands back the canonical type. The identity door
+// any case) and hands back the canonical type. The identity door
 // `app.Type[type]` carries name, kind and strict through, the kind canonicalised.
 public class TypeFactoryTests
 {
@@ -32,9 +32,9 @@ public class TypeFactoryTests
         await Assert.That(t.Name).IsEqualTo("text");
     }
 
-    [Test] public async Task Door_SingleStringWithSlash_SplitsToNameAndCanonicalKind()
+    [Test] public async Task Door_Identity_CanonicalisesKind()
     {
-        var t = _app.Type["text/markdown"];
+        var t = _app.Type[new TypeEntity("text", "markdown")];
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.Kind?.Name).IsEqualTo("md");
     }
@@ -44,14 +44,6 @@ public class TypeFactoryTests
         var t = _app.Type["text"];
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.Kind?.Name).IsNull();
-    }
-
-    [Test] public async Task Door_MultiSlash_SplitsOnFirst()
-    {
-        // First slash splits; the rest is the (free-string) kind, not an error.
-        var t = _app.Type["a/b/c"];
-        await Assert.That(t.Name).IsEqualTo("a");
-        await Assert.That(t.Kind?.Name).IsEqualTo("b/c");
     }
 
     [Test] public async Task Door_StrictDefaultsFalse()
@@ -80,7 +72,7 @@ public class TypeFactoryTests
     {
         var a = _app.Type[new TypeEntity("image", "gif")];
         var b = _app.Type[new TypeEntity("image", "gif")];
-        await Assert.That(ReferenceEquals(a, b)).IsTrue();
+        await Assert.That(a.Equals(b)).IsTrue();
     }
 
     [Test] public async Task NullSentinel_NameKindStrictPreserved()

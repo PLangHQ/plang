@@ -28,6 +28,7 @@ public interface IChoice
 /// the implicit operator) while the language sees a validated choice. The name is the
 /// value's <see cref="object.ToString"/> — uniform across enums and named-set classes.
 /// </summary>
+[global::app.Attributes.PlangType("choice")]
 public sealed class @this<T> : global::app.type.item.@this, global::app.type.item.ICreate<@this<T>>,
     IChoice
     where T : notnull

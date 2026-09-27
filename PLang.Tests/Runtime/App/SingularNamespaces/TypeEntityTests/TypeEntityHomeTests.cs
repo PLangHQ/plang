@@ -51,7 +51,7 @@ public class TypeEntityHomeTests
         await using var app = TestApp.Create("/test");
         var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
         var typeFromData = d.Type;
-        var entityFromRegistry = app.Type["int"];
+        var entityFromRegistry = app.Type[new global::app.type.@this("number", "int")];
         await Assert.That(typeFromData).IsNotNull();
         await Assert.That(typeFromData!.GetType()).IsEqualTo(typeof(global::app.type.@this));
         await Assert.That(typeFromData.ClrType).IsEqualTo(entityFromRegistry.ClrType);

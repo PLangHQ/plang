@@ -58,7 +58,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     {
         var row = _app.Module["test"]["discover"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo(_app.Type["list<test>"]);
+        await Assert.That(row!.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "test")]);
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     {
         var row = _app.Module["test"]["start"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo(_app.Type["list<test>"]);
+        await Assert.That(row!.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "test")]);
     }
 
     // Catalog renders output.ask's return as "ask" — the runtime return type

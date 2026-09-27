@@ -1,7 +1,6 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Prim = global::app.type.primitive.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.LlmRepresentationTests;
 
@@ -10,7 +9,6 @@ public class BuilderNamesTests
 #pragma warning disable CS0618
     private static readonly global::app.type.list.view.@this View = new(null!);
 #pragma warning restore CS0618
-    private static readonly Prim Table = new();
 
     [Test] public async Task BuilderNames_AreTheFundamentalVocabulary()
     {

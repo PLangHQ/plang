@@ -27,8 +27,7 @@ public class ClrTypeRerouteTests
     {
         // variable.set reroutes value.Type.ClrType to value.Context.App.Type.Clr(value.Type.Name).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
-        await Assert.That(app.Type.Clr("long")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(app.Type.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(app.Type.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
     }
 

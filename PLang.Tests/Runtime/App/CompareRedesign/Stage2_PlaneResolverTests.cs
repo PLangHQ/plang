@@ -51,13 +51,17 @@ public class Stage2_PlaneResolverTests
     {
         // the runtime registration check rejects a shadower; every built-in
         // value family is clean (statics like the lattice `Type` are exempt)
-        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(ReservedShadower)))
-            .IsEqualTo("Error");
-        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.text.@this))).IsNull();
-        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.dict.@this))).IsNull();
-        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.image.@this))).IsNull();
-        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.path.file.@this))).IsNull();
+        var reserved = global::PLang.Tests.TestApp.SharedContext.App.Type.Reserved;
+        await Assert.That(Shadows(typeof(ReservedShadower), reserved)).IsEqualTo("Error");
+        await Assert.That(Shadows(typeof(global::app.type.item.text.@this), reserved)).IsNull();
+        await Assert.That(Shadows(typeof(global::app.type.item.dict.@this), reserved)).IsNull();
+        await Assert.That(Shadows(typeof(global::app.type.item.image.@this), reserved)).IsNull();
+        await Assert.That(Shadows(typeof(global::app.type.item.path.file.@this), reserved)).IsNull();
     }
+
+    private static string? Shadows(System.Type clr, IReadOnlySet<string> reserved) =>
+        clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .FirstOrDefault(p => reserved.Contains(p.Name))?.Name;
 
     private sealed class ReservedShadower : global::app.type.item.@this
     {

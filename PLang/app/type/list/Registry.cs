@@ -1,240 +1,181 @@
-using System.Collections.Concurrent;
 using System.Reflection;
 using app.Attributes;
 
 namespace app.type.list;
 
 /// <summary>
-/// Registry partial of <see cref="@this"/> — absorbs the former <c>PlangTypeIndex</c>
-/// (single source of truth for domain type identity).
+/// Registry partial of <see cref="@this"/> — the one set of types: how a type comes in
+/// (<see cref="Add(System.Type, actor.context.@this, string?)"/>, <see cref="Add(Assembly, actor.context.@this)"/>),
+/// the startup scan, and the name a C# class reports.
 ///
-/// Rules, in order:
-///   1. [PlangType("name")] on the class — declared name wins. Multiple
-///      [PlangType] attributes act as aliases; the first non-null Name is canonical.
-///   2. [PlangType] with no Name — inferred name (@this convention: last
-///      namespace segment; otherwise class name lowercased).
-///   3. @this classes WITHOUT [PlangType] — last-namespace-segment is the name.
-///   4. Only items (app.type.item.@this) are plang types; an engine class has no type name.
-///   One name, one class, in both directions — checked when the registry is built.
+/// A class's name, in order:
+///   1. [PlangType("name")] on the class — the declared name; [PlangType] with no name infers it.
+///   2. An @this class — the last namespace segment.
+///   3. Only items (app.type.item.@this) are plang types; an engine class has no type name.
+///   4. A path scheme or a typed program list (<c>list&lt;step&gt;</c>) is a kind of its family and
+///      claims no name of its own.
+///   One name, one class.
 /// </summary>
 public sealed partial class @this
 {
-    private readonly object _initLock = new();
-    private bool _initialized;
-    private readonly ConcurrentDictionary<string, Type> _nameToType = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<Type, string> _typeToName = new();
-    // Runtime registrations (test harnesses, plugins) merge into the index.
-    private readonly ConcurrentDictionary<string, Type> _runtimeNameToType = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _lock = new();
+    private volatile bool _loaded;
 
-    // The clr → owning-plang-name index (int→"number", DateOnly→"date"), populated inline as each
-    // value type is indexed, from its own OwnedClrTypes declaration. Feeds the born-native lift's clr
-    // rung: a raw CLR scalar resolves to the entity that owns its shape. Mutable like its sibling
-    // indices — a code.load type adds its ownership at runtime. Exact keys only; the one Assignable
-    // declaration (path) is always an item.@this and never a raw CLR value.
-    private readonly ConcurrentDictionary<Type, string> _clr = new();
+    // The types, in the order they came in. Copy-on-write: a walk reads the array it holds, and an
+    // Add swaps in a new one, so a lookup never sees a half-added type.
+    private volatile global::app.type.@this[] _types = [];
 
-    private readonly HashSet<string> _clrTypeFullNames = new(StringComparer.Ordinal);
-    private volatile bool _clrTypeFullNamesInitialized;
-    private readonly object _clrTypeFullNamesLock = new();
-
-    /// <summary>Assemblies to scan for [PlangType] discovery. Defaults to the App assembly; callers can extend.</summary>
+    /// <summary>Assemblies the startup scan reads. Defaults to the App assembly; callers can extend.</summary>
     public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
 
     /// <summary>
-    /// True if <paramref name="name"/> matches the FullName of any type in any loaded assembly.
-    /// Used to defend goal-name slots against CLR-type-name leaks (a known builder bug:
-    /// e.g. <c>app.goal.GoalCall</c> getting written as a goal Name during prompt rendering).
-    /// A goal Name is a user-authored identifier — it can never legitimately equal a CLR type name.
+    /// Built-in type names a runtime-loaded assembly may not claim. Their bodies are signing- or
+    /// transport-load-bearing: a DLL that replaced <c>identity</c>'s class or its renderer could
+    /// produce authentically-signed values whose body was attacker-composed.
     /// </summary>
-    public bool IsClrTypeName(string? name)
+    public IReadOnlySet<string> Sealed { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        if (string.IsNullOrEmpty(name)) return false;
-        if (!name.Contains('.')) return false;
-        EnsureClrTypeFullNamesInitialized();
-        return _clrTypeFullNames.Contains(name);
-    }
+        "identity", "signature", "signedoperation", "callback", "channel",
+    };
 
-    private void EnsureClrTypeFullNamesInitialized()
+    /// <summary>
+    /// The reserved core of the navigation planes — <c>%x!type%</c>/<c>!error%</c>/<c>!success%</c>
+    /// and the <c>@schema</c> wire marker always answer from the Data. A value type may not declare
+    /// an instance property under these names: it would shadow (or be shadowed by) the Data on the
+    /// <c>!</c> plane. Statics are fine; only the navigable instance surface can shadow.
+    /// </summary>
+    public IReadOnlySet<string> Reserved { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        if (_clrTypeFullNamesInitialized) return;
-        lock (_clrTypeFullNamesLock)
+        "type", "error", "success", "@schema",
+    };
+
+    // Every type, loaded on first ask.
+    private global::app.type.@this[] Types
+    {
+        get
         {
-            if (_clrTypeFullNamesInitialized) return;
-            foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
-            {
-                foreach (var t in SafeGetTypes(asm))
-                {
-                    if (t.FullName != null) _clrTypeFullNames.Add(t.FullName);
-                }
-            }
-            _clrTypeFullNamesInitialized = true;
+            Load();
+            return _types;
         }
     }
 
-    /// <summary>
-    /// Returns the CLR type for a PLang name, or null if no type is registered
-    /// under that name.
-    /// </summary>
-    public Type? ResolveType(string name)
+    // The startup scan: every item class in Assemblies comes in under its name, then each gets its
+    // facts once every name is known (a fact names its property types). A clash here is plang's own.
+    private void Load()
     {
-        if (string.IsNullOrWhiteSpace(name)) return null;
-        EnsureInitialized();
-        if (_runtimeNameToType.TryGetValue(name, out var runtime)) return runtime;
-        return _nameToType.TryGetValue(name, out var t) ? t : null;
-    }
-
-    /// <summary>
-    /// All types known to the index, deduplicated by CLR type. Useful for seeding
-    /// a catalog build that isn't started from action parameters.
-    /// </summary>
-    public IEnumerable<Type> KnownTypes()
-    {
-        EnsureInitialized();
-        return _typeToName.Keys.Concat(_runtimeNameToType.Values).Distinct();
-    }
-
-    /// <summary>
-    /// Registers a name → type mapping at runtime. Prefer [PlangType] on the class.
-    /// This is for synthetic/test types that can't carry attributes.
-    /// </summary>
-    public void RegisterRuntime(string name, Type type)
-    {
-        if (string.IsNullOrWhiteSpace(name) || type == null) return;
-        // One name, one class — a runtime registration (code.load, a plugin) cannot take a name
-        // another class already owns.
-        EnsureInitialized();
-        if (ResolveType(name) is { } owner && owner != type)
-            throw new InvalidOperationException(
-                $"type name '{name}' is claimed by both {owner.FullName} and {type.FullName} — one name, one class.");
-        _runtimeNameToType[name] = type;
-        _typeToName.TryAdd(type, name);
-        // A code.load type owns its CLR shapes at runtime too — add them to the clr index.
-        if (type.GetProperty("OwnedClrTypes", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-                ?.GetValue(null) is IEnumerable<global::app.type.convert.OwnedClr> owned)
-            foreach (var decl in owned)
-                if (!decl.Assignable) _clr.TryAdd(decl.Clr, name);
-    }
-
-    private void EnsureInitialized()
-    {
-        if (_initialized) return;
-        lock (_initLock)
+        if (_loaded) return;
+        lock (_lock)
         {
-            if (_initialized) return;
-            // An explicitly-aliased [PlangType] name (one that diverges from the type's own
-            // inferred name) claims its name after every natural owner has registered.
-            var deferredAliases = new List<(string Name, Type Type)>();
+            if (_loaded) return;
+            var named = new List<global::app.type.@this>();
             foreach (var assembly in Assemblies)
-                IndexAssembly(assembly, deferredAliases);
-            foreach (var (name, type) in deferredAliases)
-                Claim(name, type);
-            SeedAliases();
-            Guard();
-            _initialized = true;
+                foreach (var clr in SafeGetTypes(assembly))
+                    if (NameOf(clr) is { } name)
+                    {
+                        if (named.Find(t => t.Names(name)) is { } owner)
+                            throw new InvalidOperationException(
+                                $"type name '{name}' is claimed by both {owner.ClrType!.FullName} and {clr.FullName} — one name, one class.");
+                        named.Add(new global::app.type.@this(name, clr, null));
+                    }
+            _types = [.. named];
+            _types = [.. named.Select(t => new global::app.type.@this(t.Name, t.ClrType!, this))];
+            _loaded = true;
         }
     }
 
     /// <summary>
-    /// The spelled names of the primitives (<c>string</c>, <c>int</c>, <c>boolean</c>, <c>csv</c>, …)
-    /// resolve to the ITEM that owns the alias's C# type — <c>string</c> → text, <c>int</c> → number.
-    /// The C# types are the items' mates (their <c>OwnedClrTypes</c>), never a name's owner.
+    /// Adds the plang type <paramref name="clr"/> defines — under <paramref name="name"/>, or the
+    /// name the class reports. A name another class owns, a sealed name, or an instance property
+    /// under a reserved name is an error; the set is unchanged.
     /// </summary>
-    private void SeedAliases()
+    public data.@this Add(System.Type clr, actor.context.@this context, string? name = null)
     {
-        foreach (var (alias, clr) in Primitive.Aliases)
+        if ((name ?? NameOf(clr)) is not { } claimed)
+            return context.Error(new error.Error($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
+        if (Sealed.Contains(claimed))
+            return context.Error(new error.Error(
+                $"'{claimed}' is on the sealed built-in list and may not be claimed by a runtime-loaded type.", "TypeLoadCollision", 400));
+        if (Array.Find(clr.GetProperties(BindingFlags.Public | BindingFlags.Instance), p => Reserved.Contains(p.Name)) is { } shadow)
+            return context.Error(new error.Error(
+                $"Type '{clr.FullName}' declares instance property '{shadow.Name}' — `type`/`error`/`success`/`@schema` are the reserved navigation core and may not be shadowed by a value type.",
+                "TypeLoadReservedShadow", 400));
+        lock (_lock)
         {
-            var shape = Nullable.GetUnderlyingType(clr) ?? clr;
-            var owner = typeof(app.type.item.@this).IsAssignableFrom(shape) ? shape
-                : _clr.TryGetValue(shape, out var ownerName) && _nameToType.TryGetValue(ownerName, out var ot) ? ot
-                : null;
-            if (owner != null && !_nameToType.ContainsKey(alias)) _nameToType[alias] = owner;
+            Load();
+            if (Array.Find(_types, t => t.Names(claimed)) is { } owner)
+                return owner.ClrType == clr
+                    ? context.Ok(owner)
+                    : context.Error(new error.Error(
+                        $"type name '{claimed}' is claimed by both {owner.ClrType?.FullName} and {clr.FullName} — one name, one class.",
+                        "TypeLoadCollision", 400));
+            // Its own name first, so its facts can name a property of its own type.
+            _types = [.. _types, new global::app.type.@this(claimed, clr, null)];
+            var added = new global::app.type.@this(claimed, clr, this);
+            _types = [.. _types[..^1], added];
+            return context.Ok(added);
         }
     }
 
-    // One name, one class: a second class claiming a taken name fails at registry build.
-    private void Claim(string name, Type type)
+    /// <summary>
+    /// Adds every plang type <paramref name="assembly"/> exports, and registers its renderers
+    /// (<see cref="ITypeRenderer"/>). Every type added must render — its own renderer or one already
+    /// known. The first error stops the load; the types added before it stay.
+    /// </summary>
+    public data.@this Add(Assembly assembly, actor.context.@this context)
     {
-        if (_nameToType.TryGetValue(name, out var existing) && existing != type)
-            throw new InvalidOperationException(
-                $"type name '{name}' is claimed by both {existing.FullName} and {type.FullName} — one name, one class.");
-        _nameToType[name] = type;
-    }
+        System.Type[] exported;
+        try { exported = assembly.GetExportedTypes(); }
+        catch (ReflectionTypeLoadException ex) { exported = ex.Types.Where(t => t != null).ToArray()!; }
 
-    // A class may report a name only if it is the item that owns the name, or a kind of it (a scheme
-    // or program list deriving from the owner). The C# mates ride the ownership index, not this one.
-    private void Guard()
-    {
-        foreach (var (type, name) in _typeToName)
+        var added = new List<global::app.type.@this>();
+        foreach (var clr in exported)
         {
-            if (!_runtimeNameToType.TryGetValue(name, out var owner) && !_nameToType.TryGetValue(name, out owner))
-                throw new InvalidOperationException($"{type.FullName} reports the type name '{name}', which no item owns.");
-            if (owner != type && !owner.IsAssignableFrom(type))
-                throw new InvalidOperationException(
-                    $"{type.FullName} reports the type name '{name}', which {owner.FullName} owns — one name, one class.");
+            if (clr.IsAbstract || clr.IsInterface) continue;
+            // A class that claims a sealed name is refused whether or not it is an item: the name is
+            // what a loaded assembly may not take.
+            var claims = clr.GetCustomAttribute<PlangTypeAttribute>(inherit: false) is { } declared
+                ? declared.Name ?? InferName(clr)
+                : IsThisClass(clr) ? InferName(clr) : null;
+            if (claims != null && Sealed.Contains(claims))
+                return context.Error(new error.Error(
+                    $"'{claims}' is on the sealed built-in list and may not be claimed by a runtime-loaded type ({clr.FullName}).", "TypeLoadCollision", 400));
+            if (NameOf(clr) is null) continue;
+            var result = Add(clr, context);
+            if (!result.Success) return result;
+            added.Add(this[NameOf(clr)!]);
         }
-    }
 
-
-    private void IndexAssembly(Assembly assembly, List<(string Name, Type Type)> deferredAliases)
-    {
-        foreach (var type in SafeGetTypes(assembly))
+        foreach (var clr in exported)
         {
-            // The registry holds plang types — items — only. An engine class (a host list, a
-            // channel, a reader) claims no type name; a non-item's [PlangType] declares a name its
-            // OWNER reads (a closed set's name is the KIND of choice), never a type.
-            if (!typeof(app.type.item.@this).IsAssignableFrom(type)) continue;
-            var attrs = type.GetCustomAttributes<PlangTypeAttribute>(inherit: false).ToList();
-
-            // Skip abstract (non-static) types UNLESS they declare [PlangType] OR
-            // are an @this class — an abstract @this is the base of a scheme/family
-            // (e.g. path.@this with concrete subclasses FilePath, HttpPath). The
-            // PLang name resolves to the base; construction dispatches via a
-            // registry (Scheme.From).
-            if (type.IsAbstract && !type.IsSealed && attrs.Count == 0 && !IsThisClass(type)) continue;
-            string? canonical = null;
-
-            if (attrs.Count > 0)
-            {
-                var inferred = InferName(type);
-                foreach (var attr in attrs)
-                {
-                    var name = attr.Name ?? inferred;
-                    if (name == null) continue;
-                    canonical ??= name;
-                    // A name that matches the type's own inference is its natural
-                    // claim — register now. A name the attribute redirects to
-                    // (one that diverges from the type's namespace/class) is claimed
-                    // after every natural owner has registered.
-                    if (string.Equals(name, inferred, System.StringComparison.Ordinal))
-                        Claim(name, type);
-                    else
-                        deferredAliases.Add((name, type));
-                }
-            }
-            else if (IsThisClass(type))
-            {
-                var family = FamilyName(type);
-                canonical = family ?? InferName(type);
-                // A variant resolves TO its family name but never claims the name
-                // slot — the family base owns name→type (FilePath answers "path";
-                // ResolveType("path") stays path.@this).
-                if (canonical != null && family == null)
-                    Claim(canonical, type);
-            }
-
-            if (canonical != null)
-            {
-                _typeToName.TryAdd(type, canonical);
-                // The raw CLR shapes this value type owns (int→"number") — the born-native lift's clr rung.
-                if (type.GetProperty("OwnedClrTypes", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-                        ?.GetValue(null) is IEnumerable<global::app.type.convert.OwnedClr> owned)
-                    foreach (var decl in owned)
-                        if (!decl.Assignable) _clr.TryAdd(decl.Clr, canonical);
-            }
+            if (clr.IsAbstract || clr.IsInterface || !typeof(ITypeRenderer).IsAssignableFrom(clr)) continue;
+            if (clr.GetConstructor(System.Type.EmptyTypes) is not { } ctor) continue;
+            var renderer = (ITypeRenderer)ctor.Invoke(null);
+            if (Sealed.Contains(renderer.TypeName))
+                return context.Error(new error.Error(
+                    $"ITypeRenderer for '{renderer.TypeName}' rejected — '{renderer.TypeName}' is on the sealed built-in list and its rendering may not be replaced by a runtime-loaded DLL.",
+                    "TypeLoadCollision", 400));
+            Renderer.Register(renderer.TypeName, renderer.Format, (value, writer) => renderer.Write(value, writer));
         }
+
+        if (added.Find(t => !Renderer.Has(t.Name)) is { } bare)
+            return context.Error(new error.Error(
+                $"type '{bare.Name}' loaded with no covering renderer (need a Default ITypeRenderer or per-format coverage).",
+                "TypeLoadCoverage", 400));
+        return context.Ok(added);
     }
 
-    private static bool IsThisClass(Type type) =>
+    // The name a class reports as a type of its own, or null: not an item, a kind of a family, or an
+    // abstract class that neither declares a name nor is an @this.
+    private static string? NameOf(System.Type type)
+    {
+        if (!typeof(app.type.item.@this).IsAssignableFrom(type) || FamilyName(type) != null) return null;
+        var declared = type.GetCustomAttribute<PlangTypeAttribute>(inherit: false);
+        if (declared != null) return declared.Name ?? InferName(type);
+        if (!IsThisClass(type) || type.ContainsGenericParameters) return null;
+        return InferName(type);
+    }
+
+    private static bool IsThisClass(System.Type type) =>
         string.Equals(type.Name, "this", StringComparison.Ordinal);
 
     /// <summary>
@@ -243,7 +184,7 @@ public sealed partial class @this
     /// generic base (<c>list&lt;step&gt;</c> → {list, kind: step}). Null for every other class:
     /// by default a class's name is its own (modifier is "modifier", never a kind of action).
     /// </summary>
-    private static string? FamilyName(Type type)
+    private static string? FamilyName(System.Type type)
     {
         if (type.IsDefined(typeof(app.type.item.path.PathSchemeAttribute), inherit: false))
             return InferName(typeof(app.type.item.path.@this));
@@ -257,7 +198,7 @@ public sealed partial class @this
     /// Inferred name: last namespace segment for @this classes, lowercased class
     /// name otherwise. Null when the type has no namespace.
     /// </summary>
-    private static string? InferName(Type type)
+    private static string? InferName(System.Type type)
     {
         if (IsThisClass(type))
         {
@@ -269,7 +210,7 @@ public sealed partial class @this
         return type.Name.ToLowerInvariant();
     }
 
-    private static IEnumerable<Type> SafeGetTypes(Assembly assembly)
+    private static IEnumerable<System.Type> SafeGetTypes(Assembly assembly)
     {
         try { return assembly.GetTypes(); }
         catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null)!; }

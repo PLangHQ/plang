@@ -319,8 +319,8 @@ public sealed class Formal
                 Fail($"`{prop}` takes an action: write the action itself, {prop}=goal.call(Name=\"…\")", at);
 
             // the type: the declared one; in an open slot the written one, else the literal's own
-            var typeName = declaredFace != "item" ? declaredFace : written ?? LiteralType(value);
-            var type = _context.App.Type[typeName];
+            var face = declaredFace != "item" ? declaredFace : written ?? LiteralType(value);
+            var type = _context.App.Type[new global::app.type.@this(TypeName(face), TypeKind(face))];
             global::app.type.item.@this born;
             if (value.Action != null) born = value.Action;
             // argument rows are named rows, each value its own (a %x% row value is born a template on

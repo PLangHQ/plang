@@ -85,12 +85,11 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     [Test]
     public async Task PrimitiveMap_DictRegistered_RawDictionaryEntryRetired()
     {
-        // type/primitive/this.cs maps "dict" to the new value type; the raw
-        // Dictionary<string,object> entry that used to back "dict" is gone (J).
-        var aliases = new global::app.type.primitive.@this().Aliases;
-        await Assert.That(aliases["dict"]).IsEqualTo(typeof(Dict));
-        await Assert.That(aliases["dictionary"]).IsEqualTo(typeof(Dict));
-        await Assert.That(aliases["map"]).IsEqualTo(typeof(Dict));
-        await Assert.That(aliases["dict"]).IsNotEqualTo(typeof(Dictionary<string, object>));
+        // "dict" and its aliases name the dict value type, not a raw Dictionary.
+        var types = global::PLang.Tests.TestApp.SharedContext.App.Type;
+        await Assert.That(types.Clr("dict")).IsEqualTo(typeof(Dict));
+        await Assert.That(types.Clr("dictionary")).IsEqualTo(typeof(Dict));
+        await Assert.That(types.Clr("map")).IsEqualTo(typeof(Dict));
+        await Assert.That(types.Clr("dict")).IsNotEqualTo(typeof(Dictionary<string, object>));
     }
 }

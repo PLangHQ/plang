@@ -36,33 +36,22 @@ public class TypeEntityShapeTests
         await Assert.That(t.GetProperty("ClrType", BindingFlags.Public | BindingFlags.Instance)).IsNull();
         // Interior access still works through the registry — App.Type.Clr(name).
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(app.Type.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     [Test] public async Task Entity_FamilyKindAccessor_Removed()
     {
         // The old `type.Kind` that resolved via App.Format.FamilyOf(Value) is gone.
         // Pin: `type("image", null).Kind` reads null (no family-derivation), and
-        // the door splits "image/jpeg" to {Name:"image", Kind:"jpg"} — Name
+        // the identity door answers {image, jpeg} as {Name:"image", Kind:"jpg"} — Name
         // carries the family directly; Kind is the (canonical) subtype.
         var noSubtype = new TypeEntity("image");
         await Assert.That(noSubtype.Kind?.Name).IsNull();
 
         await using var app = TestApp.Create("/test");
-        var split = app.Type["image/jpeg"];
+        var split = app.Type[new TypeEntity("image", "jpeg")];
         await Assert.That(split.Name).IsEqualTo("image");
         await Assert.That(split.Kind?.Name).IsEqualTo("jpg");
-    }
-
-    [Test] public async Task Entity_Kinds_PopulatedForNumber()
-    {
-        await using var app = TestApp.Create("/test");
-        var num = app.Type["number"];
-        await Assert.That(num.Kinds).IsNotNull();
-        await Assert.That(num.Kinds!).Contains("int");
-        await Assert.That(num.Kinds!).Contains("long");
-        await Assert.That(num.Kinds!).Contains("decimal");
-        await Assert.That(num.Kinds!).Contains("double");
     }
 
     [Test] public async Task Entity_Compressible_DerivesFromName()

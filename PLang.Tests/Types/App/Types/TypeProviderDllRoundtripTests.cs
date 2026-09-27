@@ -18,12 +18,12 @@ public class TypeProviderDllRoundtripTests
     {
         var asm = LoadFixture();
         var types = new global::app.type.list.@this();
-        var result = global::app.type.list.Loader.Register(asm, types);
+        var result = types.Add(asm, global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.RegisteredTypes).Contains("money");
+        await Assert.That(types.Contains("money")).IsTrue();
 
-        var moneyType = types.ResolveType("money");
+        var moneyType = types.Clr("money");
         await Assert.That(moneyType).IsNotNull();
         await Assert.That(moneyType!.FullName).IsEqualTo("TypeProvider.Money");
 
@@ -45,15 +45,15 @@ public class TypeProviderDllRoundtripTests
         // Capture baseline for "int" before the override — int is bootstrap-seeded
         // and may or may not have a generator-emitted renderer; what matters is
         // that after Loader.Register, the runtime entry wins.
-        var beforeType = types.ResolveType("int");
+        var beforeType = types.Clr("int");
         await Assert.That(beforeType).IsEqualTo(typeof(int));
 
-        var result = global::app.type.list.Loader.Register(asm, types);
+        var result = types.Add(asm, global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.RegisteredTypes).Contains("int");
+        await Assert.That(types.Contains("int")).IsTrue();
 
-        // ResolveType — runtime wins over the bootstrap "int" → System.Int32 entry.
-        var afterType = types.ResolveType("int");
+        // Clr — runtime wins over the bootstrap "int" → System.Int32 entry.
+        var afterType = types.Clr("int");
         await Assert.That(afterType).IsNotNull();
         await Assert.That(afterType!.FullName).IsEqualTo("TypeProvider.CustomInt");
 

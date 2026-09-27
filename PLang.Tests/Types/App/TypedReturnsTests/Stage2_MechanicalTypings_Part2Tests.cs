@@ -85,6 +85,6 @@ public class Stage2_MechanicalTypings_Part2Tests
         // goals renders as a collection shape — PLang's foreach over it needs the list
         // semantics, hence no wrapper record.
         await Assert.That(goals).IsNotNull();
-        await Assert.That(goals!.Return).IsEqualTo(_app.Type["list<goal>"]);
+        await Assert.That(goals!.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "goal")]);
     }
 }

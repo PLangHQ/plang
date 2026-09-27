@@ -525,7 +525,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var newType = new Type("text/plain");
+        var newType = new Type("text", "plain");
         var ov = new Data("test", "hello", newType, context: context);
 
         // Type gets context from Data — family is resolvable via registry.

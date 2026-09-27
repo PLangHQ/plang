@@ -54,9 +54,6 @@ public sealed class @this
     /// </summary>
     public void Register(System.Reflection.Assembly assembly)
     {
-        // The choice FAMILY — a wire type {name:"choice", kind:"operator"} resolves to choice<T>.
-        _owner.Register("choice", typeof(global::app.type.item.choice.@this<>));
-
         var seen = new HashSet<System.Type>();
         foreach (var t in SafeTypes(assembly))
             foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))

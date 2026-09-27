@@ -81,16 +81,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
         // name → kind vocabulary the LLM may emit, scoped to the FUNDAMENTAL
-        // vocabulary only — never every registered type's Kinds. A result type
-        // like `hash` stays fully registered (app.Type["hash"], getTypes) but
-        // its algorithms never join the always-on prompt: the LLM doesn't choose
-        // `as hash`, so listing them is pure noise. Two sources, both filtered
-        // to fundamentals:
+        // vocabulary only, filtered to fundamentals:
         //   - Format registry's extension→family map (text, image, audio, video)
         //     — the file-extension kinds.
-        //   - Fundamentals that ADVERTISE a static `Kinds` vocabulary (number's
-        //     precisions) — pulled from the catalog entry's folded Kinds so the
-        //     type owns its list (no hardcoding here).
         var kindsByName = new Dictionary<string, IReadOnlyList<string>>(System.StringComparer.OrdinalIgnoreCase);
         if (_modules.App?.Format is { } fmt)
         {
@@ -98,10 +91,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 if (IsFundamental(kvp.Key))
                     kindsByName[kvp.Key] = kvp.Value;
         }
-        var allKnown = _modules.App?.Type.BuildTypeEntries(null) ?? new List<global::app.type.@this>();
-        foreach (var t in allKnown)
-            if (t.Kinds is { Count: > 0 } && IsFundamental(t.Name))
-                kindsByName[t.Name] = t.Kinds;
 
         return new @this(_modules)
         {

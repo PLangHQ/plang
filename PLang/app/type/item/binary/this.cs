@@ -8,6 +8,7 @@ namespace app.type.item.binary;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "(bytes)";
+    public static IReadOnlyList<string> Alias { get; } = ["bytes"];
     public static string Shape => "string";
 
     public byte[] Value { get; }

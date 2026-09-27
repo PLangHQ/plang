@@ -234,7 +234,7 @@ public partial class Set : IContext, IScope
             // number.@this domain class, but a numeric value is a CLR primitive (int/long/...) — the
             // entity's ClrType carries the right mate (typeof(int) for {number, int}); a bare name
             // asks the registry with this handler's context.
-            var targetType = type.ClrType ?? Context.App.Type.Clr(typeName) ?? Context.App.Type.Get(typeName);
+            var targetType = type.ClrType ?? Context.App.Type.Clr(typeName);
 
             // Stamp kind from the value by building through the family's eager door and
             // reading the kind off the built value (image parses its path's extension → jpg;

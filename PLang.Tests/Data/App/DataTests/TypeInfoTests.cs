@@ -19,7 +19,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CanonicalisesToNumberOfKindInt()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["int"];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int")];
 
         await Assert.That(type.Name).IsEqualTo("number");
         await Assert.That(type.Kind?.Name).IsEqualTo("int");
@@ -38,7 +38,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type["int"];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int")];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }

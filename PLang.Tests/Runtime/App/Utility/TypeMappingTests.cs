@@ -4,30 +4,19 @@ namespace PLang.Tests.App.Utils;
 
 public class TypeMappingTests
 {
-    // A primitive name or alias resolves to the item that owns it — string → text, int → number.
+    // A type name or alias resolves to the item that owns it — string → text, bytes → binary.
     // The C# types are the items' mates, never a name's owner.
     [Test]
     [Arguments("string", "text")]
     [Arguments("text", "text")]
-    [Arguments("csv", "text")]
-    [Arguments("int", "number")]
-    [Arguments("integer", "number")]
-    [Arguments("long", "number")]
-    [Arguments("float", "number")]
-    [Arguments("double", "number")]
-    [Arguments("decimal", "number")]
-    [Arguments("byte", "number")]
-    [Arguments("int?", "number")]
+    [Arguments("number", "number")]
     [Arguments("bool", "bool")]
     [Arguments("boolean", "bool")]
-    [Arguments("bool?", "bool")]
     [Arguments("datetime", "datetime")]
-    [Arguments("datetime?", "datetime")]
     [Arguments("date", "date")]
     [Arguments("time", "time")]
     [Arguments("duration", "duration")]
     [Arguments("guid", "guid")]
-    [Arguments("guid?", "guid")]
     [Arguments("bytes", "binary")]
     [Arguments("list", "list")]
     [Arguments("array", "list")]
@@ -58,22 +47,6 @@ public class TypeMappingTests
     {
         // `timespan` is dropped — the one name for a duration is `duration`.
         await Assert.That(TypeMapping.GetType("timespan")).IsNull();
-    }
-
-    [Test]
-    public async Task GetType_GenericList_IsAListOfTheOwningItem()
-    {
-        await Assert.That(TypeMapping.GetType("list<string>")).IsEqualTo(typeof(List<global::app.type.item.text.@this>));
-        await Assert.That(TypeMapping.GetType("list<int>")).IsEqualTo(typeof(List<global::app.type.item.number.@this>));
-    }
-
-    [Test]
-    public async Task GetType_GenericDict_IsADictOfTheOwningItems()
-    {
-        await Assert.That(TypeMapping.GetType("dict<string,int>"))
-            .IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
-        await Assert.That(TypeMapping.GetType("dictionary<string,int>"))
-            .IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
     }
 
     [Test]

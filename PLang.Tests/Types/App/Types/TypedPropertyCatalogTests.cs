@@ -45,11 +45,7 @@ public class TypedPropertyCatalogTests
     }
 
     private global::app.type.@this? FindEntry(string name)
-    {
-        foreach (var e in _types.BuildTypeEntries(null))
-            if (e.Name == name) return e;
-        return null;
-    }
+        => _types.Contains(name) ? _types[name] : null;
 
     [Test]
     public async Task Catalog_ImageEntry_ListsPathPropertyWithItsType()
@@ -88,36 +84,12 @@ public class TypedPropertyCatalogTests
     }
 
     [Test]
-    public async Task Catalog_KindVocabulary_ShownForNumber_IntDecimalDoubleLong()
-    {
-        var number = FindEntry("kind-fixture-number");
-        await Assert.That(number).IsNotNull();
-        await Assert.That(number!.Kinds).IsNotNull();
-        await Assert.That(number.Kinds!).Contains("int");
-        await Assert.That(number.Kinds!).Contains("decimal");
-        await Assert.That(number.Kinds!).Contains("double");
-        await Assert.That(number.Kinds!).Contains("long");
-    }
-
-    [Test]
-    public async Task Catalog_KindVocabulary_NotShownForImage()
-    {
-        // Image has a Build(value)→kind hook but no developer-meaningful kind
-        // vocabulary (the LLM doesn't pick jpg/png/gif — the file does).
-        // No static Kinds property ⇒ Entry.Kinds null ⇒ catalog renders no
-        // "(kinds: …)" suffix.
-        var image = FindEntry("kind-fixture-image");
-        await Assert.That(image!.Kinds).IsNull();
-    }
-
-    [Test]
     public async Task Catalog_HighLevelTypeAppearsAlone_WhenNoKind()
     {
         // A bare scalar type (no Kinds, no properties) appears in the catalog
         // with just its shape — no kind suffix, no property list.
         var bare = FindEntry("kind-fixture-bare");
         await Assert.That(bare).IsNotNull();
-        await Assert.That(bare!.Kinds).IsNull();
-        await Assert.That(bare.Property).IsNull();
+        await Assert.That(bare!.Property).IsNull();
     }
 }

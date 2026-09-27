@@ -84,7 +84,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.list → Task<Data<global::app.type.item.list.@this<path>>>.
         var row = Find("file", "list");
-        await Assert.That(row.Return).IsEqualTo(_app.Type["list<path>"]);
+        await Assert.That(row.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "path")]);
     }
 
     // Data<Identity> — domain type. [PlangType("identity")] on the class
@@ -101,7 +101,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_DataOfListOfIdentity_IsListOfIdentity()
     {
         var row = Find("identity", "list");
-        await Assert.That(row.Return).IsEqualTo(_app.Type["list<identity>"]);
+        await Assert.That(row.Return).IsEqualTo(_app.Type[new global::app.type.@this("list", "identity")]);
     }
 
     // Sanity: every catalog row carries a type — item or a real T.

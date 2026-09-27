@@ -24,6 +24,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";
+    public static IReadOnlyList<string> Alias { get; } = ["dictionary", "map"];
 
     // The single backing — key → raw-or-wrapped slot, mirroring list's _items. A
     // slot holds EITHER a raw CLR value (a scalar off the wire, a native

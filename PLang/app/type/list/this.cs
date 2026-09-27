@@ -1,25 +1,16 @@
 using System.Reflection;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using app.Attributes;
-using app.module;
 
 namespace app.type.list;
 
 /// <summary>
-/// Owns PLang name ↔ CLR type identity, the [Choices] vocabulary registry, and the
-/// type-conversion entry points. The primary partial holds the public surface; the
-/// <c>Registry</c> partial (formerly <c>Utils.PlangTypeIndex</c>) absorbs assembly
-/// indexing for [PlangType] and the @this convention.
+/// The types — every plang type, one set, each type owning its name, aliases, C# class and facts
+/// (<c>app.Type</c>). Distinct from <c>app.type.item.list</c> (the plang list VALUE). A lookup walks
+/// the set: by name or alias (the type's own <see cref="app.type.@this.Match"/>), by C# class, by
+/// identity. How a type comes in lives in the <c>Registry</c> partial.
 ///
-/// File-format characteristics (extension → Kind, extension → MIME, Kind →
-/// compressibility) live separately on <see cref="app.format.list.@this"/> at
-/// <c>app.Format</c>.
-///
-/// This IS the collection of all system types (<c>app.Type</c>) — the current and future home,
-/// distinct from <c>app.type.item.list</c> (the plang list VALUE). Its internals are still the
-/// legacy registry blob; Stage-3-core cleans them in place (untangle the Registry index, reparent
-/// the sub-registries to <c>app.type.*</c>) — the class is not going anywhere.
+/// File-format characteristics (extension → Kind, extension → MIME, Kind → compressibility) live
+/// separately on <see cref="app.format.list.@this"/> at <c>app.Format</c>.
 /// </summary>
 public sealed partial class @this
 {
@@ -33,6 +24,11 @@ public sealed partial class @this
     {
         Context = context;
         Kind = new kind.list.@this(context);   // per-App, born with context → its kinds are stamped
+    }
+
+    public @this()
+    {
+        Choice = new global::app.type.item.choice.list.@this(this);
     }
 
     /// <summary>The choice registry — the closed-set vocabulary. Owns discovering closed sets
@@ -51,7 +47,7 @@ public sealed partial class @this
     /// The singleton store of kind behaviors (navigate / enumerate / load / convert), one
     /// <see cref="kind.behavior.@this"/> per format. INTERNAL plumbing — reached only
     /// through the kind token (<c>value.Kind.Navigate(…)</c>), never a flat
-    /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <c>type.Kinds</c> (advertised vocabulary).
+    /// <c>App.Type.&lt;plural&gt;</c>.
     /// </summary>
     internal kind.list.@this Kind { get; private set; } = new(null);
 
@@ -74,125 +70,21 @@ public sealed partial class @this
     /// </summary>
     public reader.@this Reader { get; } = new();
 
-    /// <summary>The primitives' spelled names — this registry's own data. <c>app.Type[name]</c> is
-    /// the one door that turns a spelled name into its canonical type.</summary>
-    internal app.type.primitive.@this Primitive { get; } = new();
-
-    private const int MaxGenericDepth = 20;
-
-
-    // --- PLang name → CLR type ---
-
     /// <summary>
-    /// PLang type name → CLR type. Handles generics (list&lt;string&gt;), dictionaries,
-    /// nullable (int?), and MIME types. Depth-guarded against unbounded generic nesting.
+    /// The type <paramref name="name"/> names — its name or one of its aliases (<c>string</c> →
+    /// text). The type carries its facts: Property / Values / Shape / Example / Description and its
+    /// C# class. A spelled kind is not a name: <c>{text, md}</c> is asked by identity. Throws on a miss.
     /// </summary>
-    public System.Type? Get(string typeName) => Get(typeName, 0);
+    public app.type.@this this[string name]
+        => Array.Find(Types, t => t.Names(name))
+           ?? throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
 
-    /// <summary>Alias for <see cref="Get(string)"/> — preserves existing <c>app.type.Clr</c> caller habit.</summary>
-    public System.Type? Clr(string plangName) => Get(plangName);
-
-    /// <summary>True when <paramref name="typeName"/> names a plang type — the presence question
+    /// <summary>True when <paramref name="name"/> names a plang type — the presence question
     /// beside the indexer, which selects and throws on a miss.</summary>
-    public bool Contains(string typeName)
-        // A spelled {name/kind} ("text/md") is known when its name is — the same split the name door makes.
-        => Get(typeName.IndexOf('/') is > 0 and var slash && !typeName.Contains('<') ? typeName[..slash] : typeName) != null;
+    public bool Contains(string name) => Array.Exists(Types, t => t.Names(name));
 
-    // --- Stage 3 accessor surface ---
-
-    // Catalog cache keyed by PLang type name.  The no-module catalog walk is
-    // App-global (only the KnownTypes() seed varies, and that seed is identity
-    // to this registry instance), so a single Lazy is enough: BuildTypeEntries
-    // runs once per registry instance and every fold-property read of
-    // app.Type[name] then comes from the cache.
-    //
-    // The (modules)-overload of BuildTypeEntries stays uncached — its input is
-    // the App's module set which can change at runtime via code.load.
-    private readonly Lazy<Dictionary<string, app.type.@this>> _catalogByName;
-
-    private Dictionary<string, app.type.@this> CatalogByName => _catalogByName.Value;
-
-    public @this()
-    {
-        Choice = new global::app.type.item.choice.list.@this(this);
-        _catalogByName = new Lazy<Dictionary<string, app.type.@this>>(() =>
-        {
-            var dict = new Dictionary<string, app.type.@this>(StringComparer.OrdinalIgnoreCase);
-            foreach (var entry in BuildTypeEntries(null))
-            {
-                // Collision resolution: when two CLR types map to the same PLang
-                // name (e.g. `app.goal.@this` the goal entity and
-                // `app.channel.type.goal.@this` the goal-channel both lowercase to
-                // "goal" via the @this convention), prefer the catalog-richer
-                // entry.  First-wins TryAdd over reflection-ordered types is
-                // non-deterministic — a Scalar entry could shadow a Record with
-                // populated properties depending on assembly load order.
-                // Richness rank: Record (has properties) > Enum (has Values) > Scalar.
-                // (codeanalyzer v2 finding #1.)
-                if (!dict.TryGetValue(entry.Name, out var existing))
-                {
-                    dict[entry.Name] = entry;
-                    continue;
-                }
-                if (entry.Richness > existing.Richness)
-                    dict[entry.Name] = entry;
-            }
-            return dict;
-        });
-    }
-
-    /// <summary>
-    /// Index by PLang type name.  Returns the catalog-built entity — fully
-    /// populated with Property / Values / Shape / Example / Description / Kinds
-    /// / ClrType.  Throws on miss; index-miss is a hard error.
-    /// </summary>
-    /// <remarks>
-    /// Both doors (<c>app.Type[name]</c> and <c>data.Type</c>) hand back
-    /// equivalent entities — same catalog fold data, same ClrType.  Per
-    /// codeanalyzer v1 finding #1: returning <c>new app.type.@this(name)</c>
-    /// here would ship a contextless half-entity whose fold properties
-    /// silently null; cached catalog lookup closes that gap.
-    /// </remarks>
-    public app.type.@this this[string typeName]
-    {
-        get
-        {
-            if (CatalogByName.TryGetValue(typeName, out var built)) return built;
-            // A spelled form — "text/markdown" is {text, markdown}: the name before the first
-            // slash, the rest the kind, which the identity door canonicalises.
-            var slash = typeName.IndexOf('/');
-            if (slash > 0 && !typeName.Contains('<'))
-                return this[new app.type.@this(typeName[..slash], typeName[(slash + 1)..])];
-            // The container spelling a type prints — "list<path>" is {list, path}: the element is the kind.
-            var open = typeName.IndexOf('<');
-            if (open > 0 && typeName.EndsWith('>'))
-                return this[new app.type.@this(typeName[..open], typeName[(open + 1)..^1])];
-            if (Get(typeName) is not { } clr)
-                throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
-            // THE canonicalising door: an alias lands on the name of the item that owns it —
-            // "string" → the "text" entry — and a precision name is a kind of number: "int" → {number, int}.
-            if (_typeToName.TryGetValue(clr, out var canonicalName))
-            {
-                if (Precision(typeName, canonicalName) is { } precision)
-                    return this[new app.type.@this(canonicalName, precision)];
-                if (!string.Equals(canonicalName, typeName, StringComparison.OrdinalIgnoreCase))
-                    return this[canonicalName];
-                if (CatalogByName.TryGetValue(canonicalName, out var canonical)) return canonical;
-            }
-            // Not in the catalog (a generic shape, a primitive item the catalog doesn't list) but the
-            // name resolves — a type born knowing its class, no facts to carry.
-            return new app.type.@this(typeName.ToLowerInvariant(), clr);
-        }
-    }
-
-    // A number spelled by its precision ("int", "integer", "long?") — the precision is number's kind.
-    private static string? Precision(string spelled, string canonicalName)
-    {
-        if (canonicalName != "number") return null;
-        var lower = spelled.ToLowerInvariant().TrimEnd('?');
-        if (lower == "integer") return "int";
-        return lower != "number" && app.type.item.number.@this.Kinds.ContainsKey(lower) ? lower : null;
-    }
+    /// <summary>The C# class of the type <paramref name="name"/> names, or null when it names none.</summary>
+    public System.Type? Clr(string name) => Array.Find(Types, t => t.Names(name))?.ClrType;
 
     /// <summary>
     /// The type content of this MIME arrives as. Content off I/O is raw bytes — it IS binary; the
@@ -212,58 +104,49 @@ public sealed partial class @this
         => string.IsNullOrEmpty(extension) ? app.type.@this.Null
             : this[new app.type.@this("binary", extension.TrimStart('.'))];
 
-    // The full types built per identity {name, kind, strict, template} — each built once.
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<(string Name, string? Kind, bool Strict, string? Template), app.type.@this> _full = new();
-
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the
-    /// entry's facts. A choice's kind names its set, so a <c>{choice, operator}</c> carries that
-    /// set's options. The kind is canonicalised (<c>markdown</c> → <c>md</c>). A name the registry
-    /// doesn't know answers as its bare identity. Holds no context; cached per identity.
+    /// type's facts. A choice's kind names its set, so a <c>{choice, operator}</c> carries that
+    /// set's options. The kind is canonicalised (<c>markdown</c> → <c>md</c>). A name no type
+    /// answers to is its bare identity. Holds no context.
     /// </summary>
     public app.type.@this this[app.type.@this type]
     {
         get
         {
             var kind = type.Kind?.Name is { } k ? Context?.App.Format.CanonicaliseKind(k) ?? k : null;
-            return _full.GetOrAdd((type.Name.ToLowerInvariant(), kind?.ToLowerInvariant(), type.Strict, type.Template),
-                id => Full(type.Name, kind, id.Strict, id.Template));
+            if (Array.Find(Types, t => t.Names(type.Name)) is not { } entry)
+                return new app.type.@this(type.Name, kind, type.Strict, type.Template);
+            if (kind == null && !type.Strict && type.Template == null) return entry;
+            // A kind that pins a C# mate carries it ({number, int} → Int32).
+            var clr = kind != null && entry.Owned.FirstOrDefault(o => string.Equals(o.Kind, kind, StringComparison.OrdinalIgnoreCase)) is { } mate
+                ? mate.Clr : entry.ClrType;
+            return new app.type.@this(entry.Name, clr, kind, type.Strict, type.Template)
+            {
+                Alias = entry.Alias,
+                Owned = entry.Owned,
+                Property = entry.Property,
+                Values = entry.Name == "choice" && kind != null && Choice.Contains(kind) ? Choice[kind].Values : entry.Values,
+                Shape = entry.Shape,
+                ConstructorSignature = entry.ConstructorSignature,
+                Example = entry.Example,
+                Description = entry.Description,
+            };
         }
-    }
-
-    private app.type.@this Full(string name, string? kind, bool strict, string? template)
-    {
-        if (!Contains(name)) return new app.type.@this(name, kind, strict, template);
-        var entry = this[name];
-        if (kind == null && !strict && template == null) return entry;
-        // A number's precision kind carries its own C# mate ({number, int} → Int32), stamped at birth.
-        var clr = entry.Name == "number" && kind != null
-            ? (Primitive.Aliases.TryGetValue(kind, out var mate) ? mate : null)
-            : entry.ClrType;
-        return new app.type.@this(entry.Name, clr, kind, strict, template)
-        {
-            Property = entry.Property,
-            Values = entry.Name == "choice" && kind != null && Choice.Contains(kind) ? Choice[kind].Values : entry.Values,
-            Shape = entry.Shape,
-            ConstructorSignature = entry.ConstructorSignature,
-            Example = entry.Example,
-            Description = entry.Description,
-            Kinds = entry.Kinds,
-        };
     }
 
     /// <summary>
     /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when
-    /// the CLR type names no plang type (a raw POCO). The navigable mirror of
-    /// <see cref="this[string]"/>; replaces the old <c>ResolveName</c> verb-lookup. Null on miss
-    /// (a CLR type MAY not be plang vocabulary), unlike the name door's throw-on-miss.
+    /// the CLR type names no plang type (a raw POCO). Null on miss (a CLR type MAY not be plang
+    /// vocabulary), unlike the name door's throw-on-miss.
     /// </summary>
     public app.type.@this this[System.Type clrType]
     {
         get
         {
-            // The name comes from PlangName — the same step the catalog names through, so the
-            // entity's face and the catalog can never disagree. A kinded family is born here with
+            Load();
+            // The name comes from PlangName — the same step the facts name through, so the
+            // entity's face and the facts can never disagree. A kinded family is born here with
             // its kind; a choice carries its set's options; every other name is the named entity.
             var (name, kind) = PlangName(clrType);
             return kind == null ? this[name] : this[new app.type.@this(name, kind)];
@@ -313,85 +196,57 @@ public sealed partial class @this
 
     // The born-native lift moved to its rightful owner — the produced type. "Build whatever this raw
     // is" is item.@this.Create(raw, ctx) (item's own ICreate face); the registry keeps only SELECTION
-    // (the identity indexer this[System.Type], both string doors), never construction.
-
-    private System.Type? Get(string typeName, int depth)
-    {
-        if (string.IsNullOrWhiteSpace(typeName)) return null;
-        if (depth > MaxGenericDepth) return null;
-
-        if (typeName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && typeName.EndsWith(">"))
-        {
-            var innerTypeName = typeName[5..^1];
-            var innerType = Get(innerTypeName, depth + 1);
-            return innerType != null ? typeof(List<>).MakeGenericType(innerType) : null;
-        }
-
-        if ((typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ||
-             typeName.StartsWith("dictionary<", StringComparison.OrdinalIgnoreCase)) && typeName.EndsWith(">"))
-        {
-            var prefix = typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ? 5 : 11;
-            var inner = typeName[prefix..^1];
-            var parts = inner.Split(',');
-            if (parts.Length == 2)
-            {
-                var keyType = Get(parts[0].Trim(), depth + 1);
-                var valueType = Get(parts[1].Trim(), depth + 1);
-                if (keyType == null || valueType == null) return null;
-                return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
-            }
-        }
-
-        // The registry is the single source of truth — an item, or an alias resolving to one.
-        return ResolveType(typeName);
-    }
+    // (the identity indexer this[System.Type], the name door), never construction.
 
     // --- CLR type → PLang name ---
 
-    // The plang name of a CLR type — {name, kind} — read off the registry's own indexes. The one
-    // naming step: the entity door (this[System.Type]) builds its entity from it, and the catalog fold
-    // names through it directly (the door reads the catalog, so the fold cannot ask the door).
-    // Nullability is the slot's fact, never part of a name; a Data<T> slot names T; plain Data is the
-    // open item slot; a family names its content as the kind; a raw CLR type no plang type owns is clr.
+    // The plang name of a CLR type — {name, kind} — read off the types' own facts. The one naming
+    // step: the entity door (this[System.Type]) builds its entity from it, and a type's facts name
+    // their property types through it. Reads the set as it stands: the startup scan names property
+    // types while the set is being filled. Nullability is the slot's fact, never part of a name; a
+    // Data<T> slot names T; plain Data is the open item slot; a family names its content as the
+    // kind; a C# shape a type owns is that type (int → number); a raw CLR type no plang type owns is clr.
     private (string Name, string? Kind) PlangName(System.Type type)
     {
-        EnsureInitialized();
+        var types = _types;
         type = Nullable.GetUnderlyingType(type) ?? type;
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
         if (type == typeof(data.@this)) return ("item", null);
         // A plang list<T> NODE (action.list : list<action>) is {list, kind: element} — named before
-        // the item index, which would answer a plain "list" with no element.
+        // the item classes, which would answer a plain "list" with no element.
         if (typeof(app.type.item.list.@this).IsAssignableFrom(type) && ContainerFamily(type) is { } node)
             return (node.Family, Face(PlangName(node.Element)));
-        if (_clr.TryGetValue(type, out var owner)) return (owner, null);   // conversion owner: int → number
+        if (Array.Find(types, t => t.Owned.Any(o => !o.Assignable && o.Clr == type)) is { } owner)
+            return (owner.Name, null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
             return ("choice", Choice[type].Name);
-        // Only an item answers by its indexed name — _typeToName also holds the concept names of
-        // non-item @this classes (callstack, the serializers registry), and those are not plang types.
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _typeToName.TryGetValue(type, out var declared))
+        if (typeof(app.type.item.@this).IsAssignableFrom(type)
+            && (Array.Find(types, t => t.ClrType == type)?.Name ?? FamilyName(type)) is { } declared)
             return (declared, null);
-        if (Primitive.Canonical.TryGetValue(type, out var primitive)) return (primitive, null);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
     }
+
+    /// <summary>The name a C# class prints as — the kind rides in the name for a family
+    /// (<c>list&lt;path&gt;</c>).</summary>
+    internal string Face(System.Type type) => Face(PlangName(type));
 
     // A {name, kind} as the entity's face prints it — the kind rides in the name for a family.
     private string Face((string Name, string? Kind) named)
         => named.Kind == null ? named.Name : $"{named.Name}<{named.Kind}>";
 
-    // --- Registration ---
-
-    /// <summary>
-    /// Registers a domain type for deserialization and type resolution.
-    /// Prefer declaring [PlangType(name)] on the class itself — that's the single
-    /// source of truth. This API remains for test harnesses that synthesize types.
-    /// </summary>
-    public void Register(string plangName, System.Type clrType)
+    /// <summary>A type's property <paramref name="name"/> of C# class <paramref name="clr"/> — its
+    /// type born from its name and class directly, since a type's facts are read while the set fills.</summary>
+    internal property.@this Property(string name, System.Type clr)
     {
-        RegisterRuntime(plangName, clrType);
+        var (typeName, kind) = PlangName(clr);
+        return new property.@this
+        {
+            Name = char.ToLower(name[0]) + name[1..],
+            Type = new app.type.@this(typeName, Array.Find(_types, t => t.Names(typeName))?.ClrType, kind),
+        };
     }
-
 
     // --- Type-kind queries ---
 
@@ -410,8 +265,6 @@ public sealed partial class @this
             || underlying == typeof(Guid);
     }
 
-    // --- Conversion methods now live in Types/Conversion.cs (the partial). ---
-
     // --- Catalog support ---
 
     /// <summary>
@@ -422,8 +275,9 @@ public sealed partial class @this
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
     [System.Obsolete("Type/module discovery moves to list<type>/list<module> + a Fluid render — do not add new callers.")]
-    public List<app.type.@this> BuildTypeEntries(app.module.list.@this? modules)
+    public List<app.type.@this> BuildTypeEntries(app.module.list.@this modules)
     {
+        Load();
         var entries = new List<app.type.@this>();
         var seen = new HashSet<System.Type>();
         var queue = new Queue<System.Type>();
@@ -436,33 +290,25 @@ public sealed partial class @this
             queue.Enqueue(t);
         }
 
-        if (modules != null)
+        foreach (var ns in modules.Names)
         {
-            foreach (var ns in modules.Names)
+            foreach (var actionName in modules.GetActions(ns))
             {
-                foreach (var actionName in modules.GetActions(ns))
-                {
-                    var actionType = modules.GetActionType(ns, actionName);
-                    if (actionType == null) continue;
+                var actionType = modules.GetActionType(ns, actionName);
+                if (actionType == null) continue;
 
-                    foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
-                        var unwrapped = UnwrapType(prop.PropertyType);
-                        Enqueue(unwrapped);
-                        // A native typed list<T> carries its element type intrinsically;
-                        // walk it so the builder gets T's schema (e.g. list<LlmMessage>).
-                        if (unwrapped is { IsGenericType: true } u
-                            && u.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
-                            Enqueue(u.GetGenericArguments()[0]);
-                    }
+                foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+                    var unwrapped = UnwrapType(prop.PropertyType);
+                    Enqueue(unwrapped);
+                    // A native typed list<T> carries its element type intrinsically;
+                    // walk it so the builder gets T's schema (e.g. list<LlmMessage>).
+                    if (unwrapped is { IsGenericType: true } u
+                        && u.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
+                        Enqueue(u.GetGenericArguments()[0]);
                 }
             }
-        }
-        else
-        {
-            foreach (var t in KnownTypes())
-                Enqueue(t);
         }
 
         while (queue.Count > 0)
@@ -470,176 +316,25 @@ public sealed partial class @this
             var type = queue.Dequeue();
             if (!seen.Add(type)) continue;
 
-            var typeName = Face(PlangName(type));
+            var typeName = Face(type);
             // A CLR type no plang type owns is not a catalog entry.
             if (typeName == "clr") continue;
-
-            // Skip the type entity itself — its wire shape ({name, kind?, strict?})
-            // and kind vocabulary are taught explicitly in the compile prompt's
-            // "Type reference" block. Rendering it as a catalog scalar
-            // ("type: string") confuses the LLM.
-            if (type == typeof(app.type.@this)) continue;
             // Skip `data.@this` — actions with polymorphic Value slots (variable.set
             // etc.) declare it as `object`; surfacing it again as a scalar
             // ("object: string") in the catalog is redundant and confusing.
-            if (type == typeof(data.@this)) continue;
+            if (type == typeof(data.@this) || type == typeof(app.type.@this)) continue;
 
-            // Catalog metadata sourced from static-property convention on the type:
-            //   public static string Example => "...";
-            //   public static string Description => "...";
-            //   public static string Shape => "string";
-            // Missing properties → null. Replaces the former [PlangType(Example=, ...)]
-            // parameters; the attribute now only carries Name overrides for divergent
-            // cases (goal.call, catalog).
-            string? staticExample = ReadStaticString(type, "Example");
-            string? staticDescription = ReadStaticString(type, "Description");
-            string? staticShape = ReadStaticString(type, "Shape");
-            IReadOnlyList<string>? staticKinds = ReadStaticStringList(type, "Kinds");
-
-            var values = Choice.Contains(type) ? Choice[type].Values : null;
-            if (values != null)
-            {
-                entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
-                {
-                    Values = values,
-                    Description = staticDescription,
-                    Example = staticExample,
-                });
-                continue;
-            }
-
-            var resolveMethod = type.GetMethod("Resolve",
-                BindingFlags.Public | BindingFlags.Static);
-            string? constructorSignature = null;
-            string? derivedShape = null;
-            if (resolveMethod != null)
-            {
-                var resolveParams = resolveMethod.GetParameters();
-                if (resolveParams.Length >= 1)
-                {
-                    var first = resolveParams[0];
-                    derivedShape = Face(PlangName(first.ParameterType));
-                    constructorSignature = $"{first.Name}: {derivedShape}";
-                }
-            }
-
-            var llmProps = new app.type.property.list.@this();
-            // A member that needs the asker's context is a one-context method; it is the same
-            // property to the catalog, listed where it is declared among the properties.
-            var llmMethods = new Queue<MethodInfo>(type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .Where(m => Attribute.IsDefined(m, typeof(LlmBuilderAttribute)) && m.ReturnType != typeof(void)
-                    && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(actor.context.@this))
-                .OrderBy(m => m.MetadataToken));
-            void AddField(string name, System.Type fieldType)
-            {
-                // The catalog is still being built here, so the property's type is born from its
-                // name and class directly rather than asked of the door.
-                var (fieldName, fieldKind) = PlangName(fieldType);
-                llmProps.Add(new app.type.property.@this
-                {
-                    Name = char.ToLower(name[0]) + name[1..],
-                    Type = new app.type.@this(fieldName, ResolveType(fieldName), fieldKind),
-                });
-                Enqueue(UnwrapType(fieldType));
-            }
+            var entry = new app.type.@this(typeName,
+                Clr(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type, this);
+            if (entry.Values == null && entry.Shape == null && entry.Property == null) continue;
+            entries.Add(entry);
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                if (!prop.CanRead || prop.Name == "EqualityContract") continue;
-                if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
-                while (llmMethods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
-                    && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                    AddField(llmMethods.Dequeue().Name, m.ReturnType);
-                // [LlmBuilder] is the explicit opt-in for catalog visibility;
-                // [JsonIgnore] only governs STJ wire shape. A property can be
-                // both (e.g. type.Kind: not on the entity's own wire — the
-                // wire emits `kind` from data.Type.Kind via Wire.cs — but
-                // discoverable as a builder field).
-                AddField(prop.Name, prop.PropertyType);
-            }
-            while (llmMethods.TryDequeue(out var m)) AddField(m.Name, m.ReturnType);
-
-            // Scalar discriminant: either has a Resolve(input, context) factory (so the
-            // wire shape is derivable), declares a static Shape property, or is
-            // catalog-named but has no LLM-builder properties (a domain wrapper around
-            // a primitive). Records have llmProps; scalars don't.
-            var hasPlangName = type.GetCustomAttributes<PlangTypeAttribute>().Any();
-            var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
-            bool isScalar = constructorSignature != null
-                || staticShape != null
-                || ((hasPlangName || isThisClass) && llmProps.Count == 0);
-
-            if (isScalar)
-            {
-                entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
-                {
-                    Shape = derivedShape ?? staticShape ?? "string",
-                    ConstructorSignature = constructorSignature,
-                    Property = llmProps.Count > 0 ? llmProps : null,
-                    Description = staticDescription,
-                    Example = staticExample,
-                    Kinds = staticKinds,
-                });
-                continue;
-            }
-
-            if (llmProps.Count > 0)
-            {
-                entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
-                {
-                    Property = llmProps,
-                    Description = staticDescription,
-                    Example = staticExample,
-                    Kinds = staticKinds,
-                });
-            }
+                if (Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) Enqueue(UnwrapType(prop.PropertyType));
+            foreach (var m in type.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                if (Attribute.IsDefined(m, typeof(LlmBuilderAttribute))) Enqueue(UnwrapType(m.ReturnType));
         }
 
         return entries;
-    }
-
-    /// <summary>
-    /// Reads a public-static string property by name from <paramref name="type"/>.
-    /// Used to source catalog metadata (Example, Description, Shape) from a
-    /// convention rather than from a per-parameter attribute — see
-    /// <see cref="BuildTypeEntries"/>. Returns null when the property is absent,
-    /// non-string, or throws.
-    /// </summary>
-    private string? ReadStaticString(System.Type type, string propertyName)
-    {
-        var prop = type.GetProperty(propertyName,
-            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-        if (prop == null || prop.PropertyType != typeof(string)) return null;
-        try
-        {
-            return prop.GetValue(null) as string;
-        }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Reads a public-static <c>IReadOnlyList&lt;string&gt;</c> (or <c>IEnumerable&lt;string&gt;</c>)
-    /// property — the catalog's opt-in <c>Kinds</c> vocabulary convention. Returns null when
-    /// the property is absent, the wrong shape, or throws.
-    /// </summary>
-    private IReadOnlyList<string>? ReadStaticStringList(System.Type type, string propertyName)
-    {
-        var prop = type.GetProperty(propertyName,
-            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-        if (prop == null) return null;
-        try
-        {
-            var raw = prop.GetValue(null);
-            if (raw is IReadOnlyList<string> list) return list;
-            if (raw is IEnumerable<string> seq) return seq.ToList();
-            return null;
-        }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        {
-            return null;
-        }
     }
 
     /// <summary>

@@ -121,12 +121,11 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     [Test]
     public async Task PrimitiveMap_ListRegistered_RawListEntryRetired()
     {
-        // type/primitive/this.cs maps "list"/"array" to the new value type; the raw
-        // List<object> entry is gone (J).
-        var aliases = new global::app.type.primitive.@this().Aliases;
-        await Assert.That(aliases["list"]).IsEqualTo(typeof(ListV));
-        await Assert.That(aliases["array"]).IsEqualTo(typeof(ListV));
-        await Assert.That(aliases["list"]).IsNotEqualTo(typeof(List<object>));
+        // "list"/"array" name the list value type, not a raw List<object>.
+        var types = global::PLang.Tests.TestApp.SharedContext.App.Type;
+        await Assert.That(types.Clr("list")).IsEqualTo(typeof(ListV));
+        await Assert.That(types.Clr("array")).IsEqualTo(typeof(ListV));
+        await Assert.That(types.Clr("list")).IsNotEqualTo(typeof(List<object>));
     }
 
     [Skip("Per-element in-memory signing was removed: signing is an I/O-boundary concern now — one signature layer wraps the WHOLE payload, not each nested Data. Element-level survival of a signature at rest no longer applies; the list round-trip itself is covered below.")]

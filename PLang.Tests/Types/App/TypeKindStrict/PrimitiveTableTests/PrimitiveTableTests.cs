@@ -1,27 +1,25 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Prim = global::app.type.primitive.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.PrimitiveTableTests;
 
-// Primitive table flip: text canonical for string; int/long/decimal/double/float
-// canonical to number; BuilderNames trimmed (text in, string/numerics out).
+// text owns "string" as its alias; BuilderNames trimmed (text in, string/numerics out).
 public class PrimitiveTableTests
 {
 #pragma warning disable CS0618
     private static readonly global::app.type.list.view.@this View = new(null!);
 #pragma warning restore CS0618
-    private static readonly Prim Table = new();
+    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
 
-    [Test] public async Task Canonical_StringMapsToText()
-        => await Assert.That(Table.Canonical[typeof(string)]).IsEqualTo("text");
+    [Test] public async Task String_NamesText()
+        => await Assert.That(Types["string"].Name).IsEqualTo("text");
 
-    [Test] public async Task Aliases_StringStillResolves()
-        => await Assert.That(Table.Aliases["string"]).IsEqualTo(typeof(string));
+    [Test] public async Task Text_OwnsStringAlias()
+        => await Assert.That(Types["text"].Alias).Contains("string");
 
-    [Test] public async Task Aliases_TextStillResolves()
-        => await Assert.That(Table.Aliases["text"]).IsEqualTo(typeof(string));
+    [Test] public async Task Text_Resolves()
+        => await Assert.That(Types.Clr("text")).IsEqualTo(typeof(global::app.type.item.text.@this));
 
     [Test] public async Task BuilderNames_IncludesText()
         => await Assert.That(View.BuilderNames).Contains("text");
@@ -36,15 +34,4 @@ public class PrimitiveTableTests
         await Assert.That(View.BuilderNames).DoesNotContain("decimal");
         await Assert.That(View.BuilderNames).DoesNotContain("double");
     }
-
-    [Test] public async Task Canonical_IntLongDecimalDouble_MapToNumber()
-    {
-        await Assert.That(Table.Canonical[typeof(int)]).IsEqualTo("number");
-        await Assert.That(Table.Canonical[typeof(long)]).IsEqualTo("number");
-        await Assert.That(Table.Canonical[typeof(decimal)]).IsEqualTo("number");
-        await Assert.That(Table.Canonical[typeof(double)]).IsEqualTo("number");
-    }
-
-    [Test] public async Task Canonical_FloatMapsToNumber()
-        => await Assert.That(Table.Canonical[typeof(float)]).IsEqualTo("number");
 }

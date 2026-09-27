@@ -24,11 +24,8 @@ public class RegistryFoldTests
     [Test]
     public async Task Get_AnAlias_ResolvesToTheItemThatOwnsIt()
     {
-        // A primitive's spelled names are owned by its item: string → text, decimal → number.
-        await Assert.That(_types.Get("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
-        await Assert.That(_types.ResolveType("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
-        await Assert.That(_types.Get("decimal")).IsEqualTo(typeof(global::app.type.item.number.@this));
-        await Assert.That(_types.ResolveType("decimal")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        // A primitive's spelled names are owned by its item: string → text.
+        await Assert.That(_types.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]
@@ -42,7 +39,7 @@ public class RegistryFoldTests
             ("datetime", typeof(global::app.type.item.datetime.@this), typeof(System.DateTimeOffset)),
         })
         {
-            await Assert.That(_types.ResolveType(name)).IsEqualTo(item);
+            await Assert.That(_types.Clr(name)).IsEqualTo(item);
             await Assert.That(_types[mate]?.Name).IsEqualTo(name);
         }
         // Numerics: many-to-one — every numeric CLR primitive names "number"

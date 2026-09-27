@@ -8,7 +8,7 @@ namespace app.type;
 /// <summary>
 /// PLang type entity carrying the <c>{Name, Kind, Strict}</c> identity plus the
 /// folded catalog knowledge (Property, Values, Shape,
-/// ConstructorSignature, Example, Description, Kinds).
+/// ConstructorSignature, Example, Description).
 ///
 /// <para><c>Name</c> is the family/primitive ("text", "number", "image", "long",
 /// "datetime"). <c>Kind</c> is the optional subtype ("md", "gif", "int") —
@@ -29,7 +29,7 @@ namespace app.type;
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
-public sealed class @this : item.@this
+public sealed class @this : item.@this, item.IMatch<@this>
 {
     /// <summary>Self-write (the sync core; base <c>Output</c> wraps it): the type entity's
     /// <c>{name, kind?, strict?}</c> identity — the same shape Data writes for its <c>type</c>
@@ -467,21 +467,15 @@ public sealed class @this : item.@this
     /// <summary>Semantic description from a static <c>Description</c> property on the type.</summary>
     public string? Description { get; init; }
 
-    /// <summary>
-    /// Developer-meaningful kind vocabulary from a static <c>Kinds</c> property.
-    /// Advertised vocabulary the LLM may emit; distinct from <see cref="Kind"/>
-    /// (the per-value subtype).
-    /// </summary>
-    public IReadOnlyList<string>? Kinds { get; init; }
+    /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
+    /// declared by its class as a static <c>Alias</c>. Never null.</summary>
+    [JsonIgnore]
+    public IReadOnlyList<string> Alias { get; init; } = [];
 
-    /// <summary>How much catalog this entry carries — a record (properties, no shape) over a closed
-    /// set (values) over a scalar (shape) over a bare name. Breaks a same-name tie in the catalog
-    /// deterministically.</summary>
-    internal int Richness =>
-        Shape == null && Property is { Count: > 0 } ? 3
-        : Values is { Count: > 0 } ? 2
-        : Shape != null || ConstructorSignature != null ? 1
-        : 0;
+    /// <summary>The C# shapes this type owns (<c>int</c> → number, kind int), declared by its class
+    /// as a static <c>OwnedClrTypes</c>: a raw C# value of one of them is a value of this type.</summary>
+    [JsonIgnore]
+    internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get; init; } = [];
 
     /// <summary>A type born knowing its C# class — the registry's entries and the full types it
     /// builds for an identity.</summary>
@@ -490,6 +484,87 @@ public sealed class @this : item.@this
     {
         _clrType = clrType;
     }
+
+    /// <summary>
+    /// The type a class defines: its name, its C# class, its aliases and owned C# shapes, and — when
+    /// <paramref name="types"/> is given — the facts the class declares: a closed set's options, a
+    /// scalar's wire shape and constructor, a record's <c>[LlmBuilder]</c> properties, its static
+    /// <c>Description</c> and <c>Example</c>. The facts name property types through
+    /// <paramref name="types"/>, so they are read once every type's name is known; without it the
+    /// type is its identity alone.
+    /// </summary>
+    internal @this(string name, System.Type clr, list.@this? types) : this(name, clr)
+    {
+        Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
+        Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
+        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
+        if (types == null || clr == typeof(@this)) return;
+
+        var example = Declared<string>("Example");
+        var description = Declared<string>("Description");
+        if (types.Choice.Contains(clr))
+        {
+            Values = types.Choice[clr].Values;
+            Description = description;
+            Example = example;
+            return;
+        }
+
+        var shape = Declared<string>("Shape");
+        string? signature = null, derived = null;
+        if (clr.GetMethod("Resolve", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                ?.GetParameters() is [var first, ..])
+        {
+            derived = types.Face(first.ParameterType);
+            signature = $"{first.Name}: {derived}";
+        }
+
+        var property = new property.list.@this();
+        // A member that needs the asker's context is a one-context method; it is the same property to
+        // the catalog, listed where it is declared among the properties.
+        var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
+                && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(actor.context.@this))
+            .OrderBy(m => m.MetadataToken));
+        foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!prop.CanRead || prop.Name == "EqualityContract") continue;
+            if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
+            while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
+                && m.MetadataToken < prop.GetMethod!.MetadataToken)
+                property.Add(types.Property(methods.Dequeue().Name, m.ReturnType));
+            property.Add(types.Property(prop.Name, prop.PropertyType));
+        }
+        while (methods.TryDequeue(out var m)) property.Add(types.Property(m.Name, m.ReturnType));
+
+        // A scalar has a constructor, a declared wire shape, or is a named type with no builder
+        // properties (a domain wrapper around a primitive); a record has builder properties.
+        if (signature != null || shape != null || property.Count == 0)
+        {
+            Shape = derived ?? shape ?? "string";
+            ConstructorSignature = signature;
+            Property = property.Count > 0 ? property : null;
+        }
+        else Property = property;
+        Description = description;
+        Example = example;
+
+        T? Declared<T>(string member) where T : class
+        {
+            var p = clr.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                                            | System.Reflection.BindingFlags.FlattenHierarchy);
+            return p?.GetValue(null) as T;
+        }
+    }
+
+    /// <summary>This type answers for its name or one of its aliases, case-insensitive.</summary>
+    public System.Threading.Tasks.ValueTask<@this?> Match(string key) => new(Names(key) ? this : null);
+
+    /// <summary>True when <paramref name="key"/> is this type's name or one of its aliases — the
+    /// in-memory answer <see cref="Match"/> gives, for the registry's synchronous walk.</summary>
+    internal bool Names(string key)
+        => string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)
+           || Alias.Contains(key, System.StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A type answers navigation as its full type — the registry's, found with the
     /// asker's context. A full type is its own answer.</summary>

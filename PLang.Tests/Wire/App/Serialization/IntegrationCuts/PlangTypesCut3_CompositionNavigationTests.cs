@@ -71,11 +71,11 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         var types = new global::app.type.list.@this();
         // image and path are distinct registered types.
-        await Assert.That(types.ResolveType("image")).IsEqualTo(typeof(image));
-        await Assert.That(types.ResolveType("path")).IsNotEqualTo(typeof(image));
+        await Assert.That(types.Clr("image")).IsEqualTo(typeof(image));
+        await Assert.That(types.Clr("path")).IsNotEqualTo(typeof(image));
         // No "path|image" or similar union name exists anywhere in the registry.
-        await Assert.That(types.ResolveType("path|image")).IsNull();
-        await Assert.That(types.ResolveType("image|path")).IsNull();
+        await Assert.That(types.Clr("path|image")).IsNull();
+        await Assert.That(types.Clr("image|path")).IsNull();
         // image's CLR type doesn't inherit from path — no union via inheritance.
         await Assert.That(typeof(global::app.type.item.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
     }
@@ -83,8 +83,7 @@ public class PlangTypesCut3_CompositionNavigationTests
     [Test] public async Task CatalogRendering_ImagePathProperty_HasTypePathAnnotation()
     {
         var types = new global::app.type.list.@this();
-        var entries = types.BuildTypeEntries(null);
-        var imageEntry = entries.FirstOrDefault(e => e.Name == "image");
+        var imageEntry = types["image"];
         await Assert.That(imageEntry).IsNotNull();
         await Assert.That(imageEntry!.Property).IsNotNull();
         var pathProp = imageEntry.Property!.FirstOrDefault(p => p.Name == "path");

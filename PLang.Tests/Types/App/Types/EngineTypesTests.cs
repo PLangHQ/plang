@@ -27,18 +27,6 @@ public class EngineTypesTests
     }
 
     [Test]
-    public async Task Clr_Int_ReturnsIntType()
-    {
-        await Assert.That(_types.Clr("int")).IsEqualTo(typeof(global::app.type.item.number.@this));
-    }
-
-    [Test]
-    public async Task Clr_Long_ReturnsLongType()
-    {
-        await Assert.That(_types.Clr("long")).IsEqualTo(typeof(global::app.type.item.number.@this));
-    }
-
-    [Test]
     public async Task Clr_Bool_ReturnsBoolType()
     {
         await Assert.That(_types.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
@@ -55,42 +43,6 @@ public class EngineTypesTests
     public async Task Clr_Bytes_ReturnsByteArrayType()
     {
         await Assert.That(_types.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
-    }
-
-    [Test]
-    public async Task Clr_NullableInt_ReturnsNullableIntType()
-    {
-        await Assert.That(_types.Clr("int?")).IsEqualTo(typeof(global::app.type.item.number.@this));
-    }
-
-    [Test]
-    public async Task Clr_NullableGuid_ReturnsNullableGuidType()
-    {
-        await Assert.That(_types.Clr("guid?")).IsEqualTo(typeof(global::app.type.item.guid.@this));
-    }
-
-    [Test]
-    public async Task Clr_GenericListString_ReturnsListOfString()
-    {
-        await Assert.That(_types.Clr("list<string>")).IsEqualTo(typeof(List<global::app.type.item.text.@this>));
-    }
-
-    [Test]
-    public async Task Clr_GenericListInt_ReturnsListOfInt()
-    {
-        await Assert.That(_types.Clr("list<int>")).IsEqualTo(typeof(List<global::app.type.item.number.@this>));
-    }
-
-    [Test]
-    public async Task Clr_GenericDictStringInt_ReturnsDictionary()
-    {
-        await Assert.That(_types.Clr("dict<string,int>")).IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
-    }
-
-    [Test]
-    public async Task Clr_GenericDictionaryStringInt_ReturnsDictionary()
-    {
-        await Assert.That(_types.Clr("dictionary<string,int>")).IsEqualTo(typeof(Dictionary<global::app.type.item.text.@this, global::app.type.item.number.@this>));
     }
 
     [Test]
@@ -606,20 +558,6 @@ public class EngineTypesTests
 
         // Should return null (depth exceeded), not throw
         await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task Clr_ExactlyAtMaxDepth_Resolves()
-    {
-        // Build list<list<...list<string>...>> nested exactly 20 times
-        // MaxGenericDepth=20, depth starts at 0, so 20 nestings reaches depth=20 (allowed)
-        var typeName = "string";
-        for (int i = 0; i < 20; i++)
-            typeName = $"list<{typeName}>";
-
-        var result = _types.Clr(typeName);
-
-        await Assert.That(result).IsNotNull();
     }
 
     [Test]
