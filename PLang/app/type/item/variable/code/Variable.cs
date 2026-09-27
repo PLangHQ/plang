@@ -29,7 +29,12 @@ public sealed class Variable : Hop
         => await context.Variable.Set(Name, value);
 
     /// <summary>What the name holds, or — when it holds nothing — an empty dict stored under it,
-    /// so a write deeper in (<c>set %x.a% = 1</c> on a new <c>%x%</c>) has a place to land.</summary>
+    /// so a write deeper in (<c>set %x.a% = 1</c> on a new <c>%x%</c>) has a place to land. A <c>!</c>
+    /// name the memory doesn't bind that names a setting (<c>%!http.request.timeout%</c>) is the asker's
+    /// settings, which take the write themselves.</summary>
     internal async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(global::app.actor.context.@this context)
-        => await context.Variable.Ensure(Name, () => new global::app.type.item.dict.@this());
+    {
+        if (Name.StartsWith('!') && await Start(null, context) is { IsInitialized: true } held) return held;
+        return await context.Variable.Ensure(Name, () => new global::app.type.item.dict.@this());
+    }
 }

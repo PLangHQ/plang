@@ -28,15 +28,15 @@ public class SetTests
     [Test]
     public async Task Set_BangPath_WritesSetting_NotVariable()
     {
-        // `set %!http.request.timeout% = 5` lands on context.Setting (where the generator seam
+        // `set %!http.request.timeoutInSec% = 5` lands on context.Setting (where the generator seam
         // reads it) — the write side of the setting front door — not on the variable store.
         var context = _app.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%!http.request.timeout%"), ("value", 5));
+        var action = TestAction.Create("variable", "set", ("name", "%!http.request.timeoutInSec%"), ("value", 5));
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Setting.Get(_app.Module("http")["request"]!, "timeout")).Success).IsTrue();
-        await Assert.That((await context.Variable.GetValue("!http.request.timeout"))).IsNull();
+        await Assert.That((await context.Setting.Get(_app.Module("http")["request"]!, "timeoutInSec")).Success).IsTrue();
+        await Assert.That((await context.Variable.GetValue("!http.request.timeoutInSec"))).IsNull();
     }
 
     // Build.goal's `set default %!build.cache% = true` leaves --build={"cache":false} standing: a

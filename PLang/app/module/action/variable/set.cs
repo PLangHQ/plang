@@ -133,19 +133,6 @@ public partial class Set : IContext, IScope
                 return existing;
         }
 
-        // %!path% write → a setting on context.Setting (the write side of the setting front door),
-        // not a variable: `set %!http.request.timeout% = 5` lands where the generator seam reads it
-        // (step → %!module.action.param% → %!module.param% → [Default]). A root the memory binds
-        // (%!app.goal.list.setting.os%) writes through its own hops — a setting instance writes the
-        // option itself. The reserved !ask sentinel (callback resume) stays a variable.
-        if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask")
-            && !(await Context.Variable.Get(name.Code.Root.Name)).IsInitialized)
-        {
-            // the value itself, read now: a setting is built from this run's values in memory
-            await Context.Setting.Set(name.Name[1..], new data.@this(name.Name[1..], await Value.Value(), context: Context));
-            return Value;
-        }
-
         // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure
         // surfaces as Data.Error (Success=false) — Variables.Set is not called in that case so
         // the binding stays whatever it was. For primitives this is straight coercion ("42" → 42).
@@ -310,7 +297,8 @@ public partial class Set : IContext, IScope
         // name as-is, without inspecting or computing it (no AsCanonical, no .Value). A reference
         // or template resolves/renders on its own door at read; a literal is itself. A self-write
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
-        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties.
+        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.cache%` a
+        // setting's option for this run.
         return await name.Set(Value, Context);
     }
 

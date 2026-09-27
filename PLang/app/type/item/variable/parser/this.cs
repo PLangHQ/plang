@@ -14,11 +14,16 @@ public sealed class @this
     private readonly string _text;
     private readonly List<global::app.error.Error> _error = [];
     private List<variable.@this>? _variable;
+    private readonly System.Lazy<variable.@this?> _whole;
 
     // The cursor over the reference being read, and where its body ends (its closing %).
     private int _pos, _end;
 
-    public @this(string text) => _text = text ?? "";
+    public @this(string text)
+    {
+        _text = text ?? "";
+        _whole = new(One);
+    }
 
     /// <summary>The references the text holds, in order. One that doesn't parse is left out; the
     /// reason is in <see cref="Error"/>.</summary>
@@ -62,21 +67,21 @@ public sealed class @this
     /// <summary>The one variable the whole text is — written with its % signs (<c>%user.name%</c>), or a bare
     /// name (<c>user</c>, the form a name slot may carry) read as <c>%user%</c>. The one way a variable is made
     /// from text. Null when the text is not exactly one variable; the reason is in <see cref="Error"/>.</summary>
-    public variable.@this? Whole
+    public variable.@this? Whole => _whole.Value;
+
+    // The whole text as one variable, read once — a second read of Whole adds no second error.
+    private variable.@this? One()
     {
-        get
+        if (!_text.StartsWith('%'))
         {
-            if (!_text.StartsWith('%'))
-            {
-                var named = new @this($"%{_text}%");
-                var whole = named.Whole;
-                _error.AddRange(named.Error);
-                return whole;
-            }
-            if (Read(0) is { } one && one.Text.Length == _text.Length) return one;
-            if (_error.Count == 0) _error.Add(new global::app.error.Error($"'{_text}' is not one variable.", "InvalidVariable", 400));
-            return null;
+            var named = new @this($"%{_text}%");
+            var whole = named.Whole;
+            _error.AddRange(named.Error);
+            return whole;
         }
+        if (Read(0) is { } one && one.Text.Length == _text.Length) return one;
+        if (_error.Count == 0) _error.Add(new global::app.error.Error($"'{_text}' is not one variable.", "InvalidVariable", 400));
+        return null;
     }
 
     /// <summary>The reference whose opening <c>%</c> is at <paramref name="at"/>, or null: none opens

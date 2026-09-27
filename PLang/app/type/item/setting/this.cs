@@ -69,9 +69,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         if (Option(key) == null)
             throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
-        await context.Setting.Set($"{Path}.{key}",
-            value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+        await Write(key, value, context);
         return await base.Set(key, isIndex, value, context);
+    }
+
+    /// <summary>This run's value for <paramref name="key"/> under this setting's path, in the writer's
+    /// settings. The value is read now — a setting is built from this run's values in memory — and
+    /// goes in whole.</summary>
+    protected async System.Threading.Tasks.ValueTask Write(string key, object? value, global::app.actor.context.@this context)
+    {
+        var written = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
+        await written.Value();
+        await context.Setting.Set($"{Path}.{key}", written);
     }
 
     /// <summary>
