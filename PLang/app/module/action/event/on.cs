@@ -41,7 +41,8 @@ public partial class On : IContext
     {
         // Resolve target actor — default to current context's actor
         var named = Actor == null ? null : await Actor.Value();
-        var targetActor = (named == null ? null : Context.App.Actor[named]) ?? Context.Actor ?? Context.App.User;
+        var targetActor = (named == null ? null : await (await Context.App.actor.Get(named.ToString()!)).Value())
+                          ?? Context.Actor ?? Context.App.User;
 
         // The binding sets %!event% (the moment that fired) before the handler runs the held call.
         var call = (await Goal.Value())!;

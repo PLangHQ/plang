@@ -3,7 +3,7 @@ namespace PLang.Tests.App.Modules.app;
 /// <summary>
 /// An actor slot names WHO — a choice from the closed set {system, user} (<c>choice&lt;actor&gt;</c>).
 /// Each handler's slot is bound from a .pr-shaped action and read through the typed door; the name
-/// selects the live actor through <c>app.Actor[name]</c>.
+/// selects the live actor through <c>app.actor.Get(name)</c>.
 /// </summary>
 public class ActorChoiceTests
 {
@@ -30,7 +30,7 @@ public class ActorChoiceTests
     {
         var named = await slot!.Value();
         await Assert.That(named).IsNotNull();
-        await Assert.That(ReferenceEquals(_app.Actor[named!], _app.System)).IsTrue();
+        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.System)).IsTrue();
     }
 
     [Test] public async Task GoalCall_System_SelectsSystem()
@@ -87,7 +87,7 @@ public class ActorChoiceTests
         var slot = (await Bound<global::app.module.action.channel.Set>("channel", "set", "%who%")).Actor!;
 
         var named = await slot.Value();
-        await Assert.That(ReferenceEquals(_app.Actor[named!], _app.User)).IsTrue();
+        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.User)).IsTrue();
     }
 
     [Test]

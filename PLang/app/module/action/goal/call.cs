@@ -92,7 +92,7 @@ public partial class Call : IContext
         // actor's context. Only resolve Actor when it actually holds one, so a null
         // value never tries to convert into an actor.
         var named = Actor == null || await Actor.IsEmpty() ? null : await Actor.Value();
-        var execContext = named == null ? Context : Context.App.Actor[named].Context;
+        var execContext = named == null ? Context : (await (await Context.App.actor.Get(named.ToString()!)).Value())!.Context;
 
         // Data just flows — each argument binds under its name as-is, no inspection, no resolve;
         // it resolves on its own door when the callee reads it. Goal-call is not a fork: the writes

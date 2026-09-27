@@ -8,9 +8,21 @@ namespace app.actor;
 /// <summary>
 /// Represents an actor in the system with its own context and IO channels.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IList<@this, global::app.actor.list.@this>
 {
     private readonly CancellationTokenSource _cts;
+
+    /// <summary>A key names this actor by its name — <c>system</c>, <c>user</c>; case is not the program's to get right.</summary>
+    public ValueTask<@this?> Match(string key)
+        => ValueTask.FromResult(string.Equals(Name, key, StringComparison.OrdinalIgnoreCase) ? this : null);
+
+    /// <summary>The actor the asker acts as.</summary>
+    public static @this? Current(global::app.actor.context.@this context) => context.Actor;
+
+    /// <summary>The app's actors: System and User.</summary>
+    public static global::app.actor.list.@this List(global::app.@this app) => new(app);
 
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").

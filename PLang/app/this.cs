@@ -216,20 +216,23 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public format.list.@this Format { get; } = new();
 
-    /// <summary>The app's actors — select by name with <c>app.Actor[name]</c>.</summary>
-    public actor.list.@this Actor { get; }
+    /// <summary>
+    /// The type named <c>actor</c> — <c>%!app.actor%</c>: its <c>list</c> is the app's two actors, System
+    /// and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
+    /// </summary>
+    public global::app.type.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
     /// Cancelling System cascades to User and Service.
     /// Links to App's shutdown token so RequestShutdown() cascades through everything.
     /// </summary>
-    public actor.@this System => Actor.System;
+    public global::app.actor.@this System => actor.list.System;
 
     /// <summary>
     /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
-    public actor.@this User => Actor.User;
+    public global::app.actor.@this User => actor.list.User;
 
     /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
@@ -272,7 +275,7 @@ public sealed partial class @this : IAsyncDisposable
         // values from. System is the cancellation root; User links to its token.
         // The actor/context ctor touches App only lazily (Settings/Code via deferred
         // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
-        Actor = new actor.list.@this(this, _shutdownCts.Token);
+        actor = new(this);
 
         Event = new global::app.@event.list.@this();
         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
@@ -576,7 +579,7 @@ public sealed partial class @this : IAsyncDisposable
         _shutdownCts.Cancel();
         _shutdownCts.Dispose();
 
-        await Actor.DisposeAsync();
+        await actor.list.DisposeAsync();
 
         await _modules.DisposeAsync();
         await Code.DisposeAsync();

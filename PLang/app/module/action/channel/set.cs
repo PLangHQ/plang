@@ -37,7 +37,7 @@ public partial class Set : IContext
             return Context.Error(new ServiceError("Channel name is required", "ValueRequired", 400));
 
         var named = Actor == null ? null : await Actor.Value();
-        var actor = named == null ? Context.Actor : Context.App.Actor[named];
+        var actor = named == null ? Context.Actor : (await (await Context.App.actor.Get(named.ToString()!)).Value())!;
 
         if ((await Goal.Value()) is not { } call)
             return Context.Error(new ServiceError("Goal is required", "ValueRequired", 400));
