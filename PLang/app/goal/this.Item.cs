@@ -5,6 +5,7 @@ namespace app.goal;
 // The goal owns its wire: Output writes itself token by token (each field a plang type that writes
 // itself — path, choice, the step/goal children), its serializer/Reader.cs reads itself back.
 [global::app.Attributes.PlangType("goal")]
+[global::app.Attributes.Format("", "application/plang-goal", ".pr")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.goal.list.@this>

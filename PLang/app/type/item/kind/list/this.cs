@@ -29,7 +29,7 @@ public sealed class @this : global::app.type.kind.@this
         => isIndex
             ? int.TryParse(key, out var i) && i >= 0 && i < Length(obj)
                 ? (true, At(obj, i)) : (false, null)
-            : ctx.App.type.list.Kind("*").Descend(obj, key, isIndex, ctx);
+            : ctx.App.type.list["item"].kind["*"]!.Descend(obj, key, isIndex, ctx);
 
     // Index write (`[0] = step`) → replace the element in place on the sequence host (its identity
     // holds — it mutates, no rebind). A named member → the * kind (a settable property on the
@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.kind.@this
     public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
-        if (!isIndex) return ctx.App.type.list.Kind("*").Set(host, key, isIndex, value, ctx);
+        if (!isIndex) return ctx.App.type.list["item"].kind["*"]!.Set(host, key, isIndex, value, ctx);
         var n = Length(host);
         if (!int.TryParse(key, out var i) || i < 0 || i >= n)
             throw new System.NotSupportedException(

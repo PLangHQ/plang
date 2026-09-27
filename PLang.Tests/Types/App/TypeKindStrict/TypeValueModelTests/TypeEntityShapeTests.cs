@@ -59,7 +59,7 @@ public class TypeEntityShapeTests
         await using var app = TestApp.Create("/test");
         // Compressibility is the format's knowledge about a type: image is already compressed.
         var image = app.type.list["image"];
-        await Assert.That(app.Format.Compressible(image)).IsFalse();
+        await Assert.That(image.kind.Compressible).IsFalse();
     }
 
     [Test] public async Task BareType_CarriesNoFacts_ItsFullTypeDoes()

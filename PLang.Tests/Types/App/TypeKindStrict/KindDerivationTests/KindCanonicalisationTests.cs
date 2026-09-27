@@ -1,50 +1,45 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.KindDerivationTests;
 
+// A spelled kind finds its format through the one walk: a format answers to its name, its
+// extensions and its MIMEs, so another spelling of the same format is the same kind.
 public class KindCanonicalisationTests
 {
-    [Test] public async Task Canonicalise_Markdown_ToMd()
+    [Test] public async Task Markdown_IsMd()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Format.CanonicaliseKind("markdown")).IsEqualTo("md");
+        await Assert.That(app.type.list.Kind("markdown").Name).IsEqualTo("md");
     }
 
-    [Test] public async Task Canonicalise_Jpeg_ToJpg()
+    [Test] public async Task Jpeg_IsJpg()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Format.CanonicaliseKind("jpeg")).IsEqualTo("jpg");
+        await Assert.That(app.type.list.Kind("jpeg").Name).IsEqualTo("jpg");
     }
 
-    [Test] public async Task Canonicalise_UnknownFrobnicate_PassesThrough()
+    [Test] public async Task UnknownFrobnicate_IsItsOwnName()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Format.CanonicaliseKind("frobnicate")).IsEqualTo("frobnicate");
+        await Assert.That(app.type.list.Kind("frobnicate").Name).IsEqualTo("frobnicate");
     }
 
-    [Test] public async Task Canonicalise_SharedSubtypePicksPrimary()
+    [Test] public async Task SpelledTypeKind_FindsTheFormat()
     {
         await using var app = TestApp.Create("/test");
-        // Shared MIME subtype across two extensions: shorter extension wins.
-        await Assert.That(app.Format.CanonicaliseKind("jpeg")).IsEqualTo("jpg");
+        var type = app.type.list[new global::app.type.@this("image", "jpeg"), app.User.Context];
+        await Assert.That(type.kind.Name).IsEqualTo("jpg");
     }
 
-    [Test] public async Task Canonicalise_NullInput_ReturnsNull()
+    [Test] public async Task RegisteredFormat_AnswersToItsMimeAndExtensions()
     {
+        // A format added at runtime is found by the same walk — nothing hand-written beside it.
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Format.CanonicaliseKind(null)).IsNull();
-    }
-
-    [Test] public async Task Canonicalise_AliasTableDerived_NotHandWritten()
-    {
-        // Register a fresh extension at runtime; its MIME subtype should
-        // canonicalise to the freshly-registered extension. Proves the table
-        // is derived from the registry, not a literal map.
-        await using var app = TestApp.Create("/test");
-        app.Format.Add(".frobx", "frob-kind", "application/x-frobnicate");
-        await Assert.That(app.Format.CanonicaliseKind("x-frobnicate")).IsEqualTo("frobx");
+        app.type.list.Add(new global::app.type.kind.@this(
+            new global::app.Attributes.FormatAttribute("frobx", "application/x-frobnicate", ".frobx", ".frob"), "binary"));
+        await Assert.That(app.type.list.Kind("application/x-frobnicate").Name).IsEqualTo("frobx");
+        await Assert.That(app.type.list.Kind(".frob").Name).IsEqualTo("frobx");
     }
 }

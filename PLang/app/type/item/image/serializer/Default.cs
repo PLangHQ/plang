@@ -24,7 +24,8 @@ public static class Default
     {
         if (raw is byte[] bytes)
         {
-            var mime = ctx.Context?.App.Format.Mime("." + (kind ?? "")) ?? $"image/{kind}";
+            var mime = ctx.Context == null ? $"image/{kind}"
+                : (string.IsNullOrEmpty(kind) ? null : ctx.Context.App.type.list["image"].kind[kind]?.Mime.FirstOrDefault()) ?? "application/octet-stream";
             return new global::app.type.item.image.@this(bytes, mime, kind);
         }
         return global::app.type.item.image.@this.Create(raw,

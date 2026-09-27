@@ -21,9 +21,60 @@ public class @this
 {
     public string Name { get; }
 
+    private readonly string? _owner;
+    private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
+    private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
+    private readonly bool _compressible;
+
     public @this(string name)
     {
         Name = name ?? throw new System.ArgumentNullException(nameof(name));
+    }
+
+    /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
+    /// MIMEs and extensions it answers to, and whether its content compresses.</summary>
+    public @this(global::app.Attributes.FormatAttribute format, string owner) : this(format.Name)
+    {
+        _owner = owner;
+        _mime = format.Mime is { } mime ? [mime] : [];
+        _extension = format.Extension;
+        _compressible = format.Compressible;
+    }
+
+    /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
+    public virtual System.Collections.Generic.IReadOnlyList<string> Mime => _mime;
+
+    /// <summary>The file extensions of this kind, each with its dot.</summary>
+    public virtual System.Collections.Generic.IReadOnlyList<string> Extension => _extension;
+
+    /// <summary>Whether compressing content of this kind pays; false for a kind that declares no format.</summary>
+    public virtual bool Compressible => _compressible;
+
+    /// <summary>
+    /// Whether this kind answers to <paramref name="key"/>: its name, an alias, one of its MIMEs (the media
+    /// type — <c>; charset=…</c> and any other parameter dropped, here and nowhere else) or one of its
+    /// extensions (with or without the dot). Case aside.
+    /// </summary>
+    public bool Names(string key)
+    {
+        if (string.IsNullOrEmpty(key)) return false;
+        if (string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)) return true;
+        foreach (var alias in Alias)
+            if (string.Equals(alias, key, System.StringComparison.OrdinalIgnoreCase)) return true;
+        if (Mime.Count > 0)
+        {
+            var semicolon = key.IndexOf(';');
+            var media = (semicolon >= 0 ? key.AsSpan(0, semicolon) : key.AsSpan()).Trim();
+            foreach (var mime in Mime)
+                if (media.Equals(mime, System.StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        if (Extension.Count > 0)
+        {
+            var bare = key.AsSpan().TrimStart('.');
+            foreach (var extension in Extension)
+                if (bare.Equals(extension.AsSpan().TrimStart('.'), System.StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
     }
 
     /// <summary>True for a type's empty kind — the type has no kind.</summary>
@@ -54,22 +105,20 @@ public class @this
     /// <summary>The other names this kind answers to (<c>integer</c> for int).</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string> Alias => [];
 
-    /// <summary>The name of the type this kind is a kind of, when its class declares it (number's
-    /// precisions are number's, json/list/dict/<c>*</c> are item's). Null for a kind with no class
-    /// of its own — a name from a file extension — whose type the readers and formats know.</summary>
-    protected internal virtual string? Owner => null;
+    /// <summary>The name of the type this kind is a kind of: the type whose class declares it as a format
+    /// (png is image's, md text's), or whose kind class it is (number's precisions are number's,
+    /// json/list/dict/<c>*</c> are item's). Null for a name no type declares.</summary>
+    protected internal virtual string? Owner => _owner;
 
     /// <summary>
     /// The type this kind is a kind of — what its content is (md → text, json → item, int →
-    /// number): the type its class declares, else the type whose reader reads this kind, else the
-    /// format family, else <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text.
-    /// Asked with the caller's context.
+    /// number): the type that declares it, else the type whose reader reads this kind, else
+    /// <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text. Asked with the caller's context.
     /// </summary>
     public global::app.type.@this type(actor.context.@this context)
     {
         string name = Owner
                       ?? context.App.type.list.Reader.TypeOf(Name)
-                      ?? context.App.Format.Kind(Name)
                       ?? "binary";
         return context.App.type.list[new global::app.type.@this(name), context];
     }

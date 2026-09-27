@@ -150,7 +150,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
         var name = scheme.@this.ParseScheme(rawPath) is { Length: > 0 } s ? s : "file";
-        return context.App.type.list.Kind(name) is scheme.@this kind
+        return context.App.type.list[global::app.type.item.@this.NameOf(typeof(@this))].kind[name] is scheme.@this kind
             ? kind.Create(rawPath, context)
             : throw new scheme.SchemeNotRegistered(name);
     }
@@ -203,8 +203,16 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location.Clr<string>() ?? "");
     [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
-    /// <summary>The mime type of this location's extension, from the caller's format registry.</summary>
-    [LlmBuilder] public string MimeType(actor.context.@this context) => context.App?.Format?.Mime(Extension) ?? "application/octet-stream";
+    /// <summary>The MIME of this location's extension — the format with that extension says it; a format with
+    /// no MIME of its own arrives as its type's (<c>.ini</c> is text/plain); opaque bytes when neither does.</summary>
+    [LlmBuilder] public string MimeType(actor.context.@this context)
+    {
+        var type = Kind(context);
+        if (type.IsNull) return "application/octet-stream";
+        return type.kind.Mime.FirstOrDefault()
+               ?? context.App.type.list[type.Name].kind.Mime.FirstOrDefault()
+               ?? "application/octet-stream";
+    }
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
     [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);

@@ -447,12 +447,10 @@ public class DataTests : System.IAsyncDisposable
 
         // Context propagation: setting Data.Context stamps the embedded Type
         // entity so registry-keyed reads (TypeOf, Compressible, ClrType) work.
-        // Bytes off I/O are binary; the kind (jpg) names how they narrow.
+        // image/jpeg is image's jpg format.
         var ov = new Data("test", new byte[] { 1, 2 }, engine.type.list.Mime("image/jpeg", context), context: context);
 
-        // The family lives on the format registry, keyed by the kind (the
-        // subtype) — jpg → image — not by the Name, which is just "binary".
-        await Assert.That(ov.Type!.Name).IsEqualTo("binary");
+        await Assert.That(ov.Type!.Name).IsEqualTo("image");
         await Assert.That(engine.type.list.Kind(ov.Type!.kind.Name).type(context).Name).IsEqualTo("image");
     }
 
@@ -501,13 +499,12 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        // A declared {binary, jpg} (bytes off I/O, the kind names the decode)
-        // survives the ctor — the value isn't re-derived to a bare binary that
-        // drops the kind.
+        // A declared {image, jpg} (bytes off I/O, unread) survives the ctor — the value isn't
+        // re-derived to a bare binary that drops the declaration.
         var explicitType = engine.type.list.Mime("image/jpeg", context);
         var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType, context: context);
 
-        await Assert.That(ov.Type!.Name).IsEqualTo("binary");
+        await Assert.That(ov.Type!.Name).IsEqualTo("image");
         await Assert.That(ov.Type!.kind.Name).IsEqualTo("jpg");
     }
 
@@ -520,8 +517,8 @@ public class DataTests : System.IAsyncDisposable
         var newType = new Type("text", "plain");
         var ov = new Data("test", "hello", newType, context: context);
 
-        // Type gets context from Data — family is resolvable via registry.
-        await Assert.That(engine.Format.FamilyOf(newType.Name)).IsEqualTo("text");
+        // Type gets context from Data — the type resolves through the registry.
+        await Assert.That(engine.type.list[newType, context].Name).IsEqualTo("text");
     }
 
     [Test]
@@ -532,11 +529,10 @@ public class DataTests : System.IAsyncDisposable
 
         var data = new Data("img", new byte[] { 1, 2 }, engine.type.list.Mime("image/jpeg", context), context: context);
 
-        // Binary content; the kind (jpg) carries the family. The kind's family
-        // is image, which is not compressible (already-compressed content).
-        await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.type.list.Kind(data.Type!.kind.Name).type(context).Name).IsEqualTo("image");
-        await Assert.That(engine.Format.Compressible(data.Type!)).IsFalse();
+        // image/jpeg is image's jpg format — already-compressed content.
+        await Assert.That(data.Type!.Name).IsEqualTo("image");
+        await Assert.That(data.Type!.kind.Name).IsEqualTo("jpg");
+        await Assert.That(engine.type.list[data.Type!, context].kind.Compressible).IsFalse();
     }
 
     [Test]
@@ -546,8 +542,8 @@ public class DataTests : System.IAsyncDisposable
 
         // Family-Kind accessor is gone — Kind is the subtype (null when unset).
         await Assert.That(imageType.kind.IsEmpty).IsTrue();
-        // Compressibility is the format's knowledge — the type object carries no context for it.
-        await Assert.That(new global::app.format.list.@this().Compressible(imageType)).IsFalse();
+        // A type spelled without the registry declares no format — nothing says it compresses.
+        await Assert.That(imageType.kind.Compressible).IsFalse();
     }
 
     [Test]
@@ -558,7 +554,8 @@ public class DataTests : System.IAsyncDisposable
 
         var data = new Data("txt", "hello", engine.type.list.Mime("text/plain", context), context: context);
 
-        await Assert.That(engine.Format.Compressible(data.Type!)).IsTrue();
+        await Assert.That(data.Type!.Name).IsEqualTo("text");
+        await Assert.That(engine.type.list[data.Type!, context].kind.Compressible).IsTrue();
     }
 
     [Test]

@@ -11,10 +11,16 @@ public sealed class @this : global::app.type.kind.@this
     private readonly string _owner;
     private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
     private readonly object _gate = new();
+    // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
+    private global::app.type.kind.@this? _format;
 
     public @this(string owner) : base("") => _owner = owner;
 
     protected internal override string Owner => _owner;
+
+    public override System.Collections.Generic.IReadOnlyList<string> Mime => _format?.Mime ?? [];
+    public override System.Collections.Generic.IReadOnlyList<string> Extension => _format?.Extension ?? [];
+    public override bool Compressible => _format?.Compressible ?? false;
 
     // The kinds this type holds, in the order they came.
     private global::app.type.kind.@this[] Held
@@ -22,10 +28,24 @@ public sealed class @this : global::app.type.kind.@this
         get { lock (_gate) return _kinds.ToArray(); }
     }
 
-    /// <summary>One of this type's kinds, by its name or an alias; null when it holds none by that name.</summary>
+    /// <summary>Everything this type holds: its own format, if it has one, then its kinds — what a type
+    /// object that replaces this one's type takes over.</summary>
+    internal System.Collections.Generic.IEnumerable<global::app.type.kind.@this> Kinds
+        => _format is { } format ? Held.Prepend(format) : Held;
+
+    /// <summary>The type itself when it answers to <paramref name="name"/> (its own MIME or extension), else one
+    /// of its kinds that does — by name, alias, MIME or extension; null when none does.</summary>
     public override global::app.type.kind.@this? this[string name]
-        => Held.FirstOrDefault(k => string.Equals(k.Name, name, System.StringComparison.OrdinalIgnoreCase)
-                                    || k.Alias.Contains(name, System.StringComparer.OrdinalIgnoreCase));
+    {
+        get
+        {
+            if (Names(name)) return this;
+            lock (_gate)
+                foreach (var kind in _kinds)
+                    if (kind.Names(name)) return kind;
+            return null;
+        }
+    }
 
     /// <summary>One of this type's kinds by the C# form its values ride as — each kind says whether it
     /// carries the class; exact wins, then the most derived; null when none carries it.</summary>
@@ -44,19 +64,17 @@ public sealed class @this : global::app.type.kind.@this
         }
     }
 
-    /// <summary>This type's kinds, each as the full type it makes, with its family's formats.</summary>
+    /// <summary>This type's kinds, each as the full type it makes.</summary>
     public override global::app.type.kind.list.@this list(global::app.actor.context.@this context)
-    {
-        var formats = context.App.Format.KindsByFamily().TryGetValue(_owner, out var family) ? family : [];
-        return new(Held.Select(k => k.Name).Concat(formats).Distinct(System.StringComparer.OrdinalIgnoreCase)
-            .Select(name => context.App.type.list[new global::app.type.@this(_owner, name), context]));
-    }
+        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner, k.Name), context]));
 
-    /// <summary>Adds a kind of this type; a kind of the same name replaces the one before it.</summary>
+    /// <summary>Adds a kind of this type; a kind of the same name replaces the one before it. The type's own
+    /// format (the empty name) is held as the type's, not as a kind.</summary>
     internal void Add(global::app.type.kind.@this kind)
     {
         lock (_gate)
         {
+            if (kind.IsEmpty) { _format = kind; return; }
             _kinds.RemoveAll(k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase));
             _kinds.Add(kind);
         }

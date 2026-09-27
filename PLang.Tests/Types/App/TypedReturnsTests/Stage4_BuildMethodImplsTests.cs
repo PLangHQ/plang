@@ -147,8 +147,8 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
         await result.IsSuccess();
-        // The flip: content off I/O is binary; the extension is the kind.
-        await Assert.That(AsType(result).Name).IsEqualTo("binary");
+        // The extension is a format: json is item's kind.
+        await Assert.That(AsType(result).Name).IsEqualTo("item");
         await Assert.That(AsType(result).kind.Name).IsEqualTo("json");
     }
 

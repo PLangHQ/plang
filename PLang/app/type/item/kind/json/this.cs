@@ -16,6 +16,10 @@ public sealed class @this : global::app.type.kind.@this
 
     protected internal override string Owner => "item";
 
+    public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/json", "text/json"];
+    public override System.Collections.Generic.IReadOnlyList<string> Extension => [".json"];
+    public override bool Compressible => true;
+
     public override System.Type? ClrForm => typeof(JsonElement);
 
     // json self-dispatches on the element's ValueKind (object → property, array → index), so the

@@ -11,6 +11,21 @@ namespace app.type.code;
 /// <see cref="Build"/>.</para>
 /// </summary>
 [global::app.Attributes.PlangType("code")]
+[global::app.Attributes.Format("")]
+[global::app.Attributes.Format("cs", "text/x-csharp")]
+[global::app.Attributes.Format("js", "text/javascript")]
+[global::app.Attributes.Format("ts", "text/typescript")]
+[global::app.Attributes.Format("py", "text/x-python")]
+[global::app.Attributes.Format("java", "text/x-java")]
+[global::app.Attributes.Format("cpp", "text/x-c++src")]
+[global::app.Attributes.Format("h", "text/x-chdr")]
+[global::app.Attributes.Format("html", "text/html", ".html", ".htm")]
+[global::app.Attributes.Format("css", "text/css")]
+[global::app.Attributes.Format("go", "text/x-go")]
+[global::app.Attributes.Format("rb", "text/x-ruby")]
+[global::app.Attributes.Format("sh", "text/x-shellscript")]
+[global::app.Attributes.Format("bat", "text/x-bat")]
+[global::app.Attributes.Format("ps1", "text/x-powershell")]
 public sealed partial class @this : global::app.type.item.@this
 {
     public static string Example => "Console.WriteLine(\"hi\");";

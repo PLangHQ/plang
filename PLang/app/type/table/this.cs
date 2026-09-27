@@ -23,6 +23,7 @@ namespace app.type.table;
 // EnumerateItems/Navigate would type each cell through the per-column format
 // rather than letting it lift to its default (text/number) type.
 [global::app.Attributes.PlangType("table")]
+[global::app.Attributes.Format("csv", "text/csv")]
 public sealed class @this : global::app.type.item.@this
 {
     /// <summary>Column headers in source order.</summary>

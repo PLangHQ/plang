@@ -51,7 +51,8 @@ public partial class @this
         if (Type == null)
             return this;
 
-        if (_context?.App.Format.Compressible(Type) != true)
+        // whether it pays is the format's: the kind of the value's type (or the type's own format) says so
+        if (_context == null || !_context.App.type.list[Type, _context].kind.Compressible)
             return this;
 
         var serializer = _context.Actor?.Channel.Serializers.GetByType("application/plang")

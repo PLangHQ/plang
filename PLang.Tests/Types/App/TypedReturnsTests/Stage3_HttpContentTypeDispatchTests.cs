@@ -61,29 +61,26 @@ public class Stage3_HttpContentTypeDispatchTests
         return result;
     }
 
-    // json body stamps {binary, json}; untouched it's the raw bytes, navigated
+    // json body stamps {item, json}; untouched it's the raw bytes, navigated
     // it materializes and a key resolves.
     [Test]
-    public async Task Body_ApplicationJson_StampsBinaryJson_LazyThenNavigates()
+    public async Task Body_ApplicationJson_StampsItemJson_LazyThenNavigates()
     {
         var resp = await Get("https://x/y", r => r.Content = new StringContent("{\"a\":1}", Encoding.UTF8, "application/json"));
-        await Assert.That(resp.Type.Name).IsEqualTo("binary"); // the flip: binary + json kind
+        await Assert.That(resp.Type.Name).IsEqualTo("item"); // json is item's kind
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes (Peek is the source carrier)
         await Assert.That((await (await resp.Get("a")).Value())?.ToString()).IsEqualTo("1"); // navigate materializes
     }
 
-    // text/html stamps {binary, html}; untouched it's the raw bytes. (There is no
-    // code/html reader, so Value() does not narrow it to a string — the html text
-    // is reached only via an explicit `as text`.)
+    // text/html is code's html format; untouched it's the raw bytes.
     [Test]
-    public async Task Body_TextHtml_StampsBinaryHtml()
+    public async Task Body_TextHtml_StampsCodeHtml()
     {
         var resp = await Get("https://x/p", r => r.Content = new StringContent("<p>hi</p>", Encoding.UTF8, "text/html"));
-        await Assert.That(resp.Type.Name).IsEqualTo("binary");
-        // text/html → kind "htm" (canonicalised to the shortest extension form).
-        await Assert.That(resp.Type.kind.Name).IsEqualTo("htm");
+        await Assert.That(resp.Type.Name).IsEqualTo("code");
+        await Assert.That(resp.Type.kind.Name).IsEqualTo("html");
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
-        // On access, the kind narrows to a `code` value (html is the code family).
+        // On access, code reads it.
         await Assert.That(await resp.Value()).IsTypeOf<global::app.type.code.@this>();
     }
 
@@ -95,29 +92,29 @@ public class Stage3_HttpContentTypeDispatchTests
             r.Content = new ByteArrayContent(bytes);
             r.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
         });
-        await Assert.That(resp.Type.Name).IsEqualTo("binary"); // the flip: binary + png kind (narrows to image on Value())
+        await Assert.That(resp.Type.Name).IsEqualTo("image"); // image's png format, read on Value()
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
     }
 
     [Test]
-    public async Task Body_MissingContentType_StampsBinary()
+    public async Task Body_MissingContentType_StampsText()
     {
         var bytes = new byte[] { 1, 2, 3 };
         var resp = await Get("https://x/raw", r => {
             r.Content = new ByteArrayContent(bytes);
             r.Content.Headers.ContentType = null;
         });
-        // No Content-Type → opaque bytes → {binary, null}; the raw stays byte[].
-        await Assert.That(resp.Type.Name).IsEqualTo("binary");
+        // No Content-Type → the http channel reads web content as text/plain → {text}; the raw stays byte[].
+        await Assert.That(resp.Type.Name).IsEqualTo("text");
         await Assert.That(resp.Raw).IsTypeOf<byte[]>();
     }
 
     [Test]
-    public async Task Body_TextCsv_StampsBinary()
+    public async Task Body_TextCsv_StampsTable()
     {
         var resp = await Get("https://x/data", r => r.Content = new StringContent("a,b\n1,2", Encoding.UTF8, "text/csv"));
-        // The flip: csv body stamps {binary, csv}; untouched it's the raw bytes.
-        await Assert.That(resp.Type.Name).IsEqualTo("binary");
+        // csv body stamps {table, csv}; untouched it's the raw bytes.
+        await Assert.That(resp.Type.Name).IsEqualTo("table");
         await Assert.That(resp.Type.kind.Name).IsEqualTo("csv");
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
     }

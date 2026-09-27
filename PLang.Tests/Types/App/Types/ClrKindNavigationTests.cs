@@ -102,9 +102,9 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     public async Task ApexLift_NonItemNamedHost_BecomesClrCarrier_NoRecursion()
     {
         var ctx = _app.User.Context;
-        // A non-item host (the format registry) — rung 2's item⟺ICreate guard sends it to the clr
+        // A non-item host (the reader registry) — rung 2's item⟺ICreate guard sends it to the clr
         // entity instead of resurrecting a non-Creatable named entity whose decline used to loop.
-        var lifted = global::app.type.item.@this.Create(ctx.App.Format, ctx);
+        var lifted = global::app.type.item.@this.Create(ctx.App.type.list.Reader, ctx);
         await Assert.That(lifted).IsTypeOf<global::app.type.clr.@this>();
     }
 

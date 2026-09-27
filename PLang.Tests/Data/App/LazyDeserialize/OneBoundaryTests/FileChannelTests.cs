@@ -56,7 +56,7 @@ public class FileChannelTests
         var ch = new filechannel(p, app.User.Context);
         var d = await ch.Read();
         await Assert.That(d.MaterializeCount()).IsEqualTo(0); // nothing parsed at read time
-        await Assert.That(d.Type.Name).IsEqualTo("binary"); // the flip: binary + json kind
+        await Assert.That(d.Type.Name).IsEqualTo("item"); // json is item's kind
         await Assert.That(d.Type.kind.Name).IsEqualTo("json");
     }
 }

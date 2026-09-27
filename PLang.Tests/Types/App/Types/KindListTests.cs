@@ -30,9 +30,17 @@ public class KindListTests
 
     [Test] public async Task HashKindList_IsItsAlgorithms()
     {
+        // sha256 is both hash's algorithm and binary's checksum file — a kind is its type's, so ask hash.
         var ctx = TestApp.SharedContext;
-        var kinds = ctx.App.type.list.Kind("sha256").list(ctx).Items().Select(t => t.kind.Name).ToList();
+        var kinds = ctx.App.type.list["hash"].kind["sha256"]!.list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).IsEquivalentTo(new[] { "keccak256", "sha256" });
+    }
+
+    [Test] public async Task AKindNameTwoTypesHold_IsAmbiguousByBareName()
+    {
+        var ctx = TestApp.SharedContext;
+        await Assert.That(() => ctx.App.type.list.Kind("sha256")).Throws<InvalidOperationException>();
+        await Assert.That(ctx.App.type.list["binary"].kind["sha256"]!.type(ctx).Name).IsEqualTo("binary");
     }
 
     [Test] public async Task ItemKinds_AreJsonListDictAndReflection()
@@ -42,12 +50,14 @@ public class KindListTests
         await Assert.That(kinds).IsEquivalentTo(new[] { "json", "list", "dict", "*" });
     }
 
-    [Test] public async Task AFormatKind_IsAKindOfItsFamily()
+    [Test] public async Task AFormatKind_IsAKindOfTheTypeThatReadsIt()
     {
         var ctx = TestApp.SharedContext;
         await Assert.That(ctx.App.type.list.Kind("md").type(ctx).Name).IsEqualTo("text");
         var kinds = ctx.App.type.list.Kind("md").list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).Contains("md");
-        await Assert.That(kinds).Contains("csv");
+        // csv is table's: table reads it
+        await Assert.That(kinds).DoesNotContain("csv");
+        await Assert.That(ctx.App.type.list.Kind("csv").type(ctx).Name).IsEqualTo("table");
     }
 }

@@ -4,47 +4,44 @@ using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 
-// app.type.list.Mime / app.type.list.Extension — the type content off I/O arrives as:
-// binary, with the MIME subtype / file extension as its kind.
+// app.type.list.Mime / app.type.list.Extension — the type content off I/O arrives as: the format, a
+// kind of the type that reads it. The value stays unread until touched.
 public class FormatRemapTests
 {
     private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
     private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
 
-    // The flip: content off I/O IS binary; the mime subtype is the decode hint
-    // (the kind). json → `{binary, json}` — the kind narrows to a dict only on
-    // Value() access, nothing is eagerly typed item here.
-    [Test] public async Task Mime_ApplicationJson_ReturnsBinaryJson()
+    // json is item's kind: `{item, json}` — what a json value reports.
+    [Test] public async Task Mime_ApplicationJson_ReturnsItemJson()
     {
         var t = Types.Mime("application/json", Ctx);
-        await Assert.That(t.Name).IsEqualTo("binary");
+        await Assert.That(t.Name).IsEqualTo("item");
         await Assert.That(t.kind.Name).IsEqualTo("json");
     }
 
-    // xml is also binary off the wire → `{binary, xml}`.
-    [Test] public async Task Mime_ApplicationXml_ReturnsBinaryXml()
+    [Test] public async Task Mime_ApplicationXml_ReturnsTextXml()
     {
         var t = Types.Mime("application/xml", Ctx);
-        await Assert.That(t.Name).IsEqualTo("binary");
+        await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.kind.Name).IsEqualTo("xml");
     }
 
-    [Test] public async Task Extension_DotJson_ReturnsBinaryJson()
+    [Test] public async Task Extension_DotJson_ReturnsItemJson()
     {
         var t = Types.Extension(".json", Ctx);
-        await Assert.That(t.Name).IsEqualTo("binary");
+        await Assert.That(t.Name).IsEqualTo("item");
         await Assert.That(t.kind.Name).IsEqualTo("json");
     }
 
-    // csv and xlsx are binary + the extension as kind; the kind narrows to a
-    // table only on Value() access.
-    [Test] public async Task Extension_DotCsv_ReturnsBinaryCsv()
+    // csv is table's — table reads it.
+    [Test] public async Task Extension_DotCsv_ReturnsTableCsv()
     {
         var t = Types.Extension(".csv", Ctx);
-        await Assert.That(t.Name).IsEqualTo("binary");
+        await Assert.That(t.Name).IsEqualTo("table");
         await Assert.That(t.kind.Name).IsEqualTo("csv");
     }
 
+    // xlsx stays binary's until a type reads it.
     [Test] public async Task Extension_DotXlsx_ReturnsBinaryXlsx()
     {
         var t = Types.Extension(".xlsx", Ctx);
@@ -52,28 +49,23 @@ public class FormatRemapTests
         await Assert.That(t.kind.Name).IsEqualTo("xlsx");
     }
 
-    // png is binary + png kind; it narrows to an image only on Value() access.
-    [Test] public async Task Extension_DotPng_ReturnsBinaryPng()
+    [Test] public async Task Extension_DotPng_ReturnsImagePng()
     {
         var t = Types.Extension(".png", Ctx);
-        await Assert.That(t.Name).IsEqualTo("binary");
+        await Assert.That(t.Name).IsEqualTo("image");
         await Assert.That(t.kind.Name).IsEqualTo("png");
     }
 
-    // octet-stream is genuinely opaque bytes → `{binary, null}`: the binary
-    // type with no decode hint. Not null, and critically not `object`.
+    // octet-stream is genuinely opaque bytes → `{binary}`: binary's own format, no kind.
     [Test] public async Task Mime_ApplicationOctetStream_StampsBytesNullKind()
     {
         var t = Types.Mime("application/octet-stream", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.IsEmpty).IsTrue();
-        await Assert.That(t.Name).IsNotEqualTo("object");
     }
 
-    // Independent #16 — the convergence pin. Both routes (.json extension
-    // and application/json MIME) must produce the same stamp. Otherwise
-    // file.read and http.get would land different shapes for the same
-    // content type. Same probe for csv.
+    // Both routes (.json extension and application/json MIME) land the same stamp — file.read and
+    // http.get agree for the same content. Same probe for csv.
     [Test] public async Task Extension_AgreesWith_Mime_ForDotJson()
     {
         var byExt = Types.Extension(".json", Ctx);

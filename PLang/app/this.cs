@@ -203,15 +203,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// The type named <c>type</c> — <c>%!app.type%</c>: its <c>list</c> is the app's types (the
     /// lookups by name, C# class, identity, MIME and extension, and the kinds), <c>Get(name)</c> is
-    /// one type as a result. File-format characteristics live on <see cref="Format"/>.
+    /// one type as a result. A file format is a kind of the type that reads it.
     /// </summary>
     public global::app.type.@this<global::app.type.@this, global::app.type.list.@this> type { get; }
-
-    /// <summary>
-    /// File-format characteristics: extension → Kind, extension → MIME,
-    /// Kind → compressibility. One per app.
-    /// </summary>
-    public format.list.@this Format { get; } = new();
 
     /// <summary>
     /// The type named <c>actor</c> — <c>%!app.actor%</c>: its <c>list</c> is the app's two actors, System

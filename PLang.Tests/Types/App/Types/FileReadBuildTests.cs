@@ -15,18 +15,17 @@ public class FileReadBuildTests
 
     [Test] public async Task FileReadBuild_PngExtension_ReturnsHighLevelType_Image()
     {
-        // The action Build() returns the high-level type stamp. For .png the
-        // formats registry maps the extension → "image".
+        // .png is image's png format.
         await using var app = NewApp();
-        var k = app.Format.Kind("png");
-        await Assert.That(k).IsEqualTo("image");
+        var type = app.type.list.Extension(".png", app.User.Context);
+        await Assert.That(type.Name).IsEqualTo("image");
     }
 
     [Test] public async Task FileReadBuild_TxtExtension_ReturnsHighLevelType_Text()
     {
         await using var app = NewApp();
-        var k = app.Format.Kind("txt");
-        await Assert.That(k).IsEqualTo("text");
+        var type = app.type.list.Extension(".txt", app.User.Context);
+        await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test] public async Task FileReadRun_ImageMime_ConstructsImageValue_NotRawBytes()
@@ -74,11 +73,11 @@ public class FileReadBuildTests
 
     [Test] public async Task FileReadBuild_UnknownExtension_FallsBack_BareTextType()
     {
-        // Unknown extension: formats.Kind returns null, falls back to extension
-        // name. The action Build returns Ok() (no stamp) when even that isn't
-        // a registered PLang type.
+        // Unknown extension: no format has it — bytes of that kind.
         await using var app = NewApp();
-        await Assert.That(app.Format.Kind("xyz")).IsNull();
+        var type = app.type.list.Extension(".xyz", app.User.Context);
+        await Assert.That(type.Name).IsEqualTo("binary");
+        await Assert.That(type.kind.Name).IsEqualTo("xyz");
     }
 
     [Test] public async Task FileReadRun_ReturnsBareDataPolymorphic_NotStaticDataImage()

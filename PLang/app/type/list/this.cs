@@ -9,8 +9,9 @@ namespace app.type.list;
 /// the set: by name or alias (the type's own <see cref="app.type.@this.Match"/>), by C# class, by
 /// identity. How a type comes in lives in the <c>Registry</c> partial.
 ///
-/// File-format characteristics (extension → Kind, extension → MIME, Kind → compressibility) live
-/// separately on <see cref="app.format.list.@this"/> at <c>app.Format</c>.
+/// A file format is a kind of the type that reads it (png of image, md of text), declared on the type's
+/// class with <c>[Format]</c>; the kind answers to its MIMEs and extensions, so the one walk
+/// (<see cref="Kind(string)"/>) finds a format by any of them.
 /// </summary>
 public sealed partial class @this
 {
@@ -19,13 +20,39 @@ public sealed partial class @this
     public @this() { }
 
     /// <summary>
-    /// The kind <paramref name="name"/> names — one of a type's kinds, by its name or an alias
-    /// (json is item's, int number's, operator choice's, file path's); a name no type holds is a kind
-    /// with no class of its own (a file extension), minted by name.
+    /// The kind <paramref name="name"/> names when the caller holds only the name — the one kind any type
+    /// answers to it with (by name, alias, MIME or extension); a name no type holds is a kind with no class
+    /// of its own, minted by name. A kind's name is its type's, so two types may each hold one by the same
+    /// name (<c>{hash, sha256}</c>, <c>{binary, sha256}</c>): asked by that bare name, it is ambiguous — an
+    /// error naming both, never the first that answers. A caller that holds the type asks the type.
     /// </summary>
     public global::app.type.kind.@this Kind(string name)
-        => Types.Select(t => t.kind[name]).FirstOrDefault(k => k != null)
-           ?? new global::app.type.kind.@this(name);
+        => Held(name) ?? new global::app.type.kind.@this(name);
+
+    /// <summary>
+    /// The kind of <paramref name="type"/> — the type's own kind by its kind's name. A kind the type holds
+    /// none of (a stamp written before the format was its type's: <c>{binary, json}</c>) is only a name, so
+    /// it is found as <see cref="Kind(string)"/> finds a name.
+    /// </summary>
+    public global::app.type.kind.@this Kind(app.type.@this type, actor.context.@this context)
+        => this[type, context].kind is { Owner: not null } held ? held : Kind(type.kind.Name);
+
+    // The kind a type holds that answers to the key — by name, alias, MIME or extension; a type's own
+    // format answers as its empty kind. Null when no type holds one. Registration keeps a MIME or an
+    // extension to one kind; a name two types hold is refused here.
+    private global::app.type.kind.@this? Held(string key)
+    {
+        global::app.type.kind.@this? found = null;
+        foreach (var type in Types)
+        {
+            if (type.kind[key] is not { } kind) continue;
+            if (found != null)
+                throw new System.InvalidOperationException(
+                    $"'{key}' is a kind of more than one type ({found.Owner}, {kind.Owner}) — ask the type for its kind.");
+            found = kind;
+        }
+        return found;
+    }
 
     /// <summary>
     /// The kind a host object of <paramref name="clr"/> is — one of item's kinds by the C# form it
@@ -78,32 +105,49 @@ public sealed partial class @this
     public bool Contains(string name) => Types.Any(t => t.Names(name));
 
     /// <summary>
-    /// The type content of this MIME arrives as. Content off I/O is raw bytes — it IS binary; the
-    /// MIME's subtype is the kind, the decode hint that narrows it on access (json→item, jpg→image,
-    /// csv→table). <c>image/png</c> → {binary, png}; opaque bytes (octet-stream) → {binary}. Not the
-    /// string door: "text/markdown" spelled as a type is {text, md}, as a MIME it is {binary, md}.
+    /// The type content of this MIME is — the format that answers to it, as a kind of the type that reads
+    /// it: <c>image/png</c> → {image, png}, <c>text/plain</c> → {text}, <c>application/json; charset=utf-8</c>
+    /// → {item, json}, <c>video/mp4</c> → {binary, mp4}. A MIME no format answers to is opaque bytes: {binary}.
+    /// The value stays unread until touched — its type reads it then.
     /// </summary>
     public app.type.@this Mime(string mime, actor.context.@this context)
-        => this[new app.type.@this("binary", context.App.Format.Subtype(mime)), context];
+        => Format(mime) is { } kind ? Of(kind, context) : this["binary"];
 
     /// <summary>
-    /// The type a file of this extension holds — binary, the extension itself its kind (the
-    /// authoritative subtype for a file): <c>.md</c> → {binary, md}, agreeing with its MIME.
-    /// The null type for no extension.
+    /// The type a file of this extension holds — the format with that extension, as a kind of the type that
+    /// reads it: <c>.md</c> → {text, md}, agreeing with its MIME. An extension no format has is bytes of that
+    /// kind (<c>.xyz</c> → {binary, xyz}); the null type for no extension.
     /// </summary>
     public app.type.@this Extension(string extension, actor.context.@this context)
-        => string.IsNullOrEmpty(extension) ? app.type.@this.Null
+    {
+        if (string.IsNullOrEmpty(extension)) return app.type.@this.Null;
+        return Format(extension.StartsWith('.') ? extension : "." + extension) is { } kind ? Of(kind, context)
             : this[new app.type.@this("binary", extension.TrimStart('.')), context];
+    }
+
+    // The format a MIME (its media type — parameters dropped) or an extension (with its dot) is.
+    private global::app.type.kind.@this? Format(string key)
+    {
+        Load();
+        var semicolon = key.IndexOf(';');
+        var media = semicolon >= 0 ? key[..semicolon].Trim() : key;
+        lock (_formats) return _formats.TryGetValue(media, out var kind) ? kind : null;
+    }
+
+    // The full type a held kind makes: its owner, with the kind unless it is the owner's own format.
+    private app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context)
+        => this[new app.type.@this(kind.Owner!, kind.IsEmpty ? null : kind.Name), context];
 
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the
     /// type's facts. A choice's kind names its set, so a <c>{choice, operator}</c> carries that
-    /// set's options. The kind is canonicalised through the caller's formats (<c>markdown</c> →
-    /// <c>md</c>) and its own aliases (<c>integer</c> → <c>int</c>). A name no type answers to is
+    /// set's options. The kind is the type's own kind that answers to the spelled name — by name, alias or
+    /// extension (<c>{text, markdown}</c> → md, <c>{image, jpeg}</c> → jpg, <c>{number, integer}</c> → int);
+    /// a name the type holds no kind by is a kind of that name with no class. A name no type answers to is
     /// its bare identity.
     /// </summary>
     public app.type.@this this[app.type.@this type, actor.context.@this context]
-        => Full(type, type.kind is { IsEmpty: false } k ? Kind(context.App.Format.CanonicaliseKind(k.Name) ?? k.Name) : null);
+        => Full(type, type.kind is { IsEmpty: false } k ? k.Name : null);
 
     /// <summary>
     /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when
@@ -119,15 +163,20 @@ public sealed partial class @this
             // entity's face and the facts can never disagree. A kinded family is born here with
             // its kind (already the canonical name); every other name is the named entity.
             var (name, kind) = PlangName(clrType);
-            return kind == null ? this[name] : Full(new app.type.@this(name), Kind(kind));
+            return kind == null ? this[name] : Full(new app.type.@this(name), kind);
         }
     }
 
-    // The full type for an identity and its kind — the type carries the kind itself, its
-    // behaviour with it; a choice's kind (its set) carries the set's options.
-    private app.type.@this Full(app.type.@this type, global::app.type.kind.@this? kind)
+    // The full type for an identity and its kind's name — the type carries its own kind of that name, its
+    // behaviour with it; a choice's kind (its set) carries the set's options. The type's own format
+    // answering to the name (`{text, txt}`) is the type itself, no kind.
+    private app.type.@this Full(app.type.@this type, string? name)
     {
-        if (Types.FirstOrDefault(t => t.Names(type.Name)) is not { } entry)
+        var entry = Types.FirstOrDefault(t => t.Names(type.Name));
+        var kind = name == null ? null
+            : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
+            : new global::app.type.kind.@this(name);
+        if (entry == null)
             return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
         if (kind == null && !type.Strict && type.Template == null) return entry;
         return new app.type.@this(entry.Name, kind != null ? kind.Of(entry.ClrType) : entry.ClrType, kind?.Name, type.Strict, type.Template)

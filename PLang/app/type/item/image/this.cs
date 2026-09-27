@@ -16,6 +16,14 @@ namespace app.type.item.image;
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
 [global::app.Attributes.PlangType("image")]
+[global::app.Attributes.Format("jpg", "image/jpeg", ".jpg", ".jpeg", Compressible = false)]
+[global::app.Attributes.Format("png", "image/png", Compressible = false)]
+[global::app.Attributes.Format("gif", "image/gif", Compressible = false)]
+[global::app.Attributes.Format("bmp", "image/bmp", Compressible = false)]
+[global::app.Attributes.Format("tif", "image/tiff", ".tif", ".tiff", Compressible = false)]
+[global::app.Attributes.Format("svg", "image/svg+xml", Compressible = false)]
+[global::app.Attributes.Format("webp", "image/webp", Compressible = false)]
+[global::app.Attributes.Format("heic", "image/heic", Compressible = false)]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer
 {
     public static string Example => "/images/photo.jpg";

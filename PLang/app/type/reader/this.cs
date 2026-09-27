@@ -108,10 +108,12 @@ public sealed class @this
     /// </summary>
     public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
     {
-        if (string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kind))
+        if (string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kind)
+            && context.App.type.list["binary"].kind[kind!] == null)
         {
-            // Narrow ONLY when the kind's type can actually read this kind; otherwise the
-            // bytes ride as binary (an xlsx file is binary bytes until an xlsx reader exists).
+            // Bytes stamped with a kind binary doesn't hold (a stamp written before the format was its
+            // type's) name that kind only by name: narrow ONLY when the kind's type can actually read
+            // it; otherwise the bytes ride as binary.
             var inner = context.App.type.list.Kind(kind!).type(context).Name;
             if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
                 && Typed(inner, kind) is not null) typeName = inner;

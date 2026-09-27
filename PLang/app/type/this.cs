@@ -111,6 +111,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
     private readonly global::app.type.kind.@this _kind;
 
+    /// <summary>The formats this type reads — its kinds that have a MIME or an extension
+    /// (<c>%!app.type.image.format.list%</c>).</summary>
+    public global::app.type.format.@this format => new(_kind);
+
     /// <summary>
     /// When true, <see cref="kind"/> is a requirement (enforced at build for
     /// literals via <c>app.data.IKindValidatable</c>; deferred to runtime for

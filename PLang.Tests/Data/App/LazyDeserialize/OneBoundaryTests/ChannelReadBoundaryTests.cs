@@ -29,8 +29,8 @@ public class ChannelReadBoundaryTests
         await using var app = NewApp();
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes("{\"port\":8080}"));
         var d = await ch.Read();
-        // The flip: content off I/O is binary; the mime subtype is the kind.
-        await Assert.That(d.Type.Name).IsEqualTo("binary");
+        // The MIME is a format: a kind of the type that reads it — json is item's.
+        await Assert.That(d.Type.Name).IsEqualTo("item");
         await Assert.That(d.Type.kind.Name).IsEqualTo("json");
     }
 
@@ -43,17 +43,15 @@ public class ChannelReadBoundaryTests
         await Assert.That(d.MaterializeCount()).IsEqualTo(0); // not parsed at read
     }
 
-    // Independent #14 — channel.this.cs defaults Mime to "text/plain". After
-    // the flip the default stamp is `{binary, <kind>}` — binary off I/O carrying
-    // the mime's reverse-mapped extension as the decode hint (non-null), never
-    // `{object, null}` and never a throw on an unset Mime.
-    [Test] public async Task ChannelRead_DefaultTextPlainMime_StampsBinaryWithKind()
+    // channel.this.cs defaults Mime to "text/plain" — text's own format: plain text is {text},
+    // no kind; never a throw on an unset Mime.
+    [Test] public async Task ChannelRead_DefaultTextPlainMime_StampsText()
     {
         await using var app = NewApp();
         var ch = Input(app, "text/plain", Encoding.UTF8.GetBytes("hello"));
         var d = await ch.Read();
-        await Assert.That(d.Type.Name).IsEqualTo("binary");
-        await Assert.That(d.Type.kind.IsEmpty).IsFalse();
+        await Assert.That(d.Type.Name).IsEqualTo("text");
+        await Assert.That(d.Type.kind.IsEmpty).IsTrue();
     }
 
     // Independent #15 — an octet-stream Mime stamps `{binary, null}` (no decode
@@ -69,30 +67,30 @@ public class ChannelReadBoundaryTests
         await Assert.That(d.Raw is byte[]).IsTrue();
     }
 
-    // The flip — an application/json body stamps `{binary, json}`. The key
-    // invariant: stamping does NOT parse — raw stays the unparsed bytes.
-    [Test] public async Task ChannelRead_ApplicationJsonBody_StampsBinaryJson_NoParseAtStamp()
+    // An application/json body stamps `{item, json}`. The key invariant: stamping does NOT
+    // parse — raw stays the unparsed bytes.
+    [Test] public async Task ChannelRead_ApplicationJsonBody_StampsItemJson_NoParseAtStamp()
     {
         await using var app = NewApp();
         const string json = "{\"port\":8080}";
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes(json));
         var d = await ch.Read();
-        await Assert.That(d.Type.Name).IsEqualTo("binary");
+        await Assert.That(d.Type.Name).IsEqualTo("item");
         await Assert.That(d.Type.kind.Name).IsEqualTo("json");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         // Content off I/O is raw bytes now — untouched raw is the byte[], not the string.
         await Assert.That(d.Raw is byte[]).IsTrue();
     }
 
-    // text/csv lands `{binary, csv}`. Same lazy invariant: raw is the unparsed
+    // text/csv lands `{table, csv}`. Same lazy invariant: raw is the unparsed
     // bytes, no parse at stamp time.
-    [Test] public async Task ChannelRead_TextCsvBody_StampsBinaryCsv_NoParseAtStamp()
+    [Test] public async Task ChannelRead_TextCsvBody_StampsTableCsv_NoParseAtStamp()
     {
         await using var app = NewApp();
         const string csv = "name,age\nAda,36\n";
         var ch = Input(app, "text/csv", Encoding.UTF8.GetBytes(csv));
         var d = await ch.Read();
-        await Assert.That(d.Type.Name).IsEqualTo("binary");
+        await Assert.That(d.Type.Name).IsEqualTo("table");
         await Assert.That(d.Type.kind.Name).IsEqualTo("csv");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         // Content off I/O is raw bytes now — untouched raw is the byte[], not the string.
@@ -112,15 +110,14 @@ public class ChannelReadBoundaryTests
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("hello");
     }
 
-    // app/channel/stream/this.cs today returned bare text and ignored the
-    // channel's Mime. After the flip the stream channel produces Mime-stamped
-    // lazy Data — a json-mime read lands `binary`, not a bare `text` string.
+    // The stream channel produces Mime-stamped lazy Data — a json-mime read lands
+    // `{item, json}`, not a bare `text` string.
     [Test] public async Task StreamChannel_NoLongerReturnsBareText()
     {
         await using var app = NewApp();
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes("{\"a\":1}"));
         var d = await ch.Read();
         await Assert.That(d.HasRaw).IsTrue();
-        await Assert.That(d.Type.Name).IsEqualTo("binary");
+        await Assert.That(d.Type.Name).IsEqualTo("item");
     }
 }

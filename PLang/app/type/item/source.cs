@@ -148,7 +148,7 @@ public class source : @this
             // reader below (png→image, csv→table, …). Covers both entrances — a content source and
             // an inherited wire both parse here. A bad parse rides the catch → MaterializeFailed.
             if (_type.kind is { IsEmpty: false } kind
-                && await asking.App.type.list.Kind(kind.Name).Load(_value, asking) is { } loaded)
+                && await asking.App.type.list.Kind(_type, asking).Load(_value, asking) is { } loaded)
             {
                 var decoded = await loaded.Value();
                 decoded.history.Add(this);   // the source rides the materialized value's history

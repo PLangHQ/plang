@@ -10,11 +10,12 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 // no longer exist anywhere in the codebase.
 public class OtherAccessorsTests
 {
-    [Test] public async Task AppFormat_LookupByName_ReturnsMimeAndCompressibleInfo()
+    [Test] public async Task TypeList_Extension_AnswersTheFormatsTypeAndMime()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Format.Mime(".jpg")).IsEqualTo("image/jpeg");
-        await Assert.That(app.Format.Kind(".jpg")).IsEqualTo("image");
+        var jpg = app.type.list.Extension(".jpg", app.User.Context);
+        await Assert.That(jpg.Name).IsEqualTo("image");
+        await Assert.That(jpg.kind.Mime[0]).IsEqualTo("image/jpeg");
     }
 
     [Test] public async Task ContextVariable_IndexByName_AfterSet_ReturnsValue()

@@ -76,12 +76,13 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_ExtensionRegisteredAtRuntime_FileKindIsTheRegisteredKind()
     {
-        // `.abcdata` is unknown until `.abc` registers `application/abcdata`; from then on the
-        // registry canonicalises the `abcdata` kind to the registered extension, `abc`.
+        // `.abcdata` is unknown until a format `abc` takes that extension; from then on the
+        // extension answers to the registered kind, `abc`.
         System.IO.File.WriteAllText(TempPath("before.abcdata"), "x");
         var before = await new Read(_app.User.Context) { Path = MakePath("before.abcdata") }.Start();
 
-        _app.Format.Add(".abc", "abc", "application/abcdata");
+        _app.type.list.Add(new global::app.type.kind.@this(
+            new global::app.Attributes.FormatAttribute("abc", "application/abcdata", ".abc", ".abcdata"), "binary"));
         System.IO.File.WriteAllText(TempPath("after.abcdata"), "x");
         var after = await new Read(_app.User.Context) { Path = MakePath("after.abcdata") }.Start();
 

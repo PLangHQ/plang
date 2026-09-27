@@ -193,14 +193,21 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     /// <summary>Replaces the type of <paramref name="type"/>'s name with <paramref name="type"/>
     /// itself — the app's own type object for its concept (<c>app.type</c> is the entry named
-    /// <c>type</c>). Same name, same class: the guard holds.</summary>
+    /// <c>type</c>). Same name, same class: the guard holds. The kinds the replaced entry held (goal's
+    /// .pr format) go over to the new one.</summary>
     internal void Replace(global::app.type.@this type)
     {
         lock (_lock)
         {
             Load();
             var index = Items().ToList().FindIndex(t => t.Names(type.Name));
-            if (index >= 0) RemoveAt(index);
+            if (index >= 0)
+            {
+                if (Items().ElementAt(index).kind is global::app.type.kind.empty.@this held
+                    && type.kind is global::app.type.kind.empty.@this root)
+                    foreach (var kind in held.Kinds) root.Add(kind);
+                RemoveAt(index);
+            }
             base.Add(type);
         }
     }
@@ -220,8 +227,22 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if (kind.Owner is not { } owner
             || Items().FirstOrDefault(t => t.Names(owner))?.kind is not global::app.type.kind.empty.@this root)
             throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
+        // A MIME or an extension is one format's: a second kind answering to it would make the walk's
+        // answer depend on the order the types came in.
+        lock (_formats)
+        {
+            foreach (var key in kind.Mime.Concat(kind.Extension))
+                if (_formats.TryGetValue(key, out var taken)
+                    && !(string.Equals(taken.Owner, owner, StringComparison.OrdinalIgnoreCase) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
+                    throw new InvalidOperationException(
+                        $"'{key}' is already the format '{taken.Owner}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — '{owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
+            foreach (var key in kind.Mime.Concat(kind.Extension)) _formats[key] = kind;
+        }
         root.Add(kind);
     }
+
+    // Each MIME and extension a format answers to, to the one kind that holds it.
+    private readonly Dictionary<string, global::app.type.kind.@this> _formats = new(StringComparer.OrdinalIgnoreCase);
 
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
     // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
@@ -237,6 +258,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 var kind = (global::app.type.kind.@this)Activator.CreateInstance(t)!;
                 if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
             }
+            // each format a type's class declares, a kind of that type
+            if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false)
+                && global::app.type.item.@this.NameOf(t) is { } reads && Items().Any(type => type.Names(reads)))
+                foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
+                    Hold(new global::app.type.kind.@this(format, reads));
             // each class of settings, a kind of setting by its path (one of it says the path)
             if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
                 && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null

@@ -28,6 +28,15 @@ namespace app.type.item.text;
 /// <c>foreach %s%</c> never char-iterates it.</para>
 /// </summary>
 [global::app.Attributes.PlangType("text")]
+[global::app.Attributes.Format("", "text/plain", ".txt")]
+[global::app.Attributes.Format("xml", "application/xml")]
+[global::app.Attributes.Format("md", "text/markdown", ".md", ".markdown")]
+[global::app.Attributes.Format("yml", "text/yaml", ".yml", ".yaml")]
+[global::app.Attributes.Format("ini")]
+[global::app.Attributes.Format("goal")]
+[global::app.Attributes.Format("llm")]
+[global::app.Attributes.Format("template")]
+[global::app.Attributes.Format("liquid")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

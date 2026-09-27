@@ -27,7 +27,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task StreamChannel_ReadCore_ReadsBytes_StampsBinaryViaMime()
+    public async Task StreamChannel_ReadCore_ReadsBytes_StampsTextViaMime()
     {
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("hello"));
         var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
@@ -35,9 +35,9 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         app.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsSuccess();
-        // The flip: read yields lazy binary Data carrying the raw bytes, stamped
-        // from the channel's Mime — no eager decode at read time.
-        await Assert.That(result.Type.Name).IsEqualTo("binary");
+        // Read yields lazy Data carrying the raw bytes, stamped from the channel's Mime
+        // (text/plain is text) — no eager decode at read time.
+        await Assert.That(result.Type.Name).IsEqualTo("text");
         await Assert.That(result.Raw is byte[]).IsTrue();
         await Assert.That(global::System.Text.Encoding.UTF8.GetString((byte[])result.Raw!)).IsEqualTo("hello");
     }
