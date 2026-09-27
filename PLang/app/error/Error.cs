@@ -71,7 +71,7 @@ public class Error : global::app.type.item.@this
     /// back-references that can't round-trip (Exception, Step, Goal, CallFrames) are
     /// dropped — the snapshot's CallStack section carries the chain. Symmetric with the
     /// read side (<c>ErrorWire</c>).</summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("$type");       writer.String(GetType().Name);
@@ -96,7 +96,7 @@ public class Error : global::app.type.item.@this
 
     /// <summary>Subtypes add their own wire fields here — written mid-object, after the
     /// common fields and before <c>errorChain</c>. Base errors have none.</summary>
-    protected virtual void WriteSpecific(global::app.channel.serializer.IWriter writer) { }
+    protected virtual void WriteSpecific(global::app.type.format.IWriter writer) { }
 
     private global::app.data.@this<global::app.snapshot.@this>? _callback;
 

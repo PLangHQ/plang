@@ -169,11 +169,11 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
     /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Start"/>.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         // In formal a step's actions are one line: `a; b`.
-        if (writer is global::app.channel.serializer.formal.Writer formal)
+        if (writer is global::app.type.format.formal.Writer formal)
         {
             formal.BeginActions();
             for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);

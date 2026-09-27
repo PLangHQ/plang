@@ -1,4 +1,4 @@
-namespace app.channel.serializer;
+namespace app.type.format;
 
 /// <summary>
 /// Format-encoder protocol consumed by the wire pipeline once

@@ -14,7 +14,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("list", kind);
         reader.BeginArray();
@@ -36,7 +36,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         {
             if (elementReader is null) list.AddRaw(parser.Entry(ref reader, ctx));
             // a typed entry is an object; any other token is a bare element
-            else if (reader.Peek() != global::app.channel.serializer.TokenKind.Object) list.AddRaw(elementReader.Read(ref reader, null, ctx));
+            else if (reader.Peek() != global::app.type.format.TokenKind.Object) list.AddRaw(elementReader.Read(ref reader, null, ctx));
             else list.AddRaw(Element(reader.RawValue(), elementReader, parser, ctx));
         }
         reader.EndArray();
@@ -50,7 +50,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (parser.Typed(raw) is { } row) return row;
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var bare = new global::app.channel.serializer.json.Reader(utf8, raw);
+        var bare = new global::app.type.format.json.Reader(utf8, raw);
         return element.Read(ref bare, null, ctx);
     }
 }

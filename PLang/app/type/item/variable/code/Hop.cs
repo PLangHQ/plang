@@ -30,7 +30,7 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
             $"'{Text}' can't be written to — a {Kind} answers a value, it holds none.", "VariableNotWritable", 400)));
 
     /// <summary>Its <c>.pr</c> form: one object under its kind — <c>{"property": "address"}</c>.</summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name(Kind);
@@ -39,7 +39,7 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>What it writes under its kind.</summary>
-    protected abstract void Piece(global::app.channel.serializer.IWriter writer);
+    protected abstract void Piece(global::app.type.format.IWriter writer);
 
     public override string ToString() => Text;
 }

@@ -77,7 +77,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// like every other value. This node shape is the only structural thing the snapshot owns;
     /// below it, composition.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         writer.BeginObject();

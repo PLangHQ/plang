@@ -13,7 +13,7 @@ public sealed class @this
     public int Indent { get; init; }
 
     /// <summary>Writes itself as the .pr's <c>line</c> object.</summary>
-    public void Output(global::app.channel.serializer.IWriter writer)
+    public void Output(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("number"); writer.Int(Number);

@@ -143,7 +143,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// pass (file is <c>ILoadable</c>). Text content emits the UTF-8 text form;
     /// anything else emits the bytes.
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         if (_isText) writer.String(ContentText());
         else writer.Bytes(Bytes);

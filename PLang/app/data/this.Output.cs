@@ -37,7 +37,7 @@ public partial class @this
     /// real type+value), not <c>type:variable</c>.
     /// </summary>
     public async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, View mode,
+        global::app.type.format.IWriter writer, View mode,
         global::app.actor.context.@this? context = null, bool layer = false)
     {
         context ??= _context;

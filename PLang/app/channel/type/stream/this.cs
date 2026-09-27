@@ -1,4 +1,3 @@
-using app.channel.serializer;
 using app.error;
 
 namespace app.channel.type.stream;

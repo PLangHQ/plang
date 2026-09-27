@@ -23,7 +23,7 @@ public sealed class Method : Hop
 
     /// <summary>Its name, then its values as rows: <c>"replace", "parameter": [{"type": {"name": "text"},
     /// "value": "-"}, …]</c>; a variable's row names it, as every stored row does.</summary>
-    protected override void Piece(global::app.channel.serializer.IWriter writer)
+    protected override void Piece(global::app.type.format.IWriter writer)
     {
         writer.String(Name);
         writer.Name("parameter");

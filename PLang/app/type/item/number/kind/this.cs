@@ -26,9 +26,9 @@ public abstract class @this : global::app.type.kind.@this
     public abstract global::app.type.item.number.@this Create(global::app.type.item.@this value);
 
     /// <summary>Write a number of this kind to the wire — the kind emits its own token.</summary>
-    public abstract void Write(global::app.type.item.number.@this value, global::app.channel.serializer.IWriter writer);
+    public abstract void Write(global::app.type.item.number.@this value, global::app.type.format.IWriter writer);
 
     /// <summary>Read a number of this kind off the wire — the inverse of <see cref="Write"/>.</summary>
     public abstract global::app.type.item.@this Read<TReader>(ref TReader reader)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct;
+        where TReader : global::app.type.format.IReader, allows ref struct;
 }

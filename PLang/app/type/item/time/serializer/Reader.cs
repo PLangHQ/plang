@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
         => reader.Null()
             ? new global::app.type.item.@null.@this("time", kind)
             : new global::app.type.item.time.@this(System.TimeOnly.Parse(

@@ -1,4 +1,4 @@
-namespace app.channel.serializer;
+namespace app.type.format;
 
 /// <summary>
 /// A value's serializer for ONE channel format — the per-format exception a type owns when

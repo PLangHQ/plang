@@ -172,7 +172,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// (<c>dict</c>/<c>list</c>) override with key/index writes; a value with no writable property for
     /// <paramref name="key"/> throws. The writer's <paramref name="context"/> rides along for a value
     /// that builds its child (a foreign host, a step constructing its actions); reflection needs none.</para>
-    /// (Distinct from <see cref="Write(global::app.channel.serializer.IWriter)"/>, which serializes.)
+    /// (Distinct from <see cref="Write(global::app.type.format.IWriter)"/>, which serializes.)
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
@@ -603,12 +603,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>
     /// Render this value's bare wire form into the format-neutral
-    /// <see cref="global::app.channel.serializer.IWriter"/> — the leaf-serializer
+    /// <see cref="global::app.type.format.IWriter"/> — the leaf-serializer
     /// behavior (OBP Rule 9: the value owns its wire shape, the writer never
     /// type-switches). Only leaves are asked (Normalize routes non-leaves through
     /// their own branches); the default throws so a missing override is loud.
     /// </summary>
-    public virtual void Write(global::app.channel.serializer.IWriter writer)
+    public virtual void Write(global::app.type.format.IWriter writer)
         => throw new System.NotSupportedException(
             $"{GetType().Name} has no bare wire form — it is not a leaf value.");
 
@@ -622,7 +622,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// between the writer's synchronous buffer writes.
     /// </summary>
     public virtual System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         Write(writer);
@@ -631,7 +631,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>
     /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting
-    /// the attribute set (<see cref="global::app.channel.serializer.filter.Tagged"/>:
+    /// the attribute set (<see cref="global::app.type.format.filter.Tagged"/>:
     /// <c>Out→[Out]</c>, <c>Store→[Store]</c>, <c>Debug→all</c>). Each property value writes ITSELF:
     /// an <see cref="@this"/> via its own <see cref="Output"/>, a raw C# scalar via the writer, a
     /// sequence as an array. The general-object wire form; leaves and special shapes
@@ -639,11 +639,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     [System.Obsolete("Superseded by the reflection (*) kind's Output — do not add new callers.")]
     protected async System.Threading.Tasks.ValueTask OutputTagged(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         writer.BeginObject();
-        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(GetType(), mode))
+        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(GetType(), mode))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             var value = entry.Property.GetValue(this);
@@ -658,7 +658,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // becomes an array of self-writes, a raw C# scalar goes through the writer. This is the
     // reflection→wire boundary — C# primitives can't write themselves, so the writer renders them.
     private static async System.Threading.Tasks.ValueTask WriteReflected(
-        global::app.channel.serializer.IWriter writer, object value, global::app.View mode,
+        global::app.type.format.IWriter writer, object value, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         switch (value)

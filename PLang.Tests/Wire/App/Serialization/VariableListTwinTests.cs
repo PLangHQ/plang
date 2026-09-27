@@ -47,7 +47,7 @@ public class VariableListTwinTests
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms,
                    new System.Text.Json.JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
             new global::app.type.item.variable.serializer.Entry().Write(
-                new global::app.channel.serializer.json.Writer(utf8), found.DistinctBy(v => v.Text).ToList());
+                new global::app.type.format.json.Writer(utf8), found.DistinctBy(v => v.Text).ToList());
         return JsonNode.Parse(ms.ToArray())!.ToJsonString();
     }
 

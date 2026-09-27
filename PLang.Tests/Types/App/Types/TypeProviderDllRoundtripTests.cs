@@ -38,7 +38,7 @@ public class TypeProviderDllRoundtripTests
     }
 
 
-    private sealed class CapturingWriter : global::app.channel.serializer.IWriter
+    private sealed class CapturingWriter : global::app.type.format.IWriter
     {
         public CapturingWriter(string format) { Format = format; }
         public string Format { get; }

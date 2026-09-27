@@ -1,6 +1,6 @@
 namespace app.type.item.@bool.serializer;
 
-using TokenKind = global::app.channel.serializer.TokenKind;
+using TokenKind = global::app.type.format.TokenKind;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for
@@ -16,7 +16,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("bool", kind);
         return reader.Peek() switch

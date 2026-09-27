@@ -223,7 +223,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Self-write: a test is a structural item — its tagged [Out] fields ride the
     /// wire (the report serializes it), no hand-mapped shape.</summary>
     public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
         => OutputTagged(writer, mode, context);
 

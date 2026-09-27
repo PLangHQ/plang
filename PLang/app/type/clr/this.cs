@@ -83,7 +83,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// tried to serialize it as a leaf; name the carried type so the producer is findable.
     /// (The clr's structured wire form is <see cref="Output"/>, which reflects the host.)
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
         => throw new System.NotSupportedException(
             $"clr carrier wrapping '{Value.GetType().FullName}' reached the wire as a leaf — "
             + "it has no plang type to render itself. Wrap it in a real item type, or fix the producer that parked it in a clr.");
@@ -181,7 +181,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     // The carrier owns its per-format serializers — instantiated directly (no reflection, no
     // registry), keyed by format. Only formats that DIVERGE from the default reflection are
     // listed; text is here because a foreign host has no plain-text form (renders as json).
-    private static readonly System.Collections.Generic.Dictionary<string, global::app.channel.serializer.IOutput> _formats
+    private static readonly System.Collections.Generic.Dictionary<string, global::app.type.format.IOutput> _formats
         = new() { ["text"] = new format.text() };
 
     /// <summary>
@@ -191,7 +191,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// serializer (a foreign host has no plain-text form — renders as a json string).
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (_formats.TryGetValue(writer.Format, out var serializer))

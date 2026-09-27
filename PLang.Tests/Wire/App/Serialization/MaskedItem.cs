@@ -9,7 +9,7 @@ public sealed class MaskedItem : global::app.type.item.@this
 
     /// <summary>A structural item — its tagged fields ride the wire.</summary>
     public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
         => OutputTagged(writer, mode, context);
 }

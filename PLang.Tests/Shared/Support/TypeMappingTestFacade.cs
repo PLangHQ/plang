@@ -51,7 +51,7 @@ internal static class Json
         WriteIndented = true,
         Converters =
         {
-            new global::app.channel.serializer.json.Converter(),
+            new global::app.type.format.json.Converter(),
         },
     };
 

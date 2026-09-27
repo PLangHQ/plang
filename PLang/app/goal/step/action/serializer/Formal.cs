@@ -4,7 +4,7 @@ namespace app.goal.step.action.serializer;
 
 /// <summary>
 /// Reads a step's actions from formal — <c>file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)</c>
-/// — the read-side twin of the formal writer (<see cref="app.channel.serializer.formal.Writer"/>). Born with
+/// — the read-side twin of the formal writer (<see cref="app.type.format.formal.Writer"/>). Born with
 /// the step whose actions it reads, as <see cref="Reader"/> is, so every action it makes holds that step.
 ///
 /// <para>Grammar (whitespace, new lines included, between any two tokens):</para>
@@ -360,7 +360,7 @@ public sealed class Formal
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
             utf8.Read();
-            var reader = new global::app.channel.serializer.json.Reader(utf8, bytes);
+            var reader = new global::app.type.format.json.Reader(utf8, bytes);
             return marked.Read(ref reader, new global::app.type.reader.ReadContext(_context, marked.Template,
                 Variable: marked.Template != null ? variables : null));
         }
@@ -431,7 +431,7 @@ public sealed class Formal
         {
             using var ms = new System.IO.MemoryStream();
             using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                new global::app.type.item.variable.serializer.Entry().Write(new global::app.channel.serializer.json.Writer(utf8), variables);
+                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.format.json.Writer(utf8), variables);
             return Encoding.UTF8.GetString(ms.ToArray());
         }
 

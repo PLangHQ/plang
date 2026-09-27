@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace app.channel.serializer.json;
+namespace app.type.format.json;
 
 /// <summary>
 /// JSON implementation of <see cref="IReader"/> — a <c>ref struct</c> holding a

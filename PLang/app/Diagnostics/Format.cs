@@ -28,10 +28,10 @@ public static class Format
         WriteIndented = true,
         // Path serializes as its Relative string; without this the default
         // serializer walks Path.GoalCall.PrPath.GoalCall... cycle.
-        Converters = { new global::app.channel.serializer.json.Converter() },
+        Converters = { new global::app.type.format.json.Converter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { app.channel.serializer.filter.Sensitive.Mask }
+            Modifiers = { app.type.format.filter.Sensitive.Mask }
         }
     };
 

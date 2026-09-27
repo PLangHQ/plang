@@ -8,7 +8,7 @@ namespace app.type.item.url.serializer;
 /// </summary>
 public static class Default
 {
-    public static void Write(global::app.type.item.url.@this value, global::app.channel.serializer.IWriter writer)
+    public static void Write(global::app.type.item.url.@this value, global::app.type.format.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         if (!value.IsLoaded) { writer.String(value.ToString()); return; }

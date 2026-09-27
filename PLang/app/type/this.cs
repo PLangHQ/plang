@@ -39,7 +39,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>Self-write: the type entity's <c>{name, kind?, strict?, template?}</c> identity — the
     /// shape Data writes for its <c>type</c> slot (<c>json.Writer.BeginRecord</c>), and a type held
     /// as a value in every view but Out (a <c>.pr</c> row holding a type stays its identity).</summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
@@ -55,7 +55,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// description, example and aliases, and its kinds' names (a kinded type shows its own kind). Every other
     /// view writes the identity (<see cref="Write"/>).
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         if (mode != global::app.View.Out || context == null) { Write(writer); return; }
@@ -341,7 +341,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// build), never because of what it holds. A type whose values are STRUCTURE (an action, a
     /// goal.call) is read eagerly through its own reader; a variable name or a template takes the
     /// content door; every other slot is a lazy wire over its verbatim bytes.</summary>
-    public item.@this Read(ref global::app.channel.serializer.json.Reader reader,
+    public item.@this Read(ref global::app.type.format.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
         // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names.
@@ -351,7 +351,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // The slot is captured in plang's own format — the wire type's plang kind, which reads it on first touch.
         var transport = (global::app.type.item.wire.kind.plang.@this)ctx.Context.App.type.list["wire"].kind["plang"]!;
 
-        if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
+        if (reader.Peek() == global::app.type.format.TokenKind.String)
         {
             var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
             // A SEMANTIC string — a variable NAME, or a template (its row's marker) — takes the

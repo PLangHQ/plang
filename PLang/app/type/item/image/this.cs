@@ -86,7 +86,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the source location when wired, else a scannable label. A protobuf
     /// stream carries the raw bytes.
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         switch (writer.Format)
         {

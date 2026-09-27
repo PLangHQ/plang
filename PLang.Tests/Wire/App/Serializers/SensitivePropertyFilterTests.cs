@@ -1,6 +1,6 @@
 using System.Text.Json;
 using app;
-using app.channel.serializer;
+using app.type.format;
 using app.error;
 using app.module.action.identity;
 using PLangEngine = global::app.@this;
@@ -80,7 +80,7 @@ public class SensitivePropertyFilterTests
             IsDefault = true
         };
 
-        // Raw JsonSerializer (used by DataSource) has no global::app.channel.serializer.filter.Sensitive
+        // Raw JsonSerializer (used by DataSource) has no global::app.type.format.filter.Sensitive
         var json = JsonSerializer.Serialize(identity);
 
         await Assert.That(json).Contains("pubkey123");

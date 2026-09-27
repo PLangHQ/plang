@@ -228,9 +228,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Its text, with its % signs — bare in formal (<c>Name: variable = %content%</c>), a
     /// string everywhere else.</summary>
-    public override void Write(global::app.channel.serializer.IWriter w)
+    public override void Write(global::app.type.format.IWriter w)
     {
-        if (w.Format == global::app.channel.serializer.formal.Writer.Token) w.Raw(Text);
+        if (w.Format == global::app.type.format.formal.Writer.Token) w.Raw(Text);
         else w.String(Text);
     }
 }

@@ -28,7 +28,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
         {
-            var writer = new global::app.channel.serializer.json.Writer(utf8, view, context.App.type.list.Renderer, emitsSchema: true);
+            var writer = new global::app.type.format.json.Writer(utf8, view, context.App.type.list.Renderer, emitsSchema: true);
             await item.Output(writer, view, context);
             await utf8.FlushAsync(ct);
         }
@@ -74,7 +74,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// symbol), the step/sub-goal children (each an item). The DEBUG view routes through the reflection
     /// (*) kind so diagnostic props (Errors/Warnings) ride.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (mode == global::app.View.Debug)

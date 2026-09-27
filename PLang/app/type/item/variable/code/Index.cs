@@ -15,7 +15,7 @@ public sealed class Index : Hop
     public override string Kind => "index";
 
     /// <summary><c>{"number": 0}</c>, <c>{"text": "k"}</c>, or <c>{"variable": [the key]}</c>.</summary>
-    protected override void Piece(global::app.channel.serializer.IWriter writer)
+    protected override void Piece(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (Key is variable.@this named)

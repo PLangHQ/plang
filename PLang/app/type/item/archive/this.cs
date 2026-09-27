@@ -40,7 +40,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.Bytes(Value);
+    public override void Write(global::app.type.format.IWriter w) => w.Bytes(Value);
 
     /// <summary>Non-empty bytes are truthy.</summary>
     public override bool IsTruthy() => Value.Length > 0;

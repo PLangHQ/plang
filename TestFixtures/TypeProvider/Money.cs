@@ -22,7 +22,7 @@ public sealed class MoneyRenderer : global::app.type.list.ITypeRenderer
     public string TypeName => "money";
     public string Format => global::app.type.renderer.@this.AnyFormat;
 
-    public void Write(object value, global::app.channel.serializer.IWriter writer)
+    public void Write(object value, global::app.type.format.IWriter writer)
     {
         if (value is Money m)
             writer.String($"{m.Currency} {m.Amount}");

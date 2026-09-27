@@ -30,14 +30,14 @@ public class FormalWriterTests
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
-        var reader = new global::app.channel.serializer.json.Reader(utf8, bytes);
+        var reader = new global::app.type.format.json.Reader(utf8, bytes);
         return (global::app.goal.step.@this)new global::app.goal.step.serializer.Reader(goal)
             .Read(ref reader, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, "plang"));
     }
 
     internal static async Task<string> Formal(global::app.goal.step.@this step)
     {
-        var writer = new global::app.channel.serializer.formal.Writer();
+        var writer = new global::app.type.format.formal.Writer();
         await step.Code.Output(writer, global::app.View.Store, global::PLang.Tests.TestApp.SharedContext);
         return writer.ToString();
     }
@@ -60,7 +60,7 @@ public class FormalWriterTests
     [Test]
     public async Task Leaves_WriteAsFormalLiterals()
     {
-        var writer = new global::app.channel.serializer.formal.Writer();
+        var writer = new global::app.type.format.formal.Writer();
         writer.BeginArray(6);
         writer.String("a \"quoted\" \\ line\n"); writer.Long(10000); writer.Double(0.24); writer.Double(1); writer.Bool(true); writer.Null();
         writer.EndArray();
@@ -70,7 +70,7 @@ public class FormalWriterTests
     [Test]
     public async Task ADict_WritesItsKeysQuoted()
     {
-        var writer = new global::app.channel.serializer.formal.Writer();
+        var writer = new global::app.type.format.formal.Writer();
         writer.BeginObject(); writer.Name("id"); writer.String("x"); writer.Name("n"); writer.Long(5); writer.EndObject();
         await Assert.That(writer.ToString()).IsEqualTo("{\"id\": \"x\", \"n\": 5}");
     }

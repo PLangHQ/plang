@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     protected override global::app.type.item.list.@this Empty() => new @this([]);
 
     /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         var hops = Items().ToList();
         writer.BeginArray(hops.Count);
@@ -20,7 +20,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
         writer.EndArray();
     }
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         Write(writer);

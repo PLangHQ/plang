@@ -22,7 +22,7 @@ public sealed class @this : global::app.type.item.list.@this<Tag>
     /// <summary>Writes the goal's tag array — each tag its bare string, the shape the goal reader reads
     /// (not the base's per-row value face).</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         writer.BeginArray((int)Count);

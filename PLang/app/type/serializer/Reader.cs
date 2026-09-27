@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         // Token-parse the descriptor {name, kind?, strict?, template?} — the symmetric mirror of
         // type.@this.Write; no STJ, no per-type converter. Field names are written lowercase.

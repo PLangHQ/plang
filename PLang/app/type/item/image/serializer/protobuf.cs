@@ -7,7 +7,7 @@ namespace app.type.item.image.serializer;
 /// </summary>
 public static class protobuf
 {
-    public static void Write(global::app.type.item.image.@this value, global::app.channel.serializer.IWriter writer)
+    public static void Write(global::app.type.item.image.@this value, global::app.type.format.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         writer.Bytes(value.Bytes);

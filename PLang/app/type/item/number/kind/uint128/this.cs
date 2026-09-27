@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.item.number.kind.@this
             var o => throw new System.FormatException($"'{o}' cannot be uint128."),
         };
 
-    public override void Write(global::app.type.item.number.@this v, global::app.channel.serializer.IWriter w) => w.String(v.ToString());
+    public override void Write(global::app.type.item.number.@this v, global::app.type.format.IWriter w) => w.String(v.ToString());
     public override global::app.type.item.@this Read<TReader>(ref TReader r)
         => (global::app.type.item.number.@this)System.UInt128.Parse(r.String(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
 }

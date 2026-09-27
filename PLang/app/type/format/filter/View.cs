@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json.Serialization.Metadata;
 using app;
 
-namespace app.channel.serializer.filter;
+namespace app.type.format.filter;
 
 /// <summary>
 /// Filters JSON properties based on view attributes.

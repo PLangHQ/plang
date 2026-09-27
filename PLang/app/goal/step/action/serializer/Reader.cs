@@ -3,7 +3,7 @@ namespace app.goal.step.action.serializer;
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>action</c> — the read-side
 /// mirror of <see cref="app.goal.step.action.@this.Output"/>. Walks the handed
-/// <see cref="app.channel.serializer.IReader"/> in place (the channel already made the one reader and
+/// <see cref="app.type.format.IReader"/> in place (the channel already made the one reader and
 /// positioned it): the action's bare shape <c>{module, name, property[], default?[], modifier[]}</c>.
 /// Each property row is read into a property — raw, no Data, no context.
 /// A modifier rides action's own shape — each element in the <c>modifiers</c> array is populated as the
@@ -25,7 +25,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// caller drops it.</summary>
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("action", kind);
         // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic.
@@ -40,7 +40,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     // actions the same step, child steps that step's goal — the chain self-feeds.
     private void Populate<TReader>(ref TReader reader,
         global::app.goal.step.action.@this action, global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -117,7 +117,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var row = new global::app.channel.serializer.json.Reader(utf8, raw);
+        var row = new global::app.type.format.json.Reader(utf8, raw);
 
         var name = "";
         global::app.type.@this? type = null;
@@ -156,7 +156,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 throw new global::app.error.PrFormatOutdatedException($"property '{name}' is a template without its variable list");
             var bytes = new System.Text.Json.Utf8JsonReader(held);
             bytes.Read();
-            var slot = new global::app.channel.serializer.json.Reader(bytes, held);
+            var slot = new global::app.type.format.json.Reader(bytes, held);
             var born = ctx with { Variable = variables };
             value = type!.Name == "action" ? Read(ref slot, null, born) : type.Read(ref slot, born);
         }

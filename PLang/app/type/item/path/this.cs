@@ -288,7 +288,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// The resolved <see cref="Absolute"/> stays off the wire (it leaks the install root and
     /// is gated behind Authorize).
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
+    public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
 
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding

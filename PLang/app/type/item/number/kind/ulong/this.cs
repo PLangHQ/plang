@@ -7,7 +7,7 @@ public sealed class @this : global::app.type.item.number.kind.@this
     public @this() : base("ulong") { }
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value) => value.Clr<ulong>();
 
-    public override void Write(global::app.type.item.number.@this v, global::app.channel.serializer.IWriter w)
+    public override void Write(global::app.type.item.number.@this v, global::app.type.format.IWriter w)
     {
         ulong ul = (ulong)v.BoxedValue;
         if (ul <= long.MaxValue) w.Long((long)ul);
@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.item.number.kind.@this
     }
 
     public override global::app.type.item.@this Read<TReader>(ref TReader r)
-        => (global::app.type.item.number.@this)(r.Peek() == global::app.channel.serializer.TokenKind.String
+        => (global::app.type.item.number.@this)(r.Peek() == global::app.type.format.TokenKind.String
             ? ulong.Parse(r.String(), System.Globalization.CultureInfo.InvariantCulture)
             : (ulong)r.Long());
 }

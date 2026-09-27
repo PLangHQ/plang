@@ -94,7 +94,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// location (the reference face); the listing was pre-materialised by the
     /// serialize chokepoint's <c>Load()</c> pass.
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         var listed = Listed;
         if (listed == null) { writer.String(ToString()); return; }

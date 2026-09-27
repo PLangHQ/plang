@@ -134,7 +134,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value ?? "");
+    public override void Write(global::app.type.format.IWriter w) => w.String(_value ?? "");
     public override string ToString() => _value ?? "";
     public override string? RawText => _value;
 

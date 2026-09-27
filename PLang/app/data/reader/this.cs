@@ -28,12 +28,12 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         utf8.Read();
         // Own the buffer so a wire slot's Slice() gets a verbatim span (not a JsonDocument
         // round-trip) on this host-carrier subtree entry too.
-        var reader = new global::app.channel.serializer.json.Reader(utf8, raw);
+        var reader = new global::app.type.format.json.Reader(utf8, raw);
         return Read(ref reader, ctx);
     }
 
     /// <summary>The one read — the Data is born with the read's context.</summary>
-    public Data Read(ref global::app.channel.serializer.json.Reader reader,
+    public Data Read(ref global::app.type.format.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
         var born = ctx.Context;
@@ -60,7 +60,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     // form (type:"string") is the OLD shape — invalid; throw so a stale .pr
                     // surfaces loudly. The entity reads through its own reader (the `type`
                     // reader, like any other value) — context stamped there.
-                    if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
+                    if (reader.Peek() == global::app.type.format.TokenKind.String)
                         throw new JsonException(
                             $"invalid .pr schema: 'type' must be an object {{name, ...}}, not the bare string "
                             + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
@@ -96,7 +96,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 throw new global::app.error.PrFormatOutdatedException($"'{name}' is a template without its variable list");
             var utf8 = new System.Text.Json.Utf8JsonReader(raw);
             utf8.Read();
-            var held = new global::app.channel.serializer.json.Reader(utf8, raw);
+            var held = new global::app.type.format.json.Reader(utf8, raw);
             value = typeRef!.Read(ref held, ctx with { Variable = variables });
         }
         if (value != null)

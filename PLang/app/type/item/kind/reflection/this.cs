@@ -59,7 +59,7 @@ public sealed class @this : global::app.type.kind.@this
     // (%var%-born / template / signing byte-identical).
     public object? Read<TReader>(ref TReader reader, global::System.Type target,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return null;
 
@@ -93,7 +93,7 @@ public sealed class @this : global::app.type.kind.@this
         var host = global::System.Activator.CreateInstance(target)!;
         var byName = new global::System.Collections.Generic.Dictionary<string, global::System.Reflection.PropertyInfo>(
             global::System.StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(target, global::app.View.Store))
+        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(target, global::app.View.Store))
             byName[entry.WireName] = entry.Property;
 
         reader.BeginObject();
@@ -125,7 +125,7 @@ public sealed class @this : global::app.type.kind.@this
             global::System.StringComparer.OrdinalIgnoreCase);
         foreach (var key in slots.KeyNames) byName[key] = key;
 
-        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(target, global::app.View.Store))
+        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(target, global::app.View.Store))
         {
             if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
             // Each entry lowers ITSELF to the property's CLR type — at the exit door, no context.
@@ -137,7 +137,7 @@ public sealed class @this : global::app.type.kind.@this
     // Read one value AS its declared CLR type off the reader.
     private object? ReadValue<TReader>(ref TReader reader, global::System.Type type,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         var t = global::System.Nullable.GetUnderlyingType(type) ?? type;
         if (reader.Null()) return null;
@@ -147,7 +147,7 @@ public sealed class @this : global::app.type.kind.@this
         if (t == typeof(int)) return (int)reader.Long();
         if (t == typeof(long)) return reader.Long();
         if (t.IsEnum)
-            return reader.Peek() == global::app.channel.serializer.TokenKind.Number
+            return reader.Peek() == global::app.type.format.TokenKind.Number
                 ? global::System.Enum.ToObject(t, reader.Long())
                 : global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
 
@@ -163,7 +163,7 @@ public sealed class @this : global::app.type.kind.@this
             var entity = ctx.Context.App.type.list[t];
             // The symbol rides as a string; a numeric ordinal (an enum member written by value) becomes
             // its member first. choice.Create takes either the member or the symbol.
-            object member = reader.Peek() == global::app.channel.serializer.TokenKind.Number
+            object member = reader.Peek() == global::app.type.format.TokenKind.Number
                 ? global::System.Enum.ToObject(t.GetGenericArguments()[0], reader.Long())
                 : reader.String();
             return entity.Create(member,
@@ -184,7 +184,7 @@ public sealed class @this : global::app.type.kind.@this
 
     private object? ReadDataList<TReader>(ref TReader reader,
         global::System.Type listType, global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         var dataReader = new global::app.data.reader.@this();
         // Build the declared List-of-Data type ONCE, adding each param's own verbatim bytes (→ the
@@ -238,7 +238,7 @@ public sealed class @this : global::app.type.kind.@this
     // Serves hosts and foreign POCOs alike — the one object-Output path (a collection host writes
     // through the list kind's array-Output).
     public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        object obj, global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
     {
         var type = obj.GetType();
@@ -247,7 +247,7 @@ public sealed class @this : global::app.type.kind.@this
         // writing it (a context, a callstack) is a bug, so throw LOUD naming it. An untagged
         // FOREIGN type (a plang-blind library DTO) can't declare, so it dumps transparently.
         if (mode != global::app.View.Debug
-            && !global::app.channel.serializer.filter.Tagged.IsTagAware(type)
+            && !global::app.type.format.filter.Tagged.IsTagAware(type)
             && type.Assembly == typeof(global::app.type.kind.@this).Assembly)
             throw new global::app.data.OutputException(
                 $"'{type.FullName}' has no wire contract — it declares no [Out]/[Store] face and is "
@@ -255,7 +255,7 @@ public sealed class @this : global::app.type.kind.@this
                 "NoWireContract");
 
         writer.BeginObject();
-        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(type, mode))
+        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(type, mode))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             object? value;

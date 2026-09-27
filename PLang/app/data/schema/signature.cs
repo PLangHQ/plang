@@ -17,7 +17,7 @@ public sealed class signature : ISchemaReader
 {
     public string Schema => global::app.type.item.signature.@this.WireSchemaSignature;
 
-    public Data Read(ref global::app.channel.serializer.json.Reader reader,
+    public Data Read(ref global::app.type.format.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
         var context = ctx.Context;

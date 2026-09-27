@@ -27,7 +27,7 @@ public class AskError : Error
     }
 
     /// <summary>An ask carries where the value belongs — the table + key to store it.</summary>
-    protected override void WriteSpecific(global::app.channel.serializer.IWriter writer)
+    protected override void WriteSpecific(global::app.type.format.IWriter writer)
     {
         writer.Name("table");   writer.String(Table);
         writer.Name("dataKey"); writer.String(DataKey);

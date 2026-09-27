@@ -101,10 +101,10 @@ public sealed class @this
 
     /// <summary>Writes the property's row — <c>{name, type, value, properties?}</c>, the value as held
     /// (a wire relays its raw verbatim).</summary>
-    public async System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (writer is global::app.channel.serializer.formal.Writer formal)
+        if (writer is global::app.type.format.formal.Writer formal)
         {
             await Row(formal, frozen: false, mode, context);
             return;
@@ -142,7 +142,7 @@ public sealed class @this
     /// <summary>The property's formal row — <c>Name: type = value</c>, or <c>Name: type ?= value</c> when
     /// it is a frozen default (an action's <c>Default</c> row). The type is written whole, its kind in
     /// angle brackets; the value writes itself.</summary>
-    public async System.Threading.Tasks.ValueTask Row(global::app.channel.serializer.formal.Writer writer,
+    public async System.Threading.Tasks.ValueTask Row(global::app.type.format.formal.Writer writer,
         bool frozen, global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.Row(Name, Type.kind.IsEmpty ? Type.Name : $"{Type.Name}<{Type.kind.Name}>", frozen);

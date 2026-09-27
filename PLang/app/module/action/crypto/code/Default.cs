@@ -59,7 +59,7 @@ public class Default : ICrypto
             using var hashStream = new MemoryStream();
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(hashStream))
             {
-                var writer = new global::app.channel.serializer.json.Writer(
+                var writer = new global::app.type.format.json.Writer(
                     utf8, view,
                     action.Context?.App?.type.list.Renderer, emitsSchema: true);
                 await data.Output(writer, view, action.Context, layer: true);

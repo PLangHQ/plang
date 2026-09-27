@@ -15,7 +15,7 @@ public class FormalReaderTests
 
     private static async Task<string> Written(global::app.data.@this read)
     {
-        var writer = new global::app.channel.serializer.formal.Writer();
+        var writer = new global::app.type.format.formal.Writer();
         await ((global::app.goal.step.action.list.@this)read.Peek()!).Output(writer, global::app.View.Store, global::PLang.Tests.TestApp.SharedContext);
         return writer.ToString();
     }

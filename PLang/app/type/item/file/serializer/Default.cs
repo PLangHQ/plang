@@ -10,7 +10,7 @@ namespace app.type.item.file.serializer;
 /// </summary>
 public static class Default
 {
-    public static void Write(global::app.type.item.file.@this value, global::app.channel.serializer.IWriter writer)
+    public static void Write(global::app.type.item.file.@this value, global::app.type.format.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         value.Write(writer);

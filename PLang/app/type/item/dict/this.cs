@@ -163,11 +163,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // The dict owns its per-format serializers — instantiated directly (no reflection, no
     // registry), keyed by format. Only formats that DIVERGE from the default token form are
     // listed; text is here because a dict has no plain-text form (renders as json).
-    private static readonly System.Collections.Generic.Dictionary<string, global::app.channel.serializer.IOutput> _formats
+    private static readonly System.Collections.Generic.Dictionary<string, global::app.type.format.IOutput> _formats
         = new() { ["text"] = new format.text() };
 
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (_formats.TryGetValue(writer.Format, out var serializer))

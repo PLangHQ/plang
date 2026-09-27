@@ -1,11 +1,11 @@
-namespace app.channel.serializer.value;
+namespace app.type.format.value;
 
-using TokenKind = global::app.channel.serializer.TokenKind;
+using TokenKind = global::app.type.format.TokenKind;
 
 /// <summary>
 /// A format-neutral <see cref="IReader"/> over a single already-decoded value
 /// (a <c>string</c> path/csv/source-text, or a <c>byte[]</c> blob) — the sibling of
-/// <see cref="app.channel.serializer.json.Reader"/> for a value that is already in
+/// <see cref="app.type.format.json.Reader"/> for a value that is already in
 /// hand rather than a wire stream. It yields that value as ONE scalar token, so a
 /// type's <see cref="app.type.reader.ITypeReader"/> can pull its own content
 /// (<c>reader.String()</c>, <c>reader.Bytes()</c>) without a wire parser — the read

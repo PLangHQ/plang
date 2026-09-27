@@ -42,7 +42,7 @@ public sealed class @this<T, L> : @this
     /// keeps for itself stays out); detail comes by navigating to one. Every other view writes the
     /// type's identity.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         if (mode != global::app.View.Out) return base.Output(writer, mode, context);

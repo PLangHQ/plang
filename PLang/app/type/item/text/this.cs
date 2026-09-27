@@ -52,7 +52,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (await data.Value() is @this text)
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else
-            await data.Output(new global::app.channel.serializer.text.Writer(stream, characters), view ?? global::app.View.Out, context);
+            await data.Output(new global::app.type.format.text.Writer(stream, characters), view ?? global::app.View.Out, context);
         await stream.FlushAsync(ct);
         return context.Ok();
     }
@@ -160,7 +160,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private async System.Threading.Tasks.ValueTask<string> Rendered(global::app.actor.context.@this context)
     {
         using var ms = new System.IO.MemoryStream();
-        var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+        var w = new global::app.type.format.text.Writer(ms, System.Text.Encoding.UTF8);
         int pos = 0;
         for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {
@@ -216,7 +216,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// interleaved tokens into a json/plang writer) and writes that.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (Template == null || mode == global::app.View.Store || context?.Variable == null)
@@ -245,7 +245,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => IsVariable ? await _variable[0].Start(ctx) : null;
 
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value);
+    public override void Write(global::app.type.format.IWriter w) => w.String(_value);
 
     /// <summary>
     /// Text has no by-key structure — navigating it (<c>%x.port%</c>) is an authoring

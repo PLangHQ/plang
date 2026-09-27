@@ -44,7 +44,7 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     /// Read-back is ICreate&lt;Identity&gt;.Create from this object.
     /// </summary>
     public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter w, global::app.View mode,
+        global::app.type.format.IWriter w, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         w.BeginObject();

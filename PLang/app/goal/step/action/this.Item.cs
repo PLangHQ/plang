@@ -39,7 +39,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// action-shaped items (each writes itself). The DEBUG view (the live --debug channel, never the
     /// persisted wire) still routes through the reflection (*) kind so diagnostic props ride.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (mode == global::app.View.Debug)
@@ -47,7 +47,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
             return;
         }
-        if (writer is global::app.channel.serializer.formal.Writer formal)
+        if (writer is global::app.type.format.formal.Writer formal)
         {
             await Formal(formal, mode, context);
             return;
@@ -89,7 +89,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The action in formal: its own call; a condition's body inline after it (<c>{ a; b }</c>);
     /// then its modifiers after it in their list's order — each the next call in the same sequence:
     /// <c>file.read(…); on.error(…); cache.wrap(…)</c>. (Read back in any order, they sort the same.)</summary>
-    private async System.Threading.Tasks.ValueTask Formal(global::app.channel.serializer.formal.Writer writer,
+    private async System.Threading.Tasks.ValueTask Formal(global::app.type.format.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         await Call(writer, mode, context);
@@ -105,7 +105,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties, its frozen defaults
     /// (<c>?=</c>), and a modifier's Recovery (<c>Recovery: list&lt;action&gt; = [a, b]</c>).</summary>
-    private async System.Threading.Tasks.ValueTask Call(global::app.channel.serializer.formal.Writer writer,
+    private async System.Threading.Tasks.ValueTask Call(global::app.type.format.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginCall(Module.Name, Name);

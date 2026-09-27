@@ -6,16 +6,16 @@ namespace app.type.item.dict.format;
 /// converter), captured as one bare string. An instance, held directly by
 /// <see cref="app.type.item.dict.@this"/>'s own format map — no registry, no reflection.
 /// </summary>
-public sealed class text : global::app.channel.serializer.IOutput
+public sealed class text : global::app.type.format.IOutput
 {
     public async System.Threading.Tasks.ValueTask Output(
-        global::app.type.item.@this value, global::app.channel.serializer.IWriter writer,
+        global::app.type.item.@this value, global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         using var buffer = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
         {
-            var json = new global::app.channel.serializer.json.Writer(
+            var json = new global::app.type.format.json.Writer(
                 utf8, view: mode, renderers: context?.App.type.list.Renderer, emitsSchema: false);
             await value.Output(json, mode, context);
         }

@@ -17,7 +17,7 @@ public sealed class Reader<T> : global::app.type.reader.ITypeReader where T : no
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("choice", kind);
         return global::app.type.item.choice.@this<T>.Read(ref reader);

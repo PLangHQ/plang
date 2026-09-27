@@ -40,7 +40,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => Kind.Write(this, w);
+    public override void Write(global::app.type.format.IWriter w) => Kind.Write(this, w);
 
     /// <summary>A number's entity: the exact boxed CLR numeric as the mate, the kind name as kind.</summary>
     protected internal override global::app.type.@this Type

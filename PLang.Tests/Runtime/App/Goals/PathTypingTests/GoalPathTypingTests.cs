@@ -81,7 +81,7 @@ public class GoalPathTypingTests
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.channel.serializer.json.Converter(context) }
+            Converters = { new global::app.type.format.json.Converter(context) }
         };
         var json = JsonSerializer.Serialize(goal, options);
         await Assert.That(json).Contains("Cache/Start.goal");

@@ -191,7 +191,7 @@ public class source : @this
     }
 
     /// <summary>The type reads its own raw form — the declaration is the whole selector. One
-    /// token over the raw via <see cref="global::app.channel.serializer.value.Reader"/>; the
+    /// token over the raw via <see cref="global::app.type.format.value.Reader"/>; the
     /// (type, kind) reader owns the decode (a scalar off its token, csv its text, an image its
     /// bytes). A structured value never rides here — it is a <see cref="wire.@this"/>, whose
     /// override reads through its held serializer. (source.Value owns the try/catch + the
@@ -200,7 +200,7 @@ public class source : @this
     {
         var kind = _type.kind.IsEmpty ? null : _type.kind.Name;
         var typeReader = context.App.type.list.Reader.Reader(_type.Name, kind, context);
-        var reader = new global::app.channel.serializer.value.Reader(_value);
+        var reader = new global::app.type.format.value.Reader(_value);
         return typeReader.Read(ref reader, kind,
             new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable));
     }
@@ -244,12 +244,12 @@ public class source : @this
     /// mime-named type (<c>text/plain</c>, <c>binary</c>) has no (type, kind) reader to parse
     /// through. (A <see cref="wire.@this"/> overrides this to write its slice verbatim.)
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter w)
+    public override void Write(global::app.type.format.IWriter w)
     {
         if (_value is byte[] b) { w.Bytes(b); return; }
         // In formal, a whole %ref% in a slot not typed text is the variable itself, written bare
         // (`Value: item = %!data%`); inside a text it stays the text it is (`"Total: %x%"`).
-        if (w.Format == global::app.channel.serializer.formal.Writer.Token && _type.Template != null && IsVariable
+        if (w.Format == global::app.type.format.formal.Writer.Token && _type.Template != null && IsVariable
             && !string.Equals(_type.Name, "text", System.StringComparison.OrdinalIgnoreCase) && _value is string reference)
         {
             w.Raw(reference);
@@ -265,7 +265,7 @@ public class source : @this
     /// relays its raw form verbatim.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (_type.Template == null || mode == global::app.View.Store || context?.Variable == null || _value is not string template)

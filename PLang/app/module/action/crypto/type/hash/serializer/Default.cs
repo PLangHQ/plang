@@ -11,7 +11,7 @@ namespace app.module.action.crypto.type.hash.serializer;
 /// </summary>
 public static class Default
 {
-    public static void Write(global::app.module.action.crypto.type.hash.@this value, global::app.channel.serializer.IWriter writer)
+    public static void Write(global::app.module.action.crypto.type.hash.@this value, global::app.type.format.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         writer.String(value.ToBase64());

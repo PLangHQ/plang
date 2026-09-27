@@ -87,7 +87,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The truthiness primitive bottoms out here — the raw bool it wraps.</summary>
     public override bool IsTruthy() => Value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.Bool(Value);
+    public override void Write(global::app.type.format.IWriter w) => w.Bool(Value);
 
     /// <summary>Bare lowercase <c>true</c>/<c>false</c> — the serializer renders this.</summary>
     public override string ToString() => Value ? "true" : "false";

@@ -6,7 +6,7 @@ namespace app.type.item.number.serializer;
 /// </summary>
 public static class Default
 {
-    public static void Write(global::app.type.item.number.@this value, global::app.channel.serializer.IWriter writer)
+    public static void Write(global::app.type.item.number.@this value, global::app.type.format.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         value.Kind.Write(value, writer);

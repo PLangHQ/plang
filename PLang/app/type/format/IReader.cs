@@ -1,4 +1,4 @@
-namespace app.channel.serializer;
+namespace app.type.format;
 
 /// <summary>
 /// The kind of the value token an <see cref="IReader"/> is positioned at —

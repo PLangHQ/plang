@@ -131,7 +131,7 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Writes the list as an array of property rows.</summary>
-    public async System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginArray(Count);

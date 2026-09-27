@@ -49,7 +49,7 @@ public sealed class computed : @this
 
     /// <summary>Writes the current answer, lifted with the writer's context.</summary>
     public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
         => Compute(context ?? throw Contextless()).Output(writer, mode, context);
 

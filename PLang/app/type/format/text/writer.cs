@@ -3,10 +3,10 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace app.channel.serializer.text;
+namespace app.type.format.text;
 
 /// <summary>
-/// Plain-text <see cref="global::app.channel.serializer.IWriter"/>. A TOP-LEVEL scalar renders
+/// Plain-text <see cref="global::app.type.format.IWriter"/>. A TOP-LEVEL scalar renders
 /// BARE — <c>hello</c>, <c>42</c>, <c>true</c> — the text channel's whole point (no quotes, no
 /// envelope). Structural content has no bare-text form, so the writer renders it as JSON:
 /// <see cref="BeginObject"/>/<see cref="BeginArray"/> follow the json shape (<c>{"name":…}</c>),
@@ -15,11 +15,11 @@ namespace app.channel.serializer.text;
 /// writes itself bare, a container writes itself as json, both through this one writer.
 /// <para><see cref="IWriter.EmitsSchema"/> stays false — the text channel carries no Data envelope.</para>
 /// </summary>
-public sealed class Writer : global::app.channel.serializer.IWriter
+public sealed class Writer : global::app.type.format.IWriter
 {
     private readonly Stream _stream;
     private readonly Encoding _encoding;
-    private global::app.channel.serializer.json.Writer? _json;   // started lazily when structure opens
+    private global::app.type.format.json.Writer? _json;   // started lazily when structure opens
     private Utf8JsonWriter? _utf8;
     private int _depth;                                          // open object/array nesting
 
@@ -36,8 +36,8 @@ public sealed class Writer : global::app.channel.serializer.IWriter
     // Structural content becomes json — the writer knows how, no type switch. Started lazily so a
     // pure scalar never allocates a json writer; shared stream is safe because a single value is
     // EITHER a bare top-level scalar OR structural json, never interleaved.
-    private global::app.channel.serializer.json.Writer Structural()
-        => _json ??= new global::app.channel.serializer.json.Writer(
+    private global::app.type.format.json.Writer Structural()
+        => _json ??= new global::app.type.format.json.Writer(
                _utf8 = new Utf8JsonWriter(_stream), emitsSchema: false);
 
     // Scalars: bare at the top, json (quoted / comma-joined) when nested inside an open structure.

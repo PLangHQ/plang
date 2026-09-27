@@ -17,7 +17,7 @@ public partial class json
     private const int MaxDepth = 128;
 
     /// <summary>
-    /// Reads ONE value off an <see cref="app.channel.serializer.IReader"/> — the open
+    /// Reads ONE value off an <see cref="app.type.format.IReader"/> — the open
     /// <c>item</c> slot's content. A value is never a Data: a root object is a dict and a root
     /// array a list, whatever their shape (the typed-entry rule belongs to a container's
     /// entries). A scalar streams directly off the pass — no DOM. Cursor lands on the value's
@@ -25,18 +25,18 @@ public partial class json
     /// </summary>
     internal object? Read<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
         => reader.Peek() switch
         {
-            global::app.channel.serializer.TokenKind.Null => null,
-            global::app.channel.serializer.TokenKind.Bool => reader.Bool(),
-            global::app.channel.serializer.TokenKind.Number => reader.Number(),
-            global::app.channel.serializer.TokenKind.String => StringSlot(reader.String(), ctx),
+            global::app.type.format.TokenKind.Null => null,
+            global::app.type.format.TokenKind.Bool => reader.Bool(),
+            global::app.type.format.TokenKind.Number => reader.Number(),
+            global::app.type.format.TokenKind.String => StringSlot(reader.String(), ctx),
             _ => ParseRaw(reader.RawValue(), ctx),
         };
 
     /// <summary>
-    /// Reads ONE container entry off an <see cref="app.channel.serializer.IReader"/> into a raw
+    /// Reads ONE container entry off an <see cref="app.type.format.IReader"/> into a raw
     /// slot (store raw, type on read) — a dict's / list's / snapshot's entries. An entry that is a
     /// typed value (<c>{type:{name,…}, value:…}</c>) or a <c>@schema:data</c> element IS a Data;
     /// any other object/array is a native container. A scalar streams directly off the pass — no
@@ -44,13 +44,13 @@ public partial class json
     /// </summary>
     internal object? Entry<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
         => reader.Peek() switch
         {
-            global::app.channel.serializer.TokenKind.Null => null,
-            global::app.channel.serializer.TokenKind.Bool => reader.Bool(),
-            global::app.channel.serializer.TokenKind.Number => reader.Number(),
-            global::app.channel.serializer.TokenKind.String => StringSlot(reader.String(), ctx),
+            global::app.type.format.TokenKind.Null => null,
+            global::app.type.format.TokenKind.Bool => reader.Bool(),
+            global::app.type.format.TokenKind.Number => reader.Number(),
+            global::app.type.format.TokenKind.String => StringSlot(reader.String(), ctx),
             _ => RawEntry(reader.RawValue(), ctx),
         };
 

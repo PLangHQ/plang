@@ -70,7 +70,7 @@ public sealed class @this : global::app.type.kind.@this
 
     // A collection writes as an array of self-writes — each element through its own kind.
     public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        object obj, global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
     {
         writer.BeginArray(-1);

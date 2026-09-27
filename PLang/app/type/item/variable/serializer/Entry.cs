@@ -9,7 +9,7 @@ namespace app.type.item.variable.serializer;
 /// </summary>
 public sealed class Entry
 {
-    public void Write(global::app.channel.serializer.IWriter writer, IReadOnlyList<variable.@this> variables)
+    public void Write(global::app.type.format.IWriter writer, IReadOnlyList<variable.@this> variables)
     {
         writer.BeginArray(variables.Count);
         foreach (var v in variables)
@@ -24,7 +24,7 @@ public sealed class Entry
         writer.EndArray();
     }
 
-    public IReadOnlyList<variable.@this> Read(ref global::app.channel.serializer.json.Reader reader,
+    public IReadOnlyList<variable.@this> Read(ref global::app.type.format.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
         var read = new List<variable.@this>();
@@ -52,7 +52,7 @@ public sealed class Entry
         return read;
     }
 
-    private List<code.Hop> Code(ref global::app.channel.serializer.json.Reader reader, global::app.type.reader.ReadContext ctx)
+    private List<code.Hop> Code(ref global::app.type.format.json.Reader reader, global::app.type.reader.ReadContext ctx)
     {
         var hops = new List<code.Hop>();
         reader.BeginArray();
@@ -100,7 +100,7 @@ public sealed class Entry
     }
 
     // An index key: {"number": 0}, {"text": "k"}, or {"variable": [<the key variable>]}.
-    private global::app.type.item.@this Key(ref global::app.channel.serializer.json.Reader reader, global::app.type.reader.ReadContext ctx)
+    private global::app.type.item.@this Key(ref global::app.type.format.json.Reader reader, global::app.type.reader.ReadContext ctx)
     {
         reader.BeginObject();
         if (!reader.NextName(out var kind))

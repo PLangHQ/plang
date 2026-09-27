@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace app.channel.serializer.formal;
+namespace app.type.format.formal;
 
 /// <summary>
 /// Formal — a program's actions written as calls, the one text form of an action:

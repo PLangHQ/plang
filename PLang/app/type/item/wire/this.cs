@@ -40,7 +40,7 @@ public sealed class @this : global::app.type.item.source
     // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
     // slice). Any other writer is a USE — decoding needs a context, which this context-free door
     // does not have: a foreign writer reaches a wire through Output.
-    public override void Write(global::app.channel.serializer.IWriter w)
+    public override void Write(global::app.type.format.IWriter w)
     {
         if (_reader.Owns(w)) { w.Raw((string)Raw); return; }
         throw new System.InvalidOperationException(
@@ -52,7 +52,7 @@ public sealed class @this : global::app.type.item.source
     // OWN shape (a leaf via Write, a structure structurally). Own format still rides raw —
     // byte-identical relay, signatures hold.
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }

@@ -71,7 +71,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// itself; <c>warning</c> is written when the build left any. The DEBUG view (the
     /// live --debug channel, never the persisted wire) routes through the reflection (*) kind.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         if (mode == global::app.View.Debug)

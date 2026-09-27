@@ -109,7 +109,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// pass. An unfetched url renders its location — write-out alone is not
     /// consent to fetch.
     /// </summary>
-    public override void Write(global::app.channel.serializer.IWriter writer)
+    public override void Write(global::app.type.format.IWriter writer)
     {
         if (!IsLoaded) { writer.String(ToString()); return; }
         writer.String(ContentText());

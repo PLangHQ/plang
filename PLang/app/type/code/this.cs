@@ -55,5 +55,5 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override string ToString() => Source;
 
     /// <summary>The code renders itself as its source text — uniform across formats.</summary>
-    public override void Write(global::app.channel.serializer.IWriter writer) => writer.String(Source);
+    public override void Write(global::app.type.format.IWriter writer) => writer.String(Source);
 }

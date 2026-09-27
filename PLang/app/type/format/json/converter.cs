@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace app.channel.serializer.json;
+namespace app.type.format.json;
 
 /// <summary>
 /// The single STJ↔plang adapter. STJ consults it for any plang-typed value it

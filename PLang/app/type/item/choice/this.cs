@@ -56,7 +56,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     public override string ToString() => Value.ToString() ?? "";
     public override bool IsTruthy() => true;
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
+    public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
 
     string IChoice.Symbol => ToString();
 
@@ -72,8 +72,8 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     /// enum's ordinal, and 790 of them still do. <see cref="Parse"/> accepts an ordinal in its
     /// text form, so both land in one place — the type that owns the wire form.</summary>
     public static @this<T> Read<TReader>(ref TReader reader)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
-        => Parse(reader.Peek() == global::app.channel.serializer.TokenKind.Number
+        where TReader : global::app.type.format.IReader, allows ref struct
+        => Parse(reader.Peek() == global::app.type.format.TokenKind.Number
             ? reader.Number().ToString() ?? ""
             : reader.String());
 

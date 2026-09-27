@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.kind.@this
                 if (signed.Success) data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
-            var writer = new global::app.channel.serializer.json.Writer(utf8, view, context.App.type.list.Renderer, emitsSchema: true);
+            var writer = new global::app.type.format.json.Writer(utf8, view, context.App.type.list.Renderer, emitsSchema: true);
             if (data.Peek() is global::app.type.item.signature.@this sig)
                 await sig.Output(writer, view, context);
             else
@@ -108,12 +108,12 @@ public sealed class @this : global::app.type.kind.@this
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
-        var reader = new global::app.channel.serializer.json.Reader(utf8);
+        var reader = new global::app.type.format.json.Reader(utf8);
         return typeReader.Read(ref reader, kind, ctx);
     }
 
     /// <summary>Whether <paramref name="writer"/> writes this format — a captured slice rides verbatim into a json
     /// writer (schema on → "plang", off → "json"); any other writer is a different format, where the slice is
     /// decoded and the value writes itself.</summary>
-    public bool Owns(global::app.channel.serializer.IWriter writer) => writer.Format is "plang" or "json";
+    public bool Owns(global::app.type.format.IWriter writer) => writer.Format is "plang" or "json";
 }

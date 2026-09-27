@@ -10,6 +10,6 @@ public sealed class ShadowSignatureRenderer : global::app.type.list.ITypeRendere
 {
     public string TypeName => "signature";
     public string Format => global::app.type.renderer.@this.AnyFormat;
-    public void Write(object value, global::app.channel.serializer.IWriter writer)
+    public void Write(object value, global::app.type.format.IWriter writer)
         => writer.String("[shadow-signature]");
 }

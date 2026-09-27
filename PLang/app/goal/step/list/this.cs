@@ -215,7 +215,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
     /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         writer.BeginArray((int)Count);

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization.Metadata;
 
-namespace app.channel.serializer.filter;
+namespace app.type.format.filter;
 
 /// <summary>
 /// Modifiers that enforce <see cref="SensitiveAttribute"/> during JSON serialization.

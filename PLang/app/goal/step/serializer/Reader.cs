@@ -3,7 +3,7 @@ namespace app.goal.step.serializer;
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>step</c> — the read-side
 /// mirror of <see cref="app.goal.step.@this.Output"/>. Walks the handed
-/// <see cref="app.channel.serializer.IReader"/> in place: the step's bare <c>[Store]</c> shape, each
+/// <see cref="app.type.format.IReader"/> in place: the step's bare <c>[Store]</c> shape, each
 /// action via the sibling <see cref="app.goal.step.action.serializer.Reader"/>.
 /// <para>The reader is BORN with the goal whose steps it reads, so every step it makes is born
 /// holding that goal. Having no parameterless constructor is what keeps it out of the type-reader
@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// A null element is consumed and answered as the null citizen; the caller drops it.</summary>
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("step", kind);
 

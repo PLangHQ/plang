@@ -28,7 +28,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.TimeSpan(Value);
+    public override void Write(global::app.type.format.IWriter w) => w.TimeSpan(Value);
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public @this(System.TimeSpan value) { Value = value; }

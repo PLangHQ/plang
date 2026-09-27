@@ -33,7 +33,7 @@ public sealed partial class @this
     /// doesn't count.</summary>
     public async System.Threading.Tasks.Task<List<string>> Cover(global::app.actor.context.@this context)
     {
-        var writer = new global::app.channel.serializer.formal.Writer();
+        var writer = new global::app.type.format.formal.Writer();
         await Code.Output(writer, global::app.View.Store, context);
         var written = writer.ToString();
         var problems = new List<string>();
@@ -69,7 +69,7 @@ public sealed partial class @this
             {
                 if (p.Value is global::app.goal.step.action.@this held) { texts.AddRange(await Texts([held], context)); continue; }
                 if (p.Type?.Name != "text" || p.Value is null) continue;
-                var writer = new global::app.channel.serializer.formal.Writer();
+                var writer = new global::app.type.format.formal.Writer();
                 await p.Value.Output(writer, global::app.View.Store, context);
                 var json = writer.ToString();
                 if (json.StartsWith('"') && System.Text.Json.JsonSerializer.Deserialize<string>(json) is { } s) texts.Add(s);

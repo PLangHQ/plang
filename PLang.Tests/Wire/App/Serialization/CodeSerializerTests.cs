@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class CodeSerializerTests
 {
-    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
+    private sealed class CaptureWriter : global::app.type.format.IWriter
     {
         public string Format { get; }
         public object? Last { get; private set; }
@@ -55,7 +55,7 @@ public class CodeSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channel.serializer.json.Writer(utf,
+            var w = new global::app.type.format.json.Writer(utf,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new code("Console.WriteLine();", "csharp"));
         }

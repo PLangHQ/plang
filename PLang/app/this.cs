@@ -21,7 +21,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
         => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
 

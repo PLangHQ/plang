@@ -15,7 +15,7 @@ public class TextWriterItemArmTests
     private static string Render(global::app.type.item.@this item)
     {
         using var ms = new System.IO.MemoryStream();
-        var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+        var w = new global::app.type.format.text.Writer(ms, System.Text.Encoding.UTF8);
         w.Value(item);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

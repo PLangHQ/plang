@@ -11,7 +11,7 @@ public sealed class Variable : Hop
 
     public override string Kind => "variable";
 
-    protected override void Piece(global::app.channel.serializer.IWriter writer) => writer.String(Name);
+    protected override void Piece(global::app.type.format.IWriter writer) => writer.String(Name);
 
     /// <summary>What the name holds; a <c>!</c> name the memory doesn't bind (<c>%!goal.list.setting%</c>)
     /// is the asker's settings' — the bindings (<c>!app</c>, <c>!data</c>, …) answer first.</summary>

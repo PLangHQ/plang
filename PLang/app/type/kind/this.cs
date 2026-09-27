@@ -220,7 +220,7 @@ public class @this
     /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
     /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
     public virtual global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        object obj, global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
         => throw new System.NotSupportedException($"kind '{Name}' cannot write itself");
 
@@ -246,7 +246,7 @@ public class @this
     // vs {name,type,value} envelope by the writer's format (EmitsSchema), not by value type, so
     // the switch below should dissolve. (todos.md 2026-07-09)
     protected async global::System.Threading.Tasks.ValueTask WriteReflected(
-        global::app.channel.serializer.IWriter writer, object value, global::app.View mode,
+        global::app.type.format.IWriter writer, object value, global::app.View mode,
         global::app.actor.context.@this ctx)
     {
         switch (value)

@@ -78,7 +78,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(true);
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.Null();
+    public override void Write(global::app.type.format.IWriter w) => w.Null();
 
     /// <summary>The raw form of null is C# null.</summary>
 

@@ -59,9 +59,9 @@ public class ConverterDeletionsTests
         // (format) layer, not on the duration type. duration's own Read (in the
         // reader registry) parses both ISO-8601 and .NET forms; the two-wire-
         // form unification is tracked as a todo, not done here.
-        var t = PLangAssembly.GetType("app.channel.serializer.TimeSpanIso8601");
+        var t = PLangAssembly.GetType("app.type.format.TimeSpanIso8601");
         await Assert.That(t).IsNotNull();
-        await Assert.That(t!.Namespace).IsEqualTo("app.channel.serializer");
+        await Assert.That(t!.Namespace).IsEqualTo("app.type.format");
     }
 
     // The path-converter was registered in 6 places (Diagnostics/Format.cs:31,
@@ -75,7 +75,7 @@ public class ConverterDeletionsTests
         // The single json Converter exists as a JsonConverterFactory and the
         // wiring works end to end: a path round-trips through the plang wire
         // serializer (one of the 6 former path-converter sites).
-        var converterType = PLangAssembly.GetType("app.channel.serializer.json.Converter");
+        var converterType = PLangAssembly.GetType("app.type.format.json.Converter");
         await Assert.That(converterType).IsNotNull();
         await Assert.That(typeof(System.Text.Json.Serialization.JsonConverterFactory)
             .IsAssignableFrom(converterType!)).IsTrue();
@@ -84,7 +84,7 @@ public class ConverterDeletionsTests
         var ctx = app.User.Context;
         var p = global::app.type.item.path.@this.Resolve("/srv/app/cfg.json", ctx);
         var opts = new System.Text.Json.JsonSerializerOptions
-        { Converters = { new global::app.channel.serializer.json.Converter(ctx) } };
+        { Converters = { new global::app.type.format.json.Converter(ctx) } };
         var json = System.Text.Json.JsonSerializer.Serialize<global::app.type.item.path.@this>(p, opts);
         var back = System.Text.Json.JsonSerializer.Deserialize<global::app.type.item.path.@this>(json, opts);
         await Assert.That(back).IsNotNull();
@@ -101,7 +101,7 @@ public class ConverterDeletionsTests
     // context (mirror of how `path.JsonConverter` was built today).
     [Test] public async Task SingleJsonConverter_Exists_AtChannelSerializerJson()
     {
-        await Assert.That(PLangAssembly.GetType("app.channel.serializer.json.Converter")).IsNotNull();
+        await Assert.That(PLangAssembly.GetType("app.type.format.json.Converter")).IsNotNull();
     }
 
     // The behaviour: the single `Converter` consults the registry /
@@ -119,7 +119,7 @@ public class ConverterDeletionsTests
         var opts = new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.channel.serializer.json.Converter(ctx) }
+            Converters = { new global::app.type.format.json.Converter(ctx) }
         };
         var inner = System.Text.Json.JsonSerializer.Deserialize<InnerFixture>(
             "{\"file\":\"/srv/app/x.json\"}", opts);
@@ -143,7 +143,7 @@ public class ConverterDeletionsTests
         var opts = new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.channel.serializer.json.Converter(ctx) }
+            Converters = { new global::app.type.format.json.Converter(ctx) }
         };
         var outer = System.Text.Json.JsonSerializer.Deserialize<OuterFixture>(
             "{\"mid\":{\"inner\":{\"file\":\"/srv/app/deep.json\"}}}", opts);

@@ -3,7 +3,7 @@ namespace app.type.reader;
 /// <summary>
 /// The type-owned, format-agnostic value read — the read-side mirror of a type's
 /// <c>Write(value, IWriter)</c> renderer. The type <em>pulls</em> its own value
-/// off an <see cref="app.channel.serializer.IReader"/> (<c>reader.Long()</c>,
+/// off an <see cref="app.type.format.IReader"/> (<c>reader.Long()</c>,
 /// <c>reader.BeginArray()</c>, …) and constructs itself, knowing only the abstract
 /// reader — never the concrete format. The same impl serves every front-end: a
 /// <c>json.Reader</c> over the <c>.pr</c> value token, a <c>csv.Reader</c> over a
@@ -39,10 +39,10 @@ public interface ITypeReader
     /// <summary>
     /// Pull this type's value off <paramref name="reader"/>, positioned at the
     /// value's first token, and return the born-native instance. The cursor is
-    /// left on the value's last token (the <see cref="app.channel.serializer.IReader"/>
+    /// left on the value's last token (the <see cref="app.type.format.IReader"/>
     /// contract). <paramref name="kind"/> is the concrete kind being read (the
     /// registry may have matched via the wildcard).
     /// </summary>
     global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind, ReadContext ctx)
-        where TReader : app.channel.serializer.IReader, allows ref struct;
+        where TReader : app.type.format.IReader, allows ref struct;
 }

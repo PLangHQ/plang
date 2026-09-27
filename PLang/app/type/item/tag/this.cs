@@ -27,7 +27,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);
+    public override void Write(global::app.type.format.IWriter w) => w.String(Value);
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>THE PURE CORE — a <c>tag</c> passes through; a non-blank string / <c>text</c> becomes a
