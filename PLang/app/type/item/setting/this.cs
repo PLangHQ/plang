@@ -122,12 +122,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 {
                     var built = global::app.type.item.@this.Create(kvp.Value, context);
                     // a plang-typed slot the born value doesn't fit (a choice from its text) is made by
-                    // the slot's own type, through its own Create
+                    // the slot's own type, through the type door
                     if (typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
                         && !prop.PropertyType.IsInstanceOfType(built)
-                        && prop.PropertyType.GetMethod("Create", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                               [typeof(object), typeof(global::app.data.@this)]) is { } create
-                        && create.Invoke(null, [kvp.Value, new global::app.data.@this(kvp.Key, context: context)]) is global::app.type.item.@this made
+                        && context.App.type.list[prop.PropertyType].Create(kvp.Value, new global::app.data.@this(kvp.Key, context: context)) is { } made
                         && prop.PropertyType.IsInstanceOfType(made))
                         built = made;
                     val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
