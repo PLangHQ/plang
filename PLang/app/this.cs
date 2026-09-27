@@ -424,12 +424,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // app.pr is the app's identity, not a goal: read its bytes. ReadText would map the .pr
         // extension to the goal reader, which refuses a file that isn't a goal.
         var bytes = await prPath.ReadBytes(System.Context!);
-        if (!bytes.Success || bytes.Peek().IsNull) return;
+        if (!bytes.Success)
+            throw new InvalidOperationException($"{prPath} could not be read: {bytes.Error?.Message}");
+        if (bytes.Peek().IsNull) return;
         var json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!);
         if (string.IsNullOrWhiteSpace(json)) return;
-        try
+        JsonDocument doc;
+        try { doc = JsonDocument.Parse(json); }
+        catch (JsonException ex) { throw new InvalidOperationException($"{prPath} is not the app's identity: {ex.Message}", ex); }
+        using (doc)
         {
-            using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             if (root.TryGetProperty("id", out var idProp)) Id = idProp.GetString() ?? Id;
             if (root.TryGetProperty("name", out var nameProp)) Name = nameProp.GetString() ?? Name;
@@ -437,7 +441,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTime(out var updated)) Updated = updated;
             if (root.TryGetProperty("version", out var versionProp)) Version = versionProp.GetString();
         }
-        catch (JsonException) { /* corrupt app.pr — keep generated identity */ }
     }
 
     /// <summary>

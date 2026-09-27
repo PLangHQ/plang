@@ -247,8 +247,8 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
 
     /// <summary>
     /// Resolves the channel's <see cref="Encoding"/> name to a real
-    /// <see cref="global::System.Text.Encoding"/>. Falls back to UTF-8 when the
-    /// property is null/empty or names an unknown encoding. Owned by the base so
+    /// <see cref="global::System.Text.Encoding"/> — UTF-8 when none is named. An encoding name no encoding
+    /// answers to is the channel misconfigured: an error naming it, never a quiet UTF-8. Owned by the base so
     /// every concrete kind decodes the same way.
     /// </summary>
     protected global::System.Text.Encoding ResolveEncoding()
@@ -256,7 +256,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
         if (string.IsNullOrEmpty(Encoding))
             return global::System.Text.Encoding.UTF8;
         try { return global::System.Text.Encoding.GetEncoding(Encoding); }
-        catch (System.ArgumentException) { return global::System.Text.Encoding.UTF8; }
+        catch (System.ArgumentException ex)
+        {
+            throw new InvalidOperationException($"channel '{Name}' names the encoding '{Encoding}', which is no encoding", ex);
+        }
     }
 
     /// <summary>Closes the channel and any owned resources.</summary>

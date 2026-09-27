@@ -200,11 +200,12 @@ public sealed class @this
         var prefix = _actor!.Name.ToLowerInvariant() + "!";
         _reading.Value = true;
         global::app.store.@this store;
-        // A store that can't open (an unwritable root) holds no rows: nothing was ever saved there.
+        // A store that can't open (an unwritable root) is unread, not empty: a save or remove, which needs it,
+        // answers why (Load too), and nothing writes over rows that may be there.
         try { store = await _context.App.store; }
         catch (Exception ex) when (ex is UnauthorizedAccessException or InvalidOperationException)
         {
-            await (_context.App.Debug?.Write($"settings: the store could not open, so the {_actor.Name} actor has no saved rows — {ex.Message}") ?? Task.CompletedTask);
+            _unread = new global::app.error.Error($"the settings store could not open, so the {_actor.Name} actor's saved settings are unread — {ex.Message}", "SettingsUnreadable", 500) { Exception = ex };
             return rows;
         }
         var all = await store.GetAll<global::app.type.item.@this>(Table);

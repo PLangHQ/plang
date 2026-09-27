@@ -302,14 +302,19 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task StreamChannel_UnknownEncoding_FallsBackToUtf8()
+    public async Task StreamChannel_UnknownEncoding_IsAnErrorNamingIt()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var capture = new MemoryStream();
         var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "totally-not-an-encoding" };
         app.User.Channel.Register(ch);
-        await ch.WriteText("hi");
-        await Assert.That(capture.ToArray()).IsEquivalentTo(global::System.Text.Encoding.UTF8.GetBytes("hi" + global::System.Environment.NewLine));
+
+        // the stream's transport turns its own failure into the write's error result
+        var result = await ch.WriteText("hi");
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("totally-not-an-encoding");
+        await Assert.That(capture.ToArray()).IsEmpty();
     }
 }

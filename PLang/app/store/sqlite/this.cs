@@ -94,20 +94,15 @@ public sealed class @this : global::app.store.@this
     public static @this InMemory(string name, actor.context.@this context)
         => new @this(name, inMemory: true, context);
 
+    // WAL journaling. A database that can't take it answers its mode (in memory: "memory") without throwing,
+    // so a throw here is the database failing, and it bubbles.
     private void EnableWalMode()
     {
-        try
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = "PRAGMA journal_mode=WAL;";
-            cmd.ExecuteNonQuery();
-        }
-        catch (SqliteException)
-        {
-            // Non-fatal — WAL is a performance optimization, not required
-        }
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "PRAGMA journal_mode=WAL;";
+        cmd.ExecuteNonQuery();
     }
 
     // The store persists TEXT, the serializer speaks streams — so the store owns its own

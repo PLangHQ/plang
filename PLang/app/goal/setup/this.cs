@@ -48,22 +48,16 @@ public sealed class @this
             // fast-pass via IsInRoot. Out-of-root would prompt, but setup paths
             // are derived from App.AbsolutePath so this is always in-root.
             var exists = await file.ExistsAsync(context);
-            if (!exists.Success || (await exists.Value())?.Value != true) continue;
+            if (!exists.Success) return exists;
+            if ((await exists.Value())?.Value != true) continue;
 
-            try
-            {
-                // ReadText already MIME-deserializes .pr → Goal via the
-                // FilePath.ReadText path. The per-Actor serializer carries a
-                // Context-bound PathJsonConverter so Path fields land wired.
-                var read = await file.ReadText(context);
-                if (!read.Success || (await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
+            // ReadText already MIME-deserializes .pr → Goal via the FilePath.ReadText path. A setup file that
+            // doesn't read or parse is the answer — setup doesn't run past it.
+            var read = await file.ReadText(context);
+            if (!read.Success) return read;
+            if ((await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
 
-                _goals.Add(goal);
-            }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                // Skip unparseable files — they'll fail when lazy-loaded later
-            }
+            _goals.Add(goal);
         }
 
         return context.Ok();

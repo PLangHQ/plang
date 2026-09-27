@@ -91,7 +91,7 @@ public sealed class @this
 
     private void IndexAssembly(Assembly assembly)
     {
-        foreach (var type in SafeGetTypes(assembly))
+        foreach (var type in assembly.GetTypes())
         {
             if (!type.IsClass || !type.IsAbstract || !type.IsSealed) continue; // static class
             if (string.IsNullOrEmpty(type.Namespace)) continue;
@@ -126,9 +126,4 @@ public sealed class @this
         }
     }
 
-    private static IEnumerable<System.Type> SafeGetTypes(Assembly assembly)
-    {
-        try { return assembly.GetTypes(); }
-        catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null)!; }
-    }
 }

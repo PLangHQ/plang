@@ -71,7 +71,7 @@ public class AppGoalsThroughPathVerbsTests
         await Assert.That(app.Id).IsNotNull();
     }
 
-    [Test] public async Task AppLoad_OnCorruptAppPr_ReturnsFailureNotCrash()
+    [Test] public async Task AppLoad_OnCorruptAppPr_IsAnErrorNamingIt_NothingHalfApplied()
     {
         var (app, root) = await NewApp();
         var prDir = System.IO.Path.Combine(root, ".build");
@@ -79,14 +79,11 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(prDir, "app.pr"), "this is not json");
         var idBefore = app.Id;
         var nameBefore = app.Name;
-        // Load must not throw on corrupt content AND must leave the App in a
-        // usable state (no half-applied mutations — identity/name unchanged).
-        await app.Load();
+        // A corrupt app.pr is an error naming the file; nothing is half-applied (identity/name unchanged).
+        var thrown = await Assert.That(async () => await app.Load()).Throws<InvalidOperationException>();
+        await Assert.That(thrown!.Message).Contains("app.pr");
         await Assert.That(app.Id).IsEqualTo(idBefore);
         await Assert.That(app.Name).IsEqualTo(nameBefore);
-        // And the App is still operable — subsequent Save round-trips.
-        var savedResult = await app.Save();
-        await savedResult.IsSuccess();
     }
 
     [Test] public async Task AppSave_RoundTrip_WrittenAppPr_RehydratesUnderAppLoad()

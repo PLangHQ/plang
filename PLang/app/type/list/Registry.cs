@@ -67,7 +67,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         {
             if (_loaded) return;
             foreach (var assembly in Assemblies)
-                foreach (var clr in SafeGetTypes(assembly))
+                foreach (var clr in assembly.GetTypes())
                     if (NameOf(clr) is { } name) base.Add(new global::app.type.@this(name, clr, null));
             var faceted = Items().Select(t => new global::app.type.@this(t.Name, t.ClrType!, this)).ToArray();
             while (CountRaw > 0) RemoveAt(0);
@@ -146,7 +146,13 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
         System.Type[] exported;
         try { exported = assembly.GetExportedTypes(); }
-        catch (ReflectionTypeLoadException ex) { exported = ex.Types.Where(t => t != null).ToArray()!; }
+        catch (ReflectionTypeLoadException ex)
+        {
+            // a type the assembly can't load is the load's error, not a partial set of its types
+            return context.Error(new error.Error(
+                $"{assembly.GetName().Name}: types failed to load — {string.Join("; ", ex.LoaderExceptions.Select(e => e?.Message).Distinct())}",
+                "TypeLoadFailed", 400) { Exception = ex });
+        }
 
         var added = new List<global::app.type.@this>();
         foreach (var clr in exported)
@@ -223,7 +229,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private void Enlist(Assembly assembly)
     {
         var seen = new HashSet<System.Type>();
-        foreach (var t in SafeGetTypes(assembly))
+        foreach (var t in assembly.GetTypes())
         {
             if (typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false }
                 && t != typeof(global::app.type.kind.@this) && t.GetConstructor(System.Type.EmptyTypes) != null)
@@ -286,11 +292,5 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (b.IsGenericType && b.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
                 return global::app.type.item.@this.NameOf(typeof(app.type.item.list.@this));
         return null;
-    }
-
-    private static IEnumerable<System.Type> SafeGetTypes(Assembly assembly)
-    {
-        try { return assembly.GetTypes(); }
-        catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null)!; }
     }
 }

@@ -91,16 +91,15 @@ public class AppTests
     }
 
     [Test]
-    public async Task GetApp_CorruptJson_KeepsGeneratedId()
+    public async Task GetApp_CorruptJson_IsAnError_TheIdentityUntouched()
     {
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"), "{ broken json {{");
+        var idBefore = _app.Id;
 
-        // Corrupt app.pr — Load() silently keeps generated identity
-        await _app.Load();
-
-        await Assert.That(_app.Id).IsNotNull();
-        await Assert.That(_app.Id.Length).IsGreaterThan(0);
+        // A corrupt app.pr is an error naming it — never a quietly kept identity
+        await Assert.That(async () => await _app.Load()).Throws<InvalidOperationException>();
+        await Assert.That(_app.Id).IsEqualTo(idBefore);
     }
 }
