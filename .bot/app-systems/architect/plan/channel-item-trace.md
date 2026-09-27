@@ -58,6 +58,19 @@ Written before reading the coder's 8c sketch. The comparison is at the end. Ingi
 - Before-ask fires.
 - The passthrough callers are rewritten.
 
-## Comparison with the coder's sketch
+## Comparison with the coder's sketch (read after the above was pushed, c99557fd5; the coder's was written before decision 105 reached it)
 
-(to fill in after reading it)
+**The coder's is better on these:**
+- **The guard (its C):** I only said "check they're equivalent". The coder found what isn't: the binding guard (8b-1) is keyed per context, so on one actor context two parallel flows would have the second flow's handler **silently skipped** while the first runs. That's been true for actions since 8b-1, and before that too. Its fix: a per-flow guard (an AsyncLocal set on the context).
+- **Caller counts for each door:** `Resolve` equals `Get` in practice (callers pass `Output`/`Debug` explicitly) → delete. `Channel`'s NoOp sink has 1 caller (`file/read.cs:115`) → `if (Get("builder") is { } b)` → delete, along with the NoOp sentinel. `GetOrCreate` and `ReadChannelAsync<T>` have 0 callers → delete.
+- **A second meaning of `Write`/`Read`:** item's `Write(IWriter)` serializes and channel's `Write(data, ct)` transports. That's one word meaning two things on one object.
+- **CLAUDE.md** names `Channels.WriteTextAsync(Output, …)` as the console pattern, so it needs a docs proposal. I missed that the docs are consumers too.
+- `channel.list`'s own `[PlangType("channel")]` goes.
+
+**Mine is better on these, and they go in:**
+- **The executing-goal guard:** the coder keeps it in `Get` (`channel is goal g && g.IsExecuting`), which is a type-switch in the registry. It becomes the channel's own virtual answer, with the goal channel overriding it.
+- **The CLR leaves** on the channel and the `Metadata` v1 dictionary (delete it if no reader), which the coder didn't list.
+
+**Superseded by Ingi (decision 105):** the coder's type-level name-filtered binding (its D) goes. A binding goes on the named channel's own `on`, and a missing channel is an error result. My own point 4 is struck too.
+
+**Agreed in both:** channel becomes an item (`Clone => this`, module-style Output), typed `on.write`/`read`/`ask` over `[channel type, channel]`, after-failures become the result, the passthroughs go and "write text" becomes the channel's own virtual, and `CreateMemoryChannel` moves out of production.
