@@ -1,0 +1,1 @@
+[0] goal.call(Name="BuildGoal/Start", Parameter={goal: %goal%})
