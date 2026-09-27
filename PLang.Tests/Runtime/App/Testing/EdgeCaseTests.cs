@@ -78,10 +78,7 @@ public class EdgeCaseTests
         // inner grandchild-runs).
 
         var emptyList = new List<global::app.test.@this>();
-        var outerAction = new global::app.module.action.test.start(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>(),
-            Parallel = null,
-            Timeout = null
-        };
+        var outerAction = new global::app.module.action.test.start(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>() };
         var outerResult = await outerAction.Start();
 
         await outerResult.IsSuccess();

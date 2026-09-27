@@ -56,6 +56,147 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
 
+    /// <summary>Fires once per test's App after it is made and configured (its OsDirectory, its session
+    /// open), before the test's goal runs — a probe snapshots the test's App here. Parallel tests fire it
+    /// concurrently.</summary>
+    internal event System.Action<global::app.@this>? Made;
+
+    /// <summary>
+    /// Runs <paramref name="tests"/>, as many at once as test's setting says (≤ 0: one per processor), each
+    /// under its timeout (≤ 0: none) in an App of its own — the file is the App boundary. A test that isn't
+    /// Ready is recorded, not run. A test's failure is its outcome, never the run's: the others run on.
+    /// Answers the tests, each carrying its outcome; each is added to this list and its coverage merged
+    /// into this run's.
+    /// </summary>
+    public async Task<global::app.type.item.list.@this<global::app.test.@this>> Start(
+        global::app.type.item.list.@this<global::app.test.@this> given, actor.context.@this context)
+    {
+        var tests = new List<global::app.test.@this>();
+        foreach (var row in given.Items(context))
+            if (await row.Value() is global::app.test.@this test) tests.Add(test);
+        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests);
+        if (tests.Count == 0) return executed;
+
+        var setting = context.Setting.Of<global::app.test.setting.@this>();
+        var seconds = setting.TimeoutSeconds.ToDouble();
+        var timeout = seconds <= 0 ? System.Threading.Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(seconds);
+        var parallel = setting.Parallel.ToInt32();
+        if (parallel < 1) parallel = System.Environment.ProcessorCount;
+
+        using var semaphore = new SemaphoreSlim(parallel);
+        await Task.WhenAll(tests.Select(async test =>
+        {
+            await semaphore.WaitAsync(context.CancellationToken);
+            try { await Run(test, timeout, context); }
+            finally { semaphore.Release(); }
+        }));
+        return executed;
+    }
+
+    // One test, in an App of its own rooted at this App's root — the root the .pr files were built
+    // under, so their root-relative paths resolve. Its coverage records every action that fires and each
+    // branch a condition takes; its timings each top-level step of its goal.
+    private async Task Run(global::app.test.@this test, TimeSpan timeout, actor.context.@this context)
+    {
+        if (test.Status != Status.Ready)
+        {
+            Add(test);
+            return;
+        }
+
+        await using var app = new global::app.@this(_app.AbsolutePath);
+        app.OsDirectory = _app.OsDirectory;
+        app.Parent = _app;
+        // The test's session: the App is testing while it is open, and every write out of the test lands in it.
+        var session = app.test.list.Open(test);
+        var coverage = app.test.list.Report.Coverage;
+        var events = app.User.Context.Events;
+
+        test.Begin();
+
+        events.Register(new global::app.@event.lifecycle.binding.@this(
+            global::app.@event.Trigger.AfterAction,
+            async (ctx, action, result) =>
+            {
+                if (action == null) return ctx.Ok();
+                coverage.RecordModuleAction(action.Module.Name, action.Name);
+                // A condition that fired (its own result is truthy) records the branch it took, keyed by its
+                // position in the step's action chain.
+                if (action.IsCondition && result != null && await result.ToBooleanAsync())
+                {
+                    var goal = action.Step?.Goal;
+                    var site = $"{goal?.Path?.ToString() ?? goal?.Name ?? "?"}:{action.Step?.Index.ToString() ?? "?"}";
+                    coverage.RecordBranch(site, action.Step != null ? action.Step.Code.IndexOf(action) : -1);
+                    coverage.RecordBranchLabel(site, action.Name);
+                }
+                return ctx.Ok();
+            },
+            priority: int.MaxValue,
+            stopOnError: false));
+
+        // Only the test goal's own steps are timed; a sub-goal's steps roll up into the step that called it.
+        var starts = new System.Collections.Concurrent.ConcurrentDictionary<int, long>();
+        var entry = test.Goal.Path?.ToString();
+        bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, StringComparison.Ordinal);
+        events.Register(new global::app.@event.lifecycle.binding.@this(
+            global::app.@event.Trigger.BeforeStep,
+            (ctx, _, _) =>
+            {
+                if (ctx.Step is { } step && Own(step)) starts[step.Index] = System.Diagnostics.Stopwatch.GetTimestamp();
+                return Task.FromResult(ctx.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false));
+        events.Register(new global::app.@event.lifecycle.binding.@this(
+            global::app.@event.Trigger.AfterStep,
+            (ctx, _, _) =>
+            {
+                if (ctx.Step is { } step && Own(step) && starts.TryRemove(step.Index, out var start))
+                    test.Timings.Add(new global::app.test.timing.@this
+                    {
+                        Step = step,
+                        Elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(start),
+                    });
+                return Task.FromResult(ctx.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false));
+
+        Made?.Invoke(app);
+
+        // The timeout rides the test App's cancellation, so every action reading its context's token
+        // (timer.sleep, http.request, …) honours it.
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+        cts.CancelAfter(timeout);
+        app.User.Context.PushCancellation(cts);
+        var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
+        try
+        {
+            var loaded = await app.goal.list.Load(test.Goal.PrPath!.ToString());
+            var result = loaded.Success
+                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.User.Context)
+                : loaded;
+            if (timedOut()) test.Complete(Status.Timeout);
+            else test.Complete(result);
+        }
+        catch (OperationCanceledException) when (timedOut())
+        {
+            test.Complete(Status.Timeout);
+        }
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            test.Complete(Status.Fail, new global::app.error.ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
+        }
+        finally
+        {
+            app.User.Context.PopCancellation();
+            test.Stdout = session.Text;
+        }
+
+        Report.Coverage.Merge(coverage);
+        Add(test);
+    }
+
     /// <summary>The test a test goal is, as this run takes it. Its tags are the goal's own
     /// (<c>goal.Tag</c>, stamped at build) and the capabilities every action it reaches requires —
     /// its own and those of each goal its calls reach, as they are now. Seeds this run's coverage with

@@ -96,10 +96,12 @@ public class RunActionTests
 
     private async Task<IReadOnlyList<global::app.test.@this>> RunTests(List<global::app.test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
-        var action = new global::app.module.action.test.start(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>(),
-            Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
-            Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
-        };
+        // how the run runs is test's setting — this run's values for it
+        var run = new Dictionary<string, object?>();
+        if (parallel.HasValue) run["parallel"] = parallel.Value;
+        if (timeoutSec.HasValue) run["timeoutSeconds"] = timeoutSec.Value;
+        if (run.Count > 0) await _app.User.Context.Setting.Set("app.test.setting", run).IsSuccess();
+        var action = new global::app.module.action.test.start(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>() };
         var result = await action.Start();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
         var list = (global::app.type.item.list.@this)(await result.Value())!;
@@ -137,7 +139,7 @@ public class RunActionTests
         await runs.AssertAllPass();
     }
 
-    // With Config.Parallel = (global::app.type.item.number.@this)2 and 4 tests, at most 2 tests run concurrently.
+    // With test's setting parallel = 2 and 4 tests, at most 2 tests run concurrently.
     // Each fixture's BeforeAction delays asynchronously for long enough that another
     // fixture can enter the same window. The observed max concurrent depth equals the
     // semaphore size — parallel=2 → max 2; parallel=1 would observe max 1.
@@ -148,7 +150,6 @@ public class RunActionTests
         int maxDepth = 0;
         var depthLock = new object();
 
-        // Filter by _tempDir — static event is shared across parallel tests.
         void Probe(global::app.@this childApp)
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
@@ -171,7 +172,7 @@ public class RunActionTests
                 stopOnError: false));
         }
 
-        global::app.module.action.test.start.ChildAppCreated += Probe;
+        _app.test.list.Made += Probe;
         try
         {
             var tests = new List<global::app.test.@this>();
@@ -193,7 +194,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.start.ChildAppCreated -= Probe;
+            _app.test.list.Made -= Probe;
         }
     }
 
@@ -260,22 +261,19 @@ public class RunActionTests
 
     // Child App.OsDirectory is set from context.App.OsDirectory so shared
     // os/ goals (e.g. setup helpers) resolve identically in every test.
-    // Uses the ChildAppCreated hook to snapshot the child's OsDirectory.
+    // Uses the test list's Made hook to snapshot the child's OsDirectory.
     [Test]
     public async Task Run_OsDirectory_InheritedFromParentApp()
     {
         _app.OsDirectory = "/some/os/dir";
 
         string? observedChildOsDir = null;
-        // Filter by _tempDir prefix — ChildAppCreated is a static event, so in a
-        // parallel test run other tests' child Apps would otherwise overwrite our
-        // observation with their own (empty) OsDirectory.
         void Probe(global::app.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observedChildOsDir = childApp.OsDirectory;
         }
-        global::app.module.action.test.start.ChildAppCreated += Probe;
+        _app.test.list.Made += Probe;
         try
         {
             var test = await BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
@@ -291,24 +289,23 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.start.ChildAppCreated -= Probe;
+            _app.test.list.Made -= Probe;
         }
     }
 
     // testApp.Test = new global::app.test.list.@this(testApp.System.Context) before the test starts. Subsystems that branch
     // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
-    // Uses the ChildAppCreated hook to snapshot IsEnabled directly on the child App.
+    // Uses the test list's Made hook to snapshot IsEnabled directly on the child App.
     [Test]
     public async Task Run_TestingIsEnabled_SetToTrueInChildApp()
     {
         bool? observed = null;
-        // Filter by _tempDir — static event is shared across parallel tests.
         void Probe(global::app.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observed = childApp.test.list.Session != null;
         }
-        global::app.module.action.test.start.ChildAppCreated += Probe;
+        _app.test.list.Made += Probe;
         try
         {
             var test = await BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
@@ -324,26 +321,25 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.start.ChildAppCreated -= Probe;
+            _app.test.list.Made -= Probe;
         }
     }
 
     // Tests with global::app.test.Status.Stale or Skipped are NOT executed but are included in
     // the returned global::app.test.Run[] results with their original status. Reporter shows the
     // full surface — hiding filtered tests would hurt CI visibility.
-    // Side-effect probe: count ChildAppCreated invocations — only the Ready test
+    // Side-effect probe: count Made invocations — only the Ready test
     // should trigger a child App. Stale/Skipped take the early-return path.
     [Test]
     public async Task Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved()
     {
         int childAppsCreated = 0;
-        // Filter by _tempDir — static event is shared across parallel tests.
         void Probe(global::app.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 Interlocked.Increment(ref childAppsCreated);
         }
-        global::app.module.action.test.start.ChildAppCreated += Probe;
+        _app.test.list.Made += Probe;
         try
         {
             var ready = await BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
@@ -370,7 +366,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.start.ChildAppCreated -= Probe;
+            _app.test.list.Made -= Probe;
         }
     }
 
@@ -484,7 +480,7 @@ public class RunActionTests
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }
-        global::app.module.action.test.start.ChildAppCreated += Probe;
+        _app.test.list.Made += Probe;
         try
         {
             var test = await BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
@@ -510,7 +506,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.start.ChildAppCreated -= Probe;
+            _app.test.list.Made -= Probe;
         }
     }
 
