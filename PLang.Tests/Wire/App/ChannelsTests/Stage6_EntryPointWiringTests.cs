@@ -103,10 +103,10 @@ public class Stage6_EntryPointWiringTests
 
         // Unknown channel — Resolve returns null (no exception), source-gen
         // surfaces ChannelNotFound Data error from the IChannel slot.
-        await Assert.That(app.User.Channel.Resolve("dbg")).IsNull();
+        await Assert.That(app.User.Channel.Get("dbg")).IsNull();
 
         // Error channel is registered and resolvable.
-        var errCh = app.User.Channel.Resolve("error");
+        var errCh = app.User.Channel.Get("error");
         await Assert.That(errCh).IsNotNull();
         await Assert.That(errCh!.Name).IsEqualTo("error");
     }

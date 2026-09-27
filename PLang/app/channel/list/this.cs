@@ -4,15 +4,15 @@ using app.error;
 namespace app.channel.list;
 
 /// <summary>
-/// Per-actor channel registry. Pure registry — Register / Remove / Get / Resolve.
-/// Choreography (writes, reads, serializer routing) lives on <see cref="channel.@this"/>.
+/// Per-actor channel registry. Pure registry — Register / Remove, and selection: <c>this[name]</c> (a miss
+/// throws — the defaults, which <see cref="Verify"/> guarantees) and <see cref="Get"/> (a miss is null — a
+/// user-named channel). Choreography (writes, reads, serializer routing) lives on <see cref="channel.@this"/>.
 ///
 /// Standard role-channels ("output", "error", "input") are NOT auto-registered here —
 /// the entry point (PlangConsole, future PlangWeb) registers them via navigation
 /// (Stage 6). App.Run enforces the invariant that every actor that performs I/O has
 /// all three before user code runs.
 /// </summary>
-[global::app.Attributes.PlangType("channel")]
 public sealed class @this : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
@@ -26,12 +26,11 @@ public sealed class @this : IAsyncDisposable
     public app.@this App => _app;
 
     /// <summary>
-    /// The actor this collection belongs to. Set by <see cref="Actor.@this"/> right
-    /// after construction. <see cref="Register"/> stamps it onto each registered
-    /// channel, whose events fire in its context.
-    /// Null for Service-owned Channels (Service is not an Actor).
+    /// The actor this collection belongs to, born with it. <see cref="Register"/> stamps it onto each
+    /// registered channel, whose events fire in its context. Null for Service-owned Channels (Service is not
+    /// an Actor).
     /// </summary>
-    internal global::app.actor.@this Actor { get; set; } = null!;
+    internal global::app.actor.@this? Actor { get; }
 
     /// <summary>
     /// The context this channel collection births its result Data from — its
@@ -61,21 +60,13 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public static readonly string[] Defaults = [Output, Error, Input];
 
-    public @this(app.@this app, Serializers serializers)
+    /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
+    public @this(app.@this app, Serializers serializers, global::app.actor.@this? actor)
     {
         _app = app;
         Serializers = serializers;
-        // Stage 1: ctor no longer opens console streams. Entry point wires (Stage 6).
+        Actor = actor;
     }
-
-    /// <summary>
-    /// Resolves a channel by name. Empty/null falls back to the channel named
-    /// <c>"output"</c>. Returns null when nothing is registered under the requested
-    /// name — caller decides how to surface that (see e.g. source-generator-emitted
-    /// IChannel resolution which returns a <c>ChannelNotFound</c> Data error).
-    /// </summary>
-    public channel.@this? Resolve(string? name)
-        => string.IsNullOrEmpty(name) ? Get(Output) : Get(name);
 
     /// <summary>
     /// Boot invariant: every name in <see cref="Defaults"/> must be registered.
@@ -94,50 +85,18 @@ public sealed class @this : IAsyncDisposable
         return Context.Ok();
     }
 
-    public channel.@this GetOrCreate(string name, Func<channel.@this> factory)
-        => _channels.GetOrAdd(name, _ => factory());
-
     /// <summary>
-    /// Resolves a registered channel by name. Treats a goal-channel that is
-    /// currently executing on this async context as not-found, so a goal body
-    /// that writes to its own name can't loop back into itself. Sibling and
-    /// late-registered channels stay visible.
+    /// The channel registered under <paramref name="name"/> that takes writes now (<see cref="channel.@this.Available"/>),
+    /// or null — a user-named channel's miss is the caller's result to make. Sibling and late-registered
+    /// channels stay visible.
     /// </summary>
     public channel.@this? Get(string name)
-    {
-        if (!_channels.TryGetValue(name, out var channel)) return null;
-        if (channel is channel.type.goal.@this g && g.IsExecuting) return null;
-        return channel;
-    }
-
-    /// <summary>
-    /// Named-channel lookup with no-op fallback. Returns the registered channel
-    /// when one exists under <paramref name="name"/>; otherwise a process-wide
-    /// no-op sink that accepts writes silently. Use this when the caller wants
-    /// to write opportunistically without null-checking — e.g.
-    /// <c>IClass.Build()</c> writing a <c>{action, message}</c> warning dict to
-    /// <c>"builder"</c> regardless of whether a build is currently active.
-    ///
-    /// <para>
-    /// Distinct from <see cref="Resolve"/>, which returns null on miss and
-    /// expects the caller to handle that (used by stream-write paths that
-    /// surface <c>ChannelNotFound</c>). <see cref="Channel"/> never returns
-    /// null.
-    /// </para>
-    /// </summary>
-    public channel.@this Channel(string name)
-        => _channels.TryGetValue(name, out var channel) ? channel : NoOp;
-
-    // Per-list (not static): the sentinel carries THIS list's context so a Read on a
-    // missing channel returns a context-ful ChannelNotFound. Lazy — the first miss is at
-    // runtime, by which point the app/actor context is up.
-    private channel.type.noop.@this? _noop;
-    private channel.type.noop.@this NoOp => _noop ??= new("__noop__", Context);
+        => _channels.TryGetValue(name, out var channel) && channel.Available ? channel : null;
 
     public void Register(channel.@this channel)
     {
         channel.Channels = this;
-        if (channel.Actor == null) channel.Actor = Actor;
+        if (channel.Actor == null) channel.Actor = Actor!;
         _channels[channel.Name] = channel;
     }
 
@@ -165,98 +124,6 @@ public sealed class @this : IAsyncDisposable
     public IEnumerable<channel.@this> list => _channels.Values;
 
     public IEnumerable<string> ChannelNames => _channels.Keys;
-
-    private (channel.@this? Channel, data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
-    {
-        var channel = Get(name);
-        if (channel == null)
-            return (null, Context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
-
-        if (requireRead == true && !channel.CanRead)
-            return (null, Context.Error(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
-
-        if (requireWrite == true && !channel.CanWrite)
-            return (null, Context.Error(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
-
-        return (channel, null);
-    }
-
-    /// <summary>
-    /// Convenience write — resolves the channel by name, wraps the data in
-    /// a Data if needed, and delegates to the channel's own WriteAsync (which
-    /// fires events and routes through Write + the per-actor Serializers).
-    /// </summary>
-    public async Task<data.@this> WriteAsync(string channelName, object? data, CancellationToken cancellationToken = default)
-    {
-        var (channel, error) = GetChannel(channelName, requireWrite: true);
-        if (error != null) return error;
-
-        var wrapped = data is global::app.data.@this d ? d : Context.Ok(data);
-        return await channel!.WriteAsync(wrapped, cancellationToken);
-    }
-
-    /// <summary>Reads typed data from a channel.</summary>
-    public async Task<data.@this> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var (channel, error) = GetChannel(channelName, requireRead: true);
-        if (error != null) return error;
-
-        // One read door: the channel reads its bytes through the receive boundary (stream's own
-        // Read rides it too), stamping lazy Data; As<T> coerces to the caller's type. Parse
-        // failures ride Data.Error, so the read's own Success gate is the only branch.
-        var read = await channel!.ReadAsync(cancellationToken);
-        return read.Success ? read.As<T>() : read;
-    }
-
-    /// <summary>Convenience text write.</summary>
-    public async Task<data.@this> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
-    {
-        var (channel, error) = GetChannel(channelName, requireWrite: true);
-        if (error != null) return error;
-
-        try
-        {
-            if (channel is channel.type.stream.@this sc)
-                await sc.WriteTextAsync(text, cancellationToken);
-            else
-                await channel!.WriteAsync(Context.Ok(text), cancellationToken);
-            return Context.Ok();
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            return Context.Error(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
-        }
-    }
-
-    /// <summary>Convenience text read.</summary>
-    public async Task<data.@this> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
-    {
-        var (channel, error) = GetChannel(channelName, requireRead: true);
-        if (error != null) return error;
-
-        try
-        {
-            if (channel is channel.type.stream.@this sc)
-            {
-                var text = await sc.ReadAllTextAsync(cancellationToken);
-                return Context.Ok(text);
-            }
-            var read = await channel!.ReadAsync(cancellationToken);
-            return read;
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            return Context.Error(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
-        }
-    }
-
-    /// <summary>Creates and registers an in-memory channel. Convenience for tests.</summary>
-    public channel.@this CreateMemoryChannel(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
-    {
-        var ch = channel.type.stream.@this.Memory(name, direction);
-        Register(ch);
-        return ch;
-    }
 
     public async ValueTask DisposeAsync()
     {

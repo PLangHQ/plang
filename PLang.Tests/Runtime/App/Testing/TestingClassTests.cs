@@ -71,7 +71,7 @@ public class TestingClassTests
         var session = plain.test.list.Open(test);
 
         await Assert.That(global::app.test.@this.Current(plain.User.Context)).IsSameReferenceAs(test);
-        await plain.User.Channel.WriteTextAsync(global::app.channel.list.@this.Output, "hello");
+        await plain.User.Channel[global::app.channel.list.@this.Output].WriteText("hello");
         await Assert.That(session.Text?.ToString()).IsEqualTo("hello\n");
     }
 

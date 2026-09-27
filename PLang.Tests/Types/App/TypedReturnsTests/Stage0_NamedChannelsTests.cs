@@ -1,16 +1,11 @@
-using NoopChannel = global::app.channel.type.noop.@this;
-
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Contract: Channel(name) returns a registered channel by name; on miss it
-// returns a no-op sink so callers can write opportunistically without null-
-// checking. BuildWarning is the payload written to the "builder" channel
-// during a build pass.
+// Contract: Get(name) answers the registered channel by name, or null — a miss on a user-named channel is the
+// caller's result to make; nothing writes into a sink that pretends. BuildWarning is the payload written to the
+// "builder" channel during a build pass.
 //
-// Channel REGISTRATION for "builder" is owned PLang-side
-// (system/builder/Build.goal). C# only provides Channel(name) lookup, the
-// no-op fallback, and the BuildWarning record. The lifecycle tests here
-// assert the C# primitive only.
+// Channel REGISTRATION for "builder" is owned PLang-side (system/builder/Build.goal). C# only provides the Get
+// lookup and the BuildWarning shape; the lifecycle tests here assert the C# primitive only.
 
 public class Stage0_NamedChannelsTests
 {
@@ -24,67 +19,26 @@ public class Stage0_NamedChannelsTests
 
     private global::app.channel.list.@this Channels => _app.User.Channel;
 
-    private Channel RegisterMemoryChannel(string name)
-    {
-        var ch = Channels.CreateMemoryChannel(name);
-        Channels.Register(ch);
-        return ch;
-    }
-
-    // Channel(name) returns the registered channel when one exists by that name.
     [Test]
     public async Task Channels_LookupByName_ReturnsRegisteredChannel()
     {
-        var registered = RegisterMemoryChannel("builder");
-        var resolved = Channels.Channel("builder");
-        await Assert.That(ReferenceEquals(resolved, registered)).IsTrue();
+        var registered = Channels.CreateMemoryChannel("builder");
+        await Assert.That(ReferenceEquals(Channels.Get("builder"), registered)).IsTrue();
     }
 
-    // No registration → the no-op sink is returned so callers can write
-    // opportunistically without null-checking.
+    // No registration → no channel: the miss is the caller's to answer.
     [Test]
-    public async Task Channels_LookupByName_NonexistentReturnsNoOpSink()
-    {
-        var resolved = Channels.Channel("nonexistent");
-        await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved).IsTypeOf<NoopChannel>();
-    }
+    public async Task Channels_LookupByName_NonexistentIsNull()
+        => await Assert.That(Channels.Get("nonexistent")).IsNull();
 
-    // Addressing a channel that isn't registered is an error (ChannelNotFound), not a
-    // silent sink — the null-object surfaces the mistake at the call site instead of
-    // dropping the payload.
-    [Test]
-    public async Task Channels_NonexistentChannel_Write_ReturnsChannelNotFound()
-    {
-        var sink = Channels.Channel("nonexistent");
-        var result = await sink.WriteAsync(_app.Ok("payload"));
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("ChannelNotFound");
-    }
-
-    // After a build-side Register, Channel("builder") returns the real channel,
-    // not the no-op. Real lifecycle is driven by system/builder/Build.goal (a
-    // `channel set "builder"` step); this test asserts the C# primitive.
-    [Test]
-    public async Task Builder_BuildStart_RegistersBuilderChannel()
-    {
-        var registered = RegisterMemoryChannel("builder");
-        var resolved = Channels.Channel("builder");
-
-        await Assert.That(resolved).IsNotTypeOf<NoopChannel>();
-        await Assert.That(ReferenceEquals(resolved, registered)).IsTrue();
-    }
-
-    // After build end, the channel is removed and lookups fall back to the no-op sink.
+    // After build end, the channel is removed and the lookup finds none.
     [Test]
     public async Task Builder_BuildEnd_DisposesBuilderChannel()
     {
-        RegisterMemoryChannel("builder");
+        Channels.CreateMemoryChannel("builder");
         var removed = await Channels.RemoveAsync("builder");
         await Assert.That(removed).IsTrue();
-
-        var resolved = Channels.Channel("builder");
-        await Assert.That(resolved).IsTypeOf<NoopChannel>();
+        await Assert.That(Channels.Get("builder")).IsNull();
     }
 
     // A build warning rides as a native dict {action, message}; structural dict
@@ -102,53 +56,33 @@ public class Stage0_NamedChannelsTests
             .Because("Structural dict equality lets consumers de-dup identical warnings.");
     }
 
-    // Writing a warning dict to a registered "builder" channel succeeds (the
-    // dispatch reaches the real channel rather than the no-op fallback). End-to-
-    // end serialization round-trip is a separate concern owned by the channel's
-    // serializer; here we assert the routing.
+    // Writing a warning dict to a registered "builder" channel succeeds.
     [Test]
-    public async Task BuildWarning_WriteToBuilderChannel_SubscriberReceivesPayload()
+    public async Task BuildWarning_WriteToBuilderChannel_Succeeds()
     {
-        RegisterMemoryChannel("builder");
-        var payload = Warning("file.read", "missing file");
-
-        var writeResult = await Channels.WriteAsync("builder", payload);
+        Channels.CreateMemoryChannel("builder");
+        var writeResult = await Channels["builder"].WriteAsync(_app.User.Context.Ok(Warning("file.read", "missing file")));
         await writeResult.IsSuccess();
-        await Assert.That(Channels.Channel("builder")).IsNotTypeOf<NoopChannel>()
-            .Because("Write must have routed to the real channel, not the no-op fallback.");
     }
 
-    // Outside a build, "builder" is not registered → Channel("builder") returns the
-    // sentinel, whose write is a ChannelNotFound error. Best-effort callers (file.read's
-    // advisory warning) ignore the result, so the warning simply isn't written — but the
-    // channel doesn't pretend the write succeeded.
+    // Outside a build, "builder" is not registered: there is nothing to write to.
     [Test]
-    public async Task BuildWarning_WriteToBuilderChannel_OutsideBuild_ReturnsChannelNotFound()
-    {
-        var sink = Channels.Channel("builder");
-        await Assert.That(sink).IsTypeOf<NoopChannel>();
-
-        var result = await sink.WriteAsync(_app.Ok(Warning("file.read", "msg")));
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("ChannelNotFound");
-    }
+    public async Task BuildWarning_OutsideBuild_ThereIsNoBuilderChannel()
+        => await Assert.That(Channels.Get("builder")).IsNull();
 
     // The build-warning payload shape: a native dict {action, message}, mirroring
     // what file.read writes to the "builder" channel.
     private global::app.type.item.dict.@this Warning(string action, string message)
         => new global::app.type.item.dict.@this().Set("action", action).Set("message", message);
 
-    // Two distinct channel names resolve to two distinct channel instances —
-    // they are independent registry entries, not aliases. End-to-end isolation
-    // of payloads between them follows from this identity check.
+    // Two distinct channel names resolve to two distinct channel instances.
     [Test]
     public async Task BuildTimeAndRuntime_AreSeparateChannelNames()
     {
-        var builder = RegisterMemoryChannel("builder");
-        var runtime = RegisterMemoryChannel("warnings");
+        var builder = Channels.CreateMemoryChannel("builder");
+        var runtime = Channels.CreateMemoryChannel("warnings");
 
         await Assert.That(ReferenceEquals(builder, runtime)).IsFalse();
-        await Assert.That(ReferenceEquals(Channels.Channel("builder"), Channels.Channel("warnings"))).IsFalse();
+        await Assert.That(ReferenceEquals(Channels.Get("builder"), Channels.Get("warnings"))).IsFalse();
     }
 }

@@ -35,7 +35,7 @@ public sealed class @this : IAsyncDisposable
         _collection = collection;
         Parent = parent;
         Channels = new global::app.channel.list.@this(parent.App,
-            new global::app.channel.serializer.list.@this(parent.Context));
+            new global::app.channel.serializer.list.@this(parent.Context), actor: null);
     }
 
     public async ValueTask DisposeAsync()

@@ -90,7 +90,7 @@ public class Stage3_GoalChannelTests
         try
         {
             await Assert.That(app.User.Channel.Get("logger")).IsNull();
-            await Assert.That(app.User.Channel.Resolve("logger")).IsNull();
+            await Assert.That(app.User.Channel.Get("logger")).IsNull();
         }
         finally { asyncLocal.Value = false; }
 

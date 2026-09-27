@@ -23,8 +23,8 @@ public class IntegrationCutsTests
         global::app.@this.WireDefaultConsoleChannels(app.System);
 
         // Direct write through the resolved Output channel — proves
-        // Channels.Resolve(null) returns Output role channel and WriteAsync routes there.
-        var ch = app.User.Channel.Resolve(null);
+        // Channels.Get(null) returns Output role channel and WriteAsync routes there.
+        var ch = app.User.Channel.Get(global::app.channel.list.@this.Output);
         await ch.WriteAsync(app.Ok("hello"));
 
         var got = global::System.Text.Encoding.UTF8.GetString(userOutput.ToArray());

@@ -85,7 +85,7 @@ public class Stage5MessagesEndToEndTests
     {
         var (app, foreignFile) = Setup("a");
         var path = new Path(foreignFile);
-        var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
+        var ch = (CannedChannel)app.User.Channel.Get("input")!;
 
         await path.ReadText(app.User.Context); // grants via prompt
         var asksAfterFirst = ch.AskCount;
@@ -180,7 +180,7 @@ public class Stage5MessagesEndToEndTests
     {
         var (app, foreignFile) = Setup("a");
         var path = new Path(foreignFile);
-        var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
+        var ch = (CannedChannel)app.User.Channel.Get("input")!;
 
         await path.ReadText(app.User.Context);              // initial grant
         var asksBeforeRevoke = ch.AskCount;
@@ -206,7 +206,7 @@ public class Stage5MessagesEndToEndTests
         // WriteText needs Write; the narrowed Read grant doesn't cover it.
         // Authorize asks; the CannedChannel answers "a" and a wider grant lands.
         var path = new Path(foreignFile);
-        var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
+        var ch = (CannedChannel)app.User.Channel.Get("input")!;
         var writeResult = await path.WriteText("data", app.User.Context);
         await writeResult.IsSuccess();
         await Assert.That(ch.AskCount).IsGreaterThan(0); // prompt fired despite the narrow Read grant

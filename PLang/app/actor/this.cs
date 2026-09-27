@@ -101,7 +101,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Permission = new permission.@this(this);
         // Per-Actor Serializers: bound to this actor's Context so PathJsonConverter
         // produces Context-wired Paths on deserialize without any ambient state.
-        _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
+        _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context), this);
 
         // Register %!app% — navigates the App object graph (e.g., %!app.test.Verbose%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));

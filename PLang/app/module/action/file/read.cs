@@ -112,7 +112,8 @@ public partial class Read : IContext
                 var warning = new global::app.type.item.dict.@this()
                     .Set("action", source)
                     .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
-                await Context.Actor.Channel.Channel("builder").WriteAsync(Context.Ok(warning));
+                // written only while a build has its "builder" channel open
+                if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
             }
         }
         catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }

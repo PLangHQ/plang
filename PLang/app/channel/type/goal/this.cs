@@ -7,9 +7,8 @@ namespace app.channel.type.goal;
 /// the written Data as its argument (<c>%message%</c> inside the goal) — the call runs as itself,
 /// so its own arguments and modifiers apply. Returns the call's result Data.
 ///
-/// Recursion rule: while the goal body is running on the current async context,
-/// <see cref="IsExecuting"/> is true and the registry's <c>Get</c> treats this
-/// channel as not-found. A body like <c>- write out %message%</c> on a channel
+/// Recursion rule: while the goal body is running on the current async context, the channel is not
+/// <see cref="Available"/> and the registry's <c>Get</c> finds no channel under its name. A body like <c>- write out %message%</c> on a channel
 /// named <c>"output"</c> can't loop back into itself; sibling and late-registered
 /// channels stay visible.
 /// </summary>
@@ -25,11 +24,12 @@ public class @this : global::app.channel.type.session.@this
 
     /// <summary>
     /// True while this channel's goal body is running on the current async context.
-    /// The registry's <c>Get</c> treats an executing goal-channel as not-found, so
-    /// a body that writes to its own name surfaces <c>ChannelNotFound</c> instead
-    /// of looping back into itself.
     /// </summary>
     public bool IsExecuting => _executing.Value;
+
+    /// <summary>Not while its own goal body runs on this async context: a body that writes to its own name
+    /// finds no channel there instead of looping back into itself.</summary>
+    public override bool Available => !IsExecuting;
 
     public @this(string name, global::app.goal.step.action.@this call, global::app.actor.@this actor,
         ChannelDirection direction = ChannelDirection.Bidirectional)

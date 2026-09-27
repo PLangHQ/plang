@@ -28,3 +28,11 @@ Addendum (same day): **nodes lowercase, verbs PascalCase.** Lowercase covers wha
 ```
 - **A reference has one definition: `app.type.item.variable.parser`.** Never write a regex (or a hand scan) for `%…%` — ask the parser (`new parser(text).Variable`, `.Read(at)` for one at a position, `.Path()` for a path from a value), or ask the value (`item.Variable` / `HasVariable`). A variable is `Text` + `Code` (its hops: `variable`, `property`, `index`, `method`); it reads through `Start(context)` and writes through `Set(value, context)`. The variable store (`context.Variable`) takes root names only — a path goes through a variable. A stored row writes its `"variable"` list; an authored marked row without it is PrFormatOutdated. The python twin of the parser is `tools/decider/variables.py`; change both together.
 ```
+
+## coder — v8 — 2026-09-27
+**Target:** /CLAUDE.md (Runtime2 Conventions, "No `Console.*` writes in production C#")
+**Why:** 8c's E removed the channel list's passthroughs (`WriteTextAsync(name, text)`, `WriteAsync(name, data)`, `ReadTextAsync`, `Resolve`, `Channel(name)`): the list selects, the channel writes. The rule's example still names `app.CurrentActor.Channels.WriteTextAsync(global::app.channel.@this.Output, ...)`, which no longer exists (and never lived on `channel.@this`).
+**Proposed change:** replace the user-facing-chatter example with:
+```
+User-facing chatter → `await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(...)` — the list selects (`this[name]` for the defaults, which `Verify` guarantees; `Get(name)` for a user-named channel, null on a miss), the channel writes (`WriteText` / `WriteAsync`).
+```

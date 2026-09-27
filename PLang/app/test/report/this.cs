@@ -60,7 +60,7 @@ public sealed class @this
                 console.Append(test.Failure(context));
             }
             console.Append(Coverage.Text(context.App.module.list));
-            await context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
+            await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(console.ToString());
         }
 
         var run = new global::app.type.item.list.@this<global::app.test.@this>(tests);

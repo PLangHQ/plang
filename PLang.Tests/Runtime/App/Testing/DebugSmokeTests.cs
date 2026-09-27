@@ -17,7 +17,7 @@ public class DebugSmokeTests
     public void Setup()
     {
         _app = TestApp.Create("/test");
-        // Debug.Write routes via System.Channels.Resolve("debug") ?? Resolve("error").
+        // Debug.Write routes via System.Channels.Get("debug") ?? Resolve("error").
         // Register a memory channel as "error" on System so debug output lands in a
         // capture buffer instead of the real stderr stream the channel was wired to.
         _app.System.Channel.Register(global::app.channel.type.stream.@this.Memory(

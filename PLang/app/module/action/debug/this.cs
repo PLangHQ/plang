@@ -54,8 +54,8 @@ public sealed class @this
     {
         // Debug surface routes via System actor's "error" channel (stderr equivalent).
         // Stage 6: was app.channels.WriteAsync; now per-actor.
-        var ch = _context.App.System.Channel.Resolve(app.channel.list.@this.Debug)
-              ?? _context.App.System.Channel.Resolve(app.channel.list.@this.Error);
+        var ch = _context.App.System.Channel.Get(app.channel.list.@this.Debug)
+              ?? _context.App.System.Channel.Get(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;
         var envelope = message is app.data.@this d ? d : _context.App.System.Context.Ok(message);
         return ch.WriteAsync(envelope);

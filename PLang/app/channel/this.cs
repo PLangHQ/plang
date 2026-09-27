@@ -116,7 +116,17 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
 
     // The context the channel's events fire in — its actor's, else its list's app's system context (a
     // Service-owned list has no actor); null for a channel that belongs to no list.
-    private global::app.actor.context.@this? Context => Actor?.Context ?? Channels?.App.System.Context;
+    private protected global::app.actor.context.@this? Context => Actor?.Context ?? Channels?.App.System.Context;
+
+    /// <summary>Whether the channel takes writes now — a list's <c>Get</c> answers only a channel that does.
+    /// A goal channel doesn't while its own goal body runs, so a body writing to its own name can't loop.</summary>
+    public virtual bool Available => true;
+
+    /// <summary>Writes <paramref name="text"/> — as a write of that text through <see cref="WriteAsync"/>; a
+    /// stream writes the text's bytes itself.</summary>
+    public virtual Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
+        => WriteAsync((Context ?? throw new InvalidOperationException(
+            $"channel '{Name}' belongs to no list — it has no context to write text in")).Ok(text), ct);
 
     /// <summary>
     /// Public write entry, through the channel's <c>on.write</c>: what is bound before it is handed the data —

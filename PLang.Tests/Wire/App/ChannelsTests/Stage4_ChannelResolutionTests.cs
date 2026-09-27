@@ -19,30 +19,30 @@ public class Stage4_ChannelResolutionTests
     }
 
     [Test]
-    public async Task ChannelsResolve_NullName_ReturnsChannelNamedOutput()
+    public async Task ChannelsGet_Output_ReturnsChannelNamedOutput()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4a");
         global::app.@this.WireDefaultConsoleChannels(app.User);
-        var ch = app.User.Channel.Resolve(null);
+        var ch = app.User.Channel.Get(global::app.channel.list.@this.Output);
         await Assert.That(ch).IsNotNull();
         await Assert.That(ch!.Name).IsEqualTo("output");
     }
 
     [Test]
-    public async Task ChannelsResolve_NamedChannel_ReturnsThatChannel()
+    public async Task ChannelsGet_NamedChannel_ReturnsThatChannel()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4b");
         var logger = StreamChannel.Memory("logger");
         app.User.Channel.Register(logger);
-        var ch = app.User.Channel.Resolve("logger");
+        var ch = app.User.Channel.Get("logger");
         await Assert.That((Channel?)ch).IsEqualTo((Channel)logger);
     }
 
     [Test]
-    public async Task ChannelsResolve_UnknownName_ReturnsNull()
+    public async Task ChannelsGet_UnknownName_ReturnsNull()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4c");
-        var ch = app.User.Channel.Resolve("dbg");
+        var ch = app.User.Channel.Get("dbg");
         await Assert.That(ch).IsNull();
     }
 
@@ -55,7 +55,7 @@ public class Stage4_ChannelResolutionTests
         { Mime = "text/plain" });
 
         var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("hello-default"),
-            Channel = app.User.Channel.Resolve(null)
+            Channel = app.User.Channel.Get(global::app.channel.list.@this.Output)
         };
         // Direct Start skips the dispatcher's reset of init backing fields.
         await write.Start();
@@ -73,7 +73,7 @@ public class Stage4_ChannelResolutionTests
         { Mime = "text/plain" });
 
         var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("targetted"),
-            Channel = app.User.Channel.Resolve("logger")
+            Channel = app.User.Channel.Get("logger")
         };
         await write.Start();
 

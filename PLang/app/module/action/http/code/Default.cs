@@ -698,7 +698,7 @@ public sealed class Default : IHttp
 
         var result = await held.Start(context);
         if (!result.Success)
-            await app.System.Channel.WriteTextAsync(global::app.channel.list.@this.Error, result.Error?.Message ?? "");
+            await app.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
     }
 
     private static StreamFormat DetectStreamFormat(string contentType)
@@ -754,7 +754,7 @@ public sealed class Default : IHttp
                         throw new InvalidOperationException(
                             $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
 
-                    await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
+                    await app.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
                         context.Error(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
@@ -809,7 +809,7 @@ public sealed class Default : IHttp
                 var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
                 if (!read.Success)
                 {
-                    await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
+                    await app.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
                         context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                     continue;
                 }

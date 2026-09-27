@@ -104,7 +104,7 @@ public sealed class @this : global::app.channel.type.session.@this
         var question = action.Question == null ? null : await action.Question.Value();
         if (!string.IsNullOrEmpty(question?.Clr<string>()))
         {
-            var output = action.Context?.Actor?.Channel.Resolve(global::app.channel.list.@this.Output);
+            var output = action.Context?.Actor?.Channel.Get(global::app.channel.list.@this.Output);
             if (output != null && output.CanWrite)
             {
                 var writeRes = await output.WriteAsync(action.Context.Ok(question), ct);
@@ -185,6 +185,14 @@ public sealed class @this : global::app.channel.type.session.@this
     {
         var bytes = ResolveEncoding().GetBytes(text);
         await WriteBytesAsync(bytes, cancellationToken);
+    }
+
+    /// <summary>A stream writes the text's bytes itself, in its encoding — no serializer between.</summary>
+    public override async Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
+    {
+        await WriteTextAsync(text, ct);
+        return (Context ?? throw new InvalidOperationException(
+            $"channel '{Name}' belongs to no list — it has no context to answer in")).Ok();
     }
 
     public override void Close()
