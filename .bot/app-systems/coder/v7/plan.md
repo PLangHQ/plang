@@ -41,6 +41,17 @@ Goes: `_goals`/`_byPath`/`_byName`, `Get(string)`'s form scans, `this[string]`, 
 `Clear`, the stale "no app-level current" comment. Stays on the list as its work: `Load(pr)`, `Setup`,
 call's lookup.
 
+## 7a — as built (commit da26b54dd; its message wrongly repeats "stage 7 plan, 7a trace" — the scratch
+message file didn't update; not rewritten, it's pushed)
+
+All eight answers taken as ruled; call's lookup is `goal.list.Find(name, caller)`. The walk under
+`all(setting)` is `list<T>.Every(setting)` (internal, lazy); `type<T, L>.Get(key)` walks it, so the goal type
+stops reading at its match. Every yields the goals already held first (no reading), then each listed
+`.pr` not held. `goal.list.setting.Of(goal)` answers which of a file's goals a setting lists.
+Tests: GoalsTests and GoalAccessorTests rewritten for the new doors; sync `Get(name)` sites use
+`await …Find(name)`; tests asking "is it held yet" check `goal.list.Items()`. A test binary has no `os/`
+beside it, so the system listing is empty in tests.
+
 ## 7a — what doesn't hold as written, with proposals
 
 1. **"Lazy" `all()`.** The default is "the public goals, one per `.pr`, from the listing alone", but a
