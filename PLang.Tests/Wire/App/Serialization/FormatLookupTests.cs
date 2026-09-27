@@ -9,7 +9,7 @@ public class FormatLookupTests
     [Test]
     public async Task Mime_ApplicationJson_IsItemsJson()
     {
-        var type = Ctx.App.type.list.Mime("application/json", Ctx);
+        var type = Ctx.App.type.list.Stamp("application/json", Ctx);
         await Assert.That(type.Name).IsEqualTo("item");
         await Assert.That(type.kind.Name).IsEqualTo("json");
     }
@@ -17,14 +17,14 @@ public class FormatLookupTests
     [Test]
     public async Task Mime_TextJson_IsTheSameJsonFormat()
     {
-        await Assert.That(Ctx.App.type.list.Mime("text/json", Ctx).kind.Name).IsEqualTo("json");
+        await Assert.That(Ctx.App.type.list.Stamp("text/json", Ctx).kind.Name).IsEqualTo("json");
     }
 
     [Test]
     public async Task Mime_IsCaseInsensitive()
     {
-        await Assert.That(Ctx.App.type.list.Mime("APPLICATION/JSON", Ctx).kind.Name).IsEqualTo("json");
-        await Assert.That(Ctx.App.type.list.Mime("Application/Json", Ctx).kind.Name).IsEqualTo("json");
+        await Assert.That(Ctx.App.type.list.Stamp("APPLICATION/JSON", Ctx).kind.Name).IsEqualTo("json");
+        await Assert.That(Ctx.App.type.list.Stamp("Application/Json", Ctx).kind.Name).IsEqualTo("json");
     }
 
     [Test]

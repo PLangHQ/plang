@@ -204,7 +204,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That(engine.type.list.Mime("application/json", engine.User.Context).kind.Name).IsEqualTo("json");
+        await Assert.That(engine.type.list.Stamp("application/json", engine.User.Context).kind.Name).IsEqualTo("json");
     }
 
     [Test]

@@ -37,7 +37,7 @@ public class ImageFormatTests
     {
         await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
-        var result = await app.type.list.Mime("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), ctx.Ok("not an image"), ctx);
+        var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), ctx.Ok("not an image"), ctx);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NoEncoder");
     }

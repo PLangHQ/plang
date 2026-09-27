@@ -82,7 +82,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             : !string.IsNullOrEmpty(Path.Extension) ? Path.MimeType(context)
             : "text/plain";
         // (plang's own content from another actor answers only signed — its format refuses it otherwise.)
-        var read = await context.App.type.list.Mime(mime, context).kind.Decode(bytes, context);
+        var read = await context.App.type.list.Mime(mime).Decode(bytes, context);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }

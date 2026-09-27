@@ -60,11 +60,10 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.Read, context) is { } early) return early;
 
-        // The declared {type, kind} the extension's mime stamps ({goal} for .pr,
-        // {object, json} for .json, {text} for .txt) — the SAME derivation build-time
-        // file.read.Build() uses, so build and runtime agree. Only the type is stamped
-        // here; materialization is deferred (see below).
-        var type = context.App.type.list.Mime(MimeType(context), context);
+        // The file's format — its extension's MIME ({goal} for .pr, {item, json} for .json, {text} for
+        // .txt), the SAME derivation build-time file.read.Build() uses, so build and runtime agree. It
+        // decodes the bytes; materialization is deferred (see below).
+        var format = context.App.type.list.Mime(MimeType(context));
 
         // During build: a .pr may be mid-rewrite on disk — read the snapshotted bytes.
         // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.
@@ -74,7 +73,7 @@ public sealed partial class @this
         {
             var snapshot = context.App.Build!.GetPrSnapshot(Absolute);
             if (snapshot != null)
-                return await type.kind.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), context, Raw);
+                return await format.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), context, Raw);
         }
 
         if (!System.IO.File.Exists(Absolute))
@@ -93,7 +92,7 @@ public sealed partial class @this
             // The format decodes the bytes — the one door a channel read takes too: a value's format
             // holds the raw bytes unread under its {type, kind} (a .pr → the goal reader on first
             // touch, a .json → clr(json)); plang's own format is the whole Data they are.
-            return await type.kind.Decode(bytes, context, Raw);
+            return await format.Decode(bytes, context, Raw);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

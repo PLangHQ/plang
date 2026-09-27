@@ -95,7 +95,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase);
         }
         // The file's format decodes its content, with the asker's context.
-        var read = await data.Context.App.type.list.Mime(Path.MimeType(data.Context), data.Context).kind.Decode(bytes, data.Context);
+        var read = await data.Context.App.type.list.Mime(Path.MimeType(data.Context)).Decode(bytes, data.Context);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }

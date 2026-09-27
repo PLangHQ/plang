@@ -9,7 +9,7 @@ public class FormatKindTests
     [Test] public async Task MimeWithParameters_IsTheMediaType()
     {
         await using var app = NewApp();
-        var type = app.type.list.Mime("application/json; charset=utf-8", app.User.Context);
+        var type = app.type.list.Stamp("application/json; charset=utf-8", app.User.Context);
         await Assert.That(type.Name).IsEqualTo("item");
         await Assert.That(type.kind.Name).IsEqualTo("json");
     }
@@ -17,7 +17,7 @@ public class FormatKindTests
     [Test] public async Task TextPlain_IsTextItself()
     {
         await using var app = NewApp();
-        var type = app.type.list.Mime("text/plain", app.User.Context);
+        var type = app.type.list.Stamp("text/plain", app.User.Context);
         await Assert.That(type.Name).IsEqualTo("text");
         await Assert.That(type.kind.IsEmpty).IsTrue();
     }
@@ -25,7 +25,7 @@ public class FormatKindTests
     [Test] public async Task TextHtml_IsCodesHtml_AndHtmIsTheSameFormat()
     {
         await using var app = NewApp();
-        var byMime = app.type.list.Mime("text/html", app.User.Context);
+        var byMime = app.type.list.Stamp("text/html", app.User.Context);
         await Assert.That(byMime.Name).IsEqualTo("code");
         await Assert.That(byMime.kind.Name).IsEqualTo("html");
         await Assert.That(app.type.list.Extension(".htm", app.User.Context).kind.Name).IsEqualTo("html");
@@ -34,8 +34,8 @@ public class FormatKindTests
     [Test] public async Task VideoMp4_IsMp4_AudioMp4_IsM4a()
     {
         await using var app = NewApp();
-        var video = app.type.list.Mime("video/mp4", app.User.Context);
-        var audio = app.type.list.Mime("audio/mp4", app.User.Context);
+        var video = app.type.list.Stamp("video/mp4", app.User.Context);
+        var audio = app.type.list.Stamp("audio/mp4", app.User.Context);
         await Assert.That(video.Name).IsEqualTo("binary");
         await Assert.That(video.kind.Name).IsEqualTo("mp4");
         await Assert.That(audio.kind.Name).IsEqualTo("m4a");
@@ -54,7 +54,7 @@ public class FormatKindTests
     [Test] public async Task UnknownMime_IsOpaqueBytes()
     {
         await using var app = NewApp();
-        var type = app.type.list.Mime("application/x-unheard-of", app.User.Context);
+        var type = app.type.list.Stamp("application/x-unheard-of", app.User.Context);
         await Assert.That(type.Name).IsEqualTo("binary");
         await Assert.That(type.kind.IsEmpty).IsTrue();
     }
@@ -63,10 +63,10 @@ public class FormatKindTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        await Assert.That(app.type.list.Mime("image/png", ctx).kind.Compressible).IsFalse();
-        await Assert.That(app.type.list.Mime("video/mp4", ctx).kind.Compressible).IsFalse();
-        await Assert.That(app.type.list.Mime("application/pdf", ctx).kind.Compressible).IsTrue();
-        await Assert.That(app.type.list.Mime("text/plain", ctx).kind.Compressible).IsTrue();
+        await Assert.That(app.type.list.Stamp("image/png", ctx).kind.Compressible).IsFalse();
+        await Assert.That(app.type.list.Stamp("video/mp4", ctx).kind.Compressible).IsFalse();
+        await Assert.That(app.type.list.Stamp("application/pdf", ctx).kind.Compressible).IsTrue();
+        await Assert.That(app.type.list.Stamp("text/plain", ctx).kind.Compressible).IsTrue();
         // a type with no format of its own says nothing compresses
         await Assert.That(app.type.list["dict"].kind.Compressible).IsFalse();
     }
@@ -104,12 +104,12 @@ public class FormatKindTests
         var ctx = app.User.Context;
         foreach (var mime in new[] { "application/plang", "application/plang+json", "application/plang; charset=utf-8" })
         {
-            var type = app.type.list.Mime(mime, ctx);
+            var type = app.type.list.Stamp(mime, ctx);
             await Assert.That(type.Name).IsEqualTo("wire");
             await Assert.That(type.kind.Name).IsEqualTo("plang");
         }
         // a .pr is goal's, not plang's own format
-        await Assert.That(app.type.list.Mime("application/plang-goal", ctx).Name).IsEqualTo("goal");
+        await Assert.That(app.type.list.Stamp("application/plang-goal", ctx).Name).IsEqualTo("goal");
     }
 
     [Test] public async Task PlangsOwnFormat_DecodesToTheWholeData()
@@ -117,7 +117,7 @@ public class FormatKindTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var bytes = System.Text.Encoding.UTF8.GetBytes((await ctx.Format("application/plang").Serialize(app.Ok("hello"), ctx).Value())!.Clr<string>()!);
-        var decoded = await app.type.list.Mime("application/plang", ctx).kind.Decode(bytes, ctx);
+        var decoded = await app.type.list.Stamp("application/plang", ctx).kind.Decode(bytes, ctx);
         await Assert.That((await decoded.Value())?.ToString()).IsEqualTo("hello");
     }
 
@@ -125,7 +125,7 @@ public class FormatKindTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var decoded = await app.type.list.Mime("text/plain", ctx).kind.Decode(System.Text.Encoding.UTF8.GetBytes("hi"), ctx, "greeting");
+        var decoded = await app.type.list.Stamp("text/plain", ctx).kind.Decode(System.Text.Encoding.UTF8.GetBytes("hi"), ctx, "greeting");
         await Assert.That(decoded.Name).IsEqualTo("greeting");
         await Assert.That(decoded.Type.Name).IsEqualTo("text");
         await Assert.That(decoded.Raw is byte[]).IsTrue();

@@ -14,14 +14,14 @@ public class FormatRemapTests
     // json is item's kind: `{item, json}` — what a json value reports.
     [Test] public async Task Mime_ApplicationJson_ReturnsItemJson()
     {
-        var t = Types.Mime("application/json", Ctx);
+        var t = Types.Stamp("application/json", Ctx);
         await Assert.That(t.Name).IsEqualTo("item");
         await Assert.That(t.kind.Name).IsEqualTo("json");
     }
 
     [Test] public async Task Mime_ApplicationXml_ReturnsTextXml()
     {
-        var t = Types.Mime("application/xml", Ctx);
+        var t = Types.Stamp("application/xml", Ctx);
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.kind.Name).IsEqualTo("xml");
     }
@@ -59,7 +59,7 @@ public class FormatRemapTests
     // octet-stream is genuinely opaque bytes → `{binary}`: binary's own format, no kind.
     [Test] public async Task Mime_ApplicationOctetStream_StampsBytesNullKind()
     {
-        var t = Types.Mime("application/octet-stream", Ctx);
+        var t = Types.Stamp("application/octet-stream", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.IsEmpty).IsTrue();
     }
@@ -69,7 +69,7 @@ public class FormatRemapTests
     [Test] public async Task Extension_AgreesWith_Mime_ForDotJson()
     {
         var byExt = Types.Extension(".json", Ctx);
-        var byMime = Types.Mime("application/json", Ctx);
+        var byMime = Types.Stamp("application/json", Ctx);
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
         await Assert.That(byExt.kind.Name).IsEqualTo(byMime.kind.Name);
     }
@@ -77,7 +77,7 @@ public class FormatRemapTests
     [Test] public async Task Extension_AgreesWith_Mime_ForDotCsv()
     {
         var byExt = Types.Extension(".csv", Ctx);
-        var byMime = Types.Mime("text/csv", Ctx);
+        var byMime = Types.Stamp("text/csv", Ctx);
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
         await Assert.That(byExt.kind.Name).IsEqualTo(byMime.kind.Name);
     }

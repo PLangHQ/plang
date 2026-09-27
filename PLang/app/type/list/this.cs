@@ -105,13 +105,13 @@ public sealed partial class @this
     public bool Contains(string name) => Types.Any(t => t.Names(name));
 
     /// <summary>
-    /// The type content of this MIME is — the format that answers to it, as a kind of the type that reads
-    /// it: <c>image/png</c> → {image, png}, <c>text/plain</c> → {text}, <c>application/json; charset=utf-8</c>
-    /// → {item, json}, <c>video/mp4</c> → {binary, mp4}. A MIME no format answers to is opaque bytes: {binary}.
-    /// The value stays unread until touched — its type reads it then.
+    /// The format content of this MIME is — a kind of the type that reads it: <c>image/png</c> → image's png,
+    /// <c>text/plain</c> → text's own, <c>application/json; charset=utf-8</c> → item's json, <c>video/mp4</c> →
+    /// binary's mp4. A MIME no format answers to is opaque bytes: binary's own. The format decodes and encodes
+    /// its content.
     /// </summary>
-    public app.type.@this Mime(string mime, actor.context.@this context)
-        => !string.IsNullOrEmpty(mime) && Held(mime) is { } kind ? Of(kind, context) : this["binary"];
+    public global::app.type.kind.@this Mime(string mime)
+        => !string.IsNullOrEmpty(mime) && Held(mime) is { } kind ? kind : this["binary"].kind;
 
     /// <summary>
     /// The type a file of this extension holds — the format with that extension, as a kind of the type that

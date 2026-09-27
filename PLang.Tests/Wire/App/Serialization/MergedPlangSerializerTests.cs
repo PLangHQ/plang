@@ -12,7 +12,7 @@ public class MergedPlangSerializerTests : System.IAsyncDisposable
 
     [Test] public async Task Mime_ApplicationPlangData_IsNotPlangsFormat()
     {
-        var type = app.type.list.Mime("application/plang+data", Ctx);
+        var type = app.type.list.Stamp("application/plang+data", Ctx);
         await Assert.That(type.Name).IsEqualTo("binary");
         await Assert.That(type.kind.IsEmpty).IsTrue();
     }

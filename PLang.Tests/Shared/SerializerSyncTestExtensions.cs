@@ -14,7 +14,15 @@ public static class SerializerSyncTestExtensions
     /// <summary>The format a MIME names, as the asker sees it — plang's own for <c>application/plang</c>,
     /// item's json for <c>application/json</c>, text's for <c>text/plain</c>.</summary>
     public static global::app.type.kind.@this Format(this global::app.actor.context.@this ctx, string mime)
-        => ctx.App.type.list.Mime(mime, ctx).kind;
+        => ctx.App.type.list.Mime(mime);
+
+    /// <summary>The full type content of this MIME is stamped as — the format's own type with the format as
+    /// its kind (<c>image/png</c> → {image, png}, <c>text/plain</c> → {text}).</summary>
+    public static global::app.type.@this Stamp(this global::app.type.list.@this types, string mime, global::app.actor.context.@this ctx)
+    {
+        var format = types.Mime(mime);
+        return types[new global::app.type.@this(format.Owner ?? "binary", format.IsEmpty ? null : format.Name), ctx];
+    }
 
     public static global::app.data.@this<global::app.type.item.text.@this> Serialize(this global::app.type.kind.@this format,
         global::app.data.@this d, global::app.actor.context.@this ctx)

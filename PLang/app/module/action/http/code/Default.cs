@@ -82,7 +82,7 @@ public sealed class Default : IHttp
                 // item property bag.
                 var ms = new MemoryStream();
                 var context = action.Context;
-                var serialized = await context.App.type.list.Mime(contentType, context).kind.Encode(ms, action.Body!, context);
+                var serialized = await context.App.type.list.Mime(contentType).Encode(ms, action.Body!, context);
                 if (!serialized.Success) return serialized;
                 httpContent = new ByteArrayContent(ms.ToArray());
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType) { CharSet = encoding };
@@ -448,7 +448,7 @@ public sealed class Default : IHttp
             return bytesRead;
         }
 
-        var format = context.App.type.list.Mime(string.IsNullOrEmpty(contentType) ? "text/plain" : contentType, context).kind;
+        var format = context.App.type.list.Mime(string.IsNullOrEmpty(contentType) ? "text/plain" : contentType);
         var result = await format.Decode((await bytesRead.Value())!.Clr<byte[]>()!, context, "http");
         // Metadata (status, headers, duration, url, ...) rides as Properties —
         // read with `!`. BuildProperties populates the protocol metadata; duration
@@ -901,7 +901,7 @@ public sealed class Default : IHttp
         async Task<string> Body(string mime)
         {
             using var ms = new MemoryStream();
-            await context.App.type.list.Mime(mime, context).kind.Encode(ms, action.Content, context, encoding: Encoding.GetEncoding(encoding));
+            await context.App.type.list.Mime(mime).Encode(ms, action.Content, context, encoding: Encoding.GetEncoding(encoding));
             return Encoding.GetEncoding(encoding).GetString(ms.ToArray());
         }
 
