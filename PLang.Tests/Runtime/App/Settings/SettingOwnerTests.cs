@@ -40,10 +40,10 @@ public class SettingOwnerTests
     {
         await using var app = TestApp.Create("/test");
         app.Debug = new global::app.module.action.debug.@this(app.System.Context);
-        await Assert.That(app.Debug.MaxLength).IsEqualTo(500);
+        await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(500);
 
         await app.System.Setting.Set("debug", new Dictionary<string, object?> { ["maxLength"] = 10 }).IsSuccess();
-        await Assert.That(app.Debug.MaxLength).IsEqualTo(10);
+        await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(10);
     }
 
     // A value the option can't take is refused at the flag, and nothing is written.

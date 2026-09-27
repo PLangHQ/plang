@@ -78,7 +78,7 @@ public class DebugSmokeTests
         var set = _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
 
         await set.IsSuccess();
-        await Assert.That(_app.Debug.Variables.Items(_app.System.Context).Select(v => v.Peek()?.ToString()).ToList())
+        await Assert.That(_app.Debug.Setting.Variables.Items(_app.System.Context).Select(v => v.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new List<string> { "trace", "%goal%" });
     }
 

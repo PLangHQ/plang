@@ -19,15 +19,6 @@ public sealed class @this
     /// flags once.</summary>
     public setting.@this Setting { get; internal set; }
 
-    public string? Goal => Setting.Goal;
-    public int? Step => Setting.Step;
-    public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables => Setting.Variables;
-    public int MaxLength => Setting.MaxLength;
-    public string? Grep => Setting.Grep;
-    public global::app.type.item.choice.@this<global::app.module.action.debug.Level> Level => Setting.Level;
-    public bool Verbose => Setting.Verbose;
-    public LlmDebug? Llm => Setting.Llm;
-
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
 
@@ -72,7 +63,7 @@ public sealed class @this
     }
 
     // The watched names, as the store names them (no %).
-    private HashSet<string> Watched => Variables.Items(_context).Select(v => (v.Peek()?.ToString() ?? "").Trim('%'))
+    private HashSet<string> Watched => Setting.Variables.Items(_context).Select(v => (v.Peek()?.ToString() ?? "").Trim('%'))
         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -86,7 +77,7 @@ public sealed class @this
     public void Activate()
     {
         // The store announces every create, change and delete for any name; the watch filters by name.
-        if (Variables.CountRaw > 0)
+        if (Setting.Variables.CountRaw > 0)
         {
             var watched = Watched;
             var store = _context.App.User.Context.Variable;
@@ -96,38 +87,38 @@ public sealed class @this
         }
 
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
-        if (Llm != null && (Llm.System || Llm.User || Llm.Response || Llm.Schema))
+        if (Setting.Llm is { } llm && (llm.System == true || llm.User == true || llm.Response == true || llm.Schema == true))
         {
             if (_context.App.Code.Get<global::app.module.action.llm.code.ILlm>().Provider is global::app.module.action.llm.code.OpenAi oai)
             {
                 var context = _context.App.User.Context;
-                var toFile = string.Equals(Llm.Output, "file", StringComparison.OrdinalIgnoreCase);
+                var toFile = string.Equals(llm.Output.ToString(), "file", StringComparison.OrdinalIgnoreCase);
 
                 oai.OnBeforeRequest += (messages, schema) =>
                 {
                     // Resolve file path *once* per call so request + response share it.
                     if (toFile) _currentLlmFilePath = ResolveLlmFilePath(context);
 
-                    if (Llm.System)
+                    if (llm.System)
                     {
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
                         EmitLlmBlock("LLM SYSTEM", sys, context, toFile);
                     }
-                    if (Llm.User)
+                    if (llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
                         EmitLlmBlock("LLM USER", users, context, toFile);
                     }
-                    if (Llm.Schema && !string.IsNullOrEmpty(schema))
+                    if (llm.Schema == true && !string.IsNullOrEmpty(schema))
                     {
                         EmitLlmBlock("LLM SCHEMA", new[] { schema }, context, toFile);
                     }
                 };
-                if (Llm.Response)
+                if (llm.Response)
                 {
                     oai.OnAfterResponse += (rawResponse) =>
                         EmitLlmBlock("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context, toFile);
@@ -136,50 +127,52 @@ public sealed class @this
         }
 
         // Build grep regex
-        if (!string.IsNullOrEmpty(Grep))
+        if (Setting.Grep?.ToString() is { Length: > 0 } grep)
         {
-            try { _grepRegex = new Regex(Grep, RegexOptions.IgnoreCase); }
-            catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
+            try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
+            catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(grep), RegexOptions.IgnoreCase); }
         }
 
         // Debug watches user execution, so its step/goal(/action) bindings register on the
         // User actor's context (where user goals fire) — Debug itself is born with System's context.
         var events = _context.App.User.Context.Events;
+        var goal = Setting.Goal?.ToString() ?? "*";
+        var step = Setting.Step?.ToInt32();
 
         events.Register(new EventBinding(
             Trigger.BeforeStep,
-            (context, _, _) => BeforeStepHandler(context, Step),
-            goalNamePattern: Goal ?? "*",
+            (context, _, _) => BeforeStepHandler(context, step),
+            goalNamePattern: goal,
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             Trigger.AfterStep,
-            (context, _, _) => AfterStepHandler(context, Step),
-            goalNamePattern: Goal ?? "*",
+            (context, _, _) => AfterStepHandler(context, step),
+            goalNamePattern: goal,
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
             Trigger.AfterGoal,
             (context, _, _) => AfterGoalHandler(context),
-            goalNamePattern: Goal ?? "*",
+            goalNamePattern: goal,
             priority: int.MaxValue,
             stopOnError: false));
 
-        if (Level.Value == global::app.module.action.debug.Level.Action)
+        if (Setting.Level.Value == global::app.module.action.debug.Level.Action)
         {
             events.Register(new EventBinding(
                 Trigger.BeforeAction,
-                (context, _, _) => BeforeActionHandler(context, Step),
-                goalNamePattern: Goal ?? "*",
+                (context, _, _) => BeforeActionHandler(context, step),
+                goalNamePattern: goal,
                 priority: int.MaxValue,
                 stopOnError: false));
 
             events.Register(new EventBinding(
                 Trigger.AfterAction,
-                (context, _, _) => AfterActionHandler(context, Step),
-                goalNamePattern: Goal ?? "*",
+                (context, _, _) => AfterActionHandler(context, step),
+                goalNamePattern: goal,
                 priority: int.MaxValue,
                 stopOnError: false));
         }
@@ -396,7 +389,7 @@ public sealed class @this
     private static Task WriteFiltered(StringBuilder sb, actor.context.@this context)
     {
         var debug = context.App?.Debug;
-        var maxLen = debug?.MaxLength ?? 500;
+        var maxLen = (debug?.Setting ?? context.Setting.Of<setting.@this>()).MaxLength.ToInt32();
         var grep = debug?._grepRegex;
         var output = sb.ToString();
 
@@ -619,16 +612,16 @@ public sealed class @this
 public class LlmDebug
 {
     /// <summary>Dump system messages from each LLM API call.</summary>
-    public bool System { get; set; }
+    public global::app.type.item.@bool.@this System { get; set; } = false;
 
     /// <summary>Dump user (and any non-system) messages from each LLM API call.</summary>
-    public bool User { get; set; }
+    public global::app.type.item.@bool.@this User { get; set; } = false;
 
     /// <summary>Dump the raw response string returned by the LLM API.</summary>
-    public bool Response { get; set; }
+    public global::app.type.item.@bool.@this Response { get; set; } = false;
 
     /// <summary>Dump the JSON Schema string passed via the format instruction.</summary>
-    public bool Schema { get; set; }
+    public global::app.type.item.@bool.@this Schema { get; set; } = false;
 
     /// <summary>
     /// Where enabled blocks go. "stderr" (default) = existing labeled blocks to stderr,
@@ -637,5 +630,5 @@ public class LlmDebug
     /// File mode is the only way to get the full system prompt or raw response when they
     /// exceed maxLength, since maxLength is for terminal display.
     /// </summary>
-    public string Output { get; set; } = "stderr";
+    public global::app.type.item.text.@this Output { get; set; } = "stderr";
 }

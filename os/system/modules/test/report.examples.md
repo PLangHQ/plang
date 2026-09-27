@@ -1,2 +1,2 @@
-Step text: `write test report format='junit', write to %report%`
-Properties: `{"Format": "junit"}`
+Step text: `set %!app.test.setting.format% = 'junit'` then `write test report, write to %report%`
+Properties: `{}`

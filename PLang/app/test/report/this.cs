@@ -31,18 +31,15 @@ public sealed class @this
 
     /// <summary>
     /// Writes the run out: to the console its summary, each test (a failure with why) and the coverage —
-    /// unless the run is nested in a test, whose verdict it is — and the artefact at the app root, in
-    /// <paramref name="format"/> (<c>junit</c>, else json), else the format test's setting says. The json
-    /// artefact is the tests' own wire form. Answers the tests, the artefact's facts on its Properties
+    /// unless the run is nested in a test, whose verdict it is — and the artefact at the app root, in the
+    /// format test's setting says. The json artefact is the tests' own wire form. Answers the tests, the artefact's facts on its Properties
     /// (format, reportPath, content, the summary counts); a top-level run that didn't pass answers its
     /// verdict — after the artefact is written.
     /// </summary>
-    public async Task<global::app.data.@this> Write(global::app.type.item.text.@this? format,
-        global::app.actor.context.@this context)
+    public async Task<global::app.data.@this> Write(global::app.actor.context.@this context)
     {
         var tests = _tests.Items().ToList();
-        var chosen = format == null ? (Format)context.Setting.Of<global::app.test.setting.@this>().Format
-            : string.Equals(format.ToString(), "junit", System.StringComparison.OrdinalIgnoreCase) ? Format.JUnit : Format.Json;
+        Format chosen = context.Setting.Of<global::app.test.setting.@this>().Format;
         var nested = global::app.test.@this.Current(context) != null;
         var summary = Summary();
 
