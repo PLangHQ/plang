@@ -18,6 +18,7 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 | 12 | 4 | Kinds live on their types; the type list answers kind lookups by name and by class by walking its types' kinds; no flat kind store beside them. Supersedes "the global store becomes item's kind list" in letter (number's, hash's, sets' and schemes' kinds need their own homes), keeps it in shape | one store (Ingi: "list.where(prpath == …)"); the global store answered for every type's kinds, not item's alone | plan stage 4 |
 | 13 | 4 | Replaces 10: instead of a virtual `Add` that every adder routes through, one protected guard every slot write passes (`Admit(slot)`, `Admit(list)` for a chunk), a no-op on the base list, overridden by the registry (a violation throws: only plang's own code can reach the slots) | routing through a per-item `Add` makes every list's extend O(n) (chunks are O(1) by design) and opens lazy rows; the guard keeps the guarantee without the cost | coder's stage 4 |
 | 14 | 4 | The identity door becomes `app.type.list[type, context]` and `Mime(mime, context)`, reading `context.App.Format` | Ingi: "we use context, context.app.format" | coder's stage 4 |
+| 15 | 4 | `type<T>` takes its list class as a second parameter: `type.@this<T, L> where L : list<T>`, the element naming it through `IList<TSelf, L>`; app declares `type.@this<type.@this, type.list.@this> type` (later `…<goal.@this, goal.list.@this> goal`) | `app.type.list.Mime(…)` and goal's loading list need the list's own class without casts; a typed accessor beside `list` would hold the list twice | coder's stage 4 |
 | 3 | 3 | Test `LoadDll_CustomInt_OverridesBuiltInName` (a DLL overriding "int") is deleted; what it guarded flips: a loaded DLL claiming a taken type name is refused (`Add` answers an error) | contradicts one name one type and "int is a kind"; already failing in the baseline | coder's stage 3 |
 
 ## 2026-09-27 — app-systems plan ready for coder
@@ -31,7 +32,7 @@ Stage status:
 | 1 | `Run` → `Start` (+ test/environment/callback.start, range From/To, test stopwatch Begin) | complete (4b396e780) |
 | 2 | folded into 4 | — |
 | 3 | One set of types | complete (4bfd09c61 … f88e1f8d3; suites at or under baseline: Types 23 → 19, Data 45 → 44; twins byte-equal) |
-| 4 | The collected type | in progress |
+| 4 | The collected type | in progress (010bfa885, b67ac285d, 94ea6df1a, 0339f2bcf; timing unchanged, no index) |
 | 5 | Faces and honest facts | pending |
 | 6 | The reference (variable parser) | pending |
 | 7 | Every concept is its type (+ settings, test) | pending |
