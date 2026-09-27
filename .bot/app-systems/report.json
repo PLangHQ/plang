@@ -377,8 +377,81 @@
           "category": "code",
           "confidence": "high",
           "context": "trace of read/write/render paths and the nine reference definitions; questions sent to architect"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/variable/",
+            "PLang.Generators/"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "6a: app.variable -> app.type.item.variable; generator namespace strings; 150 dead usings"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/variable/parser/this.cs",
+            "PLang/app/type/item/variable/code/",
+            "PLang/app/module/action/variable/set.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "6b: the parser and the four hops; variable = Text + Code; Start/Set; index keys typed, no literal fallback (ruled)"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/text/this.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/data/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "6c: text owns its methods ([LlmBuilder] opt-in, ruled); grep provider births with context"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/",
+            "PLang/app/data/reader/this.cs",
+            "PLang/app/goal/step/action/serializer/",
+            "os/system/",
+            "Tests/",
+            "tools/decider/"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "6d/6e: item.Variable; rows write/read \"variable\" lists; PrFormatOutdated; 16 .pr rewritten; step.Typed (ruled); python twin"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/variable/list/this.cs",
+            "PLang/app/module/action/",
+            "PLang/app/goal/step/",
+            "tools/decider/prompt_c.py"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "6f: path/ tokenizer, walker, clr/kind path walk, CleanName x2, %setting.X% mount, regex parsers -> parser; store root-only; HasVariable"
+        },
+        {
+          "paths": [
+            "tools/decider/runs/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "6g: eval c_eval round 11 58/58 final (56 first, 2 caught+fixed); bootstrap 9 first/1 retried/3 refused (nano answer slips; prompts identical to stage 5, checked over 73 steps)"
         }
-      ]
+      ],
+      "timestamp_end": "2026-09-27T08:18:19Z",
+      "after": {
+        "status": "stage 6 complete, pushed",
+        "health": "six suites at/under baseline by name; twins equal; plang --test 7/0/317",
+        "notes": "plang-visible changes listed in v6/result.md for Ingi; kind faces still wait for Ingi"
+      }
     }
   ]
 }

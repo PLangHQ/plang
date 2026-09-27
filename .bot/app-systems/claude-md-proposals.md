@@ -20,3 +20,11 @@ Addendum (same day): **nodes lowercase, verbs PascalCase.** Lowercase covers wha
 **Target:** /CLAUDE.md (Runtime2 Conventions: "Action `Run()` returns are typed", "Handler naming")
 **Why:** stage 1 made `Start` the entry verb of everything that runs (Ingi): every handler's `Run()` is now `Start()`, the generated dispatcher is `ICodeGenerated.Start()` (implemented explicitly beside the handler's own), and goal/step/action/list `Run(context)` are `Start(context)`. The CLAUDE.md bullet still says `Run()`.
 **Proposed change:** in the bullet "**Action `Run()` returns are typed via the signature.**", replace `Run()` with `Start()` (and "Action `Run()` returns" in its good_to_know cross-reference title). Add to "Handler naming": "An action's entry method is `Start()`; the generated dispatcher is `ICodeGenerated.Start()`, an explicit interface member, so it shares the name in one partial class — start an action through `action.Start(context)`, never the handler directly."
+
+## coder — v6 — 2026-09-27
+**Target:** /CLAUDE.md (Runtime2 Conventions)
+**Why:** stage 6 found 11 separate definitions of a `%reference%` (regexes in Formal, step Cover/Scope, pick, debug, text's render, Data's full-match, the store's path tokenizer, the variable's hand scan) that disagreed on spaces, `!` and brackets. They are now one parser, and the .pr carries each row's parsed variables. A new regex for `%…%` would bring the drift back.
+**Proposed change:**
+```
+- **A reference has one definition: `app.type.item.variable.parser`.** Never write a regex (or a hand scan) for `%…%` — ask the parser (`new parser(text).Variable`, `.Read(at)` for one at a position, `.Path()` for a path from a value), or ask the value (`item.Variable` / `HasVariable`). A variable is `Text` + `Code` (its hops: `variable`, `property`, `index`, `method`); it reads through `Start(context)` and writes through `Set(value, context)`. The variable store (`context.Variable`) takes root names only — a path goes through a variable. A stored row writes its `"variable"` list; an authored marked row without it is PrFormatOutdated. The python twin of the parser is `tools/decider/variables.py`; change both together.
+```
