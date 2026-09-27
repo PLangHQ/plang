@@ -452,6 +452,30 @@
         "health": "six suites at/under baseline by name; twins equal; plang --test 7/0/317",
         "notes": "plang-visible changes listed in v6/result.md for Ingi; kind faces still wait for Ingi"
       }
+    },
+    {
+      "id": "bc801cbc-d56f-49bb-ba6e-615412f6aa8d",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T08:20:56Z",
+      "intent": "Stage 7: every concept is its type (goal, module, actor, test, variable), settings, the prompt line",
+      "before": {
+        "assumptions": "stage 4 type<T, L> machinery carries each concept; production callers of the goal collection are few",
+        "risk": "goal.all() listing every .pr; settings layering touches identity/permission; builder reads %!app.module.list%"
+      },
+      "plan": ".bot/app-systems/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/list/this.cs",
+            "PLang/app/goal/this.cs",
+            "PLang/app/goal/setup/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "7a trace: goal collection, callers, sub-goal parent/address"
+        }
+      ]
     }
   ]
 }
