@@ -71,20 +71,17 @@ public sealed partial class @this
                 return Context.Error(new global::app.error.ServiceError(
                     $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
-            // Channels are wired by the entry point (PlangConsole) before Start.
-            // The User actor's "output"/"input" channels wrap stdout/stdin — write
-            // the prompt to output, then ReadLine off the input stream. Two-call
-            // because the default channels are direction-split (output write-only,
-            // input read-only) so Stream.Ask can't bridge them.
-            var outputChannel = _context.App.User.Channel.Get(global::app.channel.list.@this.Output) as global::app.channel.type.stream.@this;
-            var inputChannel = _context.App.User.Channel.Get(global::app.channel.list.@this.Input) as global::app.channel.type.stream.@this;
-            if (outputChannel == null || inputChannel == null)
-                return Context.Error(new global::app.error.ServiceError(
-                    "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
-
-            await outputChannel.WriteText($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n): ");
-            using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
-            var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
+            // The question goes through the User actor's ask door: its input channel asks, writing the
+            // question on the actor's output channel and reading the answer — so on.ask fires as for any ask.
+            var userContext = _context.App.User.Context;
+            var ask = new global::app.module.action.output.ask(userContext)
+            {
+                Question = userContext.Ok<global::app.type.item.text.@this>(
+                    $"No app found at {_context.App.AbsolutePath}. Create new app? (y/n): ")
+            };
+            var asked = await _context.App.Run(ask, userContext);
+            if (!asked.Success) return asked;
+            var answer = ((await asked.Value()) as global::app.module.action.output.Ask)?.Answer?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
                 return Context.Error(new global::app.error.ServiceError(
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));

@@ -314,8 +314,11 @@ public sealed partial class @this : IAsyncDisposable
         if (IsScalar(value)) return value;
         if (deep)
         {
+            // A value the cloner can't copy (no reflection access, an unsupported member) is
+            // captured as its summary; any other failure is a bug and bubbles.
             try { return Force.DeepCloner.DeepClonerExtensions.DeepClone(value); }
-            catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+            catch (System.Exception ex) when (ex is NotSupportedException or MemberAccessException
+                or System.Security.SecurityException or InvalidOperationException)
             {
                 return SummaryString(value);
             }

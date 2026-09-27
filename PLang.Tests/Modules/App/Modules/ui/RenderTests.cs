@@ -243,7 +243,7 @@ public class RenderTests : IDisposable
     }
 
     [Test]
-    public async Task Render_CallGoal_GoalNotFound_ShowsErrorInOutput()
+    public async Task Render_CallGoal_GoalNotFound_IsTheRendersError()
     {
         var context = _app.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before {% callGoal 'Missing' %} After",
@@ -252,16 +252,9 @@ public class RenderTests : IDisposable
 
         var result = await _provider.Render(action);
 
-        // Goal not found: either inline error text or Data error
-        if (result.Success)
-        {
-            var output = (await result.Value())?.ToString() ?? "";
-            await Assert.That(output).Contains("[Error:");
-        }
-        else
-        {
-            await Assert.That(result.Error).IsNotNull();
-        }
+        // A failed call fails the render — never "[Error: …]" printed into a successful output.
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).Contains("Missing");
     }
 
     [Test]

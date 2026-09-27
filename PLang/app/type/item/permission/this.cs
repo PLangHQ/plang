@@ -55,6 +55,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public @this(string Actor, string Path, IReadOnlySet<Verb> Verbs, Match Match)
     {
+        // a grant is born sound: a regex path that isn't a regex fails here, so matching never meets one
+        if (Match == Match.Regex)
+        {
+            try { _ = new Regex(Path); }
+            catch (ArgumentException ex)
+            {
+                throw new global::app.error.AppException($"the permission pattern '{Path}' is not a valid regex: {ex.Message}", ex, "InvalidPermissionPattern", 400);
+            }
+        }
         this.Actor = Actor;
         this.Path = Path;
         this.Verbs = Verbs;
@@ -130,15 +139,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             }
         }
         rx.Append('$');
-        try { return Regex.IsMatch(candidate, rx.ToString()); }
-        catch (ArgumentException) { return false; }
+        // every character but the wildcards is escaped, so the glob's regex is always sound
+        return Regex.IsMatch(candidate, rx.ToString());
     }
 
-    private static bool RegexMatches(string pattern, string candidate)
-    {
-        try { return Regex.IsMatch(candidate, pattern); }
-        catch (ArgumentException) { return false; }
-    }
+    // The grant's regex was checked when the grant was made.
+    private static bool RegexMatches(string pattern, string candidate) => Regex.IsMatch(candidate, pattern);
 
     /// <summary>
     /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>. No

@@ -55,18 +55,18 @@ public class Default : IGrep
     private static List<int> FindMatchingLines(string[] lines, string pattern)
     {
         var matches = new List<int>();
-        Regex? regex = null;
+        Regex regex;
 
+        // a pattern that isn't a regex is the program's error, naming it — never a quiet "contains"
         try { regex = new Regex(pattern, RegexOptions.IgnoreCase); }
-        catch (ArgumentException) { /* invalid regex — fallback to contains */ }
+        catch (ArgumentException ex)
+        {
+            throw new global::app.error.AppException($"'{pattern}' is not a valid pattern: {ex.Message}", ex, "InvalidPattern", 400);
+        }
 
         for (int i = 0; i < lines.Length; i++)
         {
-            bool isMatch = regex != null
-                ? regex.IsMatch(lines[i])
-                : lines[i].Contains(pattern, StringComparison.OrdinalIgnoreCase);
-
-            if (isMatch) matches.Add(i);
+            if (regex.IsMatch(lines[i])) matches.Add(i);
         }
 
         return matches;

@@ -50,7 +50,7 @@ public class DebugTraceWriteTests
         // fast-passes. If anyone reverts to System.IO.File.AppendAllText the
         // PLNG002 analyzer fails the build — but we additionally verify the
         // bytes land on disk.
-        app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, context, toFile: true);
+        await app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, context, toFile: true);
         // Read back via the same gated verb.
         var read = await app.Debug._currentLlmFilePath!.ReadText(context);
         await read.IsSuccess();

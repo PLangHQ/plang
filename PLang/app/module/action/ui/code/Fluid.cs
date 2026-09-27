@@ -377,38 +377,23 @@ public class Fluid : ITemplate
         var app = (app.@this)context.AmbientValues["app"];
         var plangContext = (global::app.actor.context.@this)context.AmbientValues["context"];
 
-        try
-        {
-            var goalNameValue = await expression.EvaluateAsync(context);
-            var goalName = goalNameValue?.ToStringValue() ?? "";
-            if (string.IsNullOrEmpty(goalName))
-            {
-                await writer.WriteAsync("[Error: callGoal requires a goal name]");
-                return Completion.Normal;
-            }
+        // A failed call fails the render — the render's result is the error, never an
+        // "[Error: …]" printed into output that reads as success.
+        var goalNameValue = await expression.EvaluateAsync(context);
+        var goalName = goalNameValue?.ToStringValue() ?? "";
+        if (string.IsNullOrEmpty(goalName))
+            throw new global::app.error.AppException("callGoal requires a goal name", "MissingGoalName", 400);
 
-            var goal = await app.goal.list.Find(goalName);
-            var result = goal != null
-                ? await goal.Start(plangContext)
-                : plangContext.Error(new global::app.error.ActionError($"Goal '{goalName}' not found.", "GoalNotFound", 404));
+        var goal = await app.goal.list.Find(goalName);
+        if (goal == null)
+            throw new global::app.error.GoalNotFoundException(goalName);
 
-            if (result.Success)
-            {
-                var output = (await result.Value())?.ToString() ?? "";
-                await writer.WriteAsync(output);
-            }
-            else
-            {
-                // Show error message in template output per Ingi's requirement
-                var errorMessage = result.Error?.Message ?? "Unknown error";
-                await writer.WriteAsync($"[Error: {errorMessage}]");
-            }
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            await writer.WriteAsync($"[Error: {ex.Message}]");
-        }
+        var result = await goal.Start(plangContext);
+        if (!result.Success)
+            throw new global::app.error.AppException($"callGoal '{goalName}' failed: {result.Error?.Message}",
+                result.Error?.Key ?? "GoalFailed", result.Error?.StatusCode ?? 500);
 
+        await writer.WriteAsync((await result.Value())?.ToString() ?? "");
         return Completion.Normal;
     }
 
@@ -434,28 +419,19 @@ public class Fluid : ITemplate
             foreach (var candidate in candidates)
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
-                var resolved = TryResolvePath(candidate);
-                if (resolved == null) continue;
+                var resolved = _basePath.Combine(candidate);
                 // ExistsAsync routes through AuthGate(Read). Out-of-root template
                 // includes (`{% include '../../etc/passwd' %}`) surface as
-                // permission prompts or denials — not silent file reads.
+                // permission prompts or denials — not silent file reads. A failed
+                // probe (denied, unreadable) fails the render; only "absent" is not-found.
                 var exists = resolved.ExistsAsync(_context).GetAwaiter().GetResult();
-                if (exists.Success && (exists.Peek() as global::app.type.item.@bool.@this)?.Value == true)
+                if (!exists.Success)
+                    throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
+                        exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);
+                if ((exists.Peek() as global::app.type.item.@bool.@this)?.Value == true)
                     return new PlangFileInfo(resolved, candidate, _context);
             }
             return new NotFoundFileInfo(subpath);
-        }
-
-        private global::app.type.item.path.@this? TryResolvePath(string candidate)
-        {
-            try
-            {
-                return _basePath.Combine(candidate);
-            }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                return null;
-            }
         }
 
         private static string StripLiquidExtension(string path)

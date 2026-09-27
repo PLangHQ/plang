@@ -98,25 +98,21 @@ public partial class Read : IContext
         // stamps can't drift; the content type appears only when runtime examination narrows.
         var inferred = Context.App.type.list[new global::app.type.@this("file", p.Extension.TrimStart('.')), Context];
 
-        // Best-effort missing-file warning. Channel("builder") falls back to a
-        // no-op sink when no build is active, so this is safe outside builds.
-        try
+        // Missing-file warning, written only while a build has its "builder" channel open.
+        // A probe that can't answer (denied at build time) gives no warning — the runtime
+        // read asks again under its own grant.
+        var exists = await p.ExistsAsync(Context);
+        if (exists.Success && !await exists.ToBooleanAsync())
         {
-            var exists = await p.ExistsAsync(Context);
-            if (exists.Success && !await exists.ToBooleanAsync())
-            {
-                // Advisory build warning as a native dict {action, message} —
-                // `action` is the source attribution (the handler reduces to its
-                // own identity; a live handler has no wire form).
-                string source = __action == null ? "" : $"{__action.Module}.{__action.Name}";
-                var warning = new global::app.type.item.dict.@this()
-                    .Set("action", source)
-                    .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
-                // written only while a build has its "builder" channel open
-                if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
-            }
+            // Advisory build warning as a native dict {action, message} —
+            // `action` is the source attribution (the handler reduces to its
+            // own identity; a live handler has no wire form).
+            string source = __action == null ? "" : $"{__action.Module}.{__action.Name}";
+            var warning = new global::app.type.item.dict.@this()
+                .Set("action", source)
+                .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
+            if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
         }
-        catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }
 
         return Context.Ok(inferred);
     }

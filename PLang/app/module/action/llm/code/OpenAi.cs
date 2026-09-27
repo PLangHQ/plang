@@ -28,10 +28,12 @@ public sealed class OpenAi : ILlm
     public string? Source { get; set; }
 
     /// <summary>Fired before each LLM API call with resolved messages and the schema string (if any). Debug subscribes to this.</summary>
-    public event Action<List<LlmMessage>, string?>? OnBeforeRequest;
+    /// Each subscriber is awaited before the request goes out.
+    public event Func<List<LlmMessage>, string?, Task>? OnBeforeRequest;
 
-    /// <summary>Fired with the raw LLM response string after each successful API call. Debug subscribes to this.</summary>
-    public event Action<string>? OnAfterResponse;
+    /// <summary>Fired with the raw LLM response string after each successful API call. Debug subscribes to this.
+    /// Each subscriber is awaited before the result is built.</summary>
+    public event Func<string, Task>? OnAfterResponse;
 
     private const string ConversationKey = "__llm_conversation__";
     private const string SchemaKey = "__llm_schema__";
@@ -146,7 +148,9 @@ public sealed class OpenAi : ILlm
                 messages.Insert(0, new LlmMessage { Role = "system", Content = formatInstruction });
         }
 
-        OnBeforeRequest?.Invoke(messages, schema);
+        if (OnBeforeRequest is { } before)
+            foreach (Func<List<LlmMessage>, string?, Task> hook in before.GetInvocationList())
+                await hook(messages, schema);
 
         // --- Cache check ---
         // Cache decision reads only action.Cache — no build-mode sniff. A cache-off build
@@ -453,7 +457,9 @@ public sealed class OpenAi : ILlm
             context.Set(ConversationKey, originalMessages);
             context.Set(SchemaKey, schema);
 
-            OnAfterResponse?.Invoke(rawResponse);
+            if (OnAfterResponse is { } after)
+                foreach (Func<string, Task> hook in after.GetInvocationList())
+                    await hook(rawResponse);
 
             // --- Build result ---
             // The producer names the kind once; the kind loads the raw (json → clr(json),

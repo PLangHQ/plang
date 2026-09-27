@@ -96,7 +96,7 @@ public sealed class @this
                 var context = _context.App.User.Context;
                 var toFile = string.Equals(llm.Output.ToString(), "file", StringComparison.OrdinalIgnoreCase);
 
-                oai.OnBeforeRequest += (messages, schema) =>
+                oai.OnBeforeRequest += async (messages, schema) =>
                 {
                     // Resolve file path *once* per call so request + response share it.
                     if (toFile) _currentLlmFilePath = ResolveLlmFilePath(context);
@@ -106,18 +106,18 @@ public sealed class @this
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        EmitLlmBlock("LLM SYSTEM", sys, context, toFile);
+                        await EmitLlmBlock("LLM SYSTEM", sys, context, toFile);
                     }
                     if (llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        EmitLlmBlock("LLM USER", users, context, toFile);
+                        await EmitLlmBlock("LLM USER", users, context, toFile);
                     }
                     if (llm.Schema == true && !string.IsNullOrEmpty(schema))
                     {
-                        EmitLlmBlock("LLM SCHEMA", new[] { schema }, context, toFile);
+                        await EmitLlmBlock("LLM SCHEMA", new[] { schema }, context, toFile);
                     }
                 };
                 if (llm.Response)
@@ -131,8 +131,12 @@ public sealed class @this
         // Build grep regex
         if (Setting.Grep?.ToString() is { Length: > 0 } grep)
         {
+            // a --grep that isn't a regex is the caller's error, named — never a quiet literal match
             try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
-            catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(grep), RegexOptions.IgnoreCase); }
+            catch (ArgumentException ex)
+            {
+                throw new global::app.error.AppException($"--debug grep '{grep}' is not a valid regex: {ex.Message}", ex, "InvalidPattern", 400);
+            }
         }
 
         // Debug watches user execution, so its bindings on the step, goal (and action) types' on.start are the
@@ -278,7 +282,7 @@ public sealed class @this
     /// </summary>
     // internal for DebugTraceWriteTests to drive the trace-write path
     // (driving the full event lifecycle requires a real LLM call).
-    internal void EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
+    internal async Task EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
     {
         if (toFile && _currentLlmFilePath != null)
         {
@@ -287,22 +291,14 @@ public sealed class @this
             foreach (var chunk in chunks)
                 sb.AppendLine(chunk);
             sb.AppendLine($"=== END {title} ===");
-            try
-            {
-                // Append routes through AuthGate(Write). Sync-wait — trace
-                // emission is inside sync event handlers.
-                var written = _currentLlmFilePath.Append(sb.ToString(), context).GetAwaiter().GetResult();
-                if (!written.Success)
-                    _ = Write($"[debug] LLM file write failed: {written.Error?.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
-            }
-            catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                _ = Write($"[debug] LLM file write failed: {ex.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
-            }
+            // Append routes through AuthGate(Write); a refused or failed write is reported on the debug channel.
+            var written = await _currentLlmFilePath.Append(sb.ToString(), context);
+            if (!written.Success)
+                await Write($"[debug] LLM file write failed: {written.Error?.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
             return;
         }
 
-        _ = WriteLlmBlock(title, chunks, context);
+        await WriteLlmBlock(title, chunks, context);
     }
 
     /// <summary>
@@ -570,12 +566,13 @@ public sealed class @this
             && type != typeof(Guid) && !type.IsEnum)
         {
             var props = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                .Where(p => p.CanRead && p.Name != "EqualityContract")
+                .Where(p => p.CanRead && p.Name != "EqualityContract" && p.GetIndexParameters().Length == 0)
                 .Take(5)
                 .Select(p =>
                 {
                     try { return $"{p.Name}={TruncateToString(p.GetValue(value), 40)}"; }
-                    catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException)) { return $"{p.Name}=?"; }
+                    // a getter that throws shows as `?` in the preview; a fault outside the getter bubbles
+                    catch (System.Reflection.TargetInvocationException) { return $"{p.Name}=?"; }
                 });
             var propStr = string.Join(", ", props);
             if (!string.IsNullOrEmpty(propStr))

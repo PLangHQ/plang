@@ -133,16 +133,15 @@ public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
 
     /// <summary>
     /// Convenience reader: the property as T (primitive coercion via
-    /// <see cref="Convert.ChangeType(object?, System.Type)"/>) — <c>default(T)</c> when absent
-    /// or not coercible. Async — see <see cref="Value"/>.
+    /// <see cref="Convert.ChangeType(object?, System.Type)"/>) — <c>default(T)</c> when absent. A property
+    /// that isn't a T throws: a wrong-typed value is not an absent one. Async — see <see cref="Value"/>.
     /// </summary>
     public async System.Threading.Tasks.ValueTask<T?> Get<T>(string name)
     {
         var v = await Value(name);
         if (v is null) return default;
         if (v is T typed) return typed;
-        try { return (T)Convert.ChangeType(v, typeof(T)); }
-        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException) { return default; }
+        return (T)Convert.ChangeType(v, typeof(T));
     }
 
     public void Clear() => _items.Clear();

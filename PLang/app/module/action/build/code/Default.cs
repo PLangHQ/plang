@@ -303,13 +303,14 @@ public class Default : IBuilder
         // removed — deserialization then throws. That .pr is corrupt from the
         // current schema, so record why and skip the merge: the goal rebuilds from
         // its source rather than crashing the whole build on one stale artefact.
+        // Only the reader's refusal (an outdated format names itself) or the .pr's own
+        // malformed JSON is a corrupt .pr; any other exception is a bug and bubbles.
         Goal? prGoal;
         try
         {
             prGoal = (await readResult.Value()) as Goal;
         }
-        catch (System.Exception ex) when (ex is not (System.OperationCanceledException
-            or System.OutOfMemoryException or System.StackOverflowException))
+        catch (System.Exception ex) when (ex is global::app.error.AppException or System.Text.Json.JsonException)
         {
             goal.Warning.Add(new global::app.warning.@this
             {

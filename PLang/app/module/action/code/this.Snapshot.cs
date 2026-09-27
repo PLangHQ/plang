@@ -177,16 +177,10 @@ public sealed partial class @this : ISnapshot
     private static string InstanceName(System.Type implType)
     {
         // Mirror what provider/load does: instantiate transiently to read the Name.
-        // This is the same parameterless-ctor contract that load already enforces.
-        try
-        {
-            var probe = (ICode)Activator.CreateInstance(implType)!;
-            return probe.Name;
-        }
-        catch
-        {
-            return implType.Name;
-        }
+        // This is the same parameterless-ctor contract that load already enforces,
+        // so a provider that can't be built fails here too, not under a guessed name.
+        var probe = (ICode)Activator.CreateInstance(implType)!;
+        return probe.Name;
     }
 }
 

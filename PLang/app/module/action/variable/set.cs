@@ -256,8 +256,9 @@ public partial class Set : IContext, IScope
             if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
             {
                 // Create throws on a bad conversion (the throw boundary) — converted is a
-                // materialized leaf, so this re-types eagerly. A kind-validatable target defers
-                // (validated at load); anything else surfaces the failure here.
+                // materialized leaf, so this re-types eagerly. A kind-validatable target defers:
+                // its failure surfaces when the value loads (its own load validates and throws);
+                // anything else surfaces the failure here.
                 try { converted = type.Create(converted, Context); }
                 catch (System.Exception ex) when (ex is System.FormatException
                                                   or System.InvalidOperationException or System.Text.Json.JsonException)
@@ -334,9 +335,8 @@ public partial class Set : IContext, IScope
             for (int i = 1; i < ps.Length; i++)
                 args[i] = ps[i].HasDefaultValue ? ps[i].DefaultValue
                     : ps[i].ParameterType == typeof(string) ? string.Empty : null;
-            try { return ctor.Invoke(args); }
-            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-            { continue; }
+            // a constructor that takes the value and throws is the value refused — it bubbles
+            return ctor.Invoke(args);
         }
         return null;
     }
