@@ -12,7 +12,10 @@ public sealed class @this<T, L> : @this
 {
     private readonly System.Lazy<L> _list;
 
-    public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T))
+    /// <summary>The concept's type, its facts read from its class through the app's types — so it can
+    /// stand as the type list's entry of its name. <c>app.type</c> itself is born before there is a list
+    /// to read through, and is its identity alone.</summary>
+    public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T), app.type?.list)
         => _list = new(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first

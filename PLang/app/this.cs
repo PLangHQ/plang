@@ -288,6 +288,12 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
         goal = new(this);
         test = new(this);
         variable = new(this);
+        // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
+        // are one object
+        type.list.Replace(module);
+        type.list.Replace(goal);
+        type.list.Replace(test);
+        type.list.Replace(variable);
         System.Setting.Written += Refresh;
         User.Setting.Written += Refresh;
 
