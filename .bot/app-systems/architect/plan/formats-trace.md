@@ -39,6 +39,17 @@ Written before reading the coder's trace. Ingi, 2026-09-27: `serializers` plural
 - **Reading values is already "binary + the format as kind"**, which matches Ingi's "many just fall to binary". The only reader that isn't that is plang's container (a whole Data), today reached through `Transport`.
 - **Writing is where the serializers matter:** json, text and plang write Data to a channel. Everything else is written by renderers per type.
 
-## Comparison with the coder's trace
+## Comparison with the coder's trace (`.bot/app-systems/coder/v8/mime-registries-trace.md`, b972f8fc6; read after mine was pushed, 0b03f55f2)
 
-(to fill in after reading it)
+**The coder's is much better on the details. It found real bugs I didn't:**
+- **Normalisation:** only the serializer list strips `; params`, so its own key `application/json; charset=utf-8` is unreachable. `Format.Subtype` doesn't strip at all, so that MIME becomes kind `json; charset=utf-8` and stays binary.
+- **`CanonicaliseKind` (the shortest extension, then alphabetical) gives wrong kinds:** `text/plain` → `ini`, `text/html` → `htm`, and `video/mp4` → `m4a`, which also matches `audio/mp4`, so a video's family comes out as **audio**. A test comment already expects `{binary, null}` where the code gives `{binary, ini}`.
+- **`FamilyOf` is order-dependent** (`TryAdd` over a ConcurrentDictionary): `text/plain` answers `text` or `plang`, octet-stream answers `binary` or `executable`. Not deterministic.
+- **`text/html` has three different answers** (the serializers: Json; Format: `.html` → code; type.list: `{binary, htm}`).
+- **`GetOrDefault` silently answers Json** for everything unregistered (csv, xml, octet-stream, plang-goal).
+- **`StartsWith("application/plang")` also catches plang-goal** at `http/code/Default.cs:434,654`, not only file.read.
+- **The renderer dispatch is dead in production** (`Of` has no production caller, and `json/writer`'s `_renderers` is never read). The reader and renderer registries hold no MIME keys.
+
+**Mine adds the structural read:** a format lives in five places as rows and never as one object. Reading is already "binary + the format as kind", which is Ingi's "fall to binary". The serializers matter for writing.
+
+**Lesson:** the coder's per-member verification turns a structural smell into concrete wrong answers. Each of these bugs exists because one fact (a format's canonical kind, family, MIME spelling) is derived separately in several places. **One format object holding its own facts fixes them by construction.** That's the strongest argument for Ingi's shape.
