@@ -6,10 +6,9 @@ namespace app.test;
 
 /// <summary>
 /// One test — a <c>*.test.goal</c> file across its whole lifecycle. Born at
-/// discovery (test.discover) carrying identity + discovery status; executed by
-/// test.start, which stamps the execution outcome (Status, Output, Timings, Error,
-/// Duration) onto the same instance. There is no separate execution record — the
-/// test IS its own run. Fields are plang values marked <c>[Out]</c>, so the test
+/// discovery (test.discover) carrying identity + discovery status; it runs itself
+/// (<see cref="Start"/>) and holds its outcome (Status, Stdout, Timings, Error,
+/// Duration). There is no separate execution record — the test IS its own run. Fields are plang values marked <c>[Out]</c>, so the test
 /// rides the wire directly (the report serializes it — no hand-mapped shape).
 /// The PLang name "test" derives from the @this namespace tail — no [PlangType] needed.
 /// </summary>
@@ -66,7 +65,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// actions require. Set by <see cref="app.test.list.@this.Create"/>.</summary>
     [Out] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
 
-    // --- Execution (stamped by test.start; empty until the test runs) ---
+    // --- Execution (empty until the test runs) ---
 
     /// <summary>Wall-clock from <see cref="Begin"/> to <see cref="Complete(Status, global::app.error.Error?)"/>. Zero until the test runs.</summary>
     [Out] public global::app.type.item.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
@@ -81,6 +80,81 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Per-step wall-clock for the entry goal's top-level steps, in source order.</summary>
     [Out] public global::app.type.item.list.@this<global::app.test.timing.@this> Timings { get; }
 
+    /// <summary>What ran while this test ran — its App's coverage, the tests that App ran in turn
+    /// included. Null until the test runs.</summary>
+    public Coverage? Coverage { get; private set; }
+
+    /// <summary>
+    /// Runs this test's goal in <paramref name="app"/>, its own App (testing it), under
+    /// <paramref name="timeout"/>: the timeout rides the App's cancellation, so every action reading its
+    /// context's token (timer.sleep, http.request, …) honours it. Records its coverage, the time each of
+    /// its goal's own steps takes (a sub-goal's steps roll up into the step that called it), and what it
+    /// wrote. Its outcome is its status — a crash inside its App is a Fail, never the caller's.
+    /// </summary>
+    public async System.Threading.Tasks.Task Start(global::app.@this app, System.TimeSpan timeout,
+        global::app.actor.context.@this context)
+    {
+        var own = app.User.Context;
+        Begin();
+        Coverage = app.test.list.Report.Coverage;
+        Coverage.Watch(own);
+        Time(own);
+
+        using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+        cts.CancelAfter(timeout);
+        own.PushCancellation(cts);
+        var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
+        try
+        {
+            var loaded = await app.goal.list.Load(Goal.PrPath!.ToString());
+            var result = loaded.Success
+                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(own)
+                : loaded;
+            if (timedOut()) Complete(Status.Timeout);
+            else Complete(result);
+        }
+        catch (System.OperationCanceledException) when (timedOut())
+        {
+            Complete(Status.Timeout);
+        }
+        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+        {
+            Complete(Status.Fail, new ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
+        }
+        finally
+        {
+            own.PopCancellation();
+            Stdout = app.test.list.Session?.Text;
+        }
+    }
+
+    // Times each of this test's goal's own steps into Timings, from the step's start to its end.
+    private void Time(global::app.actor.context.@this context)
+    {
+        var starts = new System.Collections.Concurrent.ConcurrentDictionary<int, long>();
+        var entry = Goal.Path?.ToString();
+        bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
+        context.Events.Register(new global::app.@event.lifecycle.binding.@this(
+            global::app.@event.Trigger.BeforeStep,
+            (ctx, _, _) =>
+            {
+                if (ctx.Step is { } step && Own(step)) starts[step.Index] = Stopwatch.GetTimestamp();
+                return System.Threading.Tasks.Task.FromResult(ctx.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false));
+        context.Events.Register(new global::app.@event.lifecycle.binding.@this(
+            global::app.@event.Trigger.AfterStep,
+            (ctx, _, _) =>
+            {
+                if (ctx.Step is { } step && Own(step) && starts.TryRemove(step.Index, out var start))
+                    Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = Stopwatch.GetElapsedTime(start) });
+                return System.Threading.Tasks.Task.FromResult(ctx.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false));
+    }
+
     /// <summary>Self-write: a test is a structural item — its tagged [Out] fields ride the
     /// wire (the report serializes it), no hand-mapped shape.</summary>
     public override System.Threading.Tasks.ValueTask Output(
@@ -90,7 +164,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     // --- Execution transitions ---
 
-    /// <summary>Begins timing — called by test.start when the test begins.</summary>
+    /// <summary>Begins timing — the test's run begins.</summary>
     public void Begin() => _stopwatch = Stopwatch.StartNew();
 
     /// <summary>Transitions to the given terminal status and records elapsed duration.</summary>

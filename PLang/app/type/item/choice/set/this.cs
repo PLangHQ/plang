@@ -31,8 +31,8 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>A closed set is a kind of choice.</summary>
     protected internal override string Owner => "choice";
 
-    /// <summary>The class a choice from this set is — <c>choice&lt;T&gt;</c> over the set.</summary>
-    public override System.Type? ClrForm => _form;
+    /// <summary>A choice from this set is <c>choice&lt;T&gt;</c> closed over the set.</summary>
+    public override System.Type? Of(System.Type? type) => _form;
 
     /// <summary>True when the CLR type carries options — an enum, or a static <c>Choices(context?)</c>.</summary>
     internal bool IsClosed => Closed(_clr);

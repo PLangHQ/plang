@@ -72,7 +72,7 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
     /// subdirectory still treats the parent's <c>AbsolutePath</c> as in-root.
     /// Null for top-level apps.
     /// </summary>
-    public app.@this? Parent { get; internal set; }
+    public app.@this? Parent { get; }
 
     /// <summary>
     /// The computed <c>os/</c> folder next to the executable. App-level constant
@@ -248,6 +248,14 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
     /// disposed on App.DisposeAsync.
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
+
+    /// <summary>A child of <paramref name="parent"/> — rooted at the parent's root, with its os/ folder
+    /// (a test's App: the .pr files' root-relative paths resolve as they were built).</summary>
+    public @this(@this parent) : this(parent.AbsolutePath)
+    {
+        Parent = parent;
+        OsDirectory = parent.OsDirectory;
+    }
 
     public @this(string absolutePath,
         string? environment = null,

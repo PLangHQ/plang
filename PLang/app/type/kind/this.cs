@@ -43,6 +43,10 @@ public class @this
     /// this to bridge a raw host to its kind (exact wins, then assignable — <c>IList</c>→list).</summary>
     public virtual System.Type? ClrForm => null;
 
+    /// <summary>The class values of this kind are, given the class of its type's values — the same class,
+    /// unless the kind closes it (a choice set: <c>choice&lt;T&gt;</c> → <c>choice&lt;Format&gt;</c>).</summary>
+    public virtual System.Type? Of(System.Type? type) => type;
+
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
