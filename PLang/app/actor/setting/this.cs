@@ -118,6 +118,10 @@ public sealed class @this
     /// <paramref name="path"/> of the actor this scope belongs to.</summary>
     public async ValueTask<data.@this> Save(string path, data.@this value)
     {
+        // a node that leads to settings (%!http%, %!llm.query%) is no class: its row could not be read back
+        if (value.Peek() is global::app.type.item.setting.@this { } setting && Class(setting.Path) == null)
+            return _context.Error(new global::app.error.Error(
+                $"'{setting.Path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
         var owner = Owner;
         // rows that could not be read are never written over
         if (await owner.Load() is { Success: false } unread) return unread;

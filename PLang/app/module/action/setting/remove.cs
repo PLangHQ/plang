@@ -1,19 +1,14 @@
 namespace app.module.action.setting;
 
 /// <summary>
-/// Removes a settings value by key from the System actor's DataSource.
-/// PLang: remove settings 'ApiKey'
+/// Removes the asking actor's saved row for a setting — back to the system's row, or the defaults.
+/// PLang: remove %!app.goal.list.setting%
 /// </summary>
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
+    public partial data.@this<global::app.type.item.setting.@this> Setting { get; init; }
 
     public async Task<data.@this> Start()
-    {
-        var key = (await Key.Value())!.Clr<string>()!;
-        var store = await Context.App.store;
-        var result = await store.Remove("settings", key);
-        return result.Success ? Context.Ok() : result;
-    }
+        => await Context.Setting.Remove((await Setting.Value())!.Path) is { Success: false } failed ? failed : Context.Ok();
 }

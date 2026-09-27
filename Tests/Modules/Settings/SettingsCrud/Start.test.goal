@@ -1,10 +1,8 @@
-/ Tests basic CRUD operations on settings: set, get, update, remove
+/ A setting's life: set for this run, saved as the actor's row, changed, the row removed
 Start
-/ Set initial value
-- set settings 'TestApiKey' = 'sk-test-12345'
-- get settings 'TestApiKey', write to %apiKey%
-- assert %apiKey% equals "sk-test-12345"
-- set settings 'TestApiKey' = 'sk-updated-99999'
-- get settings 'TestApiKey', write to %updatedKey%
-- assert %updatedKey% equals "sk-updated-99999"
-- remove settings 'TestApiKey'
+- set %!llm.cache% = false
+- assert %!llm.cache% is false
+- save %!llm%
+- set %!llm.cache% = true
+- assert %!llm.cache% is true
+- remove %!llm%

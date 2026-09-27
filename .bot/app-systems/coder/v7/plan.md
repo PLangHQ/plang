@@ -601,6 +601,11 @@ place stage 8 replaces with a binding on the setting's `on.set.after`.
   `start.description.md` and `report.examples.md` teach the setting form.
 - Regenerate the python-decider golden `PLang.Tests/Wire/App/Decider/PickListTests.TheStageOneRequest_IsTheOnePythonSends`
   — red on purpose since 477caa145 (it snapshots the catalog examples).
+- Re-record the bootstrap answers for `os/system/builder/Build.goal` (`tools/decider/out/bootstrap/os/system/builder/Build.goal/Build.json`)
+  — `BootstrapTests.EveryBuilderStep_TakesItsCode_WhereAndOnlyWherePythonAccepted` red since 87b66b528 (the dead
+  `%!build.summary%` step went, the recorded answers are by step index).
+- The `setting` module: `get`/`set` gone, `save`/`remove` take a setting (`save %!app.goal.list.setting%`);
+  first build for `Tests/Modules/Settings/SettingsCrud` and `Tests/App/Actors/Datasource` (rewritten to it).
 - First build for the 8 stale `.test.goal` files rewritten to the setting form (Tests/TestModule/{Run,Report},
   Tests/Modules/Test/{Run,Report}: TestRunEnforcesTimeout, TestRunIsolatesMemoryStackBetweenTests,
   TestReportWritesJunitXml, TestReportMasksSensitiveVariablesJunit) — read each `.pr` after the build.

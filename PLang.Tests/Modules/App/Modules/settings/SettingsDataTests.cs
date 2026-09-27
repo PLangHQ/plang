@@ -30,44 +30,50 @@ public class SettingsDataTests
         catch { /* best effort cleanup */ }
     }
 
+    // The setting as the actor's settings hold it now — llm's own class.
+    private global::app.module.action.llm.setting.@this Llm(global::app.actor.context.@this ctx)
+        => ctx.Setting.Of<global::app.module.action.llm.setting.@this>();
+
+    private static global::app.data.@this<global::app.type.item.setting.@this> Given(
+        global::app.type.item.setting.@this setting, global::app.actor.context.@this ctx)
+        => new("Setting", setting, context: ctx);
+
     [Test]
-    public async Task SettingsHandler_Get_ExistingKey_ReturnsValue()
+    public async Task Save_StoresTheSettingWhole_AsTheActorsRow()
     {
-        await (await _app.store).Set("settings", "TestKey", new global::app.data.@this("TestKey", "TestValue", context: _app.System.Context));
+        var ctx = _app.System.Context;
+        var llm = Llm(ctx);
+        llm.Cache = false;
 
-        var handler = new global::app.module.action.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"TestKey"
-        };
-
-        var result = await handler.Start();
+        var result = await new global::app.module.action.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("TestValue");
+        // no value rides out — a setting may hold secrets
+        await Assert.That(result.Peek() is null or global::app.type.item.@null.@this).IsTrue();
+        await Assert.That(Llm(ctx).Cache == false).IsTrue();
     }
 
     [Test]
-    public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
+    public async Task Remove_GoesBackToTheDefaults()
     {
-        var handler = new global::app.module.action.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"MissingKey"
-        };
+        var ctx = _app.System.Context;
+        var llm = Llm(ctx);
+        llm.Cache = false;
+        await (await new global::app.module.action.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
-        var result = await handler.Start();
+        var result = await new global::app.module.action.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
+        await result.IsSuccess();
+        await Assert.That(Llm(ctx).Cache == true).IsTrue();
+    }
+
+    [Test]
+    public async Task Save_ANodeThatIsNoClass_IsRefused()
+    {
+        var ctx = _app.System.Context;
+        var node = new global::app.type.item.setting.module.@this("http");
+
+        var result = await new global::app.module.action.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();
         await result.IsFailure();
-        await Assert.That(result.Error is AskError).IsTrue();
-    }
-
-    [Test]
-    public async Task SettingsHandler_Remove_DeletesKey()
-    {
-        await (await _app.store).Set("settings", "ToRemove", new global::app.data.@this("ToRemove", "value", context: _app.System.Context));
-
-        var handler = new global::app.module.action.setting.Remove(_app.System.Context) { Key = (global::app.type.item.text.@this)"ToRemove"
-        };
-
-        var result = await handler.Start();
-        await result.IsSuccess();
-
-        // Verify removed
-        var getResult = await (await _app.store).Get<global::app.type.item.@this>("settings", "ToRemove");
-        await Assert.That(await (await getResult.Value())!.IsEmpty()).IsTrue();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotASettingClass");
     }
 
     [Test]

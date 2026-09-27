@@ -1,1 +1,1 @@
-Delete a settings entry by Key from the System actor's persistent settings store
+Remove the actor's saved row for a setting (`remove %!app.goal.list.setting%`) — the setting goes back to the system's row, or its defaults

@@ -1,6 +1,6 @@
-/ actor datasource isolation
+/ actor datasource: a setting saved as the actor's row, then removed
 Start
-- set settings 'actorTestKey' = 'actorValue'
-- get settings 'actorTestKey', write to %val%
-- assert %val% equals "actorValue"
-- remove settings 'actorTestKey'
+- set %!app.goal.list.setting.os% = false
+- save %!app.goal.list.setting%
+- assert %!app.goal.list.setting.os% is false
+- remove %!app.goal.list.setting%
