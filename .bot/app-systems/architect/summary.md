@@ -9,6 +9,8 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 | 2 | 3 | An item's own type isn't born through the type list (items hold no context): the ~35 `item.Type` overrides pass their own class (`typeof(@this)`); everything holding a context is born through the list | narrows ruling (a) but keeps its point: every type knows its class, the self-lookups go | plan.md stage 3 |
 | 4 | 3 | Kinds join one store and own their type: number's 15 precisions derive from the kind base, hash's algorithms become kind classes (`crypto/type/hash/kind/`), each kind class declares its type, owns its aliases; `kind.list(context)` answers full types; choice sets and path schemes become their types' kinds; `kind` never null, renamed lowercase so every old null check breaks at compile; the empty kind is never written to the wire | the coder's three-commit proposal matches the plan and Ingi's "type is a property on the class" | coder's stage 3 |
 | 5 | 3→4 | The global kind store stays at `app.type.kind` through stage 3 and moves in stage 4 to item's kind list | once `app.type` is `type<type>`, `app.type.kind` means the type `type`'s own kinds | plan stage 4 (as planned) |
+| 6 | 3 | Rebuild the stale fixture DLLs (TypeProvider, SignatureRendererShadow) as the close of stage 3 | they test `code.load` → `Add`, which stage 3 rewrote; red since before the branch | coder's stage 3 |
+| 7 | 3 | `set.@this`'s two private statics (the set's name for the base ctor) are accepted where C# forces them; preferred shape: the base takes the enum's type and names the set itself | no statics in OBP, but a base-ctor argument before the instance exists is C#'s constraint | coder's call |
 | 3 | 3 | Test `LoadDll_CustomInt_OverridesBuiltInName` (a DLL overriding "int") is deleted; what it guarded flips: a loaded DLL claiming a taken type name is refused (`Add` answers an error) | contradicts one name one type and "int is a kind"; already failing in the baseline | coder's stage 3 |
 
 ## 2026-09-27 — app-systems plan ready for coder
@@ -21,8 +23,8 @@ Stage status:
 | 0 | Base: re-record Compile, baseline, delete v0.1 .pr, .dll, .pdb files | complete (57d180afe, 9ee92ac9c, c918a9a1b) |
 | 1 | `Run` → `Start` (+ test/environment/callback.start, range From/To, test stopwatch Begin) | complete (4b396e780) |
 | 2 | folded into 4 | — |
-| 3 | One set of types | in progress (step 1, the one list: 4bfd09c61) |
-| 4 | The collected type | pending |
+| 3 | One set of types | complete (4bfd09c61 … f88e1f8d3; suites at or under baseline: Types 23 → 19, Data 45 → 44; twins byte-equal) |
+| 4 | The collected type | in progress |
 | 5 | Faces and honest facts | pending |
 | 6 | The reference (variable parser) | pending |
 | 7 | Every concept is its type (+ settings, test) | pending |
