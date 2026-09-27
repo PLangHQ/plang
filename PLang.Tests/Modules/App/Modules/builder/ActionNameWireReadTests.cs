@@ -23,7 +23,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
             PrPath = global::app.type.item.path.@this.Resolve("/G.pr", context),
         };
         goal.Step.Add(new Step { Goal = goal, Index = 0, Text = "do stuff" });
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
         await context.Variable.Set("goal", goal);
 
         var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();

@@ -64,7 +64,7 @@ public class OtherAccessorsTests
     [Test] public async Task AppStarAliases_AppGoalsAppChannelsAppEventsAppModules_NoLongerExist()
     {
         var appType = typeof(global::app.@this);
-        await Assert.That(appType.GetProperty("Goal")).IsNotNull();
+        await Assert.That(appType.GetProperty("goal")).IsNotNull();
         await Assert.That(appType.GetProperty("Event")).IsNotNull();
         await Assert.That(appType.GetProperty("Module")).IsNotNull();
         await Assert.That(typeof(global::app.actor.@this).GetProperty("Channel")).IsNotNull();

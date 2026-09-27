@@ -22,7 +22,7 @@ public sealed class @this
     /// <summary>
     /// Setup goals, ordered: goal named "Setup" first, then alphabetical.
     /// </summary>
-    public IEnumerable<goal.@this> Goals => _goals.AllIncludingSetup
+    public IEnumerable<goal.@this> Goals => _goals.Items()
         .Where(g => g.IsSetup)
         .OrderBy(g => g.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
         .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);

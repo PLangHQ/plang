@@ -11,7 +11,7 @@ public class ChannelSetTests
     public void Setup()
     {
         _app = TestApp.Create("/app");
-        _app.Goal.Add(new global::app.goal.@this
+        _app.goal.list.Add(new global::app.goal.@this
         {
             Name = "LogIt",
             Path = global::app.type.item.path.@this.Resolve("/LogIt.goal", global::PLang.Tests.TestApp.SharedContext)

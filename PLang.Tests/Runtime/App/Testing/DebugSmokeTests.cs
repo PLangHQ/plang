@@ -54,7 +54,7 @@ public class DebugSmokeTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Dbg",
             Make.Step("set x",
                 Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1)))));
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
         // null), this call throws. If signatures are correct, it completes and emits to stderr.

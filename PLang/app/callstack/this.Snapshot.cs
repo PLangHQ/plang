@@ -171,7 +171,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
     /// <summary>
     /// Reconstructs the captured chain into <see cref="RestoredChain"/> on the live App's
-    /// CallStack. For each captured frame, looks up the goal by PrPath in <c>app.Goal</c>,
+    /// CallStack. For each captured frame, looks up the goal by name, else PrPath, among <c>app.goal.list</c>,
     /// hash-matches against the live goal, then resolves the Step + Action by index.
     /// Hard-errors on goal-not-found (<see cref="CallbackGoalNotFound"/>) or hash mismatch
     /// (<see cref="CallbackGoalHashMismatch"/>). Does not mutate the live AsyncLocal Current —
@@ -209,8 +209,12 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             // one PrPath (the file), so a PrPath lookup picks the wrong goal; the
             // hash check below then catches any residual mismatch. PrPath is the
             // fallback for snapshots captured before names were carried.
-            var liveGoal = (!string.IsNullOrEmpty(goalName) ? context.App.Goal.Get(goalName) : null)
-                           ?? context.App.Goal.Get(goalPrPath);
+            var held = context.App.goal.list.Items().Where(g => !g.IsSetup).ToList();
+            var liveGoal = (!string.IsNullOrEmpty(goalName)
+                               ? held.LastOrDefault(g => string.Equals(g.Name, goalName, StringComparison.OrdinalIgnoreCase))
+                               : null)
+                           ?? held.FirstOrDefault(g => string.Equals(g.PrPath?.ToString()?.Replace('\\', '/').TrimStart('/'),
+                                  goalPrPath.Replace('\\', '/').TrimStart('/'), StringComparison.OrdinalIgnoreCase));
             if (liveGoal == null)
                 throw new CallbackGoalNotFound(string.IsNullOrEmpty(goalName) ? goalPrPath : goalName);
 

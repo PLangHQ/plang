@@ -16,7 +16,7 @@ public class CallSnapshotTests
         action.Step = step;
         step.Code.Add(action);
         goal.Step.Add(step);
-        app.Goal.Add(goal);
+        app.goal.list.Add(goal);
         return (app, action);
     }
 
@@ -71,7 +71,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
-            dst.Goal.Add(dstGoal);
+            dst.goal.list.Add(dstGoal);
 
             await dst.Restore(snap, dst.User.Context);
 
@@ -116,7 +116,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
-            dst.Goal.Add(dstGoal);
+            dst.goal.list.Add(dstGoal);
 
             await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
             {
@@ -143,7 +143,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
-            dst.Goal.Add(dstGoal);
+            dst.goal.list.Add(dstGoal);
 
             var thrown = await Assert.ThrowsAsync<CallbackActionMismatch>(async () =>
             {
@@ -170,7 +170,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
-            dst.Goal.Add(dstGoal);
+            dst.goal.list.Add(dstGoal);
 
             var goalBefore = dstGoal;
             var stepBefore = dstStep;
@@ -179,7 +179,7 @@ public class CallSnapshotTests
             await dst.Restore(snap, dst.User.Context);
 
             // Same instances — Restore is read-only on the registry.
-            await Assert.That(dst.Goal.Get("PureGoal")).IsSameReferenceAs(goalBefore);
+            await Assert.That(await dst.goal.list.Find("PureGoal")).IsSameReferenceAs(goalBefore);
             await Assert.That(goalBefore.Step[0]).IsSameReferenceAs(stepBefore);
             await Assert.That(stepBefore.Code[0]).IsSameReferenceAs(actionBefore);
         }

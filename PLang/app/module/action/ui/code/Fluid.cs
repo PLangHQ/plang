@@ -387,7 +387,7 @@ public class Fluid : ITemplate
                 return Completion.Normal;
             }
 
-            var goal = await app.Goal.GetAsync(goalName);
+            var goal = await app.goal.list.Find(goalName);
             var result = goal != null
                 ? await goal.Start(plangContext)
                 : plangContext.Error(new global::app.error.ActionError($"Goal '{goalName}' not found.", "GoalNotFound", 404));

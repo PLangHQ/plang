@@ -23,7 +23,7 @@ public class PrPipelineTests
         engine.Module.Register("output", "write", capture);
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
-        var loadResult = await engine.Goal.Load("FullPipeline.pr");
+        var loadResult = await engine.goal.list.Load("FullPipeline.pr");
         await loadResult.IsSuccess();
 
         // Execute
@@ -56,7 +56,7 @@ public class PrPipelineTests
         engine.Module.Register("output", "write", capture);
 
         // Load and execute
-        var loadResult = await engine.Goal.Load("ReadFile.pr");
+        var loadResult = await engine.goal.list.Load("ReadFile.pr");
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
@@ -82,7 +82,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = TestApp.Create(fixturesDir);
 
-        var loadResult = await engine.Goal.Load("FilePathsFromRoot.pr");
+        var loadResult = await engine.goal.list.Load("FilePathsFromRoot.pr");
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
@@ -108,7 +108,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = TestApp.Create(fixturesDir);
 
-        var loadResult = await engine.Goal.Load(System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
+        var loadResult = await engine.goal.list.Load(System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await loadResult.IsSuccess();
 
         var context = engine.User.Context;
@@ -132,7 +132,7 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("SubRelative", "/sub/SubRelative.goal",
             Make.Step("read subdata.txt, write to %content%",
                 Make.Action("file", "read", ("path", "subdata.txt")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -152,7 +152,7 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentTraversal", "/sub/ParentTraversal.goal",
             Make.Step("read ../testdata.txt, write to %fromParent%",
                 Make.Action("file", "read", ("path", "../testdata.txt")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -171,7 +171,7 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentAndDown", "/sub/ParentAndDown.goal",
             Make.Step("read ../sub/subdata.txt, write to %backAndDown%",
                 Make.Action("file", "read", ("path", "../sub/subdata.txt")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -190,7 +190,7 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadMissing", "/ReadMissing.goal",
             Make.Step("read nonexistent.txt, write to %content%",
                 Make.Action("file", "read", ("path", "nonexistent.txt")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -210,7 +210,7 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadEscape", "/ReadEscape.goal",
             Make.Step("read ../../etc/passwd, write to %content%",
                 Make.Action("file", "read", ("path", "../../etc/passwd")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);

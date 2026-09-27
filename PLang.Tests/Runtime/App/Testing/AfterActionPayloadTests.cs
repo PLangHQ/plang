@@ -30,7 +30,7 @@ public class AfterActionPayloadTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
             Make.Step("set var",
                 Make.Action("variable", "set", Make.Param("Name", varName, "variable"), ("Value", value)))));
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
         await _app.Start(goal, _app.User.Context);
     }
 
@@ -85,7 +85,7 @@ public class AfterActionPayloadTests
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ModifierGoal",
             Make.Step("mod set", inner)));
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         var observed = new List<(string Module, string Name)>();
         _app.User.Context.Events.Register(new EventBinding(
@@ -146,7 +146,7 @@ public class AfterActionPayloadTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("FailGoal",
             Make.Step("bad assert",
                 Make.Action("assert", "equals", ("Expected", 1), ("Actual", 2)))));
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(

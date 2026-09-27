@@ -35,7 +35,7 @@ public class BuilderPinTests
     public async Task Compile_ARefusedAnswerIsFixedThenMatchedAgain()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
-        var compile = (await Installed(os)).Child.Single(g => g.Name == "Compile");
+        var compile = (await Installed(os)).Child.Items().Single(g => g.Name == "Compile");
 
         var match = compile.Step.Items().Select(s => s.Code[0]).Single(a => a.Module.Name == "build" && a.Name == "match");
         await Assert.That($"{match.Module.Name}.{match.Name}").IsEqualTo("build.match");

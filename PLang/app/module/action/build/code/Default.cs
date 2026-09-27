@@ -157,7 +157,7 @@ public class Default : IBuilder
     private void Fold(Goal goal, List<global::app.error.Error> errors)
     {
         goal.Step = Fold(goal.Step, errors);
-        foreach (var subGoal in goal.Child) Fold(subGoal, errors);
+        foreach (var subGoal in goal.Child.Items()) Fold(subGoal, errors);
     }
 
     // Flat + Indent → tree: a step's deeper-indented followers move into that step's gate

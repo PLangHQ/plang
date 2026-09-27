@@ -98,7 +98,7 @@ public class ForeachErrorPropagationTests
         innerCondAction.Step = innerStep;
         innerGoalCall.Step = innerStep;
         innerGoal.Step.Add(innerStep);
-        _app.Goal.Add(innerGoal);
+        _app.goal.list.Add(innerGoal);
 
         // Outer step: foreach over items, body is goal.call Inner
         var outerGoal = await RealGoalLoad.ViaChannel(_app, Make.Goal("InnerCallRunner",
@@ -130,7 +130,7 @@ public class ForeachErrorPropagationTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",

@@ -51,7 +51,7 @@ public class ActorChoiceTests
     [Test]
     public async Task GoalCall_SystemActor_RunsOnSystemContext()
     {
-        _app.Goal.Add(new global::app.goal.@this
+        _app.goal.list.Add(new global::app.goal.@this
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext)

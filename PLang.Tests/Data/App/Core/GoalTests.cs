@@ -15,19 +15,19 @@ public class GoalTests : System.IAsyncDisposable
         {
             Name = "TestGoal",
             Comment = "This is a comment",
-            Visibility = Visibility.Public,
             Path = global::app.type.item.path.@this.Resolve("/path/to/goal.goal", global::PLang.Tests.TestApp.SharedContext),
             PrPath = global::app.type.item.path.@this.Resolve("/path/to/goal.pr.json", global::PLang.Tests.TestApp.SharedContext),
             Hash = "abc123",
             IsSetup = true,
             IsEvent = false,
-            Child = new List<global::app.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
             }
         };
+        goal.Child.Add(new global::app.goal.@this { Name = "SubGoal1" });
+        goal.Child.Add(new global::app.goal.@this { Name = "SubGoal2" });
 
         await Assert.That(goal.Name).IsEqualTo("TestGoal");
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
@@ -37,7 +37,8 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.Hash).IsEqualTo("abc123");
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();
-        await Assert.That(goal.Child.Count).IsEqualTo(2);
+        await Assert.That(goal.Child.CountRaw).IsEqualTo(2);
+        await Assert.That(goal.Child.Items().All(c => c.Parent == goal)).IsTrue();
         await Assert.That(goal.Step.Count).IsEqualTo(2);
     }
 
@@ -50,11 +51,14 @@ public class GoalTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Visibility_DefaultsToPrivate()
+    public async Task Visibility_AFilesGoalIsPublic_ASubGoalPrivate()
     {
         var goal = new Goal();
+        var sub = new Goal();
+        goal.Child.Add(sub);
 
-        await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Private);
+        await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Public);
+        await Assert.That(sub.Visibility.Value).IsEqualTo(Visibility.Private);
     }
 
     [Test]
@@ -88,7 +92,7 @@ public class GoalTests : System.IAsyncDisposable
         var goal = new Goal();
 
         await Assert.That(goal.Child).IsNotNull();
-        await Assert.That(goal.Child.Count).IsEqualTo(0);
+        await Assert.That(goal.Child.CountRaw).IsEqualTo(0);
     }
 
     [Test]

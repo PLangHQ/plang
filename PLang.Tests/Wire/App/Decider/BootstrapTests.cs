@@ -45,7 +45,7 @@ public class BootstrapTests
         var differ = new List<string>();
         var text = await System.IO.File.ReadAllTextAsync(System.IO.Path.Combine(RepoRoot(), "os", rel));
         var root = global::app.goal.@this.Parse(text, global::app.type.item.path.@this.Resolve("/" + rel, context), context)!;
-        foreach (var goal in new[] { root }.Concat(root.Child))
+        foreach (var goal in new[] { root }.Concat(root.Child.Items()))
         {
             var recorded = System.IO.Path.Combine(RepoRoot(), "tools", "decider", "out", "bootstrap", "os", rel, goal.Name + ".json");
             var answers = System.Text.Json.JsonDocument.Parse(await System.IO.File.ReadAllTextAsync(recorded)).RootElement;

@@ -65,7 +65,7 @@ public class SnapshotResumeTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         SetStep(goal, 0, "s0", "first");
         var step1 = SetStep(goal, 1, "s1", "second");
-        app.Goal.Add(goal);
+        app.goal.list.Add(goal);
 
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
         await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))

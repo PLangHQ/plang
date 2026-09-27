@@ -70,7 +70,7 @@ public class ErrorInPlayTests
         // The .pr load applies the template seam; without it a %var% parameter never resolves.
         foreach (var a in actions) { TemplateStamp.Apply(a); a.Step = step; step.Code.Add(a); }
         goal.Step.Add(step);
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
         return goal;
     }
 

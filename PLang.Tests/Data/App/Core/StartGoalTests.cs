@@ -29,7 +29,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "newVarName", "variable"), Make.Param("Value", "%name%", "variable"))),
             Make.Step("write out \"NewVar: %newVarName%\"",
                 Make.Action("output", "write", Make.Template("Data", "NewVar: %newVarName%")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -61,7 +61,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "myVar", "variable"), ("Value", "Hello"))),
             Make.Step("set result = %myVar%",
                 Make.Action("variable", "set", Make.Param("Name", "result", "variable"), Make.Param("Value", "%myVar%", "variable")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -83,7 +83,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "user", "variable"), ("Value", "World"))),
             Make.Step("write Hello %user%!",
                 Make.Action("output", "write", Make.Template("Data", "Hello %user%!")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -103,7 +103,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write literal",
                 Make.Action("output", "write", ("Data", "no variables here")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -126,7 +126,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write with unknown var",
                 Make.Action("output", "write", Make.Template("Data", "Value: %unknown%")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -146,7 +146,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set result = %nonexistent%",
                 Make.Action("variable", "set", Make.Param("Name", "result", "variable"), Make.Param("Value", "%nonexistent%", "variable")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -171,7 +171,7 @@ public class StartGoalTests
                 Make.WithDefaults(
                     Make.Action("variable", "set", Make.Param("Name", "greeting", "variable"), ("Value", "hello")),
                     ("Type", new global::app.type.@this("text"))))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -197,7 +197,7 @@ public class StartGoalTests
                         Make.Param("Name", "count", "variable"), ("Value", 42),
                         ("Type", new global::app.type.@this("number", "long"))),
                     ("Type", new global::app.type.@this("text"))))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -217,7 +217,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set x = y",
                 Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "y")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);

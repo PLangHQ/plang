@@ -170,10 +170,10 @@ public class EventHandlerTests
         var context = _app.User.Context;
 
         // Register the callback goal (empty — just needs to be found)
-        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = global::app.type.item.path.@this.Resolve("/OnBeforeCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "OnBeforeCallback", Path = global::app.type.item.path.@this.Resolve("/OnBeforeCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Register the target goal to run
-        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = global::app.type.item.path.@this.Resolve("/TargetGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "TargetGoal", Path = global::app.type.item.path.@this.Resolve("/TargetGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Set a marker so we can detect the callback ran
         // The held call has no arguments, so verify via a different mechanism:
@@ -204,8 +204,8 @@ public class EventHandlerTests
 
         // The callback goal — when it runs, app.Start injects its parameters
         // We give it a parameter so we can verify it was called
-        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = global::app.type.item.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "MainGoal", Path = global::app.type.item.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "AfterCallback", Path = global::app.type.item.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "MainGoal", Path = global::app.type.item.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Register AfterGoal event with a held goal.call that passes an argument
         var onAction = new On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
@@ -231,8 +231,8 @@ public class EventHandlerTests
     public async Task On_BeforeGoal_CallbackSees_TheGoal()
     {
         var context = _app.User.Context;
-        _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "Target", Path = global::app.type.item.path.@this.Resolve("/Target.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "Target", Path = global::app.type.item.path.@this.Resolve("/Target.goal", global::PLang.Tests.TestApp.SharedContext) });
         await (await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "Watch", goalPattern: "Target").Start()).IsSuccess();
 
         await Make.Call("Target").Start(context);
@@ -248,7 +248,7 @@ public class EventHandlerTests
     public async Task On_BeforeStep_CallbackSees_ThatStep_AndItsGoal()
     {
         var context = _app.User.Context;
-        _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
         await (await MakeOn(context, global::app.@event.Trigger.BeforeStep, "Watch", stepPattern: "*").Start()).IsSuccess();
 
         var goal = new Goal { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", global::PLang.Tests.TestApp.SharedContext) };
@@ -265,7 +265,7 @@ public class EventHandlerTests
     public async Task On_AfterAction_CallbackSees_TheResult_AndReachesTheGoal()
     {
         var context = _app.User.Context;
-        _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
         await (await MakeOn(context, global::app.@event.Trigger.AfterAction, "Watch", actionPattern: "variable.set").Start()).IsSuccess();
 
         var goal = new Goal { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", global::PLang.Tests.TestApp.SharedContext) };

@@ -35,7 +35,7 @@ public class ConditionIfBranchIndexTests
     {
         var goal = await RealGoalLoad.ViaChannel(_app,
             Make.Goal("CondGoal", Make.Step("if test", ifAction)));
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
@@ -94,7 +94,7 @@ public class ConditionIfBranchIndexTests
 
         var goal = await RealGoalLoad.ViaChannel(_app,
             Make.Goal("Multi", Make.Step("multi", actions.ToArray())));
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         Data? captured = null;
         // Capture the orchestrating if's AfterAction (it emits the final branchIndex

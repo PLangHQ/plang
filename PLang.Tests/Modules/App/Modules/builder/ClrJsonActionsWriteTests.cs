@@ -36,7 +36,7 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
             PrPath = global::app.type.item.path.@this.Resolve("/G.pr", context),
         };
         goal.Step.Add(new Step { Goal = goal, Index = 0, Text = "do stuff" });
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
         // goal flows as clr<goal> now (a host); the builder holds it that way, so %goal%
         // navigates/writes through the clr carrier's reflection kind.
         await context.Variable.Set("goal", goal);

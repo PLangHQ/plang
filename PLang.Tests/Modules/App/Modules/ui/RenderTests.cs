@@ -226,7 +226,7 @@ public class RenderTests : IDisposable
                     index: 0, text: "set greeting")
             }
         };
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         var context = _app.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Result: {% callGoal 'Greeter' %}",
@@ -445,7 +445,7 @@ public class RenderTests : IDisposable
     {
         // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         var context = _app.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before{% callGoal 'EmptyGoal' %}After",
@@ -465,7 +465,7 @@ public class RenderTests : IDisposable
     {
         // callGoal can use a Liquid variable for the goal name
         var goal = new Goal { Name = "DynamicGoal", Path = global::app.type.item.path.@this.Resolve("/DynamicGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         var context = _app.User.Context;
         context.Variable.Set(new Data("goalName", "DynamicGoal", context: context));
@@ -498,7 +498,7 @@ public class RenderTests : IDisposable
                     index: 1, text: "return num")
             }
         };
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
 
         var context = _app.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Number: {% callGoal 'GetNumber' %}",
@@ -630,7 +630,7 @@ public class RenderTests : IDisposable
             Name = "SubGoal",
             Path = global::app.type.item.path.@this.Resolve("/goals/SubGoal.goal", context)
         };
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
         context.Goal = goal;
         // The include should resolve relative to the goal's directory (goals/)
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'templates/footer.html' %}",

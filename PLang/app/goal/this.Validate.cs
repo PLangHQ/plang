@@ -11,7 +11,7 @@ public sealed partial class @this
         var causes = new System.Collections.Generic.List<global::app.error.Error>();
         for (int i = 0; i < Step.Count; i++)
             if (await Step[i].Validate(context) is { } invalid) causes.Add(invalid);
-        foreach (var child in Child)
+        foreach (var child in Child.Items())
             if (await child.Validate(context) is { } invalid) causes.Add(invalid);
 
         if (causes.Count == 0) return null;

@@ -4,517 +4,281 @@ using app.type.item.path;
 
 namespace PLang.Tests.App.Core;
 
+// The goals: app.goal is the type over the goals read so far (goal.list, a list<goal>). A goal is picked
+// by its address through the type; a call's name is found by the list, from where it is called.
 public class GoalsTests
 {
+    private static global::app.goal.list.@this Goals() => new(global::PLang.Tests.TestApp.SharedContext.App);
+
+    private static Goal Named(string name, string path, bool setup = false, string? comment = null)
+        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext), IsSetup = setup, Comment = comment };
+
+    private static string TempApp()
+    {
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, ".build"));
+        return dir;
+    }
+
+    // ---- the list ----
+
     [Test]
     public async Task Constructor_StartsEmpty()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-
-        await Assert.That(goals.Count).IsEqualTo(0);
+        await Assert.That(Goals().CountRaw).IsEqualTo(0);
     }
 
     [Test]
-    public async Task Add_AddsGoal()
+    public async Task Add_HoldsTheGoal()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goals = Goals();
+        var goal = Named("TestGoal", "/TestGoal.goal");
 
         goals.Add(goal);
 
-        await Assert.That(goals.Count).IsEqualTo(1);
+        await Assert.That(goals.Items().Single()).IsEqualTo(goal);
     }
 
     [Test]
-    public async Task Add_RegistersByName()
+    public async Task Add_SamePrPath_ReplacesGoal()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goals = Goals();
+        goals.Add(Named("Start", "/Start.goal", comment: "First"));
+        goals.Add(Named("Start", "/Start.goal", comment: "Second"));
 
-        goals.Add(goal);
-
-        await Assert.That(goals.Get("TestGoal")).IsEqualTo(goal);
+        await Assert.That(goals.CountRaw).IsEqualTo(1);
+        await Assert.That((await goals.Find("Start"))!.Comment).IsEqualTo("Second");
     }
 
     [Test]
-    public async Task Add_RegistersByPath()
+    public async Task Add_KeysByPrPath_SameNameInTwoFiles_BothHeld()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/goals/test.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goals = Goals();
+        goals.Add(Named("Setup", "/Setup.goal", setup: true));
+        goals.Add(Named("Setup", "/Setup/Setup.goal", setup: true));
 
-        goals.Add(goal);
-
-        await Assert.That(goals.Get("/goals/test.goal")).IsEqualTo(goal);
+        await Assert.That(goals.Setup.Goals.Count()).IsEqualTo(2);
     }
 
     [Test]
-    public async Task Get_ByName_ReturnsGoal()
+    public async Task Add_ThrowsWhenNoPrPath()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        var result = goals.Get("TestGoal");
-
-        await Assert.That(result).IsEqualTo(goal);
+        await Assert.That(() => Goals().Add(new Goal { Name = "TestGoal" })).ThrowsException();
     }
 
     [Test]
-    public async Task Get_CaseInsensitive()
+    public async Task Add_ThrowsWhenPathIsEmptyString()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        await Assert.That(goals.Get("testgoal")).IsEqualTo(goal);
-        await Assert.That(goals.Get("TESTGOAL")).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task Get_EmptyOrNull_ReturnsNull()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-
-        await Assert.That(goals.Get(null!)).IsNull();
-        await Assert.That(goals.Get("")).IsNull();
-    }
-
-    [Test]
-    public async Task Get_NonexistentName_ReturnsNull()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-
-        var result = goals.Get("NonexistentGoal");
-
-        await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task Get_TriesVariations_WithGoalExtension()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal.goal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        var result = goals.Get("TestGoal");
-
-        await Assert.That(result).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task Get_TriesVariations_WithLeadingSlash()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "/goals/test", Path = global::app.type.item.path.@this.Resolve("/goals/test", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        var result = goals.Get("/goals/test");
-
-        await Assert.That(result).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task Get_TriesVariations_SlashConversion()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "goals/test", Path = global::app.type.item.path.@this.Resolve("/goals/test.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        var result = goals.Get("goals\\test");
-
-        await Assert.That(result).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task Indexer_ReturnsGoal()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        var result = goals["TestGoal"];
-
-        await Assert.That(result).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task Indexer_NonexistentName_ThrowsKeyNotFound()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-
-        await Assert.That(() => { _ = goals["NonexistentGoal"]; return Task.CompletedTask; })
-            .Throws<KeyNotFoundException>();
-    }
-
-    [Test]
-    public async Task Contains_ExistingGoal_ReturnsTrue()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
-
-        await Assert.That(goals.Contains("TestGoal")).IsTrue();
-    }
-
-    [Test]
-    public async Task Contains_NonexistentGoal_ReturnsFalse()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-
-        await Assert.That(goals.Contains("NonexistentGoal")).IsFalse();
-    }
-
-    [Test]
-    public async Task Remove_RemovesGoal()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
-
-        var removed = goals.Remove("TestGoal");
-
-        await Assert.That(removed).IsTrue();
-        await Assert.That(goals.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task Remove_RemovesPathLookups()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
-
-        goals.Remove("TestGoal");
-
-        await Assert.That(goals.Get("/TestGoal.goal")).IsNull();
-    }
-
-    [Test]
-    public async Task Remove_NonexistentGoal_ReturnsFalse()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-
-        var removed = goals.Remove("NonexistentGoal");
-
-        await Assert.That(removed).IsFalse();
-    }
-
-    [Test]
-    public async Task Clear_RemovesAllGoals()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
-
-        goals.Clear();
-
-        await Assert.That(goals.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task Names_ReturnsAllNames()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
-
-        var names = goals.Names.ToList();
-
-        await Assert.That(names).Contains("Goal1");
-        await Assert.That(names).Contains("Goal2");
-    }
-
-    [Test]
-    public async Task All_ReturnsAllGoals()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var goal2 = new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal1);
-        goals.Add(goal2);
-
-        var all = goals.All.ToList();
-
-        await Assert.That(all).Contains(goal1);
-        await Assert.That(all).Contains(goal2);
-    }
-
-    [Test]
-    public async Task Public_ReturnsOnlyPublicGoals()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "PublicGoal", Path = global::app.type.item.path.@this.Resolve("/PublicGoal.goal", global::PLang.Tests.TestApp.SharedContext), Visibility = Visibility.Public });
-        goals.Add(new Goal { Name = "PrivateGoal", Path = global::app.type.item.path.@this.Resolve("/PrivateGoal.goal", global::PLang.Tests.TestApp.SharedContext), Visibility = Visibility.Private });
-
-        var publicGoals = goals.Public.ToList();
-
-        await Assert.That(publicGoals.Count).IsEqualTo(1);
-        await Assert.That(publicGoals[0].Name).IsEqualTo("PublicGoal");
+        await Assert.That(() => Goals().Add(Named("TestGoal", ""))).ThrowsException();
     }
 
     [Test]
     public async Task Setup_ReturnsOnlySetupGoals()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "SetupGoal", Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = true });
-        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = false });
+        var goals = Goals();
+        goals.Add(Named("SetupGoal", "/SetupGoal.goal", setup: true));
+        goals.Add(Named("NormalGoal", "/NormalGoal.goal"));
 
-        var setupGoals = goals.Setup.Goals.ToList();
+        await Assert.That(goals.Setup.Goals.Select(g => g.Name).ToList()).IsEquivalentTo(new[] { "SetupGoal" });
+    }
 
-        await Assert.That(setupGoals.Count).IsEqualTo(1);
-        await Assert.That(setupGoals[0].Name).IsEqualTo("SetupGoal");
+    // ---- Find: the goal a call names ----
+
+    [Test]
+    public async Task Find_ByName_AnyCase()
+    {
+        var goals = Goals();
+        var goal = Named("TestGoal", "/TestGoal.goal");
+        goals.Add(goal);
+
+        await Assert.That(await goals.Find("TestGoal")).IsEqualTo(goal);
+        await Assert.That(await goals.Find("testgoal")).IsEqualTo(goal);
     }
 
     [Test]
-    public async Task Events_ReturnsOnlyEventGoals()
+    public async Task Find_EmptyOrUnknown_IsNull()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "EventGoal", Path = global::app.type.item.path.@this.Resolve("/EventGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsEvent = true });
-        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsEvent = false });
+        var goals = Goals();
 
-        var eventGoals = goals.Events.ToList();
-
-        await Assert.That(eventGoals.Count).IsEqualTo(1);
-        await Assert.That(eventGoals[0].Name).IsEqualTo("EventGoal");
+        await Assert.That(await goals.Find("")).IsNull();
+        await Assert.That(await goals.Find("NoSuchGoalAnywhere")).IsNull();
     }
 
     [Test]
-    public async Task Add_SamePathTwice_ReplacesGoal()
+    public async Task Find_ByPath_InTheFormsACallWrites()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "First" };
-        var goal2 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "Second" };
-        goals.Add(goal1);
+        var goals = Goals();
+        var goal = Named("test", "/goals/test.goal");
+        goals.Add(goal);
 
-        goals.Add(goal2);
-
-        await Assert.That(goals.Count).IsEqualTo(1);
-        await Assert.That((goals.Get("TestGoal"))!.Comment).IsEqualTo("Second");
+        await Assert.That(await goals.Find("/goals/test.goal")).IsEqualTo(goal);
+        await Assert.That(await goals.Find("goals/test")).IsEqualTo(goal);
+        await Assert.That(await goals.Find("goals\\test")).IsEqualTo(goal);
     }
 
     [Test]
-    public async Task Count_ReturnsCorrectCount()
+    public async Task Find_NeverASetupGoal()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal3", Path = global::app.type.item.path.@this.Resolve("/Goal3.goal", global::PLang.Tests.TestApp.SharedContext) });
+        var goals = Goals();
+        goals.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
+        goals.Add(Named("NormalGoal", "/NormalGoal.goal"));
 
-        await Assert.That(goals.Count).IsEqualTo(3);
+        await Assert.That(await goals.Find("SetupDb")).IsNull();
+        await Assert.That(await goals.Find("NormalGoal")).IsNotNull();
     }
 
     [Test]
-    public async Task Get_ExcludesSetupGoals()
+    public async Task Find_SameNameInTwoFolders_TheLastRead()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "SetupDb", Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = true });
-        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = false });
+        var goals = Goals();
+        goals.Add(Named("Helper", "/a/Helper.goal"));
+        var later = Named("Helper", "/b/Helper.goal");
+        goals.Add(later);
 
-        await Assert.That(goals.Get("SetupDb")).IsNull();
-        await Assert.That(goals.Get("NormalGoal")).IsNotNull();
+        await Assert.That(await goals.Find("Helper")).IsEqualTo(later);
+        await Assert.That((await goals.Find("a/Helper"))!.Path!.ToString()).IsEqualTo("/a/Helper.goal");
     }
 
     [Test]
-    public async Task GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk()
+    public async Task Find_ReadsAGoalFromDisk_NeverASetupGoal()
     {
-        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
-        System.IO.Directory.CreateDirectory(tempDir);
+        var dir = TempApp();
         try
         {
-            await using var engine = global::PLang.Tests.TestApp.Create(tempDir);
+            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "normalgoal.pr"),
+                """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "setupdb.pr"),
+                """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
 
-            var buildDir = System.IO.Path.Combine(tempDir, ".build");
-            System.IO.Directory.CreateDirectory(buildDir);
-            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
-            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""";
-            System.IO.File.WriteAllText(prPath, json);
-
-            var result = await engine.Goal.GetAsync("SetupDb");
-
-            await Assert.That(result).IsNull();
+            await Assert.That((await engine.goal.list.Find("NormalGoal"))!.Name).IsEqualTo("NormalGoal");
+            await Assert.That(await engine.goal.list.Find("SetupDb")).IsNull();
         }
-        finally
-        {
-            System.IO.Directory.Delete(tempDir, true);
-        }
+        finally { System.IO.Directory.Delete(dir, true); }
     }
 
-    [Test]
-    public async Task GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk()
-    {
-        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
-        System.IO.Directory.CreateDirectory(tempDir);
-        try
-        {
-            await using var engine = global::PLang.Tests.TestApp.Create(tempDir);
-
-            var buildDir = System.IO.Path.Combine(tempDir, ".build");
-            System.IO.Directory.CreateDirectory(buildDir);
-            var prPath = System.IO.Path.Combine(buildDir, "normalgoal.pr");
-            var json = """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""";
-            System.IO.File.WriteAllText(prPath, json);
-
-            var result = await engine.Goal.GetAsync("NormalGoal");
-
-            await Assert.That(result).IsNotNull();
-            await Assert.That(result!.Name).IsEqualTo("NormalGoal");
-        }
-        finally
-        {
-            System.IO.Directory.Delete(tempDir, true);
-        }
-    }
+    // ---- Load ----
 
     [Test]
     public async Task Load_RefusesASetupGoal()
     {
-        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
-        System.IO.Directory.CreateDirectory(tempDir);
+        var dir = TempApp();
         try
         {
-            await using var engine = global::PLang.Tests.TestApp.Create(tempDir);
+            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            var pr = System.IO.Path.Combine(dir, ".build", "setupdb.pr");
+            System.IO.File.WriteAllText(pr, """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
 
-            var buildDir = System.IO.Path.Combine(tempDir, ".build");
-            System.IO.Directory.CreateDirectory(buildDir);
-            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
-            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""";
-            System.IO.File.WriteAllText(prPath, json);
-
-            var result = await engine.Goal.Load(prPath);
+            var result = await engine.goal.list.Load(pr);
 
             await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
         }
-        finally
-        {
-            System.IO.Directory.Delete(tempDir, true);
-        }
+        finally { System.IO.Directory.Delete(dir, true); }
     }
 
     [Test]
-    public async Task Load_RefusesACachedSetupGoal()
+    public async Task Load_RefusesAHeldSetupGoal()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(setupGoal);
+        var goals = Goals();
+        goals.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
 
         var result = await goals.Load("/.build/setupdb.pr");
 
         await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
     }
 
-    // --- PrPath keying tests ---
-    // PrPath is computed from Path: "/Foo.goal" -> "/.build/foo.pr"
+    // ---- one goal: parent, address, visibility ----
 
     [Test]
-    public async Task Add_KeysByPrPath_PreventsSameNameCollision()
+    public async Task SubGoal_KnowsItsParent_ItsAddressAndItsVisibility()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var goal2 = new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup/Setup.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var context = global::PLang.Tests.TestApp.SharedContext;
+        var path = global::app.type.item.path.@this.Resolve("/Start.goal", context);
+        var start = Goal.Parse("Start\n- write out 'a'\n\nShow\n- write out 'b'\n", path, context)!;
 
-        goals.Add(goal1);
-        goals.Add(goal2);
+        var show = start.Child.Items().Single();
 
-        var setupGoals = goals.Setup.Goals.ToList();
-        await Assert.That(setupGoals.Count).IsEqualTo(2);
+        await Assert.That(show.Parent).IsEqualTo(start);
+        await Assert.That(start.Address).IsEqualTo("/Start");
+        await Assert.That(show.Address).IsEqualTo("/Start#Show");
+        await Assert.That(Equals(start.Visibility.Value, Visibility.Public)).IsTrue();
+        await Assert.That(Equals(show.Visibility.Value, Visibility.Private)).IsTrue();
     }
 
     [Test]
-    public async Task Get_FindsGoalKeyedByPrPath()
+    public async Task Match_TheGoalOrOneOfItsSubGoals_ByAddress()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
+        var context = global::PLang.Tests.TestApp.SharedContext;
+        var start = Goal.Parse("Start\n- write out 'a'\n\nShow\n- write out 'b'\n",
+            global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
 
-        var found = goals.Get("Start");
+        await Assert.That(await start.Match("/start")).IsEqualTo(start);
+        await Assert.That((await start.Match("/start#show"))!.Name).IsEqualTo("Show");
+        await Assert.That(await start.Match("/other")).IsNull();
+    }
 
-        await Assert.That(found).IsNotNull();
-        await Assert.That(found!.Name).IsEqualTo("Start");
+    // ---- the type: Get by address, all ----
+
+    [Test]
+    public async Task TypeGet_ByAddress_AHeldGoal_WithoutReading()
+    {
+        var dir = TempApp();
+        try
+        {
+            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            var goal = Named("Helper", "/a/Helper.goal");
+            engine.goal.list.Add(goal);
+
+            var found = await engine.goal.Get("/a/helper");
+
+            await found.IsSuccess();
+            await Assert.That(await found.Value()).IsEqualTo(goal);
+            await Assert.That((await engine.goal.Get("/no/such")).Error!.Key).IsEqualTo("NotFound");
+        }
+        finally { System.IO.Directory.Delete(dir, true); }
     }
 
     [Test]
-    public async Task Get_FindsCorrectGoal_WhenMultipleSameNameDifferentPrPath()
+    public async Task All_ListsTheAppsPrFiles_PublicByDefault_PrivateWhenAsked()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "Helper", Path = global::app.type.item.path.@this.Resolve("/a/Helper.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var goal2 = new Goal { Name = "Helper", Path = global::app.type.item.path.@this.Resolve("/b/Helper.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal1);
-        goals.Add(goal2);
+        var dir = TempApp();
+        try
+        {
+            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "start.pr"),
+                """{"name":"Start","path":"/Start.goal","step":[],"child":[{"name":"Show","path":"/Start.goal","step":[]}]}""");
+            var context = engine.User.Context;
 
-        var found = goals.Get("Helper");
+            var appOnly = new global::app.type.item.dict.@this();
+            appOnly.Set("os", false);
+            var every = await engine.goal.list.all(appOnly);
+            await Assert.That(((global::app.type.item.list.@this<Goal>)every).Items().Select(g => g.Name).ToList())
+                .IsEquivalentTo(new[] { "Start" });
 
-        await Assert.That(found).IsNotNull();
-        await Assert.That(found!.Name).IsEqualTo("Helper");
+            var both = new global::app.type.item.dict.@this();
+            both.Set("os", false);
+            both.Set("visibility", new global::app.type.item.list.@this(new global::app.type.item.@this[]
+                { new global::app.type.item.text.@this("public"), new global::app.type.item.text.@this("private") }));
+            var all = await engine.goal.list.all(both);
+            await Assert.That(((global::app.type.item.list.@this<Goal>)all).Items().Select(g => g.Name).ToList())
+                .IsEquivalentTo(new[] { "Start", "Show" });
+
+            // the default lists the system's too (none beside a test binary) and the app's
+            var byDefault = (global::app.type.item.list.@this<Goal>)await engine.goal.list.all();
+            await Assert.That(byDefault.Items().Any(g => g.Name == "Start")).IsTrue();
+        }
+        finally { System.IO.Directory.Delete(dir, true); }
     }
 
     [Test]
-    public async Task Remove_ByName_WorksWhenKeyedByPrPath()
+    public async Task AllWord_OnAList_IsEveryItem_EvenOnAnEmptyList()
     {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
+        var context = global::PLang.Tests.TestApp.SharedContext;
+        var empty = new global::app.data.@this("l", new global::app.type.item.list.@this(), context: context);
 
-        var removed = goals.Remove("TestGoal");
+        var all = await empty.Get("all");
 
-        await Assert.That(removed).IsTrue();
-        await Assert.That(goals.Get("TestGoal")).IsNull();
-        await Assert.That(goals.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task Remove_ByName_ClearsPathIndex()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goals.Add(goal);
-
-        goals.Remove("TestGoal");
-
-        await Assert.That(goals.Get("/TestGoal.goal")).IsNull();
-    }
-
-    [Test]
-    public async Task Add_SamePrPath_ReplacesGoal()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal1 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "First" };
-        var goal2 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Comment = "Second" };
-
-        goals.Add(goal1);
-        goals.Add(goal2);
-
-        await Assert.That(goals.Count).IsEqualTo(1);
-        await Assert.That((goals.Get("Start"))!.Comment).IsEqualTo("Second");
-    }
-
-    [Test]
-    public async Task Add_ThrowsWhenNoPrPath()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal" };
-
-        await Assert.That(() => goals.Add(goal)).ThrowsException();
-    }
-
-    [Test]
-    public async Task Add_ThrowsWhenPathIsEmptyString()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("", global::PLang.Tests.TestApp.SharedContext) };
-
-        await Assert.That(() => goals.Add(goal)).ThrowsException();
-    }
-
-    [Test]
-    public async Task Names_ExcludesSetupGoals()
-    {
-        var goals = new global::app.goal.list.@this(global::PLang.Tests.TestApp.SharedContext.App);
-        goals.Add(new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
-
-        var names = goals.Names.ToList();
-
-        await Assert.That(names.Count).IsEqualTo(1);
-        await Assert.That(names[0]).IsEqualTo("NormalGoal");
+        await Assert.That(all.IsInitialized).IsTrue();
+        await Assert.That(all.Peek()).IsTypeOf<global::app.type.item.list.@this>();
     }
 }

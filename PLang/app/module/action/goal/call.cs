@@ -77,14 +77,14 @@ public partial class Call : IContext
     {
         if (Name.HasVariable) return null;
         var authored = (await Name.Value())?.RawText;
-        return string.IsNullOrEmpty(authored) ? null : await Context.App.Goal.GetAsync(authored, __action?.Step?.Goal);
+        return string.IsNullOrEmpty(authored) ? null : await Context.App.goal.list.Find(authored, __action?.Step?.Goal);
     }
 
     public async Task<data.@this> Start()
     {
         // The goal is selected through the goal collection as seen from the goal this call sits in.
         // A %variable% name resolves here, in the caller's context.
-        var goal = await Context.App.Goal.GetAsync((await Name.Value())?.RawText ?? "", __action?.Step?.Goal);
+        var goal = await Context.App.goal.list.Find((await Name.Value())?.RawText ?? "", __action?.Step?.Goal);
         if (goal == null)
             return Context.Error(new global::app.error.ActionError($"Goal '{Name.Peek()}' not found.", "GoalNotFound", 404));
 

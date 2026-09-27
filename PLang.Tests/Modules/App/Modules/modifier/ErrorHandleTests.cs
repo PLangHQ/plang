@@ -355,7 +355,7 @@ public class ErrorHandleTests
         step.Code.Add(prAction);
         var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Step.Add(step);
-        _app.Goal.Add(goal);
+        _app.goal.list.Add(goal);
         return goal;
     }
 

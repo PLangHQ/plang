@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using app.actor.context;
 using app.error;
 using Error = app.error.Error;
@@ -6,143 +5,70 @@ using Error = app.error.Error;
 namespace app.goal.list;
 
 /// <summary>
-/// Collection of goals for an application.
-/// Provides lookup and caching functionality.
+/// The app's goals — the goals read so far, one per <c>.pr</c>. Its own work: reading a <c>.pr</c>
+/// (<see cref="Load"/>), the goal a call names from where it is called (<see cref="Find"/>), every goal
+/// of the app and of <c>/system/</c> (<see cref="Every"/>, reading each <c>.pr</c> as it is reached), and
+/// setup. One goal is picked by its address through the type: <c>app.goal.Get("/system/error/show")</c>.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.item.list.@this<goal.@this>
 {
-    // Path-keyed dicts. Path's own Equals/GetHashCode uses RootComparison
-    // (OrdinalIgnoreCase on Windows, Ordinal on Linux) — no separate
-    // StringComparer needed; the canonical-form keying lives on Path itself.
-    private readonly ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _goals = new();
-    private readonly ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _byPath = new();
-    // Separate by-name index for fuzzy `Get("Name")` — name lookups are
-    // a different question from Path equality and want OrdinalIgnoreCase
-    // semantics regardless of OS.
-    private readonly ConcurrentDictionary<string, goal.@this> _byName = new(StringComparer.OrdinalIgnoreCase);
     internal app.@this App { get; }
 
     /// <summary>
     /// Run-once setup execution system.
-    /// Replaces the old IEnumerable&lt;Goal&gt; filter with a proper object.
     /// </summary>
     public setup.@this Setup { get; }
 
+    // The .pr files every goal comes from, in plang form, the app's before the system's — listed once,
+    // again after a goal is added (a build writes a .pr, then adds its goal).
+    private IReadOnlyList<global::app.type.item.path.@this>? _app, _system;
+
     /// <summary>The goals of <paramref name="app"/> — the list is born knowing the App it loads for.</summary>
-    public @this(app.@this app)
+    public @this(app.@this app) : base(new List<object?>())
     {
         App = app;
         Setup = new setup.@this(this);
     }
 
+    protected override global::app.type.item.list.@this Empty() => new @this(App);
+
     /// <summary>
-    /// Adds a goal to the collection.
+    /// Adds a goal read from its <c>.pr</c>; the goal held from the same <c>.pr</c> gives way.
     /// </summary>
     public void Add(goal.@this goal)
     {
-        // Templates are honored on READ from the type's explicit `template` flag (the build
-        // stamps it on an authored %ref% value) — not stamped eagerly here, never inferred
-        // from content. See app.type.@this.Template + data.reader.
         if (goal.PrPath == null)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
-        _goals[goal.PrPath] = goal;
-        if (goal.Path != null)
-            _byPath[goal.Path] = goal;
-        // _byName is intentionally a *fuzzy* last-write-wins index:
-        // sub-goals at different paths can legitimately share a Name (e.g.
-        // setup goals in /Setup.goal AND /Setup/Setup.goal), and Get() falls
-        // back to a by-form scan over _byPath when the exact name lookup
-        // misses or returns the "wrong" same-name goal. Exact lookup via
-        // _goals (PrPath-keyed) and _byPath (Path-keyed) stay collision-free.
-        // Don't throw on name collision here — the by-form scan is the
-        // disambiguator, and throwing would break legitimate same-name use.
-        if (!string.IsNullOrEmpty(goal.Name))
-            _byName[goal.Name] = goal;
+        for (int i = 0; i < CountRaw; i++)
+            if (Equals(this[i].PrPath, goal.PrPath)) { RemoveAt(i); break; }
+        base.Add((global::app.type.item.@this)goal);
+        _app = _system = null;
     }
 
     /// <summary>
-    /// Gets a goal by name from cache only.
-    /// Setup goals are excluded — they are only reachable through Setup.Start().
+    /// The goal a call names, as seen from the goal it is called FROM. The caller's own chain answers
+    /// first — the caller itself, one of its children, then each ancestor and ITS children — so a child
+    /// goal in the same file cannot be shadowed. Then the goals already read. Not read yet → the .pr
+    /// loads: from the caller's folder (a slash-qualified name also walks the caller's ancestor folders
+    /// — it may live in a sibling's), then the app root with its /system fallback. An app-absolute name
+    /// (<c>/system/builder/X</c>) skips the caller's folders. Null when no goal answers to the name.
     /// </summary>
-    public goal.@this? Get(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return null;
-
-        // Normalize: strip .goal extension
-        if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
-            name = name[..^5];
-
-        if (_byName.TryGetValue(name, out var goal) && !goal.IsSetup)
-            return goal;
-
-        // Path-form lookup — caller passed a path string (.goal or .pr).
-        // Scan _goals.Values (PrPath-keyed) and _byPath.Values (Path-keyed) by
-        // their canonical Relative form. Path-keyed dicts can't be queried by
-        // raw string, but the candidate set is small.
-        var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
-        bool MatchesByForm(string canonical) =>
-            canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
-            || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
-            || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
-            || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase);
-        foreach (var kv in _byPath)
-        {
-            if (kv.Value.IsSetup) continue;
-            if (MatchesByForm(kv.Key.ToString().Replace('\\', '/')))
-                return kv.Value;
-        }
-        // PrPath form (`.build/foo.pr`) used by callstack.Restore — match the
-        // _goals dict by canonical Relative.
-        foreach (var kv in _goals)
-        {
-            if (kv.Value.IsSetup) continue;
-            var canonical = kv.Key.ToString().Replace('\\', '/');
-            if (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase))
-                return kv.Value;
-        }
-
-        // Slash-qualified — the folder is part of the name: only a goal whose path ends with that
-        // folder and name answers (BuildGoal/Start is Start in a BuildGoal folder, never any Start).
-        if (name.Contains('/') || name.Contains('\\'))
-        {
-            var qualified = "/" + name.TrimStart('/', '\\').Replace('\\', '/');
-            var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
-            if (_byName.TryGetValue(leafName, out goal) && !goal.IsSetup
-                && goal.Address?.Replace('\\', '/') is { } address
-                && address.EndsWith(qualified, StringComparison.OrdinalIgnoreCase))
-                return goal;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Selects the goal a call names, as seen from the goal it is called FROM. The caller's own
-    /// chain answers first — the caller itself, one of its children, then each ancestor and ITS
-    /// children — so a child goal in the same file cannot be shadowed. Then the cache. Not cached →
-    /// the .pr loads: from the caller's folder (a slash-qualified name also walks the caller's
-    /// ancestor folders — it may live in a sibling's), then the app root with its /system fallback.
-    /// An app-absolute name (<c>/system/builder/X</c>) skips the caller's folders. Null when no goal
-    /// answers to the name.
-    /// </summary>
-    public async Task<goal.@this?> GetAsync(string name, goal.@this? caller = null, CancellationToken cancellationToken = default)
+    public async Task<goal.@this?> Find(string name, goal.@this? caller = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(name)) return null;
 
         for (var g = caller; g != null; g = g.Parent)
         {
             if (string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) return g;
-            var child = g.Child.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+            var child = g.Child.Items().FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
             if (child != null) return child;
         }
 
-        var goal = Get(name);
+        var goal = Held(name);
         if (goal != null)
             return goal;
 
-        // Not cached — load the .pr. Pure name math, not a filesystem op.
+        // Not read yet — load the .pr. Pure name math, not a filesystem op.
         var cleanName = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name[..^5] : name;
         bool isAbsolute = cleanName.StartsWith('/') || cleanName.StartsWith('\\');
         cleanName = cleanName.TrimStart('/', '\\').Replace('\\', '/');
@@ -158,183 +84,144 @@ public sealed class @this
             for (var first = true; first || (nameDir.Length > 0 && dir.Length > 0); first = false)
             {
                 var combined = nameDir.Length == 0 ? dir : dir.Length == 0 ? nameDir : $"{dir}/{nameDir}";
-                if (await TryLoadPr(combined, file, name, cancellationToken) is { } near) return near;
+                if (await TryLoadPr(combined, file, cancellationToken) is { } near) return near;
                 var up = dir.LastIndexOf('/');
                 dir = up > 0 ? dir[..up] : "";
             }
         }
 
-        return await TryLoadPr(nameDir, file, name, cancellationToken);
+        return await TryLoadPr(nameDir, file, cancellationToken);
+    }
+
+    // The goal already read that a call's name writes: its name (the last read wins — sub-goals in
+    // different files may share one), its .goal or .pr path in any of the forms a call writes, or a
+    // slash-qualified name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
+    // A setup goal runs only through setup, never by a call.
+    private goal.@this? Held(string name)
+    {
+        if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
+        var held = Items().Where(g => !g.IsSetup).Reverse().ToList();
+
+        if (held.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
+            return named;
+
+        var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
+        bool Written(string? canonical) => canonical != null
+            && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
+        if (held.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
+                                     || Written(g.PrPath?.ToString().Replace('\\', '/'))) is { } byPath)
+            return byPath;
+
+        if (name.Contains('/') || name.Contains('\\'))
+        {
+            var qualified = "/" + leaf;
+            var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
+            return held.FirstOrDefault(g => string.Equals(g.Name, leafName, StringComparison.OrdinalIgnoreCase)
+                && g.Address?.Replace('\\', '/') is { } address
+                && address.EndsWith(qualified, StringComparison.OrdinalIgnoreCase));
+        }
+        return null;
     }
 
     /// <summary>
     /// Tries to load a .pr file from {root}/{dir}/.build/{file}.pr first,
     /// then from {OsDirectory}/system/{stripped}/.build/{file}.pr for system goals.
-    /// OsDirectory points to the os/ folder; the system tree lives at os/system.
-    /// Paths starting with system/ get the prefix stripped when resolving against
-    /// OsDirectory + "system". A user can override a specific system goal by
-    /// placing the file at {root}/system/...
+    /// A user can override a specific system goal by placing the file at {root}/system/...
     /// </summary>
-    private async Task<goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
+    private async Task<goal.@this?> TryLoadPr(string dir, string file, CancellationToken ct)
     {
         var prFile = file.ToLowerInvariant() + ".pr";
         var context = App.System.Context!;
 
-        // 1. Try user's root via path verbs (gated). Anchor at "/" (App root),
-        // append dir, then .build/<file>.pr. ExistsAsync fast-passes in-root.
+        // 1. The app root, through the path verbs (gated): "/" + dir + .build/<file>.pr.
         var rootCandidate = global::app.type.item.path.@this.Resolve("/", context);
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
-        var rootExists = await rootCandidate.ExistsAsync(context);
-        if (rootExists.Success && await rootExists.ToBooleanAsync())
-        {
-            var result = await Read(rootCandidate, cancellationToken: ct);
-            if (result.Success)
-            {
-                var goal = (await result.Value()) as global::app.goal.@this;
-                if (goal is { IsSetup: true }) return null;
-                // Load → Add() already indexed _byName[goal.Name].
-                // Writing _byName[name] again under a user-provided alias (e.g.
-                // "Foo" while goal.Name == "foo/bar") would create a stale-cache
-                // hit on future Get("Foo") after Remove(goal.Name). Skip it —
-                // the by-form scan in Get() handles alias lookups.
-                return goal;
-            }
-        }
+        if (await Readable(rootCandidate, ct) is { } found) return found;
 
-        // 2. /system/* fallback: path.Resolve already redirects /system/* to
-        // <OsDirectory>/system/* when not present under the App root, so a
-        // single Resolve covers both rings of the look-up.
+        // 2. /system/*: path.Resolve redirects /system/* to <OsDirectory>/system/* when not present under
+        // the app root, so one Resolve covers both rings of the look-up.
         var normalized = dir.Replace('\\', '/');
         if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
-        {
-            var sysCandidate = global::app.type.item.path.@this.Resolve(
-                "/" + normalized + "/.build/" + prFile, context);
-            var sysExists = await sysCandidate.ExistsAsync(context);
-            if (sysExists.Success && await sysExists.ToBooleanAsync())
-            {
-                var result = await Read(sysCandidate, cancellationToken: ct);
-                if (result.Success)
-                {
-                    var goal = (await result.Value()) as global::app.goal.@this;
-                    if (goal is { IsSetup: true }) return null;
-                    // Same reason as above: Add() did the canonical _byName write.
-                    return goal;
-                }
-            }
-        }
+            return await Readable(global::app.type.item.path.@this.Resolve("/" + normalized + "/.build/" + prFile, context), ct);
 
         return null;
     }
 
-    /// <summary>
-    /// Checks if a goal exists.
-    /// </summary>
-    public bool Contains(string name) => Get(name) != null;
-
-    // --- Stage 3 accessor surface ---
-
-    /// <summary>
-    /// Index by name or path. Throws KeyNotFoundException on miss — index-miss
-    /// is a hard error (`app.goal["nope"]` is a bug at the call site).
-    /// </summary>
-    public goal.@this this[string nameOrPath]
-        => Get(nameOrPath) ?? throw new KeyNotFoundException($"No goal named '{nameOrPath}'.");
-
-    /// <summary>
-    /// Index by path instance. Same hard-miss semantics.
-    /// </summary>
-    public goal.@this this[global::app.type.item.path.@this path]
+    // The goal the .pr at `pr` holds, when it exists and reads — a setup goal never answers a call.
+    private async Task<goal.@this?> Readable(global::app.type.item.path.@this pr, CancellationToken ct)
     {
-        get
+        var context = App.System.Context!;
+        var exists = await pr.ExistsAsync(context);
+        if (!exists.Success || !await exists.ToBooleanAsync()) return null;
+        var result = await Read(pr, cancellationToken: ct);
+        return result.Success && await result.Value() is goal.@this { IsSetup: false } goal ? goal : null;
+    }
+
+    /// <summary>
+    /// Every goal of the app — and of <c>/system/</c>, unless the setting says <c>os: false</c> — one per
+    /// <c>.pr</c>, the app's copy of a system goal winning; the private goals under each too when the
+    /// setting's <c>visibility</c> asks for them. The goals already held come first; each other <c>.pr</c>
+    /// is read when the walk reaches it (once: a goal read is held), so a walk that stops at a match reads
+    /// no further. A <c>.pr</c> that doesn't read (an older format) is left out, and said so on the debug
+    /// channel.
+    /// </summary>
+    internal override async IAsyncEnumerable<goal.@this> Every(global::app.type.item.dict.@this? setting = null)
+    {
+        var wants = new setting.@this(setting);
+        var held = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
+        foreach (var goal in held)
+            foreach (var one in wants.Of(goal)) yield return one;
+
+        var context = App.System.Context!;
+        _app ??= await Listed(global::app.type.item.path.@this.Resolve("/", context));
+        _system ??= await Listed(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + "/system", context));
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pr in wants.Os.Value ? _app.Concat(_system) : _app)
         {
-            if (_byPath.TryGetValue(path, out var byPath) && !byPath.IsSetup) return byPath;
-            if (_goals.TryGetValue(path, out var byPr) && !byPr.IsSetup) return byPr;
-            throw new KeyNotFoundException($"No goal at path '{path}'.");
+            if (!seen.Add(pr.ToString()!) || held.Any(g => Equals(g.PrPath, pr))) continue;
+            var loaded = await Load(pr);
+            if (!loaded.Success)
+            {
+                await (App.Debug?.Write($"goal.list: {pr} left out — {loaded.Error?.Message}") ?? Task.CompletedTask);
+                continue;
+            }
+            if (await loaded.Value() is not goal.@this goal || goal.IsSetup) continue;
+            foreach (var one in wants.Of(goal)) yield return one;
         }
     }
 
-    /// <summary>
-    /// Enumerate the loaded goals (excludes setup goals — matches Get's filter).
-    /// </summary>
-    public IEnumerable<goal.@this> list => _goals.Values.Where(g => !g.IsSetup);
-
-    // No app-level `current` — "the executing goal" is a per-actor/per-flow fact, not an
-    // app-collection one. Each actor owns its call tree (Actor.CallStack); PLang reads the
-    // executing goal via %!goal% (context.Goal). A single app.goal.current would have to pick
-    // an actor via CurrentActor — ambiguous under per-actor stacks — so it doesn't exist.
-
-    /// <summary>
-    /// Removes a goal.
-    /// </summary>
-    public bool Remove(string name)
+    // The .pr files under `root`'s .build folders, in plang form.
+    private async Task<IReadOnlyList<global::app.type.item.path.@this>> Listed(global::app.type.item.path.@this root)
     {
-        // Locate by name (path-keyed dict can't be queried by raw string).
-        var found = _byName.TryGetValue(name, out var byName)
-            ? byName
-            : _goals.Values.FirstOrDefault(g => g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (found == null) return false;
-        if (found.PrPath != null) _goals.TryRemove(found.PrPath, out _);
-        if (found.Path != null) _byPath.TryRemove(found.Path, out _);
-        if (!string.IsNullOrEmpty(found.Name)) _byName.TryRemove(found.Name, out _);
-        return true;
+        var context = App.System.Context!;
+        var exists = await root.ExistsAsync(context);
+        if (!exists.Success || !await exists.ToBooleanAsync()) return [];
+        var listed = await root.List("*.pr", recursive: true, context);
+        if (!listed.Success || await listed.Value() is not { } files) return [];
+        return files.Items().Where(f => f.ToString() is { } plang && plang.Replace('\\', '/') is var p
+                && p.LastIndexOf("/.build/", StringComparison.OrdinalIgnoreCase) is var at && at >= 0
+                && p.IndexOf('/', at + "/.build/".Length) < 0).ToList();
     }
-
-    /// <summary>
-    /// Clears all goals.
-    /// </summary>
-    public void Clear()
-    {
-        _goals.Clear();
-        _byPath.Clear();
-        _byName.Clear();
-    }
-
-    /// <summary>
-    /// Gets all goal names.
-    /// </summary>
-    public IEnumerable<string> Names => _goals.Values.Where(g => !g.IsSetup).Select(g => g.Name);
-
-    /// <summary>
-    /// All goals including setup and event goals. Used internally by Setup.Goals.
-    /// </summary>
-    internal IEnumerable<goal.@this> AllIncludingSetup => _goals.Values;
-
-    /// <summary>
-    /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
-    /// Stage 3 added <c>list</c> as the canonical accessor-surface enumerator;
-    /// <c>All</c> stays because <c>GoalsTests</c> and other in-test sites still
-    /// use it — same shape, kept to avoid a sweep across test fixtures.
-    /// </summary>
-    public IEnumerable<goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
-
-    /// <summary>
-    /// Gets the count of non-setup goals. Consistent with Get()/All.
-    /// </summary>
-    public int Count => _goals.Values.Count(g => !g.IsSetup);
-
-    /// <summary>
-    /// Gets public goals only.
-    /// </summary>
-    public IEnumerable<goal.@this> Public => _goals.Values.Where(g => g.Visibility.Value == goal.Visibility.Public);
-
-    /// <summary>
-    /// Gets event goals only.
-    /// </summary>
-    public IEnumerable<goal.@this> Events => _goals.Values.Where(g => g.IsEvent);
 
     /// <summary>
     /// The goal a .pr holds, by its location (<c>/system/error/.build/show.pr</c>, or absolute): the
-    /// collection resolves it with the context it reads with, answers the goal already loaded from
-    /// there, else reads the .pr and adds it. A setup goal is refused — it runs only through Setup.
+    /// collection resolves it with the context it reads with, answers the goal already read from there,
+    /// else reads the .pr and adds it. A setup goal is refused — it runs only through Setup.
     /// </summary>
     public async Task<data.@this> Load(string pr, CancellationToken cancellationToken = default)
+        => await Load(global::app.type.item.path.@this.Resolve(pr, App.System.Context), cancellationToken);
+
+    private async Task<data.@this> Load(global::app.type.item.path.@this location, CancellationToken cancellationToken = default)
     {
         var context = App.System.Context;
-        var location = global::app.type.item.path.@this.Resolve(pr, context);
-        var loaded = _goals.TryGetValue(location, out var cached)
-            ? context.Ok(cached)
+        var loaded = Items().FirstOrDefault(g => Equals(g.PrPath, location)) is { } held
+            ? context.Ok(held)
             : await Read(location, cancellationToken);
         if (loaded.Success && await loaded.Value() is global::app.goal.@this { IsSetup: true })
             return context.Error(new Error($"{location}: a setup goal runs only through setup.", "SetupGoal", 400));
@@ -348,9 +235,7 @@ public sealed class @this
     {
         try
         {
-            // The path reads itself AND parses by MIME — a .pr reads back as a goal
-            // (ReadText: Format maps .pr → the goal type, Context-bound so Path fields
-            // land wired). This collection only wires the parsed goal into the registry.
+            // The path reads itself AND parses by MIME — a .pr reads back as a goal.
             var readResult = await prPath.ReadText(App.System.Context);
             if (!readResult.Success || readResult.Peek().IsNull)
                 return App.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
@@ -362,13 +247,9 @@ public sealed class @this
             // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
             // relative file.read resolves against the goal's actual on-disk folder.
             primary.LoadedFromPrPath = prPath;
-            foreach (var child in primary.Child) child.LoadedFromPrPath = prPath;
+            foreach (var child in primary.Child.Items()) child.LoadedFromPrPath = prPath;
 
             Add(primary);
-
-            // Answer the clr<goal> shape the read produced — callers unwrap `as clr<goal>`
-            // (goal rides as its carrier). readResult already holds it materialized; the wiring
-            // above mutated `primary`, which IS its inner object, so the changes are visible.
             return readResult;
         }
         // The reader doesn't know its file; the load does — a refused .pr names itself.

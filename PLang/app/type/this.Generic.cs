@@ -41,7 +41,8 @@ public sealed class @this<T, L> : @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key)
     {
-        foreach (var p in list.Items())
+        // walked as the list reaches its items — a list that reads them (goal's) stops at the match
+        await foreach (var p in list.Every())
             if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);
         return data.@this<T>.FromError(new global::app.error.Error($"no {Name} '{key}'", "NotFound", 404));
     }

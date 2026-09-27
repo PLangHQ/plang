@@ -203,7 +203,7 @@ public partial class start : IContext
             // Goal.PrPath is derived from Goal.Path, anchored at the App root the child shares. The
             // child App loads it through its own goal collection, which resolves where it reads.
             var child = childApp.User.Context;
-            var loaded = await childApp.Goal.Load(test.Goal.PrPath!.ToString());
+            var loaded = await childApp.goal.list.Load(test.Goal.PrPath!.ToString());
             var result = loaded.Success
                 ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(child)
                 : loaded;

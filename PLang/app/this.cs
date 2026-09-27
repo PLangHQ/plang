@@ -20,7 +20,6 @@ public sealed partial class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly global::app.module.list.@this _modules;
-    private readonly global::app.goal.list.@this _goals;
     private bool _disposed;
 
     private global::app.service.list.@this? _services;
@@ -140,9 +139,11 @@ public sealed partial class @this : IAsyncDisposable
     public AppCode Code { get; }
 
     /// <summary>
-    /// The loaded goals.
+    /// The type named <c>goal</c> — <c>%!app.goal%</c>: its <c>list</c> is the goals read so far (and the
+    /// reading: every goal through <c>all()</c>, the goal a call names through <c>Find</c>),
+    /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one.
     /// </summary>
-    public global::app.goal.list.@this Goal => _goals;
+    public global::app.type.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
     /// The file system abstraction.
@@ -282,7 +283,7 @@ public sealed partial class @this : IAsyncDisposable
         _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
         _modules = new global::app.module.list.@this(this);
-        _goals = new global::app.goal.list.@this(this);
+        goal = new(this);
 
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own
@@ -491,7 +492,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         if (failed.Error is not { } error) return failed;
         var context = User.Context;
-        var loaded = await this.Goal.Load("/system/error/.build/show.pr");
+        var loaded = await goal.list.Load("/system/error/.build/show.pr");
         if (!loaded.Success || await loaded.Value() is not Goal show)
         {
             await (Debug?.Write($"error show: /system/error/Show could not load — {loaded.Error}") ?? Task.CompletedTask);
@@ -532,7 +533,7 @@ public sealed partial class @this : IAsyncDisposable
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         // The goal file is loaded through the goal collection, which registers what it loads.
-        var loaded = await this.Goal.Load(goalFile);
+        var loaded = await this.goal.list.Load(goalFile);
         if (!loaded.Success) return loaded;
 
         var goal = ((await loaded.Value()) as Goal)!;

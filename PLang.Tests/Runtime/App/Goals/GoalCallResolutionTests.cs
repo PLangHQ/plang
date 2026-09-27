@@ -66,7 +66,7 @@ public class GoalCallResolutionTests
         // /system/builder/BuildGoal/ — the walk shrinks to /system/builder, where the join hits.
         await WritePr("system/builder/BuildStep/.build/start.pr", "Start");
 
-        var goal = await _app.Goal.GetAsync("BuildStep/Start", CallerAt("/system/builder/BuildGoal/Start.goal"));
+        var goal = await _app.goal.list.Find("BuildStep/Start", CallerAt("/system/builder/BuildGoal/Start.goal"));
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -79,7 +79,7 @@ public class GoalCallResolutionTests
         // root is the tier that answers.
         await WritePr("BuildStep/.build/start.pr", "Start");
 
-        var goal = await _app.Goal.GetAsync("BuildStep/Start", CallerAt("/elsewhere/Caller.goal"));
+        var goal = await _app.goal.list.Find("BuildStep/Start", CallerAt("/elsewhere/Caller.goal"));
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -91,16 +91,16 @@ public class GoalCallResolutionTests
         // BuildGoal calls BuildGoal/Start: a Start elsewhere is not it, and neither is BuildGoal itself
         var ctx = _app.User.Context;
         var caller = new PLangGoal { Name = "BuildGoal", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal.goal", ctx) };
-        _app.Goal.Add(caller);
-        _app.Goal.Add(new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });
+        _app.goal.list.Add(caller);
+        _app.goal.list.Add(new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });
 
-        var none = await _app.Goal.GetAsync("BuildGoal/Start", caller);
+        var none = await _app.goal.list.Find("BuildGoal/Start", caller);
 
         await Assert.That(none).IsNull();
 
         var start = new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal/Start.goal", ctx) };
-        _app.Goal.Add(start);
-        await Assert.That(await _app.Goal.GetAsync("BuildGoal/Start", caller)).IsSameReferenceAs(start);
+        _app.goal.list.Add(start);
+        await Assert.That(await _app.goal.list.Find("BuildGoal/Start", caller)).IsSameReferenceAs(start);
     }
 
     [Test]
@@ -109,7 +109,7 @@ public class GoalCallResolutionTests
         // .pr at /foo/.build/other.pr — sibling of the caller in /foo/Caller.
         await WritePr("foo/.build/other.pr", "Other");
 
-        var goal = await _app.Goal.GetAsync("Other", CallerAt("/foo/Caller.goal"));
+        var goal = await _app.goal.list.Find("Other", CallerAt("/foo/Caller.goal"));
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Other");
@@ -122,7 +122,7 @@ public class GoalCallResolutionTests
         var child = new PLangGoal { Name = "Helper", Path = caller.Path, Parent = caller };
         caller.Child.Add(child);
 
-        var goal = await _app.Goal.GetAsync("Helper", caller);
+        var goal = await _app.goal.list.Find("Helper", caller);
 
         await Assert.That(goal).IsSameReferenceAs(child);
     }

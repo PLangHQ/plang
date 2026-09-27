@@ -204,7 +204,7 @@ public class SharedProgramTests
             global::PLang.Tests.Shared.Make.Action("variable", "set",
                 ("Name", Var("Name", "seen")),
                 ("Value", "%place%"))));
-        _app.Goal.Add(callee);
+        _app.goal.list.Add(callee);
         var call = await ActionFromPr("goal", "call", ("Name", "Weather"), ("Actor", "system"),
             // an argument row the programmer wrote with a %variable% is marked on its row, as the builder writes it
             ("Parameter", new List<object?> { new Data("place", "%city%", new global::app.type.@this("text", template: "plang"), context: _app.User.Context) }));

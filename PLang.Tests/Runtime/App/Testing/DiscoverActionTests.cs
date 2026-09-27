@@ -268,7 +268,7 @@ public class DiscoverActionTests
                 }
             }
         };
-        _app.Goal.Add(helper);
+        _app.goal.list.Add(helper);
 
         await CreateTestFileWithAction("Foo.test.goal", "Start",
             new[] { "call Helper" },

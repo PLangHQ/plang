@@ -100,11 +100,8 @@ public class SaveGoalsTests
         {
             Name = "Public",
             Path = global::app.type.item.path.@this.Resolve("/Multi.goal", _app.User.Context),
-            Child = new List<Goal>
-            {
-                new Goal { Name = "Private" }
-            }
         };
+        goal.Child.Add(new Goal { Name = "Private" });
 
         var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };
         var result = await _app.Run(action, _app.User.Context);
@@ -118,8 +115,8 @@ public class SaveGoalsTests
 
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Public");
-        await Assert.That(saved.Child.Count).IsEqualTo(1);
-        await Assert.That(saved.Child[0].Name).IsEqualTo("Private");
+        await Assert.That(saved.Child.CountRaw).IsEqualTo(1);
+        await Assert.That(saved.Child.Items().First().Name).IsEqualTo("Private");
     }
 
     [Test]

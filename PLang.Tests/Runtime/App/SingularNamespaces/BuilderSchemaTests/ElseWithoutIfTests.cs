@@ -176,13 +176,13 @@ public class ElseWithoutIfTests
         var shared = TestApp.SharedContext;
         const string fix = "- if %x% == 1, write out \"one\", else write out \"other\"";
 
-        app.Goal.Add(Make.Goal("SourceError",
+        app.goal.list.Add(Make.Goal("SourceError",
             Make.Step("the fix the LLM writes, then re-raise with it",
                 Make.Action("variable", "set", Make.Param("Name", "%sourceFix%", "variable"), Make.Param("Value", fix, "text")),
                 // `throw %!error%, fix suggestion %sourceFix%` as the builder writes it: the error rides
                 // the Message slot as a template (see HandleBuildFailure's throw in the builder's .pr).
                 Make.Action("error", "throw", Make.Template("Message", "%!error%"), ("FixSuggestion", "%sourceFix%")))));
-        app.Goal.Add(Make.Goal("FixProperties",
+        app.goal.list.Add(Make.Goal("FixProperties",
             Make.Step("mark",
                 Make.Action("variable", "set", Make.Param("Name", "%fixPropertiesRan%", "variable"), ("Value", "yes")))));
 

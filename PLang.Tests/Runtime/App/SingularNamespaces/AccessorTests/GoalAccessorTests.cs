@@ -5,65 +5,68 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
-// Batch A — app.goal collection node (Stage 3).
-// `app.Goal` is the collection (goal.list.@this), `app.Goal["name"]` selects,
-// `app.Goal.list` enumerates,
-// `app.Goal["nope"]` throws (index-miss is a hard error).
+// app.goal is the type named goal: `list` holds the goals read so far, Get(address) picks one as a result
+// (NotFound when none answers), `current` is the running goal, `all` every goal of the app.
 public class GoalAccessorTests
 {
-    [Test] public async Task AppGoal_IndexByName_ReturnsTheNamedGoal()
+    private static global::app.goal.@this Goal(PLangEngine app, string name, bool setup = false)
+        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.User.Context), IsSetup = setup };
+
+    [Test] public async Task AppGoal_GetByAddress_ReturnsTheGoal()
     {
         await using var app = TestApp.Create("/test");
-        var goal = new global::app.goal.@this { Name = "AlphaGoal", Path = global::app.type.item.path.@this.Resolve("/AlphaGoal.goal", app.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/.build/AlphaGoal/00.pr", app.User.Context) };
-        app.Goal.Add(goal);
-        await Assert.That(app.Goal["AlphaGoal"].Name).IsEqualTo("AlphaGoal");
+        var goal = Goal(app, "AlphaGoal");
+        app.goal.list.Add(goal);
+
+        var found = await app.goal.Get("/AlphaGoal");
+
+        await found.IsSuccess();
+        await Assert.That((await found.Value())!.Name).IsEqualTo("AlphaGoal");
     }
 
-    [Test] public async Task AppGoal_IndexByPrPath_ReturnsTheGoalForThatPath()
+    [Test] public async Task AppGoal_GetOfUnknownAddress_IsNotFound()
     {
         await using var app = TestApp.Create("/test");
-        var goal = new global::app.goal.@this { Name = "BetaGoal", Path = global::app.type.item.path.@this.Resolve("/BetaGoal.goal", app.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/.build/BetaGoal/00.pr", app.User.Context) };
-        app.Goal.Add(goal);
-        // Index by the stored PrPath instance — path equality is value-based on Absolute.
-        await Assert.That(app.Goal[goal.PrPath!].Name).IsEqualTo("BetaGoal");
+
+        var found = await app.goal.Get("/nope");
+
+        await found.IsFailure();
+        await Assert.That(found.Error!.Key).IsEqualTo("NotFound");
     }
 
-    [Test] public async Task AppGoal_IndexByPathInstance_ReturnsSameGoalAsStringPath()
+    [Test] public async Task AppGoalList_HoldsTheGoalsRead_AllLeavesOutSetup()
     {
         await using var app = TestApp.Create("/test");
-        var goal = new global::app.goal.@this { Name = "Gamma", Path = global::app.type.item.path.@this.Resolve("/Gamma.goal", app.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/.build/Gamma/00.pr", app.User.Context) };
-        app.Goal.Add(goal);
-        await Assert.That(app.Goal[goal.Path!].Name).IsEqualTo(app.Goal["Gamma"].Name);
+        app.goal.list.Add(Goal(app, "Public"));
+        app.goal.list.Add(Goal(app, "Setup", setup: true));
+
+        var appOnly = new global::app.type.item.dict.@this();
+        appOnly.Set("os", false);
+        var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.all(appOnly);
+
+        await Assert.That(all.Items().Select(g => g.Name).ToList()).IsEquivalentTo(new[] { "Public" });
     }
 
-    [Test] public async Task AppGoalList_Enumerates_LoadedGoals_ExcludingSetup()
+    [Test] public async Task AppGoalCurrent_IsTheRunningGoal()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
-        app.Goal.Add(new global::app.goal.@this { Name = "Public", Path = global::app.type.item.path.@this.Resolve("/Public.goal", ctx), PrPath = global::app.type.item.path.@this.Resolve("/.build/Public/00.pr", ctx) });
-        app.Goal.Add(new global::app.goal.@this { Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", ctx), PrPath = global::app.type.item.path.@this.Resolve("/.build/Setup/00.pr", ctx), IsSetup = true });
-        var names = app.Goal.list.Select(g => g.Name).ToHashSet();
-        await Assert.That(names.Contains("Public")).IsTrue();
-        await Assert.That(names.Contains("Setup")).IsFalse();
+        var context = app.User.Context;
+        var goal = Goal(app, "Running");
+        context.Goal = goal;
+
+        var current = app.goal.current(context);
+
+        await current.IsSuccess();
+        await Assert.That(await current.Value()).IsEqualTo(goal);
     }
 
-    // No `app.Goal.current` — "the executing goal" is a per-actor/per-flow fact (each actor
-    // owns its call tree), read via %!goal% (context.Goal), not off the app-level collection.
-
-    [Test] public async Task AppGoal_IndexOfUnknownName_ThrowsTypedError()
-    {
-        await using var app = TestApp.Create("/test");
-        await Assert.That(() => { _ = app.Goal["nope"]; return Task.CompletedTask; })
-            .Throws<KeyNotFoundException>();
-    }
-
-    // Goal collection is selection + lifecycle + enumeration only — no per-element behavior on the registry.
-    [Test] public async Task GoalListType_ExposesNoIoOrPerElementBehavior_OnTheRegistry()
+    // The goal list does the list's work (holding, reading, finding a call's goal) — it declares no
+    // I/O or running verbs of its own.
+    [Test] public async Task GoalListType_DeclaresNoIoOrRunningVerbs()
     {
         var t = typeof(global::app.goal.list.@this);
-        // The registry has Add/Remove/Get/Contains/Count/list/this[...] — no Write/Read/Ask/Start.
-        var forbidden = new[] { "Write", "Read", "Ask", "Start" };
-        foreach (var n in forbidden)
-            await Assert.That(t.GetMethod(n)).IsNull();
+        var own = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly;
+        foreach (var n in new[] { "Write", "Read", "Ask", "Start" })
+            await Assert.That(t.GetMethod(n, own)).IsNull();
     }
 }

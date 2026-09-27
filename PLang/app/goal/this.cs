@@ -55,16 +55,15 @@ public sealed partial class @this
         set => _step = value ?? new();
     }
 
-    private List<@this> _child = new();
+    private child.@this? _child;
+    /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
     [Store, Debug, Default]
-    public List<@this> Child
-    {
-        get => _child;
-        set => _child = value;
-    }
+    public child.@this Child => _child ??= new(this);
 
+    /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
     [Store, LlmBuilder, Debug, Default]
-    public global::app.type.item.choice.@this<Visibility> Visibility { get; internal set; } = global::app.goal.Visibility.Private;
+    public global::app.type.item.choice.@this<Visibility> Visibility
+        => Parent == null ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private;
 
     public override string ToString()
     {
@@ -210,13 +209,14 @@ public sealed partial class @this
     }
 
     /// <summary>The goal's app-absolute address — the name a call anywhere in the app reaches it by:
-    /// its .goal path without the extension (<c>/system/builder/EmitBuildEvent</c>). The goal
-    /// collection resolves it straight to the goal's .pr. Null for a goal with no Path.</summary>
+    /// its .goal path without the extension (<c>/system/builder/EmitBuildEvent</c>); a sub-goal is its
+    /// parent's address and its name (<c>/start#show</c>). Null for a goal with no Path.</summary>
     [JsonIgnore]
     public string? Address
     {
         get
         {
+            if (Parent is { } parent) return parent.Address is { } above ? $"{above}#{Name}" : null;
             var path = Path?.ToString();
             if (string.IsNullOrEmpty(path)) return null;
             return path.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? path[..^5] : path;
@@ -290,10 +290,10 @@ public sealed partial class @this
                 }
         }
 
-        if (existing.Child.Count == 0) return;
-        foreach (var subGoal in Child)
+        if (existing.Child.CountRaw == 0) return;
+        foreach (var subGoal in Child.Items())
         {
-            var priorSub = existing.Child.FirstOrDefault(g =>
+            var priorSub = existing.Child.Items().FirstOrDefault(g =>
                 string.Equals(g.Name, subGoal.Name, StringComparison.OrdinalIgnoreCase));
             if (priorSub != null) subGoal.Merge(priorSub);
         }
@@ -309,8 +309,8 @@ public sealed partial class @this
     /// step as written, in order, and the same sub-goals), every step is cached (none reopened), and so
     /// is every sub-goal. A cached goal isn't built again — its cache stands.</summary>
     [JsonIgnore]
-    public bool IsCached => Cache != null && Cache.Hash == Hash && Cache.Child.Count == Child.Count
-        && Step.IsCached && Child.All(g => g.IsCached);
+    public bool IsCached => Cache != null && Cache.Hash == Hash && Cache.Child.CountRaw == Child.CountRaw
+        && Step.IsCached && Child.Items().All(g => g.IsCached);
 
     /// <summary>A cached step whose saved code no longer holds against today's catalogue (an action gone
     /// or renamed, a check it now fails) is opened again — its code cleared — and rebuilt, with a
@@ -327,7 +327,7 @@ public sealed partial class @this
                 Message = $"step {step.Index}'s saved code no longer holds — rebuilt: {invalid.Message}",
             });
         }
-        foreach (var subGoal in Child) await subGoal.Reopen(context);
+        foreach (var subGoal in Child.Items()) await subGoal.Reopen(context);
     }
 
     /// <summary>
@@ -530,7 +530,6 @@ public sealed partial class @this
                     currentGoal = new @this
                     {
                         Name = "Start",
-                        Visibility = goals.Count == 0 ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private,
                         Path = path
                     };
                     goals.Add(currentGoal);
@@ -609,7 +608,6 @@ public sealed partial class @this
             {
                 Name = goalName,
                 Comment = goalComment,
-                Visibility = goals.Count == 0 ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private,
                 Path = path,
                 IsSetup = isSetup,
                 IsSystem = isSystem,

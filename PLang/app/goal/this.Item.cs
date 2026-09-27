@@ -4,8 +4,26 @@ namespace app.goal;
 // reads the typed internals (Name, Steps, Child, …) directly; the item faces are the boundary only.
 // The goal owns its wire: Output writes itself token by token (each field a plang type that writes
 // itself — path, choice, the step/goal children), its serializer/Reader.cs reads itself back.
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IList<@this, global::app.goal.list.@this>
 {
+    /// <summary>A key names this goal by its address (<c>/system/error/show</c>), or one of its
+    /// sub-goals by theirs (<c>/start#show</c>). Case is not the program's to get right.</summary>
+    public System.Threading.Tasks.ValueTask<@this?> Match(string key)
+    {
+        if (string.Equals(Address, key, StringComparison.OrdinalIgnoreCase))
+            return System.Threading.Tasks.ValueTask.FromResult<@this?>(this);
+        return System.Threading.Tasks.ValueTask.FromResult(
+            Child.Items().FirstOrDefault(c => string.Equals(c.Address, key, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    /// <summary>The goal running for the asker — what <c>%!goal%</c> answers.</summary>
+    public static @this? Current(global::app.actor.context.@this context) => context.Goal;
+
+    /// <summary>The app's goals: the list that reads them from their <c>.pr</c>.</summary>
+    public static global::app.goal.list.@this List(global::app.@this app) => new(app);
+
     /// <summary>The goal's own type entity — an item names its own type. Distinct from the goal
     /// channel; the reverse-name index already carried "goal" for this class, the item flip only adds
     /// the forward name→type slot.</summary>
@@ -44,8 +62,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         writer.Name("step");
         await Step.Output(writer, mode, context);   // the step.list writes its own bare array
         writer.Name("child");
-        writer.BeginArray(Child.Count);
-        foreach (var g in Child) await g.Output(writer, mode, context);
+        writer.BeginArray(Child.CountRaw);
+        foreach (var g in Child.Items()) await g.Output(writer, mode, context);
         writer.EndArray();
         writer.Name("visibility"); await Visibility.Output(writer, mode, context);
         if (Path != null) { writer.Name("path"); await Path.Output(writer, mode, context); }

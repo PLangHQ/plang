@@ -149,7 +149,7 @@ public class EngineTests
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Module).IsNotNull();
         await Assert.That(engine.User.Channel.Serializers).IsNotNull();
-        await Assert.That(engine.Goal).IsNotNull();
+        await Assert.That(engine.goal).IsNotNull();
         await Assert.That(engine.AbsolutePath).IsNotNull();
     }
 
@@ -253,7 +253,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var result = await Make.Call("EmptyGoal").Start(engine.User.Context);
 
@@ -275,7 +275,7 @@ public class EngineTests
                     index: 0, text: "set variable")
             }
         };
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
@@ -291,7 +291,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
         var context = engine.User.Context;
         await engine.Start(goal, context);
 
@@ -306,7 +306,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         await engine.Start(goal, context);
@@ -323,7 +323,7 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.Start(goal, context);
@@ -347,7 +347,7 @@ public class EngineTests
                 // Missing name parameter -> will fail
             }
         };
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var result = await Make.Call("TestGoal").Start(engine.User.Context);
 
@@ -497,7 +497,7 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var result = await engine.Start(goal, engine.System.Context);
 
@@ -515,7 +515,7 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
-        engine.Goal.Add(goal);
+        engine.goal.list.Add(goal);
 
         var result = await Make.Call("TestGoal").Start(engine.System.Context);
 

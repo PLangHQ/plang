@@ -566,6 +566,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
+    /// Every item of the list — the list itself. A list that loads its items (goal's: the <c>.pr</c> files
+    /// of the app and of <c>/system/</c>) answers them all; one with a setting class reads
+    /// <paramref name="setting"/> as it (every default when absent), one without ignores it.
+    /// </summary>
+    [LlmBuilder]
+    public virtual System.Threading.Tasks.ValueTask<@this> all(global::app.type.item.dict.@this? setting = null)
+        => System.Threading.Tasks.ValueTask.FromResult(this);
+
+    /// <summary>
     /// A list owns its child read — intrinsics (count/length, first, last, random,
     /// numeric index) win; any other key delegates to the first element
     /// (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). An element is handed out
@@ -576,6 +585,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(key, "length", System.StringComparison.OrdinalIgnoreCase))
             return new Data(key, Count, parent: parent);
+
+        // every item, before the empty check: a list that loads its items answers even when it holds none yet
+        if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
+            return new Data(key, await all(), parent: parent);
 
         if (CountRaw == 0) return Data.NotFound(key);
 

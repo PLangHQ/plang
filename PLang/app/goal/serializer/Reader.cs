@@ -65,10 +65,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         goal.Child.Add(Walk(ref reader, ctx, goal));        // born knowing its parent
                     reader.EndArray();
                     break;
-                case "visibility":
-                    // The choice reads its own wire form — symbol or legacy ordinal.
-                    goal.Visibility = global::app.type.item.choice.@this<global::app.goal.Visibility>.Read(ref reader);
-                    break;
+                // visibility derives from the goal's parent (a file's first goal is public) — the key
+                // is still written, read by no one.
+                case "visibility": reader.Skip(); break;
                 case "path": goal.Path = global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context); break;
                 // prPath is DERIVED from Path — consume and discard.
                 case "prPath": reader.Skip(); break;
