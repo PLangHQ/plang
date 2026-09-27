@@ -101,59 +101,9 @@
     },
     {
       "index": 2,
-      "text": "set default %!build.summary% = true",
-      "line": {
-        "number": 8
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%!build.summary%",
-              "variable": [
-                {
-                  "text": "%!build.summary%",
-                  "code": [
-                    {
-                      "variable": "!build"
-                    },
-                    {
-                      "property": "summary"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            },
-            {
-              "name": "AsDefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ]
-        }
-      ],
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
       "text": "set %traceGoals% = []",
       "line": {
-        "number": 9
+        "number": 8
       },
       "code": [
         {
@@ -199,10 +149,10 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 3,
       "text": "set channel \"builder\" call BuilderChannel",
       "line": {
-        "number": 10
+        "number": 9
       },
       "code": [
         {
@@ -250,10 +200,10 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 4,
       "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
       "line": {
-        "number": 11
+        "number": 10
       },
       "code": [
         {
@@ -289,10 +239,10 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 5,
       "text": "build.load, write to %app%",
       "line": {
-        "number": 12
+        "number": 11
       },
       "code": [
         {
@@ -363,10 +313,10 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 6,
       "text": "build.goals path=%path%, write to %goals%",
       "line": {
-        "number": 13
+        "number": 12
       },
       "code": [
         {
@@ -447,10 +397,10 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 7,
       "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
       "line": {
-        "number": 14
+        "number": 13
       },
       "code": [
         {
@@ -486,10 +436,10 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 8,
       "text": "foreach %goals%, call BuildGoal goal=%item%",
       "line": {
-        "number": 15
+        "number": 14
       },
       "code": [
         {
@@ -568,10 +518,10 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 9,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "line": {
-        "number": 16
+        "number": 15
       },
       "code": [
         {
@@ -623,10 +573,10 @@
       "waitForExecution": true
     },
     {
-      "index": 11,
+      "index": 10,
       "text": "build.appSave",
       "line": {
-        "number": 17
+        "number": 16
       },
       "code": [
         {
@@ -642,7 +592,7 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "ae5c439151bc441e8ba10d144d88597bafcb65993fbca62b3059faf39d94cab8",
+  "hash": "18b12c851c4554511b5084f1995a6657ceec935084c0f357d77f5b20f9c8a900",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

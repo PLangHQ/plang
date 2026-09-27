@@ -19,6 +19,7 @@ public sealed class @this
     private readonly global::app.actor.@this? _actor;               // an actor's own: the actor whose rows it holds
     private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;
     private ConcurrentDictionary<string, data.@this>? _held;        // the rows, once read
+    private global::app.error.Error? _unread;                       // why the rows could not be read, when they couldn't
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
     private readonly AsyncLocal<bool> _reading = new();
@@ -41,11 +42,15 @@ public sealed class @this
     internal event Action<string>? Written;
 
     /// <summary>Reads the saved rows of every actor up the chain, once — the app does it when it starts.
-    /// After it a setting is built in memory.</summary>
-    public async Task Load()
+    /// After it a setting is built in memory. Rows that could not be read are the error (a setting then
+    /// builds without them); a save refuses to write over them.</summary>
+    public async Task<data.@this> Load()
     {
         for (@this? s = this; s != null; s = s._parent)
             if (s._rows != null && !s._reading.Value) s._held = await s._rows.Value;
+        for (@this? s = this; s != null; s = s._parent)
+            if (s._unread != null) return _context.Error(s._unread);
+        return _context.Ok();
     }
 
     /// <summary>
@@ -114,7 +119,8 @@ public sealed class @this
     public async ValueTask<data.@this> Save(string path, data.@this value)
     {
         var owner = Owner;
-        await owner.Load();
+        // rows that could not be read are never written over
+        if (await owner.Load() is { Success: false } unread) return unread;
         var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", value.Peek(), value.Type, context: _context);
         var stored = await (await _context.App.store).Set(Table, row.Name, row);
         if (!stored.Success) return stored;
@@ -128,7 +134,7 @@ public sealed class @this
     public async ValueTask<data.@this> Remove(string path)
     {
         var owner = Owner;
-        await owner.Load();
+        if (await owner.Load() is { Success: false } unread) return unread;
         var removed = await (await _context.App.store).Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
         if (!removed.Success) return removed;
         owner._held!.TryRemove(path, out _);
@@ -155,13 +161,19 @@ public sealed class @this
     }
 
     // The saved row for path, the closest actor first (the user's, then the system's); null when none
-    // (or before the rows are read).
+    // (or before the rows are read). An actor's own class reads that actor's row alone.
     private data.@this? Saved(string path)
     {
         for (@this? s = this; s != null; s = s._parent)
+        {
             if (s._held != null && s._held.TryGetValue(path, out var row)) return row;
+            if (s._actor != null && Own(path)) return null;
+        }
         return null;
     }
+
+    // Whether the class at path is an actor's own — its values never come from the actor it falls back to.
+    private bool Own(string path) => Class(path)?.Own == true;
 
     // One option of a saved row: a setting's (its property), or an action's (its Property row).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch
@@ -193,6 +205,7 @@ public sealed class @this
         if (!all.Success)
         {
             await (_context.App.Debug?.Write($"settings: the {_actor.Name} actor's rows could not be read — {all.Error?.Message}") ?? Task.CompletedTask);
+            _unread = all.Error ?? new global::app.error.Error($"the {_actor.Name} actor's saved settings could not be read", "SettingsUnreadable", 500);
             return rows;
         }
         foreach (var row in (await all.Value())!.Items(_context))
@@ -268,13 +281,14 @@ public sealed class @this
     }
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
-    // an option (path.llm.system) nests under it.
+    // an option (path.llm.system) nests under it. An actor's own class stops at that actor's scope.
     private Dictionary<string, object?> Under(string path)
     {
         var under = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var prefix = path + ".";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        for (@this? s = this; s != null; s = s._parent)
+        var own = Own(path);
+        for (@this? s = this; s != null; s = own && s._actor != null ? null : s._parent)
             foreach (var (key, value) in s._values)
             {
                 if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !seen.Add(key)) continue;

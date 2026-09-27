@@ -233,26 +233,6 @@ public class IdentityErrorPathTests
     }
 
     [Test]
-    public async Task Rename_RemoveOldNameFails_ReturnsError()
-    {
-        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"oldname", SetAsDefault = (global::app.type.item.@bool.@this)false };
-        await h.Attach(null, Ctx);
-        await h.Start();
-
-        // Swap to failing remove — save succeeds but remove fails
-        SwapDataSource(_app, new FailingRemoveDataSource(
-            await _app.store));
-
-        var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
-        await handler.Attach(null, Ctx);
-        var result = await handler.Start();
-
-        await result.IsFailure();
-        await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
-    }
-
-    [Test]
     public async Task Archive_SaveFails_ReturnsError()
     {
         var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"toarchive", SetAsDefault = (global::app.type.item.@bool.@this)false };
@@ -389,26 +369,6 @@ public class IdentityErrorPathTests
 
     /// <summary>
     /// A store that delegates all operations except Remove, which always fails.
-    /// </summary>
-    private class FailingRemoveDataSource : global::app.store.@this
-    {
-        private readonly global::app.store.@this _inner;
-        public FailingRemoveDataSource(global::app.store.@this inner) => _inner = inner;
-
-        public override Task<global::app.data.@this<T>> Get<T>(string table, string key) => _inner.Get<T>(table, key);
-        public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) => _inner.GetAll<T>(table);
-        public override Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
-        public override Task<Data> Remove(string table, string key)
-            => Task.FromResult(Data.FromError(
-                new SettingsError("Simulated remove failure", "IOError", 500)
-                { TableName = table, KeyName = key }));
-        public override Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
-        public override Task<global::app.data.@this<global::app.type.item.list.@this>> Tables() => _inner.Tables();
-        public override void Dispose() { }
-    }
-
-    /// <summary>
-    /// A store where every operation fails.
     /// </summary>
     private class FailingGetAllDataSource : global::app.store.@this
     {

@@ -16,6 +16,9 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>A value of this kind is one of the class.</summary>
     public override System.Type? ClrForm => _class;
 
+    /// <summary>The class is an actor's own (<see cref="OwnAttribute"/>): read from the actor's row alone.</summary>
+    internal bool Own => System.Attribute.IsDefined(_class, typeof(OwnAttribute));
+
     /// <summary>A new one of the class — its defaults.</summary>
     internal global::app.type.item.setting.@this Create()
         => (global::app.type.item.setting.@this)System.Activator.CreateInstance(_class)!;

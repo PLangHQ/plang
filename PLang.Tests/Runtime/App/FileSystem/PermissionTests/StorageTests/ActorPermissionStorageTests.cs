@@ -12,9 +12,9 @@ namespace PLang.Tests.App.FileSystem.PermissionTests.StorageTests;
 /// persisted ("a") grants behind one Find/Add/Revoke surface.
 public class ActorPermissionStorageTests
 {
-    private static global::app.@this NewApp()
+    private static global::app.@this NewApp(string? root = null)
     {
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = new global::app.@this(root ?? System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]));
         // Real grant signing, but skip the identity recreate-loop (production identity
         // re-read fails verify → recreated keygen+sign each call, ~850ms).
@@ -66,18 +66,60 @@ public class ActorPermissionStorageTests
         var disk = await app.User.Permission.Find(new Path("/disk"), global::app.type.item.permission.Verb.Read);
         await Assert.That(mem).IsNotNull();
         await Assert.That(disk).IsNotNull();
-        // Routing: only the signed grant lands in sqlite. The unsigned one
-        // must NOT appear there — proves Add's signature-presence heuristic
-        // sends the two grants to different homes.
-        var stored = await (await app.store).GetAll<global::app.type.item.permission.@this>("permission");
-        await stored.IsSuccess();
-        var paths = new List<string>();
-        foreach (var d in (await stored.Value())!.Items(app.User.Context))
-        {
-            if (await ((global::app.data.@this)d).Value<PermissionRecord>() is { } p) paths.Add(p.Path);
-        }
+        // Routing: only the persisted grant lands in the actor's saved permission setting; the session
+        // one must NOT appear there.
+        var paths = await Saved(app, app.User);
         await Assert.That(paths).Contains("/disk");
         await Assert.That(paths).DoesNotContain("/mem");
+    }
+
+    // The paths of the grants the actor's own permission setting holds.
+    private static async Task<List<string>> Saved(global::app.@this app, global::app.actor.@this actor)
+    {
+        await actor.Setting.Load();
+        var paths = new List<string>();
+        foreach (var d in actor.Setting.Of<global::app.actor.permission.setting.@this>().Grant.Items(actor.Context))
+            if (await d.Value<PermissionRecord>() is { } p) paths.Add(p.Path);
+        return paths;
+    }
+
+    // One path granted to both actors: each keeps its own grant, and revoking one leaves the other.
+    [Test] public async Task SamePath_SystemAndUserGrants_BothSurvive_RevokingOneLeavesTheOther()
+    {
+        var app = NewApp();
+        var systemGrant = Grant(app, app.System.Name, "/shared");
+        var userGrant = Grant(app, app.User.Name, "/shared");
+        await app.System.Permission.Add(systemGrant, persist: true);
+        await app.User.Permission.Add(userGrant, persist: true);
+
+        await Assert.That(await app.System.Permission.Find(new Path("/shared"), Verb.Read)).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(new Path("/shared"), Verb.Read)).IsNotNull();
+
+        await app.User.Permission.Revoke((await userGrant.Value())!);
+        await Assert.That(await app.User.Permission.Find(new Path("/shared"), Verb.Read)).IsNull();
+        await Assert.That(await app.System.Permission.Find(new Path("/shared"), Verb.Read)).IsNotNull();
+    }
+
+    // Permission is an actor's own: the user never holds the system's saved grants.
+    [Test] public async Task SystemGrant_NotSurfacedTo_UserFind()
+    {
+        var app = NewApp();
+        await app.System.Permission.Add(Grant(app, app.System.Name, "/s"), persist: true);
+
+        await Assert.That(await app.User.Permission.Find(new Path("/s"), Verb.Read)).IsNull();
+        await Assert.That(await Saved(app, app.User)).DoesNotContain("/s");
+    }
+
+    // A saved grant is the actor's row: the next App on the same root reads it back.
+    [Test] public async Task PersistedGrant_IsReadByTheNextApp()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using (var first = NewApp(root))
+            await first.User.Permission.Add(Grant(first, first.User.Name, "/kept"), persist: true);
+
+        await using var next = NewApp(root);
+        await Assert.That(await Saved(next, next.User)).Contains("/kept");
+        await Assert.That(await next.User.Permission.Find(new Path("/kept"), Verb.Read)).IsNotNull();
     }
 
     [Test] public async Task VerbNarrowing_FullAllowGrant_CoversNarrowedReadRequest()

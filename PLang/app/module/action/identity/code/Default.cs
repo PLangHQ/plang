@@ -9,15 +9,13 @@ using System.Text.Json;
 namespace app.module.action.identity.code;
 
 /// <summary>
-/// Default identity provider backed by System DataSource (SQLite).
-/// All methods take the action and navigate to app/context/datasource.
+/// Default identity provider: the identities are the app's own, held in the system actor's identity
+/// setting (<c>%!identity%</c>, one row, <c>system!identity</c>).
 /// Identity is a plain class — all results are wrapped in data.@this&lt;Identity&gt;
 /// (list results in data.@this&lt;List&lt;Identity&gt;&gt;).
 /// </summary>
 public sealed class Default : IIdentity
 {
-    private const string Table = "identity";
-
     public string Name => "default";
     public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
@@ -155,16 +153,24 @@ public sealed class Default : IIdentity
         if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
 
-        // Save with new name first, then remove old — no data loss on failure
+        // One row holds every identity, so the rename is one write: the old name out, the new one in.
         var oldName = identity.Name;
         identity.Name = (await action.NewName.Value())!.Clr<string>()!;
-        var saveResult = await SaveAsync(action, identity);
-        if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-
-        identity.Name = oldName;
-        var removeResult = await RemoveAsync(action, identity);
-        identity.Name = (await action.NewName.Value())!.Clr<string>()!;
-        if (!removeResult.Success) return data.@this<Identity>.From(removeResult);
+        var (setting, settingErr) = await Setting(action);
+        if (settingErr != null)
+        {
+            identity.Name = oldName;
+            return action.Context.Error<Identity>(settingErr);
+        }
+        var rows = (await Identities(setting!, action))
+            .Where(i => !ReferenceEquals(i, identity) && !string.Equals(i.Name, oldName, StringComparison.Ordinal)).ToList();
+        rows.Add(identity);
+        var saveResult = await Store(action, setting!, rows);
+        if (!saveResult.Success)
+        {
+            identity.Name = oldName;
+            return data.@this<Identity>.From(saveResult);
+        }
 
         if (identity.IsDefault)
             app.System.Identity = identity;
@@ -202,35 +208,47 @@ public sealed class Default : IIdentity
 
     // --- Persistence helpers ---
 
-    /// <summary>Loads a single identity by name from the settings store.</summary>
+    /// <summary>Loads a single identity by name.</summary>
     internal async Task<data.@this<Identity>> Load(IContext action, string name)
     {
-        var store = await action.Context.App.store;
-        // Stored as the Identity item itself, so it round-trips as one.
-        var result = await store.Get<Identity>(Table, name);
-
-        if (!result.Success)
-            return result;
-
-        if (result.Peek() is null or { IsNull: true })
-            return action.Context.Error<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
-
-        return result;
+        var (items, err) = await LoadAll(action);
+        if (err != null) return action.Context.Error<Identity>(err);
+        return items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal)) is { } found
+            ? action.Context.Ok<Identity>(found)
+            : action.Context.Error<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
     }
 
-    /// <summary>Loads all identities (including archived) from the settings store.</summary>
+    /// <summary>Loads all identities (including archived).</summary>
     internal async Task<(List<Identity>? Identities, global::app.error.Error? Error)> LoadAll(IContext action)
     {
-        var store = await action.Context.App.store;
-        var result = await store.GetAll<Identity>(Table);
-        if (!result.Success) return (null, result.Error);
+        var (setting, err) = await Setting(action);
+        return err != null ? (null, err) : (await Identities(setting!, action), null);
+    }
 
+    // The app's own identities are the system actor's: its identity setting, whichever actor asks. Its rows
+    // are read first — a read before them would see none and a save would overwrite them; rows that could
+    // not be read are the error, never an empty list (a default made then would replace them).
+    private async Task<(setting.@this? Setting, global::app.error.Error? Error)> Setting(IContext action)
+    {
+        var system = action.Context.App.System.Setting;
+        var loaded = await system.Load();
+        return loaded.Success ? (system.Of<setting.@this>(), null) : (null, loaded.Error);
+    }
+
+    // Each identity the setting holds.
+    private async Task<List<Identity>> Identities(setting.@this setting, IContext action)
+    {
         var identities = new List<Identity>();
-        var list = await result.Value<global::app.type.item.list.@this>();
-        if (list != null)
-            foreach (var row in list.Items(action.Context))
-                if (await row.Value<Identity>() is { } identity) identities.Add(identity);
-        return (identities, null);
+        foreach (var row in setting.Identity.Items(action.Context))
+            if (await row.Value<Identity>() is { } identity) identities.Add(identity);
+        return identities;
+    }
+
+    // Saves the identities as the system actor's identity setting — one row, whole.
+    private async Task<data.@this> Store(IContext action, setting.@this setting, List<Identity> identities)
+    {
+        setting.Identity = new global::app.type.item.list.@this<Identity>(identities);
+        return await action.Context.App.System.Setting.Save(setting.Path, new data.@this(setting.Path, setting, context: action.Context));
     }
 
     /// <summary>
@@ -263,20 +281,16 @@ public sealed class Default : IIdentity
         return action.Context.Ok<Identity>(identity);
     }
 
-    /// <summary>Persists an identity to the settings store. Bare Data — the
-    /// store decides the success shape; callers only check .Success / .Error.</summary>
+    /// <summary>Saves an identity — in place of the one by its name. Bare Data; callers only check
+    /// .Success / .Error.</summary>
     private async Task<data.@this> SaveAsync(IContext action, Identity identity)
     {
-        var store = await action.Context.App.store;
-        var data = new data.@this(identity.Name, identity, context: action.Context);
-        return await store.Set(Table, identity.Name, data);
-    }
-
-    /// <summary>Removes an identity from store. Bare — same as SaveAsync.</summary>
-    private async Task<data.@this> RemoveAsync(IContext action, Identity identity)
-    {
-        var store = await action.Context.App.store;
-        return await store.Remove(Table, identity.Name);
+        var (setting, err) = await Setting(action);
+        if (err != null) return action.Context.Error(err);
+        var rows = (await Identities(setting!, action))
+            .Where(i => !ReferenceEquals(i, identity) && !string.Equals(i.Name, identity.Name, StringComparison.Ordinal)).ToList();
+        rows.Add(identity);
+        return await Store(action, setting!, rows);
     }
 
     /// <summary>

@@ -9,20 +9,14 @@ namespace app.actor.permission;
 /// Two homes unified behind one Find:
 ///   - <b>Session ("y")</b> — unsigned, lives in an in-memory list, dies
 ///     when the App exits.
-///   - <b>Persisted ("a")</b> — Ed25519-signed with <c>Expires == null</c>
-///     (permanent), routed to <c>app.store</c> under the
-///     <c>permission</c> table. Verified with <c>SkipFreshnessCheck=true</c>
-///     so the wire-freshness window doesn't apply; the signature's own
-///     <c>Expires</c> field is the only time bound.
-/// The shared table is filtered to this actor's kind client-side.
-/// Per-kind keying: <c>Permission.Path</c> is the natural key — granting the
-/// same path twice overwrites.
+///   - <b>Persisted ("a")</b> — the actor's own permission setting
+///     (<c>%!app.actor.permission.setting%</c>), one row per actor holding all its saved grants, signed
+///     whole when it is saved and verified whole when it is read; a tampered row reads as no grants.
+/// The setting is the actor's own: a user never holds the system's grants.
+/// <c>Permission.Path</c> is the natural key — granting the same path twice overwrites.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.item.setting.ISetting<setting.@this>
 {
-    private const string PermissionTable = "permission";
-    private const string VerifiedFlag = "permission.verified";
-
     private readonly global::app.actor.@this _actor;
     private readonly List<global::app.data.@this> _inMemory = new();
     private readonly object _lock = new();
@@ -53,50 +47,31 @@ public sealed class @this
             if (await TryCover(grantData, request)) return grantData;
         }
 
-        // 2) Persisted grants (client-side actor filter). Tolerant of
-        // Store creation failure — test fixtures with unwriteable App
-        // roots ("/dst" et al.) shouldn't crash here when only in-memory
-        // grants were ever used.
-        try
-        {
-            var stored = await (await _actor.App.store).GetAll<Grant>(PermissionTable);
-            if (stored.Success && await stored.Value() is { } list)
-            {
-                // Each grant is handed out under the actor's context.
-                foreach (var grantData in list.Items(_actor.Context))
-                {
-                    if (await grantData.Value<Grant>() is not { } rec) continue;
-                    if (!string.Equals(rec.Actor, _actor.Name, StringComparison.Ordinal)) continue;
-                    if (await TryCover(grantData, request)) return grantData;
-                }
-            }
-        }
-        catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            // Store unavailable (unwriteable root, etc.) — only
-            // in-memory grants searchable. Caller will fall through to the
-            // prompt path.
-        }
+        // 2) Persisted grants — the actor's own saved ones. A store that can't open (an unwritable root)
+        // holds no rows, so only the in-memory grants are searched and the caller falls through to the prompt.
+        foreach (var grantData in (await Saved()).Grant.Items(_actor.Context))
+            if (await TryCover(grantData, request)) return grantData;
 
         return null;
     }
 
     /// <summary>
-    /// Records a signed grant. Routes by signature presence: signed → sqlite,
-    /// unsigned → in-memory. Same path twice overwrites (in either home).
+    /// Records a grant: persisted into the actor's own permission setting (signed with its row when it is
+    /// saved), or in memory for this run. Same path twice overwrites (in either home).
     /// </summary>
     public async Task Add(global::app.data.@this grant, bool persist)
     {
         if (await grant.Value<Grant>() is not { } __rec) return;
         var key = __rec.Path;
 
-        // The caller decides persisted vs in-memory (it used to sign-then-persist;
-        // signing is no longer in memory). A persisted grant is signed
-        // automatically when it crosses the application/plang boundary into the
-        // settings store; an in-memory grant is local and unsigned.
         if (persist)
         {
-            await (await _actor.App.store).Set(PermissionTable, key, grant);
+            var setting = await Saved();
+            var kept = new List<Grant>();
+            foreach (var row in setting.Grant.Items(_actor.Context))
+                if (await row.Value<Grant>() is { } held && !string.Equals(held.Path, key, StringComparison.Ordinal)) kept.Add(held);
+            kept.Add(__rec);
+            await Save(setting, kept);
             return;
         }
 
@@ -126,9 +101,31 @@ public sealed class @this
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
         }
 
-        var sqliteResult = await (await _actor.App.store).Remove(PermissionTable, match.Path);
-        if (sqliteResult.Success) removed = true;
+        var setting = await Saved();
+        var kept = new List<Grant>();
+        foreach (var row in setting.Grant.Items(_actor.Context))
+            if (await row.Value<Grant>() is { } held && !(held.Actor == match.Actor && held.Path == match.Path)) kept.Add(held);
+        if (kept.Count < setting.Grant.CountRaw)
+        {
+            var saved = await Save(setting, kept);
+            if (saved.Success) removed = true;
+        }
         return removed;
+    }
+
+    // The actor's own permission setting, its saved row read first (a read before the rows would see none,
+    // and a save would overwrite them).
+    private async Task<setting.@this> Saved()
+    {
+        await _actor.Setting.Load();
+        return _actor.Setting.Of<setting.@this>();
+    }
+
+    // Saves the grants as the actor's own permission setting — one row, whole.
+    private async Task<global::app.data.@this> Save(setting.@this setting, List<Grant> grants)
+    {
+        setting.Grant = new global::app.type.item.list.@this<Grant>(grants);
+        return await _actor.Setting.Save(setting.Path, new global::app.data.@this(setting.Path, setting, context: _actor.Context));
     }
 
     private async Task<bool> TryCover(global::app.data.@this grantData, Grant request)

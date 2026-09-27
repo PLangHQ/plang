@@ -33,6 +33,37 @@ public class IdentityHandlerTests
 
     private global::app.actor.context.@this Ctx => _app.System.Context;
 
+    // --- the app's identities: the system actor's row ---
+
+    // The identity created in one App is the one the next App on the same root reads — asked from a user
+    // context too, since the app's identities are the system's. The user's own identity setting holds none.
+    [Test]
+    public async Task Identity_IsReadByTheNextApp_AsTheSystemsRow()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_id_row_" + Guid.NewGuid().ToString("N")[..8]);
+        string key;
+        await using (var first = new global::app.@this(root))
+        {
+            var ctx = first.System.Context;
+            var create = new Create(ctx) { Name = (global::app.type.item.text.@this)"keeper", SetAsDefault = (global::app.type.item.@bool.@this)true };
+            await create.Attach(null, ctx);
+            var made = await create.Start();
+            await made.IsSuccess();
+            key = ((Identity)(await made.Value())!).PublicKey;
+        }
+
+        await using var next = new global::app.@this(root);
+        var user = next.User.Context;
+        var get = new Get(user);
+        await get.Attach(null, user);
+        var got = await get.Start();
+        await got.IsSuccess();
+        await Assert.That(((Identity)(await got.Value())!).PublicKey).IsEqualTo(key);
+
+        await next.User.Setting.Load();
+        await Assert.That(next.User.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
+    }
+
     // --- create ---
 
     [Test]

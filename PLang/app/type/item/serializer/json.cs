@@ -82,6 +82,19 @@ public partial class json
            && t.TryGetProperty("name", out _)
            && element.TryGetProperty("value", out _);
 
+    /// <summary>The container entry <paramref name="utf8"/> is, when it is a typed value (a Data row a
+    /// list or dict wrote: <c>{type:{name,…}, value:…}</c>, or <c>@schema:data</c>) — read as that Data, as
+    /// every nested entry reads; null for any other value, which the container's element type reads.</summary>
+    internal global::app.data.@this? Typed(byte[] utf8)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(utf8);
+        var element = doc.RootElement;
+        return element.ValueKind == System.Text.Json.JsonValueKind.Object
+               && (global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element))
+            ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false))
+            : null;
+    }
+
     private object? ParseRaw(byte[] utf8, global::app.type.reader.ReadContext? ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);

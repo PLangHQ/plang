@@ -47,6 +47,49 @@ public class SettingRowTests
         await Assert.That(await Os(again.System.Context)).IsEqualTo("true");
     }
 
+    // The values a saved row's typed-list option holds, as the next App reads it back.
+    private static async Task<List<string>> Listed<T>(global::app.@this app, System.Func<T, global::app.type.item.list.@this> option)
+        where T : global::app.type.item.setting.@this, new()
+    {
+        await app.User.Setting.Load();
+        var values = new List<string>();
+        foreach (var row in option(app.User.Setting.Of<T>()).Items(app.User.Context))
+            values.Add((await row.Value())?.ToString() ?? "");
+        return values;
+    }
+
+    // A typed-list option of choices round-trips through the row: goal.list's visibility.
+    [Test] public async Task Row_TypedListOfChoices_IsReadBack()
+    {
+        await using (var app = new global::app.@this(_dir))
+        {
+            var setting = app.User.Setting.Of<global::app.goal.list.setting.@this>();
+            setting.Visibility = new global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>(
+                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private });
+            await (await app.User.Setting.Save(setting.Path, new global::app.data.@this("s", setting, context: app.User.Context))).IsSuccess();
+        }
+
+        await using var again = new global::app.@this(_dir);
+        await Assert.That(await Listed<global::app.goal.list.setting.@this>(again, s => s.Visibility))
+            .IsEquivalentTo(new[] { "Public", "Private" });
+    }
+
+    // A typed-list option of text round-trips through the row: test's include.
+    [Test] public async Task Row_TypedListOfText_IsReadBack()
+    {
+        await using (var app = new global::app.@this(_dir))
+        {
+            var setting = app.User.Setting.Of<global::app.test.setting.@this>();
+            setting.Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
+                new global::app.type.item.text.@this[] { "smoke", "fast" });
+            await (await app.User.Setting.Save(setting.Path, new global::app.data.@this("s", setting, context: app.User.Context))).IsSuccess();
+        }
+
+        await using var again = new global::app.@this(_dir);
+        await Assert.That(await Listed<global::app.test.setting.@this>(again, s => s.Include))
+            .IsEquivalentTo(new[] { "smoke", "fast" });
+    }
+
     // The user falls back to the system's row; the user's own row wins over it.
     [Test] public async Task UserFallsBackToSystem_OwnRowWins()
     {
