@@ -61,17 +61,6 @@ public class ChannelHookRenameTests : System.IAsyncDisposable
     [Test] public async Task ChannelSubclass_Noop_OverridesWriteReadAsk_NotCoreSuffixed()
         => await AssertSubclassOverrides(typeof(global::app.channel.type.noop.@this));
 
-    [Test] public async Task ChannelSubclass_Events_OverridesWriteReadAsk_NotCoreSuffixed()
-    {
-        // app.channel.@event.@this is the bindings holder, not a Channel
-        // subclass — there is no Write/Read/Ask override to scan. The "@event"
-        // channel kind in the architect's list refers to a per-channel events
-        // collection, which lives by composition on every Channel.
-        var t = typeof(global::app.channel.@event.@this);
-        await Assert.That(t).IsNotNull();
-        await Assert.That(typeof(global::app.channel.@this).IsAssignableFrom(t)).IsFalse();
-    }
-
     [Test] public async Task ChannelSubclass_Session_OverridesWriteReadAsk_NotCoreSuffixed()
     {
         // Session is abstract — concrete subclasses (stream, goal) carry the overrides.
@@ -84,7 +73,10 @@ public class ChannelHookRenameTests : System.IAsyncDisposable
     {
         foreach (var name in new[] { "Write", "Read", "Ask" })
         {
-            var m = t.GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
+            // the transport Write — a channel, being an item, also has item's Write(IWriter)
+            var m = name == "Write"
+                ? t.GetMethod(name, BindingFlags.Public | BindingFlags.Instance, [typeof(Data), typeof(CancellationToken)])
+                : t.GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
             await Assert.That(m).IsNotNull().Because($"{t.Name} should declare {name}");
             await Assert.That(m!.DeclaringType).IsEqualTo(t).Because($"{name} must be overridden on {t.Name}");
         }

@@ -1,11 +1,14 @@
 using app.@event;
-using app.@event.lifecycle.binding;
+using When = global::app.@event.When;
+using Scope = global::app.@event.binding.Scope;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Channel events: types, firing, recursion guard.
-// Architect: stage-8-channel-events.md and v1/plan/channel-events.md.
-
+// A channel fires its own events: write, read and ask through on.write / on.read / on.ask, at the channel type's
+// level and its own. Before is handed what is about to happen — a failure or a Handled answer is the operation's
+// answer and the channel's own work doesn't run; every after runs on the result, and a failing after is the result.
+// The channel's own transport failure is an error result; a binding's throw follows the binding list's rule. A
+// binding doesn't fire inside itself within one flow; parallel flows each fire it.
 public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
@@ -13,8 +16,19 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
+    private global::app.channel.@this Registered(string name)
+    {
+        var ch = StreamChannel.Memory(name);
+        app.User.Channel.Register(ch);
+        return ch;
+    }
+
+    private void Bind(global::app.type.item.@this on, string @event, When when,
+        System.Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
+        => on.Own().Bind(@event, when, handler, app.User, Scope.actor);
+
     [Test]
-    public async Task Trigger_HasFiveNewValues_ForChannelLifecycle()
+    public async Task Trigger_HasFiveValues_ForChannelLifecycle()
     {
         var names = Enum.GetNames(typeof(Trigger));
         await Assert.That(names).Contains("BeforeWrite");
@@ -25,190 +39,175 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task EventBinding_AcceptsChannelNameFilter()
-    {
-        var b = new EventBinding(Trigger.BeforeWrite,
-            (_, _, _) => Task.FromResult(app.Ok()),
-            channelName: "logger");
-        await Assert.That(b.ChannelName).IsEqualTo("logger");
-    }
-
-    [Test]
-    public async Task ChannelThis_ExposesEventsProperty_LikeGoalAndStep()
+    public async Task AChannel_IsAnItem_WithItsOwnEvents()
     {
         var ch = StreamChannel.Memory("c");
-        await Assert.That(ch.Events).IsNotNull();
-        await Assert.That(ch.Events.Count).IsEqualTo(0);
+        await Assert.That(ch.on.write.before.Count).IsEqualTo(0);
+        await Assert.That(ReferenceEquals(ch.Clone(), ch)).IsTrue();
+        await Assert.That(app.type.list["channel"].Namespace).IsEqualTo("app.channel");
+        await Assert.That(app.type.list["app.channel.type.stream"].Name).IsEqualTo("app.channel.type.stream");
     }
 
     [Test]
-    public async Task BeforeWriteHandler_ReceivesCorrectData()
+    public async Task BeforeWrite_IsHandedTheData()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
-        var ch = StreamChannel.Memory("logger");
-        app.User.Channel.Register(ch);
+        var ch = Registered("logger");
         Data? captured = null;
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, payload) =>
-        {
-            captured = payload;
-            return Task.FromResult(app.Ok());
-        }, channelName: "logger"));
+        Bind(ch, "write", When.before, (_, data, ctx) => { captured = data; return Task.FromResult(ctx.Ok()); });
 
         await ch.WriteAsync(app.Ok("hello"));
-        await Assert.That(captured).IsNotNull();
+
         await Assert.That((await captured!.Value())?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
-    public async Task BeforeWriteHandler_ThrowingAborts_AfterWriteDoesNotFire()
+    public async Task ARefusingBeforeWrite_IsTheAnswer_TheAftersStillRunOnIt()
     {
-        var ch = StreamChannel.Memory("c");
-        bool afterFired = false;
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) =>
-            throw new InvalidOperationException("nope")));
-        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
-        {
-            afterFired = true;
-            return Task.FromResult(app.Ok());
-        }));
+        var ch = Registered("c");
+        Data? after = null;
+        Bind(ch, "write", When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))));
+        Bind(ch, "write", When.after, (_, result, ctx) => { after = result; return Task.FromResult(ctx.Ok()); });
 
         var result = await ch.WriteAsync(app.Ok("hi"));
+
         await result.IsFailure();
-        await Assert.That(afterFired).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("Refused");
+        await Assert.That(after!.Error?.Key).IsEqualTo("Refused");
     }
 
     [Test]
-    public async Task AfterWriteHandler_FiresWhenWriteCoreSucceeds()
+    public async Task ABeforeWriteThatThrows_Propagates_NoChannelCatch()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
-        var ch = StreamChannel.Memory("c");
-        app.User.Channel.Register(ch);
-        bool afterFired = false;
-        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
-        {
-            afterFired = true;
-            return Task.FromResult(app.Ok());
-        }));
+        var ch = Registered("c");
+        Bind(ch, "write", When.before, (_, _, _) => throw new InvalidOperationException("nope"));
+
+        await Assert.That(async () => await ch.WriteAsync(app.Ok("hi"))).Throws<InvalidOperationException>();
+    }
+
+    [Test]
+    public async Task AfterWrite_FiresWhenTheWriteSucceeds()
+    {
+        var ch = Registered("c");
+        var fired = false;
+        Bind(ch, "write", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
+
         var result = await ch.WriteAsync(app.Ok("hi"));
+
         await result.IsSuccess();
-        await Assert.That(afterFired).IsTrue();
-    }
-
-    [Test]
-    public async Task AfterWriteHandler_FiresWhenWriteCoreThrows()
-    {
-        var ch = new ThrowOnWriteChannel("c");
-        bool afterFired = false;
-        Data? receivedData = null;
-        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, payload) =>
-        {
-            afterFired = true;
-            receivedData = payload;
-            return Task.FromResult(app.Ok());
-        }));
-        var result = await ch.WriteAsync(app.Ok("hi"));
-        await result.IsFailure();
-        await Assert.That(afterFired).IsTrue();
-        await receivedData!.IsFailure();
-    }
-
-    [Test]
-    public async Task AfterWriteHandler_ThrowingIsSuppressed_OriginalOutcomeStands()
-    {
-        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
-        var ch = StreamChannel.Memory("c");
-        app.User.Channel.Register(ch);
-        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
-            throw new InvalidOperationException("after fail")));
-        var result = await ch.WriteAsync(app.Ok("hi"));
-        await result.IsSuccess();
-    }
-
-    [Test]
-    public async Task BeforeWriteHandler_WritesToSameChannel_NoInfiniteLoop()
-    {
-        var ch = StreamChannel.Memory("c");
-        int outerHits = 0;
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, async (_, _, _) =>
-        {
-            outerHits++;
-            // Re-entry: write to the same channel inside the handler.
-            await ch.WriteAsync(app.Ok("inner"));
-            return app.Ok();
-        }));
-        await ch.WriteAsync(app.Ok("outer"));
-        await Assert.That(outerHits).IsEqualTo(1);
-    }
-
-    [Test]
-    public async Task MultipleBindings_FireInRegistrationOrder()
-    {
-        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
-        var ch = StreamChannel.Memory("c");
-        app.User.Channel.Register(ch);
-        var order = new List<string>();
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(app.Ok()); }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(app.Ok()); }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(app.Ok()); }));
-        await ch.WriteAsync(app.Ok("x"));
-        await Assert.That(order).IsEquivalentTo(new[] { "A", "B", "C" });
-    }
-
-    [Test]
-    public async Task FirstThrowingBinding_StopsSubsequentBindings()
-    {
-        var ch = StreamChannel.Memory("c");
-        var order = new List<string>();
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(app.Ok()); }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) =>
-        {
-            order.Add("B");
-            throw new InvalidOperationException("stop");
-        }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(app.Ok()); }));
-        var result = await ch.WriteAsync(app.Ok("x"));
-        await result.IsFailure();
-        await Assert.That(order).IsEquivalentTo(new[] { "A", "B" });
-    }
-
-    [Test]
-    public async Task OnAsk_OnSessionChannel_FiresPostAnswer()
-    {
-        var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
-        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
-        { Mime = "text/plain" };
-        Data? receivedData = null;
-        ch.Events.Add(new EventBinding(Trigger.OnAsk, (_, _, payload) =>
-        {
-            receivedData = payload;
-            return Task.FromResult(app.Ok());
-        }));
-        var result = await ch.AskAsync(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
-        await Assert.That(receivedData).IsNotNull();
-        await Assert.That((await receivedData!.Value())?.ToString()).IsEqualTo("answer");
-    }
-
-    [Test]
-    public async Task OnAsk_OnMessageChannel_FiresPreSerialise()
-    {
-        // Stage 8 ships unified OnAsk firing semantics: handler always sees the
-        // post-Core Data. Per-kind direction (Session post-answer vs Message
-        // pre-suspend) tracked in cool.md for follow-up; for now the contract is
-        // consistent. Test pins that OnAsk does fire for Message-style kinds.
-        var ch = new MessageProbeChannel("m");
-        bool fired = false;
-        ch.Events.Add(new EventBinding(Trigger.OnAsk, (_, _, _) =>
-        {
-            fired = true;
-            return Task.FromResult(app.Ok());
-        }));
-        await ch.AskAsync(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 
     [Test]
-    public async Task BindingsMatch_AcrossUserAndServiceChannels_OfSameName()
+    public async Task ATransportFailure_IsAnErrorResult_AndAfterWriteSeesIt()
+    {
+        var ch = new ThrowOnWriteChannel("c");
+        app.User.Channel.Register(ch);
+        Data? received = null;
+        Bind(ch, "write", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
+
+        var result = await ch.WriteAsync(app.Ok("hi"));
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("WriteError");
+        await received!.IsFailure();
+    }
+
+    [Test]
+    public async Task AFailingAfterWrite_IsTheResult()
+    {
+        var ch = Registered("c");
+        Bind(ch, "write", When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("after", "Broke", 400))));
+
+        var result = await ch.WriteAsync(app.Ok("hi"));
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("Broke");
+    }
+
+    [Test]
+    public async Task ABeforeWriteThatWritesToItsOwnChannel_FiresOnce()
+    {
+        var ch = Registered("c");
+        var hits = 0;
+        Bind(ch, "write", When.before, async (_, _, ctx) =>
+        {
+            hits++;
+            await ch.WriteAsync(app.Ok("inner"));
+            return ctx.Ok();
+        });
+
+        await ch.WriteAsync(app.Ok("outer"));
+
+        await Assert.That(hits).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task ParallelFlowsOnOneContext_EachFireTheBinding()
+    {
+        var ch = Registered("c");
+        var hits = 0;
+        var entered = new TaskCompletionSource();
+        var release = new TaskCompletionSource();
+        Bind(ch, "write", When.before, async (_, _, ctx) =>
+        {
+            if (Interlocked.Increment(ref hits) == 2) entered.TrySetResult();
+            await Task.WhenAny(release.Task, Task.Delay(2000));
+            return ctx.Ok();
+        });
+
+        var first = Task.Run(() => ch.WriteAsync(app.Ok("a")));
+        var second = Task.Run(() => ch.WriteAsync(app.Ok("b")));
+        await Task.WhenAny(entered.Task, Task.Delay(2000));
+        release.TrySetResult();
+        await Task.WhenAll(first, second);
+
+        await Assert.That(hits).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Bindings_FireInTheOrderAdded()
+    {
+        var ch = Registered("c");
+        var order = new List<string>();
+        Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("A"); return Task.FromResult(ctx.Ok()); });
+        Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("B"); return Task.FromResult(ctx.Ok()); });
+        Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("C"); return Task.FromResult(ctx.Ok()); });
+
+        await ch.WriteAsync(app.Ok("x"));
+
+        await Assert.That(order).IsEquivalentTo(new[] { "A", "B", "C" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
+    [Test]
+    public async Task AfterAsk_OnASessionChannel_IsHandedTheAnswer()
+    {
+        var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
+        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
+        app.User.Channel.Register(ch);
+        Data? received = null;
+        Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
+
+        var result = await ch.AskAsync(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
+
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
+        await Assert.That((await received!.Value())?.ToString()).IsEqualTo("answer");
+    }
+
+    [Test]
+    public async Task AfterAsk_OnAMessageChannel_Fires()
+    {
+        var ch = new MessageProbeChannel("m");
+        app.User.Channel.Register(ch);
+        var fired = false;
+        Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
+
+        await ch.AskAsync(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
+
+        await Assert.That(fired).IsTrue();
+    }
+
+    [Test]
+    public async Task TheChannelTypesWrite_FiresForEveryChannel_UserAndServiceAlike()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s8-cross");
         var userLogger = StreamChannel.Memory("logger");
@@ -216,66 +215,26 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         app.User.Channel.Register(userLogger);
         await using var svc = app.Services.New(parent: app.User);
         svc.Channels.Register(serviceLogger);
-
         var hits = 0;
-        app.Event.Register(new EventBinding(Trigger.BeforeWrite,
-            (_, _, _) => { hits++; return Task.FromResult(app.Ok()); },
-            channelName: "logger"));
+        app.type.list["channel"].Own().Bind("write", When.before,
+            (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
+
         await Assert.That(hits).IsEqualTo(2);
     }
 
     [Test]
-    public async Task ChannelEvents_DoNotTriggerGoalStepOrActionBindings()
+    public async Task AChannelWrite_FiresNoGoalStepOrActionBinding()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s8-iso");
-        var ch = StreamChannel.Memory("c");
-        app.User.Channel.Register(ch);
-
-        bool goalFired = false;
-        app.Event.Register(new EventBinding(Trigger.BeforeGoal,
-            (_, _, _) => { goalFired = true; return Task.FromResult(app.Ok()); }));
+        var ch = Registered("c");
+        var fired = false;
+        app.goal.Own().Bind("start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
 
         await ch.WriteAsync(app.Ok("x"));
-        await Assert.That(goalFired).IsFalse();
-    }
 
-    [Test]
-    public async Task EventsActiveSet_IsInstanceScoped_NotShared()
-    {
-        // Regression probe for B1: `_active` is an instance field, not static.
-        // If it ever becomes static, evB sees evA's active set.
-        var evA = new global::app.channel.@event.@this();
-        var evB = new global::app.channel.@event.@this();
-        using var _ = evA.Enter("X");
-        await Assert.That(evA.IsActive("X")).IsTrue();
-        await Assert.That(evB.IsActive("X")).IsFalse();
-    }
-
-    [Test]
-    public async Task Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow()
-    {
-        // Regression probe for L1: Enter must copy-on-write.
-        // If a child mutates the parent's HashSet in place, the parent flow
-        // sees the child's id while the child is still inside its scope.
-        // (Naive Task.WhenAll passes either way — children Add then Remove.)
-        var ev = new global::app.channel.@event.@this();
-        using var _ = ev.Enter("A");
-        var inside = new TaskCompletionSource();
-        var release = new TaskCompletionSource();
-        var t = Task.Run(async () =>
-        {
-            using var __ = ev.Enter("B");
-            inside.SetResult();
-            await release.Task;
-        });
-        await inside.Task;
-        var leaked = ev.IsActive("B");
-        release.SetResult();
-        await t;
-        await Assert.That(leaked).IsFalse();
+        await Assert.That(fired).IsFalse();
     }
 
     private sealed class ThrowOnWriteChannel : Channel
@@ -292,6 +251,6 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
+        public override Task<Data> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok("answer-from-resume"));
     }
 }

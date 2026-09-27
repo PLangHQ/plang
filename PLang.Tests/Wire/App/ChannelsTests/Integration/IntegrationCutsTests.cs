@@ -52,22 +52,19 @@ public class IntegrationCutsTests
         app.User.Channel.Register(audit);
         app.User.Channel.Register(metrics);
 
-        // BeforeWrite on audit: reject if value contains "REJECT".
-        audit.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, payload) =>
-        {
-            if (payload.Peek()?.ToString() is { } s && s.Contains("REJECT"))
-                throw new InvalidOperationException("rejected by approval");
-            return Task.FromResult(app.Ok());
-        }));
+        // Before a write to audit: refuse a value containing "REJECT" — the refusal is the write's answer.
+        audit.Own().Bind("write", global::app.@event.When.before, (_, payload, ctx) =>
+            Task.FromResult(payload.Peek()?.ToString() is { } s && s.Contains("REJECT")
+                ? ctx.Error(new global::app.error.Error("rejected by approval", "Rejected", 400))
+                : ctx.Ok()),
+            app.User, global::app.@event.binding.Scope.actor);
 
-        // AfterWrite on audit: write "+1" to metrics. Stage 8 contract:
-        // BeforeWrite-abort suppresses AfterWrite — so metrics fires only on
-        // the successful write.
-        audit.Events.Add(new EventBinding(Trigger.AfterWrite, async (_, _, _) =>
+        // After a write to audit (it runs on every result): count the writes that went through.
+        audit.Own().Bind("write", global::app.@event.When.after, async (_, result, ctx) =>
         {
-            await metrics.WriteAsync(app.Ok("+1"));
-            return app.Ok();
-        }));
+            if (result.Success) await metrics.WriteAsync(app.Ok("+1"));
+            return ctx.Ok();
+        }, app.User, global::app.@event.binding.Scope.actor);
 
         var ok = await audit.WriteAsync(app.Ok("ok-payload"));
         var bad = await audit.WriteAsync(app.Ok("REJECT-this"));

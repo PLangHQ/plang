@@ -131,11 +131,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public AppStatics Statics { get; } = new();
 
     /// <summary>
-    /// Global event collection for the application.
-    /// </summary>
-    public global::app.@event.list.@this Event { get; }
-
-    /// <summary>
     /// The type named <c>module</c> — <c>%!app.module%</c>: its <c>list</c> is the app's modules (and the
     /// discovery that registers their actions), <c>Get(name)</c> is one module as a result.
     /// </summary>
@@ -224,11 +219,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public global::app.type.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
-    // The types a step and an action start through — the type list's own entries, held because every step and
-    // action start reaches their events and a walk of the list copies it. Not a second store: a type's name
-    // can't be registered twice, so these can't drift from the list.
+    // The types a step and an action start through, and a channel writes, reads and asks through — the type
+    // list's own entries, held because every start and every channel write reaches their events and a walk of
+    // the list copies it. Not a second store: a type's name can't be registered twice, so these can't drift.
     internal global::app.type.@this step { get; }
     internal global::app.type.@this action { get; }
+    internal global::app.type.@this channel { get; }
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
@@ -293,7 +289,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
         actor = new(this);
 
-        Event = new global::app.@event.list.@this();
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         type = new(this);
@@ -312,6 +307,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         type.list.Replace(variable);
         step = type.list["step"];
         action = type.list["action"];
+        channel = type.list["channel"];
         System.Setting.Written += Refresh;
         User.Setting.Written += Refresh;
 

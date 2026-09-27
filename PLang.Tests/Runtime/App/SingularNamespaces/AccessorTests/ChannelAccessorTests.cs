@@ -46,7 +46,8 @@ public class ChannelAccessorTests
     // Polymorphism replaces the registry's `is channel.type.stream.@this` type-switch.
     [Test] public async Task StreamChannel_Write_UsesTheStreamOptimizedOverride()
     {
-        var streamWrite = typeof(global::app.channel.type.stream.@this).GetMethod("Write");
+        // the transport Write (a channel, being an item, also has item's Write(IWriter) — its serialize)
+        var streamWrite = typeof(global::app.channel.type.stream.@this).GetMethod("Write", [typeof(Data), typeof(CancellationToken)]);
         await Assert.That(streamWrite).IsNotNull();
         await Assert.That(streamWrite!.DeclaringType).IsEqualTo(typeof(global::app.channel.type.stream.@this));
     }
@@ -64,9 +65,10 @@ public class ChannelAccessorTests
         foreach (var n in new[] { "Write", "Read", "Ask" })
             await Assert.That(listType.GetMethod(n)).IsNull();
 
-        // Polymorphic shape lives on the element.
+        // Polymorphic shape lives on the element (the transport Write, beside item's serialize Write(IWriter)).
         var elem = typeof(global::app.channel.@this);
-        foreach (var n in new[] { "Write", "Read", "Ask" })
+        await Assert.That(elem.GetMethod("Write", [typeof(Data), typeof(CancellationToken)])).IsNotNull();
+        foreach (var n in new[] { "Read", "Ask" })
             await Assert.That(elem.GetMethod(n)).IsNotNull();
     }
 

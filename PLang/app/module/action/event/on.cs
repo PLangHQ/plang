@@ -63,8 +63,22 @@ public partial class On : IContext
             call: call,
             channelName: ChannelName == null ? null : (await ChannelName.Value())?.Clr<string>());
 
-        // Registered on the target actor's events: a channel trigger fires from there; for the others it is
-        // the id event.remove finds, holding the on.start binding it stands for.
+        // A channel trigger binds on the named channel's own event, for the target actor; with no channel of that
+        // name there is nothing to bind on — the step's answer is the error.
+        global::app.channel.@this? channel = null;
+        if (Channel(trigger) is { } on)
+        {
+            var name = binding.ChannelName;
+            channel = string.IsNullOrEmpty(name) ? null : targetActor.Channel.Get(name);
+            if (channel == null)
+                return Context.Error<global::app.type.item.text.@this>(new global::app.error.ServiceError(
+                    $"There is no channel '{name}' on {targetActor.Name} to bind {trigger} on", "ChannelNotFound", 404));
+            binding.Targets.Add(channel.Own().Bind(on.Event, on.When,
+                async (_, _, _) => await call.Start(targetActor.Context),
+                targetActor, global::app.@event.binding.Scope.actor));
+        }
+
+        // Registered on the target actor's events: the id event.remove finds, holding the binding it stands for.
         targetActor.Context.Events.Register(binding);
 
         if (Target(trigger) is { } at)
@@ -82,6 +96,17 @@ public partial class On : IContext
 
         return Context.Ok<global::app.type.item.text.@this>(binding.Id);
     }
+
+    // The channel event a channel trigger binds on, and the side; null for the rest.
+    private (string Event, When When)? Channel(Trigger trigger) => trigger switch
+    {
+        global::app.@event.Trigger.BeforeWrite => ("write", When.before),
+        global::app.@event.Trigger.AfterWrite => ("write", When.after),
+        global::app.@event.Trigger.BeforeRead => ("read", When.before),
+        global::app.@event.Trigger.AfterRead => ("read", When.after),
+        global::app.@event.Trigger.OnAsk => ("ask", When.after),
+        _ => null,
+    };
 
     // The type whose on.start a goal, step or action trigger binds on, and the side; null for the rest.
     private (string Type, When When)? Target(Trigger trigger) => trigger switch

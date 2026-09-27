@@ -12,6 +12,8 @@ public class ItemsHoldNoContextTests
     private static readonly System.Type[] Exceptions =
     {
         typeof(global::app.actor.@this),
+        // A channel is a live resource of its actor, as the actor is: it holds the context its I/O and events run in.
+        typeof(global::app.channel.@this),
         typeof(global::app.error.Error),
         typeof(global::app.snapshot.@this),
         // The signing handler doubles as a value type; it is parked with signing.

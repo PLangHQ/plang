@@ -46,7 +46,7 @@ public class Stage1_ChannelBaseTests
     {
         var baseType = typeof(Channel);
         await Assert.That(baseType.IsAbstract).IsTrue();
-        var write = baseType.GetMethod("Write");
+        var write = baseType.GetMethod("Write", [typeof(Data), typeof(CancellationToken)]);   // the transport Write
         var read = baseType.GetMethod("Read");
         var ask = baseType.GetMethod("Ask");
         await Assert.That(write).IsNotNull();

@@ -5,6 +5,33 @@
   "app.actor": {
     "word": "actor"
   },
+  "app.channel": {
+    "word": "channel"
+  },
+  "app.channel.type.file": {
+    "word": null
+  },
+  "app.channel.type.goal": {
+    "word": null
+  },
+  "app.channel.type.http": {
+    "word": null
+  },
+  "app.channel.type.message": {
+    "word": null
+  },
+  "app.channel.type.noop": {
+    "word": null
+  },
+  "app.channel.type.session": {
+    "word": null
+  },
+  "app.channel.type.stream": {
+    "word": null
+  },
+  "app.channel.type.test": {
+    "word": null
+  },
   "app.error.error": {
     "word": "error"
   },

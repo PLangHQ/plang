@@ -390,14 +390,25 @@ public sealed class @this : IDisposable
         return (data.@this<T>)data;
     }
 
-    // The bindings running in this context: a binding doesn't fire inside its own handler.
-    private readonly ConcurrentDictionary<object, byte> _activeEventBindings = new();
+    // The bindings running in this context's current flow: a binding doesn't fire inside its own handler, while a
+    // parallel flow on the same context (its own async flow) fires it too. Set per flow: a flow forked from one
+    // running a binding inherits the set, and leaving a handler restores what the flow held before it.
+    private readonly AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?> _runningBindings = new();
 
-    /// <summary>True, marking it running, when <paramref name="binding"/> is not already running here.</summary>
-    internal bool TryEnterEvent(object binding) => _activeEventBindings.TryAdd(binding, 0);
+    /// <summary>True, marking it running in this flow, when <paramref name="binding"/> is not already running in it.</summary>
+    internal bool TryEnterEvent(object binding)
+    {
+        var running = _runningBindings.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(ReferenceEqualityComparer.Instance);
+        if (running.Contains(binding)) return false;
+        _runningBindings.Value = running.Add(binding);
+        return true;
+    }
 
-    /// <summary>Marks <paramref name="binding"/> as no longer running here.</summary>
-    internal void ExitEvent(object binding) => _activeEventBindings.TryRemove(binding, out _);
+    /// <summary>Marks <paramref name="binding"/> as no longer running in this flow.</summary>
+    internal void ExitEvent(object binding)
+    {
+        if (_runningBindings.Value is { } running) _runningBindings.Value = running.Remove(binding);
+    }
 
     /// <summary>
     /// Requests cancellation of this execution.

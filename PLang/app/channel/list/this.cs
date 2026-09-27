@@ -20,15 +20,15 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// The owning App. Child channels navigate via <c>Channel.Channels.App</c>
-    /// to reach app-level surfaces (e.g. <c>app.Event</c> bindings) without
-    /// going through Actor — Service-owned Channels have no Actor.
+    /// to reach app-level surfaces without going through Actor — Service-owned
+    /// Channels have no Actor.
     /// </summary>
     public app.@this App => _app;
 
     /// <summary>
     /// The actor this collection belongs to. Set by <see cref="Actor.@this"/> right
     /// after construction. <see cref="Register"/> stamps it onto each registered
-    /// channel so channel-event firing can read from <c>Actor.Context.Events</c>.
+    /// channel, whose events fire in its context.
     /// Null for Service-owned Channels (Service is not an Actor).
     /// </summary>
     internal global::app.actor.@this Actor { get; set; } = null!;

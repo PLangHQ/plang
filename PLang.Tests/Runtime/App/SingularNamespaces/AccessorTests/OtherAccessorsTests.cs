@@ -10,26 +10,6 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 // no longer exist anywhere in the codebase.
 public class OtherAccessorsTests
 {
-    [Test] public async Task AppEvent_RegisterUnregister_RoundTripsBinding()
-    {
-        await using var app = TestApp.Create("/test");
-        var binding = new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.Trigger.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
-        var id = app.Event.Register(binding);
-        await Assert.That(id).IsNotNull();
-        await Assert.That(app.Event.Unregister(id)).IsTrue();
-    }
-
-    [Test] public async Task AppEvent_GetBindings_ReturnsTheRegisteredBindings()
-    {
-        await using var app = TestApp.Create("/test");
-        var binding = new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.Trigger.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
-        app.Event.Register(binding);
-        var bindings = app.Event.list;
-        await Assert.That(bindings.Any(b => b.Id == binding.Id)).IsTrue();
-    }
-
     [Test] public async Task AppFormat_LookupByName_ReturnsMimeAndCompressibleInfo()
     {
         await using var app = TestApp.Create("/test");
@@ -58,14 +38,13 @@ public class OtherAccessorsTests
     // run-wide log is CallStack.Audit. There is no app.Error registry to accessor-test — the
     // behaviour is pinned by ErrorInPlayTests.
 
-    // Minimal Stage 3: singular accessors (app.Goal, app.Channel, app.Event, app.Module) are
-    // present alongside the originals.  Deletion of the App* aliases is deferred to the
-    // full call-site sweep — this guard asserts the singular surface is in place.
+    // The singular accessors (app.goal, app.module, actor.Channel) are the surface; there is no app-wide
+    // event list — a thing fires its own events.
     [Test] public async Task AppStarAliases_AppGoalsAppChannelsAppEventsAppModules_NoLongerExist()
     {
         var appType = typeof(global::app.@this);
         await Assert.That(appType.GetProperty("goal")).IsNotNull();
-        await Assert.That(appType.GetProperty("Event")).IsNotNull();
+        await Assert.That(appType.GetProperty("Event")).IsNull();
         await Assert.That(appType.GetProperty("module")).IsNotNull();
         await Assert.That(typeof(global::app.actor.@this).GetProperty("Channel")).IsNotNull();
     }
