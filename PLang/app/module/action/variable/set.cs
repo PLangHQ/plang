@@ -21,15 +21,15 @@ public partial class Set : IContext, IScope
     public async Task Scope()
     {
         var name = await Name.Value();
-        if (name == null || name.IsMalformed || name.Name.StartsWith('!') || !string.IsNullOrEmpty(name.Property)) return;
+        if (name == null || name.Code.Count != 1 || name.Code.Root.Name.StartsWith('!')) return;
         if (Value.Peek() is global::app.type.item.source { IsVariable: true } source)
         {
-            if (await source.Get(Context) is { IsInitialized: true } known) await Context.Variable.Set(name.Name, known);
+            if (await source.Get(Context) is { IsInitialized: true } known) await name.Set(known, Context);
             return;
         }
         // a text with variables inside is unknown; a literal is read as the value it is
         if (Value.HasVariableReference) return;
-        if (await Value.Value() is { IsNull: false }) await Context.Variable.Set(name.Name, Value);
+        if (await Value.Value() is { IsNull: false }) await name.Set(Value, Context);
     }
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
@@ -124,53 +124,19 @@ public partial class Set : IContext, IScope
             return Context.Error(Name.Error
                 ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
-        // Variable.Resolve flagged the slot as syntactically malformed
-        // (`%x!!cost%`, `%x!a!b%`, etc.) — fail with a typed error rather
-        // than silently writing to Properties[""] or replacing the binding
-        // with a junk Name.
-        if (name.IsMalformed)
-            return Context.Error(
-                new global::app.error.ServiceError(
-                    $"Variable reference '{name.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
-                    "InvalidVariableReference", 400));
-
         // %!path% write → a setting on context.Setting (the write side of the setting front door),
         // not a variable: `set %!http.request.timeout% = 5` lands where the generator seam reads it
         // (step → %!module.action.param% → %!module.param% → [Default]). The reserved !ask sentinel
         // (callback resume) stays a variable. (Build-time schema validation of the path is deferred.)
-        if (name.Name.StartsWith('!') && !name.Name.StartsWith("!ask"))
+        if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask"))
         {
             await Context.Setting.Set(global::app.setting.Storage.InMemory, name.Name[1..], Value);
             return Value;
         }
 
-        // %x!cost% target — mutate the named variable's Properties[key]
-        // instead of replacing the binding. Same action, two stores:
-        // bare-name slots hit Value, !-suffixed slots hit Properties.
-        // Goes through Variable.Resolve's parsing — see Variable.Property.
-        var property = name.Property;
-        if (!string.IsNullOrEmpty(property))
-        {
-            var target = await Context.Variable.Get(name.Name);
-            if (target == null || !target.IsInitialized)
-                return Context.Error(
-                    new global::app.error.ServiceError($"Variable '{name.Name}' is not set",
-                        "VariableNotFound", 400));
-            try
-            {
-                target.Properties[property] = await Value.Value();
-            }
-            catch (ArgumentException ex)
-            {
-                return Context.Error(
-                    new global::app.error.ServiceError(ex.Message, "InvalidPropertyValue", 400));
-            }
-            return target;
-        }
-
         if (await AsDefault.ToBooleanAsync())
         {
-            var existing = await Context.Variable.Get(name);
+            var existing = await name.Start(Context);
             if (existing.IsInitialized)
                 return existing;
         }
@@ -338,8 +304,9 @@ public partial class Set : IContext, IScope
         // No forced type — just set the data. Data flows: bind the Value's Data under the target
         // name as-is, without inspecting or computing it (no AsCanonical, no .Value). A reference
         // or template resolves/renders on its own door at read; a literal is itself. A self-write
-        // (`set %a%=%a%`) is dropped at build, never handled here.
-        return await Context.Variable.Set(name.Name, Value);
+        // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
+        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties.
+        return await name.Set(Value, Context);
     }
 
     /// <summary>

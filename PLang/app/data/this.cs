@@ -516,7 +516,7 @@ public partial class @this
         // is a violated invariant, so let it crash rather than nurse it with `?.`.
         if (_item is global::app.type.item.variable.@this v)
         {
-            var resolved = await _context.Variable.Get(v.Name);
+            var resolved = await v.Start(_context);
             if (resolved == null || !resolved.IsInitialized)
             {
                 var notFound = new @this(v.Name, null, null, Parent, context: _context);

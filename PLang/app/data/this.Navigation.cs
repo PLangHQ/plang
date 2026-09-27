@@ -108,16 +108,6 @@ public partial class @this
         var parent = await Get(path.Parent);
         if (!parent.IsInitialized) return parent;          // parent absent → surface it, don't invent
 
-        // Materialise a source-backed parent (a `%cfg%` still raw json, a template container still a
-        // wire) so the write lands on the PARSED value, not the raw form. The write target is the
-        // materialized value itself — a cacheable source rebinds through the door, but a
-        // re-resolving template container (Cacheable=false) never rebinds, so relying on Peek() would
-        // land the write on the stale wire. Use the materialized value directly and rebind the parent
-        // to the written result, which snapshots a template container into its plain resolved form on
-        // first write (correct for a dict built up across several sets).
-        var target = await parent.Value();
-        if (parent.Error?.Key == "MaterializeFailed") return _context?.Error(parent.Error) ?? parent;
-
         // Resolve the leaf key here (the walk owns key resolution, mirroring the read side) — a
         // bracket index resolves against the store; a member is its own name.
         var leaf = path.Last;
@@ -128,12 +118,33 @@ public partial class @this
         else
             key = ((global::app.type.item.variable.path.Segment.Member)leaf).Name;
 
+        return await parent.Set(key, isIndex, value);
+    }
+
+    /// <summary>
+    /// Writes <paramref name="value"/> as this value's child at <paramref name="key"/> —
+    /// <paramref name="isIndex"/> tells a position (<c>[0]</c>) from a member (<c>.name</c>). The item
+    /// owns the write; this Data rebinds when the item comes back replaced (a json host materialises
+    /// into a dict; a clr host mutates in place, so identity holds). Answers this Data.
+    /// </summary>
+    public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
+    {
+        // Materialise a source-backed value (a `%cfg%` still raw json, a template container still a
+        // wire) so the write lands on the PARSED value, not the raw form. The write target is the
+        // materialized value itself — a cacheable source rebinds through the door, but a
+        // re-resolving template container (Cacheable=false) never rebinds, so relying on Peek() would
+        // land the write on the stale wire. Use the materialized value directly and rebind to the
+        // written result, which snapshots a template container into its plain resolved form on
+        // first write (correct for a dict built up across several sets).
+        var target = await Value();
+        if (Error?.Key == "MaterializeFailed") return _context?.Error(Error) ?? this;
+
         if (target is null)
-            return _context?.NotFound(key) ?? parent;
+            return _context?.NotFound(key) ?? this;
 
         var written = await target.Set(key, isIndex, value, _context);
-        if (!ReferenceEquals(written, parent.Peek())) parent.SetValue(written);
-        return parent;
+        if (!ReferenceEquals(written, Peek())) SetValue(written);
+        return this;
     }
 
     /// <summary>

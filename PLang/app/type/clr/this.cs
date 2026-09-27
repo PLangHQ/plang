@@ -96,6 +96,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         global::app.data.@this parent, string key)
         => Get(parent, global::app.type.item.variable.path.@this.Parse(key));
 
+    /// <summary>One step into the host: its <see cref="Kind"/> descends by the key — a position or a
+    /// member, which a sequence host answers differently — and the landed node's own kind makes the
+    /// child.</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
+        global::app.data.@this parent, string key, bool isIndex)
+    {
+        var (found, node) = Kind.Descend(Value, key, isIndex, parent.Context);
+        if (!found) return System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
+        var kind = node is null ? Kind : parent.Context.App.type.list.Kind(node.GetType());
+        return System.Threading.Tasks.ValueTask.FromResult(kind.Data(parent.Name, node, parent, parent.Context));
+    }
+
     /// <summary>The whole-path handoff — the carrier hands its <see cref="Kind"/> the entire
     /// tail so the kind walks it in ONE call (and, later, in its OWN path language:
     /// jsonpath/css). <c>data.Get</c> hands the value-plane path here; infra/method

@@ -1,12 +1,10 @@
-using app.type.item.variable;
 using @this = global::app.type.item.variable.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
-// Contract tests for App.Variables.Variable — the typed variable-name carrier introduced
-// in architect/v5 to replace [VariableName] string. Variable.Resolve is invoked by the
-// source generator's Data<T> emit through the Data.Value<T> raw-name dispatch (Variable
-// is an IName). Symmetry contract: both "%x%" and "x" produce Name == "x".
+// A variable is its text and its code. Variable.Resolve is invoked by the source generator's
+// Data<T> emit through the Data.Value<T> raw-name dispatch (variable is an IName); "%x%" and the
+// bare "x" a name slot may carry are the same variable.
 
 public class VariableResolveTests
 {
@@ -19,41 +17,46 @@ public class VariableResolveTests
     public async Task TearDown() { await _app.DisposeAsync(); }
 
     [Test]
-    public async Task Resolve_PercentWrapped_StripsAndFlags()
+    public async Task Resolve_PercentWrapped_IsTextAndRootCode()
     {
         var v = @this.Resolve("%x%", _app.User.Context);
 
+        await Assert.That(v.Text).IsEqualTo("%x%");
         await Assert.That(v.Name).IsEqualTo("x");
-        await Assert.That(v.RawValue).IsEqualTo("%x%");
-        await Assert.That(v.WasPercentWrapped).IsTrue();
+        await Assert.That(v.Code.Count).IsEqualTo(1);
+        await Assert.That(v.Code.Root.Name).IsEqualTo("x");
     }
 
     [Test]
-    public async Task Resolve_BareName_KeepsNameSurfacesFlag()
+    public async Task Resolve_BareName_IsTheSameVariable()
     {
         var v = @this.Resolve("x", _app.User.Context);
 
+        await Assert.That(v.Text).IsEqualTo("%x%");
         await Assert.That(v.Name).IsEqualTo("x");
-        await Assert.That(v.RawValue).IsEqualTo("x");
-        await Assert.That(v.WasPercentWrapped).IsFalse();
     }
 
     [Test]
-    public async Task Resolve_EmptyString_ProducesEmptyVariable()
+    public async Task Resolve_EmptyString_IsNotAVariable()
     {
-        var v = @this.Resolve("", _app.User.Context);
-
-        await Assert.That(v.Name).IsEqualTo("");
-        await Assert.That(v.RawValue).IsEqualTo("");
-        await Assert.That(v.WasPercentWrapped).IsFalse();
+        await Assert.That(() => @this.Resolve("", _app.User.Context))
+            .Throws<global::app.error.AppException>();
     }
 
-    // A born Data<Variable> slot — its value is already a Variable (the wire
-    // boundary births it via type.Judge → Variable.Resolve). The typed ask
-    // passes the Variable through unchanged: a name is never rendered against
-    // the store, so an uninitialized "x" still yields its Variable.
     [Test]
-    public async Task SlotData_PercentWrapped_AsVariable_NameIsX()
+    public async Task Convert_NotAVariable_DeclinesWithTheParsersReason()
+    {
+        var born = @this.Convert("%x!!cost%", null, _app.User.Context);
+
+        await born.IsFailure();
+        await Assert.That(born.Error!.Key).IsEqualTo("InvalidVariable");
+    }
+
+    // A born Data<variable> slot — its value is already a variable. The typed ask passes it
+    // through unchanged: a name is never rendered against the store, so an unset "x" still
+    // yields its variable.
+    [Test]
+    public async Task SlotData_AsVariable_NameIsX()
     {
         var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context), context: _app.User.Context);
 
@@ -61,53 +64,34 @@ public class VariableResolveTests
 
         await Assert.That(resolved).IsNotNull();
         await Assert.That(resolved!.Name).IsEqualTo("x");
-        await Assert.That(resolved.WasPercentWrapped).IsTrue();
     }
 
-    // A variable carries identity, not value: even when "x" holds 5 in the
-    // store, the ask returns the Variable (Name "x"), never x's value.
+    // A variable carries identity, not value: even when "x" holds 5, the ask returns the variable.
     [Test]
-    public async Task SlotData_PercentWrapped_AsVariable_IgnoresExistingValue()
+    public async Task SlotData_AsVariable_IgnoresExistingValue()
     {
-        _app.User.Context.Variable.Set("x", 5);
+        await _app.User.Context.Variable.Set("x", 5);
         var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context), context: _app.User.Context);
 
         var resolved = await slot.Value<@this>();
 
-        await Assert.That(resolved!.Name).IsEqualTo("x");
-        await Assert.That(resolved.WasPercentWrapped).IsTrue();
+        await Assert.That(resolved!.Text).IsEqualTo("%x%");
     }
 
-    // Bare "x" (no percent) births the same Variable — symmetry with "%x%".
-    [Test]
-    public async Task SlotData_BareName_AsVariable_NameIsX()
-    {
-        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("x", _app.User.Context), context: _app.User.Context);
-
-        var resolved = await slot.Value<@this>();
-
-        await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.Name).IsEqualTo("x");
-    }
-
-    // Implicit Variable→string conversion fires at any string-expecting boundary
-    // (e.g. Variables.Get(name.Value), method-call sites in handlers).
     [Test]
     public async Task ImplicitConversion_ToString_ReturnsName()
     {
-        @this v = new global::app.type.item.variable.@this("x", "%x%", true);
+        @this v = new @this("x");
 
         string s = v;
 
         await Assert.That(s).IsEqualTo("x");
     }
 
-    // String interpolation calls ToString — overridden to return Name so error
-    // messages and logs read naturally.
     [Test]
     public async Task ToString_ReturnsName_ForInterpolationFriendliness()
     {
-        var v = new global::app.type.item.variable.@this("listName", "%listName%", true);
+        var v = new @this("listName");
 
         var formatted = $"Variable '{v}' was missing";
 

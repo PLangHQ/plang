@@ -78,15 +78,15 @@ public class OutAttributeInventoryTests
     }
 
     // 4. Variable ------------------------------------------------------------
-    [Test] public async Task Variable_Name_HasOut()
+    [Test] public async Task Variable_Text_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.type.item.variable.@this), "Name")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.type.item.variable.@this), "Text")).IsTrue();
     }
-    [Test] public async Task Variable_RawValue_WasPercentWrapped_NotOut()
+    [Test] public async Task Variable_Name_Code_NotOut()
     {
         var t = typeof(global::app.type.item.variable.@this);
-        await Assert.That(HasOut(t, "RawValue")).IsFalse();
-        await Assert.That(HasOut(t, "WasPercentWrapped")).IsFalse();
+        await Assert.That(HasOut(t, "Name")).IsFalse();
+        await Assert.That(HasOut(t, "Code")).IsFalse();
     }
 
     // 5. Data itself ---------------------------------------------------------

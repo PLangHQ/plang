@@ -71,6 +71,28 @@ app/type/item/this.cs                   Variable (read-only, shared empty), HasV
 6. **Explicit opt-in:** a method is reachable from a variable only when its type marks it (`[LlmBuilder]`
    if it fits, else one small attribute). Unmarked or missing → "text has no method 'foo'".
 
+7. **Index keys (approved):** `[0]` a number, `["k"]` a text, a bare path (`[idx]`) or `[%i%]` a
+   variable key with its own code and no type. The silent literal fallback goes: an unset index
+   variable is IndexNotSet. os/ and Tests/ have 9 bare indexes, all real variables; 0 relied on the
+   fallback. Plang-visible: `%dict[key]%` meaning the literal "key" must now be `%dict["key"]%`.
+
+## 6b decisions (as built)
+
+- Hops are items (`code.@this` is a `list<Hop>`, like `action.list`); the base is `Hop`, not
+  `hop.@this`, because the startup scan would register an abstract `@this` item as a type `hop`.
+- A reference also ends at a space outside quotes, parentheses and brackets (`50% of %total%` holds
+  one reference). The old `Formal.cs:418` regex had the same rule; `RefRx` didn't.
+- Forms the old hand scan called malformed are now plain code: `%x.kind!cost%` (the child's binding),
+  `%x!a!b%`, `%!x!cost%`. `%x!!cost%` and `%x!%` don't parse (Resolve throws InvalidVariable, the
+  Convert door declines with the parser's reason). `RawValue`, `WasPercentWrapped`, `IsMalformed`,
+  `Property` are gone; `Name` (the text without its `%`) stays until 6f moves the string callers.
+- `variable.set` writes through `name.Set(Value, Context)`; a `!` write on an unset variable is
+  VariableNotFound as before; a member/index write on an unset root makes it an empty dict as before.
+- item gains `Get(parent, key, isIndex)` (the read twin of `Set(key, isIndex, …)`); clr answers it
+  per step through its kind. Data gains `Set(key, isIndex, value)` (the leaf of `Set(path, …)`).
+- Still running beside the new code until 6f: `data.Get(path)`'s walker (its `!` lookup and
+  IndexNotSet are duplicated in the hops), the store's path handling, text's RefRx render.
+
 ## Questions for plang-40 (proceeding on 6a meanwhile)
 
 1. **Inner slots.** A marked dict/list row (`{"a":"%x%"}`) births its inner texts when it materializes,

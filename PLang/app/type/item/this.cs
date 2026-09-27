@@ -236,6 +236,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.data.@this parent, string key)
         => new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
 
+    /// <summary>The child at <paramref name="key"/>, where <paramref name="isIndex"/> tells a position
+    /// (<c>[0]</c>) from a member (<c>.name</c>) — the read twin of <see cref="Set"/>. A value that
+    /// answers both the same way is navigated by key; a host with both faces (a sequence: element
+    /// vs <c>.Count</c>) overrides.</summary>
+    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
+        global::app.data.@this parent, string key, bool isIndex)
+        => Get(parent, key);
+
     /// <summary>
     /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,
     /// the courier (<c>Data.EnumerateItems</c>) only delegates here. A leaf is a

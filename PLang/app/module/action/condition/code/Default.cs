@@ -78,7 +78,7 @@ public sealed class Default : IEvaluator
     private static async Task<data.@this?> TolerateAbsentVariable(data.@this? d)
     {
         if (d?.Peek() is global::app.type.item.variable.@this v && d.Context != null
-            && !(await d.Context.Variable.Get(v.Name)).IsInitialized)
+            && !(await v.Start(d.Context)).IsInitialized)
             return null;
         return d;
     }

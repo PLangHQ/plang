@@ -1,3 +1,5 @@
+using Code = global::app.type.item.variable.code;
+
 namespace PLang.Tests.App;
 
 public class VariableResolveTest : System.IAsyncDisposable
@@ -5,76 +7,59 @@ public class VariableResolveTest : System.IAsyncDisposable
     private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/varresolve-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    [Test] public async Task Resolve_Bang_SplitsNameAndProperty()
+    private global::app.type.item.variable.@this Resolve(string raw)
+        => global::app.type.item.variable.@this.Resolve(raw, _app.User.Context);
+
+    private static string[] Hops(global::app.type.item.variable.@this v)
+        => v.Code.Items().Select(h => $"{h.Kind}:{h.Text}").ToArray();
+
+    [Test] public async Task Resolve_Bang_IsARootAndABindingProperty()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%response!cost%", _app.User.Context);
-        await Assert.That(v.Name).IsEqualTo("response");
-        await Assert.That(v.Property).IsEqualTo("cost");
-        await Assert.That(v.IsMalformed).IsFalse();
+        var v = Resolve("%response!cost%");
+        await Assert.That(Hops(v)).IsEquivalentTo(new[] { "variable:response", "property:!cost" });
+        await Assert.That(((Code.Property)v.Code[1]).Name).IsEqualTo("!cost");
     }
 
-    [Test] public async Task Resolve_NegationPrefix_KeepsBangInName()
+    [Test] public async Task Resolve_BangRoot_KeepsBangInRootName()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%!flag%", _app.User.Context);
-        await Assert.That(v.Name).IsEqualTo("!flag");
-        await Assert.That(v.Property).IsNull();
-        await Assert.That(v.IsMalformed).IsFalse();
+        var v = Resolve("%!flag%");
+        await Assert.That(v.Code.Root.Name).IsEqualTo("!flag");
+        await Assert.That(v.Code.Count).IsEqualTo(1);
     }
 
-    [Test] public async Task Resolve_NegationPlusProperty_FlagsMalformed()
+    [Test] public async Task Resolve_BangRootWithBangProperty_IsTwoHops()
     {
-        // Negation prefix + property suffix together (`%!x!cost%`) has no
-        // defined semantics — caught at parse time so write paths fail with
-        // a typed syntax error instead of VariableNotFound on "!x".
-        var v = global::app.type.item.variable.@this.Resolve("%!response!cost%", _app.User.Context);
-        await Assert.That(v.IsMalformed).IsTrue();
-        await Assert.That(v.Property).IsNull();
+        var v = Resolve("%!response!cost%");
+        await Assert.That(Hops(v)).IsEquivalentTo(new[] { "variable:!response", "property:!cost" });
     }
 
-    [Test] public async Task Resolve_DoubleBang_FlagsMalformed_NoSplit()
+    [Test] public async Task Resolve_ChainedBang_IsAHopEach()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%x!!cost%", _app.User.Context);
-        await Assert.That(v.IsMalformed).IsTrue();
-        await Assert.That(v.Property).IsNull();
+        var v = Resolve("%x!a!b%");
+        await Assert.That(Hops(v)).IsEquivalentTo(new[] { "variable:x", "property:!a", "property:!b" });
     }
 
-    [Test] public async Task Resolve_TripleBang_FlagsMalformed_NoSplit()
+    [Test] public async Task Resolve_BangAfterDot_ReadsTheChildsBinding()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%x!!!cost%", _app.User.Context);
-        await Assert.That(v.IsMalformed).IsTrue();
-        await Assert.That(v.Property).IsNull();
+        var v = Resolve("%x.kind!cost%");
+        await Assert.That(Hops(v)).IsEquivalentTo(new[] { "variable:x", "property:.kind", "property:!cost" });
     }
 
-    [Test] public async Task Resolve_ChainedBang_FlagsMalformed_NoSplit()
+    [Test] public async Task Resolve_DoubleBang_IsNotAVariable()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%x!a!b%", _app.User.Context);
-        await Assert.That(v.IsMalformed).IsTrue();
-        await Assert.That(v.Property).IsNull();
+        await Assert.That(() => Resolve("%x!!cost%")).Throws<global::app.error.AppException>();
     }
 
-    [Test] public async Task Resolve_EmptyPropertyKey_FlagsMalformed_NoSplit()
+    [Test] public async Task Resolve_EmptyPropertyKey_IsNotAVariable()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%x!%", _app.User.Context);
-        await Assert.That(v.IsMalformed).IsTrue();
-        await Assert.That(v.Property).IsNull();
+        await Assert.That(() => Resolve("%x!%")).Throws<global::app.error.AppException>();
     }
 
-    [Test] public async Task Resolve_BangAfterDot_FlagsMalformed_NoSplit()
+    [Test] public async Task Resolve_PlainPath_IsAHopEach()
     {
-        var v = global::app.type.item.variable.@this.Resolve("%x.kind!cost%", _app.User.Context);
-        await Assert.That(v.IsMalformed).IsTrue();
-        await Assert.That(v.Property).IsNull();
-    }
-
-    [Test] public async Task Resolve_PlainPath_KeepsFullBodyOnName()
-    {
-        // Pre-Stage-4 behaviour preserved: `%x.y%` lands as Name="x.y" with no
-        // property suffix. The parser's '!' split is the only thing that
-        // shortens Name; '.'/'[' paths ride along on Name verbatim.
-        var v = global::app.type.item.variable.@this.Resolve("%planStep.actions%", _app.User.Context);
+        var v = Resolve("%planStep.actions%");
         await Assert.That(v.Name).IsEqualTo("planStep.actions");
-        await Assert.That(v.Property).IsNull();
-        await Assert.That(v.IsMalformed).IsFalse();
+        await Assert.That(Hops(v)).IsEquivalentTo(new[] { "variable:planStep", "property:.actions" });
     }
 
     [Test] public async Task VariableSet_BangSyntax_WritesProperty()
@@ -99,25 +84,19 @@ public class VariableResolveTest : System.IAsyncDisposable
         await Assert.That((await response.Properties.Value("cost"))).IsEqualTo(100);
     }
 
-    [Test] public async Task VariableSet_MalformedBangSyntax_ReturnsTypedError()
+    [Test] public async Task VariableSet_BangOnUnsetVariable_IsVariableNotFound()
     {
-        await using var app = TestApp.Create("/tmp/var-set-malformed-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var app = TestApp.Create("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.User.Context;
-
-        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
-        {
-            Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response")),
-            Value = app.User.Context.Ok("hello"),
-        }, context);
 
         var result = await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
-                global::app.type.item.variable.@this.Resolve("%response!!cost%", context)),
+                global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
             Value = app.User.Context.Ok(100),
         }, context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidVariableReference");
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
     }
 }
