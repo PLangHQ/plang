@@ -18,13 +18,13 @@ public class Default : IGrep
     {
         var text = data.Peek()?.ToString();
         if (text == null || string.IsNullOrEmpty(pattern))
-            return new @this(data.Name, "");
+            return new @this(data.Name, "", context: data.Context);
 
         var lines = text.Split('\n');
         var matchIndices = FindMatchingLines(lines, pattern);
 
         if (matchIndices.Count == 0)
-            return new @this(data.Name, "");
+            return new @this(data.Name, "", context: data.Context);
 
         if (contextLines <= 0)
         {
@@ -34,22 +34,22 @@ public class Default : IGrep
             {
                 sb.AppendLine($"{i + 1}: {lines[i]}");
             }
-            return new @this(data.Name, sb.ToString().TrimEnd());
+            return new @this(data.Name, sb.ToString().TrimEnd(), context: data.Context);
         }
 
         // With context lines
-        return FormatWithContext(lines, matchIndices, contextLines, data.Name);
+        return FormatWithContext(lines, matchIndices, contextLines, data);
     }
 
     public @this GrepCount(@this data, string pattern)
     {
         var text = data.Peek()?.ToString();
         if (text == null || string.IsNullOrEmpty(pattern))
-            return new @this(data.Name, 0);
+            return new @this(data.Name, 0, context: data.Context);
 
         var lines = text.Split('\n');
         var count = FindMatchingLines(lines, pattern).Count;
-        return new @this(data.Name, count);
+        return new @this(data.Name, count, context: data.Context);
     }
 
     private static List<int> FindMatchingLines(string[] lines, string pattern)
@@ -72,7 +72,7 @@ public class Default : IGrep
         return matches;
     }
 
-    private static @this FormatWithContext(string[] lines, List<int> matchIndices, int contextLines, string name)
+    private static @this FormatWithContext(string[] lines, List<int> matchIndices, int contextLines, @this data)
     {
         var sb = new StringBuilder();
         var printed = new HashSet<int>();
@@ -99,6 +99,6 @@ public class Default : IGrep
             needsSeparator = true;
         }
 
-        return new @this(name, sb.ToString().TrimEnd());
+        return new @this(data.Name, sb.ToString().TrimEnd(), context: data.Context);
     }
 }

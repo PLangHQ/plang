@@ -194,6 +194,53 @@ public class VariableCodeTests
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotWritable");
     }
 
+    // ---- text's own methods ----
+
+    private async Task<string> Read(string text) => (await (await One(text).Start(Context)).Value()).ToString()!;
+
+    [Test]
+    public async Task Method_TextsOwnMethods_AnswerText()
+    {
+        await Context.Variable.Set("name", "  a-b-c  ");
+
+        await Assert.That(await Read("%name.trim()%")).IsEqualTo("a-b-c");
+        await Assert.That(await Read("%name.trim().replace(\"-\", \" \")%")).IsEqualTo("a b c");
+        await Assert.That(await Read("%name.trim().toupper()%")).IsEqualTo("A-B-C");
+        await Assert.That(await Read("%name.trim().ToLower()%")).IsEqualTo("a-b-c");
+        await Assert.That(await Read("%name.trim().maxlength(3)%")).IsEqualTo("a-b...");
+        await Assert.That(await Read("%name.maxlength(0)%")).IsEqualTo("  a-b-c  ");
+    }
+
+    [Test]
+    public async Task Method_AVariableParameter_IsWhatItHolds()
+    {
+        await Context.Variable.Set("name", "a-b");
+        await Context.Variable.Set("dash", "-");
+
+        await Assert.That(await Read("%name.replace(%dash%, \"+\")%")).IsEqualTo("a+b");
+    }
+
+    [Test]
+    public async Task Method_Grep_KeepsTheMatchingLines()
+    {
+        await Context.Variable.Set("log", "ok\nerror one\nok\nerror two");
+
+        await Assert.That(await Read("%log.grepcount(\"error\")%")).IsEqualTo("2");
+        await Assert.That(await Read("%log.grep(\"two\")%")).Contains("error two");
+    }
+
+    [Test]
+    public async Task Method_ThatTheValueDoesntHave_IsAnError()
+    {
+        await Context.Variable.Set("name", "a");
+
+        var result = await One("%name.foo()%").Start(Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("MethodNotFound");
+        await Assert.That(result.Error.Message).Contains("text has no method 'foo'");
+    }
+
     [Test]
     public async Task Set_ABareRoot_Rebinds()
     {

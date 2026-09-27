@@ -23,8 +23,8 @@ public class TextWrapperTests
     public async Task Text_CaseAndTrim_ReturnTextNotRawString()
     {
         // upper/lower/trim return text.@this, not raw string — flow stays native.
-        Text upper = new Text("abc").Upper();
-        Text lower = new Text("ABC").Lower();
+        Text upper = new Text("abc").ToUpper();
+        Text lower = new Text("ABC").ToLower();
         Text trimmed = new Text("  x  ").Trim();
         await Assert.That(upper.ToString()).IsEqualTo("ABC");
         await Assert.That(lower.ToString()).IsEqualTo("abc");

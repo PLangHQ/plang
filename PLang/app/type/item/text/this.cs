@@ -213,7 +213,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// error. A real input is typed by its mimetype at the boundary (object/json,
     /// table/csv), so a value reaching navigation is already structured; a bare text
     /// here means the author navigated a string. Method calls (<c>%x.grep("..")%</c>)
-    /// go through InvokeMethod, not here, so they are unaffected.
+    /// are text's own methods, not this, so they are unaffected.
     /// </summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
@@ -298,9 +298,40 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
-    public @this Upper() => new(_value.ToUpperInvariant());
-    public @this Lower() => new(_value.ToLowerInvariant());
-    public @this Trim() => new(_value.Trim());
+    // ---- Methods a variable reaches: %name.toupper()%, %text.replace("-", " ")% ----
+
+    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant());
+    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant());
+    [LlmBuilder] public @this Trim() => new(_value.Trim());
+
+    /// <summary>Every <paramref name="old"/> replaced by <paramref name="new"/>.</summary>
+    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value));
+
+    /// <summary>At most <paramref name="max"/> characters, "..." marking a cut; 0 is no limit.</summary>
+    [LlmBuilder]
+    public @this MaxLength(global::app.type.item.number.@this max)
+    {
+        var limit = max.Clr<int>();
+        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...");
+    }
+
+    /// <summary>The lines matching <paramref name="pattern"/>, through the grep provider.</summary>
+    [LlmBuilder]
+    public global::app.data.@this Grep(@this pattern, global::app.actor.context.@this context)
+        => Grep(pattern, 0, context);
+
+    /// <summary>The lines matching <paramref name="pattern"/> with <paramref name="lines"/> lines around
+    /// each, through the grep the app registered (<c>app.Code</c>), else the default line matcher.</summary>
+    [LlmBuilder]
+    public global::app.data.@this Grep(@this pattern, global::app.type.item.number.@this lines, global::app.actor.context.@this context)
+        => (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+            .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines.Clr<int>());
+
+    /// <summary>How many lines match <paramref name="pattern"/>.</summary>
+    [LlmBuilder]
+    public global::app.data.@this GrepCount(@this pattern, global::app.actor.context.@this context)
+        => (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+            .GrepCount(new global::app.data.@this("", this, context: context), pattern._value);
 
     /// <summary>The item membership hook — substring, same policy as below.</summary>
     public override System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)

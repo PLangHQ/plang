@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using app.error;
 
 namespace app.data;
@@ -6,7 +5,7 @@ namespace app.data;
 /// <summary>
 /// Data — navigation concern.
 /// GetChild traverses dot notation, bracket indexing, and method calls into nested values.
-/// Method calls: %data.grep("pattern").maxLength(100)% — chainable, return Data.
+/// A method call (<c>%data.grep("pattern").maxLength(100)%</c>) is the value's own method.
 /// </summary>
 public partial class @this
 {
@@ -54,7 +53,10 @@ public partial class @this
                 child = await GetInfrastructureValue(infra.Name);
                 break;
             case global::app.type.item.variable.path.Segment.Call call:
-                child = InvokeMethod(call.Method, call.Args);
+                // The value's own method, reached the way a variable's method step reaches it.
+                child = new global::app.type.item.variable.parser.@this("%_." + call.Raw + "%").Read(0) is { } called
+                    ? await called.Code.Items().Last().Start(this, Context)
+                    : NotFound(call.Method);
                 break;
             case global::app.type.item.variable.path.Segment.Index index:
                 child = await _item.Get(this, await index.Key(_context?.Variable));
@@ -145,102 +147,6 @@ public partial class @this
         var written = await target.Set(key, isIndex, value, _context);
         if (!ReferenceEquals(written, Peek())) SetValue(written);
         return this;
-    }
-
-    /// <summary>
-    /// Invokes a method-like navigation on Data. Chainable — returns Data.
-    /// Override in subclasses to add domain-specific methods.
-    /// </summary>
-    protected virtual @this InvokeMethod(string method, string args)
-    {
-        var str = Peek()?.ToString();
-
-        return method.ToLowerInvariant() switch
-        {
-            "grep" => InvokeGrep(args),
-            "grepcount" => InvokeGrepCount(args),
-            "maxlength" => MaxLength(str, ParseIntArg(args)),
-            "trim" => new @this(Name, str?.Trim()),
-            "tolower" => new @this(Name, str?.ToLowerInvariant()),
-            "toupper" => new @this(Name, str?.ToUpperInvariant()),
-            "replace" => Replace(str, args),
-            _ => NotFound(method)
-        };
-    }
-
-    private @this InvokeGrep(string args)
-    {
-        var provider = ResolveGrepProvider();
-        var (pattern, contextLines) = ParseGrepArgs(args);
-        return provider.Grep(this, pattern ?? "", contextLines);
-    }
-
-    private @this InvokeGrepCount(string args)
-    {
-        var provider = ResolveGrepProvider();
-        return provider.GrepCount(this, ParseStringArg(args) ?? "");
-    }
-
-    private app.data.code.IGrep ResolveGrepProvider()
-    {
-        var app = _context?.App;
-        if (app != null)
-        {
-            if (app.Code.Get<app.data.code.IGrep>().Provider is { } g) return g;
-        }
-        return new app.data.code.Default();
-    }
-
-    private static (string? pattern, int contextLines) ParseGrepArgs(string args)
-    {
-        // grep("pattern") or grep("pattern", 3)
-        var parts = Regex.Matches(args, @"""([^""]*)""|'([^']*)'|(\d+)");
-        string? pattern = null;
-        int contextLines = 0;
-
-        foreach (Match m in parts)
-        {
-            if (m.Groups[1].Success) pattern ??= m.Groups[1].Value;
-            else if (m.Groups[2].Success) pattern ??= m.Groups[2].Value;
-            else if (m.Groups[3].Success && pattern != null) int.TryParse(m.Groups[3].Value, out contextLines);
-        }
-
-        return (pattern, contextLines);
-    }
-
-    private @this MaxLength(string? text, int max)
-    {
-        if (text == null) return new @this(Name, "");
-        if (max <= 0) return new @this(Name, text); // 0 = no limit
-        return new @this(Name, text.Length > max ? text[..max] + "..." : text);
-    }
-
-    private @this Replace(string? text, string args)
-    {
-        if (text == null) return new @this(Name, "");
-        // Parse two string args: replace("old", "new")
-        var parts = Regex.Matches(args, @"""([^""]*)""|'([^']*)'");
-        if (parts.Count >= 2)
-        {
-            var oldStr = parts[0].Groups[1].Success ? parts[0].Groups[1].Value : parts[0].Groups[2].Value;
-            var newStr = parts[1].Groups[1].Success ? parts[1].Groups[1].Value : parts[1].Groups[2].Value;
-            return new @this(Name, text.Replace(oldStr, newStr));
-        }
-        return new @this(Name, text);
-    }
-
-    private static string? ParseStringArg(string args)
-    {
-        args = args.Trim();
-        if (args.StartsWith('"') && args.EndsWith('"')) return args[1..^1];
-        if (args.StartsWith('\'') && args.EndsWith('\'')) return args[1..^1];
-        return args;
-    }
-
-    private static int ParseIntArg(string args)
-    {
-        args = args.Trim();
-        return int.TryParse(args, out var n) ? n : 0;
     }
 
     /// <summary>
