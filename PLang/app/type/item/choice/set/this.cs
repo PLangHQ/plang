@@ -11,6 +11,7 @@ namespace app.type.item.choice.set;
 public sealed class @this : global::app.type.kind.@this
 {
     private readonly System.Type _clr;
+    private readonly System.Type _form;
     private readonly MethodInfo? _choices;
 
     /// <summary>The set <paramref name="clr"/> draws its options from. A closed set that declares no
@@ -23,11 +24,15 @@ public sealed class @this : global::app.type.kind.@this
                    : clr.Name))
     {
         _clr = clr;
+        _form = typeof(global::app.type.item.choice.@this<>).MakeGenericType(clr);
         _choices = Choices(clr);
     }
 
     /// <summary>A closed set is a kind of choice.</summary>
     protected internal override string Owner => "choice";
+
+    /// <summary>The class a choice from this set is — <c>choice&lt;T&gt;</c> over the set.</summary>
+    public override System.Type? ClrForm => _form;
 
     /// <summary>True when the CLR type carries options — an enum, or a static <c>Choices(context?)</c>.</summary>
     internal bool IsClosed => Closed(_clr);

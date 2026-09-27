@@ -123,7 +123,12 @@ public sealed partial class @this
         if (Types.FirstOrDefault(t => t.Names(type.Name)) is not { } entry)
             return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
         if (kind == null && !type.Strict && type.Template == null) return entry;
-        return new app.type.@this(entry.Name, entry.ClrType, kind?.Name, type.Strict, type.Template)
+        // a kind that closes the entry's open class names the class its values are (a choice set:
+        // choice<T> → choice<Format>)
+        var clr = entry.ClrType is { IsGenericTypeDefinition: true } open
+                  && kind?.ClrForm is { IsGenericType: true } form && form.GetGenericTypeDefinition() == open
+            ? form : entry.ClrType;
+        return new app.type.@this(entry.Name, clr, kind?.Name, type.Strict, type.Template)
         {
             kind = kind,
             Alias = entry.Alias,
