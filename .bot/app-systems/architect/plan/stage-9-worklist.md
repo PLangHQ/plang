@@ -39,6 +39,7 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 ## Carried in from stage 7's cleanup (decision 66)
 
 - **`test.report.Write` (`app/test/report/this.cs`)** chooses the artefact with `if (chosen == Format.JUnit) {…} else {…}`, a *fork*. Each format should write its own artefact (content and file name), for example as a serializer chosen by format, so the value writes itself.
+- **`LlmDebug.Output`** (`module/action/debug/setting`) is `text`, compared to `"file"` as a string (decision 67). Make it a choice.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
 
 ## Outside `Start()`
