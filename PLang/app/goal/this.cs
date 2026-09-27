@@ -319,10 +319,10 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
+    /// Starts this goal: lifecycle events → its steps' Start → return handling.
     /// Context travels as parameter — goals may be cached/shared.
     /// </summary>
-    public async Task<data.@this> Run(actor.context.@this context)
+    public async Task<data.@this> Start(actor.context.@this context)
     {
         var previousGoal = context.Goal;
         context.Goal = this;
@@ -360,7 +360,7 @@ public sealed partial class @this
         {
             await using var goalCall = context.CallStack.Push(goalEntryAction);
 
-            var result = await Step.Run(context);
+            var result = await Step.Start(context);
 
             // Handle return depth
             if (result.Returned)

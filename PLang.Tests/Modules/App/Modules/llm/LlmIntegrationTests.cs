@@ -215,7 +215,7 @@ public class LlmIntegrationTests
         }
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         if (snapshot == null && result.Success)
         {
@@ -265,7 +265,7 @@ public class LlmIntegrationTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         if (captureHandler != null && result.Success && captureHandler.Responses.Count > 0)
         {

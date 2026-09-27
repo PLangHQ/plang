@@ -7,7 +7,7 @@ namespace app.test;
 /// <summary>
 /// One test — a <c>*.test.goal</c> file across its whole lifecycle. Born at
 /// discovery (test.discover) carrying identity + discovery status; executed by
-/// test.run, which stamps the execution outcome (Status, Output, Timings, Error,
+/// test.start, which stamps the execution outcome (Status, Output, Timings, Error,
 /// Duration) onto the same instance. There is no separate execution record — the
 /// test IS its own run. Fields are plang values marked <c>[Out]</c>, so the test
 /// rides the wire directly (the report serializes it — no hand-mapped shape).
@@ -52,9 +52,9 @@ public sealed class @this : global::app.type.item.@this
     /// actions require. Set by <see cref="app.test.list.@this.Create"/>.</summary>
     [Out] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
 
-    // --- Execution (stamped by test.run; empty until the test runs) ---
+    // --- Execution (stamped by test.start; empty until the test runs) ---
 
-    /// <summary>Wall-clock from <see cref="Start"/> to <see cref="Complete(Status, global::app.error.Error?)"/>. Zero until the test runs.</summary>
+    /// <summary>Wall-clock from <see cref="Begin"/> to <see cref="Complete(Status, global::app.error.Error?)"/>. Zero until the test runs.</summary>
     [Out] public global::app.type.item.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
 
     /// <summary>Error captured on fail/error. Carries AssertionError.Variables on assertion failures.</summary>
@@ -76,8 +76,8 @@ public sealed class @this : global::app.type.item.@this
 
     // --- Execution transitions ---
 
-    /// <summary>Begins timing — called by test.run when execution starts.</summary>
-    public void Start() => _stopwatch = Stopwatch.StartNew();
+    /// <summary>Begins timing — called by test.start when the test begins.</summary>
+    public void Begin() => _stopwatch = Stopwatch.StartNew();
 
     /// <summary>Transitions to the given terminal status and records elapsed duration.</summary>
     public void Complete(Status status, global::app.error.Error? error = null)

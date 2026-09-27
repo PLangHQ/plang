@@ -2,7 +2,7 @@ namespace app.error;
 
 /// <summary>
 /// Per-parameter snapshot captured at the point a handler returned an error.
-/// Populated by the source-generated ExecuteAsync — same data the handler itself saw.
+/// Populated by the call frame (call.Start) from the handler's SnapshotParams — same data the handler itself saw.
 /// Lets the user (or LLM auto-fix) see "param X arrived as Y" without re-running.
 /// </summary>
 public sealed record ParamSnapshot

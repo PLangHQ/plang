@@ -16,7 +16,7 @@ public partial class Any : IContext
     public partial data.@this<global::app.type.item.choice.@this<condition.Operator>> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.item.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
         var data = await Context.Variable.Get(await ListName.Value());
         var key = (await Key.Value())!.Clr<string>()!;

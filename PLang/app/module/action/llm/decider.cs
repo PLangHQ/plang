@@ -37,5 +37,5 @@ public partial class decider : IContext
 
     /// <summary>One answer per question, under the id it was asked with: a noul answers a
     /// probability, a choice answers its pick and a confidence.</summary>
-    public async Task<data.@this<global::app.type.item.dict.@this>> Run() => await Decider.Decide(this);
+    public async Task<data.@this<global::app.type.item.dict.@this>> Start() => await Decider.Decide(this);
 }

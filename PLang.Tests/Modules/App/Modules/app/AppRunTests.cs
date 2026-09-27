@@ -24,8 +24,8 @@ public class AppRunTests
     [Test]
     public async Task Run_GoalCall_ResolvesAndRuns()
     {
-        var action = new run(_app.User.Context) { Goal = Make.Call("RunTarget") };
-        var result = await action.Run();
+        var action = new start(_app.User.Context) { Goal = Make.Call("RunTarget") };
+        var result = await action.Start();
 
         await result.IsSuccess();
     }
@@ -33,8 +33,8 @@ public class AppRunTests
     [Test]
     public async Task Run_MissingGoal_ReturnsError()
     {
-        var action = new run(_app.User.Context) { Goal = Make.Call("DoesNotExist") };
-        var result = await action.Run();
+        var action = new start(_app.User.Context) { Goal = Make.Call("DoesNotExist") };
+        var result = await action.Start();
 
         await result.IsFailure();
     }
@@ -47,9 +47,9 @@ public class AppRunTests
             Text = "test step",
             Index = 0
         };
-        var action = new run(_app.User.Context) { Step = new("", step, context: _app.User.Context)
+        var action = new start(_app.User.Context) { Step = new("", step, context: _app.User.Context)
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         // Step with no actions returns Ok
         await result.IsSuccess();
@@ -58,11 +58,11 @@ public class AppRunTests
     [Test]
     public async Task Run_NoInput_ReturnsError()
     {
-        var action = new run(_app.User.Context) { Goal = null,
+        var action = new start(_app.User.Context) { Goal = null,
             Step = null,
             Action = null
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingInput");

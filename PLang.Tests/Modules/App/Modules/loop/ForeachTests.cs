@@ -31,7 +31,7 @@ public class ForeachTests
                     ("name", "ProcessItem")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");
@@ -45,7 +45,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("item", "%item%"));
-        var result = await action.Run(context);
+        var result = await action.Start(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -69,7 +69,7 @@ public class ForeachTests
                     ("name", "DoNothing")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("myItem"))).IsEqualTo("hello");
@@ -92,7 +92,7 @@ public class ForeachTests
                     ("name", "DictGoal")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
     }
@@ -115,7 +115,7 @@ public class ForeachTests
                     ("name", "Noop")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
         // %key% should be the dictionary key (string "greeting"), not numeric index (0)
@@ -133,7 +133,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", null), ("item", "%item%"));
-        var result = await action.Run(context);
+        var result = await action.Start(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -153,7 +153,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("item", "%item%"));
-        var result = await action.Run(context);
+        var result = await action.Start(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -180,11 +180,11 @@ public class ForeachTests
         // (set %plan.system% = ..., etc.). Replicate one such write onto the clr(json).
         var setChild = TestAction.Create("variable", "set",
             ("name", "%plan.system%"), ("value", "sys-prompt"));
-        await (await setChild.Run(context)).IsSuccess();
+        await (await setChild.Start(context)).IsSuccess();
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%plan.steps%"), ("item", "%planStep%"));
-        var result = await action.Run(context);
+        var result = await action.Start(context);
 
         await result.IsSuccess();
         var planStep = await context.Variable.Get("planStep");   // last step (index 1)

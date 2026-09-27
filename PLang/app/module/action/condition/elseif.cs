@@ -18,7 +18,7 @@ public partial class Elseif : IContext, IStep
     /// <summary>The operands read as the operator asks.</summary>
     public async Task<global::app.error.Error?> Validate() => await Evaluator.Operands(Operator, Right);
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var evalResult = await Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;

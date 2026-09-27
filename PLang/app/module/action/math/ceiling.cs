@@ -11,5 +11,5 @@ public partial class Ceiling : IContext
     [Code]
     public partial global::app.module.action.math.code.IMath Math { get; }
 
-    public async Task<data.@this<number>> Run() => await Math.Ceiling(this);
+    public async Task<data.@this<number>> Start() => await Math.Ceiling(this);
 }

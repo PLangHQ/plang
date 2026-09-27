@@ -437,7 +437,7 @@ public class LibrariesTests
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.Error?>(null); }
-        public Task<Data> Execute() => Task.FromResult(Data.Ok());
+        public Task<Data> Start() => Task.FromResult(Data.Ok());
     }
 
     #endregion

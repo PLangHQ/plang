@@ -24,7 +24,7 @@ public sealed record @this(
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    public partial {TypeName} {Name} => {Backing} ?? throw new global::System.InvalidOperationException(");
         sb.AppendLine($"        \"{TypeName} is not attached — Attach(context) did not run on this action. \"");
-        sb.AppendLine($"        + \"Actions run through the pipeline, which attaches [Code] providers before Run().\");");
+        sb.AppendLine($"        + \"Actions start through the pipeline, which attaches [Code] providers before Start().\");");
         sb.AppendLine();
     }
 

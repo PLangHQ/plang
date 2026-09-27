@@ -15,7 +15,7 @@ public partial class intercept : IContext
     public partial data.@this<global::app.goal.step.action.@this>? Call { get; init; }
     public partial data.@this<global::app.type.item.dict.@this>? Parameter { get; init; }
 
-    public async Task<data.@this<global::app.mock.@this>> Run()
+    public async Task<data.@this<global::app.mock.@this>> Start()
     {
         var handle = new global::app.mock.@this
         {
@@ -49,9 +49,9 @@ public partial class intercept : IContext
             var capturedParams = await CaptureParameters(currentAction, context);
             handle.RecordCall(capturedParams);
 
-            // Goal-based mock — run the held call in place of the action
+            // Goal-based mock — start the held call in place of the action
             if (call != null)
-                return await call.Run(context);
+                return await call.Start(context);
 
             // Return value mock — skip action and return the value
             if (returnValue != null)

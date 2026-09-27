@@ -16,7 +16,7 @@ Console.CancelKeyPress += (_, e) =>
 (string currentDirectory, args) = GetCurrentDirectory(args);
 
 var executor = new Executor(Path.GetFullPath(currentDirectory));
-var result = executor.Run(args, cts.Token).GetAwaiter().GetResult();
+var result = executor.Start(args, cts.Token).GetAwaiter().GetResult();
 // Process-boundary last resort (the permitted Console.* exception): a failed run the app could not
 // show (the error show itself failed, or the app never started) must surface here, or it exits
 // silently and nothing reports why. A shown failure is not printed twice.

@@ -60,7 +60,7 @@ public class QueryImageTests
             }.ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -91,7 +91,7 @@ public class QueryImageTests
             }.ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -121,7 +121,7 @@ public class QueryImageTests
             }.ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -148,7 +148,7 @@ public class QueryImageTests
             }.ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -177,7 +177,7 @@ public class QueryImageTests
             }.ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();

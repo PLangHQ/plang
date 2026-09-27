@@ -10,7 +10,7 @@ namespace PLang.Tests.App.CallbackTests;
 /// Stage 2a — Batch 4: `Step.Resume(context, actionIdx)` and
 /// `Goal.Resume(context, stepIdx, actionIdx)` — continuation helpers used by
 /// `Snapshot.ResumeChain`. The architect resolved against a
-/// `Steps.Run(fromIndex)` overload — the remaining-steps loop lives
+/// `Steps.Start(fromIndex)` overload — the remaining-steps loop lives
 /// inside Goal.Resume.
 public class GoalResumeTests
 {
@@ -102,7 +102,7 @@ public class GoalResumeTests
     [Test]
     public async Task StepsRunAsync_FromIndexOverload_SkipsEarlierSteps()
     {
-        // Architect resolved against adding a Steps.Run(fromIndex) overload.
+        // Architect resolved against adding a Steps.Start(fromIndex) overload.
         // The from-index loop lives inside Goal.Resume — exercised by
         // GoalRunFrom_ResumesActionThenRemainingStepsInGoal above. This test
         // pins the contract that earlier steps are not re-run.

@@ -5,12 +5,12 @@ using app.test;
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
-/// Batch 10 — test.run action. The main loop.
+/// Batch 10 — test.start action. The main loop.
 /// C# handler — NOT a PLang foreach, immune to the silent-skip bug that motivated
 /// this whole module. Fresh App.@this per test (file boundary = App boundary),
 /// semaphore-throttled parallel execution, per-test timeout via CancellationToken,
 /// AfterAction subscription for coverage, child Coverage merged into parent at end.
-/// test.run never throws for child-test failures — failure is data.
+/// test.start never throws for child-test failures — failure is data.
 /// </summary>
 public class RunActionTests
 {
@@ -39,7 +39,7 @@ public class RunActionTests
 
     /// <summary>
     /// Creates a .test.goal + .pr pair on disk at the temp dir. Returns a global::app.test.@this
-    /// ready for test.run (Status=Ready, Directory=abs, PrPath relative to Directory).
+    /// ready for test.start (Status=Ready, Directory=abs, PrPath relative to Directory).
     /// </summary>
     private async Task<global::app.test.@this> BuildFixture(string relativePath, string goalName,
         (string module, string actionName, List<Data> parameters)[] actions)
@@ -96,11 +96,11 @@ public class RunActionTests
 
     private async Task<IReadOnlyList<global::app.test.@this>> RunTests(List<global::app.test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
-        var action = new global::app.module.action.test.run(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>(),
+        var action = new global::app.module.action.test.start(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>(),
             Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
             Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
         };
-        var result = await action.Run();
+        var result = await action.Start();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
         var list = (global::app.type.item.list.@this)(await result.Value())!;
         return list.Items(global::PLang.Tests.TestApp.SharedContext).Select(r => (global::app.test.@this)r.Peek()).ToList();
@@ -171,7 +171,7 @@ public class RunActionTests
                 stopOnError: false));
         }
 
-        global::app.module.action.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.start.ChildAppCreated += Probe;
         try
         {
             var tests = new List<global::app.test.@this>();
@@ -193,7 +193,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.start.ChildAppCreated -= Probe;
         }
     }
 
@@ -275,7 +275,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observedChildOsDir = childApp.OsDirectory;
         }
-        global::app.module.action.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.start.ChildAppCreated += Probe;
         try
         {
             var test = await BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
@@ -291,7 +291,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.start.ChildAppCreated -= Probe;
         }
     }
 
@@ -308,7 +308,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observed = childApp.Test != null;
         }
-        global::app.module.action.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.start.ChildAppCreated += Probe;
         try
         {
             var test = await BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
@@ -324,7 +324,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.start.ChildAppCreated -= Probe;
         }
     }
 
@@ -343,7 +343,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 Interlocked.Increment(ref childAppsCreated);
         }
-        global::app.module.action.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.start.ChildAppCreated += Probe;
         try
         {
             var ready = await BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
@@ -370,18 +370,18 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.start.ChildAppCreated -= Probe;
         }
     }
 
     // A test that fails an assertion: global::app.test.Run.Status == Fail, error on the global::app.test.Run,
-    // AssertionError.Variables populated (from Batch 5). test.run itself does not
+    // AssertionError.Variables populated (from Batch 5). test.start itself does not
     // throw — child failure is data, not exception. Keeps the main loop parallel-safe.
     [Test]
     public async Task Run_AssertionFailureInTest_CapturedInResult_NoPropagatedException()
     {
         // Fixture sets a variable before the assert so AssertionError.Variables can
-        // demonstrate it carried through test.run's failure path (end-to-end check).
+        // demonstrate it carried through test.start's failure path (end-to-end check).
         var test = await BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("score"), context: _app.User.Context), new("Value", 42, context: _app.User.Context) }),
@@ -399,7 +399,7 @@ public class RunActionTests
         await Assert.That(run.Error).IsNotNull();
         await Assert.That(run.Error is global::app.error.AssertionError).IsTrue();
 
-        // Variables snapshot flowed from assert handler → provider → test.run's
+        // Variables snapshot flowed from assert handler → provider → test.start's
         // failure path → global::app.test.Run.Error. Batch 5's headline feature.
         var assertionError = (global::app.error.AssertionError)run.Error!;
         await Assert.That(assertionError.Variables).IsNotNull();
@@ -419,9 +419,9 @@ public class RunActionTests
     }
 
     // Covers the production coverage subscriber's branchLabel / branchChain paths in
-    // run.cs (the block that reads result.Properties and calls Coverage.RecordBranch*).
+    // start.cs (the block that reads result.Properties and calls Coverage.RecordBranch*).
     // Other tests assert those Coverage methods directly, but only a fixture whose test
-    // runs THROUGH test.run exercises the real wiring — a typo in the Properties keys
+    // runs THROUGH test.start exercises the real wiring — a typo in the Properties keys
     // here would otherwise ship silently.
     [Test]
     public async Task Run_FixtureWithConditionIf_ProductionSubscriber_RecordsBranchLabelAndChain()
@@ -445,7 +445,7 @@ public class RunActionTests
         var run = results.Single();
         await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass);
 
-        // Site key format: "<goalPath>:<stepIndex>" — matches run.cs:91-95.
+        // Site key format: "<goalPath>:<stepIndex>" — matches start.cs:91-95.
         // Path.ToString() returns the Relative form (canonical: leading "/").
         var site = "/Cond.test.goal:0";
 
@@ -467,7 +467,7 @@ public class RunActionTests
     }
 
     // BeforeWrite output capture: writes routed to the "output" channel land on
-    // Run.Output (filtered by channel name in run.cs:149). Writes to "error" do not.
+    // Run.Output (filtered by channel name in start.cs:149). Writes to "error" do not.
     // The filter must hold both directions — an inversion would either leak Error
     // payloads into Output or drop Output writes entirely.
     [Test]
@@ -477,7 +477,7 @@ public class RunActionTests
         // before the fixture runs (otherwise output.write fails with ChannelNotFound).
         // Register them at ChildAppCreated time, against MemoryStreams we don't read —
         // we only assert through Run.Output, which is fed by the production
-        // BeforeWrite subscriber in test/run.cs, not by reading these streams.
+        // BeforeWrite subscriber in test/start.cs, not by reading these streams.
         var outStream = new System.IO.MemoryStream();
         var errStream = new System.IO.MemoryStream();
         void Probe(global::app.@this childApp)
@@ -490,7 +490,7 @@ public class RunActionTests
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }
-        global::app.module.action.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.start.ChildAppCreated += Probe;
         try
         {
             var test = await BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
@@ -516,7 +516,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.action.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.start.ChildAppCreated -= Probe;
         }
     }
 
@@ -593,7 +593,7 @@ public class RunActionTests
     }
 
     // Covers RunSingleAsync's outer catch — a handler that throws an unexpected
-    // exception must not propagate out of test.run. The global::app.test.Run records Fail with
+    // exception must not propagate out of test.start. The global::app.test.Run records Fail with
     // the exception message preserved; subsequent tests in the same run continue.
     [Test]
     public async Task Run_FixtureThrowsUnexpectedException_CapturedAsFail_LoopContinues()

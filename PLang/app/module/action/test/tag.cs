@@ -27,5 +27,5 @@ public partial class Tag : IContext
         return Context.Ok();
     }
 
-    public Task<data.@this> Run() => Task.FromResult(Context.Ok());
+    public Task<data.@this> Start() => Task.FromResult(Context.Ok());
 }

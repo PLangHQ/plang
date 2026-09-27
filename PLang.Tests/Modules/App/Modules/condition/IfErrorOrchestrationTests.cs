@@ -43,7 +43,7 @@ public class IfErrorOrchestrationTests : IDisposable
                     ("name", "DoesNotExist")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(_app.User.Context);
+        var result = await step.Start(_app.User.Context);
 
         // The 404 must surface. Handled=true on condition.if's result is a
         // control-flow signal to Step.RunAsync (don't re-iterate siblings),
@@ -70,7 +70,7 @@ public class IfErrorOrchestrationTests : IDisposable
                 Make.Action("output", "write", ("Data", "ran")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(_app.User.Context);
+        var result = await step.Start(_app.User.Context);
 
         await result.IsSuccess();
 

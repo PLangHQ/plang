@@ -21,5 +21,5 @@ public partial class Divide : IContext
     [Code]
     public partial global::app.module.action.math.code.IMath Math { get; }
 
-    public async Task<data.@this<number>> Run() => await Math.Divide(this);
+    public async Task<data.@this<number>> Start() => await Math.Divide(this);
 }

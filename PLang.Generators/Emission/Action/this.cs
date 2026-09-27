@@ -16,7 +16,7 @@ namespace PLang.Generators.Emission.Action;
 ///   Attach(action, context)  — sets Context / Action / Step / Static / Channel / [Code]
 ///     provider on THIS instance. Called by Resolve, and directly on prebound
 ///     (inline C#-composed) handlers whose params are already set.
-///   Execute()                — runs the handler's typed Run(), wrapping bare exceptions
+///   ICodeGenerated.Start()   — starts the handler's typed Start(), wrapping bare exceptions
 ///     with the action's module.action context.
 ///
 /// Emission uses C# raw string literals (`$$"""..."""`). With `$$`, single `{` `}`
@@ -340,7 +340,7 @@ public static class @this
 
     /// <summary>
     /// What the handler finds only when it runs — the channel it writes to, which a step may register
-    /// while the app runs. Bind, which the build uses, looks it up not; <c>Execute</c> does it first, and
+    /// while the app runs. Bind, which the build uses, looks it up not; the dispatcher (<c>ICodeGenerated.Start</c>) does it first, and
     /// a missing one fails the run as it always did.
     /// </summary>
     private static void EmitLive(StringBuilder sb, ActionClassInfo info)
@@ -385,17 +385,19 @@ public static class @this
 
     private static void EmitExecute(StringBuilder sb)
     {
+        // The dispatcher is ICodeGenerated's Start, implemented explicitly so it shares the name
+        // with the handler's own public Start() in one partial class; inside it, Start() is the handler's.
         sb.Append("""
-                public async System.Threading.Tasks.Task<global::app.data.@this> Execute()
+                async System.Threading.Tasks.Task<global::app.data.@this> global::app.module.ICodeGenerated.Start()
                 {
                     // what exists only at run — the channel — is found now
                     if (await __Live() is { } __missing) return global::app.data.@this.FromError(__missing);
-                    try { return await Run(); }
+                    try { return await Start(); }
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {
-                        // Bare exceptions from Run() (NRE, InvalidCast, etc.) reach the user
+                        // Bare exceptions from Start() (NRE, InvalidCast, etc.) reach the user
                         // as "Object reference not set" with no module.action context. Wrap
-                        // here so the message tells the reader which action's Run() threw.
+                        // here so the message tells the reader which action's Start() threw.
                         var __mod = __action?.Module.Name ?? "?";
                         var __act = __action?.Name ?? "?";
                         var __step = __action?.Step;

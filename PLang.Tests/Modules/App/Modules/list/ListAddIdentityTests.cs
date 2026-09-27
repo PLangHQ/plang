@@ -42,7 +42,7 @@ public class ListAddIdentityTests
         var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", "c", context: context)
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Same list.@this reference — direct mutation, not a fresh object stored.
@@ -68,7 +68,7 @@ public class ListAddIdentityTests
         var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", 3, context: context)
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         // The result's value IS the live list — the one %products% holds, not a copy.
         await Assert.That(ReferenceEquals(await result.Value(), live)).IsTrue();
@@ -91,7 +91,7 @@ public class ListAddIdentityTests
         var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = liveItem
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var live = (await (await vars.Get("products")).Value()) as global::app.type.item.list.@this;
@@ -120,7 +120,7 @@ public class ListAddIdentityTests
         var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", "z", context: context)
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // fresh got the new entry; orphan stayed at 1.

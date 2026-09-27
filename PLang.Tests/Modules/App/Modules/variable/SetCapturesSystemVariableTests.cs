@@ -12,7 +12,7 @@ public class SetCapturesSystemVariableTests
         await using var app = TestApp.Create("/tmp/setnow-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%start%"), ("value", "%Now%"));
-        await (await action.Run(context)).IsSuccess();
+        await (await action.Start(context)).IsSuccess();
 
         var first = (await (await context.Variable.Get("start")).Value())?.ToString();
         await Task.Delay(30);

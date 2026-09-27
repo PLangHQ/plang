@@ -67,7 +67,7 @@ public class AssertionErrorVariablesTests
 
         var action = new AssertEquals(context) { Expected = D(1), Actual = D(2) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         var err = result.Error as AssertionError;
@@ -87,7 +87,7 @@ public class AssertionErrorVariablesTests
 
         var action = new AssertEquals(context) { Expected = D(5), Actual = D(5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // On success, data.Error is null — nothing to populate.
@@ -109,7 +109,7 @@ public class AssertionErrorVariablesTests
         async Task<Data> AR(global::app.module.ICodeGenerated a)
         {
             await a.Attach(null, context);
-            return await ((dynamic)a).Run();
+            return await ((dynamic)a).Start();
         }
 
         var failures = new List<Data>

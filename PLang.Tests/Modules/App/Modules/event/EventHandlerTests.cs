@@ -35,7 +35,7 @@ public class EventHandlerTests
     public async Task On_BeforeGoal_RegistersEvent()
     {
         var context = _app.User.Context;
-        var result = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
+        var result = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value()) is global::app.type.item.text.@this).IsTrue(); // returns binding id
@@ -46,7 +46,7 @@ public class EventHandlerTests
     public async Task On_AfterGoal_RegistersEvent()
     {
         var context = _app.User.Context;
-        var result = await MakeOn(context, global::app.@event.Trigger.AfterGoal, "LogGoal", goalPattern: "*").Run();
+        var result = await MakeOn(context, global::app.@event.Trigger.AfterGoal, "LogGoal", goalPattern: "*").Start();
 
         await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
@@ -56,7 +56,7 @@ public class EventHandlerTests
     public async Task On_BeforeStep_RegistersEvent()
     {
         var context = _app.User.Context;
-        var result = await MakeOn(context, global::app.@event.Trigger.BeforeStep, "LogStep", goalPattern: "TestGoal", stepPattern: "set*").Run();
+        var result = await MakeOn(context, global::app.@event.Trigger.BeforeStep, "LogStep", goalPattern: "TestGoal", stepPattern: "set*").Start();
 
         await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
@@ -66,7 +66,7 @@ public class EventHandlerTests
     public async Task On_AfterStep_RegistersEvent()
     {
         var context = _app.User.Context;
-        var result = await MakeOn(context, global::app.@event.Trigger.AfterStep, "LogStep", priority: 5).Run();
+        var result = await MakeOn(context, global::app.@event.Trigger.AfterStep, "LogStep", priority: 5).Start();
 
         await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
@@ -76,7 +76,7 @@ public class EventHandlerTests
     public async Task On_BeforeAction_RegistersEvent()
     {
         var context = _app.User.Context;
-        var result = await MakeOn(context, global::app.@event.Trigger.BeforeAction, "OnVarSet", actionPattern: "variable.set").Run();
+        var result = await MakeOn(context, global::app.@event.Trigger.BeforeAction, "OnVarSet", actionPattern: "variable.set").Start();
 
         await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
@@ -86,7 +86,7 @@ public class EventHandlerTests
     public async Task On_AfterAction_RegistersEvent()
     {
         var context = _app.User.Context;
-        var result = await MakeOn(context, global::app.@event.Trigger.AfterAction, "OnAfterAction", actionPattern: "variable.*").Run();
+        var result = await MakeOn(context, global::app.@event.Trigger.AfterAction, "OnAfterAction", actionPattern: "variable.*").Start();
 
         await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
@@ -99,13 +99,13 @@ public class EventHandlerTests
     public async Task Remove_UnregistersEvent()
     {
         var context = _app.User.Context;
-        var registerResult = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "*").Run();
+        var registerResult = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "*").Start();
         var eventId = (await registerResult.Value())?.ToString();
 
         await Assert.That(context.Events.Count).IsEqualTo(1);
 
         var removeHandler = new Remove(context) { EventId = (global::app.type.item.text.@this)eventId };
-        var removeResult = await removeHandler.Run();
+        var removeResult = await removeHandler.Start();
 
         await removeResult.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(0);
@@ -115,7 +115,7 @@ public class EventHandlerTests
     public async Task On_WithRegex_MatchesRegexPattern()
     {
         var context = _app.User.Context;
-        await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "^Admin", isRegex: true).Run();
+        await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "^Admin", isRegex: true).Start();
 
         var match = context.Events.GetMatchingBindings(Trigger.BeforeGoal, goalName: "AdminGoal");
         await Assert.That(match.Count).IsEqualTo(1);
@@ -128,7 +128,7 @@ public class EventHandlerTests
     public async Task GoalPattern_Wildcard_MatchesPrefix()
     {
         var context = _app.User.Context;
-        await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "/admin/*").Run();
+        await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "/admin/*").Start();
 
         var match = context.Events.GetMatchingBindings(Trigger.BeforeGoal, goalName: "/admin/Users");
         await Assert.That(match.Count).IsEqualTo(1);
@@ -141,7 +141,7 @@ public class EventHandlerTests
     public async Task ActionPattern_Wildcard_MatchesModule()
     {
         var context = _app.User.Context;
-        await MakeOn(context, global::app.@event.Trigger.BeforeAction, "OnVar", actionPattern: "variable.*").Run();
+        await MakeOn(context, global::app.@event.Trigger.BeforeAction, "OnVar", actionPattern: "variable.*").Start();
 
         var match = context.Events.GetMatchingBindings(Trigger.BeforeAction, module: "variable", actionName: "set");
         await Assert.That(match.Count).IsEqualTo(1);
@@ -156,7 +156,7 @@ public class EventHandlerTests
         var context1 = _app.User.Context;
         var context2 = _app.System.Context;
 
-        await MakeOn(context1, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
+        await MakeOn(context1, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Start();
 
         await Assert.That(context1.Events.Count).IsEqualTo(1);
         await Assert.That(context2.Events.Count).IsEqualTo(0);
@@ -179,14 +179,14 @@ public class EventHandlerTests
         // The held call has no arguments, so verify via a different mechanism:
         // Register BeforeGoal event, run TargetGoal, check that the callback goal was resolved
         var onAction = MakeOn(context, global::app.@event.Trigger.BeforeGoal, "OnBeforeCallback", goalPattern: "TargetGoal");
-        var regResult = await onAction.Run();
+        var regResult = await onAction.Start();
         await regResult.IsSuccess();
 
         // Set a marker before running
         context.Variable.Set("eventFired", false);
 
         // Run the target goal — should trigger BeforeGoal event
-        await Make.Call("TargetGoal").Run(context);
+        await Make.Call("TargetGoal").Start(context);
 
         // The event handler runs the held call on targetActor.Context
         // OnBeforeCallback runs — since it has no steps, it returns Ok
@@ -202,7 +202,7 @@ public class EventHandlerTests
     {
         var context = _app.User.Context;
 
-        // The callback goal — when it runs, RunGoalAsync injects its parameters
+        // The callback goal — when it runs, app.Start injects its parameters
         // We give it a parameter so we can verify it was called
         _app.Goal.Add(new Goal { Name = "AfterCallback", Path = global::app.type.item.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
         _app.Goal.Add(new Goal { Name = "MainGoal", Path = global::app.type.item.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
@@ -212,10 +212,10 @@ public class EventHandlerTests
             Goal = Make.Call("AfterCallback", ("callbackRan", true)),
             GoalPattern = (global::app.type.item.text.@this)"MainGoal"
         };
-        await onAction.Run();
+        await onAction.Start();
 
         // Run the main goal
-        await Make.Call("MainGoal").Run(context);
+        await Make.Call("MainGoal").Start(context);
 
         // Verify the callback ran — parameter was injected on targetActor.Context.Variable
         var callbackRan = await _app.User.Context.Variable.Get("callbackRan");
@@ -233,9 +233,9 @@ public class EventHandlerTests
         var context = _app.User.Context;
         _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
         _app.Goal.Add(new Goal { Name = "Target", Path = global::app.type.item.path.@this.Resolve("/Target.goal", global::PLang.Tests.TestApp.SharedContext) });
-        await (await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "Watch", goalPattern: "Target").Run()).IsSuccess();
+        await (await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "Watch", goalPattern: "Target").Start()).IsSuccess();
 
-        await Make.Call("Target").Run(context);
+        await Make.Call("Target").Start(context);
 
         var moment = await Moment();
         await Assert.That(moment).IsNotNull();
@@ -249,12 +249,12 @@ public class EventHandlerTests
     {
         var context = _app.User.Context;
         _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
-        await (await MakeOn(context, global::app.@event.Trigger.BeforeStep, "Watch", stepPattern: "*").Run()).IsSuccess();
+        await (await MakeOn(context, global::app.@event.Trigger.BeforeStep, "Watch", stepPattern: "*").Start()).IsSuccess();
 
         var goal = new Goal { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Goal = goal, Index = 0, Text = "say hi" };
         goal.Step.Add(step);
-        await step.Run(context);
+        await step.Start(context);
 
         var moment = await Moment();
         await Assert.That(moment!.Step).IsSameReferenceAs(step);
@@ -266,7 +266,7 @@ public class EventHandlerTests
     {
         var context = _app.User.Context;
         _app.Goal.Add(new Goal { Name = "Watch", Path = global::app.type.item.path.@this.Resolve("/Watch.goal", global::PLang.Tests.TestApp.SharedContext) });
-        await (await MakeOn(context, global::app.@event.Trigger.AfterAction, "Watch", actionPattern: "variable.set").Run()).IsSuccess();
+        await (await MakeOn(context, global::app.@event.Trigger.AfterAction, "Watch", actionPattern: "variable.set").Start()).IsSuccess();
 
         var goal = new Goal { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Goal = goal, Index = 0, Text = "set %x% = 1" };
@@ -274,7 +274,7 @@ public class EventHandlerTests
         var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
         set.Step = step;   // an action is born holding its step
         step.Code.Add(set);
-        await step.Run(context);
+        await step.Start(context);
 
         var moment = await Moment();
         await Assert.That(moment!.Action).IsSameReferenceAs(set);

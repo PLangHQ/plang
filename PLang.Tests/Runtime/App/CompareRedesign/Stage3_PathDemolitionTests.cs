@@ -35,7 +35,7 @@ public class Stage3_PathDemolitionTests
     {
         var action = new global::app.module.action.file.Read(context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", p),
         };
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         return result;
     }

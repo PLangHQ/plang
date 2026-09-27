@@ -8,7 +8,7 @@ public partial class Reset : IContext
 {
     public partial data.@this<global::app.mock.@this>? Mock { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this> Start()
     {
         var mock = Mock?.Peek() as global::app.mock.@this;
         if (mock != null)

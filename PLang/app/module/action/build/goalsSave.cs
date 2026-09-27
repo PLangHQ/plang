@@ -13,5 +13,5 @@ public partial class goalsSave : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this> Run() => await Builder.GoalsSave(this);
+    public async Task<data.@this> Start() => await Builder.GoalsSave(this);
 }

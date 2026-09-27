@@ -35,7 +35,7 @@ public partial class @this
     private global::app.type.@this? _return;
     private bool _returnComputed;
 
-    /// <summary>The PLang type this action returns, read off <c>Run()</c>'s signature. Every Run
+    /// <summary>The PLang type this action returns, read off <c>Start()</c>'s signature. Every Start
     /// returns a Data, so there is always a type: <c>Task&lt;Data&lt;T&gt;&gt;</c> names T, and an
     /// undefined T (bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c>) is <c>item</c> — the
     /// unconstrained plang type, C#'s <c>object</c>. Null only when <c>Run</c> isn't Data-shaped
@@ -50,10 +50,11 @@ public partial class @this
 
             var handler = Handler;
             if (handler == null || App == null) return null;
-            var run = handler.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
-            if (run == null) return null;
+            // the handler's own Start() — the dispatcher is ICodeGenerated's, implemented explicitly (not public)
+            var start = handler.GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+            if (start == null) return null;
 
-            var ret = run.ReturnType;
+            var ret = start.ReturnType;
             if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
                 ret = ret.GetGenericArguments()[0];
 

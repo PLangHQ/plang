@@ -11,15 +11,15 @@ namespace app.module.action.test;
 /// Main test-runner loop. C# handler — NOT a PLang foreach, immune to the silent-skip
 /// bug that motivated this module. For each Ready global::app.module.action.test.test, spins up a fresh App
 /// instance (file boundary = App boundary), subscribes AfterAction for coverage,
-/// runs the test's entry goal under a timeout CancellationToken, records a global::app.test.Run,
+/// starts the test's entry goal under a timeout CancellationToken, records the test's outcome,
 /// merges the child's Coverage into the parent, then releases the App.
 /// Parallel execution is throttled by a SemaphoreSlim (Parallel / Testing.Parallel).
 /// Never throws for child-test failures — failure is data, loop stays parallel-safe.
 /// Returns the run-wide Results collection as Data so MetaTests can propagate explicitly
 /// via `write to %results%`; child TestRuns do NOT auto-bubble to the parent runner.
 /// </summary>
-[Action("run", Cacheable = false)]
-public partial class run : IContext
+[Action("start", Cacheable = false)]
+public partial class start : IContext
 {
     // Test hook: fires once per child App after it's constructed and configured
     // (OsDirectory inherited, Test active, Current assigned),
@@ -34,7 +34,7 @@ public partial class run : IContext
     public partial data.@this<global::app.type.item.number.@this>? Parallel { get; init; }
     public partial data.@this<global::app.type.item.number.@this>? Timeout { get; init; }
 
-    public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Run()
+    public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Start()
     {
         var tests = new List<global::app.test.@this>();
         var list = await Tests.Value();
@@ -92,7 +92,7 @@ public partial class run : IContext
         childApp.Parent = parentApp;
         childApp.Test = new global::app.test.list.@this(childApp.System.Context);
 
-        test.Start();
+        test.Begin();
         childApp.Test.Current = test;
 
         // Coverage subscriber — records every handler fire and every branch index observed.
@@ -206,7 +206,7 @@ public partial class run : IContext
             var child = childApp.User.Context;
             var loaded = await childApp.Goal.Load(test.Goal.PrPath!.ToString());
             var result = loaded.Success
-                ? await ((await loaded.Value()) as global::app.goal.@this)!.Run(child)
+                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(child)
                 : loaded;
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
                 test.Complete(global::app.test.Status.Timeout);

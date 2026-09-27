@@ -70,7 +70,7 @@ public partial class ask : IContext
     /// <summary>Resume sentinel — variable name used to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
 
-    public async Task<data.@this<Ask>> Run()
+    public async Task<data.@this<Ask>> Start()
     {
         // Resume path: channel pre-bound the answer under !ask.answer.
         var answer = await Context.Variable.Get(AnswerVariableName);

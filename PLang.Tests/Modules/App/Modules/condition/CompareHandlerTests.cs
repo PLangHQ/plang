@@ -30,7 +30,7 @@ public class CompareHandlerTests : IDisposable
     {
         var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo(true);
@@ -41,7 +41,7 @@ public class CompareHandlerTests : IDisposable
     {
         var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo(false);
@@ -52,7 +52,7 @@ public class CompareHandlerTests : IDisposable
     {
         var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(5), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await Assert.That((await result.Value()) is global::app.type.item.@bool.@this).IsTrue();
         await Assert.That((await result.Value())!.Value).IsTrue();
@@ -70,7 +70,7 @@ public class CompareHandlerTests : IDisposable
     {
         var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(new object()), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");

@@ -9,7 +9,7 @@ namespace PLang.Tests.App.TypedReturnsTests;
 // silently double-wraps when T = object and the source is already a Data —
 // producing Data<object>{ Value = Data<X>{...} }. The static checks in
 // Stage2_MechanicalTypings only verify T at the type level; this file
-// invokes typed Run() handlers and asserts result.Value is the raw payload,
+// invokes typed Start() handlers and asserts result.Value is the raw payload,
 // not a nested Data instance.
 public class RuntimeDoubleWrapTests
 {
@@ -39,7 +39,7 @@ public class RuntimeDoubleWrapTests
 
         var action = new First(context) { ListName = new @this("xs") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.first");
@@ -55,7 +55,7 @@ public class RuntimeDoubleWrapTests
 
         var action = new Get(context) { ListName = new @this("xs"), Index = (global::app.type.item.number.@this)1 };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.get");
@@ -70,7 +70,7 @@ public class RuntimeDoubleWrapTests
 
         var action = new Last(context) { ListName = new @this("xs") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.last");
@@ -83,17 +83,17 @@ public class RuntimeDoubleWrapTests
         var context = _app.User.Context;
         var action = new MathAdd(context) { A = new Data("", 5L, context: context), B = new Data("", 3L, context: context) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "math.add");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("8");
     }
 
-    // Sweep across every action handler whose Run() returns Task<Data<object>>:
+    // Sweep across every action handler whose Start() returns Task<Data<object>>:
     // the implicit-operator footgun only bites when T = object. The list is a
     // tripwire — when it grows, the reviewer audits the new handler's
-    // construction path. New Data<object> Run() ⇒ either narrow T to a
+    // construction path. New Data<object> Start() ⇒ either narrow T to a
     // concrete type, or add a runtime invocation test below.
     [Test]
     public async Task EveryDataObjectRunHandler_IsKnownToThisTest()
@@ -101,13 +101,13 @@ public class RuntimeDoubleWrapTests
         var dataObjectHandlers = typeof(global::app.@this).Assembly
             .GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && t.Namespace?.StartsWith("app.module") == true)
-            .Select(t => (Type: t, Run: t.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)))
-            .Where(x => x.Run != null && IsTaskDataOfObject(x.Run.ReturnType))
+            .Select(t => (Type: t, Start: t.GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)))
+            .Where(x => x.Start != null && IsTaskDataOfObject(x.Start.ReturnType))
             .Select(x => x.Type.FullName!)
             .OrderBy(n => n)
             .ToList();
 
-        // The scalars-as-native cascade removed every `Task<Data<object>>` Run handler:
+        // The scalars-as-native cascade removed every `Task<Data<object>>` Start handler:
         // known-type returns took a concrete wrapper (math.Random → Data<number>), and
         // genuinely-polymorphic ones (list.First/Get/Last/Where, signing.sign, llm.query)
         // took bare Task<Data> (no T → the `where T : item` constraint can't be violated).
@@ -116,7 +116,7 @@ public class RuntimeDoubleWrapTests
         var expected = System.Array.Empty<string>();
         await Assert.That(dataObjectHandlers).IsEquivalentTo(expected)
             .Because(
-                "New Data<object> Run() handler? Either narrow T to a concrete type, " +
+                "New Data<object> Start() handler? Either narrow T to a concrete type, " +
                 "or add a runtime double-wrap invocation test in this file. " +
                 "Forwarders that polymorphically return a Data produced elsewhere should be Task<Data>, not Task<Data<object>>.");
     }
@@ -152,7 +152,7 @@ public class RuntimeDoubleWrapTests
             Value = new global::app.data.@this("", 20L, context: context),
         };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsTypeOf<global::app.type.item.list.@this>();
         await Assert.That(((global::app.type.item.list.@this)(await result.Value())!).Count).IsEqualTo(1);

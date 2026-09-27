@@ -67,12 +67,12 @@ def plang_type(cs):
         return f'list<{plang_type(cs.split("<", 1)[1].rsplit(">", 1)[0])}>'
     return name
 
-RUN = re.compile(r'Task<(?:global::app\.)?data\.@this(?:<(?P<type>.+)>)?>\s+Run\(\)')
+START = re.compile(r'Task<(?:global::app\.)?data\.@this(?:<(?P<type>.+)>)?>\s+Start\(\)')
 
 def returns(module, action):
-    """What the action's Run returns, as its plang type (action/this.Schema.cs Return): the T of
+    """What the action's Start returns, as its plang type (action/this.Schema.cs Return): the T of
     Task<Data<T>>, item for a bare Data or an object."""
-    m = RUN.search(handler_source(module, action) or '')
+    m = START.search(handler_source(module, action) or '')
     if not m or not m.group('type') or m.group('type') == 'object': return 'item'
     return plang_type(m.group('type'))
 

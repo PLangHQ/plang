@@ -127,7 +127,7 @@ public class DiscoverActionTests
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", recursive)
         };
-        var result = await action.Run();
+        var result = await action.Start();
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
     }
 

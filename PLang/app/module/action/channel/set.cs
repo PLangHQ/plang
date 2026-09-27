@@ -31,7 +31,7 @@ public partial class Set : IContext
     public partial data.@this<app.variable.@this>? Encryption { get; init; }
     public partial data.@this<app.variable.@this>? Signing { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var name = (await Name.Value())?.Clr<string>();
         if (string.IsNullOrEmpty(name))

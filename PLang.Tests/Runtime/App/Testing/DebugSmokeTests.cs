@@ -58,7 +58,7 @@ public class DebugSmokeTests
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
         // null), this call throws. If signatures are correct, it completes and emits to stderr.
-        await _app.RunGoalAsync(goal, _app.User.Context);
+        await _app.Start(goal, _app.User.Context);
 
         var debugOut = ReadCapture();
         // Step-level markers come from the always-on handlers.

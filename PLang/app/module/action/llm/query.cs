@@ -108,7 +108,7 @@ public partial class query : IContext
     // Polymorphic: response shape depends on Schema (raw string, structured
     // object, tool-call object). The provider declares Data<object>; the
     // action forwards cleanly.
-    public async Task<data.@this> Run() => await Llm.Query(this);
+    public async Task<data.@this> Start() => await Llm.Query(this);
 
     /// <summary>
     /// Compile-time hint: Schema set ⇒ "json" (the LLM is asked to fit a

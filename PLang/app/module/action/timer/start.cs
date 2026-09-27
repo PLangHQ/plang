@@ -6,13 +6,13 @@ namespace app.module.action.timer;
 /// the elapsed duration. Use for performance tracing and simple stopwatch measurements.
 /// </summary>
 [Action("start", Cacheable = false)]
-public partial class Start : IContext, IStatic
+public partial class start : IContext, IStatic
 {
     public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
     [Default("goal")]
     public partial data.@this<global::app.type.item.text.@this> Scope { get; init; }
 
-    public async Task<data.@this<global::app.type.item.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
         var key = Name == null ? "default" : await Name.Clr<string>("default");
         var entry = new TimerEntry(DateTimeOffset.UtcNow, (await Scope.Value())!.Clr<string>()!);

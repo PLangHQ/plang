@@ -43,7 +43,7 @@ public class ProviderResolutionTests
 
         var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var hash = ((global::app.module.action.crypto.type.hash.@this)(await result.Value())!).Bytes;
@@ -57,7 +57,7 @@ public class ProviderResolutionTests
         // Fresh engine, no crypto settings — should use global::app.module.action.crypto.code.Default
         var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var hash = ((global::app.module.action.crypto.type.hash.@this)(await result.Value())!).Bytes;
@@ -76,7 +76,7 @@ public class ProviderResolutionTests
         // Even with garbage hash, mock returns true
         var action = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Value).IsTrue();

@@ -11,7 +11,7 @@ public partial class End : IContext, IStatic
 {
     public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
-    public Task<data.@this<global::app.type.item.duration.@this>> Run()
+    public Task<data.@this<global::app.type.item.duration.@this>> Start()
     {
         // If no name given, use the last started timer
         var key = (Name?.Peek() as global::app.type.item.text.@this)?.ToString();

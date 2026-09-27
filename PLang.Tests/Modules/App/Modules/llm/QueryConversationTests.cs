@@ -60,7 +60,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action1.Attach(null, Ctx);
-        await action1.Run();
+        await action1.Start();
 
         // Second query with continuation
         var action2 = new query(Ctx) { Message = new List<LlmMessage>
@@ -71,7 +71,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
-        await action2.Run();
+        await action2.Start();
 
         // Second request should contain previous messages
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -92,7 +92,7 @@ public class QueryConversationTests
         var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "first question");
         action1 = new query(Ctx) { Message = action1.Message, Cache = (global::app.type.item.@bool.@this)false };
         await action1.Attach(null, Ctx);
-        await action1.Run();
+        await action1.Start();
 
         // Second query with ContinuePreviousConversation = (global::app.type.item.@bool.@this)false — should clear
         var action2 = new query(Ctx) { Message = new List<LlmMessage>
@@ -103,7 +103,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
-        await action2.Run();
+        await action2.Start();
 
         // Second request should NOT contain first question
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -126,7 +126,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action1.Attach(null, Ctx);
-        await action1.Run();
+        await action1.Start();
 
         // Second query continuing conversation with same schema
         var action2 = new query(Ctx) { Message = new List<LlmMessage>
@@ -138,7 +138,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
-        await action2.Run();
+        await action2.Start();
 
         // The system message should NOT have doubled format instructions
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -163,7 +163,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action1.Attach(null, Ctx);
-        await action1.Run();
+        await action1.Start();
 
         // Second query: no schema, continue conversation → should reuse
         var action2 = new query(Ctx) { Message = new List<LlmMessage>
@@ -174,7 +174,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
-        await action2.Run();
+        await action2.Start();
 
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("result: string");
@@ -195,7 +195,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action1.Attach(null, Ctx);
-        await action1.Run();
+        await action1.Start();
 
         // Second query with schema B
         var action2 = new query(Ctx) { Message = new List<LlmMessage>
@@ -207,7 +207,7 @@ public class QueryConversationTests
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
-        await action2.Run();
+        await action2.Start();
 
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("newSchema");

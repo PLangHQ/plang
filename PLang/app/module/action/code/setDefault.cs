@@ -15,7 +15,7 @@ public partial class setDefault : IContext
     /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
     public partial data.@this<global::app.type.item.text.@this>? Type { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var typeName = Type == null ? null : (await Type.Value())?.Clr<string>();
         var providerType = Context.App.Code.ResolveType(typeName);

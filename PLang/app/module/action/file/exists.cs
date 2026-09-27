@@ -22,8 +22,8 @@ public partial class Exists : IContext
     // is itself a non-Success Data, so the typed SchemeNotRegistered error
     // propagates instead of an NRE.
     //
-    // Run returns Task<Data<path>> — method-signature-as-truth so the catalog
+    // Start returns Task<Data<path>> — method-signature-as-truth so the catalog
     // surfaces `→ returns path` and the compile LLM picks the right Type for
     // any trailing `variable.set` after a `write to %x%` (typed-returns work).
-    public Task<data.@this<path>> Run() => Task.FromResult(Path);
+    public Task<data.@this<path>> Start() => Task.FromResult(Path);
 }

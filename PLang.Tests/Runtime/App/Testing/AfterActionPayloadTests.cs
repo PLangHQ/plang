@@ -31,7 +31,7 @@ public class AfterActionPayloadTests
             Make.Step("set var",
                 Make.Action("variable", "set", Make.Param("Name", varName, "variable"), ("Value", value)))));
         _app.Goal.Add(goal);
-        await _app.RunGoalAsync(goal, _app.User.Context);
+        await _app.Start(goal, _app.User.Context);
     }
 
     // Subscribers to AfterAction receive the Action that just ran — Action.Module,
@@ -73,12 +73,12 @@ public class AfterActionPayloadTests
 
     // timeout.after wrapping http.request emits two AfterAction events — one for the
     // modifier itself, one for the inner action. Confirms coverage inventory includes
-    // modifiers (architect §5.6). Each Action.RunAsync fires its own AfterAction.
+    // modifiers (architect §5.6). Each Action.Start fires its own AfterAction.
     [Test]
     public async Task AfterAction_ForModifierAction_FiresSeparatelyFromInnerAction()
     {
         // Simpler fixture: variable.set wrapped by timeout.after. The modifier and the
-        // inner variable.set each go through Action.RunAsync → fire their own AfterAction.
+        // inner variable.set each go through Action.Start → fire their own AfterAction.
         var inner = Make.Modified(
             Make.Action("variable", "set", Make.Param("Name", "y", "variable"), ("Value", 7)),
             Make.Action("timeout", "after", ("Ms", 5000)));
@@ -98,10 +98,10 @@ public class AfterActionPayloadTests
             priority: int.MaxValue,
             stopOnError: false));
 
-        await _app.RunGoalAsync(goal, _app.User.Context);
+        await _app.Start(goal, _app.User.Context);
 
         // Exact count and order — Modifiers.RunAsync emits the modifier's AfterAction
-        // first (inside its own post-loop), then control returns to Action.RunAsync which
+        // first (inside its own post-loop), then control returns to Action.Start which
         // emits the inner action's AfterAction. Duplicate firings would corrupt
         // coverage counts silently; unexpected order signals a lifecycle regression.
         await Assert.That(observed.Count).IsEqualTo(2);
@@ -155,7 +155,7 @@ public class AfterActionPayloadTests
             priority: int.MaxValue,
             stopOnError: false));
 
-        await _app.RunGoalAsync(goal, _app.User.Context);
+        await _app.Start(goal, _app.User.Context);
 
         await Assert.That(captured).IsNotNull();
         await captured!.IsFailure();

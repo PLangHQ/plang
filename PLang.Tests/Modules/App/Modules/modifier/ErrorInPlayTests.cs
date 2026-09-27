@@ -183,7 +183,7 @@ public class ErrorInPlayTests
                 ErrorHandlerCalling("Recover", ("order", "GoalFirst"))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.GetValue("seen"))?.ToString())
@@ -230,7 +230,7 @@ public class ErrorInPlayTests
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1L, context: ctx) })
         });
 
-        var result = await sleep.Run(Ctx);
+        var result = await sleep.Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.GetValue("seenKey"))?.ToString()).IsEqualTo("Timeout");

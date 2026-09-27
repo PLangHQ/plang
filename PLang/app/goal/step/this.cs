@@ -105,10 +105,10 @@ public sealed partial class @this
     [JsonIgnore]
     public global::app.goal.@this Goal { get; init; } = null!;
     /// <summary>
-    /// Runs this step: lifecycle events → actions.
+    /// Starts this step: lifecycle events → actions.
     /// Error handling, caching, and timeouts are per-action modifiers, not step-level.
     /// </summary>
-    public async Task<data.@this> Run(actor.context.@this context)
+    public async Task<data.@this> Start(actor.context.@this context)
     {
         context.Step = this;
         var lifecycle = context.LifecycleFor(this);
@@ -120,7 +120,7 @@ public sealed partial class @this
         data.@this result;
         try
         {
-            result = await Code.Run(context);   // action.list owns the chain loop + fire
+            result = await Code.Start(context);   // action.list owns the chain loop + fire
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
         {

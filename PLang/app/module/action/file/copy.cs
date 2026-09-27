@@ -15,7 +15,7 @@ public partial class Copy : IContext
     [Default(true)]
     public partial data.@this<global::app.type.item.@bool.@this> IncludeSubfolders { get; init; }
 
-    public async Task<data.@this<path>> Run()
+    public async Task<data.@this<path>> Start()
     {
         // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
         // SchemeNotRegistered error instead of an NRE on .Value.

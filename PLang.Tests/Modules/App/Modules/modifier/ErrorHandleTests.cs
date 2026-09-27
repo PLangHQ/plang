@@ -76,7 +76,7 @@ public class ErrorHandleTests
             Modifier = new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) }
         };
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.GetValue("ok"))).IsEqualTo("v");
@@ -88,7 +88,7 @@ public class ErrorHandleTests
         var action = Throw("boom",
             modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -114,7 +114,7 @@ public class ErrorHandleTests
         var action = Throw("boom", key: "Oops",
             modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That(Ctx.CallStack.Audit.Any(e => e.Message == "boom")).IsTrue();
@@ -130,7 +130,7 @@ public class ErrorHandleTests
         var action = Throw("boom", key: "Oops",
             modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That(Ctx.CallStack.Audit.Any(e => e.Message == "boom")).IsTrue();
@@ -146,7 +146,7 @@ public class ErrorHandleTests
                 ErrorHandler(("statusCode", 404), ("ignoreError", true))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -160,7 +160,7 @@ public class ErrorHandleTests
                 ErrorHandler(("statusCode", 404), ("ignoreError", true))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
@@ -175,7 +175,7 @@ public class ErrorHandleTests
                 ErrorHandler(("key", "notfound"), ("ignoreError", true))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -189,7 +189,7 @@ public class ErrorHandleTests
                 ErrorHandler(("message", "connection"), ("ignoreError", true))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -203,7 +203,7 @@ public class ErrorHandleTests
                 ErrorHandler(("key", "NotFound"), ("ignoreError", true))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
@@ -218,7 +218,7 @@ public class ErrorHandleTests
                 ErrorHandler(("message", "connection"), ("ignoreError", true))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("disk full");
@@ -230,7 +230,7 @@ public class ErrorHandleTests
         var action = Throw("anything", statusCode: 418,
             modifiers: new global::app.goal.step.action.modifier.list.@this { ErrorHandler(("ignoreError", true)) });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -370,7 +370,7 @@ public class ErrorHandleTests
                 ErrorHandlerCalling("SuccessGoal", ("order", "GoalFirst"))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -416,7 +416,7 @@ public class ErrorHandleTests
     [Test]
     public async Task OnErrorClauses_KeyedError_GoesToTheFirstMatchOnly()
     {
-        var result = await ThrowCaughtByAThenB("FileNotFound").Run(Ctx);
+        var result = await ThrowCaughtByAThenB("FileNotFound").Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.Get("ranA")).IsInitialized).IsTrue();
@@ -426,7 +426,7 @@ public class ErrorHandleTests
     [Test]
     public async Task OnErrorClauses_OtherError_SkipsTheKeyedClause_GoesToTheNext()
     {
-        var result = await ThrowCaughtByAThenB("SomethingElse").Run(Ctx);
+        var result = await ThrowCaughtByAThenB("SomethingElse").Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.Get("ranA")).IsInitialized).IsFalse();
@@ -444,7 +444,7 @@ public class ErrorHandleTests
             ErrorHandlerCalling("B")
         });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That((await Ctx.Variable.Get("ranB")).IsInitialized).IsFalse();
@@ -461,7 +461,7 @@ public class ErrorHandleTests
                 ErrorHandlerCalling("FailGoal", ("order", "GoalFirst"))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.list.Count).IsGreaterThan(0);
@@ -479,7 +479,7 @@ public class ErrorHandleTests
                 ErrorHandlerCalling("SuccessGoal2", ("order", "RetryFirst"))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }
@@ -495,7 +495,7 @@ public class ErrorHandleTests
                 ErrorHandlerCalling("FailGoal2", ("order", "RetryFirst"))
             });
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.list.Count).IsGreaterThan(0);

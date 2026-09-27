@@ -25,7 +25,7 @@ public partial class @this
     public bool Returned { get; set; }
 
     /// <summary>
-    /// How many goal boundaries this return crosses. Decremented by RunGoalAsync.
+    /// How many goal boundaries this return crosses. Decremented as each goal's Start returns it.
     /// </summary>
     [JsonIgnore]
     public int ReturnDepth { get; set; } = 1;

@@ -25,7 +25,7 @@ public class IfHandlerTests : IDisposable
     private async Task<Data> RunStep(string text, params Action[] actions)
     {
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("G", Make.Step(text, actions)));
-        return await _app.RunGoalAsync(goal, _app.User.Context);
+        return await _app.Start(goal, _app.User.Context);
     }
 
     public void Dispose()
@@ -40,7 +40,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(42), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
@@ -51,7 +51,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = new Data("", context: _app.User.Context), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -62,7 +62,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
@@ -161,7 +161,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
@@ -172,7 +172,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -183,7 +183,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value()) is global::app.type.item.@bool.@this).IsTrue();
@@ -195,7 +195,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value()) is global::app.type.item.@bool.@this).IsTrue();
@@ -212,7 +212,7 @@ public class IfHandlerTests : IDisposable
             Right = right == null ? null : ctx.Ok(right)
         };
         await action.Attach(null, ctx);
-        return await action.Run();
+        return await action.Start();
     }
 
     // Every negative operator is its positive with the answer inverted.
@@ -275,7 +275,7 @@ public class IfHandlerTests : IDisposable
         var data = new TestData(true);
         var action = new If(_app.User.Context) { Left = data, Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
@@ -287,7 +287,7 @@ public class IfHandlerTests : IDisposable
         var data = new TestData(false);
         var action = new If(_app.User.Context) { Left = data, Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -305,7 +305,7 @@ public class IfHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(new object()), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
@@ -328,7 +328,7 @@ public class IfHandlerTests : IDisposable
 
         // --- Inner goal: if true → write "inner-then", else → write "inner-else" ---
         // Simulate the bug: the outer goal's condition has already set the guard on the
-        // SAME context (RunGoalAsync passes context by reference). With the buggy code
+        // SAME context (app.Start passes context by reference). With the buggy code
         // (Variables-based guard) the inner condition sees it and skips orchestration —
         // actions run sequentially instead of branched.
         _app.User.Context.Variable.Set(new Data("__condition_orchestrating__", true, context: _app.User.Context));

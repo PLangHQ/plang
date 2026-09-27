@@ -52,7 +52,7 @@ public class QueryBasicTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello world");
@@ -75,7 +75,7 @@ public class QueryBasicTests
             Model = (global::app.type.item.text.@this)"gpt-4o"
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Verify model was sent to API
@@ -97,7 +97,7 @@ public class QueryBasicTests
             MaxTokens = (global::app.type.item.number.@this)2000
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -117,7 +117,7 @@ public class QueryBasicTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("HttpError");
@@ -133,7 +133,7 @@ public class QueryBasicTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("HttpError");
@@ -154,7 +154,7 @@ public class QueryBasicTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Properties.Value("RawResponse"))?.ToString()).IsEqualTo("result text");
@@ -185,7 +185,7 @@ public class QueryBasicTests
             Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "claude-99-future")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Properties.Value("Cost"))).IsNull();
@@ -207,7 +207,7 @@ public class QueryBasicTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
@@ -238,7 +238,7 @@ public class QueryBasicTests
             Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // 1e6·0.75/1e6 + 1e6·4.50/1e6 = 5.25 exact.
@@ -276,7 +276,7 @@ public class QueryBasicTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2);

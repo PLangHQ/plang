@@ -156,13 +156,11 @@ public partial class @this
     public global::app.type.property.@this? this[string name] => Property[name];
 
     /// <summary>
-    /// Runs this action: lifecycle events → dispatch → return mapping.
+    /// Starts this action: lifecycle events → dispatch → return mapping.
     /// Context travels as parameter — actions are shared objects, not per-request.
-    /// Owns its own callstack push/pop, anchor save/restore, exception translation
-    /// (formerly App.Run's body — collapsed in stage 2a.5 since "action owns its
-    /// execution").
+    /// Owns its own callstack push/pop, anchor save/restore and exception translation.
     /// </summary>
-    public async Task<global::app.data.@this> Run(actor.context.@this context)
+    public async Task<global::app.data.@this> Start(actor.context.@this context)
     {
         // ONE FRAME PER ACTION. The frame spans the action's whole run — its lifecycle events,
         // its modifiers, and its dispatch — not just the dispatch. A modifier recovering from a
@@ -228,7 +226,7 @@ public partial class @this
     }
 
     /// <summary>
-    /// Dispatches this action inside the frame <see cref="Run"/> pushed for it: resolves the
+    /// Dispatches this action inside the frame <see cref="Start"/> pushed for it: resolves the
     /// handler, saves/restores Context anchors, and hands off to the Call, which owns the
     /// exception translation. The frame is NOT created here — a retry dispatches again into
     /// the same frame, and a modifier recovering from a failure is still inside it.
@@ -243,7 +241,7 @@ public partial class @this
         if (error != null) return context.Error(error);
 
         using var _anchor = context.AnchorScope(this);
-        return await call.ExecuteAsync(code!, context);
+        return await call.Start(code!, context);
     }
 
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
@@ -275,8 +273,8 @@ public partial class @this
     }
 
     /// <summary>
-    /// PLang name of the action's return type T (when Run() returns Task&lt;Data&lt;T&gt;&gt;).
-    /// Null when Run() returns bare <c>Task&lt;Data&gt;</c> — i.e. void: the action has no
+    /// PLang name of the action's return type T (when Start() returns Task&lt;Data&lt;T&gt;&gt;).
+    /// Null when Start() returns bare <c>Task&lt;Data&gt;</c> — i.e. void: the action has no
     /// meaningful value to write to a variable. Compile.llm uses this to choose the Type
     /// for a trailing <c>variable.set</c> after a <c>write to %x%</c>.
     /// </summary>

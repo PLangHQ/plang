@@ -106,7 +106,7 @@ public class LoudRunTests
         _app.Test.Add(NewTest("A", Status.Pass));
         _app.Test.Add(NewTest("Old", Status.Stale, "no .pr"));
 
-        var result = await new global::app.module.action.test.report(_app.User.Context).Run();
+        var result = await new global::app.module.action.test.report(_app.User.Context).Start();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Key).IsEqualTo("TestRunFailed");
@@ -120,7 +120,7 @@ public class LoudRunTests
     {
         _app.Test.Add(NewTest("A", Status.Pass));
 
-        var result = await new global::app.module.action.test.report(_app.User.Context).Run();
+        var result = await new global::app.module.action.test.report(_app.User.Context).Start();
 
         await result.IsSuccess();
     }

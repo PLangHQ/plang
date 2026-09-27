@@ -107,7 +107,7 @@ public class HandlerShapeTests
 
         var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
-        var viaHandler = await handler.Run();
+        var viaHandler = await handler.Start();
         var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText(app.User.Context);
 
         await Assert.That(viaHandler.Success).IsEqualTo(viaPath.Success);
@@ -129,7 +129,7 @@ public class HandlerShapeTests
         var fp = new global::app.type.item.path.file.@this(target);
         var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
     }
 

@@ -26,7 +26,7 @@ public partial class Where : IContext
     /// <summary>The right-hand comparison value of the predicate.</summary>
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var subject = await Context.Variable.Get((await ListName.Value()) as app.variable.@this);
         var field = (await Field.Value())!.Clr<string>()!;

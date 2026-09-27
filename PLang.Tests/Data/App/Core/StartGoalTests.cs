@@ -32,7 +32,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
 
@@ -64,7 +64,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("result"))).IsEqualTo("Hello");
@@ -86,7 +86,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         await Assert.That(capture.Lines).Contains("Hello World!");
@@ -106,7 +106,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         await Assert.That(capture.Lines).Contains("no variables here");
@@ -129,7 +129,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
@@ -149,7 +149,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
@@ -174,7 +174,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("greeting"))).IsEqualTo("hello");
@@ -200,7 +200,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         // "long" from parameters, not "string" from defaults
@@ -220,7 +220,7 @@ public class StartGoalTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
@@ -249,7 +249,7 @@ public class StartGoalTests
         public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.Error?>(null); }
 
-        public async Task<Data> Execute()
+        public async Task<Data> Start()
         {
             // The run's own Data from the program's property, born with this run's context.
             var contentData = Action?["Data"]?.Data(Context);

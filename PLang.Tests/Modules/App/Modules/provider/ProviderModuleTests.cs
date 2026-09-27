@@ -101,7 +101,7 @@ public class ProviderModuleTests
     {
         var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("LoadError");
@@ -112,7 +112,7 @@ public class ProviderModuleTests
     {
         var action = new global::app.module.action.code.load(Ctx) { Path = null
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
@@ -131,7 +131,7 @@ public class ProviderModuleTests
 
         var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var loaded = _app.Code.Get<ISigning>("test-signing");
@@ -152,7 +152,7 @@ public class ProviderModuleTests
 
         var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoProviders");
@@ -171,7 +171,7 @@ public class ProviderModuleTests
 
         var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderConstructor");
@@ -190,7 +190,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"second",
             Type = (global::app.type.item.text.@this)"signing"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_app.Code.Get<ISigning>("second").Error).IsNotNull();
@@ -203,7 +203,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"ed25519",
             Type = (global::app.type.item.text.@this)"signing"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("CannotRemoveDefault");
@@ -215,7 +215,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
             Type = (global::app.type.item.text.@this)"signing"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
@@ -227,7 +227,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"anything",
             Type = (global::app.type.item.text.@this)"invalid"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
@@ -248,7 +248,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"second",
             Type = (global::app.type.item.text.@this)"signing"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(second.IsDefault).IsTrue();
@@ -263,7 +263,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
             Type = (global::app.type.item.text.@this)"signing"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
@@ -275,7 +275,7 @@ public class ProviderModuleTests
         var action = new global::app.module.action.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"anything",
             Type = (global::app.type.item.text.@this)"invalid"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
@@ -316,7 +316,7 @@ public class ProviderModuleTests
 
         var action = new global::app.module.action.code.list(Ctx) { Type = null
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Providers are plumbing — the action returns their names (list<text>), not the CLR instances.
@@ -331,7 +331,7 @@ public class ProviderModuleTests
 
         var action = new global::app.module.action.code.list(Ctx) { Type = (global::app.type.item.text.@this)"signing"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
     }
@@ -341,7 +341,7 @@ public class ProviderModuleTests
     {
         var action = new global::app.module.action.code.list(Ctx) { Type = (global::app.type.item.text.@this)"quantum"
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");

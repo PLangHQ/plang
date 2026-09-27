@@ -11,7 +11,7 @@ public partial class Sort : IContext
     /// <summary>Optional element field to sort by — `sort %people% by "age"`. Sorts by element value when absent.</summary>
     public partial data.@this<global::app.type.item.text.@this>? By { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var listName = (await ListName.Value())!;
         var held = await Context.Variable.Get(listName);

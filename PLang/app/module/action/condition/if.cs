@@ -23,7 +23,7 @@ public partial class If : IContext, IStep
     /// operator's (notcontains, isnotempty, …). The chain — which branch fires, running its Child,
     /// skipping the rest — is owned by <c>action.list.Run</c>; a condition no longer reaches its
     /// siblings or its Step.</summary>
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var evalResult = await Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;

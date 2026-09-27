@@ -189,7 +189,7 @@ public class DataWrappedStringUsesCycleTests
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
 
         await result.Data.IsSuccess();
-        // Run() returns Data.Ok(int) — base Data with boxed int, not Data<global::app.type.item.number.@this>.
+        // Start() returns Data.Ok(int) — base Data with boxed int, not Data<global::app.type.item.number.@this>.
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("5");
     }
 }

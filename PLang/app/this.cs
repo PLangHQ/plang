@@ -445,7 +445,7 @@ public sealed partial class @this : IAsyncDisposable
             // Never split compose from run here — the fusion is what makes this honest.
             Step = context.CallStack.Current?.Action.Step,
         };
-        return entity.Run(context);
+        return entity.Start(context);
     }
 
     /// <summary>
@@ -502,7 +502,7 @@ public sealed partial class @this : IAsyncDisposable
 
         data.@this shown;
         await using (context.Variable.Calls.Push(new[] { new data.@this("error", error, context: context) }))
-            shown = await show.Run(context);
+            shown = await show.Start(context);
         if (shown.Success) failed.Properties.Set("shown", true);
         else await (Debug?.Write($"error show: /system/error/Show failed — {shown.Error}") ?? Task.CompletedTask);
         return failed;
@@ -525,7 +525,7 @@ public sealed partial class @this : IAsyncDisposable
         var context = System.Context;
 
         // Build → PLang builder (runs as User — user is building their code).
-        if (Mode.Value == global::app.Mode.Build) return await Build!.RunAsync();
+        if (Mode.Value == global::app.Mode.Build) return await Build!.Start();
 
         // Resolve goal file
         var goalFile = await (await context.Variable.Get("goalFile")).Clr<string?>(null);
@@ -540,15 +540,15 @@ public sealed partial class @this : IAsyncDisposable
         var goal = ((await loaded.Value()) as Goal)!;
 
         // User code executes under the User actor's context.
-        return await goal.Run(User.Context);
+        return await goal.Start(User.Context);
     }
 
     /// <summary>
-    /// Runs a goal already in memory. Delegates to Goal.RunAsync.
+    /// Starts a goal already in memory, under <paramref name="context"/>.
     /// </summary>
-    public async Task<data.@this> RunGoalAsync(Goal goal, actor.context.@this context, CancellationToken ct = default)
+    public async Task<data.@this> Start(Goal goal, actor.context.@this context, CancellationToken ct = default)
     {
-        return await goal.Run(context);
+        return await goal.Start(context);
     }
 
     private async Task<global::app.module.action.setting.IStore> CreateSettingsStoreAsync()

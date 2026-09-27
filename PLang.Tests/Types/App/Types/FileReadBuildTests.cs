@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Types;
 // plang-types — Stage 5
 // file.read.Build() (action IClass.Build()) resolves extension → HIGH-LEVEL type via the
 // registry/formats; the type's own Build() supplies the kind.
-// file.read.Run() constructs the typed value (an image for image MIMEs), not raw bytes.
+// file.read.Start() constructs the typed value (an image for image MIMEs), not raw bytes.
 
 public class FileReadBuildTests
 {
@@ -31,7 +31,7 @@ public class FileReadBuildTests
 
     [Test] public async Task FileReadRun_ImageMime_ConstructsImageValue_NotRawBytes()
     {
-        // file.read.Run() detects an image MIME from the ReadText result and
+        // file.read.Start() detects an image MIME from the ReadText result and
         // lifts to an image value with Type=image. Path inside the App root
         // so AuthGate doesn't deny.
         await using var app = NewApp();
@@ -45,7 +45,7 @@ public class FileReadBuildTests
             var p = global::app.type.item.path.@this.Resolve(abs, app.User.Context);
             var action = new global::app.module.action.file.Read(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(p),
             };
-            var result = await action.Run();
+            var result = await action.Start();
             await result.IsSuccess();
             await Assert.That((await result.Value())).IsTypeOf<image>();
             await Assert.That(result.Type?.Name).IsEqualTo("image");
@@ -65,7 +65,7 @@ public class FileReadBuildTests
             var p = global::app.type.item.path.@this.Resolve(abs, app.User.Context);
             var action = new global::app.module.action.file.Read(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(p),
             };
-            var result = await action.Run();
+            var result = await action.Start();
             await result.IsSuccess();
             await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello");
         }
@@ -83,9 +83,9 @@ public class FileReadBuildTests
 
     [Test] public async Task FileReadRun_ReturnsBareDataPolymorphic_NotStaticDataImage()
     {
-        // Run() signature is Task<Data> (bare), not Task<Data<image>>. The
-        // image lift happens inside Run() based on MIME.
-        var rt = typeof(global::app.module.action.file.Read).GetMethod("Run")!.ReturnType;
+        // Start() signature is Task<Data> (bare), not Task<Data<image>>. The
+        // image lift happens inside Start() based on MIME.
+        var rt = typeof(global::app.module.action.file.Read).GetMethod("Start")!.ReturnType;
         await Assert.That(rt).IsEqualTo(typeof(System.Threading.Tasks.Task<global::app.data.@this>));
     }
 }

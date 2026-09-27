@@ -37,7 +37,7 @@ public class ErrorShowTests : System.IAsyncDisposable
         var show = (await loaded.Value() as Goal)!;
         global::app.data.@this shown;
         await using (context.Variable.Calls.Push(new[] { new global::app.data.@this("error", error, context: context) }))
-            shown = await show.Run(context);
+            shown = await show.Start(context);
         await shown.IsSuccess();
         return System.Text.Encoding.UTF8.GetString(_errorOut.ToArray());
     }

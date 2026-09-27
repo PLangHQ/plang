@@ -11,7 +11,7 @@ public partial class Split : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> RemoveEmpty { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var options = await RemoveEmpty.ToBooleanAsync()
             ? StringSplitOptions.RemoveEmptyEntries

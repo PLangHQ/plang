@@ -8,7 +8,7 @@ namespace app.callstack.call;
 /// (linked to its Step → Goal in the live app.goal registry) plus the positional triple
 /// captured at issue time. Not a replacement for <see cref="@this"/> — restored frames
 /// are NOT pushable into the AsyncLocal Current and have no lifecycle. Callbacks read them
-/// to identify the resume Position; Stage 4's <c>callback.Run</c> dispatches the bottom
+/// to identify the resume Position; <c>callback.start</c> dispatches the bottom
 /// frame's Action through the normal <see cref="app.@this.Run"/> path which Pushes a fresh
 /// live Call.
 /// </summary>

@@ -75,7 +75,7 @@ public class QueryCallbackTests
 
         // Should complete without crashing even though LogToolCall goal doesn't exist
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -83,7 +83,7 @@ public class QueryCallbackTests
     public async Task Query_OnToolCall_ToolLoopCompletesWithCallback()
     {
         // Verifies the full tool loop completes when OnToolCall is configured.
-        // The callback goal doesn't exist in unit tests, so RunGoalAsync returns error,
+        // The callback goal doesn't exist in unit tests, so app.Start returns error,
         // but the provider ignores callback errors and continues. This test proves:
         // 1. OnToolCall doesn't crash the tool loop
         // 2. Tool execution still works (tool result sent back to LLM)
@@ -112,7 +112,7 @@ public class QueryCallbackTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("got data");
         // Verify tool execution happened: 2 HTTP calls (tool call + re-query with result)
@@ -128,7 +128,7 @@ public class QueryCallbackTests
     [Test]
     public async Task Query_OnValidateResponse_Passes_ReturnsNormally()
     {
-        // When OnValidateResponse goal doesn't exist, RunGoalAsync returns error
+        // When OnValidateResponse goal doesn't exist, app.Start returns error
         // which triggers retry. With MaxValidationRetries = (global::app.type.item.number.@this)0, it returns error immediately.
         // To test "passes" scenario, we need the validation goal to actually exist.
         // For unit test: no OnValidateResponse set → result returns normally
@@ -137,7 +137,7 @@ public class QueryCallbackTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("valid response");
@@ -146,7 +146,7 @@ public class QueryCallbackTests
     [Test]
     public async Task Query_OnValidateResponse_Fails_RetriesWithFeedback()
     {
-        // OnValidateResponse configured but goal doesn't exist → RunGoalAsync returns error
+        // OnValidateResponse configured but goal doesn't exist → app.Start returns error
         // → retry feedback sent to LLM → second response returns
         int callIndex = 0;
         _handler.Handler = _ =>
@@ -165,7 +165,7 @@ public class QueryCallbackTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         // After MaxValidationRetries, should return error
         await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("ValidationFailed");
@@ -191,7 +191,7 @@ public class QueryCallbackTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
         // Validation goal doesn't exist → file-not-found error on each retry
         // After max retries, returns "LLM validation failed: <last error>"
@@ -229,7 +229,7 @@ public class QueryCallbackTests
         // Final content round will trigger validation (which fails since goal doesn't exist)
         // But with MaxValidationRetries = (global::app.type.item.number.@this)1, we get one retry then error
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         // The key thing: it should have made it past the tool round to the validation phase
         await Assert.That(_handler.CallCount).IsGreaterThanOrEqualTo(2);
     }
@@ -255,7 +255,7 @@ public class QueryCallbackTests
 
         // With streaming enabled, the request should have stream:true
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         // Verify the request had stream=true
         if (_handler.LastRequest != null)
         {
@@ -279,7 +279,7 @@ public class QueryCallbackTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         // At minimum, shouldn't crash
         await Assert.That(result).IsNotNull();
     }

@@ -56,7 +56,7 @@ public class PlangRuntimeTests : IDisposable
 
         var steps = new GoalSteps { step };
         var context = _app.User.Context;
-        var result = await steps.Run(context);
+        var result = await steps.Start(context);
 
         await result.IsSuccess();
 
@@ -93,7 +93,7 @@ public class PlangRuntimeTests : IDisposable
             Goal = Make.Call("LogBefore"),
             StepPattern = (global::app.type.item.text.@this)"*"
         };
-        await onAction.Run();
+        await onAction.Start();
 
         var step = new Step { Index = 0, Text = "write hello" };
         step.Events.Context = context;
@@ -119,7 +119,7 @@ public class PlangRuntimeTests : IDisposable
                 Make.Action("output", "write", ("Data", "hello runtime")))));
 
         var context = _app.User.Context;
-        var result = await _app.RunGoalAsync(goal, context);
+        var result = await _app.Start(goal, context);
 
         await result.IsSuccess();
 

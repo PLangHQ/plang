@@ -7,7 +7,7 @@
       "line": {
         "number": 4
       },
-      "comment": "Replacement for the iteration-based runner — uses C# test.discover/run/report.\nThe C# test.run loop ensures one test's failure can't silent-skip the rest.",
+      "comment": "Replacement for the iteration-based runner — uses C# test.discover/start/report.\nThe C# test.start loop ensures one test's failure can't silent-skip the rest.",
       "code": [
         {
           "module": "variable",
@@ -93,24 +93,31 @@
     },
     {
       "index": 2,
-      "text": "test.run tests %tests%",
+      "text": "test.start tests %tests%",
       "line": {
         "number": 6
       },
       "code": [
         {
           "module": "test",
-          "name": "run",
+          "name": "start",
           "property": [
             {
               "name": "Tests",
               "type": {
-                "name": "text",
+                "name": "list",
+                "kind": "test",
                 "template": "plang"
               },
               "value": "%tests%"
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'test.start tests %tests%': test.run: module 'test' exists but action 'run' not found. Did you mean: tag, start, report, discover?"
         }
       ],
       "waitForExecution": true
@@ -132,12 +139,12 @@
     }
   ],
   "child": [],
-  "visibility": "Private",
-  "path": "/test.goal",
-  "prPath": "/.build/test.pr",
-  "hash": "590b92f9aaf1f4e8a6277e58b8ae6e7c0aff69e162f54299c34a81e40d87240d",
+  "visibility": "Public",
+  "path": "/system/test.goal",
+  "prPath": "/system/.build/test.pr",
+  "hash": "1956b28d62041d77abb9de585adce47b645ea184609b1f559a63c08088c3eed5",
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false
 }

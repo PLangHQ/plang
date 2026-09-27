@@ -13,7 +13,7 @@ public partial class Return : IContext
     [Default(1)]
     public partial data.@this<global::app.type.item.number.@this> Depth { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this> Start()
     {
         var result = this.Data ?? Context.Ok();
         result.Returned = true;

@@ -4,7 +4,7 @@ namespace app.module.matrix.nullables;
 public partial class StringNullable : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Run() =>
+    public Task<global::app.data.@this> Start() =>
         Task.FromResult<global::app.data.@this>(Tag ?? global::app.data.@this.Null("tag"));
 }
 
@@ -12,6 +12,6 @@ public partial class StringNullable : global::app.module.IContext
 public partial class IntNullable : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.number.@this>? Maybe { get; init; }
-    public Task<global::app.data.@this> Run() =>
+    public Task<global::app.data.@this> Start() =>
         Task.FromResult<global::app.data.@this>(Maybe ?? global::app.data.@this.Null("maybe"));
 }

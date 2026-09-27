@@ -73,7 +73,7 @@ public partial class Call : IContext
     }
 
     /// <summary>The goal this call names, selected through the goal collection as seen from the goal
-    /// this call sits in — the selection <see cref="Run"/> makes. A %variable% name answers none.</summary>
+    /// this call sits in — the selection <see cref="Start"/> makes. A %variable% name answers none.</summary>
     public async Task<global::app.goal.@this?> Callee()
     {
         if (Name.HasVariableReference) return null;
@@ -81,7 +81,7 @@ public partial class Call : IContext
         return string.IsNullOrEmpty(authored) ? null : await Context.App.Goal.GetAsync(authored, __action?.Step?.Goal);
     }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         // The goal is selected through the goal collection as seen from the goal this call sits in.
         // A %variable% name resolves here, in the caller's context.
@@ -114,6 +114,6 @@ public partial class Call : IContext
                 await execContext.Variable.Set(arg.Name, arg.Copy(Context));
             }
 
-        return await goal.Run(execContext);
+        return await goal.Start(execContext);
     }
 }

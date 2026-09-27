@@ -212,17 +212,17 @@ public sealed partial class @this : IAsyncDisposable
     public int Depth { get; }
 
     /// <summary>
-    /// Executes the resolved handler under this Call frame. Wraps:
-    ///   - <c>handler.Resolve(action, context)</c> then <c>Execute()</c> invocation
+    /// Starts the resolved handler under this Call frame. Wraps:
+    ///   - <c>handler.Resolve(action, context)</c> then its <c>Start()</c>
     ///   - <c>SnapshotParams</c> onto <c>Error.Params</c>
     ///   - <see cref="Record"/> on failure (which stamps CallFrames and files the error)
     ///   - OperationCanceledException swallowing into ServiceError (timeout.after
-    ///     contract: inner action's generated ExecuteAsync swallows OCE; this
+    ///     contract: inner action's generated Start swallows OCE; this
     ///     catch is the safety net for handlers that bubble it differently)
     /// Returns the handler's result (or a ServiceError-wrapped result on
     /// caught exception).
     /// </summary>
-    public async Task<data.@this> ExecuteAsync(module.ICodeGenerated handler, actor.context.@this context)
+    public async Task<data.@this> Start(module.ICodeGenerated handler, actor.context.@this context)
     {
         // `handler` is the throwaway registry shell; Resolve builds the fresh, populated
         // instance we actually run. `real` is captured for the catch-path snapshot.
@@ -236,7 +236,7 @@ public sealed partial class @this : IAsyncDisposable
                 return context.Error(resolveErr);
             }
             real = resolved;
-            var result = await real!.Execute();
+            var result = await real!.Start();
             // Stamp __SnapshotParams onto Error.Params if the handler returned an error
             // without one already populated. (The snapshot lives here, not in the handler.)
             if (!result.Success && result.Error is { } err)

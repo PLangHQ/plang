@@ -71,7 +71,7 @@ public class TagActionTests
     [Test]
     public async Task Run_IsPlainOk_NoValue()
     {
-        var result = await new Tag(Ctx) { Tags = Tags("http") }.Run();
+        var result = await new Tag(Ctx) { Tags = Tags("http") }.Start();
 
         await result.IsSuccess();
         await Assert.That(result.HasValue).IsFalse();

@@ -21,7 +21,7 @@ public partial class @this
             for (int i = fromActionIdx; i < Code.Count; i++)
             {
                 context.CancellationToken.ThrowIfCancellationRequested();
-                result = await Code[i].Run(context);
+                result = await Code[i].Start(context);
                 if (result.ShouldExit() || result.Handled) break;
             }
         }

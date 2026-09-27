@@ -9,7 +9,7 @@ public partial class Group : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var data = await Context.Variable.Get(await ListName.Value());
         var key = (await Key.Value())!.Clr<string>()!;

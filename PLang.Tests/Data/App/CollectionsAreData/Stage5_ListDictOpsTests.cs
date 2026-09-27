@@ -36,7 +36,7 @@ public class Stage5_ListDictOpsTests
         users.Add(_app.Data("", Person("age", 40L)));
         vars.Set("users", users);
 
-        var result = await WhereAction(ctx, "users", "age", ">", 20L).Run();
+        var result = await WhereAction(ctx, "users", "age", ">", 20L).Start();
         await result.IsSuccess();
         var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
@@ -48,12 +48,12 @@ public class Stage5_ListDictOpsTests
     {
         var (ctx, vars) = Ctx();
         vars.Set("user", Person("age", 25L));
-        var kept = await WhereAction(ctx, "user", "age", ">", 20L).Run();
+        var kept = await WhereAction(ctx, "user", "age", ">", 20L).Start();
         await kept.IsSuccess();
         await Assert.That((await kept.Value())).IsTypeOf<DictV>();
 
         vars.Set("user2", Person("age", 10L));
-        var dropped = await WhereAction(ctx, "user2", "age", ">", 20L).Run();
+        var dropped = await WhereAction(ctx, "user2", "age", ">", 20L).Start();
         await dropped.IsSuccess();
         await Assert.That(await (await dropped.Value())!.IsEmpty()).IsTrue();
     }
@@ -63,7 +63,7 @@ public class Stage5_ListDictOpsTests
     {
         var (ctx, vars) = Ctx();
         vars.Set("x", 5L);
-        var result = await WhereAction(ctx, "x", "age", ">", 20L).Run();
+        var result = await WhereAction(ctx, "x", "age", ">", 20L).Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("WhereOnApex");
     }
@@ -79,7 +79,7 @@ public class Stage5_ListDictOpsTests
         vars.Set("people", people);
 
         var action = new Sort(ctx) { ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
-        await (await action.Run()).IsSuccess();
+        await (await action.Start()).IsSuccess();
         var sorted = (ListV)(await (await vars.Get("people")).Value())!;
         await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
         await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
@@ -97,7 +97,7 @@ public class Stage5_ListDictOpsTests
         dicts.Add(_app.Data("", Person("city", "Oslo")));
         vars.Set("dicts", dicts);
         var action = new Sort(ctx) { ListName = new app.variable.@this("dicts") };
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("order");
     }
@@ -112,7 +112,7 @@ public class Stage5_ListDictOpsTests
         values.Add(_app.Data("", Person("city", "Oslo")));
         vars.Set("values", values);
         var action = new Unique(ctx) { ListName = new app.variable.@this("values") };
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value()) as ListV).IsNotNull();
         await Assert.That(((ListV)(await result.Value())!).Count).IsEqualTo(2);
@@ -128,7 +128,7 @@ public class Stage5_ListDictOpsTests
         people.Add(_app.Data("", Person("city", "Reyk")));
         vars.Set("people", people);
         var action = new Group(ctx) { ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.item.text.@this>("", "city", context: ctx) };
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         var groups = (ListV)(await result.Value())!;
         await Assert.That(groups.Count).IsEqualTo(2);

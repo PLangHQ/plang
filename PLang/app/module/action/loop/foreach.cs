@@ -31,7 +31,7 @@ public partial class Foreach : IContext, IStep, IScope
     /// <summary>The variable each key (dict key or list index) is bound to — unbound when not named.</summary>
     public partial data.@this<app.variable.@this>? Key { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         // A value-less collection (the null citizen or an absent slot) iterates
         // zero times; an empty list/dict falls through and enumerates to zero
@@ -73,7 +73,7 @@ public partial class Foreach : IContext, IStep, IScope
 
             foreach (var action in bodyActions)
             {
-                var result = await action.Run(Context);
+                var result = await action.Start(Context);
                 if (result.Returned) return result;
                 if (!result.Success) return result;
             }

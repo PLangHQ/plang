@@ -42,7 +42,7 @@ public class ForeachErrorPropagationTests
                     ("name", "NonExistentGoal")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -109,7 +109,7 @@ public class ForeachErrorPropagationTests
                     ("name", "Inner")))));
         var outerStep = outerGoal.Step[0];
 
-        var result = await outerStep.Run(context);
+        var result = await outerStep.Start(context);
 
         // The 404 from MissingGoal must propagate all the way up — not be
         // swallowed by condition.if's Handled flag.
@@ -140,7 +140,7 @@ public class ForeachErrorPropagationTests
                     ("name", "Noop")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");

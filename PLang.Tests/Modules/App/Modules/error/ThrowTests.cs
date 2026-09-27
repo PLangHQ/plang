@@ -21,7 +21,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
 
         var action = new Throw(context) { Message = (Text)"Something went wrong", StatusCode = (global::app.type.item.number.@this)500 };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -34,7 +34,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
 
         var action = new Throw(context) { Message = (Text)"Not found", StatusCode = (global::app.type.item.number.@this)404, Key = (Text)"NotFound" };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
@@ -47,7 +47,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
 
         var action = new Throw(context) { Message = (Text)"Server error" };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
@@ -64,7 +64,7 @@ public class ThrowTests
         var original = new global::app.error.ServiceError("original boom", "OriginalKey", 418);
 
         var action = new Throw(context) { Data = context.Ok(original) };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("OriginalKey");
@@ -84,7 +84,7 @@ public class ThrowTests
             Data = context.Ok(original),
             FixSuggestion = (Text)"- if %x% == 1, write out \"one\", else write out \"other\""
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(ReferenceEquals(result.Error, original)).IsTrue();
@@ -97,7 +97,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
 
         var action = new Throw(context) { Message = (Text)"bad input", FixSuggestion = (Text)"pass a number" };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.FixSuggestion).IsEqualTo("pass a number");
@@ -109,7 +109,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
         var original = new global::app.error.ServiceError("boom", "K", 400) { FixSuggestion = "its own" };
 
-        var result = await new Throw(context) { Data = context.Ok(original) }.Run();
+        var result = await new Throw(context) { Data = context.Ok(original) }.Start();
 
         await Assert.That(result.Error!.FixSuggestion).IsEqualTo("its own");
     }
@@ -122,7 +122,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
 
         var action = new Throw(context) { Data = Data.Ok((Text)"order-123") };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         var err = (global::app.error.Error)result.Error!;
@@ -142,7 +142,7 @@ public class ThrowTests
         var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") });
 
         var action = new Throw(context) { Data = Data.Ok(inner) };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         var err = (global::app.error.Error)result.Error!;

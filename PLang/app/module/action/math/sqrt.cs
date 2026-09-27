@@ -11,5 +11,5 @@ public partial class Sqrt : IContext
     [Code]
     public partial global::app.module.action.math.code.IMath Math { get; }
 
-    public async Task<data.@this<number>> Run() => await Math.Sqrt(this);
+    public async Task<data.@this<number>> Start() => await Math.Sqrt(this);
 }

@@ -15,9 +15,9 @@ namespace app.module;
 ///     provider, the app's from its start). Called by Resolve, and directly on prebound (inline
 ///     C#-composed) handlers whose params are already set. The build binds through it, so it looks
 ///     up nothing a step registers while the app runs.
-///   Execute — find what exists only at run (the Channel; a missing one fails the run), then run
-///     the handler's typed Run(), wrapping bare exceptions with the action's
-///     module.action context.
+///   Start — find what exists only at run (the Channel; a missing one fails the run), then start
+///     the handler's typed Start(), wrapping bare exceptions with the action's
+///     module.action context. Generated handlers implement it explicitly, beside their own Start().
 ///
 /// All handlers must implement this interface — App requires it (no fallback path).
 /// </summary>
@@ -34,7 +34,7 @@ public interface ICodeGenerated
 
     Task<global::app.error.Error?> Attach(ActionType? action, actor.context.@this context) => Task.FromResult<global::app.error.Error?>(null);
 
-    Task<data.@this> Execute();
+    Task<data.@this> Start();
 
     /// <summary>
     /// Per-property snapshot of pr-side and final-resolved values.

@@ -12,7 +12,7 @@ namespace PLang
 			this.startupDirectory = startupDirectory;
 		}
 
-		public async Task<global::app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
+		public async Task<global::app.data.@this> Start(string[] args, CancellationToken cancellationToken = default)
 		{
 			var (app, configError) = Configure(args);
 			if (configError != null) return configError;
@@ -24,7 +24,7 @@ namespace PLang
 		/// to user variables, applies --test / --debug / --build / --app config, and
 		/// sets the goalFile variable on System.Context that Start() reads.
 		/// Returns (app, null) on success, (null, errorData) if --test= config is invalid.
-		/// Separated from Run() so tests can observe configuration without executing Start().
+		/// Separated from Start() so tests can observe configuration without starting the app.
 		/// </summary>
 		internal (global::app.@this? Engine, global::app.data.@this? Error) Configure(string[] args)
 		{

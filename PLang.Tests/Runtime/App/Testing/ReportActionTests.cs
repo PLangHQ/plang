@@ -62,7 +62,7 @@ public class ReportActionTests
     private async Task Report()
     {
         var action = new global::app.module.action.test.report(_app.User.Context);
-        await action.Run();
+        await action.Start();
     }
 
     // Console output (summary + per-test status) is independent of the format selector.

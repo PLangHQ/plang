@@ -119,7 +119,7 @@ public class SharedProgramTests
 
         // Each round, System and User run the same goal at the same time (within an actor, runs are serial).
         for (int i = 0; i < 25; i++)
-            foreach (var run in await Task.WhenAll(goal.Run(_app.System.Context), goal.Run(_app.User.Context)))
+            foreach (var run in await Task.WhenAll(goal.Start(_app.System.Context), goal.Start(_app.User.Context)))
                 await run.IsSuccess();
 
         async Task<List<string>> Seen(global::app.actor.context.@this ctx)
@@ -149,7 +149,7 @@ public class SharedProgramTests
         var goal = await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("add x",
             global::PLang.Tests.Shared.Make.Action("list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
 
-        var runs = await Task.WhenAll(Enumerable.Range(0, n).Select(_ => Task.Run(() => goal.Run(_app.User.Context))));
+        var runs = await Task.WhenAll(Enumerable.Range(0, n).Select(_ => Task.Run(() => goal.Start(_app.User.Context))));
         foreach (var run in runs)
             await Assert.That(run.Success).IsTrue().Because(run.Error?.Exception?.ToString() ?? run.Error?.Message ?? "");
 
@@ -175,15 +175,15 @@ public class SharedProgramTests
         // Out of the app root: the root and the file both sit under the temp folder.
         var read = await ActionFromPr("file", "read", ("Path", "../" + System.IO.Path.GetFileName(dir) + "/data.txt"));
 
-        var first = await read.Run(_app.User.Context);
+        var first = await read.Start(_app.User.Context);
         await first.IsSuccess();
         var firstContent = (await first.Value())!.ToString();
 
-        var denied = await read.Run(_app.System.Context);
+        var denied = await read.Start(_app.System.Context);
         var deniedContent = denied.Success ? (await denied.Value())?.ToString() : null;
 
         System.IO.File.WriteAllText(file, "v2");
-        var again = await read.Run(_app.User.Context);
+        var again = await read.Start(_app.User.Context);
         await again.IsSuccess();
         var againContent = (await again.Value())!.ToString();
 
@@ -211,7 +211,7 @@ public class SharedProgramTests
         var property = call["Parameter"]!;
         var held = property.Value;
 
-        var result = await call.Run(_app.User.Context);
+        var result = await call.Start(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await (await _app.System.Context.Variable.Get("seen")).Value()).ToString()).IsEqualTo("Reykjavik");

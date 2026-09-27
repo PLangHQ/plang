@@ -14,7 +14,7 @@ public partial class Set : IContext
 
     /// <summary>Stores the value. Returns no value — a setting is often a secret, and a result
     /// would carry it onto %!data%, the debug output and the wire.</summary>
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var key = (await Key.Value())!.Clr<string>()!;
         var val = Value == null ? null : await Value.Value();

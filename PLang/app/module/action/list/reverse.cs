@@ -7,7 +7,7 @@ public partial class Reverse : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var name = await ListName.Value();
         var held = await Context.Variable.Get(name);

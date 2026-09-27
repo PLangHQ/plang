@@ -15,3 +15,8 @@
 **plang vocabulary is lowercase in members too.** Everything plang can reach is a lowercase member (`app.type`, `app.goal`, `app.variable`, their `list`, `current`, `all`, `on`, and the facts a face shows), so `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/type/this.cs`. C# plumbing plang never navigates stays PascalCase; a C# keyword keeps its `@` (`app.@event`); an item's own `Type` (its type entity) stays.
 ```
 Addendum (same day): **nodes lowercase, verbs PascalCase.** Lowercase covers what plang navigates (properties: systems, `list`, `current`, `all`, `on`, facts). Methods stay PascalCase (`Start()`, `Value()`, `Add()`): plang never calls a verb through a path, so the uppercase marks the line where C# executes (Ingi).
+
+## coder — v2 — 2026-09-27
+**Target:** /CLAUDE.md (Runtime2 Conventions: "Action `Run()` returns are typed", "Handler naming")
+**Why:** stage 1 made `Start` the entry verb of everything that runs (Ingi): every handler's `Run()` is now `Start()`, the generated dispatcher is `ICodeGenerated.Start()` (implemented explicitly beside the handler's own), and goal/step/action/list `Run(context)` are `Start(context)`. The CLAUDE.md bullet still says `Run()`.
+**Proposed change:** in the bullet "**Action `Run()` returns are typed via the signature.**", replace `Run()` with `Start()` (and "Action `Run()` returns" in its good_to_know cross-reference title). Add to "Handler naming": "An action's entry method is `Start()`; the generated dispatcher is `ICodeGenerated.Start()`, an explicit interface member, so it shares the name in one partial class — start an action through `action.Start(context)`, never the handler directly."

@@ -53,7 +53,7 @@ public class HashTypeTests
         var ctx = app.User.Context;
         var action = TestAction.Create("crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
-        var result = await action.Run(ctx);
+        var result = await action.Start(ctx);
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("hash");
         await Assert.That(result.Type!.Kind?.Name).IsEqualTo("sha256");
@@ -84,7 +84,7 @@ public class HashTypeTests
             Hash = digest,
         };
         await verify.Attach(null, ctx);
-        var result = await verify.Run();
+        var result = await verify.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Value).IsTrue();
     }

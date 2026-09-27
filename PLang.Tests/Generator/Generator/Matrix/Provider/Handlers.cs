@@ -26,7 +26,7 @@ public partial class ProviderProp : global::app.module.IContext
     [global::app.module.Code]
     public partial IFakeProvider Fake { get; }
 
-    public Task<global::app.data.@this> Run() =>
+    public Task<global::app.data.@this> Start() =>
         Task.FromResult(Context.Ok(Fake.Echo("hi")));
 }
 
@@ -36,6 +36,6 @@ public partial class ProviderMissing : global::app.module.IContext
     [global::app.module.Code]
     public partial IUnregisteredProvider Missing { get; }
 
-    public Task<global::app.data.@this> Run() =>
+    public Task<global::app.data.@this> Start() =>
         Task.FromResult(Context.Ok(Missing.Hello()));
 }

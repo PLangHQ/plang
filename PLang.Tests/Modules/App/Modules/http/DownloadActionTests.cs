@@ -73,7 +73,7 @@ public class DownloadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var bytes = ((await result.Value()) as global::app.type.item.binary.@this)?.Value;
@@ -94,7 +94,7 @@ public class DownloadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");

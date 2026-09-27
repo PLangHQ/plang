@@ -40,7 +40,7 @@ public class ForeachStringNotIterableTests
                     ("name", "DoNothing")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -64,7 +64,7 @@ public class ForeachStringNotIterableTests
                     ("name", "DoNothing")))));
         var step = goal.Step[0];
 
-        await step.Run(context);
+        await step.Start(context);
 
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("hello");
     }
@@ -86,7 +86,7 @@ public class ForeachStringNotIterableTests
                     ("name", "DoNothing")))));
         var step = goal.Step[0];
 
-        var result = await step.Run(context);
+        var result = await step.Start(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());

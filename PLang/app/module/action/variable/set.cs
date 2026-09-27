@@ -74,7 +74,7 @@ public partial class Set : IContext, IScope
     /// <summary>
     /// Optional <c>as</c> clause. Carries the whole <c>type</c> entity (Name,
     /// Kind, Strict) the LLM constructed — replaces the historical bare string.
-    /// <c>Run</c> reads <c>Type.Value.Name</c> to resolve the CLR type via the
+    /// <c>Start</c> reads <c>Type.Value.Name</c> to resolve the CLR type via the
     /// registry and stamps the entire entity (kind included) onto the minted
     /// variable.
     /// </summary>
@@ -107,7 +107,7 @@ public partial class Set : IContext, IScope
         return Context.Ok();
     }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         // Resolve the name door up front; the VALUE door stays closed on this path —
         // a plain `set %x% = %y%` forwards the binding (Copy shares the lazy

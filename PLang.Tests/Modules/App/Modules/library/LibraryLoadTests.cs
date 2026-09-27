@@ -30,7 +30,7 @@ public class ModuleAddTests
             Namespace = null
         };
 
-        var result = await add.Run();
+        var result = await add.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("Module not found");
@@ -47,7 +47,7 @@ public class ModuleAddTests
             };
 
             var countBefore = app.Module.Count;
-            var result = await add.Run();
+            var result = await add.Start();
 
             await result.IsSuccess();
             // Discover re-registers the same built-in types, count stays same
@@ -65,7 +65,7 @@ public class ModuleAddTests
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
-            var result = await add.Run();
+            var result = await add.Start();
             await result.IsSuccess();
 
             // After adding, actions should be discoverable via the flat registry
@@ -83,7 +83,7 @@ public class ModuleAddTests
                 Namespace = (global::app.type.item.text.@this)"Some.Completely.Wrong.Namespace"
             };
 
-            var result = await add.Run();
+            var result = await add.Start();
             await result.IsSuccess();
 
             // The result value should report 0 actions discovered
@@ -101,7 +101,7 @@ public class ModuleAddTests
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
-            var result = await add.Run();
+            var result = await add.Start();
 
             await result.IsSuccess();
             await Assert.That((await result.Value())).IsNotNull();
@@ -118,7 +118,7 @@ public class ModuleAddTests
                 Namespace = null
             };
 
-            var result = await add.Run();
+            var result = await add.Start();
             await result.IsSuccess();
 
             // With null namespace, Discover defaults to App.modules
@@ -136,7 +136,7 @@ public class ModuleAddTests
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
-            var result = await add.Run();
+            var result = await add.Start();
             await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable

@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Tester;
 /// <summary>
 /// Batch 14 — safety net. Independent edge cases and security tests that don't
 /// fit any single feature. Config boundary robustness (negative/zero/invalid),
-/// re-entrant test.run, path-traversal constraints, ANSI stripping in captured
+/// re-entrant test.start, path-traversal constraints, ANSI stripping in captured
 /// output (prevents injection into the failure diagnostic), nested-Data JSON
 /// serialization, invalid format values.
 /// These catch the cross-cutting failure modes that show up only in integration.
@@ -42,7 +42,7 @@ public class EdgeCaseTests
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
     // --test={"timeoutSeconds":-5} → accepted (the type has no positive-bound). The value is
-    // a sentinel, not an error: test.run reads TimeoutSeconds ≤ 0 as "no timeout".
+    // a sentinel, not an error: test.start reads TimeoutSeconds ≤ 0 as "no timeout".
     [Test]
     public async Task Config_TimeoutSeconds_NonPositive_AcceptedAsSentinel()
     {
@@ -52,7 +52,7 @@ public class EdgeCaseTests
     }
 
     // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
-    // test.run reads Parallel ≤ 0 as ProcessorCount. Not a config error.
+    // test.start reads Parallel ≤ 0 as ProcessorCount. Not a config error.
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
@@ -64,25 +64,25 @@ public class EdgeCaseTests
         await neg.IsSuccess();
     }
 
-    // A test whose goal calls test.run itself (nested runner). The inner run's
+    // A test whose goal calls test.start itself (nested runner). The inner run's
     // results do not leak into the parent run's Results; no deadlock on the
-    // semaphore; both inner and outer complete. Keeps test.run re-entrant so
+    // semaphore; both inner and outer complete. Keeps test.start re-entrant so
     // meta-tests that exercise the runner are feasible.
     [Test]
     public async Task Run_RecursiveTestRun_InsideTest_IsolatedAndCompletes()
     {
-        // Minimal shape: call test.run with an empty list twice — first outer, then
+        // Minimal shape: call test.start with an empty list twice — first outer, then
         // simulate a recursive call by calling it again. Without deadlock. Results
         // from the inner call stay on the inner App (we use the same app in the
         // test so the Results grow — verify count is from the outer action, not the
         // inner grandchild-runs).
 
         var emptyList = new List<global::app.test.@this>();
-        var outerAction = new global::app.module.action.test.run(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>(),
+        var outerAction = new global::app.module.action.test.start(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>(),
             Parallel = null,
             Timeout = null
         };
-        var outerResult = await outerAction.Run();
+        var outerResult = await outerAction.Start();
 
         await outerResult.IsSuccess();
         await Assert.That(_app.Test.Count).IsEqualTo(0);
@@ -103,7 +103,7 @@ public class EdgeCaseTests
         // Post-Stage-5: discover routes through path.List → AuthGate. An
         // out-of-root traversal either denies (Fail) or returns empty —
         // either way, no filesystem entries from outside leak.
-        var result = await action.Run();
+        var result = await action.Start();
         if (result.Success)
         {
             var files = result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
@@ -125,7 +125,7 @@ public class EdgeCaseTests
         _app.Test.Add(run);
 
         var action = new global::app.module.action.test.report(_app.User.Context);
-        await action.Run();
+        await action.Start();
 
         var output = CapturedOutput();
         // Escape chars (0x1B) must not appear in the rendered output.

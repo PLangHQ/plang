@@ -6,5 +6,5 @@ public partial class IsNotNullProp : global::app.module.IContext
     [global::app.module.IsNotNull]
     public partial global::app.data.@this<global::app.type.item.text.@this> Required { get; init; }
 
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Required);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Required);
 }

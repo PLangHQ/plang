@@ -242,7 +242,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var result = await Make.Call("NonexistentGoal").Run(engine.User.Context);
+        var result = await Make.Call("NonexistentGoal").Start(engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
@@ -255,7 +255,7 @@ public class EngineTests
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         engine.Goal.Add(goal);
 
-        var result = await Make.Call("EmptyGoal").Run(engine.User.Context);
+        var result = await Make.Call("EmptyGoal").Start(engine.User.Context);
 
         await result.IsSuccess();
     }
@@ -280,7 +280,7 @@ public class EngineTests
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
 
-        var result = await Make.Call("TestGoal").Run(engine.User.Context);
+        var result = await Make.Call("TestGoal").Start(engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -293,7 +293,7 @@ public class EngineTests
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         engine.Goal.Add(goal);
         var context = engine.User.Context;
-        await engine.RunGoalAsync(goal, context);
+        await engine.Start(goal, context);
 
         // Goal is restored after execution, but during execution context.Goal was set.
         // After RunAsync completes, Goal is restored to previous (null for root) and
@@ -309,7 +309,7 @@ public class EngineTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        await engine.RunGoalAsync(goal, context);
+        await engine.Start(goal, context);
 
         // After completion, AsyncLocal Current is restored to its pre-Push value (null).
         await Assert.That(context.CallStack!.Current).IsNull();
@@ -326,7 +326,7 @@ public class EngineTests
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
-        var result = await engine.RunGoalAsync(goal, context);
+        var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("test"))).IsEqualTo("hello");
@@ -349,7 +349,7 @@ public class EngineTests
         };
         engine.Goal.Add(goal);
 
-        var result = await Make.Call("TestGoal").Run(engine.User.Context);
+        var result = await Make.Call("TestGoal").Start(engine.User.Context);
 
         await result.IsFailure();
     }
@@ -362,7 +362,7 @@ public class EngineTests
         var context = engine.User.Context;
 
         var steps = new GoalSteps { step };
-        var result = await steps.Run(context);
+        var result = await steps.Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionNotFound");
@@ -378,7 +378,7 @@ public class EngineTests
 
         var context = engine.User.Context;
         var steps = new GoalSteps { step };
-        await steps.Run(context);
+        await steps.Start(context);
 
         await Assert.That((await context.Variable.GetValue("source"))).IsEqualTo("hello");
     }
@@ -398,7 +398,7 @@ public class EngineTests
         // are translated to ServiceError there, not at the Step level. Step.RunAsync's
         // catch still exists for non-handler failures (event handlers, iteration logic).
         var steps = new GoalSteps { step };
-        var result = await steps.Run(context);
+        var result = await steps.Start(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
@@ -415,7 +415,7 @@ public class EngineTests
         var context = engine.User.Context;
 
         var steps = new GoalSteps { step };
-        var result = await steps.Run(context);
+        var result = await steps.Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionError");
@@ -499,7 +499,7 @@ public class EngineTests
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(goal, engine.System.Context);
+        var result = await engine.Start(goal, engine.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("hello");
@@ -517,7 +517,7 @@ public class EngineTests
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
         engine.Goal.Add(goal);
 
-        var result = await Make.Call("TestGoal").Run(engine.System.Context);
+        var result = await Make.Call("TestGoal").Start(engine.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("system-value");
@@ -546,7 +546,7 @@ public class EngineTests
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.Error?>(null); }
-        public Task<Data> Execute() => Task.FromResult(Context.App!.Ok());
+        public Task<Data> Start() => Task.FromResult(Context.App!.Ok());
         public void Dispose() => IsDisposed = true;
     }
 
@@ -561,7 +561,7 @@ public class EngineTests
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.Error?>(null); }
-        public Task<Data> Execute() => Task.FromResult(Context.App!.Ok());
+        public Task<Data> Start() => Task.FromResult(Context.App!.Ok());
         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
     }
 
@@ -573,7 +573,7 @@ public class EngineTests
         public System.Type? ParameterType => null;
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> Execute()
+        public Task<Data> Start()
         {
             throw new InvalidOperationException("Test exception");
         }

@@ -43,7 +43,7 @@ public class HashActionTests
     {
         var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value()) is hash).IsTrue();
@@ -60,7 +60,7 @@ public class HashActionTests
 
         var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(((hash)(await result.Value())!).Bytes).IsEquivalentTo(((hash)(await refHash.Value())!).Bytes);
@@ -71,7 +71,7 @@ public class HashActionTests
     {
         var action = new Hash(Ctx) { Data = Ctx.Ok(new byte[] { 1, 2, 3 }), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value()) is hash).IsTrue();
@@ -87,8 +87,8 @@ public class HashActionTests
         await keccakAction.Attach(null, Ctx);
         await sha256Action.Attach(null, Ctx);
 
-        var keccakResult = await keccakAction.Run();
-        var sha256Result = await sha256Action.Run();
+        var keccakResult = await keccakAction.Start();
+        var sha256Result = await sha256Action.Start();
 
         await keccakResult.IsSuccess();
         await sha256Result.IsSuccess();
@@ -107,7 +107,7 @@ public class HashActionTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["crypto"], Name = "hash",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
         };
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -120,7 +120,7 @@ public class HashActionTests
     {
         var action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = (global::app.type.item.text.@this)"md5" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -135,7 +135,7 @@ public class HashActionTests
 
         var action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -149,12 +149,12 @@ public class HashActionTests
     {
         var hashAction = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await hashAction.Attach(null, Ctx);
-        var hashResult = await hashAction.Run();
+        var hashResult = await hashAction.Start();
         var base64 = ((hash)(await hashResult.Value())!).ToBase64();
 
         var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(base64), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await verifyAction.Attach(null, Ctx);
-        var result = await verifyAction.Run();
+        var result = await verifyAction.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Value).IsTrue();
@@ -165,13 +165,13 @@ public class HashActionTests
     {
         var hashAction = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await hashAction.Attach(null, Ctx);
-        var hashResult = await hashAction.Run();
+        var hashResult = await hashAction.Start();
         var hashBytes = ((hash)(await hashResult.Value())!).Bytes.ToArray();
         hashBytes[0] ^= 0xFF; // flip first byte
         var wrongHash = Convert.ToBase64String(hashBytes);
         var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(wrongHash), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await verifyAction.Attach(null, Ctx);
-        var result = await verifyAction.Run();
+        var result = await verifyAction.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Value).IsFalse();
@@ -182,7 +182,7 @@ public class HashActionTests
     {
         var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok("not-a-valid-base64!!!"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await verifyAction.Attach(null, Ctx);
-        var result = await verifyAction.Run();
+        var result = await verifyAction.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -198,7 +198,7 @@ public class HashActionTests
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", "hello", context: Ctx), new Data("hash", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
         };
         var (h, err) = await new Verify(Ctx).Resolve(action, Ctx);
-        var result = err != null ? Ctx.Error(err) : await h!.Execute();
+        var result = err != null ? Ctx.Error(err) : await h!.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -214,7 +214,7 @@ public class HashActionTests
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module["crypto"], Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("hash", "abc123", context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
         };
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -230,7 +230,7 @@ public class HashActionTests
 
         var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("test"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await verifyAction.Attach(null, Ctx);
-        var result = await verifyAction.Run();
+        var result = await verifyAction.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();

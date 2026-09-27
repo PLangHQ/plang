@@ -12,5 +12,5 @@ public partial class load : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this> Run() => await Builder.Load(this);
+    public async Task<data.@this> Start() => await Builder.Load(this);
 }

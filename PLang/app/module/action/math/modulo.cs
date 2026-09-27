@@ -20,5 +20,5 @@ public partial class Modulo : IContext
     [Code]
     public partial global::app.module.action.math.code.IMath Math { get; }
 
-    public async Task<data.@this<number>> Run() => await Math.Modulo(this);
+    public async Task<data.@this<number>> Start() => await Math.Modulo(this);
 }

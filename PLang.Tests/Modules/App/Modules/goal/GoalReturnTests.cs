@@ -15,7 +15,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var action = new Return(context) { Data = null };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(result.Returned).IsTrue();
@@ -28,7 +28,7 @@ public class GoalReturnTests
         var (context, _) = CreateContext();
         var data = context.Ok("hello");
         var action = new Return(context) { Data = data };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(result.Returned).IsTrue();
@@ -40,7 +40,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var action = new Return(context) { Data = context.Ok(), Depth = (global::app.type.item.number.@this)3 };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await Assert.That(result.Returned).IsTrue();
         await Assert.That(result.ReturnDepth).IsEqualTo(3);
@@ -51,7 +51,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var action = new Return(context) { Data = context.Ok(), Depth = (global::app.type.item.number.@this)0 };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
     }
@@ -61,7 +61,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var action = new Return(context) { Data = context.Ok(), Depth = (global::app.type.item.number.@this)(-5) };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
     }
@@ -73,7 +73,7 @@ public class GoalReturnTests
         var error = global::app.data.@this.FromError(
             new global::app.error.Error("something broke", "TestError", 500));
         var action = new Return(context) { Data = error };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Returned).IsTrue();

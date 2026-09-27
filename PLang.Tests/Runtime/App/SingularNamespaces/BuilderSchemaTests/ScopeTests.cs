@@ -103,11 +103,11 @@ public class ScopeTests
 
         var result = await Match(goal, """
             [0] build.goals(Path=%path%); variable.set(Name=%goals%, Value=%!data%)
-            [1] list.range(Start=1, End=%goals%); variable.set(Name=%r%, Value=%!data%)
+            [1] list.range(From=1, To=%goals%); variable.set(Name=%r%, Value=%!data%)
             """, app.System.Context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("step 1 (\"list.range from 1 to %goals%, write to %r%\") — property 'End' is %goals% (list<goal>)");
+        await Assert.That(result.Error!.Message).Contains("step 1 (\"list.range from 1 to %goals%, write to %r%\") — property 'To' is %goals% (list<goal>)");
         await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
         await Assert.That(goal.Step[1].Code.Count).IsEqualTo(0);
     }
@@ -167,7 +167,7 @@ public class ScopeTests
 
         // the build looks up nothing live: the channel is the app's to register while it runs
         await built.IsSuccess();
-        var ran = await goal.Run(app.User.Context);
+        var ran = await goal.Start(app.User.Context);
         await ran.IsFailure();
         await Assert.That(ran.Error!.Key).IsEqualTo("ChannelNotFound");
     }
@@ -186,7 +186,7 @@ public class ScopeTests
             """, app.System.Context);
         await built.IsSuccess();
 
-        await (await goal.Run(app.User.Context)).IsSuccess();
+        await (await goal.Start(app.User.Context)).IsSuccess();
 
         // as llm.query reads its Message: the typed view, then lowered — the %sys% rendered
         var messages = (await app.User.Context.Variable.Get("messages"))
@@ -267,7 +267,7 @@ public class ScopeTests
             """, app.System.Context);
 
         await accepted.IsSuccess();
-        await (await typed.Run(app.User.Context)).IsSuccess();
+        await (await typed.Start(app.User.Context)).IsSuccess();
         await Assert.That((await app.User.Context.Variable.Get("iso")).Type.Name).IsEqualTo("duration");
     }
 
@@ -321,7 +321,7 @@ public class ScopeTests
 
         var result = await Match(goal, """
             [0] variable.set(Name=%n%, Value=5)
-            [1] list.range(Start=1, End=%n%); variable.set(Name=%r%, Value=%!data%)
+            [1] list.range(From=1, To=%n%); variable.set(Name=%r%, Value=%!data%)
             """, app.System.Context);
 
         await result.IsSuccess();

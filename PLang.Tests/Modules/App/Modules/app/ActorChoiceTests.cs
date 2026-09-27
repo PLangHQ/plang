@@ -39,8 +39,8 @@ public class ActorChoiceTests
     [Test] public async Task EventOn_System_SelectsSystem()
         => await SelectsSystem((await Bound<global::app.module.action.@event.On>("event", "on", "system", ("Trigger", "BeforeGoal"))).Actor);
 
-    [Test] public async Task EnvironmentRun_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.environment.run>("environment", "run", "system")).Actor);
+    [Test] public async Task EnvironmentStart_System_SelectsSystem()
+        => await SelectsSystem((await Bound<global::app.module.action.environment.start>("environment", "start", "system")).Actor);
 
     [Test] public async Task ChannelSet_System_SelectsSystem()
         => await SelectsSystem((await Bound<global::app.module.action.channel.Set>("channel", "set", "system")).Actor);
@@ -64,7 +64,7 @@ public class ActorChoiceTests
                 new List<Data> { new Data("onSystem", "yes", context: Ctx) }),
         };
 
-        await (await action.Run()).IsSuccess();
+        await (await action.Start()).IsSuccess();
 
         await Assert.That((await _app.System.Context.Variable.Get("onSystem")).HasValue).IsTrue();
         await Assert.That((await _app.User.Context.Variable.Get("onSystem")).HasValue).IsFalse();

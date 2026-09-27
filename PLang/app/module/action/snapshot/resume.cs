@@ -21,7 +21,7 @@ public partial class resume : IContext
     [IsNotNull]
     public partial data.@this<global::app.snapshot.@this> Snapshot { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var snap = await Snapshot.Value();
         if (snap == null)

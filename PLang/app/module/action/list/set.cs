@@ -9,7 +9,7 @@ public partial class Set : IContext
     public partial data.@this<global::app.type.item.number.@this> Index { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var name = await ListName.Value();
         var held = await Context.Variable.Get(name);

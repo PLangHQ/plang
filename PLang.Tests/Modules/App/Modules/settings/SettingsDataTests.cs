@@ -100,7 +100,7 @@ public class SettingsDataTests
         var handler = new global::app.module.action.setting.Set(context) { Key = (global::app.type.item.text.@this)"HandlerKey",
             Value = new global::app.data.@this("", "HandlerValue", context: _app.System.Context)        };
 
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         // Verify via User Variables (what PLang code uses)
@@ -117,7 +117,7 @@ public class SettingsDataTests
         var handler = new global::app.module.action.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"TestKey"
         };
 
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("TestValue");
     }
@@ -128,7 +128,7 @@ public class SettingsDataTests
         var handler = new global::app.module.action.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"MissingKey"
         };
 
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error is AskError).IsTrue();
     }
@@ -141,7 +141,7 @@ public class SettingsDataTests
         var handler = new global::app.module.action.setting.Remove(_app.System.Context) { Key = (global::app.type.item.text.@this)"ToRemove"
         };
 
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         // Verify removed

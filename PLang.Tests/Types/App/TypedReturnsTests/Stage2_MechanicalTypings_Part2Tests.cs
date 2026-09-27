@@ -3,7 +3,7 @@ using System.Reflection;
 namespace PLang.Tests.App.TypedReturnsTests;
 
 // Reflection contracts for mock.intercept, builder.{types,actions,goals},
-// test.tag — each handler's Run() must produce a typed Data<T> whose T is
+// test.tag — each handler's Start() must produce a typed Data<T> whose T is
 // either a domain record or a primitive (never Data<object>).
 
 public class Stage2_MechanicalTypings_Part2Tests
@@ -17,7 +17,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task TearDown() { await _app.DisposeAsync(); }
 
     private static System.Type RunReturnType<THandler>()
-        => typeof(THandler).GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
+        => typeof(THandler).GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
 
     [Test]
     public async Task MockIntercept_Run_ReturnsTaskDataOfMock()

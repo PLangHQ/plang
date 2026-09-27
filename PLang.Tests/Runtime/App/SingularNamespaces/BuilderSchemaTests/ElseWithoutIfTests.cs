@@ -209,7 +209,7 @@ public class ElseWithoutIfTests
         apply.Modifier.Add(keyed);
         apply.Modifier.Add(retry);
 
-        var result = await apply.Run(ctx);
+        var result = await apply.Start(ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ElseWithoutIf");

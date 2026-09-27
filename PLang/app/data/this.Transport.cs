@@ -41,7 +41,7 @@ public partial class @this
 
     /// <summary>
     /// Async-native variant of <see cref="Compress"/> — preferred by
-    /// action handlers (<c>variable.compress.Run()</c>) and any caller
+    /// action handlers (<c>variable.compress.Start()</c>) and any caller
     /// already in an async context. The sync wrapper exists for C#
     /// composition sites that aren't async (and accepts the sync-over-
     /// async cost there).

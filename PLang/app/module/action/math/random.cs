@@ -10,7 +10,7 @@ public partial class Random : IContext
     [Default(100)]
     public partial data.@this<global::app.type.item.number.@this> Max { get; init; }
 
-    public async Task<data.@this<global::app.type.item.number.@this>> Run()
+    public async Task<data.@this<global::app.type.item.number.@this>> Start()
     {
         // Typed read; the number converts ITSELF at the .NET boundary — the
         // widest overload Random offers (NextInt64), so long ranges fit.

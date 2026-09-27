@@ -61,8 +61,8 @@ public class GoalAccessorTests
     [Test] public async Task GoalListType_ExposesNoIoOrPerElementBehavior_OnTheRegistry()
     {
         var t = typeof(global::app.goal.list.@this);
-        // The registry has Add/Remove/Get/Contains/Count/list/this[...] — no Write/Read/Ask/RunAsync.
-        var forbidden = new[] { "Write", "Read", "Ask", "RunAsync", "Execute" };
+        // The registry has Add/Remove/Get/Contains/Count/list/this[...] — no Write/Read/Ask/Start.
+        var forbidden = new[] { "Write", "Read", "Ask", "Start" };
         foreach (var n in forbidden)
             await Assert.That(t.GetMethod(n)).IsNull();
     }

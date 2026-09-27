@@ -29,7 +29,7 @@ public sealed partial class @this
     /// <summary>Run-wide coverage tracker. Per-test child Apps populate their own, then Merge into the parent here.</summary>
     public Coverage Coverage { get; } = new();
 
-    /// <summary>The test currently in flight on this App. null when no test is running. test.run assigns; test.tag reads.</summary>
+    /// <summary>The test currently in flight on this App. null when no test is running. test.start assigns; test.tag reads.</summary>
     public global::app.test.@this? Current { get; internal set; }
 
     // --- Configuration (plang values) ---
@@ -37,7 +37,7 @@ public sealed partial class @this
     /// <summary>Per-test wall-clock timeout in seconds. Default 30.</summary>
     public global::app.type.item.number.@this TimeoutSeconds { get; set; } = 30;
 
-    /// <summary>Parallelism bound for test.run's semaphore. Default Environment.ProcessorCount.</summary>
+    /// <summary>Parallelism bound for test.start's semaphore. Default Environment.ProcessorCount.</summary>
     public global::app.type.item.number.@this Parallel { get; set; } = System.Environment.ProcessorCount;
 
     /// <summary>When true, per-test output.write streams live to stdout. When false, captured and rendered only on failure.</summary>
@@ -159,6 +159,6 @@ public sealed partial class @this
     // No Apply(--test={...}) — the setting walk (app.Setting.Set(app.Test, dict)) sets the
     // config leaves directly: TimeoutSeconds/Parallel (number), Verbose (@bool), Format
     // (choice<Format> — unknown value rejected by the conversion), Include/Exclude
-    // (list<text>, converted element-wise). Bounds are sentinels, not errors: test.run reads
+    // (list<text>, converted element-wise). Bounds are sentinels, not errors: test.start reads
     // TimeoutSeconds ≤ 0 as no-timeout and Parallel ≤ 0 as auto (ProcessorCount).
 }

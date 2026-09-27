@@ -18,7 +18,7 @@ public partial class Compress : IContext
     [IsNotNull]
     public partial data.@this<app.variable.@this> Variable { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var target = await Context.Variable.Get((await Variable.Value())!.Name);
         if (target == null || !target.IsInitialized)
@@ -41,7 +41,7 @@ public partial class Decompress : IContext
     [IsNotNull]
     public partial data.@this<app.variable.@this> Variable { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var target = await Context.Variable.Get((await Variable.Value())!.Name);
         if (target == null || !target.IsInitialized)

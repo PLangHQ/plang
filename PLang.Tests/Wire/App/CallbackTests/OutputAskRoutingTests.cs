@@ -35,7 +35,7 @@ public class OutputAskRoutingTests
         context.Variable.Set(ask.AnswerVariableName, "Alice");
 
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.Answer).IsEqualTo("Alice");
         await Assert.That((await context.Variable.Get(ask.AnswerVariableName)).IsInitialized).IsFalse();
@@ -50,7 +50,7 @@ public class OutputAskRoutingTests
         app.User.Channel.Register(msg);
 
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
-        var result = await handler.Run();
+        var result = await handler.Start();
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }

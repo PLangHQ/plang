@@ -79,7 +79,7 @@ public class PathTypeMapperTests
         var (value, _) = Build("greeting.txt", context);
         var read = new global::app.module.action.file.Read(context) { Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
         };
-        var result = await read.Run();
+        var result = await read.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello from a string param");
     }

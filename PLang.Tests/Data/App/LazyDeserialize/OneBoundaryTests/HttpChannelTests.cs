@@ -40,7 +40,7 @@ public class HttpChannelTests
         { Content = new StringContent(body, Encoding.UTF8, contentType) };
         var action = new request(app.User.Context) { Url = (global::app.type.item.text.@this)"https://x/y", Unsigned = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, app.User.Context);
-        return await action.Run();
+        return await action.Start();
     }
 
     [Test] public async Task HttpChannel_IsBidirectional()
@@ -64,10 +64,10 @@ public class HttpChannelTests
     [Test] public async Task HttpResponse_TypeDeleted_ByAbsoluteName()
         => await Assert.That(typeof(request).Assembly.GetType("app.http.response.@this")).IsNull();
 
-    // Independent #13 — http.request's Run signature is Task<Data>, not the type.
+    // Independent #13 — http.request's Start signature is Task<Data>, not the type.
     [Test] public async Task HttpGet_Run_ReturnTypeIsData_NotHttpResponse()
     {
-        var ret = typeof(request).GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
+        var ret = typeof(request).GetMethod("Start", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
         await Assert.That(ret).IsEqualTo(typeof(Task<global::app.data.@this>));
     }
 

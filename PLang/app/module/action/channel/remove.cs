@@ -15,7 +15,7 @@ public partial class Remove : IContext
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
     public partial data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? Actor { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var name = (await Name.Value())?.Clr<string>();
         if (string.IsNullOrEmpty(name))

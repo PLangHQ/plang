@@ -48,7 +48,7 @@ public class ModifierFrameTests
     [Test]
     public async Task ModifierOwnFailure_IsReported()
     {
-        var result = await WithBrokenModifier().Run(Ctx);
+        var result = await WithBrokenModifier().Start(Ctx);
 
         await result.IsFailure();
     }
@@ -60,7 +60,7 @@ public class ModifierFrameTests
     {
         var before = Ctx.CallStack.Audit.Count;
 
-        await WithBrokenModifier().Run(Ctx);
+        await WithBrokenModifier().Start(Ctx);
 
         await Assert.That(Ctx.CallStack.Audit.Count).IsGreaterThan(before);
     }
@@ -89,7 +89,7 @@ public class ModifierFrameTests
     [Test]
     public async Task ModifierTimeout_IsReportedAsTheTimeout()
     {
-        var result = await TimedOutSleep().Run(Ctx);
+        var result = await TimedOutSleep().Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
@@ -102,7 +102,7 @@ public class ModifierFrameTests
     [Test]
     public async Task ModifierTimeout_IsRecordedOnTheCallStack()
     {
-        await TimedOutSleep().Run(Ctx);
+        await TimedOutSleep().Start(Ctx);
 
         await Assert.That(Ctx.CallStack.Audit.Any(e => e.Key == "Timeout")).IsTrue();
     }

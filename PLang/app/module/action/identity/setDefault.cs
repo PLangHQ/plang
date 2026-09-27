@@ -15,5 +15,5 @@ public partial class SetDefault : IContext
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<data.@this<Identity>> Run() => await Identity.SetDefaultAsync(this);
+    public async Task<data.@this<Identity>> Start() => await Identity.SetDefaultAsync(this);
 }

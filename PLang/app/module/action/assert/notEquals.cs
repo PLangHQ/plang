@@ -13,6 +13,6 @@ public partial class NotEquals : IContext
     [Code]
     public partial IAssert Assert { get; }
 
-    public async Task<data.@this<global::app.type.item.@bool.@this>> Run() =>
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Start() =>
         AssertSnapshot.WithVariables(await Assert.NotEquals(this), Context);
 }

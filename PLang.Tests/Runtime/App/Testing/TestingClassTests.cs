@@ -43,7 +43,7 @@ public class TestingClassTests
         await Assert.That(_app.Test.Coverage.Branches.Count).IsEqualTo(0);
     }
 
-    // Per-test in-flight state slot starts null; test.run assigns it for the currently running test.
+    // Per-test in-flight state slot starts null; test.start assigns it for the currently running test.
     [Test]
     public async Task NewInstance_CurrentTest_NullUntilAssigned()
     {

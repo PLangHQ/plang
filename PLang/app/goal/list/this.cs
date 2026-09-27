@@ -63,7 +63,7 @@ public sealed class @this
 
     /// <summary>
     /// Gets a goal by name from cache only.
-    /// Setup goals are excluded — they are only reachable through Setup.RunAsync().
+    /// Setup goals are excluded — they are only reachable through Setup.Start().
     /// </summary>
     public goal.@this? Get(string name)
     {

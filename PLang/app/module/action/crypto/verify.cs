@@ -21,5 +21,5 @@ public partial class Verify : IContext
     [Code]
     public partial ICrypto Crypto { get; }
 
-    public async Task<data.@this<global::app.type.item.@bool.@this>> Run() => await Crypto.Verify(this);
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Start() => await Crypto.Verify(this);
 }

@@ -20,7 +20,7 @@ public partial class report : IContext
 {
     public partial data.@this<global::app.type.item.text.@this>? Format { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         // The run's tests live in one place — the session.
         var testing = Context.App.Test;
@@ -28,7 +28,7 @@ public partial class report : IContext
         var format = await ResolveFormat(testing);
 
         // Suppress the console summary when we're nested inside another test
-        // (Current is set by test.run when it spins up the per-test child App).
+        // (Current is set by test.start when it spins up the per-test child App).
         // The parent test consumes results via the returned Data Properties;
         // printing the nested run's status lines would pollute the outer output.
         if (testing.Current == null)

@@ -18,7 +18,7 @@ public partial class load : IContext
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var dllPath = Path == null ? null : await Path.Value();
         if (dllPath == null)

@@ -72,7 +72,7 @@ public class DeciderProviderTests
             })
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(1);

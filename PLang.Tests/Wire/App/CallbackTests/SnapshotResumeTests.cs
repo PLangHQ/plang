@@ -7,7 +7,7 @@ using ActionEntity = global::app.goal.step.action.@this;
 namespace PLang.Tests.App.CallbackTests;
 
 /// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resume(context)` recursive cross-
-/// goal continuation; `callback.run` is the resume entry and requires Snapshot.
+/// goal continuation; `callback.start` is the resume entry and requires Snapshot.
 public class SnapshotResumeTests
 {
     private static global::app.@this NewApp() =>
@@ -29,8 +29,8 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v"); // Snapshot = null
-        var handler = new run(app.User.Context) { Callback = data };
-        var result = await handler.Run();
+        var handler = new start(app.User.Context) { Callback = data };
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
     }
@@ -40,8 +40,8 @@ public class SnapshotResumeTests
         var app = NewApp();
         var data = app.Ok("v");
         data.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext); // empty snapshot
-        var handler = new run(app.User.Context) { Callback = data };
-        var result = await handler.Run();
+        var handler = new start(app.User.Context) { Callback = data };
+        var result = await handler.Start();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
         // Confirms delegation reached Resume (we don't get NoSnapshot).
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");

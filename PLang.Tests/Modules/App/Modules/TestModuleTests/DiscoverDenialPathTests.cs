@@ -37,7 +37,7 @@ public class DiscoverDenialPathTests
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };
-        var result = await action.Run();
+        var result = await action.Start();
         // Denial surfaces as Fail, not as an empty list of tests.
         await result.IsFailure();
     }
@@ -51,7 +51,7 @@ public class DiscoverDenialPathTests
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };
-        var result = await action.Run();
+        var result = await action.Start();
         // Either denial → Fail, or the resolved path lands under root → empty.
         // BOTH branches assert so a "zero assertions on denial" regression
         // can't slip through.

@@ -1,6 +1,6 @@
 // Test action handlers used by the typed-return tests. Live in
 // app.module.typedreturns.* so the source generator picks them up and
-// generates SetAction/ExecuteAsync the same way production handlers get.
+// generates SetAction/Start the same way production handlers get.
 // Not auto-discovered (Modules.Discover walks PLang.dll only); tests
 // register via app.Module.RegisterType before invoking validate.
 
@@ -11,7 +11,7 @@ namespace app.module.typedreturns;
 public partial class NoopBuild : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
 }
 
 /// <summary>Build() returns Ok("foo") — exercises the terminal-type stamping path.</summary>
@@ -19,7 +19,7 @@ public partial class NoopBuild : global::app.module.IContext
 public partial class BuildReturnsType : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(Context.Ok("foo"));
 }
 
@@ -28,7 +28,7 @@ public partial class BuildReturnsType : global::app.module.IContext
 public partial class BuildFails : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(
         global::app.data.@this.FromError(new global::app.error.ActionError("forced build failure", "BuildFail", 400)));
 }
@@ -38,7 +38,7 @@ public partial class BuildFails : global::app.module.IContext
 public partial class BuildBareOk : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(global::app.data.@this.Ok());
 }
 
@@ -48,7 +48,7 @@ public partial class BuildOrdered : global::app.module.IContext
 {
     public static readonly List<string> InvocationLog = new();
     public partial global::app.data.@this<global::app.type.item.text.@this>? Marker { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build()
     {
         InvocationLog.Add((Marker.Peek()?.ToString()) ?? "?");

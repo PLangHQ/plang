@@ -63,7 +63,7 @@ public class ModulesDescribeReturnTypeTests
     [Test]
     public async Task Return_DataOfBool_IsBool()
     {
-        // file.exists.Run() returns Task<Data<path>> — the path is the value;
+        // file.exists.Start() returns Task<Data<path>> — the path is the value;
         // condition.compare returns Data<global::app.type.item.@bool.@this>. Use compare to pin "bool".
         var row = Find("condition", "compare");
         await Assert.That(row.Return).IsEqualTo(_app.Type["bool"]);

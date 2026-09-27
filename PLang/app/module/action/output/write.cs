@@ -5,14 +5,14 @@ namespace app.module.action.output;
 /// <summary>
 /// Writes data to a channel. Channel selection is handled by the IChannel interface —
 /// source-gen resolves the action's "channel" parameter against the current actor's
-/// Channels at ExecuteAsync time. No name → Output role channel.
+/// Channels when the action starts. No name → Output role channel.
 /// </summary>
 [Action("write", Cacheable = false)]
 public partial class Write : IContext, IChannel
 {
     public partial data.@this Data { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
         // The value writes ITSELF through the one door: Channel.WriteAsync → the serializer →
         // data.Output → its own render (a template fills its %refs% at View.Out, resolving every
         // ref including %!infra% — an authored output value is trusted). No pre-bake to a string

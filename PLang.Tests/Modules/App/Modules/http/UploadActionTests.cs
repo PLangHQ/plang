@@ -74,7 +74,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Method).IsEqualTo(System.Net.Http.HttpMethod.Post);
@@ -95,7 +95,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var body = await _handler.LastRequest!.Content!.ReadAsByteArrayAsync();
@@ -115,7 +115,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var body = await _handler.LastRequest!.Content!.ReadAsByteArrayAsync();
@@ -134,7 +134,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Verify file content was uploaded, not the filename string
@@ -151,7 +151,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var body = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -169,7 +169,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Method).IsEqualTo(System.Net.Http.HttpMethod.Put);
@@ -190,7 +190,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
@@ -212,7 +212,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
@@ -235,7 +235,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
@@ -260,7 +260,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Verify multipart form was sent
@@ -291,7 +291,7 @@ public class UploadActionTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var body = await _handler.LastRequest!.Content!.ReadAsStringAsync();

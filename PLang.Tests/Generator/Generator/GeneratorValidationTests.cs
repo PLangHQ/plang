@@ -184,12 +184,12 @@ public class GeneratorValidationTests
     public async Task GeneratedExecuteAsync_WrapsRunInTryCatch()
     {
         var generated = ReadAnyGeneratedHandler();
-        // runtime2's builder-quality pass wraps Run() in a narrow try/catch so a bare
+        // runtime2's builder-quality pass wraps Start() in a narrow try/catch so a bare
         // CLR exception (NRE, InvalidCast) surfaces as a ServiceError carrying
         // "{module}.{action}: {ExType}: {msg}" instead of an anonymous bare throw.
         // The catch converts to a ServiceError; there is deliberately no finally —
-        // lifecycle/cleanup still lives in Call.ExecuteAsync, not the generated Execute().
-        await Assert.That(generated).Contains("try { return await Run(); }");
+        // lifecycle/cleanup still lives in Call.Start, not the generated ICodeGenerated.Start().
+        await Assert.That(generated).Contains("try { return await Start(); }");
         await Assert.That(generated.Contains("finally\n") || generated.Contains("finally {")
             || generated.Contains("finally\r\n") || generated.Contains("finally    {")).IsFalse();
     }
@@ -198,9 +198,9 @@ public class GeneratorValidationTests
     public async Task GeneratedExecuteAsync_CallsRunDirectly()
     {
         var generated = ReadAnyGeneratedHandler();
-        // Execute() invokes Run() inline (inside the try/catch wrap), not via a
-        // wrapper method.
-        await Assert.That(generated).Contains("return await Run();");
+        // ICodeGenerated.Start() invokes the handler's Start() inline (inside the
+        // try/catch wrap), not via a wrapper method.
+        await Assert.That(generated).Contains("return await Start();");
     }
 
     [Test]

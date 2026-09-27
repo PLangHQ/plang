@@ -21,7 +21,7 @@ public class ClearTests
         memory.Set("var2", "value2");
 
         var action = new Clear(context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(memory.Contains("var1")).IsFalse();
@@ -35,7 +35,7 @@ public class ClearTests
         memory.Set("userVar", "value");
 
         var action = new Clear(context);
-        await action.Run();
+        await action.Start();
 
         await Assert.That(memory.Contains("Now")).IsTrue();
         await Assert.That(memory.Contains("NowUtc")).IsTrue();

@@ -3,7 +3,7 @@ using number = global::app.type.item.number.@this;
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 4 + unary retype follow-up
-// math.* actions retype Run() from Task<Data<object>> to Task<Data<number>>.
+// math.* actions retype Start() from Task<Data<object>> to Task<Data<number>>.
 // The handler RELAYS Data, never throws — overflows/divide-by-zero arrive as Data.Fail.
 // Arithmetic AND unary/comparison families (abs/floor/ceiling/sqrt/round/min/max)
 // route through number.*. MathHelper.ToDouble and MathHelper.PreserveType are deleted.
@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Types;
 public class MathHandlerDataReturnTests
 {
     private static System.Type RunReturnType(System.Type handler)
-        => handler.GetMethod("Run")!.ReturnType;
+        => handler.GetMethod("Start")!.ReturnType;
 
     private static void AssertRunReturnsDataNumber(System.Type handler)
     {
@@ -20,7 +20,7 @@ public class MathHandlerDataReturnTests
             typeof(global::app.data.@this<>).MakeGenericType(typeof(number)));
         if (rt != task)
             throw new System.InvalidOperationException(
-                $"{handler.Name}.Run() returns {rt}, expected Task<Data<number>>");
+                $"{handler.Name}.Start() returns {rt}, expected Task<Data<number>>");
     }
 
     [Test] public async Task MathAdd_RunSignature_ReturnsDataNumber_NotDataObject()

@@ -26,7 +26,7 @@ public partial class Read : IContext
     // missing path still errors at the read step), but the content stays on
     // disk until first examination, where the value door reads + parses +
     // narrows the Data to the content's type (an image becomes one when used).
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         // Resolve the path door first; the guard reads .Success AFTER the await —
         // resolution errors (bad scheme, unset %var%) only surface once the door

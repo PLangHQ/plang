@@ -69,7 +69,7 @@ public class PrLoadTests : System.IAsyncDisposable
             global::app.channel.list.@this.Output, output, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 
         var goal = await RealGoalLoad.ViaChannel(_app, built);
-        var ran = await goal.Run(_app.User.Context);
+        var ran = await goal.Start(_app.User.Context);
 
         await ran.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(output.ToArray())).Contains("n is 5");

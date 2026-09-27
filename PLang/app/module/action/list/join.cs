@@ -9,7 +9,7 @@ public partial class Join : IContext
     [Default(",")]
     public partial data.@this<global::app.type.item.text.@this> Separator { get; init; }
 
-    public async Task<data.@this<global::app.type.item.text.@this>> Run()
+    public async Task<data.@this<global::app.type.item.text.@this>> Start()
     {
         var data = await Context.Variable.Get(await ListName.Value());
         var strings = new List<string>();

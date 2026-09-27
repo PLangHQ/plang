@@ -77,7 +77,7 @@ public class @this : global::app.channel.type.session.@this
         _executing.Value = true;
         try
         {
-            return await Call.Run(context);
+            return await Call.Start(context);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

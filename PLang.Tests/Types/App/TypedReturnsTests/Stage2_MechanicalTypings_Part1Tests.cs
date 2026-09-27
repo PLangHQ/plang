@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Reflection contract for action-handler Run() return types and the catalog
+// Reflection contract for action-handler Start() return types and the catalog
 // strings Modules.Describe() emits for the trailing variable.set's type slot.
 
 public class Stage2_MechanicalTypings_Part1Tests
@@ -15,21 +15,21 @@ public class Stage2_MechanicalTypings_Part1Tests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private static System.Type RunReturnType<THandler>()
-        => typeof(THandler).GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
+    private static System.Type StartReturnType<THandler>()
+        => typeof(THandler).GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
 
     [Test]
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
-        var ret = RunReturnType<global::app.module.action.test.discover>();
+        var ret = StartReturnType<global::app.module.action.test.discover>();
         var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
-    public async Task TestRun_Run_ReturnsTaskDataListOfTest()
+    public async Task TestStart_Start_ReturnsTaskDataListOfTest()
     {
-        var ret = RunReturnType<global::app.module.action.test.run>();
+        var ret = StartReturnType<global::app.module.action.test.start>();
         var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -40,7 +40,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task OutputAsk_Run_ReturnsTaskDataOfAsk()
     {
-        var ret = RunReturnType<global::app.module.action.output.ask>();
+        var ret = StartReturnType<global::app.module.action.output.ask>();
         var expected = typeof(Task<global::app.data.@this<global::app.module.action.output.Ask>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -48,7 +48,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ChannelSet_Run_ReturnsBareTaskOfData_VoidLike()
     {
-        var ret = RunReturnType<global::app.module.action.channel.Set>();
+        var ret = StartReturnType<global::app.module.action.channel.Set>();
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>))
             .Because("channel.set produces no value — bare Task<Data> is the contract.");
     }
@@ -62,9 +62,9 @@ public class Stage2_MechanicalTypings_Part1Tests
     }
 
     [Test]
-    public async Task ModulesDescribe_TestRun_AdvertisesListOfTestReturnType()
+    public async Task ModulesDescribe_TestStart_AdvertisesListOfTestReturnType()
     {
-        var row = _app.Module["test"]["run"];
+        var row = _app.Module["test"]["start"];
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.Return).IsEqualTo(_app.Type["list<test>"]);
     }
@@ -95,7 +95,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task DataValueFromTypedRun_NotDoubleWrapped()
     {
-        var ret = RunReturnType<global::app.module.action.test.discover>();
+        var ret = StartReturnType<global::app.module.action.test.discover>();
         // Task<Data<T>> → unwrap → Data<T>
         var dataWrapper = ret.GetGenericArguments()[0];
         var t = dataWrapper.GetGenericArguments()[0];

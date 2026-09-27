@@ -20,7 +20,7 @@ public class RemoveTests
         memory.Set("testVar", "testValue");
 
         var action = new Remove(context) { Name = new app.variable.@this("testVar") };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(memory.Contains("testVar")).IsFalse();
@@ -32,7 +32,7 @@ public class RemoveTests
         var (context, _) = CreateContext();
 
         var action = new Remove(context) { Name = new app.variable.@this("nonexistent") };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
     }

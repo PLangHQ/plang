@@ -24,7 +24,7 @@ public class MockTests
         var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "test content", context: context)        };
 
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
         await Assert.That((await result.Value()) is global::app.mock.@this).IsTrue();
@@ -42,7 +42,7 @@ public class MockTests
         var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"output.write"
         };
 
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
 
         var handle = (global::app.mock.@this)(await result.Value())!;
@@ -57,7 +57,7 @@ public class MockTests
             Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var beforeCount = context.Events.Count;
-        await action.Run();
+        await action.Start();
         var afterCount = context.Events.Count;
 
         await Assert.That(afterCount).IsEqualTo(beforeCount + 1);
@@ -70,7 +70,7 @@ public class MockTests
         var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
 
-        var result = await action.Run();
+        var result = await action.Start();
         var handle = (global::app.mock.@this)(await result.Value())!;
 
         await Assert.That(handle.EventBindingId).IsNotNull();
@@ -95,7 +95,7 @@ public class MockTests
             ExpectedCount = (global::app.type.item.number.@this)2
         };
 
-        var result = await verify.Run();
+        var result = await verify.Start();
         await result.IsSuccess();
     }
 
@@ -114,7 +114,7 @@ public class MockTests
             ExpectedCount = (global::app.type.item.number.@this)3
         };
 
-        var result = await verify.Run();
+        var result = await verify.Start();
         await result.IsFailure();
         await Assert.That(result.Error is AssertionError).IsTrue();
     }
@@ -134,7 +134,7 @@ public class MockTests
             Message = (global::app.type.item.text.@this)"file.read should be called once"
         };
 
-        var result = await verify.Run();
+        var result = await verify.Start();
         await result.IsFailure();
         var error = result.Error as AssertionError;
         await Assert.That(error).IsNotNull();
@@ -151,7 +151,7 @@ public class MockTests
         // Register a mock
         var mockAction = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
-        var mockResult = await mockAction.Run();
+        var mockResult = await mockAction.Start();
         var handle = (global::app.mock.@this)(await mockResult.Value())!;
 
         var countBefore = context.Events.Count;
@@ -159,7 +159,7 @@ public class MockTests
         // Reset the specific mock
         var reset = new Reset(context) { Mock = handle
         };
-        var resetResult = await reset.Run();
+        var resetResult = await reset.Start();
         await resetResult.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(countBefore - 1);
     }
@@ -172,18 +172,18 @@ public class MockTests
         // Register two mocks
         var mock1 = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked1", context: context)        };
-        await mock1.Run();
+        await mock1.Start();
 
         var mock2 = new intercept(context) { Pattern = (global::app.type.item.text.@this)"output.write",
             Return = new global::app.data.@this("", "mocked2", context: context)        };
-        await mock2.Run();
+        await mock2.Start();
 
         await Assert.That(context.Events.Count).IsGreaterThanOrEqualTo(2);
 
         // Reset all mocks
         var reset = new Reset(context) { Mock = null
         };
-        var resetResult = await reset.Run();
+        var resetResult = await reset.Start();
         await resetResult.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(0);
     }

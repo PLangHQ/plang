@@ -59,7 +59,7 @@ public static class MatrixRunner
                 context.Variable.Set(kv.Key, kv.Value);
         }
 
-        var data = await action.Run(context);
+        var data = await action.Start(context);
         var snapshot = (data.Error as global::app.error.Error)?.Params;        return new Result(data, snapshot);
     }
 
@@ -101,7 +101,7 @@ public static class MatrixRunner
 
         var shell = new TAction();
         var (handler, resolveErr) = await shell.Resolve(action, context);
-        var data = resolveErr != null ? context.Error(resolveErr) : await handler!.Execute();
+        var data = resolveErr != null ? context.Error(resolveErr) : await handler!.Start();
         var snapshot = (data.Error as global::app.error.Error)?.Params;
         return new Result(data, snapshot);
     }

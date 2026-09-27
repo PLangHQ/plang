@@ -9,7 +9,7 @@ public partial class Add : IContext
     public partial data.@this<global::app.type.item.path.@this> Path { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Namespace { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var app = Context.App;
         var dllPath = (await Path.Value())!;

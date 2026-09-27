@@ -30,7 +30,7 @@ public partial class Throw : IContext
     /// error keeps its identity and gains the suggestion; a new error is born with it.</summary>
     public partial data.@this<global::app.type.item.text.@this>? FixSuggestion { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         // An error is a point-in-time capture (like the callstack snapshot), so the
         // attached values bind at throw, not at display.

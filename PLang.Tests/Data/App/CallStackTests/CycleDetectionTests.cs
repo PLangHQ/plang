@@ -68,7 +68,7 @@ public class CycleDetectionTests
         await using var b = context.CallStack.Push(MakeAction("B"));
         var goalA = Make.Goal("A", "/A.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
 
-        var entered = await goalA.Run(context);
+        var entered = await goalA.Start(context);
 
         await Assert.That(entered.Error?.Key).IsNotEqualTo("CallStackOverflow");
     }
@@ -82,7 +82,7 @@ public class CycleDetectionTests
         await using var start = context.CallStack.Push(MakeAction("Start"));
         var compile = Make.Goal("Compile", "/Start.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
 
-        var entered = await compile.Run(context);
+        var entered = await compile.Start(context);
 
         await Assert.That(entered.Error?.Key).IsNotEqualTo("CallStackOverflow");
     }

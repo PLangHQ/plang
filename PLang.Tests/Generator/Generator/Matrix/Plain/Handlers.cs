@@ -9,26 +9,26 @@ namespace app.module.matrix.plain;
 public partial class StringPlain : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this> Path { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Path);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Path);
 }
 
 [global::app.module.Action("intplain")]
 public partial class IntPlain : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.number.@this> Count { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Count);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Count);
 }
 
 [global::app.module.Action("boolplain")]
 public partial class BoolPlain : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.@bool.@this> Flag { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Flag);
 }
 
 [global::app.module.Action("pathplain")]
 public partial class PathPlain : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.path.@this> File { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(File);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(File);
 }

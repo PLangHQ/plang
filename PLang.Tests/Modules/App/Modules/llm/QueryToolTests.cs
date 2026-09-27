@@ -72,7 +72,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2); // Tool call + re-query
@@ -110,7 +110,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2);
@@ -145,7 +145,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("parallel done");
@@ -180,7 +180,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
     }
@@ -215,7 +215,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Tool error was sent back to LLM, which recovered
@@ -249,7 +249,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -278,7 +278,7 @@ public class QueryToolTests
             MaxToolCalls = (global::app.type.item.number.@this)3
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         // MaxToolCalls = (global::app.type.item.number.@this)3, 1 tool/round:
         // Round 1: execute 1 tool (count=1), continue
@@ -319,7 +319,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         // "city" should be in required, "units" should NOT be
@@ -346,7 +346,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        await action.Run();
+        await action.Start();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("\"required\"");
@@ -369,7 +369,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        await action.Run();
+        await action.Start();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         // Should still have a valid schema object
@@ -411,7 +411,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // The second HTTP request should contain the tool result — tool was executed.
@@ -449,7 +449,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        await action.Run();
+        await action.Start();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         // Verify all type mappings appear in the request body
@@ -492,7 +492,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Tool was executed and re-queried — tool result sent back to LLM
@@ -534,7 +534,7 @@ public class QueryToolTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Verify both tool results are in the re-query request

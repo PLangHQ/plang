@@ -65,7 +65,7 @@ public class ResultsTests
         await Assert.That(summary[global::app.test.Status.Skipped]).IsEqualTo(1);
     }
 
-    // Parallel test.run appends from multiple Tasks concurrently — Add must be
+    // Parallel test.start appends from multiple Tasks concurrently — Add must be
     // thread-safe: no lost entries, no corruption. Critical for parallel runs.
     [Test]
     public async Task Add_ConcurrentFromMultipleTasks_AllEntriesPreserved()
@@ -85,12 +85,12 @@ public class ResultsTests
     }
 
     // Complete(status) sets the terminal status and captures elapsed duration
-    // measured from Start().
+    // measured from Begin().
     [Test]
     public async Task Test_Complete_TransitionsStatusAndRecordsDuration()
     {
         var test = NewTest("D");
-        test.Start();
+        test.Begin();
         await Task.Delay(10); // ensure measurable duration
         test.Complete(global::app.test.Status.Pass);
 

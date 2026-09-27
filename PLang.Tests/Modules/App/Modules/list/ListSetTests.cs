@@ -19,7 +19,7 @@ public class ListSetTests
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
         var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)1, Value = new global::app.data.@this("", "replaced", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
@@ -33,7 +33,7 @@ public class ListSetTests
         memory.Set("myList", new List<object?> { "old", "keep" });
 
         var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "new", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
@@ -48,7 +48,7 @@ public class ListSetTests
         memory.Set("myList", new List<object?> { "a", "b" });
 
         var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)5, Value = new global::app.data.@this("", "x", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("out of range");
@@ -61,7 +61,7 @@ public class ListSetTests
         memory.Set("myList", new List<object?> { "a" });
 
         var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)(-1), Value = new global::app.data.@this("", "x", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("out of range");
@@ -74,7 +74,7 @@ public class ListSetTests
         memory.Set("myList", "not a list");
 
         var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("not a list");
@@ -86,7 +86,7 @@ public class ListSetTests
         var (context, _) = CreateContext();
 
         var action = new Set(context) { ListName = new app.variable.@this("missing"), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
     }
@@ -98,7 +98,7 @@ public class ListSetTests
         memory.Set("myList", new List<object?> { "a", "b" });
 
         var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.item.number.@this)0, Value = null };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;

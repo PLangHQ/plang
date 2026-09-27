@@ -10,7 +10,7 @@ namespace PLang.Tests.App.TypedReturnsTests;
 public class Stage3_HttpResponseTests
 {
     private static System.Type RunReturnType<THandler>()
-        => typeof(THandler).GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
+        => typeof(THandler).GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
 
     [Test]
     public async Task HttpResponse_Type_IsDeleted()

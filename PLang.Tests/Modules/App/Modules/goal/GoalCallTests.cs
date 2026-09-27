@@ -28,7 +28,7 @@ public class GoalCallTests
     public async Task Call_ExistingGoal_RunsSuccessfully()
     {
         var action = new Call(_app.User.Context) { Name = Text("TestGoal") };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
     }
@@ -37,7 +37,7 @@ public class GoalCallTests
     public async Task Call_MissingGoal_ReturnsError()
     {
         var action = new Call(_app.User.Context) { Name = Text("NonExistent") };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
@@ -52,7 +52,7 @@ public class GoalCallTests
             Parameter = new global::app.type.item.list.@this(
                 new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) })
         };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var param = await _app.User.Context.Variable.Get("myParam");
@@ -73,7 +73,7 @@ public class GoalCallTests
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("units", "imperial", context: ctx) }, tool))
         {
-            await tool.Run(ctx);
+            await tool.Start(ctx);
             await Assert.That(await ValueOf("units")).IsEqualTo("imperial");
         }
     }
@@ -86,7 +86,7 @@ public class GoalCallTests
 
         await using (ctx.Variable.Calls.Push(System.Array.Empty<Data>(), tool))
         {
-            await tool.Run(ctx);
+            await tool.Start(ctx);
             await Assert.That(await ValueOf("units")).IsEqualTo("metric");
         }
     }
@@ -102,7 +102,7 @@ public class GoalCallTests
             await using (ctx.Variable.Calls.Push(new[] { new Data("city", city, context: ctx) }, tool))
             {
                 await Task.Yield();
-                await tool.Run(ctx);
+                await tool.Start(ctx);
                 await Task.Yield();
                 return await ValueOf("city");
             }
@@ -120,7 +120,7 @@ public class GoalCallTests
         var ctx = _app.User.Context;
         var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
 
-        await tool.Run(ctx);
+        await tool.Start(ctx);
 
         await Assert.That((await ctx.Variable.Get("city")).IsInitialized).IsFalse();
     }
@@ -131,7 +131,7 @@ public class GoalCallTests
         var ctx = _app.User.Context;
         await ctx.Variable.Set("a", "five");
 
-        await Make.Call("TestGoal", ("a", "one")).Run(ctx);
+        await Make.Call("TestGoal", ("a", "one")).Start(ctx);
 
         await Assert.That(await ValueOf("a")).IsEqualTo("one");
     }
@@ -144,7 +144,7 @@ public class GoalCallTests
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("a", "nine", context: ctx) }, other))
         {
-            await Make.Call("TestGoal", ("a", "one")).Run(ctx);
+            await Make.Call("TestGoal", ("a", "one")).Start(ctx);
             await Assert.That(await ValueOf("a")).IsEqualTo("one");
         }
     }
@@ -154,7 +154,7 @@ public class GoalCallTests
     {
         _app.User.Context.Variable.Set("marker", "fromCaller");
         var action = new Call(_app.User.Context) { Name = Text("TestGoal"), Actor = null };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // marker should still be visible on same context

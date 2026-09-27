@@ -7,7 +7,7 @@ namespace app.module.action.assert;
 /// Variables snapshot to the AssertionError so the runner can render it in the
 /// failure diagnostic. No-op on success (guard from architect §4.6) and when the
 /// error is not an AssertionError (e.g. provider returned a different error type).
-/// Generic so it preserves the typed return — every assert action's Run() returns
+/// Generic so it preserves the typed return — every assert action's Start() returns
 /// <c>Data&lt;bool&gt;</c>.
 /// </summary>
 internal static class AssertSnapshot

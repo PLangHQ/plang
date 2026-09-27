@@ -56,7 +56,7 @@ public class Stage3_HttpContentTypeDispatchTests
         };
         var action = new request(_app.User.Context) { Url = (global::app.type.item.text.@this)url, Unsigned = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         return result;
     }
@@ -147,7 +147,7 @@ public class Stage3_HttpContentTypeDispatchTests
     public async Task HttpDownload_BodyDispatch_NotApplied()
     {
         var ret = typeof(global::app.module.action.http.download)
-            .GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!
+            .GetMethod("Start", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!
             .ReturnType;
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>));
     }

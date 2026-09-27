@@ -46,8 +46,8 @@ public class CryptoV1PassThroughTests
     [Test]
     public async Task CryptoEncrypt_AndCryptoDecrypt_AreAsync()
     {
-        var enc = typeof(encrypt).GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var dec = typeof(decrypt).GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var enc = typeof(encrypt).GetMethod("Start", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var dec = typeof(decrypt).GetMethod("Start", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         await Assert.That(enc).IsNotNull();
         await Assert.That(dec).IsNotNull();
         await Assert.That(typeof(System.Threading.Tasks.Task).IsAssignableFrom(enc!.ReturnType)).IsTrue();

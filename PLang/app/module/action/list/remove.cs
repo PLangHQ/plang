@@ -10,7 +10,7 @@ public partial class Remove : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var listName = (await ListName.Value());
         var held = await Context.Variable.Get(listName);

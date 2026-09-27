@@ -62,7 +62,7 @@ public class QueryFormatTests
             Schema = Ctx.Ok("{sentiment: string}")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Verify the request had format instruction
@@ -83,7 +83,7 @@ public class QueryFormatTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -108,7 +108,7 @@ public class QueryFormatTests
             Schema = Ctx.Ok("{sentiment: string, score: number}")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         // Value should be parsed JSON
@@ -132,7 +132,7 @@ public class QueryFormatTests
             Schema = Ctx.Ok("{result: string}")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("JsonParseError");
@@ -152,7 +152,7 @@ public class QueryFormatTests
             Schema = Ctx.Ok("{answer: int}")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
     }
@@ -175,7 +175,7 @@ public class QueryFormatTests
             Format = (global::app.type.item.text.@this)"python"
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("print('hello')");
@@ -195,7 +195,7 @@ public class QueryFormatTests
             Format = (global::app.type.item.text.@this)"md"
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("# Hello World");
@@ -214,7 +214,7 @@ public class QueryFormatTests
             Format = (global::app.type.item.text.@this)"python"
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Just plain text");
@@ -242,7 +242,7 @@ public class QueryFormatTests
             Schema = Ctx.Ok("{ok: bool}")
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         // System message should contain BOTH original text AND format instruction
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();

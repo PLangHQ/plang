@@ -71,11 +71,11 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Runs all setup goals. Sets context.Setup for the duration so Steps.RunAsync
+    /// Starts all setup goals. Sets context.Setup for the duration so the steps
     /// can check run-once semantics. Any goal called from within setup execution
     /// inherits the setup context (context.Setup propagates through goal.call).
     /// </summary>
-    public async Task<data.@this> RunAsync(app.@this app, actor.context.@this context, CancellationToken ct = default)
+    public async Task<data.@this> Start(app.@this app, actor.context.@this context, CancellationToken ct = default)
     {
         var discoverResult = await DiscoverAsync(app, ct);
         if (!discoverResult.Success) return discoverResult;
@@ -87,7 +87,7 @@ public sealed class @this
         {
             foreach (var goal in Goals)
             {
-                var result = await app.RunGoalAsync(goal, context, ct);
+                var result = await app.Start(goal, context, ct);
                 if (!result.Success) return result;
             }
             return context.Ok();

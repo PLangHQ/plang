@@ -7,7 +7,7 @@ public partial class StringWithDefault : global::app.module.IContext
 {
     [global::app.module.Default("hello")]
     public partial global::app.data.@this<global::app.type.item.text.@this> Greeting { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Greeting);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Greeting);
 }
 
 [global::app.module.Action("intwithdefault")]
@@ -15,7 +15,7 @@ public partial class IntWithDefault : global::app.module.IContext
 {
     [global::app.module.Default(42)]
     public partial global::app.data.@this<global::app.type.item.number.@this> Count { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Count);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Count);
 }
 
 [global::app.module.Action("enumwithdefault")]
@@ -23,7 +23,7 @@ public partial class EnumWithDefault : global::app.module.IContext
 {
     [global::app.module.Default(MatrixEnum.A)]
     public partial global::app.data.@this<global::app.type.item.choice.@this<MatrixEnum>> Choice { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Choice);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Choice);
 }
 
 [global::app.module.Action("boolwithdefault")]
@@ -31,5 +31,5 @@ public partial class BoolWithDefault : global::app.module.IContext
 {
     [global::app.module.Default(false)]
     public partial global::app.data.@this<global::app.type.item.@bool.@this> Flag { get; init; }
-    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
+    public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Flag);
 }

@@ -32,7 +32,7 @@ public class ChannelSetTests
             Goal = call,
         };
 
-        await (await action.Run()).IsSuccess();
+        await (await action.Start()).IsSuccess();
         var channel = ctx.Actor!.Channel.Get("logger") as global::app.channel.type.goal.@this;
         await Assert.That(channel).IsNotNull();
         await Assert.That(channel!.Call).IsSameReferenceAs(call);
@@ -51,7 +51,7 @@ public class ChannelSetTests
             Name = new global::app.type.item.text.@this("logger"),
             Goal = Make.Call("NoSuchGoal"),
         };
-        await (await action.Run()).IsSuccess();
+        await (await action.Start()).IsSuccess();
 
         var channel = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("logger")!;
         var result = await channel.Write(ctx.Ok("hello"));

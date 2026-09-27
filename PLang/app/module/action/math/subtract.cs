@@ -19,5 +19,5 @@ public partial class Subtract : IContext
     [Code]
     public partial global::app.module.action.math.code.IMath Math { get; }
 
-    public async Task<data.@this<number>> Run() => await Math.Subtract(this);
+    public async Task<data.@this<number>> Start() => await Math.Subtract(this);
 }

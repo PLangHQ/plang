@@ -173,7 +173,7 @@ public class HostRenderSpikeTests
             Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op("in"), context: ctx),
             Value = new Data("", wanted, context: ctx),
         };
-        var result = await where.Run();
+        var result = await where.Start();
         await result.IsSuccess();
 
         var kept = (await result.Value()) as ItemList;

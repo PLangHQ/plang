@@ -11,7 +11,7 @@ public partial class SensitiveSnapshot : global::app.module.IContext
     public partial global::app.data.@this<global::app.type.item.text.@this> ApiKey { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this> Endpoint { get; init; }
 
-    public Task<global::app.data.@this> Run()
+    public Task<global::app.data.@this> Start()
     {
         // Touch both so backing fields are set — exercises the FinalValue branch.
         var _ = (ApiKey.Peek());

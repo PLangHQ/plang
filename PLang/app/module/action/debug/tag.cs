@@ -10,7 +10,7 @@ namespace app.module.action.debug;
 ///
 /// Tags attach to the CALLER's frame, not this action's own frame: the user's intent
 /// is to annotate the surrounding step/goal scope, and the tag-action's own Call pops
-/// the moment Run() returns (its Tags would vanish from the live tree before the next
+/// the moment Start() returns (its Tags would vanish from the live tree before the next
 /// assertion could read them).
 /// </summary>
 [Action("tag", Cacheable = false)]
@@ -28,7 +28,7 @@ public partial class Tag : IContext
     /// </summary>
     public partial global::app.data.@this<global::app.type.item.text.@this>? Label { get; init; }
 
-    public async Task<global::app.data.@this> Run()
+    public async Task<global::app.data.@this> Start()
     {
         // Tag the CALLER's Call, not our own — see class summary. Falls back to Current
         // if there's no caller (we're already at the root, e.g. a single-action scope).

@@ -66,7 +66,7 @@ public class TemplateFlagTests
                 Make.Action("variable", "set", Make.Param("Name", "answer", "variable"),
                     Make.Template("Value", "%reply%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
-        await (await loaded.Run(context)).IsSuccess();
+        await (await loaded.Start(context)).IsSuccess();
 
         var answer = await context.Variable.Get("answer");
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("[1] output.write(Data=\"hello %name%\")");
@@ -88,7 +88,7 @@ public class TemplateFlagTests
                 Make.Action("variable", "set", Make.Param("Name", "answer", "variable"),
                     Make.Template("Value", "%reply%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
-        await (await loaded.Run(context)).IsSuccess();
+        await (await loaded.Start(context)).IsSuccess();
 
         var answer = await context.Variable.Get("answer");
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("[1] output.write(Data=\"hello %name%\")");

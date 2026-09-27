@@ -20,5 +20,5 @@ public partial class fold : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this> Run() => await Builder.Fold(this);
+    public async Task<data.@this> Start() => await Builder.Fold(this);
 }

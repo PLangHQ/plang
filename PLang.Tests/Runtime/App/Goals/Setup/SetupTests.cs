@@ -109,7 +109,7 @@ public class SetupTests
         await (await _app.SettingsStore).Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED", context: _app.User.Context));
 
         // Run setup — step1 should be skipped, step2 should run
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
         await result.IsSuccess();
 
         // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
@@ -161,7 +161,7 @@ public class SetupTests
 
         await Assert.That(context.Setup).IsNull();
 
-        var result = await _app.Goal.Setup.RunAsync(_app, context);
+        var result = await _app.Goal.Setup.Start(_app, context);
 
         await result.IsSuccess();
         await Assert.That(context.Setup).IsNull(); // cleared after RunAsync
@@ -194,7 +194,7 @@ public class SetupTests
         goal.Step.Add(step);
         _app.Goal.Add(goal);
 
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         // Setup should fail
         await result.IsFailure();
@@ -218,10 +218,10 @@ public class SetupTests
         goal.Step.Add(step2);
         _app.Goal.Add(goal);
 
-        // Cancel via engine shutdown — Goal.RunAsync checks context.CancellationToken
+        // Cancel via engine shutdown — Goal.Start checks context.CancellationToken
         _app.RequestShutdown();
 
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         // Setup should abort with cancellation error
         await result.IsFailure();
@@ -245,7 +245,7 @@ public class SetupTests
             System.IO.Path.Combine(buildDir, "start.pr"),
             """{"name":"Start","isSetup":false,"path":"/Start.goal","step":[]}""");
 
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         await result.IsSuccess();
         // Only the setup goal should be in the collection
@@ -271,7 +271,7 @@ public class SetupTests
             """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
 
         // RunAsync discovers and runs setup goals internally
-        await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         // Non-setup goal should not be in collection yet
         await Assert.That(_app.Goal.Get("NormalGoal")).IsNull();
@@ -286,7 +286,7 @@ public class SetupTests
     public async Task RunAsync_HandlesEmptyDirectory()
     {
         // No .pr files at all — RunAsync discovers nothing and succeeds
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         await result.IsSuccess();
         await Assert.That(_app.Goal.Setup.Goals.Any()).IsFalse();
@@ -303,7 +303,7 @@ public class SetupTests
             System.IO.Path.Combine(setupBuildDir, "setup.pr"),
             """{"name":"Setup","isSetup":true,"path":"/Setup/Setup.goal","step":[]}""");
 
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         await result.IsSuccess();
         var setupGoals = _app.Goal.Setup.Goals.ToList();
@@ -322,7 +322,7 @@ public class SetupTests
             System.IO.Path.Combine(customDir, "setup.pr"),
             """{"name":"CustomSetup","isSetup":true,"path":"/CustomFolder/CustomSetup.goal","step":[]}""");
 
-        var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
+        var result = await _app.Goal.Setup.Start(_app, _app.User.Context);
 
         await result.IsSuccess();
         // No setup goals discovered from non-convention path

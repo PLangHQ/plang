@@ -8,7 +8,7 @@ namespace app.goal.step.list;
 /// The step NODE — a goal's steps (<c>goal.Step</c>) or a control-flow action's branch body
 /// (<c>action.Child</c>), a plang list value (<c>list&lt;step&gt;</c>) so a reader returns it directly.
 /// PROGRAM STRUCTURE: born context-free (the graph is shared across concurrent runs), it stores no
-/// context — <see cref="Run"/> takes the ASK's. Owns its sequence-run (Rule 5 — the collection owns its
+/// context — <see cref="Start"/> takes the ASK's. Owns its sequence-run (Rule 5 — the collection owns its
 /// iteration). Twin of <see cref="app.goal.step.action.list.@this"/>.
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<Step>
@@ -21,18 +21,18 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
     protected override global::app.type.item.list.@this Empty() => new @this();
 
-    /// <summary>Runs the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
-    /// No indent skip-state — a fired control-flow action runs its own Child, so nesting is structural.
-    /// Context is the ASK's, handed to each step's own Run. The node iterates ITSELF (the typed
+    /// <summary>Starts the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
+    /// No indent skip-state — a fired control-flow action starts its own Child, so nesting is structural.
+    /// Context is the ASK's, handed to each step's own Start. The node iterates ITSELF (the typed
     /// positional face).</summary>
-    public async System.Threading.Tasks.Task<data.@this> Run(actor.context.@this context)
+    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
     {
         data.@this result = context.Ok();
         for (int i = 0; i < Count; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
-            result = await this[i].Run(context);
+            result = await this[i].Start(context);
             if (result.ShouldExit()) break;
         }
         return result;

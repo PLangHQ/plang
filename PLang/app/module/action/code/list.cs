@@ -12,7 +12,7 @@ public partial class list : IContext
     /// <summary>Optional provider type filter (e.g., "signing", "crypto", "identity", "key"). Omit to list all.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Type { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var typeName = Type == null ? null : (await Type.Value())?.Clr<string>();
 

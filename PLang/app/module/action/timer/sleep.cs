@@ -10,7 +10,7 @@ public partial class Sleep : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.number.@this> Ms { get; init; }
 
-    public async Task<global::app.data.@this> Run()
+    public async Task<global::app.data.@this> Start()
     {
         await Task.Delay((await Ms.Value())!.ToInt32(), Context.CancellationToken);
         return Context.Ok();

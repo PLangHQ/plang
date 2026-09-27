@@ -33,5 +33,5 @@ public partial class sign : global::app.type.item.@this, global::app.type.item.I
     [Code]
     public partial ISigning Signer { get; }
 
-    public async Task<data.@this> Run() => await Signer.SignAsync(this);
+    public async Task<data.@this> Start() => await Signer.SignAsync(this);
 }

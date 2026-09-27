@@ -17,7 +17,7 @@ public class TagActionTests
         await using var tagCall = app.User.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
         var action = new Tag(app.User.Context) { Pairs = new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" }.ToDictData(app.User.Context)
         };
-        await action.Run();
+        await action.Start();
 
         await Assert.That(outer.Tags.Count).IsEqualTo(2);
         await Assert.That(outer.Tags["k1"].Peek()?.ToString()).IsEqualTo("v1");
@@ -33,7 +33,7 @@ public class TagActionTests
         await using var call = app.User.CallStack.Push(MakeAction("Goal"));
         var action = new Tag(app.User.Context) { Label = new global::app.data.@this<global::app.type.item.text.@this>("Label", "manual-checkpoint", context: app.User.Context)
         };
-        await action.Run();
+        await action.Start();
 
         await Assert.That(await call.Tags["manual-checkpoint"].ToBooleanAsync()).IsTrue();
     }
@@ -45,7 +45,7 @@ public class TagActionTests
         // No Push — Current is null.
         var action = new Tag(app.User.Context) { Label = new global::app.data.@this<global::app.type.item.text.@this>("Label", "x", context: app.User.Context)
         };
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -58,7 +58,7 @@ public class TagActionTests
 
         var action = new Tag(app.User.Context) { Label = new global::app.data.@this<global::app.type.item.text.@this>("Label", "x", context: app.User.Context)
         };
-        await action.Run();
+        await action.Start();
         await Assert.That(call.Tags.Count).IsEqualTo(1);
         await Assert.That(await call.Tags["x"].ToBooleanAsync()).IsTrue();
     }

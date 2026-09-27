@@ -49,7 +49,7 @@ public class ConditionIfBranchIndexTests
             priority: int.MaxValue,
             stopOnError: false));
 
-        await _app.RunGoalAsync(goal, _app.User.Context);
+        await _app.Start(goal, _app.User.Context);
         return captured!;
     }
 
@@ -113,7 +113,7 @@ public class ConditionIfBranchIndexTests
             priority: int.MaxValue,
             stopOnError: false));
 
-        await _app.RunGoalAsync(goal, _app.User.Context);
+        await _app.Start(goal, _app.User.Context);
         return captured!;
     }
 

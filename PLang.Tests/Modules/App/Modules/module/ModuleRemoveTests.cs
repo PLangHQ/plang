@@ -27,7 +27,7 @@ public class ModuleRemoveTests
         await Assert.That(_app.Module.Contains("variable")).IsTrue();
 
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(_app.Module.Contains("variable")).IsFalse();
@@ -37,7 +37,7 @@ public class ModuleRemoveTests
     public async Task Remove_NonexistentModule_ReturnsNotFound()
     {
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"nonexistent" };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
@@ -51,7 +51,7 @@ public class ModuleRemoveTests
         // already built still carries its module, so this asks the question removal must answer.
         var held = _app.Module["variable"];
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
-        await action.Run();
+        await action.Start();
 
         var (resolved, error) = (new PrAction { Module = held, Name = "set" }).Instance(_app.User.Context);
         await Assert.That(resolved).IsNull();

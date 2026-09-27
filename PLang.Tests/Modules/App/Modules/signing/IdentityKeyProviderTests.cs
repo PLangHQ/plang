@@ -47,7 +47,7 @@ public class IdentityKeyProviderTests
 
         var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
@@ -61,7 +61,7 @@ public class IdentityKeyProviderTests
     {
         var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
@@ -83,7 +83,7 @@ public class IdentityKeyProviderTests
 
         var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -98,13 +98,13 @@ public class IdentityKeyProviderTests
 
         var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"stored-test", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
 
         // Load it back via Get action
         var __a0 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"stored-test" };
         await __a0.Attach(null, Ctx);
-        var getResult = await __a0.Run();
+        var getResult = await __a0.Start();
         await getResult.IsSuccess();
         var loaded = (await getResult.Value()) as Identity;
         await Assert.That(loaded).IsNotNull();
@@ -121,7 +121,7 @@ public class IdentityKeyProviderTests
 
         var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"named-test", SetAsDefault = (global::app.type.item.@bool.@this)true, Provider = (global::app.type.item.text.@this)"mock" };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;

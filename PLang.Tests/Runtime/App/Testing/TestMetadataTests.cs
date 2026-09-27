@@ -91,7 +91,7 @@ public class TestMetadataTests
         _app.Test.Add(NewTest("T", builderVersion: "v1.0")); // stale
 
         var action = new global::app.module.action.test.report(_app.User.Context);
-        await action.Run();
+        await action.Start();
 
         var output = CapturedOutput();
         await Assert.That(output.Contains("builder drift")).IsTrue();

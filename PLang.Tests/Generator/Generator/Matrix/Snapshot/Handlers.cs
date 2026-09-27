@@ -7,7 +7,7 @@ public partial class SnapshotOnError : global::app.module.IContext
     public partial global::app.data.@this<global::app.type.item.number.@this> Second { get; init; }
 
     // Touch First (so backing field is set), then fail — snapshot should record both PrValue and FinalValue.
-    public Task<global::app.data.@this> Run()
+    public Task<global::app.data.@this> Start()
     {
         var _ = (First.Peek()); // accessed
         return Task.FromResult(global::app.data.@this.FromError(

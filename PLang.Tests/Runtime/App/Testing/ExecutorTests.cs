@@ -173,8 +173,8 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
-    // Covers Run()'s composition with Configure(): an invalid --test config produces
-    // an error from Configure, and Run must propagate that error without calling
+    // Covers Start()'s composition with Configure(): an invalid --test config produces
+    // an error from Configure, and Start must propagate that error without calling
     // engine.Start() (no .build/start.pr exists in the fixture filesystem, so if
     // Start were invoked it would return a file-not-found error instead of the
     // Apply error). The assertion on the error Key differentiates the two paths.
@@ -183,7 +183,7 @@ public class ExecutorTests
     {
         var executor = NewExecutor();
         // An unknown format value is rejected by the choice<Format> conversion in the walk.
-        var result = await executor.Run(new[] { "--test={\"format\":\"csv\"}" });
+        var result = await executor.Start(new[] { "--test={\"format\":\"csv\"}" });
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();

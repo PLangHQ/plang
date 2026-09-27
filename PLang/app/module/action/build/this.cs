@@ -73,7 +73,7 @@ public sealed partial class @this
     /// Headless / CI-redirected stdin returns NoAppFound rather than blocking on a
     /// prompt nobody can answer.
     /// </summary>
-    public async Task<data.@this> RunAsync()
+    public async Task<data.@this> Start()
     {
         var appPrPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", _context.App.System.Context!);
         var appPrExists = await appPrPath.ExistsAsync(_context.App.System.Context!);
@@ -86,7 +86,7 @@ public sealed partial class @this
                 return Context.Error(new global::app.error.ServiceError(
                     $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
-            // Channels are wired by the entry point (PlangConsole) before Run.
+            // Channels are wired by the entry point (PlangConsole) before Start.
             // The User actor's "output"/"input" channels wrap stdout/stdin — write
             // the prompt to output, then ReadLine off the input stream. Two-call
             // because the default channels are direction-split (output write-only,
@@ -111,6 +111,6 @@ public sealed partial class @this
         var user = _context.App.User.Context;
         var loaded = await _context.App.Goal.Load("/system/builder/.build/build.pr");
         if (!loaded.Success) return loaded;
-        return await ((await loaded.Value()) as global::app.goal.@this)!.Run(user);
+        return await ((await loaded.Value()) as global::app.goal.@this)!.Start(user);
     }
 }

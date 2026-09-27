@@ -33,7 +33,7 @@ public class ConditionHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(true), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
@@ -44,7 +44,7 @@ public class ConditionHandlerTests : IDisposable
     {
         var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(false), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -82,7 +82,7 @@ public class ConditionHandlerTests : IDisposable
         };
         condAction.Step = step;
 
-        var result = await step.Run(_app.User.Context);
+        var result = await step.Start(_app.User.Context);
 
         await result.IsSuccess();
 
@@ -134,7 +134,7 @@ public class ConditionHandlerTests : IDisposable
         };
         condAction.Step = step;
 
-        var result = await step.Run(_app.User.Context);
+        var result = await step.Start(_app.User.Context);
 
         await result.IsSuccess();
 

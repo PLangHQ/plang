@@ -29,7 +29,7 @@ public partial class @this
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new error.Error("Operation was cancelled", "Cancelled", 499));
 
-            result = await s.Run(context);
+            result = await s.Start(context);
             if (result.ShouldExit()) return result;
         }
 

@@ -45,7 +45,7 @@ public class IdentityHandlerTests
         var realCtx = realApp.System.Context;
         var handler = new Create(realCtx) { Name = (global::app.type.item.text.@this)"test", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, realCtx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -65,7 +65,7 @@ public class IdentityHandlerTests
     {
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -77,7 +77,7 @@ public class IdentityHandlerTests
     {
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -89,22 +89,22 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"first", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
 
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"second", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h2.Attach(null, Ctx);
-        await h2.Run();
+        await h2.Start();
 
         // First should no longer be default
         var __ia0 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"first" };
         await __ia0.Attach(null, Ctx);
-        var firstResult = await __ia0.Run();
+        var firstResult = await __ia0.Start();
         var first = (await firstResult.Value()) as Identity;
         await Assert.That(first!.IsDefault).IsFalse();
 
         var __ia1 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"second" };
         await __ia1.Attach(null, Ctx);
-        var secondResult = await __ia1.Run();
+        var secondResult = await __ia1.Start();
         var second = (await secondResult.Value()) as Identity;
         await Assert.That(second!.IsDefault).IsTrue();
     }
@@ -114,11 +114,11 @@ public class IdentityHandlerTests
     {
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"stored", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await handler.Attach(null, Ctx);
-        await handler.Run();
+        await handler.Start();
 
         var __ia2 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"stored" };
         await __ia2.Attach(null, Ctx);
-        var loadResult = await __ia2.Run();
+        var loadResult = await __ia2.Start();
         await loadResult.IsSuccess();
         var loaded = (await loadResult.Value()) as Identity;
         await Assert.That(loaded!.Name).IsEqualTo("stored");
@@ -129,11 +129,11 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"dup", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
 
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"dup", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        var result = await h2.Run();
+        var result = await h2.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
     }
@@ -144,16 +144,16 @@ public class IdentityHandlerTests
         // Create and archive
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"archived", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
 
         var archiveH = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"archived" };
         await archiveH.Attach(null, Ctx);
-        await archiveH.Run();
+        await archiveH.Start();
 
         // Try to create with same name — should fail
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"archived", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        var result = await h2.Run();
+        var result = await h2.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
     }
@@ -163,13 +163,13 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        var result1 = await h1.Run();
+        var result1 = await h1.Start();
         await result1.IsFailure();
         await Assert.That(result1.Error!.Key).IsEqualTo("ValidationError");
 
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"   ", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        var result2 = await h2.Run();
+        var result2 = await h2.Start();
         await result2.IsFailure();
         await Assert.That(result2.Error!.Key).IsEqualTo("ValidationError");
     }
@@ -181,7 +181,7 @@ public class IdentityHandlerTests
     {
         var handler = new Get(Ctx) { Name = (global::app.type.item.text.@this)"nosuch" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
@@ -192,16 +192,16 @@ public class IdentityHandlerTests
         // Create two non-default identities
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"a", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        var r1 = await h1.Run();
+        var r1 = await h1.Start();
         var originalKey = ((await r1.Value()) as Identity)!.PublicKey;
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"b", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        await h2.Run();
+        await h2.Start();
 
         // Get(null) should promote the first non-archived identity as default
         var handler = new Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -215,11 +215,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"alice", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Get(Ctx) { Name = (global::app.type.item.text.@this)"alice" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -231,11 +231,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"mydefault", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -248,7 +248,7 @@ public class IdentityHandlerTests
     {
         var handler = new Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -262,11 +262,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"full", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Get(Ctx) { Name = (global::app.type.item.text.@this)"full" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         var identity = (await result.Value()) as Identity;
 
         await Assert.That(identity!.Name).IsEqualTo("full");
@@ -284,21 +284,21 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"active1", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"active2", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        await h2.Run();
+        await h2.Start();
         var h3 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"archived", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h3.Attach(null, Ctx);
-        await h3.Run();
+        await h3.Start();
 
         var archiveH = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"archived" };
         await archiveH.Attach(null, Ctx);
-        await archiveH.Run();
+        await archiveH.Start();
 
         var handler = new list(Ctx);
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var list = result.GetValue<List<Identity>>();
@@ -311,15 +311,15 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"only", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
 
         var archiveH = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"only" };
         await archiveH.Attach(null, Ctx);
-        await archiveH.Run();
+        await archiveH.Start();
 
         var handler = new list(Ctx);
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var list = result.GetValue<List<Identity>>();
@@ -333,16 +333,16 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"toarchive", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"toarchive" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var __ia3 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"toarchive" };
         await __ia3.Attach(null, Ctx);
-        var loadResult = await __ia3.Run();
+        var loadResult = await __ia3.Start();
         // Archived identities may not be returned by Get — verify via the archive result itself
         // If Get returns it, check IsArchived; if not, the archive succeeded (already asserted above)
         if (loadResult.Success)
@@ -357,11 +357,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"def", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"def" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("CannotArchiveDefault");
     }
@@ -371,7 +371,7 @@ public class IdentityHandlerTests
     {
         var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"nope" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
@@ -381,15 +381,15 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"twice", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var h1 = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"twice" };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
 
         var h2 = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"twice" };
         await h2.Attach(null, Ctx);
-        var result = await h2.Run();
+        var result = await h2.Start();
         await result.IsSuccess();
     }
 
@@ -400,25 +400,25 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"old", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"new", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        await h2.Run();
+        await h2.Start();
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"new" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var __ia4 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"old" };
         await __ia4.Attach(null, Ctx);
-        var oldResult = await __ia4.Run();
+        var oldResult = await __ia4.Start();
         var oldId = (await oldResult.Value()) as Identity;
         await Assert.That(oldId!.IsDefault).IsFalse();
 
         var __ia5 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"new" };
         await __ia5.Attach(null, Ctx);
-        var newResult = await __ia5.Run();
+        var newResult = await __ia5.Start();
         var newId = (await newResult.Value()) as Identity;
         await Assert.That(newId!.IsDefault).IsTrue();
     }
@@ -429,21 +429,21 @@ public class IdentityHandlerTests
         // Missing
         var h1 = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"missing" };
         await h1.Attach(null, Ctx);
-        var r1 = await h1.Run();
+        var r1 = await h1.Start();
         await r1.IsFailure();
         await Assert.That(r1.Error!.Key).IsEqualTo("NotFound");
 
         // Archived
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"arch", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
         var archive = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"arch" };
         await archive.Attach(null, Ctx);
-        await archive.Run();
+        await archive.Start();
 
         var h2 = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"arch" };
         await h2.Attach(null, Ctx);
-        var r2 = await h2.Run();
+        var r2 = await h2.Start();
         await r2.IsFailure();
         await Assert.That(r2.Error!.Key).IsEqualTo("ArchivedIdentity");
     }
@@ -453,11 +453,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"already", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"already" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -471,20 +471,20 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"restore", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var archiveH = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"restore" };
         await archiveH.Attach(null, Ctx);
-        await archiveH.Run();
+        await archiveH.Start();
 
         var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"restore" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var __ia6 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"restore" };
         await __ia6.Attach(null, Ctx);
-        var loadResult = await __ia6.Run();
+        var loadResult = await __ia6.Start();
         await loadResult.IsSuccess();
         var loaded = (await loadResult.Value()) as Identity;
         await Assert.That(loaded!.IsArchived).IsFalse();
@@ -495,7 +495,7 @@ public class IdentityHandlerTests
     {
         var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"nope" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
@@ -505,11 +505,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"active", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"active" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var identity = (await result.Value()) as Identity;
@@ -523,12 +523,12 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"oldname", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        var createResult = await create.Run();
+        var createResult = await create.Start();
         var originalKey = ((await createResult.Value()) as Identity)!.PublicKey;
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
 
         var renamed = (await result.Value()) as Identity;
@@ -538,7 +538,7 @@ public class IdentityHandlerTests
         // Old name should be gone
         var __ia7 = new Get(Ctx) { Name = (global::app.type.item.text.@this)"oldname" };
         await __ia7.Attach(null, Ctx);
-        var oldResult = await __ia7.Run();
+        var oldResult = await __ia7.Start();
         await oldResult.IsFailure();
     }
 
@@ -547,14 +547,14 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"a", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"b", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        await h2.Run();
+        await h2.Start();
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"a", NewName = (global::app.type.item.text.@this)"b" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
     }
@@ -564,7 +564,7 @@ public class IdentityHandlerTests
     {
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"nope", NewName = (global::app.type.item.text.@this)"whatever" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
@@ -574,11 +574,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"def", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"def", NewName = (global::app.type.item.text.@this)"renamed" };
         await handler.Attach(null, Ctx);
-        await handler.Run();
+        await handler.Start();
 
         // %MyIdentity% should reflect the new name
         var myIdentity = _app.System.Identity;
@@ -590,11 +590,11 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"valid", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        await create.Run();
+        await create.Start();
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"valid", NewName = (global::app.type.item.text.@this)"" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
@@ -606,7 +606,7 @@ public class IdentityHandlerTests
     {
         var handler = new Export(Ctx) { Name = (global::app.type.item.text.@this)"nosuch" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
@@ -616,12 +616,12 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"exportme", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        var createResult = await create.Run();
+        var createResult = await create.Start();
         var expectedKey = ((await createResult.Value()) as Identity)!.PrivateKey;
 
         var handler = new Export(Ctx) { Name = (global::app.type.item.text.@this)"exportme" };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
@@ -633,12 +633,12 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"mydefault", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        var createResult = await create.Run();
+        var createResult = await create.Start();
         var expectedKey = ((await createResult.Value()) as Identity)!.PrivateKey;
 
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
@@ -651,15 +651,15 @@ public class IdentityHandlerTests
     {
         var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"default", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h1.Attach(null, Ctx);
-        await h1.Run();
+        await h1.Start();
         var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"other", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
-        await h2.Run();
+        await h2.Start();
 
         // Fetch non-default by name
         var getOther = new Get(Ctx) { Name = (global::app.type.item.text.@this)"other" };
         await getOther.Attach(null, Ctx);
-        await getOther.Run();
+        await getOther.Start();
 
         // %MyIdentity% should still be the default, not "other"
         var myIdentity = _app.System.Identity;
@@ -674,13 +674,13 @@ public class IdentityHandlerTests
         // Create an identity named "default" but NOT as the default
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"default", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
-        var createResult = await create.Run();
+        var createResult = await create.Start();
         var originalKey = ((await createResult.Value()) as Identity)!.PublicKey;
 
         // Now trigger auto-create by getting default (none marked as default yet)
         var get = new Get(Ctx) { Name = null };
         await get.Attach(null, Ctx);
-        var getResult = await get.Run();
+        var getResult = await get.Start();
         await getResult.IsSuccess();
 
         var identity = (await getResult.Value()) as Identity;
@@ -698,7 +698,7 @@ public class IdentityHandlerTests
         // Export(null) should use GetOrCreateDefaultAsync, same as Get(null)
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
-        var result = await handler.Run();
+        var result = await handler.Start();
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PrivateKey).IsNotNull();

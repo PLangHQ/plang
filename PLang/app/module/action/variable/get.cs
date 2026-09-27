@@ -10,7 +10,7 @@ public partial class Get : IContext
 {
     public partial data.@this<app.variable.@this> Name { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         return await Context.Variable.Get(await Name.Value());
     }

@@ -1,7 +1,7 @@
 namespace PLang.Tests.Shared;
 
 /// <summary>
-/// Self-diagnosing assertions for <c>test.run</c> results (<see cref="global::app.test.@this"/>).
+/// Self-diagnosing assertions for <c>test.start</c> results (<see cref="global::app.test.@this"/>).
 /// A bare <c>Assert.That(run.Status).IsEqualTo(Pass)</c> collapses on failure to "expected Pass,
 /// found Fail" — no WHY, so you end up hand-adding throwaway diagnostic throws to read the reason.
 /// These surface the run's StatusReason + Error (key + message) IN the failure text, permanently.

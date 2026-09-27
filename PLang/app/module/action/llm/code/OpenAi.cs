@@ -420,7 +420,7 @@ public sealed class OpenAi : ILlm
             if ((action.OnValidateResponse == null ? null : await action.OnValidateResponse.Value()) is { } validator)
             {
                 await context.Variable.Set("response", extracted);
-                var validationResult = await validator.Run(context);
+                var validationResult = await validator.Start(context);
 
                 if (!validationResult.Success)
                 {
@@ -537,7 +537,7 @@ public sealed class OpenAi : ILlm
             await context.Variable.Set("name", toolCall.Name);
             await context.Variable.Set("arguments", toolCall.Arguments);
             await context.Variable.Set("status", "starting");
-            await onToolCall.Run(context);
+            await onToolCall.Start(context);
         }
 
         string result;
@@ -561,7 +561,7 @@ public sealed class OpenAi : ILlm
             {
                 data.@this goalResult;
                 await using (context.Variable.Calls.Push(parameters, tool.Held))
-                    goalResult = await tool.Held.Run(context);
+                    goalResult = await tool.Held.Start(context);
 
                 if (goalResult.Success)
                 {
@@ -586,7 +586,7 @@ public sealed class OpenAi : ILlm
             await context.Variable.Set("arguments", toolCall.Arguments);
             await context.Variable.Set("result", result);
             await context.Variable.Set("status", "completed");
-            await onToolCall.Run(context);
+            await onToolCall.Start(context);
         }
 
         return result;

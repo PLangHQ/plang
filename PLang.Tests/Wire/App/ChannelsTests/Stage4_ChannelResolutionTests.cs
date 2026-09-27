@@ -2,7 +2,7 @@ using app.channel;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Channel slot resolution + IChannel marker + Write.Run.
+// Channel slot resolution + IChannel marker + Write.Start.
 // Architect: stage-4-write-channel-slot.md.
 
 public class Stage4_ChannelResolutionTests
@@ -57,8 +57,8 @@ public class Stage4_ChannelResolutionTests
         var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("hello-default"),
             Channel = app.User.Channel.Resolve(null)
         };
-        // Direct Run skips ExecuteAsync's reset of init backing fields.
-        await write.Run();
+        // Direct Start skips the dispatcher's reset of init backing fields.
+        await write.Start();
 
         var bytes = global::System.Text.Encoding.UTF8.GetString(captured.ToArray());
         await Assert.That(bytes.Contains("hello-default")).IsTrue();
@@ -75,7 +75,7 @@ public class Stage4_ChannelResolutionTests
         var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("targetted"),
             Channel = app.User.Channel.Resolve("logger")
         };
-        await write.Run();
+        await write.Start();
 
         var bytes = global::System.Text.Encoding.UTF8.GetString(loggerCapture.ToArray());
         await Assert.That(bytes.Contains("targetted")).IsTrue();
@@ -95,7 +95,7 @@ public class Stage4_ChannelResolutionTests
         var write = new global::app.module.action.output.Write(app.User.Context) { Data = data,
             Channel = probe
         };
-        await write.Run();
+        await write.Start();
 
         await Assert.That(probe.Received).IsNotNull();
         await Assert.That(ReferenceEquals(probe.Received, data)).IsTrue();

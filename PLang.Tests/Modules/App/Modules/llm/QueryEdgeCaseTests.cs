@@ -47,7 +47,7 @@ public class QueryEdgeCaseTests
         var action = new query(Ctx) { Message = new List<LlmMessage>().ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("ValidationError");
@@ -85,7 +85,7 @@ public class QueryEdgeCaseTests
             MaxToolCalls = (global::app.type.item.number.@this)5
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         // MaxToolCalls = (global::app.type.item.number.@this)5, 3 tools/round (with batch-slice fix):
         // Round 1 (HTTP #1): remaining=5, all 3 tools execute, toolCallCount=3, continue
@@ -125,7 +125,7 @@ public class QueryEdgeCaseTests
             }.ToListData()
         };
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
     }
@@ -138,7 +138,7 @@ public class QueryEdgeCaseTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         await action.Attach(null, Ctx);
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("");

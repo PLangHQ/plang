@@ -8,7 +8,7 @@ public partial class Contains : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.item.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
         var data = await Context.Variable.Get(await ListName.Value());
 

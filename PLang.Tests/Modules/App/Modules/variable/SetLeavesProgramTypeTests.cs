@@ -32,8 +32,8 @@ public class SetLeavesProgramTypeTests
     {
         var (set, rowType) = SetComposed("hello", new global::app.type.@this("text", "markdown"));
 
-        await (await set.Run(_app.User.Context)).IsSuccess();
-        await (await set.Run(_app.User.Context)).IsSuccess();
+        await (await set.Start(_app.User.Context)).IsSuccess();
+        await (await set.Start(_app.User.Context)).IsSuccess();
 
         await Assert.That(rowType.Kind?.Name).IsEqualTo("markdown");
     }
@@ -43,7 +43,7 @@ public class SetLeavesProgramTypeTests
     {
         var (set, _) = SetComposed(5, new global::app.type.@this("foo"));
 
-        var result = await set.Run(_app.User.Context);
+        var result = await set.Start(_app.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
@@ -55,8 +55,8 @@ public class SetLeavesProgramTypeTests
     {
         var (set, rowType) = SetComposed(5, new global::app.type.@this("number"));
 
-        await (await set.Run(_app.User.Context)).IsSuccess();
-        await (await set.Run(_app.User.Context)).IsSuccess();
+        await (await set.Start(_app.User.Context)).IsSuccess();
+        await (await set.Start(_app.User.Context)).IsSuccess();
 
         await Assert.That(rowType.Kind).IsNull();
     }

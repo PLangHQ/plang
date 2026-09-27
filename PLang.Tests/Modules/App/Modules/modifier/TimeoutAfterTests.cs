@@ -41,7 +41,7 @@ public class TimeoutAfterTests
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(5000) }
         };
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.GetValue("fast"))).IsEqualTo("done");
@@ -58,7 +58,7 @@ public class TimeoutAfterTests
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(50) }
         };
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
@@ -78,7 +78,7 @@ public class TimeoutAfterTests
         };
 
         var start = DateTimeOffset.UtcNow;
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
         var elapsed = DateTimeOffset.UtcNow - start;
 
         await Assert.That(elapsed.TotalMilliseconds).IsLessThan(2000);
@@ -102,7 +102,7 @@ public class TimeoutAfterTests
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(5000) }
         };
 
-        await Assert.That(async () => await action.Run(Ctx))
+        await Assert.That(async () => await action.Start(Ctx))
             .Throws<OperationCanceledException>();
 
         Ctx.PopCancellation();
@@ -119,7 +119,7 @@ public class TimeoutAfterTests
             Modifier = new global::app.goal.step.action.modifier.list.@this { TimeoutModifier(0) }
         };
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
@@ -176,7 +176,7 @@ public class TimeoutAfterTests
             }
         };
 
-        var result = await action.Run(Ctx);
+        var result = await action.Start(Ctx);
 
         await result.IsSuccess();
     }

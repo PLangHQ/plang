@@ -8,7 +8,7 @@ namespace PLang.Tests.App;
 // Contract tests for App.Run(action, context). App.Run owns callstack push/pop,
 // save/restore Context.Step/Goal/Event, try/catch/finally with ServiceError
 // translation, and frame.SnapshotVariables in finally. The generated handler
-// ExecuteAsync is thin — no scaffolding inside it.
+// Start is thin — no scaffolding inside it.
 
 public class AppRunScaffoldingTests
 {
@@ -31,7 +31,7 @@ public class AppRunScaffoldingTests
         };
     }
 
-    // App.Run pushes a callstack frame BEFORE invoking handler.ExecuteAsync, pops it after.
+    // App.Run pushes a callstack frame BEFORE invoking handler.Start, pops it after.
     [Test]
     public async Task AppRun_PushesAndPopsCallstackFrame_AroundHandler()
     {
@@ -39,7 +39,7 @@ public class AppRunScaffoldingTests
         var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
-        await action.Run(_app.User.Context);
+        await action.Start(_app.User.Context);
 
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
@@ -57,7 +57,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action.Step = dispatchStep;
 
-        await action.Run(_app.User.Context);
+        await action.Start(_app.User.Context);
 
         // Restored after dispatch
         await Assert.That(ReferenceEquals(_app.User.Context.Step, stepBefore)).IsTrue();
@@ -76,7 +76,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
         action.Step = step;
 
-        await action.Run(_app.User.Context);
+        await action.Start(_app.User.Context);
 
         await Assert.That(ReferenceEquals(_app.User.Context.Goal, goalBefore)).IsTrue();
     }
@@ -92,7 +92,7 @@ public class AppRunScaffoldingTests
 
         var currentBefore = _app.User.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
-        var result = await action.Run(_app.User.Context);
+        var result = await action.Start(_app.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
@@ -108,7 +108,7 @@ public class AppRunScaffoldingTests
         var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "ok"));
-        var result = await action.Run(_app.User.Context);
+        var result = await action.Start(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
@@ -123,16 +123,16 @@ public class AppRunScaffoldingTests
         var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "first"));
-        await action.Run(_app.User.Context);
-        await action.Run(_app.User.Context);
+        await action.Start(_app.User.Context);
+        await action.Start(_app.User.Context);
 
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // App.Run DELIBERATELY catches OperationCanceledException and translates to ServiceError.
-    // timeout.after depends on this: the inner action's ExecuteAsync swallows OCE so the
+    // timeout.after depends on this: the inner action's Start swallows OCE so the
     // timeout is detected via CTS state + failed result, not via OCE bubbling up.
-    // Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
+    // Step.Start's catch DOES exclude OCE — that asymmetry is intentional.
     // Pinning this with a test so a future "consistency fix" doesn't silently break timeouts.
     [Test]
     public async Task AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate()
@@ -143,18 +143,18 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.oce", "throwoce");
 
         // Should NOT throw — OCE is caught and translated.
-        var result = await action.Run(_app.User.Context);
+        var result = await action.Start(_app.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
         await Assert.That(result.Error.Exception).IsTypeOf<OperationCanceledException>();
     }
 
-    // The other side of the OCE asymmetry: Step.RunAsync's catch DELIBERATELY excludes OCE
+    // The other side of the OCE asymmetry: Step.Start's catch DELIBERATELY excludes OCE
     // (PLang/App/Goals/Goal/Steps/Step/this.cs:157). That's what lets a cancelled token raised
-    // inside the foreach (line 152: ThrowIfCancellationRequested) escape Step.RunAsync and
+    // inside the foreach (line 152: ThrowIfCancellationRequested) escape Step.Start and
     // cascade to whatever wrapped it (modifier.timeoutAfter, parent cancellation, etc.).
-    // Without this assertion, a future "consistency fix" that adds OCE to Step.RunAsync's
+    // Without this assertion, a future "consistency fix" that adds OCE to Step.Start's
     // catch would silently swallow cancellations and break the timeout chain.
     [Test]
     public async Task StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate()
@@ -172,7 +172,7 @@ public class AppRunScaffoldingTests
         };
         action.Step = step;
 
-        await Assert.That(async () => await step.Run(_app.User.Context))
+        await Assert.That(async () => await step.Start(_app.User.Context))
             .ThrowsExactly<OperationCanceledException>();
     }
 
@@ -201,7 +201,7 @@ internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.m
     public void Initialize(global::app.@this engine, global::app.actor.context.@this context)
     { App = engine; Context = context; }
 
-    public Task<global::app.data.@this> Execute()
+    public Task<global::app.data.@this> Start()
     {
         throw new InvalidOperationException("forced throw");
     }
@@ -218,7 +218,7 @@ internal class OceThrowingHandler : global::app.module.IAction, global::app.modu
     public void Initialize(global::app.@this engine, global::app.actor.context.@this context)
     { App = engine; Context = context; }
 
-    public Task<global::app.data.@this> Execute()
+    public Task<global::app.data.@this> Start()
     {
         throw new OperationCanceledException("simulated cancellation");
     }

@@ -15,7 +15,7 @@ namespace app.module.action.test;
 /// file's .pr through path verbs and checks freshness against the current .goal
 /// text (SHA-256 of Name + concat(Step.Text)). A fresh goal becomes its test, as the
 /// run takes it (<see cref="app.test.list.@this.Create"/>). Returns a list&lt;test&gt;
-/// that test.run consumes.
+/// that test.start consumes.
 ///
 /// <para>The pre-AuthGate scan that this handler used to do —
 /// <c>StartsWith(rootPrefix)</c> hand-rolled containment + raw
@@ -38,7 +38,7 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<global::app.type.item.@bool.@this> Recursive { get; init; }
 
-    public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Run()
+    public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Start()
     {
         var empty = data.@this<global::app.type.item.list.@this<global::app.test.@this>>.Ok(new global::app.type.item.list.@this<global::app.test.@this>());
 

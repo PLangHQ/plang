@@ -16,5 +16,5 @@ public partial class Compare : IContext
     /// <summary>The operands read as the operator asks.</summary>
     public async System.Threading.Tasks.Task<global::app.error.Error?> Validate() => await Evaluator.Operands(Operator, Right);
 
-    public Task<data.@this<global::app.type.item.@bool.@this>> Run() => Evaluator.Evaluate(this);
+    public Task<data.@this<global::app.type.item.@bool.@this>> Start() => Evaluator.Evaluate(this);
 }

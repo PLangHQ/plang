@@ -27,7 +27,7 @@ public class SkipActionTests
         var context = _app.User.Context;
 
         var action = new SkipAction(context) { Value = new global::app.data.@this("", "override-value", context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(context.EventOverride).IsNotNull();
@@ -40,7 +40,7 @@ public class SkipActionTests
         var context = _app.User.Context;
 
         var action = new SkipAction(context) { Value = null };
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(context.EventOverride).IsNotNull();
@@ -53,7 +53,7 @@ public class SkipActionTests
         var context = _app.User.Context;
 
         var action = new SkipAction(context) { Value = new global::app.data.@this("", 42, context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
@@ -66,7 +66,7 @@ public class SkipActionTests
         var obj = new Dictionary<string, object> { ["status"] = 200 };
 
         var action = new SkipAction(context) { Value = new global::app.data.@this("", obj, context: context)};
-        var result = await action.Run();
+        var result = await action.Start();
 
         await result.IsSuccess();
         await Assert.That(Lower<object>(await context.EventOverride!.Value())).IsEqualTo(obj);

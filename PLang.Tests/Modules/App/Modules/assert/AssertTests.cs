@@ -32,7 +32,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, 42), Actual = D(context, 42) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -42,7 +42,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, 42), Actual = D(context, 99) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error is AssertionError).IsTrue();
@@ -54,7 +54,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, 5), Actual = D(context, 5.0) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -64,7 +64,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, "hello"), Actual = D(context, "hello") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -74,7 +74,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, null), Actual = D(context, null) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -84,7 +84,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, null), Actual = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -94,7 +94,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertEquals(context) { Expected = D(context, 1), Actual = D(context, 2), Message = (global::app.type.item.text.@this)"Sum check" };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
         var error = result.Error as AssertionError;
         await Assert.That(error).IsNotNull();
@@ -109,7 +109,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertNotEquals(context) { Expected = D(context, 1), Actual = D(context, 2) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -119,7 +119,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertNotEquals(context) { Expected = D(context, 5), Actual = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -131,7 +131,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsTrue(context) { Value = D(context, true) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -141,7 +141,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsTrue(context) { Value = D(context, false) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -151,7 +151,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsTrue(context) { Value = D(context, 42) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -161,7 +161,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsTrue(context) { Value = D(context, 0) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -171,7 +171,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsTrue(context) { Value = D(context, null) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -183,7 +183,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsFalse(context) { Value = D(context, false) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -193,7 +193,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsFalse(context) { Value = D(context, true) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -203,7 +203,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsFalse(context) { Value = D(context, null) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -232,7 +232,7 @@ public class AssertTests
         var fp = new global::app.type.item.path.file.@this(filePath);
         var action = new AssertIsTrue(app.User.Context) { Value = D(app.User.Context, fp) };
         await action.Attach(null, app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         System.IO.Directory.Delete(root, true);
     }
@@ -245,7 +245,7 @@ public class AssertTests
         var fp = new global::app.type.item.path.file.@this(missing);
         var action = new AssertIsTrue(app.User.Context) { Value = D(app.User.Context, fp) };
         await action.Attach(null, app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error is AssertionError).IsTrue();
         System.IO.Directory.Delete(root, true);
@@ -259,7 +259,7 @@ public class AssertTests
         var fp = new global::app.type.item.path.file.@this(missing);
         var action = new AssertIsFalse(app.User.Context) { Value = D(app.User.Context, fp) };
         await action.Attach(null, app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
         System.IO.Directory.Delete(root, true);
     }
@@ -273,7 +273,7 @@ public class AssertTests
         var fp = new global::app.type.item.path.file.@this(filePath);
         var action = new AssertIsFalse(app.User.Context) { Value = D(app.User.Context, fp) };
         await action.Attach(null, app.User.Context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error is AssertionError).IsTrue();
         System.IO.Directory.Delete(root, true);
@@ -287,7 +287,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsNull(context) { Value = D(context, null) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -297,7 +297,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsNull(context) { Value = D(context, "hello") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -309,7 +309,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsNotNull(context) { Value = D(context, "hello") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -319,7 +319,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertIsNotNull(context) { Value = D(context, null) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -331,7 +331,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertContains(context) { Value = D(context, "hello world"), Container = D(context, "world") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -341,7 +341,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertContains(context) { Value = D(context, "hello world"), Container = D(context, "xyz") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -352,7 +352,7 @@ public class AssertTests
         var list = new List<object> { 1, 2, 3 };
         var action = new AssertContains(context) { Value = D(context, list), Container = D(context, 2) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -363,7 +363,7 @@ public class AssertTests
         var list = new List<object> { 1, 2, 3 };
         var action = new AssertContains(context) { Value = D(context, list), Container = D(context, 99) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -373,7 +373,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertContains(context) { Value = D(context, null), Container = D(context, "x") };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -385,7 +385,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertGreaterThan(context) { A = D(context, 10), B = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -395,7 +395,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertGreaterThan(context) { A = D(context, 5), B = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -405,7 +405,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertGreaterThan(context) { A = D(context, 3), B = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -417,7 +417,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertLessThan(context) { A = D(context, 3), B = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsSuccess();
     }
 
@@ -427,7 +427,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertLessThan(context) { A = D(context, 5), B = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 
@@ -437,7 +437,7 @@ public class AssertTests
         var (context, _) = CreateContext();
         var action = new AssertLessThan(context) { A = D(context, 10), B = D(context, 5) };
         await action.Attach(null, context);
-        var result = await action.Run();
+        var result = await action.Start();
         await result.IsFailure();
     }
 }

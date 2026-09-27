@@ -90,7 +90,7 @@ public class SignActionTests
         // Create identity first to capture public key
         var getAction = new Get(Ctx) { Name = null };
         await getAction.Attach(null, Ctx);
-        var identityResult = await getAction.Run();
+        var identityResult = await getAction.Start();
         var publicKey = ((await identityResult.Value()) as Identity)!.PublicKey;
 
         var result = await SignData("test data");
@@ -207,7 +207,7 @@ public class SignActionTests
         // Ensure identity exists with the default ed25519 provider first
         var getAction = new Get(Ctx) { Name = null };
         await getAction.Attach(null, Ctx);
-        await getAction.Run();
+        await getAction.Start();
 
         var mock = new MockSigningProvider("mock");
         _app.Code.Register<ISigning>(mock);
@@ -257,7 +257,7 @@ public class SignActionTests
         // Ensure identity exists first
         var getAction = new Get(Ctx) { Name = null };
         await getAction.Attach(null, Ctx);
-        await getAction.Run();
+        await getAction.Start();
 
         var throwing = new ThrowingSigningProvider();
         _app.Code.Register<ISigning>(throwing);

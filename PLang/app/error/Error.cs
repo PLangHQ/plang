@@ -40,7 +40,7 @@ public class Error : global::app.type.item.@this
     /// <summary>
     /// Snapshot of the parameters as they arrived at the failing handler — the .pr
     /// raw value/type and the resolved final value for each. Populated by the
-    /// source-generated ExecuteAsync whenever a handler returns an error. Lets you
+    /// call frame (call.Start) whenever a handler returns an error. Lets you
     /// see "this is what the handler saw" without re-running with a debug flag.
     /// </summary>
     public List<ParamSnapshot>? Params { get; set; }

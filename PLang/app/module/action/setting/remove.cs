@@ -11,7 +11,7 @@ public partial class Remove : IContext
 {
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var key = (await Key.Value())!.Clr<string>()!;
         var store = await Context.App.SettingsStore;

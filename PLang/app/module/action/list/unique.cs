@@ -7,7 +7,7 @@ public partial class Unique : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Run()
+    public async Task<data.@this<app.type.item.list.@this>> Start()
     {
         var name = await ListName.Value();
         if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)

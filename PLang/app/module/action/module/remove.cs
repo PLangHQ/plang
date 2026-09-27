@@ -12,7 +12,7 @@ public partial class Remove : IContext
     /// <summary>Module name to unregister (e.g., "mymodule").</summary>
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this> Start()
     {
         var app = Context.App;
         if (!app.Module.Contains((await Name.Value())!.Clr<string>()!))

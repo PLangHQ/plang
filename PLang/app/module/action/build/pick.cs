@@ -26,5 +26,5 @@ public partial class pick : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this> Run() => await Builder.Pick(this);
+    public async Task<data.@this> Start() => await Builder.Pick(this);
 }

@@ -87,10 +87,10 @@ public class MyIdentityResolverTests
         // Create two identities
         var h1 = new Create(context) { Name = (global::app.type.item.text.@this)"first", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h1.Attach(null, context);
-        await h1.Run();
+        await h1.Start();
         var h2 = new Create(context) { Name = (global::app.type.item.text.@this)"second", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, context);
-        await h2.Run();
+        await h2.Start();
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access
         var data1 = await _app.System.Context.Variable.Get("MyIdentity");
@@ -100,7 +100,7 @@ public class MyIdentityResolverTests
         // Switch default
         var setDefault = new SetDefault(context) { Name = (global::app.type.item.text.@this)"second" };
         await setDefault.Attach(null, context);
-        await setDefault.Run();
+        await setDefault.Start();
 
         // %MyIdentity% should now be "second" — DynamicData lambda calls provider again
         var data2 = await _app.System.Context.Variable.Get("MyIdentity");

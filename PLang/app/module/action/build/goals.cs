@@ -12,7 +12,7 @@ public partial class goals : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this<global::app.type.item.list.@this<Goal>>> Run()
+    public async Task<data.@this<global::app.type.item.list.@this<Goal>>> Start()
     {
         // Builder.Goals hands back a plang list<goal> (warnings ride the Data) — forward it, no peel.
         var result = await Builder.Goals(this);
