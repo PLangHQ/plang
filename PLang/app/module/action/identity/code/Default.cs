@@ -272,12 +272,23 @@ public sealed class Default : IIdentity
             return action.Context.Ok<Identity>(candidate);
         }
 
-        // No identities at all — auto-create
+        // None stored yet. One held in memory is the one being stored right now — its own row is signed with
+        // it on the way into the store, and that signing asks for the identity here — so it answers, rather
+        // than making another for every row.
+        if (action.Context.App.System.Identity is { IsArchived: false } making)
+            return action.Context.Ok<Identity>(making);
+
+        // No identities at all — auto-create; it is the app's identity from here, before its row is stored
         var genResult = await GenerateIdentity(action, "default", true);
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
+        action.Context.App.System.Identity = identity;
         var result = await SaveAsync(action, identity);
-        if (!result.Success) return data.@this<Identity>.From(result);
+        if (!result.Success)
+        {
+            action.Context.App.System.Identity = null;   // not stored: not the app's identity
+            return data.@this<Identity>.From(result);
+        }
         return action.Context.Ok<Identity>(identity);
     }
 
