@@ -260,13 +260,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool Cacheable => true;
 
     /// <summary>
-    /// This value's type history — the values it evolved THROUGH (a dict parsed from a file holds
-    /// the file; an image born from a path holds the path). A value that never narrowed has an empty
-    /// list. The narrowing/constructing type just <c>list.Add(prior)</c> — the list owns its add
-    /// (no accumulate ceremony); <see cref="Is"/> queries it.
+    /// This value's history — the values it evolved THROUGH (a dict parsed from a file holds the
+    /// file; an image born from a path holds the path). A value that never narrowed has an empty
+    /// history. The narrowing/constructing type just <c>history.Add(prior)</c> — the history owns
+    /// its add; <see cref="Is"/> queries it.
     /// </summary>
-    private global::app.type.item.type.list.@this? _list;
-    internal global::app.type.item.type.list.@this list => _list ??= new();
+    private global::app.type.item.history.@this? _history;
+    internal global::app.type.item.history.@this history => _history ??= new();
 
     /// <summary>
     /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
@@ -283,7 +283,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// history — a <c>read config.json</c> that narrowed to a <c>dict</c> still answers
     /// <c>Is(file)</c> because the file rides in <see cref="list"/>.
     /// </summary>
-    public bool Is(global::app.type.@this? other) => Type.Is(other) || list.Has(other);
+    public bool Is(global::app.type.@this? other) => Type.Is(other) || history.Has(other);
 
     /// <summary>
     /// How this value clones when its holding <c>Data</c> is cloned. The default

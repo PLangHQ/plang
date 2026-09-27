@@ -143,7 +143,7 @@ public class source : @this
                 && await asking.App.Type.Kind[kind.Name].Load(_value, asking) is { } loaded)
             {
                 var decoded = await loaded.Value();
-                decoded.list.Add(this);   // the source rides the materialized value's prior chain
+                decoded.history.Add(this);   // the source rides the materialized value's history
                 return decoded;
             }
             var item = Read(asking);
@@ -158,7 +158,7 @@ public class source : @this
                 && item is not (global::app.type.item.dict.@this or global::app.type.item.list.@this or global::app.type.clr.@this))
                 throw new System.InvalidOperationException(
                     $"a '{_type.Name}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
-            item.list.Add(this);
+            item.history.Add(this);
             // Resolve the materialized item — a template (text/dict/list) renders against live
             // variables; a plain leaf/container answers itself. The source layer is transparent:
             // "give me the value" returns the value, not an intermediate unrendered template.

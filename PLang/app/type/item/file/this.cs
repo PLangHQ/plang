@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Template = template;
         // Born from a path — inject its type into this value's history so `is path` answers from
         // the type chain (no CLR-inheritance lattice). The type owns its history of types.
-        this.list.Add(path);
+        history.Add(path);
     }
 
     /// <summary>True once the content is in memory (the reference was examined).</summary>
@@ -103,7 +103,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // rendered at this use (a render is never kept: see Cacheable)
         if (Template != null && answer is global::app.type.item.text.@this content)
             return await new global::app.type.item.text.@this(content.ToString(), Template) { Kind = content.Kind }.Value(data);
-        answer.list.Add(this);
+        answer.history.Add(this);
         return answer;
     }
 

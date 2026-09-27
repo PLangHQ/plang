@@ -162,7 +162,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         _mime = path.MimeType(context);
         _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
-        this.list.Add(path);   // born from a path → `is path` from the type history
+        history.Add(path);   // born from a path → `is path` from its history
     }
 
     /// <summary>Path-backed with the content already read (the file read keeps images eager).</summary>

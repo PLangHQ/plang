@@ -21,7 +21,7 @@ public static class MaterializeProbeExtensions
 
     private static bool HasParsedPrior(global::app.type.item.@this item)
     {
-        foreach (var p in item.list.Priors)
+        foreach (var p in item.history.list)
         {
             if (p is global::app.type.item.source
                 or global::app.type.item.file.@this
