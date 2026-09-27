@@ -1547,6 +1547,9 @@ Found building GoalChannelRecursion's EchoBack.goal (builder-formal): `write %me
 ## 2026-09-26 — navigation reaches any public property (security, with #23)
 Found while settling the template rule (builder-formal): variable navigation descends into ANY public property by reflection (`type/item/kind/reflection/this.cs:17-25`, `Descend`), not only the `[Out]` face. `[Sensitive]` is stripped only when a whole host is serialized, so `%!app.….PrivateKey%` navigated to its leaf prints the key, from a plain step as much as from a template. Fix idea: navigation into a host honours its declared face (`[Out]`/`[LlmBuilder]`), and a `[Sensitive]` leaf answers masked or refuses. Belongs with the parked security work (#23).
 
+## 2026-09-27 — a `nothing` type? (Ingi, "maybe later")
+Came up in app-systems stage 3 while dropping the nullable type spellings (`int?`, `bool?`): whether a value may be missing is the slot's fact, and Ingi thinks plang may be missing a `nothing` type. Look at it together with what exists: the `null` type (`type.@this.Null`, `type/this.cs:153`) and the typed absence `item.@null` (`type/item/null/`).
+
 ## 2026-09-27 — variable storage through `app.store` (follow-up to app-systems)
 Ingi, naming the owned-data store `store` in app-systems: plang steps should be able to save and load values through it. `- set %user.name% = "ingi", store by identity, encrypt idp` and `- load %user% by identity idp`; also `- load %setting% by %user.id%, idp`. **By identity = the isolated data pattern (idp):** each identity's data lives in its own database, never shared with another identity's, optionally encrypted with that identity's keys. Builds on app-systems' `app.store` (`app/store/this.cs`: tables owned by their owners, today's `SettingsStore` without its settings table) and the per-actor settings rows. Parked on purpose until app-systems closes.
 
