@@ -39,6 +39,8 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 ## Carried in from stage 7's cleanup (decision 66)
 
 - **`test.report.Write` (`app/test/report/this.cs`)** chooses the artefact with `if (chosen == Format.JUnit) {…} else {…}`, a *fork*. Each format should write its own artefact (content and file name), for example as a serializer chosen by format, so the value writes itself.
+- **`variable.list.Replace` returns bool** (decision 99), and its callers list.set/sort/remove/reverse ignore it, so a failing after-set binding is swallowed. Replace answers a Data and the handlers return it, together with pattern A (the list module's shared preamble).
+- **From Ingi's one-or-many scan (2026-09-27):** `module.list.RegisterType/Register` should become the module's own action list's `Add` (shape waiting on Ingi, because `app/module/action/list/` is the `list` module's handler folder); `step.list.Body(index)` should be the step's body, built by the parser (`goal.Parse`, `goal/this.cs:498`), with build.fold left only to check (Ingi leans (b); this changes the `.pr` format, so the `.pr` files are rebuilt and it needs an eval).
 - **`AskError`** (`error/AskError.cs`) has no producer since `setting.get` went (decision 71). Delete it, or give it its real producer.
 - **`LlmDebug.Output`** (`module/action/debug/setting`) is `text`, compared to `"file"` as a string (decision 67). Make it a choice.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
