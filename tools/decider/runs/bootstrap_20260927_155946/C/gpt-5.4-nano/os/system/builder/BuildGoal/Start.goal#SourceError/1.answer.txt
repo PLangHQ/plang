@@ -1,0 +1,4 @@
+[0] ui.render(Template="/system/builder/llm/SourceFix.llm"); variable.set(Name=%sourceFixSystem%, Value=%!data%)
+[1] variable.set(Name=%sourceFixMessages%, Value=[{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}])
+[2] llm.query(Message=%sourceFixMessages%, Model="gpt-5.4-nano", Cache=%!build.cache%); variable.set(Name=%sourceFix%, Value=%!data%)
+[3] error.throw(Data=%!error%, FixSuggestion=%sourceFix%)

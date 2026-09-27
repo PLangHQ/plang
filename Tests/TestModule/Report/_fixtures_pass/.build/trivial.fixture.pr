@@ -1,0 +1,38 @@
+{
+  "name": "TrivialPass",
+  "comment": "Exercises one action path (output.write) so test.run records something\ninto the Coverage and Results the Report tests can inspect.",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'hello'",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/TestModule/Report/_fixtures_pass/trivial.fixture.goal",
+  "prPath": "/TestModule/Report/_fixtures_pass/.build/trivial.fixture.pr",
+  "hash": "616f696a404101877837e02b4c912908e6c7f23085c226a6018542c8ff27d3e5",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

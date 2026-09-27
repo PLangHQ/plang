@@ -1,0 +1,60 @@
+{
+  "name": "Slow",
+  "step": [
+    {
+      "index": 0,
+      "text": "timer.sleep 5000 milliseconds",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "timer",
+          "name": "sleep",
+          "property": [
+            {
+              "name": "Ms",
+              "type": {
+                "name": "number"
+              },
+              "value": 5000
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out 'should not reach here'",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "should not reach here"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/TestModule/Run/_timeout/slow.fixture.goal",
+  "prPath": "/TestModule/Run/_timeout/.build/slow.fixture.pr",
+  "hash": "92e07efb129265212536ed82489089393bd4cdd05eb4e518b040812163cde948",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

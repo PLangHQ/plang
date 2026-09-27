@@ -1,0 +1,56 @@
+{
+  "name": "SensitiveFail",
+  "comment": "Fails an assertion where %MyIdentity% (which carries a [Sensitive] PrivateKey)\nis the Actual value. Drives Identity into both AssertionError.Actual and the\ncaptured Variables snapshot — the outer test verifies test.report masks the\nPrivateKey as '******' before writing. %MyIdentity% is a reserved DynamicData\nthat lazily get-or-creates the default identity, so the fixture is idempotent\nacross runs (no \"already exists\" error).",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %MyIdentity% equals 'will-not-match'",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "will-not-match"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity%",
+              "variable": [
+                {
+                  "text": "%MyIdentity%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Test/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
+  "prPath": "/Modules/Test/Report/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
+  "hash": "e0bd94cb525644f9b2c74a36d317409a79f60ca81247c5c32bc7c7a54f8d9e93",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}
