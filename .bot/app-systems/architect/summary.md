@@ -19,6 +19,8 @@ Coder works stage by stage; every decision made without Ingi is logged here, wit
 | 13 | 4 | Replaces 10: instead of a virtual `Add` that every adder routes through, one protected guard every slot write passes (`Admit(slot)`, `Admit(list)` for a chunk), a no-op on the base list, overridden by the registry (a violation throws: only plang's own code can reach the slots) | routing through a per-item `Add` makes every list's extend O(n) (chunks are O(1) by design) and opens lazy rows; the guard keeps the guarantee without the cost | coder's stage 4 |
 | 14 | 4 | The identity door becomes `app.type.list[type, context]` and `Mime(mime, context)`, reading `context.App.Format` | Ingi: "we use context, context.app.format" | coder's stage 4 |
 | 15 | 4 | `type<T>` takes its list class as a second parameter: `type.@this<T, L> where L : list<T>`, the element naming it through `IList<TSelf, L>`; app declares `type.@this<type.@this, type.list.@this> type` (later `…<goal.@this, goal.list.@this> goal`) | `app.type.list.Mime(…)` and goal's loading list need the list's own class without casts; a typed accessor beside `list` would hold the list twice | coder's stage 4 |
+| 16 | 4→7 | The type list's `type` entry is `app.type` itself (replaced at app construction, same class); for the other concept types the same move, with the type reading its facts itself instead of copies on entries, is settled in stage 7 with goal in hand | today `%!app.type.type%` answers a fact-less entry, a different object from `%!app.type%` | plan stages 4, 7 |
+| 17 | 4→7 | The prompt's `%!app.X["key"]%` line moves from stage 4 to stage 7 | no builder prompt or goal reads `%!app…%` yet; stage 4 stays builder-neutral (twins byte-equal), stage 7 is where goal/module/actor become reachable | plan stages 4, 7 |
 | 3 | 3 | Test `LoadDll_CustomInt_OverridesBuiltInName` (a DLL overriding "int") is deleted; what it guarded flips: a loaded DLL claiming a taken type name is refused (`Add` answers an error) | contradicts one name one type and "int is a kind"; already failing in the baseline | coder's stage 3 |
 
 ## 2026-09-27 — app-systems plan ready for coder
@@ -32,8 +34,8 @@ Stage status:
 | 1 | `Run` → `Start` (+ test/environment/callback.start, range From/To, test stopwatch Begin) | complete (4b396e780) |
 | 2 | folded into 4 | — |
 | 3 | One set of types | complete (4bfd09c61 … f88e1f8d3; suites at or under baseline: Types 23 → 19, Data 45 → 44; twins byte-equal) |
-| 4 | The collected type | in progress (010bfa885, b67ac285d, 94ea6df1a, 0339f2bcf; timing unchanged, no index) |
-| 5 | Faces and honest facts | pending |
+| 4 | The collected type | complete (010bfa885 … a6d4e740b + the `type` entry; timing unchanged, no index; builder-neutral) |
+| 5 | Faces and honest facts | in progress |
 | 6 | The reference (variable parser) | pending |
 | 7 | Every concept is its type (+ settings, test) | pending |
 | 8 | `on` on every object | pending |
