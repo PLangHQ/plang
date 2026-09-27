@@ -74,7 +74,7 @@ Stage status:
 | 4 | The collected type | complete (010bfa885 … a6d4e740b + the `type` entry; timing unchanged, no index; builder-neutral) |
 | 5 | Faces and honest facts | complete except the kind faces, which wait for Ingi (5d4311778 … 99d110412; suites at or under baseline: Modules 37, Types 15, Data 44, Runtime 23; plang --test 7 pass) |
 | 6 | The reference (variable parser) | complete (6f44b6054 … 8df240b2f; eval: golden 58/58, bootstrap 9 first / 1 retried / 3 refused, all nano slips, prompts byte-equal; **plang-visible changes listed in `.bot/app-systems/coder/v6/result.md`**: index fallback gone, methods opt-in on text only, the new `!` forms, a space ends a reference outside quotes, `%setting.X%` gone, a bare slot name written back as `%name%`) |
-| 7 | Every concept is its type (+ settings, test) | in progress: 7a goal (da26b54dd), 7b module + actor (bbc9fc71b, 48aa863d3), 7c test (0bb5f21b1), 7d variable (a2493fc74) done; 7e settings next, then 7f and the all/Every fold |
+| 7 | Every concept is its type (+ settings, test) | in progress: 7a goal (da26b54dd), 7b module + actor (bbc9fc71b, 48aa863d3), 7c test (0bb5f21b1), 7d variable (a2493fc74), 7e-1 homes (d4de3fb80, dispose fix 74f9dc8f9), 7e-2a typed settings read (6b58ae446; `%!build.cache%` resolves again) done; 7e-2b rows, 7e-2c CLI owners, 7e-3 identity/permission, 7f and the all/Every fold next |
 | 8 | `on` on every object | pending |
 | 9 | Module pass | pending |
 | 10 | `%!app` holds its types | pending |
