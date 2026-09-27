@@ -556,20 +556,20 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = new Variables(_app.User.Context);
         stack.Set("test", "value");
 
-        var removed = stack.Remove("test");
+        var removed = await stack.Remove("test");
 
-        await Assert.That(removed).IsTrue();
+        await Assert.That((await removed.Value())?.ToString()).IsEqualTo("value");
         await Assert.That(stack.Contains("test")).IsFalse();
     }
 
     [Test]
-    public async Task Remove_NonexistentName_ReturnsFalse()
+    public async Task Remove_NonexistentName_IsNotFound()
     {
         var stack = new Variables(_app.User.Context);
 
-        var removed = stack.Remove("nonexistent");
+        var removed = await stack.Remove("nonexistent");
 
-        await Assert.That(removed).IsFalse();
+        await Assert.That(removed.IsInitialized).IsFalse();
     }
 
     [Test]
@@ -578,9 +578,10 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = new Variables(_app.User.Context);
         stack.Set("Test", "value");
 
-        var removed = stack.Remove("TEST");
+        var removed = await stack.Remove("TEST");
 
-        await Assert.That(removed).IsTrue();
+        await Assert.That(removed.IsInitialized).IsTrue();
+        await Assert.That(stack.Contains("Test")).IsFalse();
     }
 
     [Test]

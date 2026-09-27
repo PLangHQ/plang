@@ -26,6 +26,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static global::app.type.item.list.@this<@this> List(global::app.@this app)
         => throw new System.InvalidOperationException("a variable list belongs to an actor: use context.Variable");
 
+    /// <summary>A variable is set and removed through the variable type's events, then its own.</summary>
+    protected internal override global::app.type.item.@this? Level(int depth, global::app.actor.context.@this context) => depth switch
+    {
+        0 => context.App.variable,
+        1 => this,
+        _ => null,
+    };
+
     /// <summary>The variables the asker sees — its actor's memory.</summary>
     public static global::app.type.item.list.@this<@this>? Of(global::app.actor.context.@this context)
         => context.Variable.list;

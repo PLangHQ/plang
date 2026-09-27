@@ -39,6 +39,8 @@ public class @this : global::app.type.item.@this
     // The shared empty start and load, typed.
     private static readonly start NoStart = (start)None["start"];
     private static readonly load NoLoad = (load)None["load"];
+    private static readonly set NoSet = (set)None["set"];
+    private static readonly remove NoRemove = (remove)None["remove"];
 
     /// <summary>The event named <paramref name="name"/>; null when there is no event of that name.</summary>
     public virtual global::app.@event.@this? this[string name] => None.GetValueOrDefault(name);
@@ -48,6 +50,12 @@ public class @this : global::app.type.item.@this
 
     /// <summary>The load — what runs before and after the item is loaded.</summary>
     public virtual load load => NoLoad;
+
+    /// <summary>The set — what runs before and after the item is set.</summary>
+    public virtual set set => NoSet;
+
+    /// <summary>The remove — what runs before and after the item is removed.</summary>
+    public virtual remove remove => NoRemove;
 
     /// <summary>One step down: the event by its name (<c>.start</c>).</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)

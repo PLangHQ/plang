@@ -45,9 +45,9 @@ public sealed partial class @this
     public audit.@this Audit { get; } = new();
 
     /// <summary>
-    /// Optional Variables source for diff capture. Set by <see cref="Push"/> via the
-    /// per-call <c>variables</c> argument; the active Call subscribes to its <c>OnSet</c>
-    /// when <see cref="Diff"/> is on.
+    /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own
+    /// (<see cref="Push"/>'s <c>variables</c>); the store records each change here (<c>Record</c>) and a Call
+    /// pushed while <see cref="Diff"/> is on keeps its store's.
     /// </summary>
     public Variables? Variables { get; internal set; }
 

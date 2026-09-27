@@ -1,76 +1,142 @@
+using When = global::app.@event.When;
+using Scope = global::app.@event.binding.Scope;
+
 namespace PLang.Tests.App.VariablesTests;
 
+// A variable is set and removed through the variable type's on.set / on.remove: before a set, handed the value about
+// to be stored — a failure or a Handled answer is the set's answer and nothing is written; after it, the variable and
+// the stored value. A name's first set is a set; the same Data set again changes nothing and fires nothing.
 public class CollectionEventsTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
+    private global::app.@event.on.own On => app.variable.Own();
+
     [Test]
-    public async Task OnSet_FiresOnRebind_WithBeforeAfter()
+    public async Task AfterSet_IsHandedTheVariable_AndTheStoredValue()
     {
         var vars = new Variables(app.User.Context);
-        vars.Set("name", "old");
+        await vars.Set("name", "old");
+        string? name = null;
+        string? stored = null;
+        On.Bind("set", When.after, async (item, result, ctx) =>
+        {
+            name = ((global::app.type.item.variable.@this)item).Name;
+            stored = (await result.Value())?.ToString();
+            return ctx.Ok();
+        }, app.User, Scope.app);
 
-        string? capturedName = null;
-        object? capturedBefore = null, capturedAfter = null;
-        vars.OnSet += (n, before, after) => { capturedName = n; capturedBefore = before; capturedAfter = after; };
+        await vars.Set("name", "new");
 
-        vars.Set("name", "new");
-
-        await Assert.That(capturedName).IsEqualTo("name");
-        await Assert.That(capturedBefore?.ToString()).IsEqualTo("old");
-        await Assert.That(capturedAfter?.ToString()).IsEqualTo("new");
+        await Assert.That(name).IsEqualTo("name");
+        await Assert.That(stored).IsEqualTo("new");
     }
 
     [Test]
-    public async Task OnCreate_FiresOnInitialSet()
+    public async Task AFirstSet_IsASet()
     {
         var vars = new Variables(app.User.Context);
-        string? capturedName = null;
-        object? capturedValue = null;
-        vars.OnCreate += (n, v) => { capturedName = n; capturedValue = v; };
+        var sets = 0;
+        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
 
-        vars.Set("name", "ingi");
+        await vars.Set("name", "first");
 
-        await Assert.That(capturedName).IsEqualTo("name");
-        await Assert.That(capturedValue).IsEqualTo("ingi");
+        await Assert.That(sets).IsEqualTo(1);
     }
 
     [Test]
-    public async Task OnRemove_FiresOnDelete()
+    public async Task TheSameDataSetAgain_FiresNothing()
     {
         var vars = new Variables(app.User.Context);
-        vars.Set("name", "ingi");
-        string? capturedName = null;
-        vars.OnRemove += n => capturedName = n;
+        var held = await vars.Set("name", "first");
+        var sets = 0;
+        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
 
-        vars.Remove("name");
-        await Assert.That(capturedName).IsEqualTo("name");
+        await vars.Set("name", held);
+
+        await Assert.That(sets).IsEqualTo(0);
     }
 
     [Test]
-    public async Task OnSet_DoesNotFireOnInitialSet()
+    public async Task BeforeSet_IsHandedTheValue_AFailureIsTheAnswer_AndNothingIsWritten()
     {
         var vars = new Variables(app.User.Context);
-        var setFired = false;
-        vars.OnSet += (_, _, _) => setFired = true;
+        await vars.Set("name", "old");
+        string? about = null;
+        On.Bind("set", When.before, async (_, result, ctx) =>
+        {
+            about = (await result.Value())?.ToString();
+            return ctx.Error(new global::app.error.Error("no", "Refused", 400));
+        }, app.User, Scope.app);
 
-        vars.Set("name", "first");
-        await Assert.That(setFired).IsFalse();
+        var answer = await vars.Set("name", "new");
+
+        await Assert.That(about).IsEqualTo("new");
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("Refused");
+        await Assert.That((await vars.Value("name")).ToString()).IsEqualTo("old");
     }
 
-
     [Test]
-    public async Task Events_NotFired_AfterUnsubscribe()
+    public async Task ACancellingBeforeSet_IsTheAnswer_AndNothingIsWritten()
     {
         var vars = new Variables(app.User.Context);
-        vars.Set("name", "first");
-        var fired = false;
-        Action<string, object?, object?> handler = (_, _, _) => fired = true;
-        vars.OnSet += handler;
-        vars.OnSet -= handler;
+        On.Bind("set", When.before, (_, _, ctx) =>
+        {
+            var instead = ctx.Ok("instead");
+            instead.Handled = true;
+            return Task.FromResult(instead);
+        }, app.User, Scope.app);
 
-        vars.Set("name", "second");
-        await Assert.That(fired).IsFalse();
+        var answer = await vars.Set("name", "new");
+
+        await Assert.That((await answer.Value())?.ToString()).IsEqualTo("instead");
+        await Assert.That(vars.Contains("name")).IsFalse();
+    }
+
+    [Test]
+    public async Task AfterRemove_IsHandedTheRemovedValue()
+    {
+        var vars = new Variables(app.User.Context);
+        await vars.Set("name", "ingi");
+        string? removed = null;
+        On.Bind("remove", When.after, async (_, result, ctx) =>
+        {
+            removed = (await result.Value())?.ToString();
+            return ctx.Ok();
+        }, app.User, Scope.app);
+
+        var answer = await vars.Remove("name");
+
+        await answer.IsSuccess();
+        await Assert.That(removed).IsEqualTo("ingi");
+        await Assert.That(vars.Contains("name")).IsFalse();
+    }
+
+    [Test]
+    public async Task ARefusingBeforeRemove_IsTheAnswer_AndTheVariableStays()
+    {
+        var vars = new Variables(app.User.Context);
+        await vars.Set("name", "ingi");
+        On.Bind("remove", When.before,
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.User, Scope.app);
+
+        var answer = await vars.Remove("name");
+
+        await answer.IsFailure();
+        await Assert.That(vars.Contains("name")).IsTrue();
+    }
+
+    [Test]
+    public async Task ABindingForAnotherActor_DoesNotFire()
+    {
+        var vars = new Variables(app.User.Context);
+        var sets = 0;
+        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.System, Scope.actor);
+
+        await vars.Set("name", "first");
+
+        await Assert.That(sets).IsEqualTo(0);
     }
 }

@@ -30,22 +30,23 @@ public abstract class @this : global::app.type.item.@this
     /// <summary>
     /// Starts what is bound before <paramref name="item"/>'s event at each of its levels, outermost first
     /// (<see cref="global::app.type.item.@this.Level"/>). A failure or a Handled answer stops it and is the answer;
-    /// null when nothing was bound — nothing said, and nothing made.
+    /// null when nothing was bound — nothing said, and nothing made. The first binding is handed
+    /// <paramref name="result"/> (what the event is about to do, a set's value), else a plain success.
     /// </summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(global::app.type.item.@this item,
-        global::app.actor.context.@this context)
+        global::app.actor.context.@this context, global::app.data.@this? result = null)
     {
         // nothing bound at any level: nothing to start, so nothing awaited or made
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on).before.Count > 0) return Before(item, depth, context);
+            if (Of(level.on).before.Count > 0) return Before(item, depth, context, result);
         return default;
     }
 
     // From the first level with a binding outward.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(global::app.type.item.@this item,
-        int depth, global::app.actor.context.@this context)
+        int depth, global::app.actor.context.@this context, global::app.data.@this? result)
     {
-        var answer = context.Ok();
+        var answer = result ?? context.Ok();
         for (; item.Level(depth, context) is { } level; depth++)
         {
             var side = Of(level.on).before;

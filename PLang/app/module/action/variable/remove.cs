@@ -7,7 +7,8 @@ public partial class Remove : IContext
 
     public async Task<data.@this> Start()
     {
-        Context.Variable.Remove(await Name.Value());
-        return Data();
+        // a refusal (what is bound before the remove) is the action's answer
+        var removed = await Context.Variable.Remove(await Name.Value());
+        return removed.Success ? Data() : removed;
     }
 }

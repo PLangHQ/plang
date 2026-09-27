@@ -6,38 +6,50 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 {
     private List<call.Position>? _restoredChain;
 
-    // CallStack-level diff stream — populated by a single OnSet subscription wired by
-    // EnableDiffStream. Independent of per-Call Diffs (which require Flags.Diff at Push
+    // CallStack-level diff stream — every change of the store it was opened on, while a diff scope
+    // (EnableDiffStream) is open. Independent of per-Call Diffs (which require Flags.Diff at Push
     // time). Errors.Push uses this so handler-time mutations during an error scope land
     // on the stream even when Flags.Diff was off when the live Calls were pushed.
     private readonly List<Diff> _streamDiffs = new();
     private readonly object _streamLock = new();
-    private Action<string, object?, object?>? _streamHandler;
-    private Action<string, object?>? _streamCreateHandler;
     private global::app.type.item.variable.list.@this? _streamVariables;
 
+    // The frames capturing their store's diffs (Diff was on when they were pushed), each until it ends.
+    private readonly object _diffingLock = new();
+    private call.@this[] _diffing = [];
+
     /// <summary>
-    /// Wires OnSet + OnCreate on <paramref name="vars"/> so every variable change appends to
-    /// the CallStack's own diff stream. Idempotent — calling twice on the same Variables is
-    /// a no-op. Both events get captured because Variables.Set fires OnCreate for first-time
-    /// names and OnSet only for replace; both are mutations the diff stream cares about.
+    /// Opens the stream on <paramref name="vars"/>: from now every change of that store appends to the
+    /// CallStack's own diff stream. Idempotent — opening it again while open is a no-op.
     /// </summary>
     internal void EnableDiffStream(global::app.type.item.variable.list.@this? vars)
     {
-        if (vars == null || _streamHandler != null) return;
-        _streamHandler = (name, before, _) =>
-        {
-            lock (_streamLock)
-                _streamDiffs.Add(new Diff(name, before, DateTimeOffset.UtcNow));
-        };
-        _streamCreateHandler = (name, _) =>
-        {
-            lock (_streamLock)
-                _streamDiffs.Add(new Diff(name, null, DateTimeOffset.UtcNow));
-        };
+        if (vars == null || _streamVariables != null) return;
         _streamVariables = vars;
-        vars.OnSet += _streamHandler;
-        vars.OnCreate += _streamCreateHandler;
+    }
+
+    /// <summary>A frame starts capturing its store's diffs, until it ends (<see cref="Close"/>).</summary>
+    internal void Open(call.@this frame)
+    {
+        lock (_diffingLock) _diffing = [.. _diffing, frame];
+    }
+
+    /// <summary>A frame's capture ends.</summary>
+    internal void Close(call.@this frame)
+    {
+        lock (_diffingLock) _diffing = Array.FindAll(_diffing, f => !ReferenceEquals(f, frame));
+    }
+
+    /// <summary>
+    /// The store <paramref name="store"/> changed: <paramref name="name"/> held <paramref name="before"/> (null: it
+    /// was new). The change lands on the open diff stream when it is that store's, and on every frame capturing
+    /// that store's diffs — the history a snapshot reverse-applies to stand where an error was thrown.
+    /// </summary>
+    internal void Record(global::app.type.item.variable.list.@this store, string name, object? before)
+    {
+        if (ReferenceEquals(_streamVariables, store))
+            lock (_streamLock) _streamDiffs.Add(new Diff(name, before, DateTimeOffset.UtcNow));
+        foreach (var frame in _diffing) frame.Record(store, name, before);
     }
 
     /// <summary>
@@ -73,16 +85,8 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         }
     }
 
-    /// <summary>Tears down subscriptions wired by <see cref="EnableDiffStream"/>.</summary>
-    internal void DisableDiffStream()
-    {
-        if (_streamHandler == null || _streamVariables == null) return;
-        _streamVariables.OnSet -= _streamHandler;
-        if (_streamCreateHandler != null) _streamVariables.OnCreate -= _streamCreateHandler;
-        _streamHandler = null;
-        _streamCreateHandler = null;
-        _streamVariables = null;
-    }
+    /// <summary>Closes the stream opened by <see cref="EnableDiffStream"/>.</summary>
+    internal void DisableDiffStream() => _streamVariables = null;
 
     /// <summary>
     /// The captured-and-restored chain of frames, populated by <see cref="Restore"/>.

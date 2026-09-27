@@ -20,8 +20,8 @@ public sealed partial class @this : IAsyncDisposable
     private readonly app.callstack.@this _stack;
     private readonly @this? _previousCurrent;
     private readonly Variables? _diffSource;
-    private Action<string, object?, object?>? _onSetHandler;
-    private Action<string, object?>? _onCreateHandler;
+    // A diff keeps a deep copy of the value before (the DeepDiff setting when pushed), else a summary.
+    private readonly bool _deep;
     private Dictionary<global::System.Type, object>? _items;
 
     /// <summary>
@@ -132,23 +132,20 @@ public sealed partial class @this : IAsyncDisposable
         if (stack.Diff.Value && diffSource != null)
         {
             Diffs = new diff.@this();
-            var deep = stack.DeepDiff.Value;
-            _onSetHandler = (name, before, _) =>
-            {
-                // OnSet fires synchronously on Variables.Set; parallel Task.WhenAll
-                // branches sharing the same Variables instance can invoke this concurrently.
-                // Diffs owns its lock and snapshot iteration — Add is safe, readers safe.
-                Diffs.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
-            };
-            // OnCreate fires for first-time variable creation (replacing OnSet for that path).
-            // Capture as a diff with Before=null so reverse-apply unwinds the create.
-            _onCreateHandler = (name, _) =>
-            {
-                Diffs.Add(new Diff(name, null, DateTimeOffset.UtcNow));
-            };
-            diffSource.OnSet += _onSetHandler;
-            diffSource.OnCreate += _onCreateHandler;
+            _deep = stack.DeepDiff.Value;
+            stack.Open(this);
         }
+    }
+
+    /// <summary>
+    /// A change of <paramref name="store"/>: when it is the store this frame captures, the diff lands here —
+    /// <paramref name="name"/> held <paramref name="before"/>, null when it was new, so reverse-apply unwinds
+    /// the create. Parallel branches sharing the store record concurrently; Diffs owns its lock.
+    /// </summary>
+    internal void Record(Variables store, string name, object? before)
+    {
+        if (ReferenceEquals(store, _diffSource))
+            Diffs?.Add(new Diff(name, CaptureBefore(before, _deep), DateTimeOffset.UtcNow));
     }
 
     /// <summary>
@@ -282,7 +279,7 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Disposes the Call: stops the stopwatch, unsubscribes diff capture, restores
+    /// Disposes the Call: stops the stopwatch, ends its diff capture, restores
     /// AsyncLocal Current, and (when history off) removes self from Caller.Children.
     /// </summary>
     public ValueTask DisposeAsync()
@@ -293,16 +290,7 @@ public sealed partial class @this : IAsyncDisposable
             CompletedAt = DateTimeOffset.UtcNow;
         }
 
-        if (_onSetHandler != null && _diffSource != null)
-        {
-            _diffSource.OnSet -= _onSetHandler;
-            _onSetHandler = null;
-        }
-        if (_onCreateHandler != null && _diffSource != null)
-        {
-            _diffSource.OnCreate -= _onCreateHandler;
-            _onCreateHandler = null;
-        }
+        if (Diffs != null) _stack.Close(this);
 
         if (!_stack.History.Value && Caller != null)
             Caller.Children.Remove(this);

@@ -12,6 +12,8 @@ public sealed class own : @this
 
     private start? _start;
     private load? _load;
+    private set? _set;
+    private remove? _remove;
 
     internal own() { }
 
@@ -20,6 +22,12 @@ public sealed class own : @this
 
     /// <summary>This item's own load — the one its indexer answers under <c>load</c>, held.</summary>
     public override load load => _load ??= (load)this["load"]!;
+
+    /// <summary>This item's own set — the one its indexer answers under <c>set</c>, held.</summary>
+    public override set set => _set ??= (set)this["set"]!;
+
+    /// <summary>This item's own remove — the one its indexer answers under <c>remove</c>, held.</summary>
+    public override remove remove => _remove ??= (remove)this["remove"]!;
 
     /// <summary>The event named <paramref name="name"/>, this item's own; null when there is no event of that name.</summary>
     public override global::app.@event.@this? this[string name]

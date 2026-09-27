@@ -85,7 +85,7 @@ public class DebugSmokeTests
     // A watched variable logs its create, change and delete through the store's own events; an
     // unwatched one logs nothing.
     [Test]
-    public async Task Debug_WatchedVariable_LogsCreatedChangedDeleted()
+    public async Task Debug_WatchedVariable_LogsSetAndDeleted()
     {
         _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
         _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
@@ -94,14 +94,13 @@ public class DebugSmokeTests
 
         await store.Set("trace", 1);
         await store.Set("trace", "now text");
-        store.Remove("trace");
+        await store.Remove("trace");
         await store.Set("other", 1);
-        await Task.Delay(50);   // the watch writes fire-and-forget
 
         var debugOut = ReadCapture();
-        await Assert.That(debugOut).Contains("WATCH [trace] CREATED");
-        await Assert.That(debugOut).Contains("WATCH [trace] CHANGED");
-        await Assert.That(debugOut).Contains("Type: number → text");
+        await Assert.That(debugOut).Contains("WATCH [trace] SET");
+        await Assert.That(debugOut).Contains("Type: number");
+        await Assert.That(debugOut).Contains("Type: text");
         await Assert.That(debugOut).Contains("WATCH [trace] DELETED");
         await Assert.That(debugOut).DoesNotContain("WATCH [other]");
     }

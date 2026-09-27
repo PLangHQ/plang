@@ -75,14 +75,17 @@ public sealed class @this
     /// </summary>
     public void Activate()
     {
-        // The store announces every create, change and delete for any name; the watch filters by name.
+        // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
         if (Setting.Variables.CountRaw > 0)
         {
             var watched = Watched;
-            var store = _context.App.User.Context.Variable;
-            store.OnCreate += (name, value) => { if (watched.Contains(name)) Watch(name, "CREATED", null, value); };
-            store.OnSet += (name, before, after) => { if (watched.Contains(name)) Watch(name, "CHANGED", before, after); };
-            store.OnRemove += name => { if (watched.Contains(name)) Watch(name, "DELETED", null, null); };
+            var variables = _context.App.variable.Own();
+            bool Watches(global::app.type.item.@this item, actor.context.@this _)
+                => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
+            variables.Bind("set", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "SET", result, context),
+                _context.App.User, global::app.@event.binding.Scope.actor, Watches);
+            variables.Bind("remove", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "DELETED", null, context),
+                _context.App.User, global::app.@event.binding.Scope.actor, Watches);
         }
 
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
@@ -169,24 +172,22 @@ public sealed class @this
     }
 
 
-    /// <summary>One watched variable was created, changed or deleted: where it happened (goal, step)
-    /// and its type — before → after on a change. The store's events are sync, so this writes
-    /// fire-and-forget through the debug channel.</summary>
-    private void Watch(string name, string change, object? before, object? after)
+    /// <summary>One watched variable was set or removed: where it happened (goal, step) and, on a set, the
+    /// type it now holds. Answers a plain success — the watch never fails a program.</summary>
+    private async Task<data.@this> Watch(global::app.type.item.variable.@this variable, string change,
+        data.@this? stored, actor.context.@this context)
     {
-        var context = _context.App.User.Context;
         var goalName = context.Goal?.Name ?? "?";
         var stepIndex = context.Step?.Index.ToString() ?? "?";
         var stepText = context.Step?.Text;
         if (stepText != null && stepText.Length > 60) stepText = stepText[..60];
-        string TypeOf(object? value) => (value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name ?? "null";
 
         var sb = new StringBuilder();
-        sb.AppendLine($"=== WATCH [{name}] {change} ===");
+        sb.AppendLine($"=== WATCH [{variable.Name}] {change} ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
-        if (change == "CHANGED") sb.AppendLine($"  Type: {TypeOf(before)} → {TypeOf(after)}");
-        else if (change == "CREATED") sb.AppendLine($"  Type: {TypeOf(after)}");
-        _ = Write(sb.ToString());
+        if (stored != null) sb.AppendLine($"  Type: {stored.Type.Name}");
+        await Write(sb.ToString());
+        return context.Ok();
     }
 
     private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)

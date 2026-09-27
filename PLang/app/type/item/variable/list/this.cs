@@ -42,23 +42,6 @@ public partial class @this
     }
 
     /// <summary>
-    /// Fires after a variable is rebound (existing name → new value). Carries (name, before, after).
-    /// Collection-level event — fires for any name.
-    /// Used by Call.@this diff capture: subscribe in ctor, unsubscribe in DisposeAsync.
-    /// </summary>
-    public event Action<string, object?, object?>? OnSet;
-
-    /// <summary>
-    /// Fires when a name is created for the first time. Carries (name, value).
-    /// </summary>
-    public event Action<string, object?>? OnCreate;
-
-    /// <summary>
-    /// Fires when a name is removed.
-    /// </summary>
-    public event Action<string>? OnRemove;
-
-    /// <summary>
     /// Production ctor — born from the owning context. Every Variables in a running
     /// App belongs to exactly one context, passed in here.
     /// </summary>
@@ -112,14 +95,24 @@ public partial class @this
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
+        // What is bound before the set answers first: a refusal or a cancel is the answer, nothing written.
+        if (await Before(Events?.set, name, value) is { } refused) return refused;
+
+        var (stored, changed, before) = Bind(name, value);
+        return changed ? await After(name, before, stored) : stored;
+    }
+
+    // Binds `name` to `value`: the Data stored, whether the name changed (the same Data set again doesn't),
+    // and what it held before (null when it was new).
+    private (data.@this Stored, bool Changed, object? Before) Bind(string name, object? value)
+    {
         // If a Calls overlay is active (we're inside a forked flow — channel fire,
         // parallel foreach iteration, etc.), route the write into the overlay so
         // siblings can't see it. Reads cascade overlay → caller chain → underlying
         // dict, so subsequent gets here see the new value.
         var frame = Calls.Current;
 
-        // Data value: replace under `name`; the store announces the create or change (OnCreate /
-        // OnSet — the diff capture and the --debug watch listen there). In-place mutation of prev
+        // Data value: replace under `name`. In-place mutation of prev
         // is wrong: a Data may be aliased under multiple keys (e.g. Action stores the step result
         // both under its own name AND under "!data"), so mutating prev would bleed across keys.
         // Properties stay attached to the Data instance — they're result metadata (e.g.
@@ -130,39 +123,15 @@ public partial class @this
             if (frame != null)
             {
                 var hadPrev = frame.TryGet(name, out var prevFrame);
-                if (hadPrev && !ReferenceEquals(prevFrame, dv))
-                {
-                    var prevValue = prevFrame.Peek();
-                    frame.Set(name, dv);
-                    OnSet?.Invoke(name, prevValue, dv.Peek());
-                    return dv;
-                }
-                else if (!hadPrev)
-                {
-                    frame.Set(name, dv);
-                    OnCreate?.Invoke(name, dv.Peek());
-                    return dv;
-                }
+                var prevValue = hadPrev ? prevFrame.Peek() : null;
                 frame.Set(name, dv);
-                return dv;
+                return hadPrev && ReferenceEquals(prevFrame, dv) ? (dv, false, null) : (dv, true, prevValue);
             }
 
-            if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
-            {
-                var prevValue = prev.Peek();
-                _variables[name] = dv;
-                OnSet?.Invoke(name, prevValue, dv.Peek());
-                return dv;
-            }
-            else if (prev == null)
-            {
-                _variables[name] = dv;
-                OnCreate?.Invoke(name, dv.Peek());
-                return dv;
-            }
-
+            var had = _variables.TryGetValue(name, out var prev);
+            var before = had ? prev!.Peek() : null;
             _variables[name] = dv;
-            return dv;
+            return had && ReferenceEquals(prev, dv) ? (dv, false, null) : (dv, true, before);
         }
 
         if (frame != null)
@@ -177,24 +146,16 @@ public partial class @this
                 var rebound = new data.@this(name, value, context: _context);
                 var prevValue = existingFrame.Peek();
                 frame.Set(name, rebound);
-                OnSet?.Invoke(name, prevValue, rebound.Peek());
-                return rebound;
+                return (rebound, true, prevValue);
             }
 
             // Either nothing visible, or only visible via Caller chain — mint a
             // fresh local entry that shadows. Mutating an inherited Data would
             // bleed the write up to the caller's scope.
             var data = new data.@this(name, value, context: _context);
-            if (frame.TryGet(name, out var inherited))
-            {
-                OnSet?.Invoke(name, inherited.Peek(), value);
-            }
-            else
-            {
-                OnCreate?.Invoke(name, value);
-            }
+            var inheritedValue = frame.TryGet(name, out var inherited) ? inherited.Peek() : null;
             frame.Set(name, data);
-            return data;
+            return (data, true, inheritedValue);
         }
 
         if (_variables.TryGetValue(name, out var existing))
@@ -207,17 +168,38 @@ public partial class @this
             var rebound = new data.@this(name, value, context: _context);
             var prevValue = existing.Peek();
             _variables[name] = rebound;
-            OnSet?.Invoke(name, prevValue, rebound.Peek());
-            return rebound;
+            return (rebound, true, prevValue);
         }
-        else
-        {
-            var data = new data.@this(name, value, context: _context);
-            _variables[name] = data;
-            OnCreate?.Invoke(name, value);
-            return data;
-        }
+
+        var fresh = new data.@this(name, value, context: _context);
+        _variables[name] = fresh;
+        return (fresh, true, null);
     }
+
+    // The variable type's events — once the app has it: the actors' stores are born before the app's types.
+    private global::app.@event.on.@this? Events => _context.App.variable?.on;
+
+    // What is bound before `name` changes to `value`: null to go on — nothing bound, or nothing refused — else a
+    // failure or a Handled answer, which is the write's answer. The variable is made only when something is bound.
+    private System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this? @event, string name, object? value)
+        => @event is { before.Count: > 0 } ? Before(@event, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
+
+    private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
+    {
+        var answer = await @event.Before(Named(name), _context, about);
+        return answer is { Success: false } or { Handled: true } ? answer : null;
+    }
+
+    // `name` changed from `before` (null: it was new) to `stored`: the call stack records it for its history, then
+    // what is bound after the set starts on the stored Data — its answer is the set's.
+    private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
+    {
+        _context.CallStack.Record(this, name, before);
+        return Events?.set is { after.Count: > 0 } set ? set.After(Named(name), stored, _context) : new(stored);
+    }
+
+    // The variable named `name`, as its events are handed it.
+    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%").Variable.Single();
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> makes, stored under it in one step: runs asking at once all answer
@@ -230,19 +212,22 @@ public partial class @this
         if (Calls.Current != null)
             return await Set(name, value());
 
+        var made = value();
+        if (await Before(Events?.set, name, made) is { } refused) return refused;
         data.@this? born = null;
-        var held = _variables.GetOrAdd(name, _ => born = new data.@this(name, value(), context: _context));
-        if (ReferenceEquals(held, born)) OnCreate?.Invoke(name, born.Peek());
-        return held;
+        var held = _variables.GetOrAdd(name, _ => born = new data.@this(name, made, context: _context));
+        return ReferenceEquals(held, born) ? await After(name, null, held) : held;
     }
 
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
     /// holds <paramref name="expected"/> — the Data the caller read — in one step; a newer value set
     /// in between is left alone. Answers whether the name now holds the value. When
-    /// <paramref name="expected"/> already holds it there is nothing to write.</summary>
+    /// <paramref name="expected"/> already holds it there is nothing to write. What is bound before the set
+    /// refusing or cancelling it: not written, false.</summary>
     public async System.Threading.Tasks.ValueTask<bool> Replace(string name, data.@this expected, global::app.type.item.@this value)
     {
         if (ReferenceEquals(expected.Peek(), value)) return true;
+        if (await Before(Events?.set, name, value) is not null) return false;
 
         var frame = Calls.Current;
         if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
@@ -253,7 +238,7 @@ public partial class @this
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
         else if (!_variables.TryUpdate(name, rebound, expected)) return false;
-        OnSet?.Invoke(name, expected.Peek(), value);
+        await After(name, expected.Peek(), rebound);
         return true;
     }
 
@@ -324,16 +309,16 @@ public partial class @this
     }
 
     /// <summary>
-    /// Removes a variable; the store announces it (OnRemove).
+    /// Removes a variable, through the variable type's <c>on.remove</c>: what is bound before it is handed the
+    /// value the name holds, and a refusal or a cancel is the answer, the variable left; what is bound after it
+    /// is handed the value removed. Answers the value removed, NotFound when the name held nothing.
     /// </summary>
-    public bool Remove(string name)
+    public async System.Threading.Tasks.ValueTask<data.@this> Remove(string name)
     {
-        if (_variables.TryRemove(name, out _))
-        {
-            OnRemove?.Invoke(name);
-            return true;
-        }
-        return false;
+        if (!_variables.TryGetValue(name, out var held)) return _context.NotFound(name);
+        if (await Before(Events?.remove, name, held) is { } refused) return refused;
+        if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
+        return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
     }
 
     /// <summary>

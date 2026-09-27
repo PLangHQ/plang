@@ -77,7 +77,7 @@ public partial class ask : IContext
             // The sentinel rides as the "answer" property of the infra root
             // variable "!ask". Variable.Remove only takes flat keys; removing
             // the root consumes the marker. "!ask" is reserved for this use.
-            Context.Variable.Remove("!ask");
+            await Context.Variable.Remove("!ask");
             return Context.Ok<Ask>(new Ask { Answer = (await answer.Value())?.ToString() });
         }
 
