@@ -573,6 +573,27 @@ place stage 8 replaces with a binding on the setting's `on.set.after`.
 - Checks: suites no new failures; plang --test 7/0/317; builder's 7 goals rebuilt byte-identical with
   `--build={"files":[…]}` through the new setting.
 
+## 7e-3 — trace (identity, permission into settings)
+
+- **Identity today** (`identity/code/Default.cs:19,206-280`): table `identity`, key = the identity's name,
+  one row per identity, app-global (no actor in key or value). The default (flag `IsDefault`) becomes
+  `app.System.Identity` (`:33,69,137,170`); `actor.Identity` exists per actor (`actor/this.cs:81`) but
+  only the system's is ever set. Rows hold the private key; the store signs every row on write.
+- **Permission today** (`actor/permission/this.cs`): session ("y") grants in an in-memory list;
+  persisted ("a") grants in table `permission`, key = the grant's `Path` only, value the grant (carries
+  `Actor`), filtered by actor by hand on read (`:69`). Each persisted grant is its own row, signed at the
+  store boundary and verified on read. Callers: `path.Authorize` (`this.Authorize.cs:36,95`),
+  `file.Operations` (`:404,414`). **Existing bug:** the key is the path alone, so a system grant and a
+  user grant for one path overwrite each other, and `Revoke` removes by path for every actor (`:129`).
+- **Proposal:** identity's class `module/action/identity/setting/this.cs` (path `identity`), option
+  `list<Identity> Identity`; permission's `actor/permission/setting/this.cs` (path
+  `app.actor.permission.setting`), option `list<permission> Grant` (persisted grants only; session grants
+  stay in memory). Rows `<actor>!identity`, `<actor>!app.actor.permission.setting`, saved whole through
+  `actor.Setting.Save`. The marker `[Own]` on both classes: read from the actor's own row, never a
+  fallback's. Grant checking (`Covers`, `TryCover`) and keys untouched.
+- **Questions (sent to plang-cd):** whose row holds identities; signing granularity (one signed row per
+  actor instead of one per grant); migrating the old `identity`/`permission` tables; the marker's name.
+
 ## 7f — carried in from the OBP cleanup (decisions 53–66)
 
 - Builder-visible changes to evaluate with 7f's eval: test.start's `Parallel`/`Timeout` and test.report's
