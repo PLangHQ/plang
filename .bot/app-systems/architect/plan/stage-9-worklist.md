@@ -36,6 +36,11 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **G. Duplicated assembly loading**: see 5.
 - **H. mock and test objects hold only data** while the handlers hold their behavior: the behavior moves onto the objects.
 
+## Carried in from stage 7's cleanup (decision 66)
+
+- **`test.report.Write` (`app/test/report/this.cs`)** chooses the artefact with `if (chosen == Format.JUnit) {…} else {…}`, a *fork*. Each format should write its own artefact (content and file name), for example as a serializer chosen by format, so the value writes itself.
+- **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
+
 ## Outside `Start()`
 
 - Heavy `Build`/`Validate` in `variable.set`, `goal.call`, `file.read`, `llm.query`, `test.tag` and `loop.foreach`: same rule. Validation belongs to the thing validated.
