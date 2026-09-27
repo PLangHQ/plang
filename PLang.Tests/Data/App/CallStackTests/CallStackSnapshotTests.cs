@@ -53,7 +53,7 @@ public class CallStackSnapshotTests
         var stack = app.User.CallStack;
         // Turn History on so completed children stay in the tree — we'll assert the snapshot
         // still excludes them because they're not on the *active* chain.
-        stack.History = true;
+        stack.Setting.History = true;
 
         await using (var parent = stack.Push(a1))
         {

@@ -32,7 +32,7 @@ public class SettingRowTests
     {
         var setting = (global::app.goal.list.setting.@this)(await Read("%!app.goal.list.setting%", actor.Context)).Peek()!;
         setting.Os = os;
-        var saved = await actor.Setting.Save("goal.list.setting", new global::app.data.@this("s", setting, context: actor.Context));
+        var saved = await actor.Setting.Save("app.goal.list.setting", new global::app.data.@this("s", setting, context: actor.Context));
         await saved.IsSuccess();
     }
 
@@ -64,7 +64,7 @@ public class SettingRowTests
     {
         await using var app = TestApp.Create(_dir);
         await Save(app.User, os: false);
-        await app.User.Context.Setting.Set("goal.list.setting.os", app.User.Context.Ok(true));
+        await app.User.Context.Setting.Set("app.goal.list.setting.os", app.User.Context.Ok(true));
         await Assert.That(await Os(app.User.Context)).IsEqualTo("true");
     }
 
@@ -73,7 +73,7 @@ public class SettingRowTests
     {
         await using var app = TestApp.Create(_dir);
         await Save(app.User, os: false);
-        await (await app.User.Setting.Remove("goal.list.setting")).IsSuccess();
+        await (await app.User.Setting.Remove("app.goal.list.setting")).IsSuccess();
         await Assert.That(await Os(app.User.Context)).IsEqualTo("true");
     }
 

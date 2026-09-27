@@ -16,7 +16,7 @@ namespace app;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed partial class @this : IAsyncDisposable
+public sealed partial class @this : IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private bool _disposed;
@@ -196,11 +196,6 @@ public sealed partial class @this : IAsyncDisposable
          : global::app.Mode.Run;
 
     /// <summary>
-    /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
-    /// </summary>
-    public bool Create { get; set; }
-
-    /// <summary>
     /// The type named <c>type</c> — <c>%!app.type%</c>: its <c>list</c> is the app's types (the
     /// lookups by name, C# class, identity, MIME and extension, and the kinds), <c>Get(name)</c> is
     /// one type as a result. File-format characteristics live on <see cref="Format"/>.
@@ -285,6 +280,8 @@ public sealed partial class @this : IAsyncDisposable
         goal = new(this);
         test = new(this);
         variable = new(this);
+        System.Setting.Written += Refresh;
+        User.Setting.Written += Refresh;
 
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own
@@ -364,6 +361,34 @@ public sealed partial class @this : IAsyncDisposable
     /// If no app.pr exists, the app keeps its generated Id.
     /// </summary>
     public async Task Load()
+    {
+        await Identity();
+        // the actors' saved settings, read once: after this a setting is built in memory
+        await User.Setting.Load();
+        Refresh("");
+    }
+
+    /// <summary>
+    /// What reads its settings on every step holds them — each call stack, Debug — and is built again
+    /// when a value under their path is written (<paramref name="written"/>; empty: everything). The one
+    /// place a holder learns of a write; it becomes a binding on the setting's <c>on.set.after</c>.
+    /// </summary>
+    private void Refresh(string written)
+    {
+        bool Covers(string path) => written.Length == 0
+            || written.Equals(path, StringComparison.OrdinalIgnoreCase)
+            || written.StartsWith(path + ".", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith(written + ".", StringComparison.OrdinalIgnoreCase);
+
+        if (Covers(new global::app.callstack.setting.@this().Path))
+            foreach (var one in actor.list.Items())
+                one.CallStack.Setting = one.Context.Setting.Of<global::app.callstack.setting.@this>();
+        if (Debug != null && Covers(new global::app.module.action.debug.setting.@this().Path))
+            Debug.Setting = System.Context.Setting.Of<global::app.module.action.debug.setting.@this>();
+    }
+
+    // The app's identity, from .build/app.pr when there is one.
+    private async Task Identity()
     {
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync(System.Context!);

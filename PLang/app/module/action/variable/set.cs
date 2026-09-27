@@ -141,7 +141,8 @@ public partial class Set : IContext, IScope
         if (name.Code.Root.Name.StartsWith('!') && !name.Code.Root.Name.StartsWith("!ask")
             && !(await Context.Variable.Get(name.Code.Root.Name)).IsInitialized)
         {
-            await Context.Setting.Set(name.Name[1..], Value);
+            // the value itself, read now: a setting is built from this run's values in memory
+            await Context.Setting.Set(name.Name[1..], new data.@this(name.Name[1..], await Value.Value(), context: Context));
             return Value;
         }
 

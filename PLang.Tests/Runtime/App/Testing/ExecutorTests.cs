@@ -63,8 +63,8 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.test.list.Session != null).IsTrue();
-        await Assert.That(engine.test.list.Setting.TimeoutSeconds).IsEqualTo(5);
-        await Assert.That(engine.test.list.Setting.Parallel).IsEqualTo(3);
+        await Assert.That(engine.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds).IsEqualTo(5);
+        await Assert.That(engine.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel).IsEqualTo(3);
         await using var _ = engine;
     }
 

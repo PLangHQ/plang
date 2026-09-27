@@ -60,7 +60,7 @@ public class Default : IBuilder
         if (files == null || files.Count == 0)
             return context.Ok(new global::app.type.item.list.@this<Goal>());
 
-        // Filter by app.Build.Files if set (--build={"files":[...]})
+        // Filter by build's files setting if set (--build={"files":[...]}, %!build.files%)
         // Honor the user's specified order — building has bootstrapping concerns
         // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
         // earlier iterations use the previous in-memory build pipeline).
@@ -70,7 +70,7 @@ public class Default : IBuilder
         // A files entry names a goal file of the app being built: a relative one is from the app's root
         // (as the user types it at the root), never from the builder's own folder.
         var filters = new List<path>();
-        foreach (var row in app.Build.Files.Items(context))
+        foreach (var row in context.Setting.Of<global::app.module.action.build.setting.@this>().Files.Items(context))
             if ((await row.Value())?.ToString() is { Length: > 0 } entry)
                 filters.Add(path.Resolve(entry.StartsWith('/') || entry.StartsWith('\\') ? entry : "/" + entry, context));
 

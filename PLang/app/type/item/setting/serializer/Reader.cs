@@ -38,7 +38,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
         // each value into its option through the option's own type — the walk the CLI flags take
-        var applied = ctx.Context.Setting.Set(setting, read);
+        var applied = ctx.Context.Setting.Apply(setting, read);
         return applied.Success ? setting : new global::app.type.item.@null.@this("setting", kind);
     }
 }

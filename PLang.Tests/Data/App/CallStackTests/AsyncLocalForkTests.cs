@@ -55,7 +55,7 @@ public class AsyncLocalForkTests
     [Test]
     public async Task ParallelBranches_BothAppearInOuterChildren_HistoryOn()
     {
-        var stack = new CallStack { History = true };
+        var stack = new CallStack { Setting = new() { History = true } };
         await using var outer = stack.Push(MakeAction("Outer"));
 
         async Task BranchA() { await using var a = stack.Push(MakeAction("A")); await Task.Yield(); }

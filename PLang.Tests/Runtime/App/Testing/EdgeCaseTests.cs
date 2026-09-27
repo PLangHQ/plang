@@ -46,9 +46,9 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_TimeoutSeconds_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
+        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
         await result.IsSuccess();
-        await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(-5);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(-5);
     }
 
     // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
@@ -56,11 +56,11 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
-        var zero = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 });
         await zero.IsSuccess();
-        await Assert.That(_app.test.list.Setting.Parallel.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
 
-        var neg = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 });
         await neg.IsSuccess();
     }
 
@@ -142,7 +142,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" });
         await result.IsFailure();
     }
 }

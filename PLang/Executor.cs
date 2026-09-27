@@ -53,54 +53,41 @@ namespace PLang
 				userVars.Set(param.Key, param.Value);
 			}
 
-			// Debug mode — born under --debug (presence = enabled). Config (scalars) flows
-			// through the setting walk like every other flag; then the Debug is activated
+			// Each flag's dict is this run's values for its owner's setting class, on the system actor (the
+			// user falls back to it): --debug → %!debug%, --test → %!app.test.setting%, --app →
+			// %!app.setting%, --callstack → %!app.callstack.setting% (both actors' call stacks read it),
+			// --build → %!build%. A key that isn't one of the class's options is refused.
+			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this, new()
+			{
+				if (!parameters.TryGetValue(name, out var value) || value is not IDictionary<string, object?> dict) return null;
+				var set = app.System.Setting.Set(new TSetting().Path, dict);
+				return set.Success ? null : set;
+			}
+
+			// Debug mode — born under --debug (presence = enabled), reading its setting; then activated
 			// (watchers, LLM hooks, grep regex, event bindings).
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
+				if (Flag<global::app.module.action.debug.setting.@this>("!debug") is { } debugError) return (null, debugError);
 				app.Debug = new Debug(app.System.Context);
-				if (debugValue is IDictionary<string, object?> debugDict)
-				{
-					var debugResult = app.System.Setting.Set(app.Debug, debugDict);
-					if (!debugResult.Success) return (null, debugResult);
-				}
 				app.Debug.Activate();
 			}
 
-			// Test mode (--test is canonical; --tester is gone)
+			// Test mode (--test is canonical; --tester is gone). The setting first: it names the actor the
+			// run's session opens on.
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
-
-				// The setting first: it names the actor the run's session opens on.
-				if (testValue is IDictionary<string, object?> testDict)
-				{
-					var applyResult = app.System.Setting.Set(app.test.list.Setting, testDict);
-					if (!applyResult.Success) return (null, applyResult);
-				}
+				if (Flag<global::app.test.setting.@this>("!test") is { } testError) return (null, testError);
 				app.test.list.Open();
 			}
 
-			// App settings (--app={"create":true}) — the convert-walk (public-setter gate + per-leaf
-			// TryConvert), not the lift-then-lower catalog.Populate.
-			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-			{
-				var appResult = app.System.Setting.Set(app, appDict);
-				if (!appResult.Success) return (null, appResult);
-			}
+			if (Flag<global::app.setting.@this>("!app") is { } appError) return (null, appError);
 
-			// Callstack knobs (--callstack={"timing":true}) — each actor owns its own call
-			// tree, so the run-wide flag applies to both startup actors (System bootstrap +
-			// User code). Walk is the same as --build/--app. (Service actors are spawned
-			// later — carrying the flag to them is a separate concern, TODO.)
-			if (parameters.TryGetValue("!callstack", out var callstackValue) && callstackValue is IDictionary<string, object?> callstackDict)
-			{
-				var systemResult = app.System.Setting.Set(app.System.CallStack, callstackDict);
-				if (!systemResult.Success) return (null, systemResult);
-				var userResult = app.User.Setting.Set(app.User.CallStack, callstackDict);
-				if (!userResult.Success) return (null, userResult);
-			}
+			// Each actor owns its own call tree; both read the one setting (the user's falls back to the
+			// system's). (Service actors are spawned later — carrying the flag to them is a separate concern.)
+			if (Flag<global::app.callstack.setting.@this>("!callstack") is { } callstackError) return (null, callstackError);
 
 			// Build mode (--build is canonical; --builder is gone). The flag may be a bare
 			// `true` (`plang build` normalizes the subcommand to `--build`) or carry a JSON
@@ -111,25 +98,14 @@ namespace PLang
 				app.Build = new global::app.module.action.build.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
-
-				if (buildValue is IDictionary<string, object?> buildDict)
-				{
-					var buildResult = app.System.Setting.Set(app.Build, buildDict);
-					if (!buildResult.Success) return (null, buildResult);
-				}
-
-				// The cache flag is build's own setting for this run — %!build.cache%, which Build.goal's
-				// goals read. InMemory Set completes synchronously (no I/O).
-				app.System.Setting.Set("build.cache", app.System.Context.Ok(app.Build.Cache))
-					.GetAwaiter().GetResult();
+				if (Flag<global::app.module.action.build.setting.@this>("!build") is { } buildError) return (null, buildError);
 
 				// Build-mode-inversion (§6.D, Case A): a cache-off build flows DOWN to llm.query
-				// as the `llm.cache` in-memory setting, so llm.query reads its own `action.Cache`
+				// as the `llm.cache` setting, so llm.query reads its own `action.Cache`
 				// (which resolves %!llm.query.cache% → %!llm.cache% → [Default]) instead of sniffing
-				// app.Build. This also fixes the old "most builder goals don't thread cache" gap —
-				// the cache-off default now reaches every llm.query without threading. InMemory Set
-				// completes synchronously (no I/O), so unwrapping here in the sync Configure is safe.
-				if (!app.Build.Cache)
+				// the build. The cache-off default reaches every llm.query without threading. The
+				// run's value is in memory, so the sync Configure sets it at once.
+				if (!app.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Cache.Value)
 					app.System.Setting.Set("llm.cache", app.System.Context.Ok(false))
 						.GetAwaiter().GetResult();
 			}

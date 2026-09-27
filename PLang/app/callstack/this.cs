@@ -24,21 +24,19 @@ public sealed partial class @this
     private readonly AsyncLocal<call.@this?> _current = new();
     private call.@this? _root;
 
-    // --- Capture knobs: plang-typed properties, set by the CLI convert-walk
-    //     (--callstack={"timing":true} → Setting.Set(app.CallStack, dict), same as --build sets
-    //     Build.Files). Defaults inline. Each toggles one tier of Call data capture:
-    //       Timing   — StartedAt/CompletedAt/Duration
-    //       Diff     — Variables.OnSet → Call.Diffs (scalar-only unless DeepDiff)
-    //       DeepDiff — deep-clone non-scalar Before values (only meaningful with Diff)
-    //       Tags     — advisory hint for exporters (Call.Tag() writes always succeed)
-    //       History  — retain popped Calls in Caller.Children (FIFO-capped at MaxFrames)
-    //       MaxFrames— history-on retention cap
-    public @bool  Timing    { get; set; } = @bool.False;
-    public @bool  Diff      { get; set; } = @bool.False;
-    public @bool  DeepDiff  { get; set; } = @bool.False;
-    public @bool  Tags      { get; set; } = @bool.False;
-    public @bool  History   { get; set; } = @bool.False;
-    public number MaxFrames { get; set; } = 1000;
+    /// <summary>What this stack captures (<c>%!app.callstack.setting%</c>) — held, since every push reads it;
+    /// the app builds it again when a value under its path is written.</summary>
+    public setting.@this Setting { get; internal set; } = new();
+
+    // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
+    private int _diffScopes;
+
+    public @bool  Timing    => Setting.Timing;
+    public @bool  Diff      => Volatile.Read(ref _diffScopes) > 0 ? @bool.True : Setting.Diff;
+    public @bool  DeepDiff  => Setting.DeepDiff;
+    public @bool  Tags      => Setting.Tags;
+    public @bool  History   => Setting.History;
+    public number MaxFrames => Setting.MaxFrames;
 
     /// <summary>
     /// Run-wide accumulator of every error observed (handled or unhandled). Survives Pop.

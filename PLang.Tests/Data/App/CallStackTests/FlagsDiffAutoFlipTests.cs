@@ -31,7 +31,7 @@ public class FlagsDiffAutoFlipTests
         await Assert.That(app.User.CallStack.Diff.Value).IsFalse();
 
         // Now with Diff already on — the scope must not turn it off afterwards.
-        app.User.CallStack.Diff = true;
+        app.User.CallStack.Setting.Diff = true;
         using (app.User.CallStack.DiffScope(app.User.Context.Variable)) { /* scoped */ }
         await Assert.That(app.User.CallStack.Diff.Value).IsTrue();
     }

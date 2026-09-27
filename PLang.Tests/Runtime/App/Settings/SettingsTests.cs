@@ -26,25 +26,24 @@ public class SettingsTests
         await Assert.That(d.IsInitialized).IsFalse();   // unset → NotFound → the seam falls to [Default]
     }
 
-    // --build={"files":["a.goal"]} binds a JSON string array to Build.Files (now a plang list). The
-    // walk stores it lazily; each row lifts to a REAL path at its door (row.Value<path>()). Repro of
-    // the --build={...} crash — the CLR List<path> that forced set-time cross-family conversion.
+    // --build={"files":["a.goal"]} binds a JSON string array to build's files setting (a plang list);
+    // each row lifts to a REAL path at its door (row.Value<path>()).
     [Test]
     public async Task Set_StringArray_BindsToListOfPath()
     {
         await using var app = new EngineType("/app");
-        var node = new global::app.module.action.build.@this(app.System.Context);
         var settings = new Dictionary<string, object?>
         {
             ["files"] = new List<object?> { "a.goal", "b.goal" },
         };
 
-        var result = app.System.Setting.Set(node, settings);
+        var result = app.System.Setting.Set("build", settings);
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
+        var files = app.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Files;
         var paths = new List<global::app.type.item.path.@this>();
-        foreach (var row in (node.Files).Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var row in files.Items(global::PLang.Tests.TestApp.SharedContext))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);
 
         await Assert.That(paths.Count).IsEqualTo(2);

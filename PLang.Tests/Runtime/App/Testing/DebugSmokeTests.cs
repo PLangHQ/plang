@@ -48,7 +48,7 @@ public class DebugSmokeTests
         // Fully-qualified: the `Debug` global alias is shadowed here by the sibling
         // PLang.Tests.App.Debug namespace (the App/Debug/ test folder). CLAUDE.md alias-clash trap.
         _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
-        _app.System.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["level"] = "action" });
+        _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["level"] = "action" });
         _app.Debug.Activate();
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Dbg",
@@ -75,7 +75,7 @@ public class DebugSmokeTests
     public async Task Debug_Variables_BindAsNames()
     {
         _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
-        var set = _app.System.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
+        var set = _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
 
         await set.IsSuccess();
         await Assert.That(_app.Debug.Variables.Items(_app.System.Context).Select(v => v.Peek()?.ToString()).ToList())
@@ -88,7 +88,7 @@ public class DebugSmokeTests
     public async Task Debug_WatchedVariable_LogsCreatedChangedDeleted()
     {
         _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
-        _app.System.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
+        _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
         _app.Debug.Activate();
         var store = _app.User.Context.Variable;
 

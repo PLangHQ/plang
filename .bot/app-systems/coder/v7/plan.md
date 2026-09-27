@@ -529,3 +529,46 @@ owner can't ask for its instance there.
 
 I lean to (b) with (c)'s refresh for the two hot-path owners: one async moment (rows at app start), sync
 reads after, and Debug / CallStack hold theirs because they're read on every step.
+
+**Ruling (plang-40):** (b) + (c)'s refresh for the two hot-path owners; the refresh small, direct, in one
+place stage 8 replaces with a binding on the setting's `on.set.after`.
+
+## 7e-2c — as built
+
+- **Paths:** a setting class's path is its namespace (`app.goal.list.setting`, `app.test.setting`,
+  `app.callstack.setting`, `app.setting`); a module's own is read by the module's name (`llm`, `build`,
+  `debug`). Plang path = class path for owners; the app's own class gets `app.setting`.
+- **The actor's settings:** `Load()` reads every actor's rows up the chain once (the app does it in
+  `app.Load`, before the goal runs); after it `this[path]` / `Of<T>()` build a class in memory (defaults ←
+  the held row ← this run's values for its own options). Rows are held by their read value. A setting
+  read nested inside the rows' own read (a row read back reads a setting while it verifies) builds without
+  them — without this the nested read re-entered the rows' Lazy, its throw became a GetAll failure, and
+  the actor's rows were cached empty (latent since 7e-2b-i; found here, `SettingOwnerTests`).
+- **The CLI door:** `Set(path, dict)` — a flag's dict is this run's values under the class's path (nested
+  dicts one level deeper), checked first by applying it to a fresh instance (an unknown key or a value its
+  option can't take is refused, nothing written). The convert walk is internal `Apply`.
+- **Refresh:** each actor's own settings raise `Written(path)` for any write up the chain (this run's, a
+  save, a remove); `app.Refresh` — the one place — rebuilds each call stack's and Debug's held instance
+  when the written path covers theirs.
+- **Owners:**
+  - test: `test/setting` is a setting (`[Out, Store]`); `test.list : ISetting<test.setting>`;
+    `test.list.Setting` gone; test.start / report / Exclusion read `context.Setting.Of<test.setting>()`;
+    `Session` is the open test channel on any of the app's actors; `Open` reads the setting's actor.
+  - build: `build/setting` gains `Files`; `app.Build.Files` / `Cache` gone; the goal listing reads the
+    setting; Executor's `llm.cache` coupling reads build's `Cache`.
+  - callstack: `app/callstack/setting` (Timing, Diff, DeepDiff, Tags, History, MaxFrames); each
+    `CallStack` holds `Setting`, its flags read it; `DiffScope` is a count (Diff on while a scope is
+    open), not a write over the setting.
+  - debug: `module/action/debug/setting` (Goal, Step, Variables, MaxLength, Grep, Level, Verbose, Llm);
+    Debug holds `Setting` (born from the system's), its properties read it; Activate reads the watch
+    list / grep / LLM flags once.
+  - app: `app/setting` (`Create`); `app : ISetting<app.setting>`; `app.Create` gone; build.Start reads it.
+    The `clr` carrier answers `.setting` for a host that names a class (the app is no item):
+    `%!app.setting.create%`. `Setting.Of(owner)` is the one lookup both the item base and the carrier ask.
+- **Executor:** each flag → `System.Setting.Set(<class path>, dict)` through one local `Flag<T>`.
+- **PLang/.gitignore:** the un-ignore for the debug module named its old path (`app/module/debug/`); the
+  new `debug/setting/` was silently ignored. Now `!/app/module/action/debug/`.
+- Tests: `SettingOwnerTests` (6); the CLI-walk tests go through the path door; call stack tests set
+  `Setting`; GetGoalsTests set build's files.
+- Checks: suites no new failures; plang --test 7/0/317; builder's 7 goals rebuilt byte-identical with
+  `--build={"files":[…]}` through the new setting.

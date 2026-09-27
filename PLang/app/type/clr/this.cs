@@ -98,14 +98,23 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>One step into the host: its <see cref="Kind"/> descends by the key — a position or a
     /// member, which a sequence host answers differently — and the landed node's own kind makes the
     /// child.</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key, bool isIndex)
     {
         var (found, node) = Kind.Descend(Value, key, isIndex, parent.Context);
-        if (!found) return System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
+        if (!found)
+            // a host that names its settings (the app: %!app.setting%) answers .setting with them
+            return !isIndex && await Setting(parent, key) is { } setting ? setting : parent.Context.NotFound(key);
         var kind = node is null ? Kind : parent.Context.App.type.list.Kind(node.GetType());
-        return System.Threading.Tasks.ValueTask.FromResult(kind.Data(parent.Name, node, parent, parent.Context));
+        return kind.Data(parent.Name, node, parent, parent.Context);
     }
+
+    /// <summary>The host's settings, when <paramref name="key"/> is <c>setting</c> and the host names a
+    /// setting class — the carrier answers for what it carries.</summary>
+    private new async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+        => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+            ? await parent.Context.Setting.Of(Value)
+            : null;
 
     /// <summary>The format→type read door — the carrier hands its <see cref="Kind"/> its own content,
     /// the declared type's reader, and the element kind. The kind bridges the format (json → a json

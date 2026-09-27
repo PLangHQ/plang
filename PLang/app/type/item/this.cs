@@ -243,13 +243,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <c>setting</c> and this owner names a setting class (<see cref="setting.ISetting{T}"/>):
     /// <c>%!app.goal.list.setting%</c>. Null otherwise.</summary>
     protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
-    {
-        if (!string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)) return null;
-        var named = GetType().GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(setting.ISetting<>));
-        if (named == null) return null;
-        var path = ((setting.@this)System.Activator.CreateInstance(named.GetGenericArguments()[0])!).Path;
-        return await parent.Context.Setting.Get(path);
-    }
+        => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+            ? await parent.Context.Setting.Of(this)
+            : null;
 
     /// <summary>The child at <paramref name="key"/>, where <paramref name="isIndex"/> tells a position
     /// (<c>[0]</c>) from a member (<c>.name</c>) — the read twin of <see cref="Set"/>. A value that

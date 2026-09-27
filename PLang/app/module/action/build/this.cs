@@ -15,20 +15,6 @@ public sealed partial class @this
 {
     private readonly actor.context.@this _context;
 
-
-    /// <summary>
-    /// Optional file filter. When set, only these files are built — IN ORDER. A native plang list:
-    /// the walk stores it lazily (JSON strings born as path-declared rows), and each row lifts to a
-    /// path at the CONSUMER's door (<c>row.Value&lt;path&gt;()</c>) — no set-time materialization.
-    /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
-    /// </summary>
-    public global::app.type.item.list.@this Files { get; set; }
-
-    /// <summary>
-    /// Whether to use LLM cache. Default true. Set via --build={"cache":false}
-    /// </summary>
-    public bool Cache { get; set; } = true;
-
     /// <summary>
     /// Snapshot of .pr file content (raw JSON) loaded at first access during build.
     /// Keyed by absolute file path. When a .pr file is overwritten during build,
@@ -60,7 +46,6 @@ public sealed partial class @this
     public @this(actor.context.@this context)
     {
         _context = context;
-        Files = new global::app.type.item.list.@this();
     }
 
     /// <summary>The context this subsystem was born with (system-scoped).</summary>
@@ -80,7 +65,7 @@ public sealed partial class @this
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app={"create":true}.
-        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_context.App.Create)
+        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_context.Setting.Of<global::app.setting.@this>().Create.Value)
         {
             if (Console.IsInputRedirected)
                 return Context.Error(new global::app.error.ServiceError(

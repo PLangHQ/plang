@@ -85,7 +85,7 @@ public partial class report : IContext
     private async Task<global::app.test.Format> ResolveFormat(global::app.test.list.@this testing)
     {
         var over = Format == null ? null : (await Format.Value())?.Clr<string>();
-        if (over == null) return testing.Setting.Format;
+        if (over == null) return Context.Setting.Of<global::app.test.setting.@this>().Format;
         return string.Equals(over, "junit", StringComparison.OrdinalIgnoreCase)
             ? global::app.test.Format.JUnit
             : global::app.test.Format.Json;

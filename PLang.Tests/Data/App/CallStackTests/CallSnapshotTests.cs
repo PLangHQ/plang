@@ -201,7 +201,7 @@ public class CallSnapshotTests
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
-        app.User.CallStack.Timing = true;
+        app.User.CallStack.Setting.Timing = true;
         await using var call = app.User.CallStack.Push(action);
 
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);

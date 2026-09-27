@@ -4,11 +4,12 @@ namespace app.test.list;
 
 /// <summary>
 /// The run's tests — a list of them, reached at <c>app.test.list</c>; one is picked by its goal's address
-/// through the type (<c>app.test.Get("/Tests/x/Start")</c>). Holds how a run runs (<see cref="Setting"/>),
-/// what it comes to (<see cref="Report"/>), and whether one is running: the app is testing while its
-/// <see cref="Session"/> is open.
+/// through the type (<c>app.test.Get("/Tests/x/Start")</c>). Holds what a run comes to (<see cref="Report"/>)
+/// and whether one is running: the app is testing while a <see cref="Session"/> is open. How a run runs is
+/// test's setting (<c>%!app.test.setting%</c>), read where it's needed.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<global::app.test.@this>
+public sealed class @this : global::app.type.item.list.@this<global::app.test.@this>,
+    global::app.type.item.setting.ISetting<global::app.test.setting.@this>
 {
     private readonly global::app.@this _app;
 
@@ -18,19 +19,17 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         Report = new(this);
     }
 
-    /// <summary>How a run runs — <c>--test={…}</c> applies onto it.</summary>
-    public global::app.test.setting.@this Setting { get; } = new();
-
     /// <summary>What the run comes to.</summary>
     public global::app.test.report.@this Report { get; }
 
-    /// <summary>The run's open session on the actor its setting names; null when the app is not testing.
-    /// The one answer to "are we testing".</summary>
+    /// <summary>The run's open session, on whichever of the app's actors it was opened; null when the app is
+    /// not testing. The one answer to "are we testing".</summary>
     public global::app.channel.type.test.@this? Session
-        => Actor.Channel[typeof(global::app.channel.type.test.@this)] as global::app.channel.type.test.@this;
+        => _app.actor.list.Items().Select(a => a.Channel[typeof(global::app.channel.type.test.@this)])
+            .OfType<global::app.channel.type.test.@this>().FirstOrDefault();
 
-    /// <summary>Opens a session on the setting's actor: the run's own, or (given its test) the one a
-    /// test's App writes into.</summary>
+    /// <summary>Opens a session on the actor test's setting names: the run's own, or (given its test) the
+    /// one a test's App writes into.</summary>
     public global::app.channel.type.test.@this Open(global::app.test.@this? test = null)
     {
         var session = new global::app.channel.type.test.@this(test);
@@ -41,12 +40,18 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// <summary>Closes the open session, if there is one.</summary>
     public async Task Close()
     {
-        if (Session is { } session) await Actor.Channel.RemoveAsync(session.Name);
+        if (Session is { } session) await session.Actor.Channel.RemoveAsync(session.Name);
     }
 
-    // The actor the setting names — one of the app's, which the actor list holds.
+    // The actor test's setting names — one of the app's, which the actor list holds.
     private global::app.actor.@this Actor
-        => _app.actor.list.Items().First(a => string.Equals(a.Name, Setting.Actor.ToString(), StringComparison.OrdinalIgnoreCase));
+    {
+        get
+        {
+            var named = _app.System.Context.Setting.Of<global::app.test.setting.@this>().Actor.ToString();
+            return _app.actor.list.Items().First(a => string.Equals(a.Name, named, StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
@@ -91,12 +96,13 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     public global::app.type.item.text.@this? Exclusion(global::app.test.@this test, actor.context.@this context)
     {
         var tags = test.Tags.Items().ToHashSet();
+        var setting = context.Setting.Of<global::app.test.setting.@this>();
         // Each filter row is taken out as a value (a list set from the CLI holds its raw rows).
         bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
             => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek()) is { } tag && tags.Contains(tag));
 
-        if (Setting.Exclude.CountRaw > 0 && Carries(Setting.Exclude)) return "excluded by tag";
-        if (Setting.Include.CountRaw > 0 && !Carries(Setting.Include)) return "no include match";
+        if (setting.Exclude.CountRaw > 0 && Carries(setting.Exclude)) return "excluded by tag";
+        if (setting.Include.CountRaw > 0 && !Carries(setting.Include)) return "no include match";
         return null;
     }
 }

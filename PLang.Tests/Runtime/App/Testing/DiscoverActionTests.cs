@@ -292,7 +292,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
     {
-        _app.test.list.Setting.Include.Add(new global::app.type.item.text.@this("fast"));
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } });
         await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
 
         var files = await Discover();
@@ -306,7 +306,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
-        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("slow"));
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
@@ -327,8 +327,8 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeAndExclude_ExcludeAppliedAfterInclude()
     {
-        _app.test.list.Setting.Include.Add(new global::app.type.item.text.@this("http"));
-        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("slow"));
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } });
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]

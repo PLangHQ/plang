@@ -22,7 +22,7 @@ public class SettingReadTests
     {
         await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
-        await ctx.Setting.Set("goal.list.setting.os", ctx.Ok(false));
+        await ctx.Setting.Set("app.goal.list.setting.os", ctx.Ok(false));
 
         var read = await Read("%!app.goal.list.setting.os%", ctx);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");

@@ -14,52 +14,19 @@ public sealed class @this
 {
     private readonly actor.context.@this _context;
 
-    /// <summary>
-    /// Filter to a specific goal name. Null = all goals.
-    /// </summary>
-    public string? Goal { get; set; }
+    /// <summary>What debug shows (<c>%!debug%</c>) — held, since every step reads it; the app builds it again
+    /// when a value under its path is written. Activation reads the watched variables, the grep and the LLM
+    /// flags once.</summary>
+    public setting.@this Setting { get; internal set; }
 
-    /// <summary>
-    /// Filter to a specific step index. Null = all steps.
-    /// </summary>
-    public int? Step { get; set; }
-
-    /// <summary>
-    /// The variables to watch, by name. A watched variable prints at every step and logs each time
-    /// it is created, changed or deleted.
-    /// Set via: --debug={"variables":["trace","goal"]}
-    /// </summary>
-    public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; } = new();
-
-    /// <summary>
-    /// Max characters per line before truncation. Default 500.
-    /// </summary>
-    public int MaxLength { get; set; } = 500;
-
-    /// <summary>
-    /// Regex string to filter debug output lines.
-    /// </summary>
-    public string? Grep { get; set; }
-
-    /// <summary>
-    /// Debug detail level — <see cref="Level.Step"/> (default) or <see cref="Level.Action"/>.
-    /// A <c>choice&lt;Level&gt;</c> so the --debug walk rejects any value outside the set.
-    /// </summary>
-    public global::app.type.item.choice.@this<global::app.module.action.debug.Level> Level { get; set; } = global::app.module.action.debug.Level.Step;
-
-    /// <summary>
-    /// When true, errors include a dump of all available variables at the point of failure.
-    /// Useful for diagnosing missing variables in foreach/goal.call chains.
-    /// Set via: --debug={"verbose":true}
-    /// </summary>
-    public bool Verbose { get; set; }
-
-    /// <summary>
-    /// Granular LLM tracing — each sub-flag dumps one part of the API exchange to stderr.
-    /// Set via: --debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}
-    /// Only the parts you set to true are shown — all-off (or no Llm object) means no tracing.
-    /// </summary>
-    public LlmDebug? Llm { get; set; }
+    public string? Goal => Setting.Goal;
+    public int? Step => Setting.Step;
+    public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables => Setting.Variables;
+    public int MaxLength => Setting.MaxLength;
+    public string? Grep => Setting.Grep;
+    public global::app.type.item.choice.@this<global::app.module.action.debug.Level> Level => Setting.Level;
+    public bool Verbose => Setting.Verbose;
+    public LlmDebug? Llm => Setting.Llm;
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
@@ -83,6 +50,7 @@ public sealed class @this
     public @this(actor.context.@this context)
     {
         _context = context;
+        Setting = context.Setting.Of<setting.@this>();
     }
 
     /// <summary>
@@ -110,8 +78,8 @@ public sealed class @this
     /// <summary>
     /// Activates debug tracing: watches the named variables through the User store's own events,
     /// subscribes the LLM request/response hooks, compiles the grep regex, and registers the
-    /// step/goal(/action) event bindings. The scalar config is set beforehand by the --debug
-    /// walk (<c>app.Setting.Set(app.Debug, dict)</c>); this does the side-effects only —
+    /// step/goal(/action) event bindings. The config is debug's setting (<c>--debug={…}</c> is this run's
+    /// values for it, written before Debug is born); this does the side-effects only —
     /// Debug is born, then activated. No config parsing or callstack cross-write lives here
     /// (callstack config is its own flag, <c>--callstack</c>).
     /// </summary>

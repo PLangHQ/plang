@@ -2,27 +2,28 @@ namespace app.type.item.setting;
 
 /// <summary>
 /// A setting — what an owner lets be set: a class of options (its public settable properties) whose
-/// initializers are the defaults (<c>goal.list.setting</c>'s <c>Os</c>, llm's <c>Cache</c>). Each class is a
-/// kind of this type, named by its path: its namespace under <c>app.</c>, a module's own class read as
-/// the module's name (<c>module.action.llm.setting</c> → <c>llm</c>). A bare setting is a node — a path
-/// that leads to settings (<c>goal</c>, <c>goal.list</c>, an action's <c>llm.query</c>). plang reaches
-/// one as <c>%!path%</c>: the asker's settings build it, this run's values on it.
+/// initializers are the defaults (<c>app.goal.list.setting</c>'s <c>Os</c>, llm's <c>Cache</c>). Each class
+/// is a kind of this type, named by its path: its namespace, which is its owner's path in plang
+/// (<c>%!app.goal.list.setting%</c>); a module's own class is read by the module's name
+/// (<c>app.module.action.llm.setting</c> → <c>llm</c>, <c>%!llm.cache%</c>). A bare setting is a node — a
+/// path that leads to settings (a module, an action's <c>llm.query</c>). The asker's settings build one,
+/// the saved row and this run's values on it.
 /// </summary>
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A node: the path it stands for.</summary>
     public @this(string path) => Path = path;
 
-    /// <summary>A class of options: its path is its namespace under <c>app.</c>, a module's own class
-    /// read as the module's name.</summary>
+    /// <summary>A class of options: its path is its namespace, a module's own class read as the module's
+    /// name.</summary>
     protected @this()
     {
-        var path = GetType().Namespace!.StartsWith("app.") ? GetType().Namespace![4..] : GetType().Namespace!;
-        const string module = "module.action.", own = ".setting";
+        var path = GetType().Namespace!;
+        const string module = "app.module.action.", own = ".setting";
         Path = path.StartsWith(module) && path.EndsWith(own) ? path[module.Length..^own.Length] : path;
     }
 
-    /// <summary>The path this setting is read by — <c>%!goal.list.setting%</c> is <c>goal.list.setting</c>.</summary>
+    /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>.</summary>
     [Out] public string Path { get; }
 
     /// <summary>A setting is built by the asker's settings, never made from a value.</summary>

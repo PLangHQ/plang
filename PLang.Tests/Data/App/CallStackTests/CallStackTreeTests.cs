@@ -59,7 +59,7 @@ public class CallStackTreeTests
     [Test]
     public async Task Pop_RetainsInCallerChildren_WhenHistoryTrue()
     {
-        var stack = new CallStack { History = true };
+        var stack = new CallStack { Setting = new() { History = true } };
         await using var outer = stack.Push(MakeAction("A"));
         await using (var inner = stack.Push(MakeAction("B")))
         {
@@ -87,10 +87,9 @@ public class CallStackTreeTests
     [Test]
     public async Task MaxFrames_FifoEvictsOldestSibling_WhenHistoryTrue()
     {
-        var stack = new CallStack
-        {
+        var stack = new CallStack { Setting = new() {
             History = true, MaxFrames = 2
-        };
+        } };
         await using var outer = stack.Push(MakeAction("Outer"));
 
         // Push and pop three siblings; with history retention, all three start as Children

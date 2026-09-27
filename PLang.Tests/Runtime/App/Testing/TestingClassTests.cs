@@ -79,28 +79,28 @@ public class TestingClassTests
     [Test]
     public async Task NewInstance_TimeoutSeconds_DefaultIs30()
     {
-        await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(30);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(30);
     }
 
     // Architect spec: Parallel defaults to Environment.ProcessorCount.
     [Test]
     public async Task NewInstance_Parallel_DefaultIsProcessorCount()
     {
-        await Assert.That(_app.test.list.Setting.Parallel.ToInt32()).IsEqualTo(Environment.ProcessorCount);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(Environment.ProcessorCount);
     }
 
     // No tag filter by default — Include is empty, meaning every discovered test matches.
     [Test]
     public async Task NewInstance_Include_DefaultIsEmpty()
     {
-        await Assert.That(_app.test.list.Setting.Include.Count.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(0);
     }
 
     // No tag filter by default — Exclude is empty, meaning nothing is excluded.
     [Test]
     public async Task NewInstance_Exclude_DefaultIsEmpty()
     {
-        await Assert.That(_app.test.list.Setting.Exclude.Count.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(0);
     }
 
     // --test={"timeoutSeconds":60,"parallel":4,"include":["fast"],"exclude":["slow"]}
@@ -116,23 +116,23 @@ public class TestingClassTests
             ["exclude"] = new List<object?> { "slow" },
         };
 
-        var result = _app.System.Setting.Set(_app.test.list.Setting, config);
+        var result = _app.System.Setting.Set("app.test.setting", config);
 
         await result.IsSuccess();
-        await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(60);
-        await Assert.That(_app.test.list.Setting.Parallel.ToInt32()).IsEqualTo(4);
-        await _app.test.list.Setting.Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.test.list.Setting.Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(60);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(4);
+        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
     }
 
     // A choice setting given as CLI text (--test={"format":"junit"}) is made by the choice itself.
     [Test]
     public async Task Configure_AChoiceFromItsText()
     {
-        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["format"] = "junit" });
+        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
 
         await result.IsSuccess();
-        await Assert.That(_app.test.list.Setting.Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
     }
 
     // Include/Exclude are replace-semantics — the walk sets a fresh list<text>, so a second
@@ -140,22 +140,22 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
-        _app.test.list.Setting.Include.Add(new global::app.type.item.text.@this("oldInclude"));
-        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("oldExclude"));
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "oldInclude" } });
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "oldExclude" } });
 
-        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
+        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
         });
 
         await result.IsSuccess();
-        await Assert.That(_app.test.list.Setting.Include.Count.ToInt32()).IsEqualTo(1);
-        await _app.test.list.Setting.Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.test.list.Setting.Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
-        await Assert.That(_app.test.list.Setting.Exclude.Count.ToInt32()).IsEqualTo(1);
-        await _app.test.list.Setting.Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.test.list.Setting.Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(1);
+        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(1);
+        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
     }
 
     // Unknown config keys are rejected — the setting walk is strict (same as --app/--build/
@@ -163,7 +163,7 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_UnknownKey_Rejected()
     {
-        var result = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
+        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
         {
             ["timeoutSeconds"] = 10,
             ["futureOption"] = "not a valid key yet"
@@ -187,7 +187,7 @@ public class TestingClassTests
     [Test]
     public async Task Create_ExcludedTest_ComesBackSkippedWithItsReason()
     {
-        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("slow"));
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
 
         var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);
 
@@ -199,7 +199,7 @@ public class TestingClassTests
     [Test]
     public async Task Create_ExcludeSetThroughTheWalk_Filters()
     {
-        var set = _app.System.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        var set = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await set.IsSuccess();
 
         var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);
@@ -211,7 +211,7 @@ public class TestingClassTests
     [Test]
     public async Task Create_TakenTest_IsReady()
     {
-        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("slow"));
+        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
 
         var test = await _app.test.list.Create(TaggedGoal("fast"), _app.User.Context);
 

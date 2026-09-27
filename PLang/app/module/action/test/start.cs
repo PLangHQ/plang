@@ -42,7 +42,7 @@ public partial class start : IContext
                 if (await row.Value() is global::app.test.@this test) tests.Add(test);
         var parentApp = Context.App;
         // The number lowers itself — absent slot falls to the stated default.
-        var setting = parentApp.test.list.Setting;
+        var setting = Context.Setting.Of<global::app.test.setting.@this>();
         int parallel = Parallel == null ? setting.Parallel.ToInt32()
             : (await Parallel.Value())?.ToInt32() ?? setting.Parallel.ToInt32();
         double timeoutSeconds = Timeout == null ? setting.TimeoutSeconds.ToDouble()

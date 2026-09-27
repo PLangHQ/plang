@@ -186,7 +186,7 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Start.goal"));
+        _app.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "Start.goal" } });
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -206,7 +206,7 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("mygoal.goal"));
+        _app.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "mygoal.goal" } });
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -226,7 +226,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("NonExistent.goal"));
+        _app.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "NonExistent.goal" } });
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -244,7 +244,7 @@ public class GetGoalsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Other.goal"), "Other\n- write out 'other'");
 
         // as typed at the app's root: no leading slash
-        _app.Build.Files.Add(new global::app.type.item.text.@this("Sanity/AddItem.goal"));
+        _app.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "Sanity/AddItem.goal" } });
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
@@ -267,8 +267,7 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("First.goal"));
-        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Third.goal"));
+        _app.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "First.goal", "Third.goal" } });
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
