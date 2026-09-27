@@ -88,7 +88,7 @@ public class TestMetadataTests
     public async Task Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent()
     {
         _app.Version = "v2.0"; // current app builder version
-        _app.Test.Add(NewTest("T", builderVersion: "v1.0")); // stale
+        _app.test.list.Add(NewTest("T", builderVersion: "v1.0")); // stale
 
         var action = new global::app.module.action.test.report(_app.User.Context);
         await action.Start();

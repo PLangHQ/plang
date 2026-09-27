@@ -156,6 +156,11 @@ public sealed class @this : IAsyncDisposable
     public channel.@this this[string name]
         => Get(name) ?? throw new KeyNotFoundException($"No channel named '{name}'.");
 
+    /// <summary>The open channel of the C# class <paramref name="clrType"/>, whatever name it is under;
+    /// null when there is none. What a channel IS, beside where it writes (its name).</summary>
+    public channel.@this? this[System.Type clrType]
+        => _channels.Values.FirstOrDefault(c => c.IsOpen && clrType.IsInstanceOfType(c));
+
     /// <summary>Enumerate registered channels.</summary>
     public IEnumerable<channel.@this> list => _channels.Values;
 

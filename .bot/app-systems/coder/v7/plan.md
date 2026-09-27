@@ -146,3 +146,72 @@ beside it, so the system listing is empty in tests.
   (Decide.goal) is guarded by `ModuleAccessorTests.AppModuleList_ReadsAsAVariable`.
 - Suites: no new failures vs baseline (Runtime 22, Data 36, Generator 10 — at or under). plang --test
   7/0/317 after a clean rebuild.
+
+## 7c trace — test
+
+**Today** `app.Test` is `test.list.@this?` (`app/this.cs:184`): null when not testing, born by `--test`
+(`Executor.cs:73`), by `test.start` for each child App (`test/start.cs:92`), and by snapshot restore
+(`this.Snapshot.cs:59`). It holds four things in one class: settings (`TimeoutSeconds`, `Parallel`,
+`Verbose` — read nowhere, `Format`, `Include`, `Exclude`), the tests (`_tests`, `Add`, `Tests`, `Count`,
+`Create`, `Exclusion`), run state (`StartedAt`, `Coverage`, `Current`) and the report's reading
+(`Summary()`, `Verdict()`). "Are we testing" is `Test != null`: `Mode` (`app/this.cs:197`) and through it
+the in-memory settings store (`:562`) and Executor's routing to `/system/.build/test.pr` (`:136`).
+`Current` is set only on a child App (`start.cs:95`); `report.cs:33,78` read `Current == null` as "not a
+nested run". The tests' output is captured by a BeforeWrite binding on the child's user actor
+(`start.cs:126-146`) into `test.Stdout`.
+
+**Shape:**
+- `test/this.cs` — the test; adds `IMatch` (delegates to its goal: every test goal is named `Start`, so
+  the address is what tells them apart), `ICurrent` (below), `IList`.
+- `test/list/this.cs` — a `list<test>`: typed `Add`, `Create`, `Exclusion`. `Count`/`Tests` go (the
+  base list's count; `Items()` inside C#). Holds `Setting` and `Report` (below) — the concept's own work.
+- `test/setting/this.cs` — the plain setting class (as goal's in 7a; `ISetting<T>` in 7e):
+  `TimeoutSeconds`, `Parallel`, `Format`, `Include`, `Exclude`, `Actor: choice<actor.Name> = User`.
+  `Verbose` goes (read nowhere). `--test={…}` applies onto it (`app.Setting.Set(app.test.list.Setting, …)`).
+- `test/report/this.cs` — `StartedAt`, `Coverage`, `Summary()`, `Verdict()`; `test.report` writes it.
+- `app.test` = `type<test, test.list>`, always there.
+
+**The session — proposal (needs a ruling):**
+- `test/session/this.cs : channel.type.session.@this` — kept-open, holds what is written to it as rows
+  (memory), `Text` its rows as text. Knows its `Test` (null for the run's own session).
+- **The run's session**: `test.start` (and `--test`) opens one on the actor its setting names
+  (`app.User` by default), registered under the name `test`; it closes when the run ends.
+  "Are we testing" = that actor has an open `test` channel. `Mode` derives from it; the in-memory store and
+  Executor's routing follow `Mode` unchanged.
+- **Each test's writes**: the child App's user actor gets its own session registered as `output` (so every
+  `write out` in the test lands there, no binding), holding its test. `test.Stdout` = that session's text
+  when the test completes. The BeforeWrite capture goes. The child counts as testing because its user
+  actor has an open session — so the child is registered under both `test` and `output`? **Question:**
+  one session under two names, or is "testing" = any open `test.session` on the actor (checked by type,
+  not name)? I lean to the latter — the session is the fact; its name is where writes go.
+- `ICurrent`: `test.Current(context)` = the test of the session on `context.Actor` (null outside a
+  test). `report.cs`'s "nested run" check becomes `test.Current(Context) != null`. No stored `Current`.
+- Snapshot restore rebuilds a `Mode.Test` App by opening a session (no test in it).
+
+Plan: 7c-1 (independent of the ruling) = test as its type: `list<test>`, `test/setting`, `test/report`,
+`app.test`, the callers. Interim for one commit: the run's report is born when a run opens
+(`test.list.Report` null otherwise) and `Mode` reads that; 7c-2 (the session, after the ruling) replaces
+it with the open session.
+
+## 7c — as built (ruling (a): testing = an open session on the actor, asked through one door)
+
+- `app.test` = `type<test, test.list>`, always there. `test` adds `Match` (its goal's address), `ICurrent`,
+  `IList`. `test.list` is a `list<test>` holding `Setting`, `Report`, `Session`, `Open(test?)`, `Close()`,
+  `Create`, `Exclusion(test, context)`.
+- `test/setting/this.cs`: `Actor` (choice<actor.Name> = user), `TimeoutSeconds`, `Parallel`, `Format`,
+  `Include`, `Exclude`. `Verbose` gone. `--test={…}` applies onto it, then Executor opens the session.
+- `test/report/this.cs`: `StartedAt`, `Coverage`, `Summary()`, `Verdict()` over the list's tests.
+- **The session lives at `app/channel/type/test/this.cs`**, not `test/session/`: the channel-kind layout
+  rule (`ChannelKindLayoutTests`: every channel kind under `app.channel.type.*`). One object, one name:
+  the run's is registered as `test`, a test's as `output` on its App (its `Text` becomes `test.Stdout`;
+  the BeforeWrite capture is gone). The one door: `channel.list[System.Type]` (open channel of that
+  class, any name) — `test.list.Session` (Mode, hence the in-memory store and Executor's routing) and
+  `test.Current(ctx)` (report's nested-run check) both ask it.
+- Behaviour change: a test's writes no longer also reach the console live; they are the test's Stdout
+  (the report prints it on failure).
+- Snapshot restore opens / closes the session from the captured Mode.
+
+## For stage 11 (plang-40)
+
+- `PLang.Tests/Shared/ModuleTestExtensions.cs` `app.Module(name)` is one of the test helpers that goes
+  when tests use the app's own doors.

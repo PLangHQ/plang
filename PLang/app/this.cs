@@ -178,10 +178,11 @@ public sealed partial class @this : IAsyncDisposable
     public Debug? Debug { get; set; }
 
     /// <summary>
-    /// Test session — the collection of discovered/run *.test.goal tests plus
-    /// run-wide state. null = not testing; non-null = a live session (born under --test).
+    /// The type named <c>test</c> — <c>%!app.test%</c>: its <c>list</c> is the run's tests (with the run's
+    /// setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test the
+    /// asker is running. The app is testing while the list's session is open.
     /// </summary>
-    public global::app.test.list.@this? Test { get; set; }
+    public global::app.type.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
 
     /// <summary>
     /// Build mode controller. null = off; non-null = on (born under --build).
@@ -190,11 +191,11 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.module.action.build.@this? Build { get; set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
-    /// testing when it has a Test, otherwise running. Not a stored field, so there is no second truth
-    /// beside the presence; the App branches on this, never on the presence itself.</summary>
+    /// testing while its test session is open, otherwise running. Not a stored field, so there is no
+    /// second truth; the App branches on this, never on the presence itself.</summary>
     public global::app.type.item.choice.@this<global::app.Mode> Mode
         => Build != null ? global::app.Mode.Build
-         : Test != null ? global::app.Mode.Test
+         : test.list.Session != null ? global::app.Mode.Test
          : global::app.Mode.Run;
 
     /// <summary>
@@ -277,7 +278,7 @@ public sealed partial class @this : IAsyncDisposable
         actor = new(this);
 
         Event = new global::app.@event.list.@this();
-        // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
+        // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         type = new(this);
         type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
@@ -286,6 +287,7 @@ public sealed partial class @this : IAsyncDisposable
         Setting = new global::app.setting.@this(System.Context);
         module = new(this);
         goal = new(this);
+        test = new(this);
 
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own

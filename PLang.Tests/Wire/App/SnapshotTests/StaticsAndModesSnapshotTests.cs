@@ -40,14 +40,13 @@ public class StaticsAndModesSnapshotTests
     {
         // The App's Mode (testing) round-trips: a running destination comes back testing.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Test = new global::app.test.list.@this(src.System.Context);
 
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Test = null;   // a running app — TestApp.Create gives it a Test
-        await Assert.That(dst.Test != null).IsFalse();
+        await dst.test.list.Close();   // a running app — TestApp.Create opens a session
+        await Assert.That(dst.test.list.Session != null).IsFalse();
         await dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Test != null).IsTrue();
+        await Assert.That(dst.test.list.Session != null).IsTrue();
     }
 }

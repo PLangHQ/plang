@@ -13,9 +13,23 @@ namespace app.test;
 /// rides the wire directly (the report serializes it — no hand-mapped shape).
 /// The PLang name "test" derives from the @this namespace tail — no [PlangType] needed.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
+    global::app.type.item.IList<@this, list.@this>
 {
     private Stopwatch? _stopwatch;
+
+    /// <summary>A key names this test by its goal's address — every test goal is named Start, so the
+    /// address is what tells them apart.</summary>
+    public async System.Threading.Tasks.ValueTask<@this?> Match(string key)
+        => await Goal.Match(key) != null ? this : null;
+
+    /// <summary>The test the asker's actor is running — the one its open session holds; null outside a test.</summary>
+    public static @this? Current(global::app.actor.context.@this context)
+        => (context.Actor?.Channel[typeof(global::app.channel.type.test.@this)] as global::app.channel.type.test.@this)?.Test;
+
+    /// <summary>The run's tests.</summary>
+    public static list.@this List(global::app.@this app) => new(app);
 
     public @this()
     {

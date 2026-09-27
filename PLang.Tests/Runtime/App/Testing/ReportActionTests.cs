@@ -70,8 +70,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Console_AlwaysWritesSummary_RegardlessOfFormat()
     {
-        _app.Test.Add(NewTest("X", global::app.test.Status.Pass));
-        _app.Test.Format = global::app.test.Format.JUnit;
+        _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
 
         await Report();
 
@@ -85,7 +85,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_OutputDirectory_IsDotTestRelativeToDiscoveryPath()
     {
-        _app.Test.Add(NewTest("X", global::app.test.Status.Pass));
+        _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
 
@@ -98,7 +98,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Format_DefaultIsJson_WritesResultsJson()
     {
-        _app.Test.Add(NewTest("X", global::app.test.Status.Pass));
+        _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
 
@@ -117,7 +117,7 @@ public class ReportActionTests
         var steps = new global::app.goal.step.list.@this();
         steps.Add(new global::app.goal.step.@this { Goal = test.Goal, Text = "write out %response%" });
         test.Goal.Step = steps;
-        _app.Test.Add(test);
+        _app.test.list.Add(test);
 
         await Report();
 
@@ -132,8 +132,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Format_Junit_WritesJunitXml()
     {
-        _app.Test.Format = global::app.test.Format.JUnit;
-        _app.Test.Add(NewTest("X", global::app.test.Status.Pass));
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
+        _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
 
@@ -149,8 +149,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_JUnit_TestNameWithXmlSpecialChars_Escaped()
     {
-        _app.Test.Format = global::app.test.Format.JUnit;
-        _app.Test.Add(NewTest("asserts <x> & <y>", global::app.test.Status.Pass));
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
+        _app.test.list.Add(NewTest("asserts <x> & <y>", global::app.test.Status.Pass));
 
         await Report();
 
@@ -168,8 +168,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Coverage_ModuleActionTable_ShowsUniverseVsObserved()
     {
-        _app.Test.Coverage.RecordModuleAction("variable", "set");
-        _app.Test.Add(NewTest("X", global::app.test.Status.Pass));
+        _app.test.list.Report.Coverage.RecordModuleAction("variable", "set");
+        _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
 
@@ -186,9 +186,9 @@ public class ReportActionTests
     [Test]
     public async Task Report_Coverage_BranchTable_PerSiteShowsObservedIndices()
     {
-        _app.Test.Coverage.RecordBranch("MyGoal:3", 0);
-        _app.Test.Coverage.RecordBranch("MyGoal:3", 1);
-        _app.Test.Add(NewTest("X", global::app.test.Status.Pass));
+        _app.test.list.Report.Coverage.RecordBranch("MyGoal:3", 0);
+        _app.test.list.Report.Coverage.RecordBranch("MyGoal:3", 1);
+        _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
 
@@ -211,9 +211,9 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_FailStatus_EmitsFailureElement()
     {
-        _app.Test.Format = global::app.test.Format.JUnit;
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
         var err = new AssertionError(1, 2, "mismatch");
-        _app.Test.Add(NewTest("Failing", global::app.test.Status.Fail, err));
+        _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 
         await Report();
 
@@ -230,8 +230,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout()
     {
-        _app.Test.Format = global::app.test.Format.JUnit;
-        _app.Test.Add(NewTest("SlowTest", global::app.test.Status.Timeout));
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
+        _app.test.list.Add(NewTest("SlowTest", global::app.test.Status.Timeout));
 
         await Report();
 
@@ -247,10 +247,10 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_SkippedStatus_EmitsSkippedElement()
     {
-        _app.Test.Format = global::app.test.Format.JUnit;
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
         var run = NewTest("Filtered", global::app.test.Status.Skipped);
         run.StatusReason = "excluded by tag";
-        _app.Test.Add(run);
+        _app.test.list.Add(run);
 
         await Report();
 
@@ -268,10 +268,10 @@ public class ReportActionTests
     public async Task Report_Junit_StaleStatus_EmitsErrorWithReason()
     {
         // A test that could not load is an error in junit — never a quiet skip.
-        _app.Test.Format = global::app.test.Format.JUnit;
+        _app.test.list.Setting.Format = global::app.test.Format.JUnit;
         var run = NewTest("StaleTest", global::app.test.Status.Stale);
         run.StatusReason = "goal hash changed since build";
-        _app.Test.Add(run);
+        _app.test.list.Add(run);
 
         await Report();
 
@@ -294,7 +294,7 @@ public class ReportActionTests
         await vars.Set("items", new List<int> { 1, 2, 3 });
         await vars.Set("maybe", null);
         var err = new AssertionError(1, 2) { Variables = vars.Snapshot() };
-        _app.Test.Add(NewTest("Failing", global::app.test.Status.Fail, err));
+        _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 
         await Report();
 

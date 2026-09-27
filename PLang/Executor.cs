@@ -70,15 +70,16 @@ namespace PLang
 			// Test mode (--test is canonical; --tester is gone)
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
-				app.Test = new global::app.test.list.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
+				// The setting first: it names the actor the run's session opens on.
 				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var applyResult = app.Setting.Set(app.Test, testDict);
+					var applyResult = app.Setting.Set(app.test.list.Setting, testDict);
 					if (!applyResult.Success) return (null, applyResult);
 				}
+				app.test.list.Open();
 			}
 
 			// App settings (--app={"create":true}) — the convert-walk (public-setter gate + per-leaf

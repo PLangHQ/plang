@@ -233,12 +233,12 @@ public class RunActionTests
 
         await RunTests(new List<global::app.test.@this> { test });
 
-        var coverage = _app.Test.Coverage;
+        var coverage = _app.test.list.Report.Coverage;
         await Assert.That(coverage.ModuleActions.Any(x => x.Module == "variable" && x.Action == "set")).IsTrue();
     }
 
-    // After a test completes, its App.Test.Coverage is merged into the parent
-    // App.Test.Coverage via Coverage.Merge. Run-wide view accumulates observations
+    // After a test completes, its App.test.list.Report.Coverage is merged into the parent
+    // App.test.list.Report.Coverage via Coverage.Merge. Run-wide view accumulates observations
     // from all child tests (unions module.action pairs and branch-site indices).
     [Test]
     public async Task Run_TestChildCoverage_MergedIntoParentCoverage()
@@ -249,11 +249,11 @@ public class RunActionTests
         });
 
         // Pre-populate parent's coverage with something distinct
-        _app.Test.Coverage.RecordModuleAction("output", "write");
+        _app.test.list.Report.Coverage.RecordModuleAction("output", "write");
 
         await RunTests(new List<global::app.test.@this> { test });
 
-        var observed = _app.Test.Coverage.ModuleActions.ToList();
+        var observed = _app.test.list.Report.Coverage.ModuleActions.ToList();
         await Assert.That(observed.Any(x => x == ("output", "write"))).IsTrue();
         await Assert.That(observed.Any(x => x == ("variable", "set"))).IsTrue();
     }
@@ -306,7 +306,7 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
-                observed = childApp.Test != null;
+                observed = childApp.test.list.Session != null;
         }
         global::app.module.action.test.start.ChildAppCreated += Probe;
         try
@@ -451,19 +451,19 @@ public class RunActionTests
 
         // BranchLabels populated via the production subscriber reading
         // (await result.Properties.Value("branchLabel")) and calling RecordBranchLabel.
-        await Assert.That(_app.Test.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
-        await Assert.That(_app.Test.Coverage.BranchLabels[site].Contains("true")).IsTrue();
+        await Assert.That(_app.test.list.Report.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
+        await Assert.That(_app.test.list.Report.Coverage.BranchLabels[site].Contains("true")).IsTrue();
 
         // BranchChains populated via the production subscriber reading
         // (await result.Properties.Value("branchChain")) and calling RecordBranchChain.
-        await Assert.That(_app.Test.Coverage.BranchChains.ContainsKey(site)).IsTrue();
-        var chain = _app.Test.Coverage.BranchChains[site];
+        await Assert.That(_app.test.list.Report.Coverage.BranchChains.ContainsKey(site)).IsTrue();
+        var chain = _app.test.list.Report.Coverage.BranchChains[site];
         await Assert.That(chain.Count).IsEqualTo(2);
         await Assert.That(chain[0]).IsEqualTo("true");
         await Assert.That(chain[1]).IsEqualTo("false");
 
         // Indices map gets the simple-path 0 (condition was true).
-        await Assert.That(_app.Test.Coverage.Branches[site].Contains(0)).IsTrue();
+        await Assert.That(_app.test.list.Report.Coverage.Branches[site].Contains(0)).IsTrue();
     }
 
     // BeforeWrite output capture: writes routed to the "output" channel land on
@@ -473,19 +473,13 @@ public class RunActionTests
     [Test]
     public async Task Run_OutputCapture_OutputChannelOnly_ErrorChannelExcluded()
     {
-        // Two foundational channels need to exist on the child App's User actor
-        // before the fixture runs (otherwise output.write fails with ChannelNotFound).
-        // Register them at ChildAppCreated time, against MemoryStreams we don't read —
-        // we only assert through Run.Output, which is fed by the production
-        // BeforeWrite subscriber in test/start.cs, not by reading these streams.
-        var outStream = new System.IO.MemoryStream();
+        // The child App's output is the test's session (test.start opens it); the error channel
+        // is a MemoryStream we don't read — we only assert through the test's Stdout, which is the
+        // session's text.
         var errStream = new System.IO.MemoryStream();
         void Probe(global::app.@this childApp)
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
-            childApp.User.Channel.Register(new StreamChannel(
-                global::app.channel.list.@this.Output, outStream,
-                ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
             childApp.User.Channel.Register(new StreamChannel(
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });

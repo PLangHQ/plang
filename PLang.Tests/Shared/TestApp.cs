@@ -1,8 +1,8 @@
 namespace PLang.Tests;
 
 /// <summary>
-/// App factory for the C# unit suites. Spins up a test session (<c>app.Test</c> non-null,
-/// presence = test mode) so the settings store is in-memory (see
+/// App factory for the C# unit suites. Opens a test session (<c>app.test.list.Open()</c>,
+/// an open session = test mode) so the settings store is in-memory (see
 /// <c>app.@this.CreateSettingsStore</c>) — the TUnit binaries never go through
 /// <c>Executor</c>/<c>plang --test</c>, so without this they fall to the on-disk SQLite
 /// store and pollute shared fixtures across runs. Prefer this over <c>new app.@this(...)</c>
@@ -17,7 +17,7 @@ public static class TestApp
     {
         var app = new global::app.@this(absolutePath, environment, autoWireConsoleChannels);
         // Presence = test mode: in-memory settings store, no on-disk pollution.
-        app.Test = new global::app.test.list.@this(app.System.Context);
+        app.test.list.Open();
         // Swap in the no-crypto signing mock so tests don't pay ed25519 keygen +
         // keccak256 + signing per Data. Real-signing tests use a plain app.@this.
         // IsBuiltIn keeps the mock out of the Code snapshot (it has no loadable

@@ -49,8 +49,8 @@ public class LoudRunTests
     // The run's tests live in the session; the verdict reads them there.
     private global::app.error.Error? Verdict(params global::app.test.@this[] tests)
     {
-        foreach (var test in tests) _app.Test.Add(test);
-        return _app.Test.Verdict();
+        foreach (var test in tests) _app.test.list.Add(test);
+        return _app.test.list.Report.Verdict();
     }
 
     [Test]
@@ -103,8 +103,8 @@ public class LoudRunTests
     [Test]
     public async Task Report_FailedRun_FailsAfterWritingTheArtefact()
     {
-        _app.Test.Add(NewTest("A", Status.Pass));
-        _app.Test.Add(NewTest("Old", Status.Stale, "no .pr"));
+        _app.test.list.Add(NewTest("A", Status.Pass));
+        _app.test.list.Add(NewTest("Old", Status.Stale, "no .pr"));
 
         var result = await new global::app.module.action.test.report(_app.User.Context).Start();
 
@@ -118,7 +118,7 @@ public class LoudRunTests
     [Test]
     public async Task Report_PassingRun_Succeeds()
     {
-        _app.Test.Add(NewTest("A", Status.Pass));
+        _app.test.list.Add(NewTest("A", Status.Pass));
 
         var result = await new global::app.module.action.test.report(_app.User.Context).Start();
 

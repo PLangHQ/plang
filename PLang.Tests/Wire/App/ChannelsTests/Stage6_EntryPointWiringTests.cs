@@ -18,7 +18,8 @@ public class Stage6_EntryPointWiringTests
     {
         // App ctor offers an opt-out for entry points that own the wiring.
         // With autoWireConsoleChannels:false, the per-actor Channels are empty.
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s6a", autoWireConsoleChannels: false);
+        // A plain App — TestApp.Create opens a test session, which is a channel.
+        await using var app = new global::app.@this("/tmp/s6a", autoWireConsoleChannels: false);
         await Assert.That(app.User.Channel.ChannelNames.Any()).IsFalse();
         await Assert.That(app.System.Channel.ChannelNames.Any()).IsFalse();
     }

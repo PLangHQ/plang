@@ -45,7 +45,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Test != null).IsTrue();
+        await Assert.That(engine!.test.list.Session != null).IsTrue();
         await Assert.That((string?)await engine.System.Context.Variable.GetValue("goalFile"))
             .IsEqualTo("/system/.build/test.pr");
         await using var _ = engine;
@@ -62,9 +62,9 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Test != null).IsTrue();
-        await Assert.That(engine.Test.TimeoutSeconds).IsEqualTo(5);
-        await Assert.That(engine.Test.Parallel).IsEqualTo(3);
+        await Assert.That(engine!.test.list.Session != null).IsTrue();
+        await Assert.That(engine.test.list.Setting.TimeoutSeconds).IsEqualTo(5);
+        await Assert.That(engine.test.list.Setting.Parallel).IsEqualTo(3);
         await using var _ = engine;
     }
 
@@ -151,7 +151,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Test != null).IsFalse();
+        await Assert.That(engine!.test.list.Session != null).IsFalse();
         await Assert.That(engine.Debug != null).IsFalse();
         await Assert.That(engine.Build != null).IsFalse();
         await Assert.That((string?)await engine.System.Context.Variable.GetValue("goalFile"))
@@ -168,7 +168,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Test != null).IsTrue();
+        await Assert.That(engine!.test.list.Session != null).IsTrue();
         await Assert.That(engine.Debug != null).IsTrue();
         await using var _ = engine;
     }

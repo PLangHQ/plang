@@ -21,20 +21,21 @@ public partial class report : IContext
 
     public async Task<data.@this> Start()
     {
-        // The run's tests live in one place — the session.
-        var testing = Context.App.Test;
-        var results = testing.Tests;
+        // The run's tests live in one place — the test list.
+        var testing = Context.App.test.list;
+        var results = testing.Items().ToList();
         var format = await ResolveFormat(testing);
+        // A run nested inside a test (its App's actor is running one) leaves its verdict to that test.
+        var nested = global::app.test.@this.Current(Context) != null;
 
-        // Suppress the console summary when we're nested inside another test
-        // (Current is set by test.start when it spins up the per-test child App).
+        // Suppress the console summary when we're nested inside another test.
         // The parent test consumes results via the returned Data Properties;
         // printing the nested run's status lines would pollute the outer output.
-        if (testing.Current == null)
+        if (!nested)
         {
             var console = new StringBuilder();
             RenderConsole(console, results, testing, Context);
-            RenderCoverageTables(console, testing, Context.App.module.list);
+            RenderCoverageTables(console, testing.Report, Context.App.module.list);
             await Context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
         }
 
@@ -59,7 +60,7 @@ public partial class report : IContext
 
         // Surface the artefact for observability: PLang tests inspect these on %report%
         // without a filesystem round-trip. All values are scalars so assert.* validate them.
-        var summary = testing.Summary();
+        var summary = testing.Report.Summary();
         int variableSnapshotCount = results.Count(t => t.Error?.Variables is { CountRaw: > 0 });
 
         // Return the tests so a parent runner can propagate them via `write to %results%`.
@@ -75,7 +76,7 @@ public partial class report : IContext
 
         // The run's verdict, at the top level only — a nested run's results are its parent test's to
         // judge. The artefact is already written, so a failed run still leaves its report.
-        if (testing.Current == null && testing.Verdict() is { } failed)
+        if (!nested && testing.Report.Verdict() is { } failed)
             return Context.Error(failed);
         return result;
     }
@@ -84,7 +85,7 @@ public partial class report : IContext
     private async Task<global::app.test.Format> ResolveFormat(global::app.test.list.@this testing)
     {
         var over = Format == null ? null : (await Format.Value())?.Clr<string>();
-        if (over == null) return testing.Format;
+        if (over == null) return testing.Setting.Format;
         return string.Equals(over, "junit", StringComparison.OrdinalIgnoreCase)
             ? global::app.test.Format.JUnit
             : global::app.test.Format.Json;
@@ -104,7 +105,7 @@ public partial class report : IContext
     private static void RenderConsole(StringBuilder sb, IReadOnlyList<global::app.test.@this> results,
         global::app.test.list.@this testing, actor.context.@this context)
     {
-        var summary = testing.Summary();
+        var summary = testing.Report.Summary();
         sb.AppendLine($"Test summary: {results.Count} total, "
             + $"{summary[global::app.test.Status.Pass]} pass, {summary[global::app.test.Status.Fail]} fail, "
             + $"{summary[global::app.test.Status.Timeout]} timeout, {summary[global::app.test.Status.Stale]} stale, "
@@ -152,7 +153,7 @@ public partial class report : IContext
         }
     }
 
-    private static void RenderCoverageTables(StringBuilder sb, global::app.test.list.@this testing, global::app.module.list.@this modules)
+    private static void RenderCoverageTables(StringBuilder sb, global::app.test.report.@this testing, global::app.module.list.@this modules)
     {
         sb.AppendLine();
         sb.AppendLine("Module.action coverage:");

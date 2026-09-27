@@ -46,9 +46,9 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_TimeoutSeconds_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
+        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
         await result.IsSuccess();
-        await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(-5);
+        await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(-5);
     }
 
     // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
@@ -56,11 +56,11 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
-        var zero = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["parallel"] = 0 });
         await zero.IsSuccess();
-        await Assert.That(_app.Test.Parallel.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.test.list.Setting.Parallel.ToInt32()).IsEqualTo(0);
 
-        var neg = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["parallel"] = -1 });
         await neg.IsSuccess();
     }
 
@@ -85,7 +85,7 @@ public class EdgeCaseTests
         var outerResult = await outerAction.Start();
 
         await outerResult.IsSuccess();
-        await Assert.That(_app.Test.Count).IsEqualTo(0);
+        await Assert.That(_app.test.list.Items().Count()).IsEqualTo(0);
     }
 
     // --test={"path":"../../../etc"} → rejected. Discovery is constrained to
@@ -122,7 +122,7 @@ public class EdgeCaseTests
         var run = new global::app.test.@this() { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
-        _app.Test.Add(run);
+        _app.test.list.Add(run);
 
         var action = new global::app.module.action.test.report(_app.User.Context);
         await action.Start();
@@ -142,7 +142,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["format"] = "csv" });
         await result.IsFailure();
     }
 }

@@ -56,6 +56,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         if (entry == null) return;
         var mode = (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>())!.Value;
         Build = mode == global::app.Mode.Build ? new global::app.module.action.build.@this(context) : null;
-        Test = mode == global::app.Mode.Test ? new global::app.test.list.@this(context) : null;
+        if (mode == global::app.Mode.Test && test.list.Session == null) test.list.Open();
+        else if (mode != global::app.Mode.Test) await test.list.Close();
     }
 }

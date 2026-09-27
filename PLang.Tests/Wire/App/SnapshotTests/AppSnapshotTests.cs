@@ -32,7 +32,7 @@ public class AppSnapshotTests
 
         await Assert.That((await (await dst.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
         await Assert.That(dst.Build != null).IsTrue();
-        await Assert.That(dst.Test == null).IsTrue();
+        await Assert.That(dst.test.list.Session == null).IsTrue();
     }
 
     [Test]

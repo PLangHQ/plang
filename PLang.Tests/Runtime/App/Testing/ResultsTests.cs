@@ -27,8 +27,8 @@ public class ResultsTests
     [Test]
     public async Task NewInstance_Count_IsZero()
     {
-        await Assert.That(_app.Test.Count).IsEqualTo(0);
-        await Assert.That(_app.Test.Tests.Any()).IsFalse();
+        await Assert.That(_app.test.list.Items().Count()).IsEqualTo(0);
+        await Assert.That(_app.test.list.Items().Any()).IsFalse();
     }
 
     // Adding a test makes it enumerable via the session.
@@ -36,10 +36,10 @@ public class ResultsTests
     public async Task Add_Test_AppearsInEnumeration()
     {
         var test = NewTest("Alpha");
-        _app.Test.Add(test);
+        _app.test.list.Add(test);
 
-        await Assert.That(_app.Test.Count).IsEqualTo(1);
-        await Assert.That(_app.Test.Tests.Contains(test)).IsTrue();
+        await Assert.That(_app.test.list.Items().Count()).IsEqualTo(1);
+        await Assert.That(_app.test.list.Items().Contains(test)).IsTrue();
     }
 
     // Mixed Pass/Fail/Timeout/Stale/Skipped tests produce correct per-status counts.
@@ -53,10 +53,10 @@ public class ResultsTests
         var stale = NewTest("S"); stale.Complete(global::app.test.Status.Stale);
         var skipped = NewTest("K"); skipped.Complete(global::app.test.Status.Skipped);
 
-        _app.Test.Add(pass1); _app.Test.Add(pass2); _app.Test.Add(fail);
-        _app.Test.Add(timeout); _app.Test.Add(stale); _app.Test.Add(skipped);
+        _app.test.list.Add(pass1); _app.test.list.Add(pass2); _app.test.list.Add(fail);
+        _app.test.list.Add(timeout); _app.test.list.Add(stale); _app.test.list.Add(skipped);
 
-        var summary = _app.Test.Summary();
+        var summary = _app.test.list.Report.Summary();
 
         await Assert.That(summary[global::app.test.Status.Pass]).IsEqualTo(2);
         await Assert.That(summary[global::app.test.Status.Fail]).IsEqualTo(1);
@@ -76,12 +76,12 @@ public class ResultsTests
         var tasks = Enumerable.Range(0, workers).Select(w => Task.Run(() =>
         {
             for (int i = 0; i < perWorker; i++)
-                _app.Test.Add(NewTest($"W{w}-{i}"));
+                _app.test.list.Add(NewTest($"W{w}-{i}"));
         })).ToArray();
 
         await Task.WhenAll(tasks);
 
-        await Assert.That(_app.Test.Count).IsEqualTo(workers * perWorker);
+        await Assert.That(_app.test.list.Items().Count()).IsEqualTo(workers * perWorker);
     }
 
     // Complete(status) sets the terminal status and captures elapsed duration

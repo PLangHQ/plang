@@ -42,10 +42,11 @@ public partial class start : IContext
                 if (await row.Value() is global::app.test.@this test) tests.Add(test);
         var parentApp = Context.App;
         // The number lowers itself — absent slot falls to the stated default.
-        int parallel = Parallel == null ? parentApp.Test.Parallel.ToInt32()
-            : (await Parallel.Value())?.ToInt32() ?? parentApp.Test.Parallel.ToInt32();
-        double timeoutSeconds = Timeout == null ? parentApp.Test.TimeoutSeconds.ToDouble()
-            : (await Timeout.Value())?.ToDouble() ?? parentApp.Test.TimeoutSeconds.ToDouble();
+        var setting = parentApp.test.list.Setting;
+        int parallel = Parallel == null ? setting.Parallel.ToInt32()
+            : (await Parallel.Value())?.ToInt32() ?? setting.Parallel.ToInt32();
+        double timeoutSeconds = Timeout == null ? setting.TimeoutSeconds.ToDouble()
+            : (await Timeout.Value())?.ToDouble() ?? setting.TimeoutSeconds.ToDouble();
         // Sentinel: ≤ 0 means no timeout (the type enforces no bound; the consumer reads intent).
         var timeout = timeoutSeconds <= 0 ? System.Threading.Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(timeoutSeconds);
 
@@ -77,7 +78,7 @@ public partial class start : IContext
         // would hurt CI visibility.
         if (test.Status != global::app.test.Status.Ready)
         {
-            parentApp.Test.Add(test);
+            parentApp.test.list.Add(test);
             return;
         }
 
@@ -89,10 +90,12 @@ public partial class start : IContext
         await using var childApp = new app.@this(parentApp.AbsolutePath);
         childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Parent = parentApp;
-        childApp.Test = new global::app.test.list.@this(childApp.System.Context);
+        // The test's session: the child App is testing while it is open, and every write out of the
+        // test lands in it (registered as the child's output).
+        var session = childApp.test.list.Open(test);
+        var coverage = childApp.test.list.Report.Coverage;
 
         test.Begin();
-        childApp.Test.Current = test;
 
         // Coverage subscriber — records every handler fire and every branch index observed.
         // Site key for branches = "goalName:stepIndex"; matches what the report renders.
@@ -102,7 +105,7 @@ public partial class start : IContext
             {
                 if (action != null)
                 {
-                    childApp.Test.Coverage.RecordModuleAction(action.Module.Name, action.Name);
+                    coverage.RecordModuleAction(action.Module.Name, action.Name);
 
                     // Coverage DERIVES from the natural facts — the runtime stamps nothing. A condition
                     // that fired (its own result is truthy) records the branch it took, keyed by its
@@ -114,8 +117,8 @@ public partial class start : IContext
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
                         var branchIdx = action.Step != null ? action.Step.Code.IndexOf(action) : -1;
-                        childApp.Test.Coverage.RecordBranch(site, branchIdx);
-                        childApp.Test.Coverage.RecordBranchLabel(site, action.Name);
+                        coverage.RecordBranch(site, branchIdx);
+                        coverage.RecordBranchLabel(site, action.Name);
                     }
                 }
                 return context.Ok();
@@ -123,31 +126,6 @@ public partial class start : IContext
             priority: int.MaxValue,
             stopOnError: false);
         childApp.User.Context.Events.Register(coverageBinding);
-
-        // Output capture — every write on the User actor's "output" channel
-        // appends to testRun.Output. BeforeWrite (not AfterWrite) — AfterWrite
-        // fires with the *result* of WriteCore (typically value-less Ok), while
-        // BeforeWrite fires with the *input* Data carrying the actual
-        // payload. Filtered by channel name so writes to "error" / "debug"
-        // don't get captured.
-        var outputBuf = new StringBuilder();
-        var outputBinding = new EventBinding(
-            app.@event.Trigger.BeforeWrite,
-            async (context, _, written) =>
-            {
-                // Append newline per write — the stream-channel's text serializer
-                // adds one on flush, so this matches "what stdout sees". A
-                // payload that already ends in \n just gets a blank line, which
-                // is still readable in the UI.
-                var wv = written == null ? null : await written.Value();
-                if (wv != null)
-                    outputBuf.Append(wv).Append('\n');
-                return context.Ok();
-            },
-            channelName: app.channel.list.@this.Output,
-            priority: int.MaxValue,
-            stopOnError: false);
-        childApp.User.Context.Events.Register(outputBinding);
 
         // Per-step timing — only top-level steps of the entry goal. Nested
         // sub-goal steps roll up because the caller's AfterStep doesn't
@@ -224,10 +202,10 @@ public partial class start : IContext
         finally
         {
             childApp.User.Context.PopCancellation();
-            test.Stdout = outputBuf.Length > 0 ? outputBuf.ToString() : null;
+            test.Stdout = session.Text;
         }
 
-        parentApp.Test.Coverage.Merge(childApp.Test.Coverage);
-        parentApp.Test.Add(test);
+        parentApp.test.list.Report.Coverage.Merge(coverage);
+        parentApp.test.list.Add(test);
     }
 }

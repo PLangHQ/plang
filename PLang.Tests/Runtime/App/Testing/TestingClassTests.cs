@@ -19,74 +19,92 @@ public class TestingClassTests
         _app = TestApp.Create("/test");
     }
 
-    // Fresh Testing starts disabled — today's stub behavior is preserved.
+    // A plain App is not testing: no session is open until a run opens one.
     [Test]
     public async Task NewInstance_IsEnabled_FalseByDefault()
     {
-        await Assert.That(_app.Test != null).IsFalse();
+        await using var plain = new global::app.@this("/test");
+        await Assert.That(plain.test.list.Session == null).IsTrue();
+        await Assert.That(plain.Mode.Value).IsEqualTo(global::app.Mode.Run);
     }
 
-    // Testing owns a Results collection, initialized, empty on construction.
+    // Opening a run's session makes the App testing; closing it ends that.
+    [Test]
+    public async Task OpenAndClose_TheSession_IsTheTestingState()
+    {
+        await using var plain = new global::app.@this("/test");
+        plain.test.list.Open();
+        await Assert.That(plain.Mode.Value).IsEqualTo(global::app.Mode.Test);
+        await plain.test.list.Close();
+        await Assert.That(plain.Mode.Value).IsEqualTo(global::app.Mode.Run);
+    }
+
+    // The test list always exists, empty on construction.
     [Test]
     public async Task NewInstance_Results_InitializedEmpty()
     {
-        await Assert.That(_app.Test).IsNotNull();
-        await Assert.That(_app.Test.Count).IsEqualTo(0);
+        await Assert.That(_app.test.list.Items().Count()).IsEqualTo(0);
     }
 
     // Testing owns a Coverage tracker, initialized with zero observed module.action and branch entries.
     [Test]
     public async Task NewInstance_Coverage_InitializedEmpty()
     {
-        await Assert.That(_app.Test.Coverage).IsNotNull();
-        await Assert.That(_app.Test.Coverage.ModuleActions.Any()).IsFalse();
-        await Assert.That(_app.Test.Coverage.Branches.Count).IsEqualTo(0);
+        await Assert.That(_app.test.list.Report.Coverage).IsNotNull();
+        await Assert.That(_app.test.list.Report.Coverage.ModuleActions.Any()).IsFalse();
+        await Assert.That(_app.test.list.Report.Coverage.Branches.Count).IsEqualTo(0);
     }
 
-    // Per-test in-flight state slot starts null; test.start assigns it for the currently running test.
+    // The run's own session holds no test: no test is current.
     [Test]
-    public async Task NewInstance_CurrentTest_NullUntilAssigned()
+    public async Task NewInstance_CurrentTest_NullOutsideATest()
     {
-        await Assert.That(_app.Test.Current).IsNull();
+        await Assert.That(global::app.test.@this.Current(_app.User.Context)).IsNull();
+    }
+
+    // A test's session makes its test the current one for the actor it is on, and takes its writes.
+    [Test]
+    public async Task TestSession_IsCurrent_AndTakesTheWrites()
+    {
+        await using var plain = new global::app.@this("/test");
+        var test = new global::app.test.@this { Goal = new global::app.goal.@this { Name = "Start" } };
+        var session = plain.test.list.Open(test);
+
+        await Assert.That(global::app.test.@this.Current(plain.User.Context)).IsSameReferenceAs(test);
+        await plain.User.Channel.WriteTextAsync(global::app.channel.list.@this.Output, "hello");
+        await Assert.That(session.Text?.ToString()).IsEqualTo("hello\n");
     }
 
     // Architect spec: TimeoutSeconds defaults to 30.
     [Test]
     public async Task NewInstance_TimeoutSeconds_DefaultIs30()
     {
-        await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(30);
+        await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(30);
     }
 
     // Architect spec: Parallel defaults to Environment.ProcessorCount.
     [Test]
     public async Task NewInstance_Parallel_DefaultIsProcessorCount()
     {
-        await Assert.That(_app.Test.Parallel.ToInt32()).IsEqualTo(Environment.ProcessorCount);
+        await Assert.That(_app.test.list.Setting.Parallel.ToInt32()).IsEqualTo(Environment.ProcessorCount);
     }
 
     // No tag filter by default — Include is empty, meaning every discovered test matches.
     [Test]
     public async Task NewInstance_Include_DefaultIsEmpty()
     {
-        await Assert.That(_app.Test.Include.Count.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.test.list.Setting.Include.Count.ToInt32()).IsEqualTo(0);
     }
 
     // No tag filter by default — Exclude is empty, meaning nothing is excluded.
     [Test]
     public async Task NewInstance_Exclude_DefaultIsEmpty()
     {
-        await Assert.That(_app.Test.Exclude.Count.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.test.list.Setting.Exclude.Count.ToInt32()).IsEqualTo(0);
     }
 
-    // Quiet mode by default — output.write is captured and shown only on failure.
-    [Test]
-    public async Task NewInstance_Verbose_DefaultIsFalse()
-    {
-        await _app.Test.Verbose.IsFalse();
-    }
-
-    // --test={"timeoutSeconds":60,"parallel":4,"include":["fast"],"exclude":["slow"],"verbose":true}
-    // applies all five fields to the Testing instance via the setting walk (keys are property names).
+    // --test={"timeoutSeconds":60,"parallel":4,"include":["fast"],"exclude":["slow"]}
+    // applies each field to the run's setting via the setting walk (keys are property names).
     [Test]
     public async Task Configure_FromJson_AllFieldsApplied()
     {
@@ -96,27 +114,25 @@ public class TestingClassTests
             ["parallel"] = 4,
             ["include"] = new List<object?> { "fast" },
             ["exclude"] = new List<object?> { "slow" },
-            ["verbose"] = true
         };
 
-        var result = _app.Setting.Set(_app.Test, config);
+        var result = _app.Setting.Set(_app.test.list.Setting, config);
 
         await result.IsSuccess();
-        await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(60);
-        await Assert.That(_app.Test.Parallel.ToInt32()).IsEqualTo(4);
-        await _app.Test.Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.Test.Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.Test.Verbose.IsTrue();
+        await Assert.That(_app.test.list.Setting.TimeoutSeconds.ToInt32()).IsEqualTo(60);
+        await Assert.That(_app.test.list.Setting.Parallel.ToInt32()).IsEqualTo(4);
+        await _app.test.list.Setting.Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.test.list.Setting.Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
     }
 
     // A choice setting given as CLI text (--test={"format":"junit"}) is made by the choice itself.
     [Test]
     public async Task Configure_AChoiceFromItsText()
     {
-        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["format"] = "junit" });
+        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["format"] = "junit" });
 
         await result.IsSuccess();
-        await Assert.That(_app.Test.Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
+        await Assert.That(_app.test.list.Setting.Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
     }
 
     // Include/Exclude are replace-semantics — the walk sets a fresh list<text>, so a second
@@ -124,22 +140,22 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
-        _app.Test.Include.Add(new global::app.type.item.text.@this("oldInclude"));
-        _app.Test.Exclude.Add(new global::app.type.item.text.@this("oldExclude"));
+        _app.test.list.Setting.Include.Add(new global::app.type.item.text.@this("oldInclude"));
+        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("oldExclude"));
 
-        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?>
+        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
         });
 
         await result.IsSuccess();
-        await Assert.That(_app.Test.Include.Count.ToInt32()).IsEqualTo(1);
-        await _app.Test.Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.Test.Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
-        await Assert.That(_app.Test.Exclude.Count.ToInt32()).IsEqualTo(1);
-        await _app.Test.Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.Test.Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await Assert.That(_app.test.list.Setting.Include.Count.ToInt32()).IsEqualTo(1);
+        await _app.test.list.Setting.Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.test.list.Setting.Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await Assert.That(_app.test.list.Setting.Exclude.Count.ToInt32()).IsEqualTo(1);
+        await _app.test.list.Setting.Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.test.list.Setting.Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
     }
 
     // Unknown config keys are rejected — the setting walk is strict (same as --app/--build/
@@ -147,7 +163,7 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_UnknownKey_Rejected()
     {
-        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?>
+        var result = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?>
         {
             ["timeoutSeconds"] = 10,
             ["futureOption"] = "not a valid key yet"
@@ -171,9 +187,9 @@ public class TestingClassTests
     [Test]
     public async Task Create_ExcludedTest_ComesBackSkippedWithItsReason()
     {
-        _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
+        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("slow"));
 
-        var test = await _app.Test.Create(TaggedGoal("slow"), _app.User.Context);
+        var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
@@ -183,10 +199,10 @@ public class TestingClassTests
     [Test]
     public async Task Create_ExcludeSetThroughTheWalk_Filters()
     {
-        var set = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        var set = _app.Setting.Set(_app.test.list.Setting, new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await set.IsSuccess();
 
-        var test = await _app.Test.Create(TaggedGoal("slow"), _app.User.Context);
+        var test = await _app.test.list.Create(TaggedGoal("slow"), _app.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
@@ -195,9 +211,9 @@ public class TestingClassTests
     [Test]
     public async Task Create_TakenTest_IsReady()
     {
-        _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
+        _app.test.list.Setting.Exclude.Add(new global::app.type.item.text.@this("slow"));
 
-        var test = await _app.Test.Create(TaggedGoal("fast"), _app.User.Context);
+        var test = await _app.test.list.Create(TaggedGoal("fast"), _app.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Ready);
         await Assert.That(test.StatusReason).IsNull();
