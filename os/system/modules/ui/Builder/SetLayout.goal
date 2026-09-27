@@ -1,6 +1,6 @@
 SetLayout
 - if %options.Name% is empty then call AskWhichTemplate
-- read /ui/template/%options.Name%/readme.md, allowReadFromSystem = true
+- read /ui/template/%options.Name%/start.md, allowReadFromSystem = true
     write to %readme%
 - read /ui/template/%options.Name%/layout.html, "" if empty, write to %layoutExample%    
 - read %options.OutputFile%, "" if empty, write to %currentDesign%
