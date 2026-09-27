@@ -88,12 +88,15 @@ public sealed class HttpTestServer : IDisposable
     /// "attacker's secret" can be seeded without granting the test actor
     /// permission to that URL.
     /// </summary>
-    public string MapStoredBody(byte[] body)
+    public string MapStoredBody(byte[] body, string? contentType = null)
     {
         var path = $"/seed/{Guid.NewGuid():N}";
         _store[path] = body;
+        if (contentType != null) _contentTypes[path] = contentType;
         return _baseAddress.GetLeftPart(UriPartial.Authority) + path;
     }
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _contentTypes = new();
 
     public string MapRequiresIdentity()
     {
@@ -193,6 +196,7 @@ public sealed class HttpTestServer : IDisposable
                     if (_store.TryGetValue(path, out var getBytes))
                     {
                         resp.StatusCode = 200;
+                        if (_contentTypes.TryGetValue(path, out var served)) resp.ContentType = served;
                         resp.ContentLength64 = getBytes.Length;
                         resp.OutputStream.Write(getBytes, 0, getBytes.Length);
                     }

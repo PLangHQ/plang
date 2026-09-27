@@ -27,6 +27,11 @@ public static class SerializerSyncTestExtensions
     public static global::app.data.@this Deserialize(this global::app.type.kind.@this format, string str, global::app.actor.context.@this ctx)
         => DeserializeFrom(format, str, ctx, global::app.View.Out);
 
+    /// <summary>The Data a hand-written wire string is, read as plang keeps it (Store) — an unsigned Data is
+    /// the at-rest form; between actors (Out) plang's format refuses one without a signature.</summary>
+    public static global::app.data.@this Stored(this global::app.type.kind.@this format, string str, global::app.actor.context.@this ctx)
+        => DeserializeFrom(format, str, ctx, global::app.View.Store);
+
     public static global::app.data.@this<T> Deserialize<T>(this global::app.type.kind.@this format, string str, global::app.actor.context.@this ctx)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {

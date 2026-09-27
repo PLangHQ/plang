@@ -437,11 +437,10 @@ public sealed class Default : IHttp
             return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
         }
 
-        // The response body enters through the one channel boundary: the http
-        // channel stamps {type, kind} from Content-Type and produces LAZY Data —
-        // the body is NOT deserialized at read time, it materializes on first
-        // touch (navigation / As<T>) through the reader registry. A status check
-        // (%response!status%) reads a Property and never touches the body.
+        // The response body is decoded by its Content-Type's format into LAZY Data, born with the asker's
+        // context — the body is NOT deserialized at read time, it materializes on first touch (navigation /
+        // As<T>). A status check (%response!status%) reads a Property and never touches the body. A response
+        // with no Content-Type is web text.
         var bytesRead = await ReadLimitedBytesAsync(response.Content, maxResponseSize, context);
         if (!bytesRead.Success)
         {
@@ -449,8 +448,8 @@ public sealed class Default : IHttp
             return bytesRead;
         }
 
-        var channel = new global::app.channel.type.http.@this(contentType, (await bytesRead.Value())!.Clr<byte[]>()!, context);
-        var result = await channel.Read();
+        var format = context.App.type.list.Mime(string.IsNullOrEmpty(contentType) ? "text/plain" : contentType, context).kind;
+        var result = await format.Decode((await bytesRead.Value())!.Clr<byte[]>()!, context, "http");
         // Metadata (status, headers, duration, url, ...) rides as Properties —
         // read with `!`. BuildProperties populates the protocol metadata; duration
         // is the one timing fact only this layer knows.

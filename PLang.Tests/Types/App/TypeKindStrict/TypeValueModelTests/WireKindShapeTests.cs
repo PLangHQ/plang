@@ -15,7 +15,7 @@ public class WireKindShapeTests
         => global::PLang.Tests.TestApp.SharedContext.Format("application/plang")
             .Serialize(data, global::PLang.Tests.TestApp.SharedContext).Peek()!.ToString()!;
     private static global::app.data.@this FromJson(string json)
-        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Deserialize(json, global::PLang.Tests.TestApp.SharedContext);
+        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Stored(json, global::PLang.Tests.TestApp.SharedContext);
 
     [Test] public async Task Wire_Write_EmitsTypeAsStructuredEntity()
     {

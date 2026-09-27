@@ -28,7 +28,7 @@ public class WireConverterDepthBombTests
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(16);
-        var result = plang.Deserialize(json, ctx);
+        var result = plang.Stored(json, ctx);
         await result.IsSuccess();
         // The open item slot's content opens as a VALUE — a dict, never a bare Data — and the
         // next level rides as that dict's `value` entry (a container entry may be a Data).
@@ -47,7 +47,7 @@ public class WireConverterDepthBombTests
         var ctx = global::PLang.Tests.TestApp.SharedContext;
         var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(200);
-        var result = plang.Deserialize(json, ctx);
+        var result = plang.Stored(json, ctx);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PlangDeserializeError");
         // Rejected for its depth — by the reader's own depth budget or the nested-Data MaxReadDepth.

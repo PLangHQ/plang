@@ -78,7 +78,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         // The sample: one auth-gated read per value per program run — a later
         // narrow (another alias, a cached binding) serves from memory, never
-        // from a re-read. The channel stamps + parses FROM the sample.
+        // from a re-read. The format decodes FROM the sample.
         byte[] bytes;
         if (_bytes != null) bytes = _bytes;
         else
@@ -94,8 +94,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
                 || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase);
         }
-        var channel = new global::app.channel.type.file.@this(Path, data.Context);
-        var read = await channel.Read(bytes);
+        // The file's format decodes its content, with the asker's context.
+        var read = await data.Context.App.type.list.Mime(Path.MimeType(data.Context), data.Context).kind.Decode(bytes, data.Context);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }

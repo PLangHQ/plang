@@ -40,7 +40,7 @@ public class WireReadLazyTests
         // value is a valid json *string* token whose content is malformed json,
         // typed {item, json} — read defers it, no throw.
         const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"item\",\"kind\":\"json\"},\"value\":\"{not json\"}";
-        var back = Plang.Deserialize(wire, Ctx);
+        var back = Plang.Stored(wire, Ctx);
         await Assert.That(back.HasRaw).IsTrue();
         await Assert.That(back.MaterializeCount()).IsEqualTo(0);
     }

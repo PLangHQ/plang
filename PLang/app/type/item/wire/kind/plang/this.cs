@@ -61,7 +61,8 @@ public sealed class @this : global::app.type.kind.@this
         }
     }
 
-    /// <summary>The whole Data the bytes are — reconstructed, its signature verified.</summary>
+    /// <summary>The whole Data the bytes are — reconstructed, its signature verified; between actors (Out) a Data
+    /// without a signature is refused.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
         System.Threading.CancellationToken ct = default)
@@ -87,6 +88,11 @@ public sealed class @this : global::app.type.kind.@this
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
                         "Signature verification failed", "SignatureInvalid", 400));
             }
+            // Between actors (the Out view) a Data rides signed — this format signs every one it writes — so
+            // content that arrives without a signature is refused. plang's own store (Store) keeps what it wrote.
+            else if (view == global::app.View.Out)
+                return context.Error(new global::app.error.ServiceError(
+                    "plang content arrived unsigned — between actors a Data rides signed", "UnsignedPlang", 403));
             return read;
         }
         catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)

@@ -74,17 +74,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             var bin = await readBytes.Value();
             bytes = _bytes = bin?.Value ?? System.Array.Empty<byte>();
         }
-        // Stamp the content's type by precedence: the response Content-Type rules;
-        // else the URL extension is the hint (.json → dict); else a typeless web
-        // response is text, not raw bytes.
+        // The content's format by precedence: the response Content-Type rules; else the URL extension
+        // is the hint (.json → json); else a typeless web response is text, not raw bytes. The format
+        // decodes it, with the asker's context.
         var context = data.Context;
-        global::app.data.@this read;
-        if (!string.IsNullOrEmpty(_contentType))
-            read = await new global::app.channel.type.http.@this(_contentType, bytes, context).Read();
-        else if (context.App.type.list.Extension(Path.Extension, context) is { IsNull: false })
-            read = await new global::app.channel.type.file.@this(Path, context).Read(bytes);
-        else
-            read = await new global::app.channel.type.http.@this("text/plain", bytes, context).Read();
+        var mime = !string.IsNullOrEmpty(_contentType) ? _contentType
+            : !string.IsNullOrEmpty(Path.Extension) ? Path.MimeType(context)
+            : "text/plain";
+        // (plang's own content from another actor answers only signed — its format refuses it otherwise.)
+        var read = await context.App.type.list.Mime(mime, context).kind.Decode(bytes, context);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }

@@ -53,14 +53,10 @@ public partial class Read : IContext
             return new data.@this("directory", new global::app.type.item.directory.@this(path),
                 Context.App.type.list["directory"], context: Context);
 
-        // The plang container (.pr) IS structured Data — a Goal, not content to
-        // narrow. Deserialize eagerly through the channel as before.
-        var mime = path.MimeType(Context);
-        if (mime.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
-        {
-            var prChannel = new global::app.channel.type.file.@this(path, Context);
-            return await prChannel.Read();
-        }
+        // Program content — a .pr is goal's format, plang's own is a whole Data — is the value itself, not a
+        // file to narrow: the path reads it through its format.
+        if (Context.App.type.list.Mime(path.MimeType(Context), Context).Name is "goal" or "wire")
+            return await path.ReadText(Context);
 
         // The reference: the extension rides as the kind (the content-kind
         // inference input — `.json` narrows to dict, `.csv` to table/list). ResolveVariables is the
