@@ -24,7 +24,7 @@ public sealed partial class @this
     /// with no class of its own (a file extension), minted by name.
     /// </summary>
     public global::app.type.kind.@this Kind(string name)
-        => Types.Select(t => (t.kind as global::app.type.kind.empty.@this)?[name]).FirstOrDefault(k => k != null)
+        => Types.Select(t => t.kind[name]).FirstOrDefault(k => k != null)
            ?? new global::app.type.kind.@this(name);
 
     /// <summary>
@@ -34,16 +34,8 @@ public sealed partial class @this
     /// </summary>
     public global::app.type.kind.@this Kind(System.Type clr)
     {
-        var kinds = (this["item"].kind as global::app.type.kind.empty.@this)!.kinds;
-        global::app.type.kind.@this? best = null;
-        if (clr != typeof(string))   // string is a scalar, never a sequence kind
-            foreach (var k in kinds)
-            {
-                if (k.ClrForm is not { } form || !form.IsAssignableFrom(clr)) continue;
-                if (form == clr) return k;
-                if (best is null || best.ClrForm!.IsAssignableFrom(form)) best = k;
-            }
-        return best ?? kinds.First(k => k.Name == "*");
+        var item = this["item"].kind;
+        return item[clr] ?? item["*"]!;
     }
 
     /// <summary>
@@ -220,8 +212,7 @@ public sealed partial class @this
             return (own.Name, null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
-            return (family, (Array.Find(types, t => t.Names(family))?.kind as global::app.type.kind.empty.@this)?
-                .kinds.FirstOrDefault(k => k.ClrForm == type)?.Name);
+            return (family, Array.Find(types, t => t.Names(family))?.kind[type]?.Name);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
     }

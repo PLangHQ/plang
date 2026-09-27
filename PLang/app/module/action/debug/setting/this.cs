@@ -3,7 +3,7 @@ namespace app.module.action.debug.setting;
 /// <summary>
 /// What <c>--debug</c> shows — <c>%!debug%</c>; <c>--debug={…}</c> is this run's values for it.
 /// </summary>
-public sealed class @this : global::app.type.item.setting.@this
+public sealed class @this : global::app.type.item.setting.module.@this
 {
     /// <summary>Filter to a specific goal name. Null = all goals.</summary>
     [Out, Store] public string? Goal { get; set; }

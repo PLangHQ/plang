@@ -17,7 +17,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this("setting", kind);
         var types = ctx.Context.App.type.list;
         // a row whose class is gone reads as nothing — the other rows still load
-        if (kind == null || (types["setting"].kind as global::app.type.kind.empty.@this)?[kind] is not global::app.type.item.setting.kind.@this known)
+        if (kind == null || types["setting"].kind[kind] is not global::app.type.item.setting.kind.@this known)
         {
             reader.Skip();
             return new global::app.type.item.@null.@this("setting", kind);

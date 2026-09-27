@@ -4,7 +4,7 @@ namespace app.module.action.build.setting;
 /// The build module's own settings — <c>%!build.cache%</c>, <c>%!build.files%</c>: what the builder reads.
 /// <c>--build={…}</c> is this run's values for them.
 /// </summary>
-public sealed class @this : global::app.type.item.setting.@this
+public sealed class @this : global::app.type.item.setting.module.@this
 {
     /// <summary>Whether the builder's LLM answers are cached. <c>--build={"cache":false}</c> turns it off.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Cache { get; set; } = true;

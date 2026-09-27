@@ -29,6 +29,15 @@ public class @this
     /// <summary>True for a type's empty kind — the type has no kind.</summary>
     public bool IsEmpty => Name.Length == 0;
 
+    /// <summary>One of this kind's type's kinds, by its name or an alias — a type holds its kinds on its
+    /// empty kind; null when it holds none by that name (the type list's <c>Kind(name)</c> then mints the
+    /// unknown kind, after asking every type).</summary>
+    public virtual @this? this[string name] => null;
+
+    /// <summary>One of this kind's type's kinds, by the C# form its values ride as (exact wins, then the
+    /// most derived assignable: <c>JsonElement</c>→json, <c>IList</c>→list); null when none claims it.</summary>
+    public virtual @this? this[System.Type clr] => null;
+
     /// <summary>The CLR form values of this kind ride as (json → <c>JsonElement</c>), or null
     /// when the kind claims no single CLR carrier. The collection's <c>[clrType]</c> door reads
     /// this to bridge a raw host to its kind (exact wins, then assignable — <c>IList</c>→list).</summary>
@@ -61,13 +70,20 @@ public class @this
     /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
     /// <c>{number, long}</c>, … for a number kind; the formats that are text for a text kind.
     /// </summary>
-    public list.@this list(actor.context.@this context)
+    public virtual list.@this list(actor.context.@this context)
     {
+        // the type holds its kinds: its own kind (the empty one) answers
         var owner = type(context);
-        var held = owner.kind is empty.@this root ? root.kinds.Select(k => k.Name) : [];
-        var formats = context.App.Format.KindsByFamily().TryGetValue(owner.Name, out var family) ? family : [];
+        return ReferenceEquals(owner.kind, this) ? Listed(owner.Name, [], context) : owner.kind.list(context);
+    }
+
+    /// <summary>The kinds <paramref name="held"/> and the formats of <paramref name="owner"/>'s family, each
+    /// as the full type it makes.</summary>
+    protected list.@this Listed(string owner, System.Collections.Generic.IEnumerable<string> held, actor.context.@this context)
+    {
+        var formats = context.App.Format.KindsByFamily().TryGetValue(owner, out var family) ? family : [];
         return new(held.Concat(formats).Distinct(System.StringComparer.OrdinalIgnoreCase)
-            .Select(name => context.App.type.list[new global::app.type.@this(owner.Name, name), context]));
+            .Select(name => context.App.type.list[new global::app.type.@this(owner, name), context]));
     }
 
     // --- Verbs: the kind owns what you can do with its values. Defaults here; kinds override. ---

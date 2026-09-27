@@ -47,14 +47,19 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         global::app.View mode, global::app.actor.context.@this? context)
         => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
 
-    /// <summary>One step down: an option of this class (<c>.os</c>), else the setting the longer path
-    /// names, as the asker's settings see it (<c>!llm</c> → <c>.query</c>, <c>!goal.call</c> → <c>.name</c>).</summary>
+    /// <summary>One step down: an option of this class (<c>.os</c>), else what this setting answers next
+    /// (<see cref="Next"/>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
         if (Option(key) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
-        return await parent.Context.Setting.Get($"{Path}.{key}");
+        return await Next(parent, key);
     }
+
+    /// <summary>What a key that isn't one of this class's options names — a module's settings answer an
+    /// action (<c>%!llm.query%</c>), an action's its options; a class has nothing past its options.</summary>
+    protected virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
+        => System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
 
     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
     /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>goal.list.setting.os</c>), where the next read

@@ -238,51 +238,36 @@ public sealed class @this
         var named = owner.GetType().GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>));
         if (named == null) return null;
-        return await Get(((global::app.type.item.setting.@this)Activator.CreateInstance(named.GetGenericArguments()[0])!).Path);
+        await Load();
+        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(named.GetGenericArguments()[0])!).Path);
     }
 
     // The class of settings at path, when there is one.
     private global::app.type.item.setting.kind.@this? Class(string path)
-        => (_context.App.type.list["setting"].kind as global::app.type.kind.empty.@this)?[path] as global::app.type.item.setting.kind.@this;
+        => _context.App.type.list["setting"].kind[path] as global::app.type.item.setting.kind.@this;
 
-    /// <summary>
-    /// The setting <paramref name="path"/> names, as this scope sees it (<c>%!path%</c>): a class's instance;
-    /// an action's option (<c>llm.query.cache</c>) — as the seam reads it, else the action's default; a node
-    /// for a path that leads to settings (a module, an action, a prefix of a class's path). NotFound when
-    /// the path names none.
-    /// </summary>
-    public async ValueTask<data.@this> Get(string path)
+    // The class at path as a value — a value its options can't take (this run's) is the error.
+    private data.@this Instance(string path)
     {
-        await Load();
-        if (Class(path) != null)
-        {
-            try { return new data.@this(path, this[path], context: _context); }
-            catch (InvalidOperationException ex) { return _context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
-        }
-
-        var hop = path.Split('.');
-        if (_context.App.module.list.Items().FirstOrDefault(m => string.Equals(m.Name, hop[0], StringComparison.OrdinalIgnoreCase)) is { } module)
-        {
-            if (hop.Length == 1) return Node(path);
-            if (module[hop[1]] is { } action)
-            {
-                if (hop.Length == 2) return Node(path);
-                if (hop.Length == 3 && action.Property.FirstOrDefault(p => string.Equals(p.Name, hop[2], StringComparison.OrdinalIgnoreCase)) is { } row)
-                {
-                    var set = await Get([$"{hop[0]}.{hop[1]}.{hop[2]}", $"{hop[0]}.{hop[2]}"]);
-                    return set.IsInitialized ? set : new data.@this(hop[2], row.Default, context: _context);
-                }
-            }
-        }
-
-        var classes = _context.App.type.list["setting"].kind as global::app.type.kind.empty.@this;
-        if (classes?.kinds.Any(k => k.Name.StartsWith(path + ".", StringComparison.OrdinalIgnoreCase)) == true)
-            return Node(path);
-        return _context.NotFound(path);
+        try { return new data.@this(path, this[path], context: _context); }
+        catch (InvalidOperationException ex) { return _context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
     }
 
-    // A path that leads to settings, as a value.
-    private data.@this Node(string path) => new(path, new global::app.type.item.setting.@this(path), context: _context);
+    /// <summary>
+    /// The first setting a <c>!</c> name the memory doesn't bind names (<c>%!llm%</c>, <c>%!http%</c>): the
+    /// module's settings — its own class when it has one — which answer the next hop themselves (an action,
+    /// then its options). NotFound when the name is no module's. (An owner's settings are reached through
+    /// the owner: <c>%!app.goal.list.setting%</c>.)
+    /// </summary>
+    public async ValueTask<data.@this> Get(string name)
+    {
+        if (!_context.App.module.list.Items().Any(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)))
+            return _context.NotFound(name);
+        await Load();
+        return Class(name) != null
+            ? Instance(name)
+            : new data.@this(name, new global::app.type.item.setting.module.@this(name), context: _context);
+    }
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
     // an option (path.llm.system) nests under it.

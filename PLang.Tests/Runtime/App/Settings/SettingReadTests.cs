@@ -67,16 +67,28 @@ public class SettingReadTests
         await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
     }
 
-    // A path that leads to settings is a node; an action's path is one too.
-    [Test] public async Task Paths_AreNodes()
+    // A module's settings answer an action; an action's answer its options.
+    [Test] public async Task ModuleAndAction_AreNodes()
     {
         await using var app = TestApp.Create("/test");
-        foreach (var path in new[] { "%!http%", "%!http.request%", "%!llm.query%" })
+        var http = await Read("%!http%", app.User.Context);
+        await http.IsSuccess();
+        await Assert.That(http.Peek()).IsTypeOf<global::app.type.item.setting.module.@this>();
+        foreach (var path in new[] { "%!http.request%", "%!llm.query%" })
         {
             var read = await Read(path, app.User.Context);
             await read.IsSuccess();
-            await Assert.That(read.Peek()!.GetType()).IsEqualTo(typeof(global::app.type.item.setting.@this));
+            await Assert.That(read.Peek()).IsTypeOf<global::app.type.item.setting.action.@this>();
         }
+    }
+
+    // An action's option named like an action member (variable.set's Name) reads the option, not the action.
+    [Test] public async Task ActionOption_NotTheActionsMember()
+    {
+        await using var app = TestApp.Create("/test");
+        var ctx = app.User.Context;
+        await ctx.Setting.Set("variable.set.name", ctx.Ok("%x%"));
+        await Assert.That((await (await Read("%!variable.set.name%", ctx)).Value())?.ToString()).IsEqualTo("%x%");
     }
 
     // An owner's option written through its own path lands in this run's settings, where the next read
