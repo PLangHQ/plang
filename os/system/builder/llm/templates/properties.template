@@ -13,6 +13,9 @@ its Example, whichever it has.
 Settings — only when a step names a %!path% whose root is a class of settings (step.Setting, the walk's):
 each class once, in the order the steps first name it, as %!path%(option: type = default, …).
 
+Keys — only when a step reads one of the app's by its key (%!app.goal["/show"]%, step.HasKey): the one line
+that teaches the form.
+
 Then every listed action ONCE (goal.call too when a listed action holds actions): its signature, the
 first line of its description, its notes (their headings one level down).
 
@@ -104,6 +107,13 @@ Settings
 {%- endunless -%}
 {%- endfor -%}
 {%- endfor -%}
+{%- assign keyed = false -%}
+{%- for s in goal.Step -%}{%- if s.HasKey -%}{%- assign keyed = true -%}{%- endif -%}{%- endfor -%}
+{%- if keyed %}
+
+Keys
+- %!app.goal["/show"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module["file"]%)
+{%- endif -%}
 {%- for n in names -%}
 {%- if n == "" -%}{%- continue -%}{%- endif -%}
 {%- assign mn = n | split: "." | first -%}

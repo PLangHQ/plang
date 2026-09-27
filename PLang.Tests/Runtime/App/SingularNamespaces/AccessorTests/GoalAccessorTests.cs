@@ -24,17 +24,17 @@ public class GoalAccessorTests
         await Assert.That((await found.Value())!.Name).IsEqualTo("AlphaGoal");
     }
 
-    // The builder's prompt line (Properties.llm) teaches %!app.goal["/start"]% and %!app.module["file"]%:
+    // The builder's Keys line (properties.template) teaches %!app.goal["/show"]% and %!app.module["file"]%:
     // both read, as written, in a real App — a goal's key is its address, matched without case.
     [Test] public async Task PromptLineExamples_Resolve_AsWritten()
     {
         await using var app = TestApp.Create("/test");
-        app.goal.list.Add(Goal(app, "Start"));
+        app.goal.list.Add(Goal(app, "Show"));
         var context = app.User.Context;
 
-        var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/start\"]%").Variable.Single().Start(context);
+        var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/show\"]%").Variable.Single().Start(context);
         await goal.IsSuccess();
-        await Assert.That((await goal.Value() as global::app.goal.@this)!.Name).IsEqualTo("Start");
+        await Assert.That((await goal.Value() as global::app.goal.@this)!.Name).IsEqualTo("Show");
 
         var module = await new global::app.type.item.variable.parser.@this("%!app.module[\"file\"]%").Variable.Single().Start(context);
         await module.IsSuccess();

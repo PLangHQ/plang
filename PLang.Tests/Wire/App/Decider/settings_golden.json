@@ -16,5 +16,21 @@
       "set %x% = %!goal.Name%"
     ],
     "block": ""
+  },
+  {
+    "goal": "Keyed",
+    "steps": [
+      "write out %!app.goal[\"/checkout\"].path%",
+      "set %m% = %!app.module[\"file\"]%"
+    ],
+    "block": "\n\nKeys\n- %!app.goal[\"/show\"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module[\"file\"]%)"
+  },
+  {
+    "goal": "SettingAndKeyed",
+    "steps": [
+      "set %!llm.cache% = false",
+      "write out %!app.goal[\"/checkout\"].name%"
+    ],
+    "block": "\n\nSettings\n- %!llm%(cache: bool = true)\n\nKeys\n- %!app.goal[\"/show\"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module[\"file\"]%)"
   }
 ]

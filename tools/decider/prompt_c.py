@@ -4,7 +4,8 @@
     user    the goal as written, one line per step: the step, `=> decider:` its picks ≥ 0.5 with their scores,
             `=> formal:` the certain ones (≥ 0.9) pre-filled — `?` for a value to fill, known values filled
             (`write to %x%` → variable.set(Name=%x%, Value=%!data%)); then Types; then Settings (only when
-            a step names a %!path% of a class of settings); then each listed action once (signature,
+            a step names a %!path% of a class of settings), then Keys (only when a step reads %!app.X["key"]%);
+            then each listed action once (signature,
             description line, notes), and goal.call's definition when a listed action holds actions (an
             action-typed property, on.error's Recovery)
 
@@ -50,6 +51,19 @@ def settings_named(goal):
             found = [SETTING_PATHS[p.lower()] for p in setting_paths(v) if p.lower() in SETTING_PATHS]
             if found and found[-1] not in named: named.append(found[-1])
     return named
+
+KEYS_LINE = '- %!app.goal["/show"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module["file"]%)'
+
+def is_keyed(v):
+    """Reads one of the app's by its key (variable.IsKeyed): !app, a concept, then an index."""
+    code = v['code']
+    return (len(code) > 2 and code[0].get('variable', '').lower() == '!app'
+            and 'property' in code[1] and not code[1]['property'].startswith('!') and 'index' in code[2])
+
+def keys_block(goal):
+    """The user message's Keys: the one line that teaches %!app.X["key"]%, when a step reads one so (step.HasKey)."""
+    keyed = any(is_keyed(v) for s in goal['steps'] for v in ref.parse(s['text']))
+    return '\n\nKeys\n' + KEYS_LINE if keyed else ''
 
 def settings_block(goal):
     """The user message's Settings: each class a step names, %!path%(option: type = default, …); none, nothing."""
@@ -260,7 +274,7 @@ def user_message_c(goal, picks):
         for p in b.declared(*a.split('.', 1))[0].values():
             faces.setdefault(p['type'], p.get('options'))
     out += '\n\nTypes' + ''.join('\n' + b.type_line(t, o) for t, o in faces.items())
-    out += settings_block(goal)
+    out += settings_block(goal) + keys_block(goal)
     for a in shown:
         module, name = a.split('.', 1)
         out += f'\n\n## {b.signature(a)}'

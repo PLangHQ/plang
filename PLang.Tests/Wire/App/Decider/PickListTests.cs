@@ -145,10 +145,11 @@ public class PickListTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
-    // Prompt C's Settings block: for each goal of settings_golden.json (tools/decider/settings_fixture.py), the
-    // classes its steps name, as python shows them from settings.json — the template's block, byte for byte.
+    // Prompt C's Settings and Keys blocks: for each goal of settings_golden.json (tools/decider/settings_fixture.py),
+    // the classes its steps name (from settings.json) and the %!app.X["key"]% line when a step reads one so — the
+    // template's blocks, byte for byte.
     [Test]
-    public async Task ThePromptCSettingsBlock_IsTheOnePythonSends()
+    public async Task ThePromptCSettingsAndKeys_AreTheOnesPythonSends()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
         var context = os.User.Context;
@@ -164,8 +165,10 @@ public class PickListTests
             await goal.Step.Scope(context);
             // the message ends in one newline (python: out + "\n"); the block is what comes before it
             var rendered = (await Rendered("properties.template", goal, context)).TrimEnd('\n');
-            var at = rendered.IndexOf("\n\nSettings\n", StringComparison.Ordinal);
-            var end = at < 0 ? -1 : rendered.IndexOf("\n\n", at + 2, StringComparison.Ordinal);
+            // the blocks run from the first of their headers to the actions' definitions (or the end)
+            var at = new[] { rendered.IndexOf("\n\nSettings\n", StringComparison.Ordinal), rendered.IndexOf("\n\nKeys\n", StringComparison.Ordinal) }
+                .Where(i => i >= 0).DefaultIfEmpty(-1).Min();
+            var end = at < 0 ? -1 : rendered.IndexOf("\n\n## ", at, StringComparison.Ordinal);
             var block = at < 0 ? "" : end < 0 ? rendered[at..] : rendered[at..end];
             var python = entry.GetProperty("block").GetString()!;
             if (block != python)

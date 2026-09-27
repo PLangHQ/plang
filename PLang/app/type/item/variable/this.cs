@@ -50,6 +50,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal bool IsMembers => !Code.Root.Name.StartsWith('!')
         && Code.Items().Skip(1).All(h => h is code.Property { IsBinding: false });
 
+    /// <summary>Reads one of the app's by its key — <c>%!app.goal["/show"]%</c>, <c>%!app.module["file"]%</c>: the
+    /// app, a concept, then an index.</summary>
+    internal bool IsKeyed => Code.Count > 2
+        && string.Equals(Code.Root.Name, "!app", System.StringComparison.OrdinalIgnoreCase)
+        && Code.Items().ElementAt(1) is code.Property { IsBinding: false }
+        && Code.Items().ElementAt(2) is code.Index;
+
     /// <summary>The dotted paths a setting's variable spells, shortest first — <c>%!app.test.setting.parallel%</c>
     /// spells <c>app</c>, <c>app.test</c>, <c>app.test.setting</c>, <c>app.test.setting.parallel</c> (its root
     /// without the <c>!</c>, then each member). A binding, an index or a method ends them; a variable that is no

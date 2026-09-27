@@ -19,10 +19,16 @@ public sealed partial class @this
     [JsonIgnore]
     public IReadOnlyList<global::app.type.item.setting.kind.@this> Setting => _setting;
 
+    private bool _hasKey;
+    /// <summary>The step's words read one of the app's by its key (<c>%!app.goal["/show"]%</c>) — the builder then
+    /// teaches that form. Left by the walk; false until then. Build-time only.</summary>
+    [JsonIgnore]
+    public bool HasKey => _hasKey;
+
     /// <summary>This step at the build's walk: its code — or, while it has none, the code its certain
     /// picks already know (<c>Pick.Known</c>) — walked action by action over <paramref name="scratch"/>,
-    /// leaving <see cref="Typed"/> and <see cref="Setting"/>. One error per property the store says is the
-    /// wrong type.</summary>
+    /// leaving <see cref="Typed"/>, <see cref="Setting"/> and <see cref="HasKey"/>. One error per property the
+    /// store says is the wrong type.</summary>
     public async Task<List<global::app.error.Error>> Scope(global::app.actor.context.@this scratch)
     {
         var variables = new global::app.type.item.variable.parser.@this(Text).Variable;
@@ -31,6 +37,7 @@ public sealed partial class @this
         _setting = variables
             .Select(v => v.Paths.Select(path => classes[path]).OfType<global::app.type.item.setting.kind.@this>().LastOrDefault())
             .OfType<global::app.type.item.setting.kind.@this>().Distinct().ToList();
+        _hasKey = variables.Any(v => v.IsKeyed);
         // the bare names the step's words write: %name% — not a setting (%!x%), not a way in (%x.y%)
         var names = variables
             .Where(v => v.IsBare).Select(v => v.Code.Root.Name).Distinct().ToList();
