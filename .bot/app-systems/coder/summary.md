@@ -1,42 +1,41 @@
 # coder — app-systems
 
-**Version:** v3
+**Version:** v4
 
 ## What this is
 app-systems makes every `app.X` the type X (a generic `type<X>` over its concept's `list<X>`), so the
 plang path, the C# path and the file path agree. The architect's plan
 (`.bot/app-systems/architect/plan.md`) lays it out in 13 stages.
 - v1: plan review and stage 0.
-- v2: stage 1, `Start` as the entry verb.
-- v3: stage 3, one set of types.
+- v2: stage 1 (`Start`).
+- v3: stage 3 (one set of types).
+- v4: stage 4 (the collected type).
 
 ## What was done
-- **v1, v2**: see `v1/result.md` and `v2/plan.md`; stage 1 is commit `8c135f519`.
-- **v3, stage 3** (details and commits in `v3/result.md`):
-  - The registry is one list of types. Each type owns its name, `Alias`, item class (`ClrType`), owned C# shapes and facts, and answers `Match(key)` (`IMatch<TSelf>`).
-  - `Add` is the one way in, answering errors as results. Types are born through the list.
-  - Kinds own their type. Number's precisions, hash's algorithms, choice's sets and path's schemes are all kinds; `kind.list(context)` lists a type's kinds.
-  - `type.kind` is never null (the empty kind).
-  - Results: the six suites are at or under the baseline, the prompt twins are byte-equal, and `plang --test` is unchanged.
-  - Files: `PLang/app/type/{this.cs, list/this.cs, list/Registry.cs, kind/**, item/**}`, `code/load.cs`, `variable/set.cs`, `Formal.cs`, `data/this.cs`, plus ~90 test files.
-- **Next:** stage 4, the collected type: `type.@this<T>`, `app.type` as `type<type>`, `item.history`, the strict `list<T>`, and the kind store moving under item.
+- **v1–v3**: see `v1/result.md`, `v2/plan.md`, `v3/result.md`.
+- **v4, stage 4** (details, commits and decisions in `v4/result.md`):
+  - `item.history`.
+  - Strict `list<T>`.
+  - `type<T, L>` with `list`, `Get(key)` (async, 404 on a miss) and `current(context)`; `IMatch`/`ICurrent`/`IList`.
+  - The types are a `list<type>` behind one `Admit` guard, holding no context.
+  - Kinds live on their types.
+  - `app.type` is the type named `type` (`%!app.type%`), its `list` the types.
+  - Programmer-written type names ask `await app.type.Get`.
+- **Results:** six suites at or under the baseline, prompt twins byte-equal, `plang --test` unchanged, no timing regression.
+- **Next:** stage 5, faces and honest facts. Trace first.
 
 ## Code example
-A type answers for itself, and the list walks it:
+The app's types, as C# reaches them:
 ```csharp
-// type/this.cs
-public ValueTask<@this?> Match(string key) => new(Names(key) ? this : null);
-internal bool Names(string key)
-    => string.Equals(Name, key, StringComparison.OrdinalIgnoreCase)
-       || Alias.Contains(key, StringComparer.OrdinalIgnoreCase);
+// app/this.cs
+public global::app.type.@this<global::app.type.@this, global::app.type.list.@this> type { get; }
+type = new(this);
+type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
 
-// type/list/this.cs
-public app.type.@this this[string name]
-    => Array.Find(Types, t => t.Names(name))
-       ?? throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
-```
-A kind declares the type it is a kind of:
-```csharp
-// type/item/number/kind/this.cs
-protected internal override string Owner => "number";
+// a name the programmer wrote — a miss is a result, not a throw
+var named = await context.App.type.Get(typeName);
+if (!named.Success) return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
+
+// a lookup by another key, on the list
+var type = context.App.type.list.Mime(mime, context);
 ```

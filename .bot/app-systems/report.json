@@ -163,6 +163,53 @@
         "health": "six suites at or under baseline (Types 23→19, Data 45→44); prompt twins byte-equal; plang --test 7/0/317 as baseline",
         "notes": "next: stage 4 after the architect's go; fixture DLLs need rebuilding (pre-existing)"
       }
+    },
+    {
+      "id": "8e2f4a6c-1d3b-4c7e-9f05-7a9b3c2d1e48",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T04:40:00Z",
+      "timestamp_end": "2026-09-27T07:10:00Z",
+      "intent": "Stage 4: the collected type — trace, bring back what doesn't hold, implement",
+      "before": {
+        "assumptions": "the registry can become a list<type>; App.Type sites move mechanically",
+        "risk": "list walks under the lock on every type lookup; two ways into the types' slots"
+      },
+      "plan": ".bot/app-systems/coder/v4/plan.md",
+      "actions": [
+        {
+          "paths": ["TestFixtures/TypeProvider/Money.cs", "TestFixtures/SignatureRendererShadow/Shadow.cs", "PLang.Tests/Shared/Fixtures/dlls/"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "stage 3 close: fixture DLLs rebuilt against the one set (32d05f0a1)"
+        },
+        {
+          "paths": ["PLang/app/type/item/history/this.cs", "PLang/app/type/item/list/this.Generic.cs", "PLang/app/type/this.Generic.cs", "PLang/app/type/item/ICurrent.cs", "PLang/app/type/item/IList.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "item.history, strict list<T>, type<T, L> with IMatch/ICurrent/IList"
+        },
+        {
+          "paths": ["PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs", "PLang/app/type/item/list/this.cs", "PLang/app/type/kind/"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "the types are a list<type> behind the Admit guard (option b, plang-40), no stored context; kinds on their types, no flat store"
+        },
+        {
+          "paths": ["PLang/app/this.cs", "PLang/", "PLang.Generators/Emission/Property/Data/this.cs", "PLang.Tests/"],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "App.Type → app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
+        }
+      ],
+      "after": {
+        "status": "stage 4 done and pushed (010bfa885 … 0af97062c)",
+        "health": "six suites at or under baseline (Types 17, Data 44); prompt twins byte-equal; plang --test 7/0/317; no timing regression",
+        "notes": "next: stage 5 trace"
+      }
     }
   ]
 }
