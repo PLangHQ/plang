@@ -14,7 +14,9 @@
       "plan": ".bot/app-systems/architect/plan.md",
       "actions": [
         {
-          "paths": [".bot/app-systems/architect/plan.md"],
+          "paths": [
+            ".bot/app-systems/architect/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "medium",
@@ -36,21 +38,29 @@
       "plan": ".bot/app-systems/coder/v1/plan.md",
       "actions": [
         {
-          "paths": [".bot/app-systems/architect/plan.md", ".bot/app-systems/coder/v1/result.md"],
+          "paths": [
+            ".bot/app-systems/architect/plan.md",
+            ".bot/app-systems/coder/v1/result.md"
+          ],
           "type": "review",
           "category": "doc",
           "confidence": "high",
           "context": "Stages 1, 3, 4 claims checked in the code (two read-only agents, key findings re-verified): generator's one await Run(), timer class named Start, callback.run, type navigation via clr reflection, registry context serves Format, extra alias/spelling sources and list mutators"
         },
         {
-          "paths": ["tools/decider/prompt_c.py", "tools/decider/out/bootstrap/os/system/builder/BuildGoal/Start.goal/Compile.json"],
+          "paths": [
+            "tools/decider/prompt_c.py",
+            "tools/decider/out/bootstrap/os/system/builder/BuildGoal/Start.goal/Compile.json"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step — python now follows C#; BootstrapTests green"
+          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step \u2014 python now follows C#; BootstrapTests green"
         },
         {
-          "paths": ["os/"],
+          "paths": [
+            "os/"
+          ],
           "type": "delete",
           "category": "config",
           "confidence": "high",
@@ -68,7 +78,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T01:35:00Z",
       "timestamp_end": "2026-09-27T02:10:00Z",
-      "intent": "Stage 1: Run → Start, the entry verb of everything that runs",
+      "intent": "Stage 1: Run \u2192 Start, the entry verb of everything that runs",
       "before": {
         "assumptions": "the generator emits one await Run() for every handler, so all 125 are renamed together; callback.run and the v0.1 dll/pdb follow Ingi's rulings",
         "risk": "a stale PlangConsole binary rebuilding os/system/test.goal with the old action name"
@@ -76,28 +86,45 @@
       "plan": ".bot/app-systems/coder/v2/plan.md",
       "actions": [
         {
-          "paths": ["PLang.Generators/Emission/Action/this.cs", "PLang/app/module/ICodeGenerated.cs", "PLang/app/callstack/call/this.cs", "PLang/app/goal/", "PLang/app/module/action/"],
+          "paths": [
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/app/module/ICodeGenerated.cs",
+            "PLang/app/callstack/call/this.cs",
+            "PLang/app/goal/",
+            "PLang/app/module/action/"
+          ],
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "Run → Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
+          "context": "Run \u2192 Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
         },
         {
-          "paths": ["PLang/app/module/action/environment/start.cs", "PLang/app/module/action/test/start.cs", "PLang/app/module/action/callback/start.cs", "os/system/modules/", "os/system/test.goal", "os/system/.build/test.pr"],
+          "paths": [
+            "PLang/app/module/action/environment/start.cs",
+            "PLang/app/module/action/test/start.cs",
+            "PLang/app/module/action/callback/start.cs",
+            "os/system/modules/",
+            "os/system/test.goal",
+            "os/system/.build/test.pr"
+          ],
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "environment/test/callback .run → .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
+          "context": "environment/test/callback .run \u2192 .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
         },
         {
-          "paths": ["PLang.Tests/"],
+          "paths": [
+            "PLang.Tests/"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
           "context": "~145 test files follow the rename (agent), reflection by name updated; pick_golden.json regenerated after the python twin's Start() regex fix"
         },
         {
-          "paths": ["os/apps/"],
+          "paths": [
+            "os/apps/"
+          ],
           "type": "delete",
           "category": "config",
           "confidence": "high",
@@ -115,7 +142,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T02:15:00Z",
       "timestamp_end": "2026-09-27T04:35:05Z",
-      "intent": "Stage 3: one set of types — trace first, bring back what doesn't hold, then implement",
+      "intent": "Stage 3: one set of types \u2014 trace first, bring back what doesn't hold, then implement",
       "before": {
         "assumptions": "the registry's seven stores can collapse into one list of types; the facts computed per type keep prompt C byte-equal",
         "risk": "kind never null ripples to ~110 null checks; types born bare still need the registry for their C# class"
@@ -123,35 +150,60 @@
       "plan": ".bot/app-systems/coder/v3/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/type/list/", "PLang/app/type/kind/", "PLang/app/type/primitive/this.cs", "PLang/app/type/item/choice/list/this.cs", "PLang/app/type/item/path/scheme/this.cs"],
+          "paths": [
+            "PLang/app/type/list/",
+            "PLang/app/type/kind/",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/type/item/choice/list/this.cs",
+            "PLang/app/type/item/path/scheme/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "trace of the stage 3 row; four asks sent to plang-40: kind's owner vs decode target, bare type births, Primitive.Aliases' four groups, generics by name in variable.set"
         },
         {
-          "paths": ["PLang/app/type/this.cs", "PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs", "PLang/app/type/item/IMatch.cs", "PLang/app/module/action/code/load.cs"],
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/type/item/IMatch.cs",
+            "PLang/app/module/action/code/load.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "one set of types (4bfd09c61): seven stores → one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
+          "context": "one set of types (4bfd09c61): seven stores \u2192 one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
         },
         {
-          "paths": ["PLang/app/type/this.cs", "PLang/app/type/item/", "PLang/app/data/this.cs", "PLang/app/module/action/variable/set.cs"],
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/",
+            "PLang/app/data/this.cs",
+            "PLang/app/module/action/variable/set.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) — ruling 2, taken to Ingi by plang-40"
+          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) \u2014 ruling 2, taken to Ingi by plang-40"
         },
         {
-          "paths": ["PLang/app/type/kind/", "PLang/app/type/item/number/kind/", "PLang/app/module/action/crypto/type/hash/kind/", "PLang/app/type/item/choice/set/this.cs", "PLang/app/type/item/path/scheme/this.cs"],
+          "paths": [
+            "PLang/app/type/kind/",
+            "PLang/app/type/item/number/kind/",
+            "PLang/app/module/action/crypto/type/hash/kind/",
+            "PLang/app/type/item/choice/set/this.cs",
+            "PLang/app/type/item/path/scheme/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "kinds own their type and aliases; number/hash kinds in the store; sets and schemes are kinds; kind.list(context); kind never null with the empty kind (d7c34770d, bfb8b1d8e, a56192aca)"
         },
         {
-          "paths": ["PLang.Tests/"],
+          "paths": [
+            "PLang.Tests/"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "medium",
@@ -159,8 +211,8 @@
         }
       ],
       "after": {
-        "status": "stage 3 done and pushed (4bfd09c61 … f88e1f8d3)",
-        "health": "six suites at or under baseline (Types 23→19, Data 45→44); prompt twins byte-equal; plang --test 7/0/317 as baseline",
+        "status": "stage 3 done and pushed (4bfd09c61 \u2026 f88e1f8d3)",
+        "health": "six suites at or under baseline (Types 23\u219219, Data 45\u219244); prompt twins byte-equal; plang --test 7/0/317 as baseline",
         "notes": "next: stage 4 after the architect's go; fixture DLLs need rebuilding (pre-existing)"
       }
     },
@@ -169,7 +221,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T04:40:00Z",
       "timestamp_end": "2026-09-27T07:10:00Z",
-      "intent": "Stage 4: the collected type — trace, bring back what doesn't hold, implement",
+      "intent": "Stage 4: the collected type \u2014 trace, bring back what doesn't hold, implement",
       "before": {
         "assumptions": "the registry can become a list<type>; App.Type sites move mechanically",
         "risk": "list walks under the lock on every type lookup; two ways into the types' slots"
@@ -177,36 +229,56 @@
       "plan": ".bot/app-systems/coder/v4/plan.md",
       "actions": [
         {
-          "paths": ["TestFixtures/TypeProvider/Money.cs", "TestFixtures/SignatureRendererShadow/Shadow.cs", "PLang.Tests/Shared/Fixtures/dlls/"],
+          "paths": [
+            "TestFixtures/TypeProvider/Money.cs",
+            "TestFixtures/SignatureRendererShadow/Shadow.cs",
+            "PLang.Tests/Shared/Fixtures/dlls/"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
           "context": "stage 3 close: fixture DLLs rebuilt against the one set (32d05f0a1)"
         },
         {
-          "paths": ["PLang/app/type/item/history/this.cs", "PLang/app/type/item/list/this.Generic.cs", "PLang/app/type/this.Generic.cs", "PLang/app/type/item/ICurrent.cs", "PLang/app/type/item/IList.cs"],
+          "paths": [
+            "PLang/app/type/item/history/this.cs",
+            "PLang/app/type/item/list/this.Generic.cs",
+            "PLang/app/type/this.Generic.cs",
+            "PLang/app/type/item/ICurrent.cs",
+            "PLang/app/type/item/IList.cs"
+          ],
           "type": "create",
           "category": "code",
           "confidence": "high",
           "context": "item.history, strict list<T>, type<T, L> with IMatch/ICurrent/IList"
         },
         {
-          "paths": ["PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs", "PLang/app/type/item/list/this.cs", "PLang/app/type/kind/"],
+          "paths": [
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/type/item/list/this.cs",
+            "PLang/app/type/kind/"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "the types are a list<type> behind the Admit guard (option b, plang-40), no stored context; kinds on their types, no flat store"
         },
         {
-          "paths": ["PLang/app/this.cs", "PLang/", "PLang.Generators/Emission/Property/Data/this.cs", "PLang.Tests/"],
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Tests/"
+          ],
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "App.Type → app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
+          "context": "App.Type \u2192 app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
         }
       ],
       "after": {
-        "status": "stage 4 done and pushed (010bfa885 … 0af97062c)",
+        "status": "stage 4 done and pushed (010bfa885 \u2026 0af97062c)",
         "health": "six suites at or under baseline (Types 17, Data 44); prompt twins byte-equal; plang --test 7/0/317; no timing regression",
         "notes": "next: stage 5 trace"
       }
@@ -216,7 +288,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T07:10:00Z",
       "timestamp_end": "2026-09-27T09:30:00Z",
-      "intent": "Stage 5: faces and honest facts — trace, one eval, goal descriptions above names",
+      "intent": "Stage 5: faces and honest facts \u2014 trace, one eval, goal descriptions above names",
       "before": {
         "assumptions": "facts change prompt C's text (one eval run); a comment move re-saves .pr with every step cached",
         "risk": "the face leaking onto the wire; steps re-asking the decider on re-save"
@@ -224,28 +296,53 @@
       "plan": ".bot/app-systems/coder/v5/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/type/item/", "PLang/app/variable/this.cs", "PLang/app/goal/", "tools/decider/build_pr.py", "PLang.Tests/Wire/App/Decider/pick_golden.json"],
+          "paths": [
+            "PLang/app/type/item/",
+            "PLang/app/variable/this.cs",
+            "PLang/app/goal/",
+            "tools/decider/build_pr.py",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "honest facts; python twin finds a type's class anywhere; one eval (58/58 golden; builder 11/12, 1 refused on a dict literal)"
         },
         {
-          "paths": ["PLang/app/type/this.cs", "PLang/app/type/this.Generic.cs", "PLang/app/data/this.Output.cs", "PLang/app/type/property/this.cs"],
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/this.Generic.cs",
+            "PLang/app/data/this.Output.cs",
+            "PLang/app/type/property/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "faces in the Out view; type slots written with Write (identity) in every view; Internal on wire and clr"
         },
         {
-          "paths": ["PLang/app/type/list/view/", "PLang/app/goal/this.cs", "PLang/app/goal/serializer/Reader.cs", "PLang/app/module/action/build/code/Default.cs"],
+          "paths": [
+            "PLang/app/type/list/view/",
+            "PLang/app/goal/this.cs",
+            "PLang/app/goal/serializer/Reader.cs",
+            "PLang/app/module/action/build/code/Default.cs"
+          ],
           "type": "delete",
           "category": "code",
           "confidence": "high",
           "context": "view/BuildTypeEntries/module Schema gone; goal.Description gone; hash covers comments; cache merge counts folded bodies"
         },
         {
-          "paths": ["os/", "Tests/", "start.md", "PLang/start.md", "PlangConsole/start.md", "Skill/start.md", "tools/decider/start.md", "Documentation/v0.2/goals-steps.md"],
+          "paths": [
+            "os/",
+            "Tests/",
+            "start.md",
+            "PLang/start.md",
+            "PlangConsole/start.md",
+            "Skill/start.md",
+            "tools/decider/start.md",
+            "Documentation/v0.2/goals-steps.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -257,6 +354,31 @@
         "health": "six suites at or under baseline; twins equal; plang --test 7/0/317",
         "notes": "next: stage 6 trace"
       }
+    },
+    {
+      "id": "caa010c4-98cc-4991-9de6-10f124390657",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T06:41:07Z",
+      "intent": "Stage 6: the reference - one parser, variable = text + code, .pr variable lists",
+      "before": {
+        "assumptions": "a reference is parsed at every read today; the .pr can carry each marked row's parsed variables so loading never parses",
+        "risk": "the generator losing IName on the namespace move (missing-parameter guard vanishes silently); marked .pr rows refused until rewritten"
+      },
+      "plan": ".bot/app-systems/coder/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/variable/",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/type/item/text/this.cs",
+            "PLang/app/data/reader/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "trace of read/write/render paths and the nine reference definitions; questions sent to architect"
+        }
+      ]
     }
   ]
 }
