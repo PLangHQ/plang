@@ -47,6 +47,21 @@ Ingi, 2026-09-27: a type's name is its namespace (`app.channel.type.goal`), and 
 - **The module's action list clash** (`app/module/action/list/` is the `list` module's handler folder). That's C#'s own namespace, a folder-layout question, and it stays with Ingi.
 - **`FamilyName`'s kinds** (path schemes, settings, typed lists): they're about meaning, not naming, and stay. The "subclass with no name is a kind of its base" rule isn't needed for the channel clash any more.
 
-## Comparison with the coder's trace
+## Comparison with the coder's trace (read after the above was pushed, a21e9e255)
 
-(to fill in after reading it)
+**The coder's is better, on points I missed:**
+- **The Python twins name types by the same guessed-tail rule, read off the C# source** (`params.py:plang_type`, `build_pr.py:plang_type`/`type_files`). I wrote "no Python change expected". Wrong: that's the language-boundary miss again (see memory `feedback_trace_language_boundary`). The fix is the coder's: a C# twin test writes `types.json` (namespace → word, aliases) and Python reads it, the `settings.json` pattern.
+- **Non-`@this` item classes** (`[PlangType]` with no name: LlmMessage, Ask, Identity, Error, …) take the lowercase class name today. I only traced `@this`. The coder names them namespace + class (`app.module.action.llm.llmmessage`).
+- **The `.pr` census** (58 files walked as JSON): bool, item, text, variable, number, list, choice, path, dict, goal, setting, action, type, plus the kinds `list<test>` and `list<llmmessage>`. I couldn't take it (the hook blocks `.pr` in shell) and left it as a check.
+- **Where the word is declared:** the coder uses `[PlangType("text")]` for the word and keeps the static `Alias` for other spellings. Mine put everything in `Alias`, with the first entry as the spelling, which gives position a meaning. The coder's matches how closed sets already declare their names (`[PlangType("operator")]`), so a declared word is declared the same way everywhere. **Adopted.**
+- **A whole-catalog render diff** before and after, as a byte-equal check.
+
+**Mine adds, and it goes in:**
+- `Sealed` becomes the words a loaded DLL may not claim as its word or alias.
+- **The type's Out-view face** (`%!app.type.text%` written out) shows `name` = the namespace under the rule. That's plang-visible, so Ingi hears about it.
+- `Admit` must see words and aliases from the first scanned entry on.
+- **The ~25 hand-spelled `Type => new("goal", …)`:** they derive from their class now (`new(typeof(@this))`, read off the class's declared word), not as a follow-up. Otherwise the word is declared twice, once in the attribute and once in the literal.
+
+**Same in both:** the namespace is the name and identity; the face is `word ?? Name`, so `.pr` files and prompts stay byte-equal; the alias guard; channel and app unblocked by the rule alone, with `FamilyName`'s kinds untouched.
+
+**Lesson:** my trace stopped at the C# boundary once more. The twins are code.
