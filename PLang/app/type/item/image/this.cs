@@ -24,8 +24,25 @@ namespace app.type.item.image;
 [global::app.Attributes.Format("svg", "image/svg+xml", Compressible = false)]
 [global::app.Attributes.Format("webp", "image/webp", Compressible = false)]
 [global::app.Attributes.Format("heic", "image/heic", Compressible = false)]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer,
+    global::app.type.item.IEncode<@this>
 {
+    /// <summary>Image's formats written: an image value is its bytes (a path-backed one reads them first,
+    /// through its own door). Any other value is no content of these formats — an error.</summary>
+    public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
+    {
+        var value = await data.Value();
+        if (!data.Success) return context.Error(data.Error!);
+        if (value is not @this image)
+            return context.Error(new global::app.error.Error(
+                $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not an image — nothing writes it as image content", "NoEncoder", 400));
+        await stream.WriteAsync(image.Bytes, ct);
+        await stream.FlushAsync(ct);
+        return context.Ok();
+    }
+
     public static string Example => "/images/photo.jpg";
     public static string Description => "An image: its bytes, or where they are. Its kind is its format (png, jpg, gif, …).";
     public static string Shape => "string";
