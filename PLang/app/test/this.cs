@@ -14,7 +14,7 @@ namespace app.test;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>,
-    global::app.type.item.IList<@this, list.@this>
+    global::app.type.item.IList<@this, list.@this>, global::app.type.item.setting.IConcept<setting.@this>
 {
     private Stopwatch? _stopwatch;
 

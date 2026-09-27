@@ -69,8 +69,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         if (Option(key) == null)
             throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
+        // onto this instance through the one convert walk (a choice from its text) — a value the option can't
+        // take is refused before this run holds it
+        var raw = value is global::app.data.@this held ? await held.Value() : value;
+        var applied = Apply(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [key] = raw }, context);
+        if (!applied.Success) throw new System.NotSupportedException(applied.Error!.Message);
         await Write(key, value, context);
-        return await base.Set(key, isIndex, value, context);
+        return this;
     }
 
     /// <summary>This run's value for <paramref name="key"/> under this setting's path, in the writer's

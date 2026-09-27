@@ -11,12 +11,19 @@ public sealed class @this<T, L> : @this
     where L : item.list.@this<T>
 {
     private readonly System.Lazy<L> _list;
+    // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>).
+    private readonly System.Type? _setting;
 
     /// <summary>The concept's type, its facts read from its class through the app's types — so it can
     /// stand as the type list's entry of its name. <c>app.type</c> itself is born before there is a list
     /// to read through, and is its identity alone.</summary>
     public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T), app.type?.list)
-        => _list = new(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+    {
+        _list = new(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+        _setting = typeof(T).GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
+            ?.GetGenericArguments()[0];
+    }
 
     /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first
     /// read; a concept whose list belongs to the asker has none here (its <c>List</c> says so).</summary>
@@ -78,6 +85,9 @@ public sealed class @this<T, L> : @this
             return current(parent.Context);
         if (string.Equals(key, "list", System.StringComparison.OrdinalIgnoreCase))
             return new data.@this(key, Of(parent.Context), parent: parent);
+        // the concept's own settings (%!app.test.setting%), as the asker's settings build them
+        if (_setting is { } @class && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase))
+            return await parent.Context.Setting.Of(@class);
         // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
         if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
         if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;

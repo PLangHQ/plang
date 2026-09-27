@@ -8,8 +8,7 @@ namespace app.test.list;
 /// and whether one is running: the app is testing while a <see cref="Session"/> is open. How a run runs is
 /// test's setting (<c>%!app.test.setting%</c>), read where it's needed.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<global::app.test.@this>,
-    global::app.type.item.setting.ISetting<global::app.test.setting.@this>
+public sealed class @this : global::app.type.item.list.@this<global::app.test.@this>
 {
     private readonly global::app.@this _app;
 

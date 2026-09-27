@@ -253,9 +253,15 @@ public sealed class @this
     {
         var named = owner.GetType().GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>));
-        if (named == null) return null;
+        return named == null ? null : await Of(named.GetGenericArguments()[0]);
+    }
+
+    /// <summary>The setting class <paramref name="class"/>, as this scope sees it — <c>%!app.test.setting%</c>,
+    /// the settings a concept's type answers.</summary>
+    public async ValueTask<data.@this> Of(System.Type @class)
+    {
         await Load();
-        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(named.GetGenericArguments()[0])!).Path);
+        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class)!).Path);
     }
 
     // The class of settings at path, when there is one.
