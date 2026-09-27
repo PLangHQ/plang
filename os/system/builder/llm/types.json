@@ -1,4 +1,7 @@
 {
+  "app": {
+    "word": null
+  },
   "app.actor": {
     "word": "actor"
   },

@@ -16,8 +16,18 @@ namespace app;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed partial class @this : IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>
+public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>
 {
+    /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
+    public override bool IsLeaf => false;
+
+    public override System.Threading.Tasks.ValueTask Output(global::app.channel.serializer.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+        => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
+
+    /// <summary>The one root: a copy of the app is the app.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     private readonly CancellationTokenSource _shutdownCts = new();
     private bool _disposed;
 
@@ -588,8 +598,12 @@ public sealed partial class @this : IAsyncDisposable, global::app.type.item.sett
 
         var goal = ((await loaded.Value()) as Goal)!;
 
-        // User code executes under the User actor's context.
-        return await goal.Start(User.Context);
+        // User code executes under the User actor's context — the app starts running through its on.start: a
+        // before that fails or cancels is the answer and the goal doesn't start; every after runs on the result.
+        var user = User.Context;
+        var answer = await on.start.Before(this, user);
+        var result = answer is { Success: false } or { Handled: true } ? answer : await goal.Start(user);
+        return await on.start.After(this, result, user);
     }
 
     /// <summary>
