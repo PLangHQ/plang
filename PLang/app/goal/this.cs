@@ -262,7 +262,17 @@ public sealed partial class @this
 
         // Exact-text match only — robust to reorder/insert/delete; a text change drops the prior
         // mapping and the LLM rebuilds that step fresh. Sets PriorText so the builder can emit @known.
-        var prior = existing.Step.Items().ToList();
+        // The prior steps are every step as the .pr holds it, a condition's folded body included (the
+        // source lists an indented body as steps of its own, as the hash walks them).
+        var prior = new List<global::app.goal.step.@this>();
+        void Held(global::app.goal.step.@this step)
+        {
+            prior.Add(step);
+            foreach (var action in step.Code.Items())
+                foreach (var body in action.Child.Items())
+                    if (body.Line.Number != step.Line.Number) Held(body);
+        }
+        foreach (var step in existing.Step.Items()) Held(step);
         if (prior.Count > 0)
         {
             var consumed = new HashSet<int>();

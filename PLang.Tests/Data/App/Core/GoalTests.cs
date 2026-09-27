@@ -237,6 +237,38 @@ public class VisibilityTests
     {
         await Assert.That((int)Visibility.Public).IsEqualTo(1);
     }
+}
+
+public class GoalCacheTests
+{
+    // A goal rebuilt from its .pr keeps every step cached, an indented body folded into its condition
+    // included: the source lists the body as a step of its own, the .pr holds it inside the condition.
+    [Test]
+    public async Task Merge_AFoldedBody_IsCachedLikeAnyStep()
+    {
+        var set = global::PLang.Tests.Shared.Make.Action("variable", "set", ("Name", "%x%"), ("Value", 1));
+        var condition = global::PLang.Tests.Shared.Make.Action("condition", "if", ("Left", "%b%"));
+        var body = new Step { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } };
+        body.Code.Add(set);
+        condition.Child.Add(body);
+        var gate = new Step { Index = 0, Text = "if %b%", Line = new() { Number = 4 } };
+        gate.Code.Add(condition);
+        var cached = new Goal { Name = "Start", Step = new GoalSteps { gate } };
+
+        var source = new Goal
+        {
+            Name = "Start",
+            Comment = "a comment the cached goal didn't have",
+            Step = new GoalSteps
+            {
+                new Step { Index = 0, Text = "if %b%", Line = new() { Number = 4 } },
+                new Step { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } },
+            },
+        };
+        source.Merge(cached);
+
+        await Assert.That(source.Step.IsCached).IsTrue();
+    }
 
     // The hash covers the source as written, comments included: a comment-only change is a change.
     [Test]
