@@ -109,6 +109,28 @@
         "health": "six suites at baseline (known flakes only); plang --test 7 pass / 0 fail / 317 stale, as baseline",
         "notes": "next: stage 3 after the architect's go"
       }
+    },
+    {
+      "id": "d71c2e58-4a3b-4f19-8c6e-2b9a0f5e7d34",
+      "bot": "coder",
+      "timestamp_start": "2026-09-27T02:15:00Z",
+      "timestamp_end": "",
+      "intent": "Stage 3: one set of types — trace first, bring back what doesn't hold, then implement",
+      "before": {
+        "assumptions": "the registry's seven stores can collapse into one list of types; the facts computed per type keep prompt C byte-equal",
+        "risk": "kind never null ripples to ~110 null checks; types born bare still need the registry for their C# class"
+      },
+      "plan": ".bot/app-systems/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/type/list/", "PLang/app/type/kind/", "PLang/app/type/primitive/this.cs", "PLang/app/type/item/choice/list/this.cs", "PLang/app/type/item/path/scheme/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "trace of the stage 3 row; four asks sent to plang-40: kind's owner vs decode target, bare type births, Primitive.Aliases' four groups, generics by name in variable.set"
+        }
+      ],
+      "after": {}
     }
   ]
 }
