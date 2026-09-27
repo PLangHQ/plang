@@ -273,3 +273,57 @@ exactly what the plan says variable is. The `type` fact of `%!app.variable.user%
   skipped. Born on each read; the dictionary stays the one store (its shape untouched).
 - One variable navigated as itself: its members by reflection; its `type` is the type of what it holds.
 - Tests: `VariableAccessorTests` (list, key, name, type, NotFound, overlay order, C# list throws).
+
+## 7e trace — settings
+
+**Today.**
+- `app/setting/this.cs` is one class for both lifetimes (`Storage.InMemory` / `Storage.Persistent`). The
+  in-memory side is a per-context chain of string-keyed Data (`context.Setting`, parent
+  `Parent?.Setting ?? App.Setting`, `actor/context/this.cs:134`); the persistent side is the `settings`
+  table of `App.SettingsStore` keyed by the path's first segment (`:43-60`, an unset one is an `AskError`).
+  It also holds the CLI convert-walk `Set(object node, dict)` (`:82-136`).
+- Writers: `set %!x%` → `context.Setting.Set(InMemory, "x", value)` (`variable/set.cs:127-133`);
+  Executor's `llm.cache` off (`Executor.cs:130`). Readers: the generated action-param seam only —
+  `context.Setting.Get(InMemory, "module.action.param", "module.param")` (`Generators/Emission/Property/
+  Data/this.cs:150`). **A plang read of `%!x%` does not reach the setting chain today**: the root hop
+  asks the variable store for `!x` (`code/Variable.cs:18`), which only holds the bindings (`!data`,
+  `!app`, …). `%!llm.cache%` reads NotFound.
+- The CLI walk lands on objects, not setting classes: `app.Debug`, `app.test.list.Setting`, `app` itself
+  (`--app`), each actor's `CallStack`, `app.Build` (`Executor.cs:64-117`).
+- `App.SettingsStore` (`IStore`, sqlite / in-memory in test mode) is used by: `setting` (the table above,
+  and the `setting.get/set/remove` actions — the key-value door), setup (`goal/setup/this.cs:107,142`),
+  the LLM cache (`OpenAi.cs:66`, `TypeSafe.cs:30`), identity (`identity/code/Default.cs:208-278`, one row
+  per identity), permission (`actor/permission/this.cs:62,99,129`, grants filtered by actor by hand).
+- `.goal` / `.pr` uses of the `setting` module in `os/` and `Tests/`: none. `%!x%` reads that exist are
+  bindings the Executor or a goal puts in the memory directly (`%!build.cache%`: `Executor.cs:121`
+  `userVars.Set("!build.cache", …)` and `Build.goal:7` `set default %!build.cache%`), `%!plang.*%`,
+  `%!step.Text%`, `%!trace.id%`.
+
+**Slices (proposal):**
+- **7e-1 — homes.** `app.store` (`app/store/this.cs` over today's `IStore`; `SettingsStore` goes; setup
+  and the LLM cache stay its owners). The machinery moves to `actor/setting/this.cs`: each actor has one
+  (`app.System.Setting`, `app.User.Setting` falling back to the system's), a context's this-run layer
+  chains to its actor's (`Parent?.Setting ?? Actor.Setting`); Executor's `llm.cache` lands on
+  `System.Setting`. `app/setting/this.cs` becomes the app's own setting class (`id`, `name`, `create`,
+  `environment`); `--app` lands there. No behaviour change.
+- **7e-2 — typed settings.** `ISetting<T>` on the owner; one table, a row `<actor>!<class path>` →
+  `Data<class>` whole; loaded in layers (row or defaults → this run → the step); the `%!…%` read reaches
+  it (new: today it doesn't); `setting.save` / `setting.remove`; `setting.get/set` go; `Storage` goes;
+  `test.list.Setting` becomes test's setting loaded like every other, and `--test` / `--debug` /
+  `--build` / callstack land on their owners' classes.
+- **7e-3 — identity and permission** into their setting classes, with the no-fallback marker. Security:
+  its own slice, reviewed on its own.
+
+**Questions (7e-2 can't start without them):**
+1. **Where an action parameter's setting lives.** Today every action param is a setting
+   (`%!llm.query.cache%` → `%!llm.cache%` → `[Default]`), keyed by string. With typed classes, is an
+   action's setting class *the action's own class* (its properties are the options: `%!llm.query%` is
+   one instance of `llm.query`'s settable properties, `%!llm%` a module class), or does each module
+   declare a setting class listing the params it lets be set? The first keeps "every param is a setting"
+   with no new files; the second is explicit but writes ~125 classes or drops most params from settings.
+2. **The `%!x%` read path.** `%!goal.list.setting.os%` parses to root `!goal`, then `.list`, `.setting`,
+   `.os`. Proposal: the root hop, for a `!` name the memory doesn't bind, asks the actor's setting for
+   that name's node (the settings under `goal`), and navigation steps down to the instance and its
+   property. Or is the whole class path one key (`!goal.list.setting`), read as one hop?
+3. **Row key's actor.** `user!goal.list.setting` — the actor's name (`system`/`user`), matching
+   `actor.Name`, lowercase?
