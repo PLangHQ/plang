@@ -139,7 +139,15 @@ public sealed class @this : item.list.@this<goal.@this>, item.ISetting<setting.@
   - **The settings are a C# class (Ingi: "define the settings in c#, not get, because we can then build on top of that"):** `setting/this.cs` under its owner. A missing key is the property's own default (`= false`, `= Public`; Ingi: never an empty result). `visibility` writes its default because its enum's zero is `Private` (`goal/this.cs:16`).
   - **The builder reads the setting class** (named by `ISetting<TSetting>`) the way it reads a type's facts: properties, types, defaults (`os: bool = false, visibility: visibility = public`); a plang call with an unknown key fails at build. No generator step.
   - One signature on every list, `all(setting)`: each list turns the call's dict into its own setting class; a list with none ignores it. The type's `Get(key)` calls `all` with the shared empty setting, so every default.
-- A list is navigated by index, so `list.all` never clashes with an element's key. plang paths are written in lowercase (`%!app.goal["/show"].name%`); navigation ignores case.
+- **`all` is one of the list's own words (round 6, Ingi).** Navigating a list knows only `count`/`length`, `first`, `last`, `random` and a number; an empty list answers NotFound first, and any other word goes to the first element (`type/item/list/this.cs:556-576`: `%list.street%` → `%list[0].street%`). So `all` joins them, before the empty check:
+
+```csharp
+// type/item/list/this.cs — Get(parent, key), NEW, right after count/length
+if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
+    return new Data(key, await all(empty), parent: parent);    // goal's override runs; an empty list still answers
+```
+
+  `.all` runs `all` with the shared empty setting (every layer's defaults); `all(setting: {…})` is a method step on the list (stage 6's `method` hop). `all` lives on the base list class, where `Get` is; the typed `list<T>` view over it is coder's. plang paths are written in lowercase (`%!app.goal["/show"].name%`); navigation ignores case.
 
 **One element.** It owns its facts and its `on` (events about it); `current` (the one in play) is its type's.
 
@@ -410,7 +418,7 @@ Round 6 (fresh eyes, in progress). Settled: the item's history is `item.history`
 1. ~~**Stored twice**~~: settled, the list is the one store; lookups are `First`/`where` (see "The concept's own work lives in its list").
 2. ~~**The indexer can't load**~~: settled, `Get(key)` is the one async door and the C# indexer goes (see "Members of a collected type").
 3. ~~**`all` isn't on the base list**~~: settled, the base list's `all(setting)` answers itself and goal overrides it; the settings are a C# class under their owner (`goal/list/setting/this.cs`), named by `ISetting<TSetting>` (see "`list` is a real object"). Still open inside it: how a call asks for both visibilities (a list `[public, private]`, or leaving it out means both).
-4. **List navigation sends an unknown name to the first element** (`type/item/list/this.cs:575-576`), so `%!app.goal.list.all%` reads the first goal's `all`.
+4. ~~**List navigation sends an unknown name to the first element**~~: settled, `all` is one of the list's own words, checked before the empty check (see "`list` is a real object").
 5. **Two kinds:** the registry's `Kind` store is json/list/dict/`*`, how a value is navigated (`type/kind/list/this.cs:5-15`), not md/csv; a type already has `Kind` (`type/this.cs:60`) and `Kinds` (`:475`), and a `kind` beside `Kind` is ambiguous to navigation, which ignores case (`type/item/kind/reflection/this.cs:20-24`).
 6. **Sub-goals share their file's address** (`goal/this.cs:601`), so `goal["…"]` can't select one.
 7. **test is a session** (start time, coverage, verdict, timeout; `App.Test` null when not testing): `type<test>` has no place for it, and the plan hangs `app.test.mock` and `app.test.coverage` on it.
