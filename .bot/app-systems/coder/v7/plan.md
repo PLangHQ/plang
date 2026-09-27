@@ -572,3 +572,14 @@ place stage 8 replaces with a binding on the setting's `on.set.after`.
   `Setting`; GetGoalsTests set build's files.
 - Checks: suites no new failures; plang --test 7/0/317; builder's 7 goals rebuilt byte-identical with
   `--build={"files":[…]}` through the new setting.
+
+## 7f — carried in from the OBP cleanup (decisions 53–66)
+
+- Builder-visible changes to evaluate with 7f's eval: test.start's `Parallel`/`Timeout` and test.report's
+  `Format` params are gone (`%!app.test.setting.parallel|timeoutSeconds|format%` own them);
+  `start.description.md` and `report.examples.md` teach the setting form.
+- Regenerate the python-decider golden `PLang.Tests/Wire/App/Decider/PickListTests.TheStageOneRequest_IsTheOnePythonSends`
+  — red on purpose since 477caa145 (it snapshots the catalog examples).
+- First build for the 8 stale `.test.goal` files rewritten to the setting form (Tests/TestModule/{Run,Report},
+  Tests/Modules/Test/{Run,Report}: TestRunEnforcesTimeout, TestRunIsolatesMemoryStackBetweenTests,
+  TestReportWritesJunitXml, TestReportMasksSensitiveVariablesJunit) — read each `.pr` after the build.

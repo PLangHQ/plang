@@ -31,9 +31,26 @@ rulings and as-built notes for every slice are in `v7/plan.md`.
 - **Results each slice:** six suites no new failures vs baseline; `plang --test` 7/0/317; builder goals
   rebuilt byte-identical where the runtime seam changed.
 
+## OBP cleanup before 7e-3 (decisions 53–66; each slice OBP-reviewed by plang-cd before the next)
+- c2d150d51, 49a2e97e3 — settings nodes answer their own hop; errors are results; one convert walk; the
+  seam reads `context.Setting.Get(action, option)`.
+- 4fff826d0 — `parser.Whole` the one variable maker (no statics); `Every(setting, context)` reads the
+  asker's settings (`Every()` = the system asking); the convert walk is `setting.Apply(values, context)`.
+- e1e6261c3 — the variable routes its own `%!…%` write (root hop → settings; action/module nodes write
+  the run layer); variable.set's branch gone.
+- 56cd06fb4, 4ab7f7d19, 9e4b0c241 — a test run is `app.test.list.Start`; a test runs itself
+  (`test.Start(app, context)`); coverage watches itself; `new app(parent)`; the report writes itself
+  (`report.Write(context)`); test.start / test.report are one line. **Builder-visible:** test.start's
+  Parallel/Timeout and test.report's Format params are gone — `%!app.test.setting.*%` owns them.
+- e6910e699, e1b262dfe — the type door closes `choice<T>` (`kind.Of(type)`); the setting walk makes a
+  slot through `type.list[clr].Create`.
+- 477caa145 — Debug reads its `Setting` (8 forwarders gone); debug's options are plang types.
+- **Open:** the walk's `.Clr` lowering still re-tags typed-list options (`list<text>`) — the door can't
+  make `list<T>` (asked plang-cd). The python-decider golden `PickListTests.TheStageOneRequest…` is red
+  on purpose until 7f regenerates it (catalog examples changed). 8 stale `.test.goal` files edited to the
+  setting form need their first build with 7f.
+
 ## Next / waiting
-- **Hold:** Ingi is reviewing an OBP pass over the overnight code (plang-40); a cleanup commit may come
-  before 7e-3.
 - **7e-3** identity + permission into settings (storage move + no-fallback marker only).
 - **7e-2b-ii** (setting.save/remove in, get/set out) and **7f** (concept types in the type list, the
   prompt line, teaching setting classes): builder-visible, one eval for stage 7.
