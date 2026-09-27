@@ -67,9 +67,6 @@ public sealed partial class @this
     /// beside the indexer, which selects and throws on a miss.</summary>
     public bool Contains(string name) => Array.Exists(Types, t => t.Names(name));
 
-    /// <summary>The C# class of the type <paramref name="name"/> names, or null when it names none.</summary>
-    public System.Type? Clr(string name) => Array.Find(Types, t => t.Names(name))?.ClrType;
-
     /// <summary>
     /// The type content of this MIME arrives as. Content off I/O is raw bytes — it IS binary; the
     /// MIME's subtype is the kind, the decode hint that narrows it on access (json→item, jpg→image,
@@ -311,7 +308,7 @@ public sealed partial class @this
             if (type == typeof(data.@this) || type == typeof(app.type.@this)) continue;
 
             var entry = new app.type.@this(typeName,
-                Clr(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type, this);
+                Array.Find(_types, t => t.Names(typeName))?.ClrType is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type, this);
             if (entry.Values == null && entry.Shape == null && entry.Property == null) continue;
             entries.Add(entry);
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))

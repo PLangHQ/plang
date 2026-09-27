@@ -12,7 +12,7 @@ internal static class TypeMapping
     /// <summary>For tests that need the live App backing this facade (e.g. Register that must persist across calls).</summary>
     internal static global::app.@this App => _app;
 
-    public static System.Type? GetType(string typeName) => _app.Type.Clr(typeName);
+    public static System.Type? GetType(string typeName) => global::PLang.Tests.TypeListExtensions.Clr(_app.Type, typeName);
 
     /// <summary>The face of the entity the CLR type names — what a catalog prints.</summary>
     public static string GetTypeName(System.Type type) => _app.Type[type].ToString();
