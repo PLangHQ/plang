@@ -79,13 +79,7 @@ public class RunActionTests
         // Write the .pr through the PLANG serializer (goal.Output, Store view) — the same path the
         // real build takes — NOT raw STJ. The reader reads the plang wire shape ({name,type,value}
         // per param); a raw-STJ dump of the Data C# surface no longer round-trips through it.
-        var serializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using (var ms = new System.IO.MemoryStream())
-        {
-            await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
-            System.IO.File.WriteAllText(prFile, System.Text.Encoding.UTF8.GetString(ms.ToArray()));
-        }
+        System.IO.File.WriteAllText(prFile, await _app.User.Context.Pr(goal));
 
         return new global::app.test.@this()
         {
@@ -543,13 +537,7 @@ public class RunActionTests
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(helperPrAbs)!);
         // Write via the plang serializer (goal.Output, Store) — the real build path — not raw STJ,
         // so the reader can read it back (see BuildFixture).
-        var helperSerializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using (var hms = new System.IO.MemoryStream())
-        {
-            await helperSerializer.SerializeItemAsync(hms, helperGoal, global::app.View.Store);
-            System.IO.File.WriteAllText(helperPrAbs, System.Text.Encoding.UTF8.GetString(hms.ToArray()));
-        }
+        System.IO.File.WriteAllText(helperPrAbs, await _app.User.Context.Pr(helperGoal));
 
         // Entry goal: 3 top-level steps. Step 1 calls Helper (which has its own
         // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.

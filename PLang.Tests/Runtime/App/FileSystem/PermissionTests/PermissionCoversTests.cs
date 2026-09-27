@@ -85,10 +85,10 @@ public class PermissionCoversTests
         var ctx = app.User.Context;
         var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.Glob);
         var data = new global::app.data.@this<Permission>("", original, context: ctx);
-        var serializer = new global::app.channel.serializer.plang.@this(ctx);
-        var stored = serializer.Store(data);
+        var plang = ctx.Format("application/plang");
+        var stored = plang.Store(data, ctx);
         await stored.IsSuccess();
-        var loaded = serializer.Load((await stored.Value())!.ToString()!);
+        var loaded = await plang.Decode(System.Text.Encoding.UTF8.GetBytes((await stored.Value())!.ToString()!), ctx, view: global::app.View.Store);
         var roundtripped = await loaded.Value<Permission>();
         await Assert.That(roundtripped).IsEqualTo(original);
     }

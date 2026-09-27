@@ -19,9 +19,7 @@ public class LoadTests
         await using var writer = TestApp.Create(_root);
         var goal = Make.Goal("FullPipeline",
             Make.Step("set x", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
-        var serializer = (global::app.channel.serializer.plang.@this)
-            writer.User.Channel.Serializers.GetOrDefault("application/plang");
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "fullpipeline.pr"), await serializer.Text(goal));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "fullpipeline.pr"), await writer.User.Context.Pr(goal));
     }
 
     [After(Test)]

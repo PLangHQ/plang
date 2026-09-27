@@ -12,10 +12,10 @@ public class WireKindShapeTests
     // A Data writes itself via Data.Output through the serializer's async path (the Out view),
     // NOT JsonSerializer.Serialize — the Wire converter is read-only and throws on STJ Write.
     private static string ToJson(global::app.data.@this data)
-        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext)
-            .Serialize(data).Peek()!.ToString()!;
+        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang")
+            .Serialize(data, global::PLang.Tests.TestApp.SharedContext).Peek()!.ToString()!;
     private static global::app.data.@this FromJson(string json)
-        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).Deserialize(json);
+        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Deserialize(json, global::PLang.Tests.TestApp.SharedContext);
 
     [Test] public async Task Wire_Write_EmitsTypeAsStructuredEntity()
     {

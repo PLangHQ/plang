@@ -38,8 +38,25 @@ namespace app.type.item.text;
 [global::app.Attributes.Format("template")]
 [global::app.Attributes.Format("liquid")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    System.IEquatable<@this>
+    System.IEquatable<@this>, global::app.type.item.IEncode<@this>
 {
+    /// <summary>
+    /// Text's formats written: a text value is its characters, in the given encoding (UTF-8 when none) — no
+    /// writer between; any other value writes itself as text (a leaf bare, a container as its json content).
+    /// </summary>
+    public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
+    {
+        var characters = encoding ?? System.Text.Encoding.UTF8;
+        if (await data.Value() is @this text)
+            await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
+        else
+            await data.Output(new global::app.channel.serializer.text.Writer(stream, characters), view ?? global::app.View.Out, context);
+        await stream.FlushAsync(ct);
+        return context.Ok();
+    }
+
     public static string Example => "Hello, world";
     public static IReadOnlyList<string> Alias { get; } = ["string"];
     public static string Shape => "string";

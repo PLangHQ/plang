@@ -148,7 +148,7 @@ public class EngineTests
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Module).IsNotNull();
-        await Assert.That(engine.User.Channel.Serializers).IsNotNull();
+        await Assert.That(engine.User.Channel).IsNotNull();
         await Assert.That(engine.goal).IsNotNull();
         await Assert.That(engine.AbsolutePath).IsNotNull();
     }
@@ -200,12 +200,11 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Channels_HasSerializers()
+    public async Task TypeList_HasJsonFormat()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That(engine.User.Channel.Serializers).IsNotNull();
-        await Assert.That(engine.User.Channel.Serializers.GetByType("application/json")).IsNotNull();
+        await Assert.That(engine.type.list.Mime("application/json", engine.User.Context).kind.Name).IsEqualTo("json");
     }
 
     [Test]

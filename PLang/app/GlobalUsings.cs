@@ -12,7 +12,6 @@ global using CacheSettings = app.goal.step.CacheSettings;
 // Channels subsystem
 global using Channel = app.channel.@this;
 global using ChannelDirection = app.channel.ChannelDirection;
-global using Serializers = app.channel.serializer.list.@this;
 
 // Path types (formerly FileSystem)
 // Lowercase aliases — match the PLang concept names, and (unlike PascalCase

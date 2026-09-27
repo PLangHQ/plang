@@ -17,11 +17,7 @@ public class ActionPropertyPrTests
 
     private async Task<string> Write(global::app.goal.@this goal)
     {
-        var serializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        return await _app.User.Context.Pr(goal);
     }
 
     private async Task<global::app.data.@this> Read(string pr)

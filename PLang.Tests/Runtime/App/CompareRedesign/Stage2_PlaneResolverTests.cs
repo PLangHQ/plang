@@ -93,9 +93,9 @@ public class Stage2_PlaneResolverTests
 
         // A Data writes itself via Data.Output through the serializer's async path — the Wire
         // converter is read-only and throws on STJ Write. Out drops the envelope name; Store keeps it.
-        var plang = (global::app.channel.serializer.plang.@this)app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var outbound = plang.Serialize(d).Peek()!.ToString()!;
-        var store = plang.Store(d).Peek()!.ToString()!;
+        var plang = app.User.Context.Format("application/plang");
+        var outbound = plang.Serialize(d, app.User.Context).Peek()!.ToString()!;
+        var store = plang.Store(d, app.User.Context).Peek()!.ToString()!;
 
         await Assert.That(outbound).DoesNotContain("\"myBinding\"");
         await Assert.That(store).Contains("\"myBinding\"");

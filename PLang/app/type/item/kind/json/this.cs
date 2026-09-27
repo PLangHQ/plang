@@ -22,6 +22,26 @@ public sealed class @this : global::app.type.kind.@this
 
     public override System.Type? ClrForm => typeof(JsonElement);
 
+    /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on
+    /// read). The value writes itself through the json writer.</summary>
+    public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
+    {
+        try
+        {
+            var face = view ?? global::app.View.Out;
+            await using var utf8 = new Utf8JsonWriter(stream);
+            await data.Output(new global::app.channel.serializer.json.Writer(utf8, face, context.App.type.list.Renderer, emitsSchema: false), face, context);
+            await utf8.FlushAsync(ct);
+            return context.Ok();
+        }
+        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
+        {
+            return context.Error(new global::app.error.ServiceError($"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
+        }
+    }
+
     // json self-dispatches on the element's ValueKind (object → property, array → index), so the
     // grammar's isIndex adds nothing here.
     public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)

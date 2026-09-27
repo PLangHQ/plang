@@ -17,6 +17,9 @@ public class LoadSeamTests
 {
     private global::app.@this _app = null!;
 
+    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private static global::app.type.kind.@this Plang => Ctx.Format("application/plang");
+
     [Before(Test)]
     public void Setup()
     {
@@ -66,7 +69,7 @@ public class LoadSeamTests
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["avatar"] = img };
         using var ms = new System.IO.MemoryStream();
 
-        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, _app.User.Context.Ok(dict));
+        var result = await Plang.Encode(ms, _app.User.Context.Ok(dict), Ctx);
         await result.IsSuccess();
 
         var json = Encoding.UTF8.GetString(ms.ToArray());
@@ -104,7 +107,7 @@ public class LoadSeamTests
         var img = PathBackedPng("out.png");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, _app.User.Context.Ok(img));
+        var result = await Plang.Encode(ms, _app.User.Context.Ok(img), Ctx);
         await result.IsSuccess();
 
         var json = Encoding.UTF8.GetString(ms.ToArray());
@@ -118,7 +121,7 @@ public class LoadSeamTests
         img.RequireStrictKind("gif");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, _app.User.Context.Ok(img));
+        var result = await Plang.Encode(ms, _app.User.Context.Ok(img), Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StrictKindMismatch");

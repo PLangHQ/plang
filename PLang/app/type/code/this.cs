@@ -26,8 +26,14 @@ namespace app.type.code;
 [global::app.Attributes.Format("sh", "text/x-shellscript")]
 [global::app.Attributes.Format("bat", "text/x-bat")]
 [global::app.Attributes.Format("ps1", "text/x-powershell")]
-public sealed partial class @this : global::app.type.item.@this
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.IEncode<@this>
 {
+    /// <summary>Code's formats are text: written as text writes.</summary>
+    public static System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
+        => global::app.type.item.text.@this.Encode(stream, data, context, view, encoding, ct);
+
     public static string Example => "Console.WriteLine(\"hi\");";
     public static string Shape => "string";
 

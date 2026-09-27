@@ -17,11 +17,7 @@ public class ListNestingTests
     private static async Task<System.Text.Json.JsonElement> WrittenParameters(global::app.goal.step.action.@this action)
     {
         var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal", global::PLang.Tests.Shared.Make.Step("a step", action));
-        var serializer = (global::app.channel.serializer.plang.@this)
-            TestApp.SharedContext.App.User.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
-        using var doc = System.Text.Json.JsonDocument.Parse(ms.ToArray());
+        using var doc = System.Text.Json.JsonDocument.Parse(await TestApp.SharedContext.App.User.Context.Pr(goal));
         return doc.RootElement.GetProperty("step")[0].GetProperty("code")[0].GetProperty("property").Clone();
     }
 

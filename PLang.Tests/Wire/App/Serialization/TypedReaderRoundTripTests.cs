@@ -136,11 +136,10 @@ public class TypedReaderRoundTripTests
             System.IO.Path.GetTempPath(), "plang-typedread-" + Guid.NewGuid().ToString("N")[..8]));
         await using (app)
         {
-            var plang = (global::app.channel.serializer.plang.@this)
-                app.User.Channel.Serializers.GetByMimeType("application/plang");
+            var plang = app.User.Context.Format("application/plang");
             var data = new global::app.data.@this("v", true, context: app.User.Context);
-            var wire = (await plang.Serialize(data).Value())!.Clr<string>()!;
-            var back = plang.Deserialize(wire);
+            var wire = (await plang.Serialize(data, app.User.Context).Value())!.Clr<string>()!;
+            var back = plang.Deserialize(wire, app.User.Context);
             await Assert.That((await back.Value())!.Clr<bool>()).IsTrue();
         }
     }

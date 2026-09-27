@@ -26,6 +26,9 @@ public class SensitivePropertyFilterTests
     private string _tempDir = null!;
     private PLangEngine _app = null!;
 
+    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private static global::app.type.kind.@this Json => Ctx.Format("application/json");
+
     [Before(Test)]
     public void Setup()
     {
@@ -59,8 +62,7 @@ public class SensitivePropertyFilterTests
             Created = DateTime.UtcNow
         };
 
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = (await serializer.Serialize(_app.Ok(identity)).Value())!.Clr<string>()!;
+        var json = (await Json.Serialize(_app.Ok(identity), Ctx).Value())!.Clr<string>()!;
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
@@ -91,8 +93,7 @@ public class SensitivePropertyFilterTests
         // A type without [Sensitive] should serialize normally
         var obj = new { Name = (global::app.type.item.text.@this)"test", Value = 42 };
 
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = (await serializer.Serialize(_app.Ok(obj)).Value())!.Clr<string>()!;
+        var json = (await Json.Serialize(_app.Ok(obj), Ctx).Value())!.Clr<string>()!;
 
         await Assert.That(json).Contains("test");
         await Assert.That(json).Contains("42");
@@ -184,8 +185,7 @@ public class SensitivePropertyFilterTests
         var result = await create.Start();
         var identity = (await result.Value()) as Identity;
 
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = (await serializer.Serialize(_app.Ok(identity)).Value())!.Clr<string>()!;
+        var json = (await Json.Serialize(_app.Ok(identity), Ctx).Value())!.Clr<string>()!;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
         var deserialized = JsonSerializer.Deserialize<JsonElement>(json);

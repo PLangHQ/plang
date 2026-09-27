@@ -33,7 +33,7 @@ public class KeptStepTests
     }
 
     private static async Task<string> Pr(global::app.goal.@this goal, global::app.@this app) =>
-        await ((global::app.channel.serializer.plang.@this)app.User.Channel.Serializers.GetOrDefault("application/plang")).Text(goal);
+        await app.User.Context.Pr(goal);
 
     private static System.Text.Json.Nodes.JsonNode Code(string pr, int step) =>
         System.Text.Json.Nodes.JsonNode.Parse(pr)!["step"]![step]!["code"]!;

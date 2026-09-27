@@ -25,9 +25,10 @@ public class WireConverterDepthBombTests
     [Test] public async Task Deserialize_ShallowNesting_StillWorks()
     {
         // Sanity: 16-level nesting is within budget and round-trips.
-        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(16);
-        var result = plang.Deserialize(json);
+        var result = plang.Deserialize(json, ctx);
         await result.IsSuccess();
         // The open item slot's content opens as a VALUE — a dict, never a bare Data — and the
         // next level rides as that dict's `value` entry (a container entry may be a Data).
@@ -43,9 +44,10 @@ public class WireConverterDepthBombTests
         // 200 levels: well past the 64-level cap. Must surface a typed
         // PlangDeserializeError, NOT a StackOverflowException (which would
         // unrecoverably crash the test process).
-        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(200);
-        var result = plang.Deserialize(json);
+        var result = plang.Deserialize(json, ctx);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PlangDeserializeError");
         // Rejected for its depth — by the reader's own depth budget or the nested-Data MaxReadDepth.
@@ -54,12 +56,12 @@ public class WireConverterDepthBombTests
 
     [Test] public async Task Deserialize_DepthBomb_FromStream_RejectsAsTypedError()
     {
-        // Same shape, async-stream path — covers the DeserializeAsync entry too.
-        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
+        // Same shape, straight through the kind's byte decode door.
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(200);
         var bytes = Encoding.UTF8.GetBytes(json);
-        using var ms = new MemoryStream(bytes);
-        var result = await plang.DeserializeAsync(ms);
+        var result = await plang.Decode(bytes, ctx);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PlangDeserializeError");
     }

@@ -111,11 +111,7 @@ public class DiscoverActionTests
             goal.Hash = "0000000000000000000000000000000000000000000000000000000000000000";
 
         // The goal writes its OWN .pr — the Store view through the plang serializer, as goalsSave does.
-        var serializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
-        System.IO.File.WriteAllBytes(prFile, ms.ToArray());
+        System.IO.File.WriteAllText(prFile, await _app.User.Context.Pr(goal));
 
         return relativePath;
     }

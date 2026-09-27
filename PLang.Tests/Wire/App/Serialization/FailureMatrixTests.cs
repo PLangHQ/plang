@@ -29,14 +29,13 @@ public class FailureMatrixTests : System.IAsyncDisposable
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var plang = app.User.Context.Format("application/plang");
 
         var d = new global::app.data.@this("x", "untampered", context: app.User.Context);
-        var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;
+        var wire = (await plang.Serialize(d, app.User.Context).Value())!.Clr<string>()!;
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
-        var back = plang.Deserialize(tampered);
+        var back = plang.Deserialize(tampered, app.User.Context);
         var verify = await app.Run<global::app.module.action.signing.verify>(
             new global::app.module.action.signing.verify(app.User.Context)
             {
@@ -49,12 +48,13 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task WireConverter_Read_RandomJsonMissingReservedFields_ProducesTypedFailure()
     {
-        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
+        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var plang = ctx.Format("application/plang");
         // A JSON object with none of the reserved fields — Read parses, but
         // produces an effectively-empty Data (the converter ignores unknown
         // top-level fields). Typed-failure here means the call doesn't throw;
         // the resulting Data is observable as empty.
-        var back = plang.Deserialize("{\"unknown\":42}");   // Deserialize returns the reconstruction itself
+        var back = plang.Deserialize("{\"unknown\":42}", ctx);   // Deserialize returns the reconstruction itself
         await back.IsSuccess();
         await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
     }

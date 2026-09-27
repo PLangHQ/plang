@@ -33,14 +33,6 @@ public class Stage6_EntryPointWiringTests
     }
 
     [Test]
-    public async Task AppThis_SerializersExists_PerActor()
-    {
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s6c");
-        await Assert.That(app.User.Channel.Serializers).IsNotNull();
-        await Assert.That(app.System.Channel.Serializers).IsNotNull();
-    }
-
-    [Test]
     public async Task ChannelsVerify_FailsFast_WhenOutputMissing()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s6d", autoWireConsoleChannels: false);

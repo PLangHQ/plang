@@ -266,9 +266,6 @@ public class OnTests
 
     private static async Task<string> Written(global::app.type.item.@this item, global::app.View view, global::app.actor.context.@this context)
     {
-        var serializer = new global::app.channel.serializer.plang.@this(context);
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, item, view);
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        return await context.Pr(item, view);
     }
 }

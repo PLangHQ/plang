@@ -41,10 +41,7 @@ public class PrEnvelopeTests : System.IAsyncDisposable
         var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal",
             global::PLang.Tests.Shared.Make.Step("if %n% >= 5 — write out 'big'",
                 global::PLang.Tests.Shared.Make.Action("output", "write", ("Data", "it's big — n >= 5"))));
-        var serializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetOrDefault("application/plang");
-
-        var text = await serializer.Text(goal);
+        var text = await _app.User.Context.Pr(goal);
 
         await Assert.That(text).Contains("\"if %n% >= 5 — write out 'big'\"");
         await Assert.That(text).Contains("it's big — n >= 5");
@@ -55,10 +52,6 @@ public class PrEnvelopeTests : System.IAsyncDisposable
 
     private async Task<string> Write(global::app.goal.@this goal)
     {
-        var serializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        return await _app.User.Context.Pr(goal);
     }
 }

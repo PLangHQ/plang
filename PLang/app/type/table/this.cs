@@ -24,8 +24,14 @@ namespace app.type.table;
 // rather than letting it lift to its default (text/number) type.
 [global::app.Attributes.PlangType("table")]
 [global::app.Attributes.Format("csv", "text/csv")]
-public sealed class @this : global::app.type.item.@this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.IEncode<@this>
 {
+    /// <summary>Table's format (csv) is text: written as text writes.</summary>
+    public static System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
+        => global::app.type.item.text.@this.Encode(stream, data, context, view, encoding, ct);
+
     /// <summary>Column headers in source order.</summary>
     public IReadOnlyList<string> Headers { get; }
 

@@ -159,7 +159,6 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!callStack", () => CallStack, this));
         vars.Set(new data.DynamicData("!trace", () => Trace, this));
         vars.Set(new data.DynamicData("!channels", () => Actor.Channel, this));
-        vars.Set(new data.DynamicData("!serializers", () => Actor.Channel.Serializers, this));
         vars.Set(new data.DynamicData("!goal", () => Goal, this));
         vars.Set(new data.DynamicData("!step", () => Step, this));
         // %!error% reads the CALL STACK. The error is already recorded on the frame that

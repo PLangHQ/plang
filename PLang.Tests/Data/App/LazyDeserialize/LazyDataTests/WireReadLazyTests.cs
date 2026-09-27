@@ -3,7 +3,6 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using data = global::app.data.@this;
-using plang = global::app.channel.serializer.plang.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 
@@ -15,7 +14,10 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 public class WireReadLazyTests
 {
     private static data RoundTrip(data d)
-        => new plang(global::PLang.Tests.TestApp.SharedContext).Deserialize(new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Peek()!.ToString()!);   // Deserialize returns the reconstruction itself
+        => Plang.Deserialize(Plang.Serialize(d, Ctx).Peek()!.ToString()!, Ctx);   // Deserialize returns the reconstruction itself
+
+    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private static global::app.type.kind.@this Plang => Ctx.Format("application/plang");
 
     // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
     // and materializes only on touch. Scoped to object/table so scalars/domain/
@@ -38,7 +40,7 @@ public class WireReadLazyTests
         // value is a valid json *string* token whose content is malformed json,
         // typed {item, json} — read defers it, no throw.
         const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"item\",\"kind\":\"json\"},\"value\":\"{not json\"}";
-        var back = new plang(global::PLang.Tests.TestApp.SharedContext).Deserialize(wire);
+        var back = Plang.Deserialize(wire, Ctx);
         await Assert.That(back.HasRaw).IsTrue();
         await Assert.That(back.MaterializeCount()).IsEqualTo(0);
     }
@@ -52,10 +54,10 @@ public class WireReadLazyTests
         // fallback can't resolve a kind and lifts the bare JSON number as long).
         await using var app = global::PLang.Tests.TestApp.Create("/test");
         var ctx = app.User.Context;
-        var serializer = new plang(ctx);
+        var plang = ctx.Format("application/plang");
         var d = app.Ok(5);                 // number / int derived
         d.Name = "n";
-        var back = serializer.Deserialize(serializer.Serialize(d).Peek()!.ToString()!);
+        var back = plang.Deserialize(plang.Serialize(d, ctx).Peek()!.ToString()!, ctx);
         await Assert.That(back.Type.Name).IsEqualTo("number");
         await Assert.That(back.Kind).IsEqualTo("int");
     }

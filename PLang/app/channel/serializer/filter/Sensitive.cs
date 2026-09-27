@@ -7,7 +7,7 @@ namespace app.channel.serializer.filter;
 ///
 /// Two modes for different output intents:
 ///  - <see cref="Strip"/> — removes the property entirely. Used on user-facing output
-///    channels (<c>global::app.channel.serializer.Json</c>) where the consumer should not
+///    channels (the json format's write) where the consumer should not
 ///    even learn that a secret exists.
 ///  - <see cref="Mask"/> — replaces the value with <c>"******"</c>, keeping the property
 ///    visible. Used on diagnostic output (test reports, debug dumps) where the reader

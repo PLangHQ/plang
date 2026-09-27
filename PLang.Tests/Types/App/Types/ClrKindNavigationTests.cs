@@ -62,7 +62,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1,\"b\":[2,3]}"), ctx));
-        var json = new global::app.channel.serializer.plang.@this(ctx).Serialize(d).Peek()!.ToString()!;
+        var json = ctx.Format("application/plang").Serialize(d, ctx).Peek()!.ToString()!;
         await Assert.That(json).Contains("\"a\":1");
         await Assert.That(json).Contains("\"b\":[2,3]");
         await Assert.That(json.ToLowerInvariant()).DoesNotContain("valuekind");

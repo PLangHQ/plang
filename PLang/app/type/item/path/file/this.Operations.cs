@@ -207,16 +207,15 @@ public sealed partial class @this
             else
             {
                 // The file's extension is the format that writes the value (a goal to .pr its program
-                // form). A format that doesn't encode yet writes through the serializer its extension
-                // names, else text — a leaf bare, a container as its json content.
-                var format = Kind(context).kind;
+                // form, a text value to .json json-quoted, to .txt bare). A format that doesn't write this
+                // value (an unknown extension, one of binary's) falls to text — a leaf bare, a container as
+                // its json content: this door's own rule for a file of no known format.
                 using var encoded = new System.IO.MemoryStream();
-                var result = await format.Encode(encoded, value!, context);
+                var result = await Kind(context).kind.Encode(encoded, value!, context);
                 if (!result.Success && result.Error?.Key == "NoEncoder")
                 {
                     encoded.SetLength(0);
-                    var serializers = context.Actor.Channel.Serializers;
-                    result = await (serializers.GetByExtension(Extension) ?? serializers.Text).SerializeAsync(encoded, value!);
+                    result = await context.App.type.list["text"].kind.Encode(encoded, value!, context);
                 }
                 if (!result.Success)
                     return context.Error<global::app.type.item.path.@this>(result.Error!);

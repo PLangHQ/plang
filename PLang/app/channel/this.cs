@@ -79,9 +79,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
 
     /// <summary>
     /// The Channels collection this channel belongs to — set by
-    /// <see cref="app.channel.list.@this.Register"/>. Stream channels navigate through
-    /// this to reach their parent Channels' Serializers registry; the per-actor
-    /// Channels owns the single Serializers home.
+    /// <see cref="app.channel.list.@this.Register"/>; the channel's events fire in its context.
     /// </summary>
     public global::app.channel.list.@this Channels { get; internal set; } = null!;
 

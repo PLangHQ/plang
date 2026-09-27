@@ -46,13 +46,11 @@ public class GoalCallResolutionTests
     {
         var ctx = _app.User.Context;
         var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName + ".goal", ctx) };
-        var serializer = (global::app.channel.serializer.plang.@this)ctx.Actor!.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
+        var pr = await ctx.Pr(goal);
 
         var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(abs)!);
-        await System.IO.File.WriteAllBytesAsync(abs, ms.ToArray());
+        await System.IO.File.WriteAllTextAsync(abs, pr);
     }
 
     /// <summary>A caller goal whose Path anchors the folder walk.</summary>

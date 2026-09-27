@@ -285,10 +285,13 @@ public class SnapshotWireTests
             new global::app.type.@this("snapshot"), context: context);
 
         using var ms = new System.IO.MemoryStream();
-        // file-save owns its selector (its Extension); an unregistered one falls to Text (content).
-        var serializers = context.Actor.Channel.Serializers;
-        var serializer = serializers.GetByExtension(".snapshot") ?? serializers.Text;
-        var result = await serializer.SerializeAsync(ms, d);
+        // file-save's format is its extension's; one that writes nothing (NoEncoder) falls to text (content).
+        var result = await context.App.type.list.Extension(".snapshot", context).kind.Encode(ms, d, context);
+        if (!result.Success && result.Error?.Key == "NoEncoder")
+        {
+            ms.SetLength(0);
+            result = await context.App.type.list["text"].kind.Encode(ms, d, context);
+        }
 
         var content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(result.Success).IsTrue();

@@ -78,21 +78,14 @@ public sealed class Default : IHttp
             }
             else
             {
-                // All I/O goes through the channel: the serializer for the
-                // content-type renders the body value into the request stream via
-                // its OWN converter (a dict/list/item serializes as itself), instead
-                // of raw STJ on the `object`-typed value — which bypasses the
-                // converter and reflects the base item property bag.
+                // The content-type is a format, and the format writes the body value into the request
+                // (a dict/list/item writes itself) — never raw STJ on the value, which would reflect the base
+                // item property bag.
                 var ms = new MemoryStream();
-                var serialized = await action.Context.Actor.Channel.Serializers
-                    .GetOrDefault(contentType).SerializeAsync(ms, action.Body!);
+                var context = action.Context;
+                var serialized = await context.App.type.list.Mime(contentType, context).kind.Encode(ms, action.Body!, context);
                 if (!serialized.Success) return serialized;
-                var bytes = ms.ToArray();
-                // SerializeAsync frames with a trailing newline (NDJSON streaming);
-                // an HTTP body is a single document — drop the frame delimiter.
-                int n = bytes.Length;
-                while (n > 0 && (bytes[n - 1] == (byte)'\n' || bytes[n - 1] == (byte)'\r')) n--;
-                httpContent = new ByteArrayContent(bytes, 0, n);
+                httpContent = new ByteArrayContent(ms.ToArray());
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType) { CharSet = encoding };
             }
         }
@@ -904,15 +897,13 @@ public sealed class Default : IHttp
     {
         var content = await action.Content.Value();
         var context = action.Context;
-        var serializers = context.Actor.Channel.Serializers;
 
-        // The value writes ITSELF through the serializer named by the body's content-type — no
-        // Lower + STJ (which emits the wrapper's C# property bag), no type-shape branch. The Text
-        // serializer renders a leaf bare and a container as json; the json serializer renders json.
-        async Task<string> Body(global::app.channel.serializer.ISerializer serializer)
+        // The value writes ITSELF in the body's format — no Lower + STJ (which emits the wrapper's C#
+        // property bag), no type-shape branch. Text writes a leaf bare and a container as json; json writes json.
+        async Task<string> Body(string mime)
         {
             using var ms = new MemoryStream();
-            await serializer.SerializeAsync(ms, action.Content);
+            await context.App.type.list.Mime(mime, context).kind.Encode(ms, action.Content, context, encoding: Encoding.GetEncoding(encoding));
             return Encoding.GetEncoding(encoding).GetString(ms.ToArray());
         }
 
@@ -924,7 +915,7 @@ public sealed class Default : IHttp
                 case ContentAs.Base64: return (CreateBase64Content(content!.ToString()!), null);
                 case ContentAs.Form: return await CreateFormContentAsync(app, context, content!);
                 case ContentAs.Text:
-                    return (new StringContent(await Body(serializers.Text), Encoding.GetEncoding(encoding)), null);
+                    return (new StringContent(await Body("text/plain"), Encoding.GetEncoding(encoding)), null);
                 default:
                     return (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), null);
             }
@@ -954,7 +945,7 @@ public sealed class Default : IHttp
 
         // The native value writes ITSELF as json content (list/object), never the C# property bag.
         return (new StringContent(
-            await Body(serializers.GetByType("application/json")!),
+            await Body("application/json"),
             Encoding.GetEncoding(encoding),
             "application/json"), null);
     }

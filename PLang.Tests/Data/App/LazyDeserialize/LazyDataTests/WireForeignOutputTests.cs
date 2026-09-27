@@ -3,7 +3,6 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using Wire = global::app.type.item.wire.@this;
-using Plang = global::app.channel.serializer.plang.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 
@@ -24,7 +23,7 @@ public class WireForeignOutputTests
         var data = new global::app.data.@this("slot", wire, context: ctx);
 
         using var ms = new System.IO.MemoryStream();
-        await ctx.Actor.Channel.Serializers.Text.SerializeAsync(ms, data);   // FOREIGN format
+        await ctx.Format("text/plain").Encode(ms, data, ctx);   // FOREIGN format
         return Encoding.UTF8.GetString(ms.ToArray());
     }
 

@@ -109,7 +109,7 @@ public sealed class OpenAi : ILlm
             // renders as json. NEVER STJ on the wrapper — that emitted the value's C# property bag
             // ({"Cacheable":…,"IsLeaf":…}) instead of the schema.
             using var ms = new System.IO.MemoryStream();
-            await context.Actor.Channel.Serializers.Text.SerializeAsync(ms, a.Schema);
+            await context.App.type.list["text"].kind.Encode(ms, a.Schema, context);
             return System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 
@@ -575,7 +575,7 @@ public sealed class OpenAi : ILlm
                     {
                         // The tool result writes ITSELF as json — never STJ on the item (property bag).
                         using var ms = new System.IO.MemoryStream();
-                        await context.Actor.Channel.Serializers.GetByType("application/json")!.SerializeAsync(ms, goalResult);
+                        await context.App.type.list["item"].kind["json"]!.Encode(ms, goalResult, context);
                         result = System.Text.Encoding.UTF8.GetString(ms.ToArray());
                     }
                 }

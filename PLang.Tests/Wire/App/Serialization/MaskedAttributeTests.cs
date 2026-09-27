@@ -33,11 +33,7 @@ public class MaskedAttributeTests
     private static async Task<string> Written(global::app.View view)
     {
         var app = TestApp.Create("/test");
-        var serializer = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetOrDefault("application/plang");
-        using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, new MaskedItem { key = "ApiKey", value = "sk-real-secret" }, view);
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        return await app.User.Context.Pr(new MaskedItem { key = "ApiKey", value = "sk-real-secret" }, view);
     }
 
     [Test] public async Task Wire_MaskedValue_WritesFourStars_KeyVisible()

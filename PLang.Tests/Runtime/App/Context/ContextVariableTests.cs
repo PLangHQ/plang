@@ -65,15 +65,6 @@ public class ContextVariableTests
     }
 
     [Test]
-    public async Task ContextVar_Serializers_ReturnsSerializerRegistry()
-    {
-        var vars = _app.User.Context.Variable;
-        var value = await vars.GetValue("!serializers");
-
-        await Assert.That(value).IsNotNull();
-    }
-
-    [Test]
     public async Task ContextVar_Goal_IsNullInitially()
     {
         var vars = _app.User.Context.Variable;

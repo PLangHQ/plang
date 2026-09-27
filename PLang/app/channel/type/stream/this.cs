@@ -50,25 +50,16 @@ public sealed class @this : global::app.channel.type.session.@this
 
         try
         {
-            // A text value on a text channel is its characters, in the channel's encoding — no serializer between.
-            if (Mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
-                && await data.Value() is global::app.type.item.text.@this text)
-            {
-                var encoding = ResolveEncoding();
-                await Stream.WriteAsync(encoding.GetBytes(text.ToString() + System.Environment.NewLine), ct);
-                await Stream.FlushAsync(ct);
-                return data.Context.Ok();
-            }
-
-            // The stream owns its selector (its Mime); the registry just looks up.
-            var serResult = await Channels!.Serializers.GetOrDefault(Mime).SerializeAsync(Stream, data, cancellationToken: ct);
+            // The channel's Mime is a format, and the format writes the data (a text value on a text channel
+            // is its characters, in the channel's encoding).
+            var context = Context ?? data.Context;
+            var result = await context.App.type.list.Mime(Mime, context).kind.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
             // Line framing is the channel's job (console/pipe ergonomics, NDJSON):
             // delimit each line-oriented text message with a newline. Binary and the
             // self-describing plang envelope are not framed.
-            if (serResult.Success && IsLineDelimited(Mime))
-                await Stream.WriteAsync(
-                    System.Text.Encoding.UTF8.GetBytes(System.Environment.NewLine), ct);
-            return serResult;
+            if (result.Success && IsLineDelimited(Mime))
+                await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
+            return result;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

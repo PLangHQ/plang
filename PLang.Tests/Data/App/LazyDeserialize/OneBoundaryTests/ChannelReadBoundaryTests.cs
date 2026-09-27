@@ -98,12 +98,12 @@ public class ChannelReadBoundaryTests
     }
 
     // `application/plang` is the self-describing container; channel.read hands
-    // the body to the plang serializer, which reconstructs the Data.
+    // the body to plang's own format, which reconstructs the Data.
     [Test] public async Task ChannelRead_ApplicationPlangBody_DelegatesToPlangSerializer_LazyContainer()
     {
         await using var app = NewApp();
-        var serializer = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await serializer.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
+        var plang = app.User.Context.Format("application/plang");
+        var wire = (await plang.Serialize(app.Ok("hello"), app.User.Context).Value())!.Clr<string>()!;
 
         var ch = Input(app, "application/plang", Encoding.UTF8.GetBytes(wire));
         var d = await ch.Read();

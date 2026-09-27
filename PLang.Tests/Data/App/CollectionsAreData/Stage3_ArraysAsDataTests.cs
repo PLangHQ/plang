@@ -134,15 +134,14 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var plang = ctx.Format("application/plang");
 
         var list = new ListV();
         list.Add(app.Data("signed", "hello world"));
         var listData = app.Data("list", list);
 
-        var json = (await plang.Serialize(listData).Value())!.Clr<string>()!;
-        var rebuilt = plang.Deserialize(json);
+        var json = (await plang.Serialize(listData, ctx).Value())!.Clr<string>()!;
+        var rebuilt = plang.Deserialize(json, ctx);
         await rebuilt.IsSuccess();
         var element = await rebuilt.Get("[0]");
         await Assert.That(element.IsInitialized).IsTrue();

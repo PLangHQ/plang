@@ -39,13 +39,6 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     private actor.context.@this Context => Actor?.Context ?? _app.System.Context;
 
-    /// <summary>
-    /// The serializer registry — content-type routing for I/O. Per-actor:
-    /// each actor's Channels owns its own registry. Boot-time defaults register
-    /// identically per actor; runtime extensions apply to the registering actor.
-    /// </summary>
-    public Serializers Serializers { get; }
-
     public const string Output = "output";
     public const string Error = "error";
     public const string Input = "input";
@@ -61,10 +54,9 @@ public sealed class @this : IAsyncDisposable
     public static readonly string[] Defaults = [Output, Error, Input];
 
     /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
-    public @this(app.@this app, Serializers serializers, global::app.actor.@this? actor)
+    public @this(app.@this app, global::app.actor.@this? actor)
     {
         _app = app;
-        Serializers = serializers;
         Actor = actor;
     }
 

@@ -31,14 +31,14 @@ public class DictTypedEntryRoundTripTests
         // Born WITH context — never constructed then stamped.
         var result = context.Ok(value);
 
-        // The store binds the serializer with its context (application/plang) — the read
+        // The store rides plang's own format (application/plang) with its context — the read
         // routes through the one context-ful Typed-reader path, borning each nested
         // {type,value} entry back to its real type instead of a raw dict.
-        var serializer = new global::app.channel.serializer.plang.@this(context);
+        var plang = context.Format("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeAsync(ms, result, global::app.View.Store);
+        await plang.Encode(ms, result, context, global::app.View.Store);
         ms.Position = 0;
-        var back = await serializer.DeserializeAsync<global::app.type.item.@this>(ms, global::app.View.Store);
+        var back = await plang.Decode<global::app.type.item.@this>(ms, context, global::app.View.Store);
 
         await Assert.That(back.Success).IsTrue();
         // Materialize through the async Value door — Peek returns the deferred source.

@@ -21,7 +21,7 @@ public class LazyDataShapeTests : System.IAsyncDisposable
     {
         var d = _app.Ok("hello");
         d.Name = "greeting";
-        var json = (await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
+        var json = (await global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Serialize(d, global::PLang.Tests.TestApp.SharedContext).Value())!.Clr<string>()!;
         await Assert.That(json.Contains("\"raw\"")).IsFalse();
         await Assert.That(json.Contains("\"_raw\"")).IsFalse();
     }

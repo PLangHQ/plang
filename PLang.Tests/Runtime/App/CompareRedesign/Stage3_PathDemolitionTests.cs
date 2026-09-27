@@ -44,10 +44,9 @@ public class Stage3_PathDemolitionTests
     {
         // A Data writes itself via Data.Output through the serializer's async path —
         // NOT JsonSerializer.Serialize (the Wire converter is read-only and throws).
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var plang = app.User.Context.Format("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await plang.SerializeAsync(ms, data, global::app.View.Out);
+        await plang.Encode(ms, data, app.User.Context, global::app.View.Out);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 

@@ -24,10 +24,8 @@ public class PathSerializerMigrationTests
         var p = global::app.type.item.path.@this.Resolve("/some/file.json", context);
         var data = new global::app.data.@this("x", p, context: context);
 
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await plang.SerializeAsync(ms, data, global::app.View.Out);
+        await context.Format("application/plang").Encode(ms, data, context, global::app.View.Out);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         // The wire emits the value as a string. The exact content depends on
         // Relative computation against App root; we just assert it's a string
@@ -45,10 +43,8 @@ public class PathSerializerMigrationTests
         var p = global::app.type.item.path.@this.Resolve("https://example.test/a/b", context);
         var data = new global::app.data.@this("x", p, context: context);
 
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await plang.SerializeAsync(ms, data, global::app.View.Out);
+        await context.Format("application/plang").Encode(ms, data, context, global::app.View.Out);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json.Contains("example.test")).IsTrue();
         await Assert.That(json.Contains("\"scheme\":")).IsFalse();

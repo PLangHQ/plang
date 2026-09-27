@@ -37,11 +37,12 @@ public class ValueConversionHookTests
             System.Threading.Thread.CurrentThread.CurrentCulture =
                 System.Globalization.CultureInfo.GetCultureInfo("de-DE");
 
-            var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
-            var dec = (await serializer.Deserialize<global::app.type.item.number.@this>("3.14").Value());
+            var ctx = global::PLang.Tests.TestApp.SharedContext;
+            var text = ctx.Format("text/plain");
+            var dec = (await text.Deserialize<global::app.type.item.number.@this>("3.14", ctx).Value());
             await Assert.That(dec).IsEqualTo(3.14m);
 
-            var dbl = (await serializer.Deserialize<global::app.type.item.number.@this>("3.14").Value());
+            var dbl = (await text.Deserialize<global::app.type.item.number.@this>("3.14", ctx).Value());
             await Assert.That(dbl).IsEqualTo(3.14d);
         }
         finally

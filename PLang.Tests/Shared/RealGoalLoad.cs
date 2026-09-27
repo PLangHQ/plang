@@ -27,9 +27,7 @@ public static class RealGoalLoad
     {
         // Write the .pr the way the real builder now does — through goal.Output (Store), not STJ —
         // so the test exercises the actual write path, not the soon-to-be-deleted PrWrite.
-        var serializer = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetOrDefault("application/plang");
-        return await Read(app, await serializer.Text(goal));
+        return await Read(app, await app.User.Context.Pr(goal));
     }
 
     /// <summary>A .pr's text read the way the runtime reads one off I/O: a stream channel, mime

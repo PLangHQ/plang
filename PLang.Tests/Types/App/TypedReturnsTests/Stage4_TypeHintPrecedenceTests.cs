@@ -4,9 +4,8 @@ using app.module.action.build.code;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Contract: user-supplied (type) hints win over Build() inference, and the
-// serializer registry walks multi-segment extensions (.junit.xml) before
-// falling back to single-segment.
+// Contract: user-supplied (type) hints win over Build() inference, and a
+// format is found by its extension on the type list.
 
 public class Stage4_TypeHintPrecedenceTests
 {
@@ -38,46 +37,10 @@ public class Stage4_TypeHintPrecedenceTests
     }
 
     [Test]
-    public async Task SerializersGetByExtension_SingleSegment_Resolves()
+    public async Task FormatByExtension_SingleSegment_Resolves()
     {
-        var json = _app.User.Channel.Serializers.GetByExtension(".json");
-        await Assert.That(json).IsNotNull();
-    }
-
-    private sealed class StubSerializer : global::app.channel.serializer.ISerializer
-    {
-        public string Type { get; init; } = "";
-        public string Extension { get; init; } = "";
-        public Task<Data> SerializeAsync(System.IO.Stream s, Data d, global::app.View view = global::app.View.Out, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public Task<Data> DeserializeAsync(System.IO.Stream s, global::app.View view = global::app.View.Out, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public Task<global::app.data.@this<T>> DeserializeAsync<T>(System.IO.Stream s, global::app.View view = global::app.View.Out, System.Threading.CancellationToken ct = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => Task.FromResult(global::app.data.@this<T>.Ok(default!));
-        public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx) => global::app.type.item.@null.@this.Instance;
-        public global::app.data.@this<global::app.type.item.text.@this> Serialize(Data d) => global::app.data.@this<global::app.type.item.text.@this>.Ok("");
-        public Data Deserialize(string d) => Data.Ok();
-        public global::app.data.@this<T> Deserialize<T>(string d) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => global::app.data.@this<T>.Ok(default!);
-    }
-
-    [Test]
-    public async Task SerializersGetByExtension_MultiSegment_Resolves()
-    {
-        var stub = new StubSerializer { Extension = ".junit.xml", Type = "application/junit+xml" };
-        _app.User.Channel.Serializers.Register(stub);
-
-        var resolved = _app.User.Channel.Serializers.GetByExtension(".junit.xml");
-        await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)stub);
-    }
-
-    [Test]
-    public async Task SerializersGetByExtension_MultiSegment_FallsBackToSingleSegment()
-    {
-        // Register only the single-segment ".xml" — a multi-segment lookup that
-        // doesn't have its own registration must walk down to the trailing
-        // segment and resolve there.
-        var xml = new StubSerializer { Extension = ".xml", Type = "application/xml" };
-        _app.User.Channel.Serializers.Register(xml);
-
-        var resolved = _app.User.Channel.Serializers.GetByExtension(".unknown.xml");
-        await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)xml);
+        var json = _app.type.list.Extension(".json", _app.User.Context).kind;
+        await Assert.That(json.Name).IsEqualTo("json");
     }
 
     // The chain finishes itself (action.list.Build); an empty list means nothing failed.

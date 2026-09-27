@@ -116,8 +116,7 @@ public class FormatKindTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var serializer = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var bytes = System.Text.Encoding.UTF8.GetBytes((await serializer.Serialize(app.Ok("hello")).Value())!.Clr<string>()!);
+        var bytes = System.Text.Encoding.UTF8.GetBytes((await ctx.Format("application/plang").Serialize(app.Ok("hello"), ctx).Value())!.Clr<string>()!);
         var decoded = await app.type.list.Mime("application/plang", ctx).kind.Decode(bytes, ctx);
         await Assert.That((await decoded.Value())?.ToString()).IsEqualTo("hello");
     }

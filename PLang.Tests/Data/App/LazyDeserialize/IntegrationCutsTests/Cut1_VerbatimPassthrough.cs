@@ -3,7 +3,6 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using data = global::app.data.@this;
 using type = global::app.type.@this;
-using plang = global::app.channel.serializer.plang.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 
@@ -19,13 +18,16 @@ public class Cut1_VerbatimPassthrough
 
     private const string ConfigJson = "{\"port\":8080}";
 
+    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private static global::app.type.kind.@this Plang => Ctx.Format("application/plang");
+
     // An untouched {object, json} Data serializes its raw json straight into the
     // value slot — byte-identical, no re-encode — and never materializes.
     [Test] public async Task Cut1_UntouchedConfigJson_SerializesByteIdentical()
     {
-        var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, new type("item", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, new type("item", "json"), Ctx);
         d.Name = "cfg";
-        var wire = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
+        var wire = (await Plang.Serialize(d, Ctx).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("\"value\":" + ConfigJson); // raw verbatim, not re-encoded
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -34,11 +36,11 @@ public class Cut1_VerbatimPassthrough
     // identical, with zero materialization.
     [Test] public async Task Cut1_UntouchedWirePayload_SerializesByteIdentical()
     {
-        var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, new type("item", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, new type("item", "json"), Ctx);
         d.Name = "cfg";
-        var wire1 = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
-        var back = new plang(global::PLang.Tests.TestApp.SharedContext).Deserialize(wire1); // deferred (raw-backed)
-        var wire2 = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(back).Value())!.Clr<string>()!;
+        var wire1 = (await Plang.Serialize(d, Ctx).Value())!.Clr<string>()!;
+        var back = Plang.Deserialize(wire1, Ctx); // deferred (raw-backed)
+        var wire2 = (await Plang.Serialize(back, Ctx).Value())!.Clr<string>()!;
         await Assert.That(wire2).IsEqualTo(wire1);
         await Assert.That(back.MaterializeCount()).IsEqualTo(0);
     }
@@ -53,8 +55,8 @@ public class Cut1_VerbatimPassthrough
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // materializes
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
 
-        var s = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var back = s.Deserialize((await s.Serialize(d).Value())!.ToString()!);   // Deserialize returns the reconstruction itself
+        var s = ctx.Format("application/plang");
+        var back = s.Deserialize((await s.Serialize(d, ctx).Value())!.ToString()!, ctx);   // Deserialize returns the reconstruction itself
         await Assert.That((await (await back.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // semantic round-trip
     }
 
@@ -62,9 +64,9 @@ public class Cut1_VerbatimPassthrough
     // is MaterializeCount, which counts reader dispatches per Data).
     [Test] public async Task Cut1_ReaderProbeCount_StaysZero_OnUntouchedPath()
     {
-        var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, new type("item", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, new type("item", "json"), Ctx);
         d.Name = "cfg";
-        _ = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
+        _ = (await Plang.Serialize(d, Ctx).Value())!.Clr<string>()!;
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 }

@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 // data-serialize-cleanup — Integration Cut 1: Plain Data round-trip with implicit signing.
 //
 // Proves end-to-end:
-//   - ISerializer input contract holds (Stage 1)
+//   - the format's encode door takes the whole Data
 //   - wire converter Write/Read are symmetric (Stage 2)
 //   - sign-if-missing fires automatically during the converter walk (Stage 2)
 //   - canonicalization hash matches the wire shape (Stage 2 canonicalization fix)
@@ -18,12 +18,11 @@ public class Cut1_PlainRoundTripTests
     private static async Task<(string wireJson, global::app.data.@this readBack, global::app.@this app)> WriteAndRead(string name, object? value)
     {
         var app = NewApp();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var plang = app.User.Context.Format("application/plang");
 
         var data = new global::app.data.@this(name, value, context: app.User.Context);
-        var wire = (await plang.Serialize(data).Value())!.Clr<string>()!;
-        var back = plang.Deserialize(wire);
+        var wire = (await plang.Serialize(data, app.User.Context).Value())!.Clr<string>()!;
+        var back = plang.Deserialize(wire, app.User.Context);
         return (wire, back, app);
     }
 

@@ -19,11 +19,11 @@ public class NestedTypedRoundTripTests
             .Set("description", "a plan")
             .Set("steps", steps);
 
-        var plang = new global::app.channel.serializer.plang.@this(ctx);
+        var plang = ctx.Format("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await plang.SerializeAsync(ms, ctx.Ok(plan), global::app.View.Store);
+        await plang.Encode(ms, ctx.Ok(plan), ctx, global::app.View.Store);
         ms.Position = 0;
-        var back = await plang.DeserializeAsync(ms, global::app.View.Store);
+        var back = await plang.Decode(ms, ctx, global::app.View.Store);
 
         await back.IsSuccess();
         // Materialize through the async door — Peek returns the deferred source.

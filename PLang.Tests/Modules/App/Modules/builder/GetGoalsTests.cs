@@ -154,12 +154,8 @@ public class GetGoalsTests
             }
         };
         // Write the .pr the way the builder now does — the goal writes itself via Output (Store),
-        // through the channel serializer (not the deleted STJ PrWrite options).
-        var prSerializer = (global::app.channel.serializer.plang.@this)
-            _app.User.Channel.Serializers.GetByMimeType("application/plang");
-        using var prMs = new System.IO.MemoryStream();
-        await prSerializer.SerializeItemAsync(prMs, prGoal, global::app.View.Store);
-        var prJson = System.Text.Encoding.UTF8.GetString(prMs.ToArray());
+        // in goal's format (a .pr).
+        var prJson = await _app.User.Context.Pr(prGoal);
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };

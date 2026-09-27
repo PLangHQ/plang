@@ -28,10 +28,9 @@ public class NestedRegisteredTypeRoundTripTests
             new global::app.data.@this("p2", p2, context: context),
         }, context: context);
 
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var plang = context.Format("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await plang.SerializeAsync(ms, outer, global::app.View.Out);
+        await plang.Encode(ms, outer, context, global::app.View.Out);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         // Both nested path values must appear as strings, not as reflected
         // property bags ("\"absolute\":" would mean reflection fired).

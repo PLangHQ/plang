@@ -18,9 +18,8 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await plang.Serialize(d2).Value())!.Clr<string>()!;
+        var plang = app.User.Context.Format("application/plang");
+        var wire = (await plang.Serialize(d2, app.User.Context).Value())!.Clr<string>()!;
 
         using var doc = JsonDocument.Parse(wire);
         // `type` is the structured entity {name, kind?, strict?} on the wire.
@@ -64,9 +63,8 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await plang.Serialize(d2).Value())!.Clr<string>()!;
+        var plang = app.User.Context.Format("application/plang");
+        var wire = (await plang.Serialize(d2, app.User.Context).Value())!.Clr<string>()!;
 
         // Flip a byte in the base64-encoded value — read back, verify must fail.
         using var doc = JsonDocument.Parse(wire);
@@ -75,7 +73,7 @@ public class Cut2_SignThenCompressTests
         var tampered = wire.Replace("\"value\":\"" + b64 + "\"", "\"value\":\"" + flipped + "\"");
         await Assert.That(tampered).IsNotEqualTo(wire);
 
-        var back = plang.Deserialize(tampered);
+        var back = plang.Deserialize(tampered, app.User.Context);
         await back.IsSuccess();
         var restored = back;
 

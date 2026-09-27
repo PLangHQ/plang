@@ -125,8 +125,23 @@ namespace app.type.item.binary;
 [global::app.Attributes.Format("sha256")]
 [global::app.Attributes.Format("md5")]
 [global::app.Attributes.Format("sfv")]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+    global::app.type.item.IEncode<@this>
 {
+    /// <summary>Binary's formats written: a binary value is its bytes. Any other value is no content of these
+    /// formats — an error, never a guessed writer.</summary>
+    public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
+    {
+        if (await data.Value() is not @this bytes)
+            return context.Error(new global::app.error.Error(
+                $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not bytes — nothing writes it as binary content", "NoEncoder", 400));
+        await stream.WriteAsync(bytes.Value, ct);
+        await stream.FlushAsync(ct);
+        return context.Ok();
+    }
+
     public static string Description => "Bytes. Its kind is what they hold, when known (png, pdf, json, …).";
     public static IReadOnlyList<string> Alias { get; } = ["bytes"];
     public static string Shape => "string";
