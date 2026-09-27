@@ -1,0 +1,261 @@
+{
+  "name": "Start",
+  "comment": "A setting's life: set for this run, saved as the actor's row, changed, the row removed",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %!llm.cache% = false",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!llm.cache%",
+              "variable": [
+                {
+                  "text": "%!llm.cache%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!llm.cache% is false",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!llm.cache%",
+              "variable": [
+                {
+                  "text": "%!llm.cache%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "save %!llm%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "save",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!llm%",
+              "variable": [
+                {
+                  "text": "%!llm%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %!llm.cache% = true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!llm.cache%",
+              "variable": [
+                {
+                  "text": "%!llm.cache%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %!llm.cache% is true",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!llm.cache%",
+              "variable": [
+                {
+                  "text": "%!llm.cache%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "remove %!llm%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "remove",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!llm%",
+              "variable": [
+                {
+                  "text": "%!llm%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Settings/SettingsCrud/Start.test.goal",
+  "prPath": "/Modules/Settings/SettingsCrud/.build/start.test.pr",
+  "hash": "8b3459c74aa031ff4f4858193f37444b95e3626fa6b084dd18ed9321a9036845",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}
