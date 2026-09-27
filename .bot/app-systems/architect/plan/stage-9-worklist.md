@@ -10,6 +10,8 @@ Where this comes from: Ingi asked (2026-09-27) for "cs that have methods more th
 | `cache/wrap.cs`, `timeout/after.cs`, `event/on.cs`, `mock/intercept.cs`, `on/error.cs` | 8 | Deleted there: modifiers become events on the owner. Whatever they compute today (retry and filters in `on/error`'s Wrap, the second glob matcher and 5 stray helpers in `mock.intercept`) moves to the owner in stage 8; error matching belongs to `Error` |
 | `test/start.cs` (~210 lines), `test/report.cs` (~260 lines of StringBuilder) | 9, after 7c | 7c created `test/report/this.cs` and the session; stage 9 makes the actions one-line doors to them. The report renders through templates (presentation is os templates, not C#). `test/start` copies `timeout.after`'s timing, which it gets from the owner instead |
 
+Also pulled forward to stage 7's cleanup (decision 56), because this branch's own stages made them: `variable.set`'s `%!…%` fork, `test.start`'s orchestration (`app.test.Start()`), `test.report`'s rendering, and debug's forwarding properties. They are no longer stage 9's.
+
 ## Top findings, in order
 
 1. **`variable/set.cs`** (356 lines; the conversion block at about `:110`, about 95 lines): an `as <type>` conversion chain plus `!`-routing. The owner: the target type's `Create` (the value is born through its type) plus the variable's own `Set`. The handler becomes one line.
