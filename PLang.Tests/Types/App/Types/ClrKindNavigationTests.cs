@@ -52,7 +52,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
-        var dict = await d.Convert(ctx.App.Type.Kind["dict"]);
+        var dict = await d.Convert(ctx.App.Type.Kind("dict"));
         await Assert.That(dict.Success).IsTrue();
         await Assert.That((await (await dict.Get("a")).Value())?.ToString()).IsEqualTo("1");
     }
@@ -102,9 +102,9 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     public async Task ApexLift_NonItemNamedHost_BecomesClrCarrier_NoRecursion()
     {
         var ctx = _app.User.Context;
-        // A non-item host (the type registry itself) — rung 2's item⟺ICreate guard sends it to the clr
+        // A non-item host (the format registry) — rung 2's item⟺ICreate guard sends it to the clr
         // entity instead of resurrecting a non-Creatable named entity whose decline used to loop.
-        var lifted = global::app.type.item.@this.Create(ctx.App.Type, ctx);
+        var lifted = global::app.type.item.@this.Create(ctx.App.Format, ctx);
         await Assert.That(lifted).IsTypeOf<global::app.type.clr.@this>();
     }
 

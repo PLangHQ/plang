@@ -43,7 +43,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (mode == global::app.View.Debug)
         {
-            await new global::app.type.item.kind.reflection.@this(context).Output(this, writer, mode, context);
+            await new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
             return;
         }
         if (writer is global::app.channel.serializer.formal.Writer formal)

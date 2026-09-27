@@ -4,7 +4,7 @@ namespace app.type.item.number.kind.uint128;
 /// reach UInt128, so it owns its arms (throws precise); rides the wire as its invariant string.</summary>
 public sealed class @this : global::app.type.item.number.kind.@this
 {
-    public @this(global::app.actor.context.@this? context = null) : base("uint128", context) { }
+    public @this() : base("uint128") { }
 
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value)
         => value.Clr<object>() switch

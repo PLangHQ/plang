@@ -564,5 +564,5 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>
     /// <summary>A type answers navigation as its full type — the registry's, found with the
     /// asker's context. A full type is its own answer.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => new global::app.type.clr.@this(parent.Context.App.Type[this], parent.Context).Get(parent, key);
+        => new global::app.type.clr.@this(parent.Context.App.Type[this, parent.Context], parent.Context).Get(parent, key);
 }

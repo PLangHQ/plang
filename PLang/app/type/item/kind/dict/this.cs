@@ -12,7 +12,7 @@ namespace app.type.item.kind.dict;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this
 {
-    public @this(global::app.actor.context.@this? context = null) : base("dict", context) { }
+    public @this() : base("dict") { }
 
     protected internal override string Owner => "item";
 

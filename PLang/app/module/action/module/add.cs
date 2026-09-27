@@ -26,7 +26,12 @@ public partial class Add : IContext
         if (!loadResult.Success) return Error(loadResult.Error!);
 
         var ns = Namespace == null ? null : (await Namespace.Value())?.ToString();
-        var count = app.Module.Discover((await loadResult.Value()).Clr<System.Reflection.Assembly>()!, ns);
+        var assembly = (await loadResult.Value()).Clr<System.Reflection.Assembly>()!;
+        var count = app.Module.Discover(assembly, ns);
+        // The assembly's plang types and kinds (the closed sets its choice<T> params draw on) come in
+        // through the types' one way in.
+        var types = app.Type.Add(assembly, Context);
+        if (!types.Success) return types;
         return Data(new type.module { name = dllPath.FileNameWithoutExtension, actions = count });
     }
 }

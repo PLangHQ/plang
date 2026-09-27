@@ -460,7 +460,7 @@ public sealed class OpenAi : ILlm
             // The producer names the kind once; the kind loads the raw (json → clr(json),
             // md/none → text). No per-format ladder, and fresh == cached (both hand raw+kind).
             var result = effectiveFormat is { } format
-                ? await context.Ok(extracted, context.App.Type.Kind[format])
+                ? await context.Ok(extracted, context.App.Type.Kind(format))
                 : context.Ok(extracted);
 
             // --- Cache store ---

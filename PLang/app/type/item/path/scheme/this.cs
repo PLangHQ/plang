@@ -10,8 +10,8 @@ public sealed class @this : global::app.type.kind.@this
 {
     private readonly Func<string, actor.context.@this, global::app.type.item.path.@this> _factory;
 
-    public @this(string scheme, Func<string, actor.context.@this, global::app.type.item.path.@this> factory,
-        actor.context.@this? context = null) : base(scheme.ToLowerInvariant(), context)
+    public @this(string scheme, Func<string, actor.context.@this, global::app.type.item.path.@this> factory)
+        : base(scheme.ToLowerInvariant())
     {
         ArgumentException.ThrowIfNullOrEmpty(scheme);
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));

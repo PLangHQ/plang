@@ -9,13 +9,14 @@ namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 public class FormatRemapTests
 {
     private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.Type;
+    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
 
     // The flip: content off I/O IS binary; the mime subtype is the decode hint
     // (the kind). json → `{binary, json}` — the kind narrows to a dict only on
     // Value() access, nothing is eagerly typed item here.
     [Test] public async Task Mime_ApplicationJson_ReturnsBinaryJson()
     {
-        var t = Types.Mime("application/json");
+        var t = Types.Mime("application/json", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.Name).IsEqualTo("json");
     }
@@ -23,14 +24,14 @@ public class FormatRemapTests
     // xml is also binary off the wire → `{binary, xml}`.
     [Test] public async Task Mime_ApplicationXml_ReturnsBinaryXml()
     {
-        var t = Types.Mime("application/xml");
+        var t = Types.Mime("application/xml", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.Name).IsEqualTo("xml");
     }
 
     [Test] public async Task Extension_DotJson_ReturnsBinaryJson()
     {
-        var t = Types.Extension(".json");
+        var t = Types.Extension(".json", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.Name).IsEqualTo("json");
     }
@@ -39,14 +40,14 @@ public class FormatRemapTests
     // table only on Value() access.
     [Test] public async Task Extension_DotCsv_ReturnsBinaryCsv()
     {
-        var t = Types.Extension(".csv");
+        var t = Types.Extension(".csv", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.Name).IsEqualTo("csv");
     }
 
     [Test] public async Task Extension_DotXlsx_ReturnsBinaryXlsx()
     {
-        var t = Types.Extension(".xlsx");
+        var t = Types.Extension(".xlsx", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.Name).IsEqualTo("xlsx");
     }
@@ -54,7 +55,7 @@ public class FormatRemapTests
     // png is binary + png kind; it narrows to an image only on Value() access.
     [Test] public async Task Extension_DotPng_ReturnsBinaryPng()
     {
-        var t = Types.Extension(".png");
+        var t = Types.Extension(".png", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.Name).IsEqualTo("png");
     }
@@ -63,7 +64,7 @@ public class FormatRemapTests
     // type with no decode hint. Not null, and critically not `object`.
     [Test] public async Task Mime_ApplicationOctetStream_StampsBytesNullKind()
     {
-        var t = Types.Mime("application/octet-stream");
+        var t = Types.Mime("application/octet-stream", Ctx);
         await Assert.That(t.Name).IsEqualTo("binary");
         await Assert.That(t.kind.IsEmpty).IsTrue();
         await Assert.That(t.Name).IsNotEqualTo("object");
@@ -75,16 +76,16 @@ public class FormatRemapTests
     // content type. Same probe for csv.
     [Test] public async Task Extension_AgreesWith_Mime_ForDotJson()
     {
-        var byExt = Types.Extension(".json");
-        var byMime = Types.Mime("application/json");
+        var byExt = Types.Extension(".json", Ctx);
+        var byMime = Types.Mime("application/json", Ctx);
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
         await Assert.That(byExt.kind.Name).IsEqualTo(byMime.kind.Name);
     }
 
     [Test] public async Task Extension_AgreesWith_Mime_ForDotCsv()
     {
-        var byExt = Types.Extension(".csv");
-        var byMime = Types.Mime("text/csv");
+        var byExt = Types.Extension(".csv", Ctx);
+        var byMime = Types.Mime("text/csv", Ctx);
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
         await Assert.That(byExt.kind.Name).IsEqualTo(byMime.kind.Name);
     }

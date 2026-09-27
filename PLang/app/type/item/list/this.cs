@@ -132,6 +132,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// own raw slots; a Data carries its own type.</summary>
     internal @this AddRaw(object? raw)
     {
+        Admit(raw);
         lock (_gate)
         {
             if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
@@ -287,6 +288,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <c>Data</c>. A list value is one element that is a list.</summary>
     public @this Add(global::app.type.item.@this value)
     {
+        Admit(value);
         lock (_gate)
         {
             _hasWrapped = true;
@@ -301,6 +303,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <see cref="Add(global::app.type.item.@this)"/> for a list argument.</summary>
     public @this Add(@this other)
     {
+        Admit(other);
         lock (_gate)
         {
             _hasWrapped = true;
@@ -313,6 +316,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <paramref name="index"/> (clamped to [0, Count]) — one chunk, never a copy.</summary>
     internal @this Insert(int index, @this other)
     {
+        Admit(other);
         lock (_gate)
         {
             _hasWrapped = true;
@@ -337,6 +341,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     public @this Add(Data item)
     {
+        Admit(item);
         lock (_gate)
         {
             _hasWrapped = true;
@@ -349,6 +354,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (clamped to [0, Count]).</summary>
     internal @this Insert(int index, Data item)
     {
+        Admit(item);
         lock (_gate)
         {
             _hasWrapped = true;
@@ -501,6 +507,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return merged;
     }
 
+    /// <summary>The one guard every new slot passes before it is stored — a row, a raw value or a
+    /// Data. A list that holds only what it admits (the types) overrides it and throws on what it
+    /// refuses; the base admits everything.</summary>
+    protected virtual void Admit(object? slot) { }
+
+    /// <summary>The guard for a chunk — another list read in place: each of its elements joins this
+    /// one. The base admits everything, so a chunk stays O(1).</summary>
+    protected virtual void Admit(@this other) { }
+
     // Replace the rows with a flat sequence of slots (post sort/reverse). The result is all
     // weight-1 rows — a new order is a new flat list.
     private void ResetTo(IEnumerable<object?> flat)
@@ -522,6 +537,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // context of whoever reads it.
     private void Put(int index, object? slot)
     {
+        Admit(slot);
         lock (_gate)
         {
             if (IsWrapped(slot)) _hasWrapped = true;

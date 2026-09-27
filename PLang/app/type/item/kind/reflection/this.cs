@@ -9,7 +9,7 @@ namespace app.type.item.kind.reflection;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this
 {
-    public @this(global::app.actor.context.@this? context = null) : base("*", context) { }
+    public @this() : base("*") { }
 
     protected internal override string Owner => "item";
 

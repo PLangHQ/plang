@@ -14,26 +14,37 @@ namespace app.type.list;
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>
-    /// The context this catalog births values from. The type catalog is a
-    /// system-owned collection, born with the App's system context.
-    /// </summary>
-    internal actor.context.@this Context { get; }
-
-    public @this(actor.context.@this context) : this()
-    {
-        Context = context;
-        Kind = new kind.list.@this(context);   // per-App, born with context → its kinds are stamped
-    }
-
+    /// <summary>The types hold no context and no app: a lookup that needs the app's formats takes
+    /// the caller's context.</summary>
     public @this() { }
 
     /// <summary>
-    /// The kinds: every kind class (json, list, dict, <c>*</c>, number's precisions, hash's
-    /// algorithms), the kinds added as instances (choice's closed sets, path's schemes), and the
-    /// formats. A kind knows the type it is a kind of.
+    /// The kind <paramref name="name"/> names — one of a type's kinds, by its name or an alias
+    /// (json is item's, int number's, operator choice's, file path's); a name no type holds is a kind
+    /// with no class of its own (a file extension), minted by name.
     /// </summary>
-    public kind.list.@this Kind { get; private set; } = new(null);
+    public global::app.type.kind.@this Kind(string name)
+        => Types.Select(t => (t.kind as global::app.type.kind.empty.@this)?[name]).FirstOrDefault(k => k != null)
+           ?? new global::app.type.kind.@this(name);
+
+    /// <summary>
+    /// The kind a host object of <paramref name="clr"/> is — one of item's kinds by the C# form it
+    /// claims (exact wins, then the most derived assignable: <c>JsonElement</c>→json,
+    /// <c>IDictionary</c>→dict, <c>IList</c>→list), else item's <c>*</c> reflection kind. Never null.
+    /// </summary>
+    public global::app.type.kind.@this Kind(System.Type clr)
+    {
+        var kinds = (this["item"].kind as global::app.type.kind.empty.@this)!.kinds;
+        global::app.type.kind.@this? best = null;
+        if (clr != typeof(string))   // string is a scalar, never a sequence kind
+            foreach (var k in kinds)
+            {
+                if (k.ClrForm is not { } form || !form.IsAssignableFrom(clr)) continue;
+                if (form == clr) return k;
+                if (best is null || best.ClrForm!.IsAssignableFrom(form)) best = k;
+            }
+        return best ?? kinds.First(k => k.Name == "*");
+    }
 
     /// <summary>
     /// Per-(type, format) renderer table. Vestigial now that a value renders
@@ -60,12 +71,12 @@ public sealed partial class @this
     /// C# class. A spelled kind is not a name: <c>{text, md}</c> is asked by identity. Throws on a miss.
     /// </summary>
     public app.type.@this this[string name]
-        => Array.Find(Types, t => t.Names(name))
+        => Types.FirstOrDefault(t => t.Names(name))
            ?? throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
 
     /// <summary>True when <paramref name="name"/> names a plang type — the presence question
     /// beside the indexer, which selects and throws on a miss.</summary>
-    public bool Contains(string name) => Array.Exists(Types, t => t.Names(name));
+    public bool Contains(string name) => Types.Any(t => t.Names(name));
 
     /// <summary>
     /// The type content of this MIME arrives as. Content off I/O is raw bytes — it IS binary; the
@@ -73,50 +84,27 @@ public sealed partial class @this
     /// csv→table). <c>image/png</c> → {binary, png}; opaque bytes (octet-stream) → {binary}. Not the
     /// string door: "text/markdown" spelled as a type is {text, md}, as a MIME it is {binary, md}.
     /// </summary>
-    public app.type.@this Mime(string mime)
-        => this[new app.type.@this("binary", Context.App.Format.Subtype(mime))];
+    public app.type.@this Mime(string mime, actor.context.@this context)
+        => this[new app.type.@this("binary", context.App.Format.Subtype(mime)), context];
 
     /// <summary>
     /// The type a file of this extension holds — binary, the extension itself its kind (the
     /// authoritative subtype for a file): <c>.md</c> → {binary, md}, agreeing with its MIME.
     /// The null type for no extension.
     /// </summary>
-    public app.type.@this Extension(string extension)
+    public app.type.@this Extension(string extension, actor.context.@this context)
         => string.IsNullOrEmpty(extension) ? app.type.@this.Null
-            : this[new app.type.@this("binary", extension.TrimStart('.'))];
+            : this[new app.type.@this("binary", extension.TrimStart('.')), context];
 
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the
     /// type's facts. A choice's kind names its set, so a <c>{choice, operator}</c> carries that
-    /// set's options. The kind is canonicalised (<c>markdown</c> → <c>md</c>). A name no type
-    /// answers to is its bare identity. Holds no context.
+    /// set's options. The kind is canonicalised through the caller's formats (<c>markdown</c> →
+    /// <c>md</c>) and its own aliases (<c>integer</c> → <c>int</c>). A name no type answers to is
+    /// its bare identity.
     /// </summary>
-    public app.type.@this this[app.type.@this type]
-    {
-        get
-        {
-            // The kind by its own name: a format's canonical spelling (markdown → md), then the name
-            // of the kind an alias answers to (integer → int).
-            // The type carries the kind itself, its behaviour with it.
-            var found = type.kind is { IsEmpty: false } k ? Kind[Context?.App.Format.CanonicaliseKind(k.Name) ?? k.Name] : null;
-            var kind = found?.Name;
-            if (Array.Find(Types, t => t.Names(type.Name)) is not { } entry)
-                return new app.type.@this(type.Name, kind, type.Strict, type.Template) { kind = found };
-            if (kind == null && !type.Strict && type.Template == null) return entry;
-            return new app.type.@this(entry.Name, entry.ClrType, kind, type.Strict, type.Template)
-            {
-                kind = found,
-                Alias = entry.Alias,
-                Owned = entry.Owned,
-                Property = entry.Property,
-                Values = kind != null && Kind[kind] is global::app.type.item.choice.set.@this set ? set.Values : entry.Values,
-                Shape = entry.Shape,
-                ConstructorSignature = entry.ConstructorSignature,
-                Example = entry.Example,
-                Description = entry.Description,
-            };
-        }
-    }
+    public app.type.@this this[app.type.@this type, actor.context.@this context]
+        => Full(type, type.kind is { IsEmpty: false } k ? Kind(context.App.Format.CanonicaliseKind(k.Name) ?? k.Name) : null);
 
     /// <summary>
     /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when
@@ -130,10 +118,31 @@ public sealed partial class @this
             Load();
             // The name comes from PlangName — the same step the facts name through, so the
             // entity's face and the facts can never disagree. A kinded family is born here with
-            // its kind; a choice carries its set's options; every other name is the named entity.
+            // its kind (already the canonical name); every other name is the named entity.
             var (name, kind) = PlangName(clrType);
-            return kind == null ? this[name] : this[new app.type.@this(name, kind)];
+            return kind == null ? this[name] : Full(new app.type.@this(name), Kind(kind));
         }
+    }
+
+    // The full type for an identity and its kind — the type carries the kind itself, its
+    // behaviour with it; a choice's kind (its set) carries the set's options.
+    private app.type.@this Full(app.type.@this type, global::app.type.kind.@this? kind)
+    {
+        if (Types.FirstOrDefault(t => t.Names(type.Name)) is not { } entry)
+            return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
+        if (kind == null && !type.Strict && type.Template == null) return entry;
+        return new app.type.@this(entry.Name, entry.ClrType, kind?.Name, type.Strict, type.Template)
+        {
+            kind = kind,
+            Alias = entry.Alias,
+            Owned = entry.Owned,
+            Property = entry.Property,
+            Values = kind is global::app.type.item.choice.set.@this set ? set.Values : entry.Values,
+            Shape = entry.Shape,
+            ConstructorSignature = entry.ConstructorSignature,
+            Example = entry.Example,
+            Description = entry.Description,
+        };
     }
 
     // The container families whose element rides as the KIND (list<path> = {list, kind:path}).
@@ -191,7 +200,7 @@ public sealed partial class @this
     // kind; a C# shape a type owns is that type (int → number); a raw CLR type no plang type owns is clr.
     private (string Name, string? Kind) PlangName(System.Type type)
     {
-        var types = _types;
+        var types = Items().ToArray();
         type = Nullable.GetUnderlyingType(type) ?? type;
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
@@ -229,7 +238,7 @@ public sealed partial class @this
         return new property.@this
         {
             Name = char.ToLower(name[0]) + name[1..],
-            Type = new app.type.@this(typeName, Array.Find(_types, t => t.Names(typeName))?.ClrType, kind),
+            Type = new app.type.@this(typeName, Items().FirstOrDefault(t => t.Names(typeName))?.ClrType, kind),
         };
     }
 
@@ -310,7 +319,7 @@ public sealed partial class @this
             if (type == typeof(data.@this) || type == typeof(app.type.@this)) continue;
 
             var entry = new app.type.@this(typeName,
-                Array.Find(_types, t => t.Names(typeName))?.ClrType is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type, this);
+                Items().FirstOrDefault(t => t.Names(typeName))?.ClrType is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type, this);
             if (entry.Values == null && entry.Shape == null && entry.Property == null) continue;
             entries.Add(entry);
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))

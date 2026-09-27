@@ -15,7 +15,7 @@ namespace app.type.item.number.kind;
 /// </summary>
 public abstract class @this : global::app.type.kind.@this
 {
-    protected @this(string name, global::app.actor.context.@this? context) : base(name, context) { }
+    protected @this(string name) : base(name) { }
 
     /// <summary>A storage size is a kind of number.</summary>
     protected internal override string Owner => "number";

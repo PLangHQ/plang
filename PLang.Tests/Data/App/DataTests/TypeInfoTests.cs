@@ -19,7 +19,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CanonicalisesToNumberOfKindInt()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int")];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.Name).IsEqualTo("number");
         await Assert.That(type.kind.Name).IsEqualTo("int");
@@ -38,7 +38,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CreatesType()
     {
-        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int")];
+        var type = global::PLang.Tests.TestApp.SharedContext.App.Type[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
@@ -84,7 +84,7 @@ public class TypeTests
     [Test]
     public async Task NumberInt_FromList_ReturnsNumberType()
     {
-        var type = Types[new Type("number", "int")];
+        var type = Types[new Type("number", "int"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(type.Name).IsEqualTo("number");
@@ -93,7 +93,7 @@ public class TypeTests
     [Test]
     public async Task NumberLong_FromList_ReturnsNumberType()
     {
-        var type = Types[new Type("number", "long")];
+        var type = Types[new Type("number", "long"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(type.Name).IsEqualTo("number");
@@ -102,7 +102,7 @@ public class TypeTests
     [Test]
     public async Task NumberDouble_FromList_ReturnsNumberType()
     {
-        var type = Types[new Type("number", "double")];
+        var type = Types[new Type("number", "double"), global::PLang.Tests.TestApp.SharedContext];
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(type.Name).IsEqualTo("number");

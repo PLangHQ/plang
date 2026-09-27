@@ -41,7 +41,7 @@ public class Stage7_PathGrowthTests
         var p = global::app.type.item.path.@this.Resolve("/data/config.json", context);
         var kind = p.Kind(context);
         await Assert.That(kind.IsNull).IsFalse();
-        await Assert.That(kind).IsEqualTo(app.Type.Extension(".json"));
+        await Assert.That(kind).IsEqualTo(app.Type.Extension(".json", context));
     }
 
     [Test]

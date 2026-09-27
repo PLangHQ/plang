@@ -74,11 +74,6 @@ public sealed class @this : IAsyncDisposable
             count++;
         }
 
-        // A code.load'd assembly may bring its own closed sets (choice<T> params) — add them as
-        // choice's kinds once its actions are in. At boot App isn't attached yet; the app ctor adds
-        // the PLang assembly's, so this only fires for a runtime-loaded assembly.
-        App?.Type.Kind.Add(assembly);
-
         return count;
     }
 

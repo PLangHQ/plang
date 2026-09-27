@@ -12,22 +12,18 @@ namespace app.type.kind;
 /// does differently. An UNKNOWN kind ("md", "csv", a host's class name) is just a base instance
 /// carrying the name — the defaults are its behavior.</para>
 ///
-/// <para>Selection + lifecycle live on the collection (<c>app.type.Kind[name|clrType]</c>),
-/// never a static factory. Equality is by <see cref="Name"/> (case-insensitive); the wire form
-/// is the name string.</para>
+/// <para>A kind lives on the type it is a kind of (that type's empty kind holds it); the type
+/// list answers kind lookups by name and by C# class by walking its types' kinds — never a static
+/// factory. A kind holds no context: its verbs take the caller's. Equality is by
+/// <see cref="Name"/> (case-insensitive); the wire form is the name string.</para>
 /// </summary>
 public class @this
 {
     public string Name { get; }
 
-    /// <summary>Born WITH context — the collection is per-App and mints kinds stamped. Verbs
-    /// still take the per-call context as a parameter (a value's context, not the kind's).</summary>
-    internal actor.context.@this? Context { get; set; }
-
-    public @this(string name, actor.context.@this? context = null)
+    public @this(string name)
     {
         Name = name ?? throw new System.ArgumentNullException(nameof(name));
-        Context = context;
     }
 
     /// <summary>True for a type's empty kind — the type has no kind.</summary>
@@ -50,31 +46,28 @@ public class @this
     /// The type this kind is a kind of — what its content is (md → text, json → item, int →
     /// number): the type its class declares, else the type whose reader reads this kind, else the
     /// format family, else <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text.
+    /// Asked with the caller's context.
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.@this type
-        => Of(Context ?? throw new System.InvalidOperationException(
-               $"kind '{Name}' has no Context — resolving its type needs a stamped kind."));
-
-    /// <summary>
-    /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
-    /// <c>{number, long}</c>, … for a number kind; the formats that are text for a text kind.
-    /// </summary>
-    public global::app.type.item.list.@this<global::app.type.@this> list(actor.context.@this context)
-    {
-        var owner = Of(context);
-        return new(context.App.Type.Kind[owner]
-            .Select(k => (global::app.type.item.@this)context.App.Type[new global::app.type.@this(owner.Name, k.Name)]));
-    }
-
-    // The type this kind is a kind of, asked with the caller's context.
-    private global::app.type.@this Of(actor.context.@this context)
+    public global::app.type.@this type(actor.context.@this context)
     {
         string name = Owner
                       ?? context.App.Type.Reader.TypeOf(Name)
                       ?? context.App.Format.Kind(Name)
                       ?? "binary";
-        return context.App.Type[new global::app.type.@this(name)];
+        return context.App.Type[new global::app.type.@this(name), context];
+    }
+
+    /// <summary>
+    /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
+    /// <c>{number, long}</c>, … for a number kind; the formats that are text for a text kind.
+    /// </summary>
+    public list.@this list(actor.context.@this context)
+    {
+        var owner = type(context);
+        var held = owner.kind is empty.@this root ? root.kinds.Select(k => k.Name) : [];
+        var formats = context.App.Format.KindsByFamily().TryGetValue(owner.Name, out var family) ? family : [];
+        return new(held.Concat(formats).Distinct(System.StringComparer.OrdinalIgnoreCase)
+            .Select(name => context.App.Type[new global::app.type.@this(owner.Name, name), context]));
     }
 
     // --- Verbs: the kind owns what you can do with its values. Defaults here; kinds override. ---
@@ -105,7 +98,7 @@ public class @this
             var (found, next) = kind.Descend(node, key, isIndex, ctx);
             if (!found) return ctx.NotFound(seg.Raw);
             node = next;
-            if (node is not null) kind = ctx.App.Type.Kind[node.GetType()];   // re-derive for the next hop
+            if (node is not null) kind = ctx.App.Type.Kind(node.GetType());   // re-derive for the next hop
         }
         return kind.Data(parent.Name, node, parent, ctx);
     }
@@ -202,7 +195,7 @@ public class @this
             // any sequence → array, an object → the * kind's declared-face Output). One rule, no
             // categories: the kind decides; an undeclared plang type throws there, loud.
             default:
-                if (value.GetType().IsClass) await ctx.App.Type.Kind[value.GetType()].Output(value, writer, mode, ctx);
+                if (value.GetType().IsClass) await ctx.App.Type.Kind(value.GetType()).Output(value, writer, mode, ctx);
                 else writer.Value(value);
                 break;
         }

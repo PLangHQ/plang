@@ -112,7 +112,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         var child = await data.Get("database");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");
         // A consumer that wants a native dict asks — the dict kind owns json→dict.
-        var asDict = await data.Convert(data.Context.App.Type.Kind["dict"]);
+        var asDict = await data.Convert(data.Context.App.Type.Kind("dict"));
         await Assert.That(asDict.Type!.Name).IsEqualTo("dict");
     }
 

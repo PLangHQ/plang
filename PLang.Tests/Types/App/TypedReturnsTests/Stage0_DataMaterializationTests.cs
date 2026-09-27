@@ -65,7 +65,7 @@ public class Stage0_DataMaterializationTests
     public async Task Data_VariableSet_NoParsingAtSetTime()
     {
         const string raw = "a,b,c\n1,2,3";
-        var src = new Data("x", raw, _app.Type[new global::app.type.@this("text", "csv")], context: _app.User.Context);
+        var src = new Data("x", raw, _app.Type[new global::app.type.@this("text", "csv"), _app.User.Context], context: _app.User.Context);
 
         await Assert.That((await src.Value())?.ToString()).IsEqualTo(raw)
             .Because("Setting a typed Data must not invoke the materializer.");

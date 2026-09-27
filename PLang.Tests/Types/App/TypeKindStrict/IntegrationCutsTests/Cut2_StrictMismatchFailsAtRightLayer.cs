@@ -37,7 +37,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         return new(ctx)
         {
             Value = new global::app.data.@this("Value", value, context: ctx),
-            Type = new global::app.data.@this("Type", ctx.App.Type[Type("image", "gif", true)], context: ctx),
+            Type = new global::app.data.@this("Type", ctx.App.Type[Type("image", "gif", true), ctx], context: ctx),
         };
     }
 

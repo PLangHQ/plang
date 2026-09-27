@@ -49,7 +49,7 @@ public class TypeEntityShapeTests
         await Assert.That(noSubtype.kind.IsEmpty).IsTrue();
 
         await using var app = TestApp.Create("/test");
-        var split = app.Type[new TypeEntity("image", "jpeg")];
+        var split = app.Type[new TypeEntity("image", "jpeg"), app.User.Context];
         await Assert.That(split.Name).IsEqualTo("image");
         await Assert.That(split.kind.Name).IsEqualTo("jpg");
     }
@@ -68,6 +68,6 @@ public class TypeEntityShapeTests
         await using var app = TestApp.Create("/test");
         var bare = new global::app.type.@this("identity");
         await Assert.That(bare.Property).IsNull();
-        await Assert.That(app.Type[bare].Property).IsNotNull();
+        await Assert.That(app.Type[bare, app.User.Context].Property).IsNotNull();
     }
 }

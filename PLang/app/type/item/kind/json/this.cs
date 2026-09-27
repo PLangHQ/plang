@@ -12,7 +12,7 @@ namespace app.type.item.kind.json;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this
 {
-    public @this(global::app.actor.context.@this? context = null) : base("json", context) { }
+    public @this() : base("json") { }
 
     protected internal override string Owner => "item";
 

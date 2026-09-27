@@ -7,21 +7,21 @@ public class KindListTests
     [Test] public async Task NumberKind_IsAKindOfNumber()
     {
         var ctx = TestApp.SharedContext;
-        await Assert.That(ctx.App.Type.Kind["int"].type.Name).IsEqualTo("number");
+        await Assert.That(ctx.App.Type.Kind("int").type(ctx).Name).IsEqualTo("number");
     }
 
     [Test] public async Task Integer_AnswersTheIntKind()
     {
         var ctx = TestApp.SharedContext;
-        await Assert.That(ctx.App.Type.Kind["integer"].Name).IsEqualTo("int");
-        var type = ctx.App.Type[new global::app.type.@this("number", "integer")];
+        await Assert.That(ctx.App.Type.Kind("integer").Name).IsEqualTo("int");
+        var type = ctx.App.Type[new global::app.type.@this("number", "integer"), ctx];
         await Assert.That(type.kind.Name).IsEqualTo("int");
     }
 
     [Test] public async Task NumberKindList_IsEveryPrecision_AsFullTypes()
     {
         var ctx = TestApp.SharedContext;
-        var kinds = ctx.App.Type.Kind["int"].list(ctx).Items().Select(t => $"{t.Name}/{t.kind.Name}").ToList();
+        var kinds = ctx.App.Type.Kind("int").list(ctx).Items().Select(t => $"{t.Name}/{t.kind.Name}").ToList();
         await Assert.That(kinds).Contains("number/int");
         await Assert.That(kinds).Contains("number/decimal");
         await Assert.That(kinds).Contains("number/biginteger");
@@ -31,22 +31,22 @@ public class KindListTests
     [Test] public async Task HashKindList_IsItsAlgorithms()
     {
         var ctx = TestApp.SharedContext;
-        var kinds = ctx.App.Type.Kind["sha256"].list(ctx).Items().Select(t => t.kind.Name).ToList();
+        var kinds = ctx.App.Type.Kind("sha256").list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).IsEquivalentTo(new[] { "keccak256", "sha256" });
     }
 
     [Test] public async Task ItemKinds_AreJsonListDictAndReflection()
     {
         var ctx = TestApp.SharedContext;
-        var kinds = ctx.App.Type.Kind["json"].list(ctx).Items().Select(t => t.kind.Name).ToList();
+        var kinds = ctx.App.Type.Kind("json").list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).IsEquivalentTo(new[] { "json", "list", "dict", "*" });
     }
 
     [Test] public async Task AFormatKind_IsAKindOfItsFamily()
     {
         var ctx = TestApp.SharedContext;
-        await Assert.That(ctx.App.Type.Kind["md"].type.Name).IsEqualTo("text");
-        var kinds = ctx.App.Type.Kind["md"].list(ctx).Items().Select(t => t.kind.Name).ToList();
+        await Assert.That(ctx.App.Type.Kind("md").type(ctx).Name).IsEqualTo("text");
+        var kinds = ctx.App.Type.Kind("md").list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).Contains("md");
         await Assert.That(kinds).Contains("csv");
     }

@@ -276,7 +276,7 @@ public sealed partial class @this : IAsyncDisposable
         Event = new global::app.@event.list.@this();
         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
-        Type = new type.list.@this(System.Context);
+        Type = new type.list.@this();
         Code = new AppCode(System.Context);
         _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
@@ -284,15 +284,11 @@ public sealed partial class @this : IAsyncDisposable
         _goals = new global::app.goal.list.@this(this);
 
         Code.RegisterDefaults();
-        // Closed sets (choice<T>: operator, httpmethod, …) surface only through handler params
-        // and enum choices carry no [Choices] marker, so choice's kinds are found by scanning the
-        // assembly's choice<T> usages — reverse-resolvable ("operator" → choice<T>) + readable.
-        // code.load re-runs this for a late-loaded assembly (Discover below).
-        Type.Kind.Add(typeof(global::app.@this).Assembly);
-        // path's schemes, each a kind of path that builds its own path subclass.
-        Type.Kind.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-        Type.Kind.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        Type.Kind.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        // path's schemes, each a kind of path that builds its own path subclass. (The types' own
+        // scan finds the kind classes and choice's closed sets.)
+        Type.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
+        Type.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        Type.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child

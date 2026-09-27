@@ -16,7 +16,7 @@ public class TypeAccessorTests
     [Test] public async Task AppType_IndexByName_ReturnsTypeEntity_WithNameAndClrType()
     {
         await using var app = TestApp.Create("/test");
-        var t = app.Type[new global::app.type.@this("number", "int")];
+        var t = app.Type[new global::app.type.@this("number", "int"), app.User.Context];
         await Assert.That(t.Name).IsEqualTo("number");
         await Assert.That(t.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }

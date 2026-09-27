@@ -38,7 +38,7 @@ public partial class Read : IContext
         // first examination through the door.
         if (path is global::app.type.item.path.http.@this)
             return new data.@this("url", new global::app.type.item.url.@this(path!, Context),
-                Context.App.Type[new global::app.type.@this("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null)],
+                Context.App.Type[new global::app.type.@this("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null), Context],
                 context: Context);
 
         // Stat once: NotFound surfaces at the read step (not at first touch),
@@ -70,7 +70,7 @@ public partial class Read : IContext
         var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
         var template = await ResolveVariables.ToBooleanAsync() ? "plang" : null;
         return new data.@this(path.FileName, new global::app.type.item.file.@this(path, Context, template),
-            Context.App.Type[new global::app.type.@this("file", kind, template: template)], context: Context);
+            Context.App.Type[new global::app.type.@this("file", kind, template: template), Context], context: Context);
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public partial class Read : IContext
 
         // The same reference the runtime lands — {file, <ext>} — so build-time and runtime
         // stamps can't drift; the content type appears only when runtime examination narrows.
-        var inferred = Context.App.Type[new global::app.type.@this("file", p.Extension.TrimStart('.'))];
+        var inferred = Context.App.Type[new global::app.type.@this("file", p.Extension.TrimStart('.')), Context];
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.

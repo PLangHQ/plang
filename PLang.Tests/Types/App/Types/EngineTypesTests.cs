@@ -55,7 +55,7 @@ public class EngineTypesTests
     [Test]
     public async Task Clr_NullOrEmpty_ReturnsNull()
     {
-        await Assert.That(_types.Clr(null!)).IsNull();
+        await Assert.That(_types.Clr((string)null!)).IsNull();
         await Assert.That(_types.Clr("")).IsNull();
         await Assert.That(_types.Clr("   ")).IsNull();
     }
@@ -523,14 +523,14 @@ public class EngineTypesTests
         engine.Format.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::app.data.@this("test", new byte[] { 1 },
-            engine.Type.Mime("application/custom"), context: context);
+            engine.Type.Mime("application/custom", context), context: context);
 
         // Bytes off I/O are binary; the kind names the subtype. The custom mime
         // only resolves to its family through the ENGINE'S registry (the runtime
         // Add), which the static TypeMapping lacks — proving lazy derivation
         // walks the engine types, not the static map.
         await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Type.Kind[data.Type!.kind.Name].type.Name).IsEqualTo("custom-kind");
+        await Assert.That(engine.Type.Kind(data.Type!.kind.Name).type(context).Name).IsEqualTo("custom-kind");
     }
 
     // --- Engine integration ---

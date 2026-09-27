@@ -15,12 +15,12 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>The set <paramref name="clr"/> draws its options from. A closed set that declares no
     /// plang name fails loud — its name is never derived from the CLR name.</summary>
-    internal @this(System.Type clr, global::app.actor.context.@this? context = null)
+    internal @this(System.Type clr)
         : base(clr.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false)?.Name
                ?? (Closed(clr)
                    ? throw new System.InvalidOperationException(
                        $"closed set {clr.FullName} declares no plang name — a closed set declares its name: [PlangType(\"…\")].")
-                   : clr.Name), context)
+                   : clr.Name))
     {
         _clr = clr;
         _choices = Choices(clr);

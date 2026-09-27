@@ -52,7 +52,7 @@ public sealed class Json : ISerializer
             if (ms.Length == 0) return _context.Ok();
             // A bare json payload — the json kind owns its parse (structured → clr(json),
             // scalar → its native leaf). One decode, no STJ serializer layer.
-            var item = _context.App.Type.Kind["json"].Parse(ms.ToArray(), _context);
+            var item = _context.App.Type.Kind("json").Parse(ms.ToArray(), _context);
             return _context.Ok(item);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)

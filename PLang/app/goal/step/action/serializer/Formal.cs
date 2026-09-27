@@ -320,7 +320,7 @@ public sealed class Formal
 
             // the type: the declared one; in an open slot the written one, else the literal's own
             var face = declaredFace != "item" ? declaredFace : written ?? LiteralType(value);
-            var type = _context.App.Type[new global::app.type.@this(TypeName(face), TypeKind(face))];
+            var type = _context.App.Type[new global::app.type.@this(TypeName(face), TypeKind(face)), _context];
             global::app.type.item.@this born;
             if (value.Action != null) born = value.Action;
             // argument rows are named rows, each value its own (a %x% row value is born a template on
@@ -341,7 +341,7 @@ public sealed class Formal
         private global::app.type.item.@this Born(global::app.type.@this type, string json, string? template = "plang")
         {
             var marked = template != null && type.Template == null && global::app.type.item.text.@this.HasVariable(json)
-                ? _context.App.Type[new global::app.type.@this(type.Name, type.kind.Name, type.Strict, template)]
+                ? _context.App.Type[new global::app.type.@this(type.Name, type.kind.Name, type.Strict, template), _context]
                 : type;
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);

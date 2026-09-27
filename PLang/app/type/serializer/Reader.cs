@@ -37,6 +37,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (name == null) return new global::app.type.item.@null.@this("type", kind);
         // Born through the types: an alias (string) canonicalises and the type carries its class; a
         // name no type answers to stays as written, for the reader of the type to judge.
-        return ctx.Context.App.Type[new global::app.type.@this(name, typeKind, strict, template)];
+        return ctx.Context.App.Type[new global::app.type.@this(name, typeKind, strict, template), ctx.Context];
     }
 }

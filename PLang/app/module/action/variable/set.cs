@@ -221,7 +221,7 @@ public partial class Set : IContext, IScope
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = Context.App.Type[typeValue as global::app.type.@this ?? new global::app.type.@this(declaredName)];
+            var type = Context.App.Type[typeValue as global::app.type.@this ?? new global::app.type.@this(declaredName), Context];
             var typeName = type.Name;
             var targetType = type.ClrType;
 
@@ -234,7 +234,7 @@ public partial class Set : IContext, IScope
             {
                 var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
                 if (Context.App.Type[typeName].Create(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
-                    type = Context.App.Type[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template)];
+                    type = Context.App.Type[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template), Context];
             }
             if (targetType == null)
             {

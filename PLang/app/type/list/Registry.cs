@@ -4,9 +4,10 @@ using app.Attributes;
 namespace app.type.list;
 
 /// <summary>
-/// Registry partial of <see cref="@this"/> — the one set of types: how a type comes in
+/// Registry partial of <see cref="@this"/> — how a type comes in
 /// (<see cref="Add(System.Type, actor.context.@this, string?)"/>, <see cref="Add(Assembly, actor.context.@this)"/>),
-/// the startup scan, and the name a C# class reports.
+/// how a kind comes in (<see cref="Add(global::app.type.kind.@this)"/>), the startup scan, the guard
+/// every slot passes, and the name a C# class reports.
 ///
 /// A class's name, in order:
 ///   1. [PlangType("name")] on the class — the declared name; [PlangType] with no name infers it.
@@ -16,14 +17,10 @@ namespace app.type.list;
 ///      claims no name of its own.
 ///   One name, one class.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : global::app.type.item.list.@this<global::app.type.@this>
 {
     private readonly object _lock = new();
     private volatile bool _loaded;
-
-    // The types, in the order they came in. Copy-on-write: a walk reads the array it holds, and an
-    // Add swaps in a new one, so a lookup never sees a half-added type.
-    private volatile global::app.type.@this[] _types = [];
 
     /// <summary>Assemblies the startup scan reads. Defaults to the App assembly; callers can extend.</summary>
     public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
@@ -50,37 +47,50 @@ public sealed partial class @this
     };
 
     // Every type, loaded on first ask.
-    private global::app.type.@this[] Types
+    private IEnumerable<global::app.type.@this> Types
     {
         get
         {
             Load();
-            return _types;
+            return Items();
         }
     }
 
     // The startup scan: every item class in Assemblies comes in under its name, then each gets its
-    // facts once every name is known (a fact names its property types). A clash here is plang's own.
+    // facts once every name is known (a fact names its property types), then each type takes its
+    // kinds. A clash here is plang's own.
     private void Load()
     {
         if (_loaded) return;
         lock (_lock)
         {
             if (_loaded) return;
-            var named = new List<global::app.type.@this>();
             foreach (var assembly in Assemblies)
                 foreach (var clr in SafeGetTypes(assembly))
-                    if (NameOf(clr) is { } name)
-                    {
-                        if (named.Find(t => t.Names(name)) is { } owner)
-                            throw new InvalidOperationException(
-                                $"type name '{name}' is claimed by both {owner.ClrType!.FullName} and {clr.FullName} — one name, one class.");
-                        named.Add(new global::app.type.@this(name, clr, null));
-                    }
-            _types = [.. named];
-            _types = [.. named.Select(t => new global::app.type.@this(t.Name, t.ClrType!, this))];
+                    if (NameOf(clr) is { } name) base.Add(new global::app.type.@this(name, clr, null));
+            var faceted = Items().Select(t => new global::app.type.@this(t.Name, t.ClrType!, this)).ToArray();
+            while (CountRaw > 0) RemoveAt(0);
+            foreach (var type in faceted) base.Add(type);
+            foreach (var assembly in Assemblies) Enlist(assembly);
             _loaded = true;
         }
+    }
+
+    /// <summary>The guard every slot passes: the types hold types, one name to one class. Only
+    /// plang's own code reaches the slots around <see cref="Add(System.Type, actor.context.@this, string?)"/>,
+    /// so a refusal here is plang broken, and throws.</summary>
+    protected override void Admit(object? slot)
+    {
+        if (slot is not global::app.type.@this type)
+            throw new InvalidOperationException($"the types hold types, not {slot?.GetType().Name ?? "null"}.");
+        if (Items().FirstOrDefault(t => t.Names(type.Name)) is { } owner && owner.ClrType != type.ClrType)
+            throw new InvalidOperationException(
+                $"type name '{type.Name}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.");
+    }
+
+    protected override void Admit(global::app.type.item.list.@this other)
+    {
+        foreach (var slot in other.Slots()) Admit(slot);
     }
 
     /// <summary>
@@ -92,6 +102,8 @@ public sealed partial class @this
     {
         if ((name ?? NameOf(clr)) is not { } claimed)
             return context.Error(new error.Error($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
+        // The class that already owns the name adds nothing new: the same answer, whatever the name.
+        if (Types.FirstOrDefault(t => t.Names(claimed)) is { } held && held.ClrType == clr) return context.Ok(held);
         if (Sealed.Contains(claimed))
             return context.Error(new error.Error(
                 $"'{claimed}' is on the sealed built-in list and may not be claimed by a runtime-loaded type.", "TypeLoadCollision", 400));
@@ -102,27 +114,32 @@ public sealed partial class @this
         lock (_lock)
         {
             Load();
-            if (Array.Find(_types, t => t.Names(claimed)) is { } owner)
+            if (Items().FirstOrDefault(t => t.Names(claimed)) is { } owner)
                 return owner.ClrType == clr
                     ? context.Ok(owner)
                     : context.Error(new error.Error(
                         $"type name '{claimed}' is claimed by both {owner.ClrType?.FullName} and {clr.FullName} — one name, one class.",
                         "TypeLoadCollision", 400));
             // Its own name first, so its facts can name a property of its own type.
-            _types = [.. _types, new global::app.type.@this(claimed, clr, null)];
+            base.Add(new global::app.type.@this(claimed, clr, null));
             var added = new global::app.type.@this(claimed, clr, this);
-            _types = [.. _types[..^1], added];
+            RemoveAt(CountRaw - 1);
+            base.Add(added);
             return context.Ok(added);
         }
     }
 
     /// <summary>
-    /// Adds every plang type <paramref name="assembly"/> exports, and registers its renderers
+    /// Adds every plang type <paramref name="assembly"/> exports, the kinds it brings (kind classes,
+    /// the closed sets its <c>choice&lt;T&gt;</c> properties draw on), and its renderers
     /// (<see cref="ITypeRenderer"/>). Every type added must render — its own renderer or one already
-    /// known. The first error stops the load; the types added before it stay.
+    /// known. The first error stops the load; what was added before it stays.
     /// </summary>
     public data.@this Add(Assembly assembly, actor.context.@this context)
     {
+        // An assembly the startup scan read brings nothing new: its types, kinds and renderers are in.
+        if (Assemblies.Contains(assembly)) return context.Ok(new List<global::app.type.@this>());
+
         System.Type[] exported;
         try { exported = assembly.GetExportedTypes(); }
         catch (ReflectionTypeLoadException ex) { exported = ex.Types.Where(t => t != null).ToArray()!; }
@@ -136,7 +153,7 @@ public sealed partial class @this
             var claims = clr.GetCustomAttribute<PlangTypeAttribute>(inherit: false) is { } declared
                 ? declared.Name ?? InferName(clr)
                 : IsThisClass(clr) ? InferName(clr) : null;
-            if (claims != null && Sealed.Contains(claims))
+            if (claims != null && Sealed.Contains(claims) && Items().FirstOrDefault(t => t.Names(claims))?.ClrType != clr)
                 return context.Error(new error.Error(
                     $"'{claims}' is on the sealed built-in list and may not be claimed by a runtime-loaded type ({clr.FullName}).", "TypeLoadCollision", 400));
             if (NameOf(clr) is null) continue;
@@ -144,6 +161,7 @@ public sealed partial class @this
             if (!result.Success) return result;
             added.Add(this[NameOf(clr)!]);
         }
+        Enlist(assembly);
 
         foreach (var clr in exported)
         {
@@ -162,6 +180,58 @@ public sealed partial class @this
                 $"type '{bare.Name}' loaded with no covering renderer (need a Default ITypeRenderer or per-format coverage).",
                 "TypeLoadCoverage", 400));
         return context.Ok(added);
+    }
+
+    /// <summary>Adds a kind to the type it is a kind of — a closed set to choice, a scheme to path.
+    /// A kind of the same name on that type is replaced.</summary>
+    public void Add(global::app.type.kind.@this kind)
+    {
+        Load();
+        Hold(kind);
+    }
+
+    // Puts a kind on its type's empty kind, reading the list as it stands (the startup scan calls it
+    // while loading).
+    private void Hold(global::app.type.kind.@this kind)
+    {
+        if (kind.Owner is not { } owner
+            || Items().FirstOrDefault(t => t.Names(owner))?.kind is not global::app.type.kind.empty.@this root)
+            throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
+        root.Add(kind);
+    }
+
+    // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
+    // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
+    // by its usage, so this reflects the assembly's property types.
+    private void Enlist(Assembly assembly)
+    {
+        var seen = new HashSet<System.Type>();
+        foreach (var t in SafeGetTypes(assembly))
+        {
+            if (typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false }
+                && t != typeof(global::app.type.kind.@this) && t.GetConstructor(System.Type.EmptyTypes) != null)
+            {
+                var kind = (global::app.type.kind.@this)Activator.CreateInstance(t)!;
+                if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
+            }
+            foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var held = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                if (held.IsGenericType && held.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                    held = held.GetGenericArguments()[0];
+                if (!held.IsGenericType || held.GetGenericTypeDefinition() != typeof(global::app.type.item.choice.@this<>)
+                    || !seen.Add(held)) continue;
+                var inner = held.GetGenericArguments()[0];
+                var set = new global::app.type.item.choice.set.@this(inner);
+                if (!set.IsClosed)
+                    throw new InvalidOperationException($"{inner.FullName} is not a closed set — no enum members, no Choices(context?).");
+                Hold(set);
+                // the closed reader for this set — one reflective instantiation, then typed reads.
+                Reader.Register("choice", set.Name,
+                    (global::app.type.reader.ITypeReader)Activator.CreateInstance(
+                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), set.Name)!);
+            }
+        }
     }
 
     // The name a class reports as a type of its own, or null: not an item, a kind of a family, or an
