@@ -214,7 +214,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// Fail, but routes through <see cref="@this.AuthGate"/> first so the verb
     /// surface is consistent with every other HttpPath verb.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(string pattern, bool recursive, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new Error(
@@ -314,7 +314,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// HTTP DELETE. <paramref name="recursive"/> / <paramref name="ignoreIfNotFound"/>
     /// are filesystem-only — no-ops here; the server decides.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(bool recursive, bool ignoreIfNotFound, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context)
     {
         var verb = Verb.Delete;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);

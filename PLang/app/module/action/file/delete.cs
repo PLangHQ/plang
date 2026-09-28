@@ -13,9 +13,7 @@ public partial class Delete : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Recursive { get; init; }
 
-    public async Task<data.@this<path>> Start()
-    {
-        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
-        return await (await Path.Value())!.Delete((await Recursive.Value())!.Value, (await IgnoreIfNotFound.Value())!.Value, Context);
-    }
+    public async Task<data.@this<path>> Start() => data.@this<path>.From(
+        await Path.Use(path => Recursive.Use(recursive => IgnoreIfNotFound.Use(async ignoreIfNotFound =>
+            (data.@this)await path.Delete(recursive, ignoreIfNotFound, Context)))));
 }

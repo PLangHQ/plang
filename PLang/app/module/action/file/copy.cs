@@ -14,12 +14,8 @@ public partial class Copy : IContext
     [Default(true)]
     public partial data.@this<global::app.type.item.@bool.@this> IncludeSubfolders { get; init; }
 
-    public async Task<data.@this<path>> Start()
-    {
-        // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
-        // SchemeNotRegistered error instead of an NRE on .Value.
-        if (!Source.Success) return data.@this<path>.From(Source);
-        if (!Destination.Success) return data.@this<path>.From(Destination);
-        return await (await Source.Value())!.CopyTo((await Destination.Value())!, (await Overwrite.Value())!.Value, (await IncludeSubfolders.Value())!.Value, Context);
-    }
+    // A path that didn't resolve (an unregistered s3://) is the answer — its own SchemeNotRegistered.
+    public async Task<data.@this<path>> Start() => data.@this<path>.From(
+        await Source.Use(source => Destination.Use(destination => Overwrite.Use(overwrite => IncludeSubfolders.Use(async includeSubfolders =>
+            (data.@this)await source.CopyTo(destination, overwrite, includeSubfolders, Context))))));
 }

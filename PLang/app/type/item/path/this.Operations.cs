@@ -92,10 +92,10 @@ public abstract partial class @this
             new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
-    public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound, actor.context.@this context);
+    public abstract Task<data.@this<@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context);
 
     /// <summary>List entries with a glob pattern. Non-FS schemes ignore both options.</summary>
-    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(string pattern, bool recursive, actor.context.@this context);
+    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context);
 
     /// <summary>Write <paramref name="value"/> to this path; returns the Path wrapped in Data.</summary>
     public abstract Task<data.@this<@this>> Save(data.@this? value, actor.context.@this context);
@@ -116,7 +116,7 @@ public abstract partial class @this
     /// underlying verb impls. Subclasses (e.g. FilePath) override for
     /// same-scheme fast paths that honour the options.
     /// </summary>
-    public virtual async Task<data.@this<@this>> CopyTo(@this destination, bool overwrite, bool includeSubfolders, actor.context.@this context)
+    public virtual async Task<data.@this<@this>> CopyTo(@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this includeSubfolders, actor.context.@this context)
     {
         var read = await Bytes(context);
         if (!read.Success || read.Exits) return data.@this<@this>.From(read);
@@ -130,7 +130,7 @@ public abstract partial class @this
     /// Cross-scheme move default: CopyTo destination, then Delete source.
     /// Subclasses (e.g. FilePath same-scheme) override for atomic move semantics.
     /// </summary>
-    public virtual async Task<data.@this<@this>> MoveTo(@this destination, bool overwrite, actor.context.@this context)
+    public virtual async Task<data.@this<@this>> MoveTo(@this destination, global::app.type.item.@bool.@this overwrite, actor.context.@this context)
     {
         var copy = await CopyTo(destination, overwrite, includeSubfolders: true, context);
         if (!copy.Success || copy.Exits) return copy;

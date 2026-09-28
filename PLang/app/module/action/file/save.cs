@@ -8,9 +8,6 @@ public partial class Save : IContext
     public partial data.@this<path> Path { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<path>> Start()
-    {
-        if (!Path.Success) return data.@this<path>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
-        return await (await Path.Value())!.Save(Value, Context);
-    }
+    public async Task<data.@this<path>> Start() => data.@this<path>.From(
+        await Path.Use(async path => (data.@this)await path.Save(Value, Context)));
 }
