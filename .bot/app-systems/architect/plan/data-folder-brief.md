@@ -40,7 +40,7 @@ Ingi, 2026-09-28 (a curious-architect conversation):
 
 ## Open
 
-1. **Input without an identity** (an LLM's answer, an unsigned web request, an `ask` answer, a file's or url's content): where may it write? The app level `.data/file/`, a sandbox such as `.data/input/`, or nowhere without the System actor? (Asked. Lean: two kinds of value, source and input; input never writes outside `.data/` or into another identity's folder.)
+1. **Settled (Ingi): "they all have identity, cant write if they dont have identity."** Every writer has an identity. A value whose origin has no identity can't be written to disk. Still to settle: which identity each kind of input carries. A signed wire request carries its signer's. An `ask` answer carries the local user's. An LLM's answer and a url's content: the provider's, or the asking actor's? The latter would put them in the asker's folder.
 2. **The id on disk:** a short fingerprint of the key as the folder name, with the full key in the identity (lean).
 3. **Callers without an identity** (an unsigned browser request): no folder, the app level only, or refused?
 4. **Naming:** `actor.Identity` today means the actor's own signing keys, while "the user's identities" means the callers. That's one word for "who I am" and "who came to me"; name them apart.
