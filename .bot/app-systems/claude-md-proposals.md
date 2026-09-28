@@ -36,3 +36,11 @@ Addendum (same day): **nodes lowercase, verbs PascalCase.** Lowercase covers wha
 ```
 User-facing chatter → `await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(...)` — the list selects (`this[name]` for the defaults, which `Verify` guarantees; `Get(name)` for a user-named channel, null on a miss), the channel writes (`WriteText` / `WriteAsync`).
 ```
+
+## architect — app-systems — 2026-09-28
+**Target:** /CLAUDE.md ("Running plang Tests", and every `Tests/` mention)
+**Why:** Ingi, 2026-09-28: "the path should not be Tests/ but Test/ not Modules/ => Module/". Folders are singular (the OBP naming rule), and a test lives at the path of what it tests. The plang test tree is renamed `Tests/` → `Test/`, with every plural folder inside it singular (`Modules/` → `Module/`, …) on app-systems. Filed on Ingi's explicit request.
+**Proposed change:** replace `Tests/` with `Test/` throughout, and add under "Running plang Tests":
+```
+- A test lives at the path of what it tests (`Test/Module/On/Cache/`, `Test/App/Type/`), in singular folders — never in a folder named for a branch, stage or plan.
+```

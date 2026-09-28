@@ -1,45 +1,42 @@
 / app-systems: every %!app.X% is the type X, and the plang path, the C# path and the file path say the same thing.
-/ This goal is the branch's summary: each stage is a sub-goal, and its steps are the behaviour we want, each with the
-/ test that validates it. Tests live at the path of what they test (never a branch or stage folder); checks that
-/ can't be a .test.goal are in spec/checks.md. A stage is done when its tests pass, its checks hold, and its OBP review
-/ is clean. The tests are built only when Ingi says so.
+/ Done: 1–8g, and 8h's code parts (see done.list). Each step below names the test that validates it; tests live at
+/ the path of what they test. Checks that can't be a test are in checks.md. Tests are built only when Ingi says so.
 AppSystems
-- call Stage8g          / done: validation that the modifiers-as-clauses logic works
-- call Stage8h          / in progress: the builder builds itself, and words compile to what they mean
-- call Stage9           / shape: each handler is one line to its owner (worklist + OBP review); one visible payoff
-- call Stage10          / %!app holds its types; the app's facts are plang values
-- call Stage11          / shape: C# tests reach the app through its own doors; one door to an actor
-- call Stage12          / a programmer's mistake is an error result with its own key, never a crash
-
-Stage8g
-- each retry of an action gets a fresh deadline                  / Tests/Modules/On/Timeout/RetryGetsAFreshDeadline
-- a recovery's result is never served from the cache             / Tests/Modules/On/Cache/RecoveryIsNeverCached
-- %!data% after an action with a clause is the action's result   / Tests/Modules/On/DataIsLeftAloneAfterAClause
+- call Stage8h
+- call Stage9
+- call Stage10
+- call Stage11
+- call Stage12
 
 Stage8h
-- "retry once" is one retry                                       / Tests/Modules/On/Error/RetryOnceMeansOneRetry
-- "if %done%, return %x%" returns from inside the if              / Tests/Modules/Condition/If/IfReturnReturns
-- render takes its arguments by name                              / Tests/Modules/Ui/Render/RenderTakesNamedArguments
+/ the builder builds itself, and plain words compile to what they mean
+- "retry once" is one retry                                       / Test/Module/On/Error/RetryOnceMeansOneRetry
+- "if %done%, return %x%" returns from inside the if              / Test/Module/Condition/If/IfReturnReturns
+- render takes its arguments by name                              / Test/Module/Ui/Render/RenderTakesNamedArguments
 - the builder rebuilds its own goals with no reader for the old format    / checks.md
 - the decider asks stage 1's common questions, and the eval measures it  / checks.md
 
 Stage9
-- a value is born through its type, so "after file create" fires  / Tests/App/Type/File/CreateFiresOnBirth
+/ every value is born through its type, so a program can hook any value's birth; handlers hand over in one line
+- "after file create" fires when a file value is born              / Test/App/Type/File/CreateFiresOnBirth
 - every existing test passes; each handler hands over in one line  / checks.md
 
 Stage10
-- the app lists its types                                         / Tests/App/Type/AppListsItsTypes
-- a plugin's type joins the app                                   / Tests/App/Type/PluginTypeJoinsTheApp
-- one name, one type: a plugin can't take a built-in's name       / Tests/App/Type/OneNameOneType
-- the app's facts are plang values                                / Tests/App/AppFactsArePlangValues
-- a typed list holds its type                                     / Tests/App/Type/List/TypedListHoldsItsType
-- the app's name is its setting                                   / Tests/App/Setting/AppNameIsItsSetting
+/ the app knows its types, and its own facts are plang values
+- the app lists its types                                         / Test/App/Type/AppListsItsTypes
+- a plugin's type joins the app                                   / Test/App/Type/PluginTypeJoinsTheApp
+- one name, one type: a plugin can't take a built-in's name       / Test/App/Type/OneNameOneType
+- the app's facts are plang values                                / Test/App/AppFactsArePlangValues
+- a typed list holds its type                                     / Test/App/Type/List/TypedListHoldsItsType
+- the app's name is its setting                                   / Test/App/Setting/AppNameIsItsSetting
 
 Stage11
-- one door to an actor: %!app.actor.system%, not %!app.system%   / Tests/App/Actor/OneDoorToAnActor
+/ one door per thing; C# tests reach the app through its own doors
+- one door to an actor: %!app.actor.system%, not %!app.system%   / Test/App/Actor/OneDoorToAnActor
 - the builder warns about a goal nothing reaches                   / checks.md
 - every C# test passes with TestApp and TestAction deleted         / checks.md
 
 Stage12
-- a value that takes no child is an error result                  / Tests/App/Type/Item/SetChildOnAValueIsAnError
-- an unknown setting is an error result                           / Tests/App/Setting/UnknownSettingIsAnError
+/ a programmer's mistake is an error with its own key, never a crash
+- a value that takes no child is an error result                  / Test/App/Type/Item/SetChildOnAValueIsAnError
+- an unknown setting is an error result                           / Test/App/Setting/UnknownSettingIsAnError

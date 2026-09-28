@@ -1,19 +1,9 @@
-## What's left, as plang (2026-09-28, Ingi: "write it up as test, that we can keep that as validation that our logic is working")
+## Now
 
-The branch's summary is [`spec/AppSystems.goal`](spec/AppSystems.goal): a root goal with a sub-goal per stage, whose steps are the behaviour we want, each naming its test. **Tests live at the path of what they test** (Ingi: "Tests/AppSystems/ is obpv"): `Tests/Modules/On/Cache/`, `Tests/App/Type/`, and so on, never a branch or stage folder, and with no second copy in `.bot/`. Checks that can't be a `.test.goal` are in [`spec/checks.md`](spec/checks.md). A stage is done when its tests pass, its checks hold, and its OBP review is clean.
+Done: 1–8g, and 8h's code parts (see [`spec/done.list`](spec/done.list)). What's left is [`spec/AppSystems.goal`](spec/AppSystems.goal), each step naming its test; checks that can't be a test are in [`spec/checks.md`](spec/checks.md).
 
-**The spec tests are built only when Ingi says so** (Ingi, 2026-09-28). Until then they stay placed as unbuilt source in `Tests/AppSystems/`. The coder may ask when it thinks a stage is ready; the request goes to Ingi.
-
-**How work is handed over from here on (Ingi):** the spec goals, plus the OBP rules that apply. The implementation is a conversation between the coder and the architect, part by part.
-
-| stage | state | spec |
-|---|---|---|
-| 8g | done; the tests validate it | 3 tests |
-| 8h | steps 2–3 done (7fc596b18); step 1 ("retry once") and the rebuild remain | 3 tests + checks |
-| 9 | shape (worklist + OBP review), plus one visible payoff | 1 test + checks |
-| 10 | not started | 6 tests |
-| 11 | shape, plus one door to an actor | 1 test + checks |
-| 12 | not started | 2 tests |
+- Tests live at the path of what they test, in singular folders (`Test/Module/On/Cache/`). They're built only when Ingi says so; the coder may ask.
+- Hand-over: the spec goals plus the OBP rules; the implementation is a conversation between the coder and the architect.
 
 ## 2026-09-27 night — Ingi asleep; the architect decides (his words: "I want you to make decisions")
 
