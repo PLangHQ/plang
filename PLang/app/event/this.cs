@@ -30,10 +30,23 @@ public abstract class @this : global::app.type.item.@this
     /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
     /// levels — so a door whose before is handed something it would have to make asks first.</summary>
     public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)
+        => Bound(item, context, BeforeSide).Outer >= 0 || Bound(item, context, AfterSide).Outer >= 0;
+
+    private static readonly System.Func<@this, binding.list.@this> BeforeSide = e => e.before;
+    private static readonly System.Func<@this, binding.list.@this> AfterSide = e => e.after;
+
+    // The outermost and innermost of the item's levels with something bound on one side; -1 when none has.
+    private (int Outer, int Inner) Bound(global::app.type.item.@this item, global::app.actor.context.@this context,
+        System.Func<@this, binding.list.@this> side)
     {
+        int outer = -1, inner = -1;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on) is { } at && (at.before.Count > 0 || at.after.Count > 0)) return true;
-        return false;
+            if (side(Of(level.on)).Count > 0)
+            {
+                if (outer < 0) outer = depth;
+                inner = depth;
+            }
+        return (outer, inner);
     }
 
     /// <summary>
@@ -46,9 +59,8 @@ public abstract class @this : global::app.type.item.@this
         global::app.actor.context.@this context, global::app.data.@this? result = null)
     {
         // nothing bound at any level: nothing to start, so nothing awaited or made
-        for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on).before.Count > 0) return Before(item, depth, context, result);
-        return default;
+        var outer = Bound(item, context, BeforeSide).Outer;
+        return outer >= 0 ? Before(item, outer, context, result) : default;
     }
 
     // From the first level with a binding outward.
@@ -73,12 +85,9 @@ public abstract class @this : global::app.type.item.@this
     public System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
         global::app.data.@this result, global::app.actor.context.@this context)
     {
-        var depth = 0;
-        while (item.Level(depth, context) != null) depth++;
         // nothing bound at any level: the result as it stands, nothing awaited
-        while (--depth >= 0)
-            if (Of(item.Level(depth, context)!.on).after.Count > 0) return After(item, result, depth, context);
-        return new(result);
+        var inner = Bound(item, context, AfterSide).Inner;
+        return inner >= 0 ? After(item, result, inner, context) : new(result);
     }
 
     // From the innermost level with a binding outward.
