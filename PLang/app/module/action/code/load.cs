@@ -1,7 +1,3 @@
-using System.Reflection;
-using app.error;
-using app.module.action.code;
-
 namespace app.module.action.code;
 
 /// <summary>
@@ -17,61 +13,14 @@ public partial class load : IContext
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var dllPath = Path == null ? null : await Path.Value();
-        if (dllPath == null)
-            return Error(new ActionError("Provider path is required", "ValidationError", 400));
-
-        // LoadAssemblyAsync gates on Execute (Unix r/w/x model) — a user who
-        // granted Read on the folder still gets a separate Execute prompt
-        // before the DLL is loaded. Preserve the original "LoadError" key
-        // so existing tests that branch on that don't churn.
-        var loadResult = await dllPath.LoadAssemblyAsync(Context);
-        if (!loadResult.Success)
-            return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
-        var assembly = (await loadResult.Value()).Clr<System.Reflection.Assembly>()!;
-
-        // The assembly's plang types come in through the types' one way in (a value writes itself).
-        // They add new resolution and rendering, but cannot rewrite what the source generator
-        // already baked into compiled handler slots.
-        var typeLoad = Context.App.type.list.Add(assembly, Context);
-        if (!typeLoad.Success) return typeLoad;
-
-        var providerTypes = assembly.GetExportedTypes()
-            .Where(t => typeof(ICode).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-            .ToList();
-
-        // A type-only DLL (plang types but no ICode providers) is valid — return Ok if either
-        // side produced registrations.
-        if (providerTypes.Count == 0 && await typeLoad.IsEmpty())
-            return Error(new ActionError("No ICode or [PlangType] entries found in assembly", "NoProviders", 400));
-
-        var registered = new List<ICode>();
-        foreach (var type in providerTypes)
+    // The DLL comes in through the code registry's one door; the providers it brings are registered.
+    public async Task<data.@this> Start() => Path == null
+        ? Context.Error(new global::app.error.Error("'path' must have a value", "ValueRequired", 400))
+        : await Path.Use(async path =>
         {
-            var ctor = type.GetConstructor(System.Type.EmptyTypes);
-            if (ctor == null)
-                return Error(new ActionError($"Provider '{type.Name}' has no parameterless constructor", "ProviderConstructor", 400));
-
-            var instance = (ICode)ctor.Invoke(null);
-            // Stamp DLL origin so snapshot capture / restore can reload from the same source.
-            instance.Source = dllPath.Absolute;
-
-            // Register for each ICode-derived interface the type implements
-            var interfaces = type.GetInterfaces()
-                .Where(i => typeof(ICode).IsAssignableFrom(i) && i != typeof(ICode))
-                .ToList();
-
-            foreach (var iface in interfaces)
-            {
-                var result = Context.App.Code.Register(iface, instance);
-                if (!result.Success) return result;
-            }
-
-            registered.Add(instance);
-        }
-
-        return Data(registered);
-    }
+            var loaded = await Context.App.Code.Load(path, Context);
+            return loaded.Success
+                ? Context.App.Code.Register((await loaded.Value()).Clr<System.Reflection.Assembly>()!, path, Context)
+                : loaded;
+        });
 }

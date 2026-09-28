@@ -97,25 +97,25 @@ public class ProviderModuleTests
     }
 
     [Test]
-    public async Task Load_NonExistentDll_ReturnsLoadError()
+    public async Task Load_NonExistentDll_IsNotFound()
     {
         var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("LoadError");
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     [Test]
-    public async Task Load_NullPath_ReturnsValidationError()
+    public async Task Load_NullPath_IsValueRequired()
     {
         var action = new global::app.module.action.code.load(Ctx) { Path = null
         };
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
     }
 
     [Test]

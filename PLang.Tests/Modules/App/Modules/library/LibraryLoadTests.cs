@@ -33,7 +33,8 @@ public class ModuleAddTests
         var result = await add.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("Module not found");
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.Message).Contains("nonexistent_mylib.dll");
     }
 
     [Test]
