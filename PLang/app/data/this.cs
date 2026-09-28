@@ -303,12 +303,12 @@ public partial class @this
     public virtual async System.Threading.Tasks.ValueTask<@this?> Given()
     {
         if (!IsInitialized) return null;
-        if (!IsVariable)
+        var named = await Follow(Context);
+        if (ReferenceEquals(named, this))
         {
             if (Success) await Value();
             return this;
         }
-        var named = await Follow(Context);
         return named.IsInitialized ? named
             : Context.Error(new global::app.error.Error($"'{Name}' names a variable that holds nothing", "VariableNotFound", 404));
     }
