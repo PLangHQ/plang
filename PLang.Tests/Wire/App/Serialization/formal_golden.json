@@ -566,6 +566,76 @@
  {
   "goal": "start",
   "index": 0,
+  "text": "if %goal.IsCached%, return %goal.Cache%",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%goal.IsCached%",
+      "variable": [
+       {
+        "text": "%goal.IsCached%",
+        "code": [
+         {
+          "variable": "goal"
+         },
+         {
+          "property": "IsCached"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "child": [
+     {
+      "text": "return %goal.Cache%",
+      "code": [
+       {
+        "module": "goal",
+        "name": "return",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "item",
+           "template": "plang"
+          },
+          "value": "%goal.Cache%",
+          "variable": [
+           {
+            "text": "%goal.Cache%",
+            "code": [
+             {
+              "variable": "goal"
+             },
+             {
+              "property": "Cache"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %goal.IsCached%) { goal.return(Data: item = %goal.Cache%) }",
+  "untyped": "condition.if(Left=%goal.IsCached%) { goal.return(Data=%goal.Cache%) }"
+ },
+ {
+  "goal": "start",
+  "index": 1,
   "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
   "pr": [
    {
@@ -620,7 +690,7 @@
  },
  {
   "goal": "start",
-  "index": 1,
+  "index": 2,
   "text": "set %buildStart% = %Now.Ticks%",
   "pr": [
    {
@@ -673,8 +743,8 @@
  },
  {
   "goal": "start",
-  "index": 2,
-  "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+  "index": 3,
+  "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}",
   "pr": [
    {
     "module": "variable",
@@ -703,7 +773,7 @@
        "name": "text",
        "template": "plang"
       },
-      "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
+      "value": "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}",
       "variable": [
        {
         "text": "%!trace.id%",
@@ -725,10 +795,13 @@
         ]
        },
        {
-        "text": "%goal%",
+        "text": "%goal.Name%",
         "code": [
          {
           "variable": "goal"
+         },
+         {
+          "property": "Name"
          }
         ]
        }
@@ -737,12 +810,12 @@
     ]
    }
   ],
-  "formal": "variable.set(Name: variable = %trace%, Value: text = \"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": %goal%, \\\"menu\\\": null, \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")",
-  "untyped": "variable.set(Name=%trace%, Value=\"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": %goal%, \\\"menu\\\": null, \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")"
+  "formal": "variable.set(Name: variable = %trace%, Value: text = \"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": \\\"%goal.Name%\\\", \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")",
+  "untyped": "variable.set(Name=%trace%, Value=\"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": \\\"%goal.Name%\\\", \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")"
  },
  {
   "goal": "start",
-  "index": 3,
+  "index": 4,
   "text": "call Compile, on error call HandleBuildFailure",
   "pr": [
    {
@@ -789,59 +862,6 @@
   ],
   "formal": "goal.call(Name: text = \"Compile\"); on.error(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")])",
   "untyped": "goal.call(Name=\"Compile\"); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])"
- },
- {
-  "goal": "start",
-  "index": 4,
-  "text": "set %trace.menu% = %menu%",
-  "pr": [
-   {
-    "module": "variable",
-    "name": "set",
-    "property": [
-     {
-      "name": "Name",
-      "type": {
-       "name": "variable"
-      },
-      "value": "%trace.menu%",
-      "variable": [
-       {
-        "text": "%trace.menu%",
-        "code": [
-         {
-          "variable": "trace"
-         },
-         {
-          "property": "menu"
-         }
-        ]
-       }
-      ]
-     },
-     {
-      "name": "Value",
-      "type": {
-       "name": "item",
-       "template": "plang"
-      },
-      "value": "%menu%",
-      "variable": [
-       {
-        "text": "%menu%",
-        "code": [
-         {
-          "variable": "menu"
-         }
-        ]
-       }
-      ]
-     }
-    ]
-   }
-  ],
-  "formal": "variable.set(Name: variable = %trace.menu%, Value: item = %menu%)",
-  "untyped": "variable.set(Name=%trace.menu%, Value=%menu%)"
  },
  {
   "goal": "start",

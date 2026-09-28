@@ -509,6 +509,20 @@ def uncovered_literals(text, rows):
     lits = [m.group(1) if m.group(1) is not None else m.group(2) for m in LITERAL.finditer(text)]
     return [l for l in dict.fromkeys(lits) if l and not any(l in written(v) for v in held)]
 
+def doubled(literal, rows):
+    """The answer doubles the literal's backslashes (\\\\n for the step's \\n) — step.Cover names it."""
+    return '\\' in literal and any(literal.replace('\\', '\\\\') in written(v) for v in values_of(rows))
+
+QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"')
+
+def uncovered_numbers(text, rows):
+    """The numbers the step writes as digits (outside its quoted texts) that its answer doesn't (step.Cover):
+    present when the digits stand in the answer on their own, not inside a larger number — a duration's PT5S
+    holds the step's 5."""
+    answer = f.write(rows, types=False)
+    return [n for n in dict.fromkeys(NUMBER.findall(QUOTED.sub('', text)))
+            if not re.search(rf'(?<![\d.]){re.escape(n)}(?![\d.]|\.\d)', answer)]
+
 def written(value):
     """A value as formal writes it, escapes and all — what the step's words are compared with (C#'s
     Cover reads the formal writer's text): the step's `\\n` is a new line, written `\\n`; a value that
@@ -638,7 +652,10 @@ def check(goal, picks, parsed, confirmed=None):
         problems += [f'step {i}: {v} isn\'t in the step — use only the step\'s variables'
                      for v in dict.fromkeys(re.findall(r'%[^%\s]+%', f.write(written[i], types=False)))
                      if not v.startswith('%!') and v not in steps[i]['text']]
-        problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], written[i])]
+        problems += [f'step {i}: "{l}" is in the step, and your answer doubles its backslashes — write each escape as the step does'
+                     if doubled(l, written[i]) else f'step {i}: "{l}" is in the step but not in your answer'
+                     for l in uncovered_literals(steps[i]['text'], written[i])]
+        problems += [f'step {i}: {n} is in the step but not in your answer' for n in uncovered_numbers(steps[i]['text'], written[i])]
         for u in unwritten(i, steps[i]['text'], rows):
             if confirmed is None: pending.append(u)
             elif not given(u, confirmed):

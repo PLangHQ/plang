@@ -141,6 +141,33 @@ public class MatchTests
         await Assert.That(goal.Step[0].Code.Count).IsEqualTo(1);
     }
 
+    // A number the step writes is one of its markers: an answer that drops it (no Operator, no Right) is refused,
+    // never taken silently.
+    [Test]
+    public async Task ANumberTheStepWrites_MissingFromTheAnswer_IsRefused()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
+        await Picked(goal, app.System.Context, (0, "condition.if"), (0, "output.write"));
+
+        var result = await Match(goal, """[0] condition.if(Left=%itemCount%) { output.write(Data="Your cart is empty") }""", app.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("0 is in the step but not in your answer");
+    }
+
+    [Test]
+    public async Task ANumberTheStepWrites_HeldByTheAnswer_IsTaken()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
+        await Picked(goal, app.System.Context, (0, "condition.if"), (0, "output.write"));
+
+        var result = await Match(goal, """[0] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }""", app.System.Context);
+
+        await result.IsSuccess();
+    }
+
     // An answer that escapes the escape (\\n: a backslash and an n, not a line break) doesn't hold what the
     // step's words say — refused, and the refusal shows what the answer wrote instead.
     [Test]

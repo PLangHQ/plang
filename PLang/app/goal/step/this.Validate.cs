@@ -50,6 +50,12 @@ public sealed partial class @this
                 problems.Add(l.Contains('\\') && written.Contains(l.Replace("\\", "\\\\"))
                     ? $"step {Index}: \"{l}\" is in the step, and your answer doubles its backslashes — write each escape as the step does"
                     : $"step {Index}: \"{l}\" is in the step but not in your answer");
+        // a number the step writes as digits is one of its markers: an answer without it dropped what the step
+        // says (`if %n% is 0` answered with no Right). Present when the digits stand in the answer on their own,
+        // not inside a larger number — a duration's PT5S holds the step's 5.
+        foreach (var n in Number.Matches(Quoted.Replace(Text, "")).Select(m => m.Value).Distinct())
+            if (!System.Text.RegularExpressions.Regex.IsMatch(written, $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)"))
+                problems.Add($"step {Index}: {n} is in the step but not in your answer");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
         // step that names no X) — a choice's option, a number and a dict's keys are not texts
         foreach (var t in (await Texts(Code.Items(), context)).Distinct())

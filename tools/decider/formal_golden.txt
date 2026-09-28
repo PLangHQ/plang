@@ -12,11 +12,11 @@
 [10] build.appSave()
 
 # start
-[0] goal.call(Name: text = "/system/builder/EmitBuildEvent", Parameter: list = {kind: text = "goalHeader", goal: item = %goal%})
-[1] variable.set(Name: variable = %buildStart%, Value: item = %Now.Ticks%)
-[2] variable.set(Name: variable = %trace%, Value: text = "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}")
-[3] goal.call(Name: text = "Compile"); on.error(Recovery: list<action> = [goal.call(Name: text = "HandleBuildFailure")])
-[4] variable.set(Name: variable = %trace.menu%, Value: item = %menu%)
+[0] condition.if(Left: item = %goal.IsCached%) { goal.return(Data: item = %goal.Cache%) }
+[1] goal.call(Name: text = "/system/builder/EmitBuildEvent", Parameter: list = {kind: text = "goalHeader", goal: item = %goal%})
+[2] variable.set(Name: variable = %buildStart%, Value: item = %Now.Ticks%)
+[3] variable.set(Name: variable = %trace%, Value: text = "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}")
+[4] goal.call(Name: text = "Compile"); on.error(Recovery: list<action> = [goal.call(Name: text = "HandleBuildFailure")])
 [5] variable.set(Name: variable = %parentGoal%, Value: item = %goal%)
 [6] loop.foreach(Collection: item = %parentGoal.Child%); goal.call(Name: text = "BuildSubGoal", Parameter: list = {subGoal: item = %item%})
 [7] variable.set(Name: variable = %goal%, Value: item = %parentGoal%)
