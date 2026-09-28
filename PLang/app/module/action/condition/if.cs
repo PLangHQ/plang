@@ -19,16 +19,8 @@ public partial class If : IContext, IStep
     /// and none without an Operator.</summary>
     public async Task<global::app.error.Error?> Validate() => await Evaluator.Operands(Operator, Right);
 
-    /// <summary>Evaluate-only: the condition answers its own truthiness — a negative question is its
-    /// operator's (notcontains, isnotempty, …). The chain — which branch fires, running its Child,
-    /// skipping the rest — is owned by <c>action.list.Run</c>; a condition no longer reaches its
-    /// siblings or its Step.</summary>
-    public async Task<data.@this> Start()
-    {
-        var evalResult = await Evaluator.Evaluate(this);
-        if (!evalResult.Success) return evalResult;
-
-        // The truthiness door — the value answers for itself.
-        return Data(await evalResult.ToBooleanAsync());
-    }
+    /// <summary>Evaluate-only: the evaluator's plang bool is the answer, as it is — the operator decided
+    /// it, or Left's own truth (the value answers for itself); a negative question is its operator's. The
+    /// chain — which branch fires, running its Child, skipping the rest — is <c>action.list.Start</c>'s.</summary>
+    public Task<data.@this<global::app.type.item.@bool.@this>> Start() => Evaluator.Evaluate(this);
 }

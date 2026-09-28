@@ -18,11 +18,6 @@ public partial class Elseif : IContext, IStep
     /// <summary>The operands read as the operator asks.</summary>
     public async Task<global::app.error.Error?> Validate() => await Evaluator.Operands(Operator, Right);
 
-    public async Task<data.@this> Start()
-    {
-        var evalResult = await Evaluator.Evaluate(this);
-        if (!evalResult.Success) return evalResult;
-        // The truthiness door — the value answers for itself; a negative question is its operator's.
-        return Data(await evalResult.ToBooleanAsync());
-    }
+    /// <summary>The evaluator's plang bool is the answer, as it is (see <see cref="If.Start"/>).</summary>
+    public Task<data.@this<global::app.type.item.@bool.@this>> Start() => Evaluator.Evaluate(this);
 }
