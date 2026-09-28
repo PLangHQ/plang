@@ -67,6 +67,10 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **Two sync-over-async sites, fixed when their callers move:** `Fluid.cs:378` (the IFileProvider include) and `OpenAi.cs:736` (`ReadAsDataUri`).
 - **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
 - **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
+- **The identity module's turn in 9b (decisions 205, 207, 208, Ingi):**
+  - `%Identity%` is a new DynamicData, the user identity's **public key** (text). In a local run, with no caller, it's the system identity's key. `%MyIdentity%` stays the system identity object (`actor/this.cs:109`).
+  - **Public keys are written URL-safe base64** (RFC 4648 §5: `-`/`_`, no `=`). The encode is `signing/code/Ed25519.cs:177`; every decode (signature verify, key import at `:204`) reads the same form. Pre-1.0, so no migration. The test identities and signed fixtures get regenerated.
+  - Noted: `%MyIdentity%`'s DynamicData resolves sync-over-async (`actor/this.cs:113`).
 - **Kept unfixed on purpose: the llm query's own cache (`RestoreFromCache`, decision 194).** Ingi wants it as the full sweep's specimen: "I dont want to fix it now, I want to be learning oppertunity". The smells and the checked grep tells are in `plan/obp-example-llm-cache.md`. Don't touch it in 9b except where a change elsewhere forces it.
 - **`OnValidateResponse` sets `%response%` in the caller's memory** (the same fault as OnToolCall's; decision 194: a frame for the validator).
 - **Builder observations from 9a's plan tests (decision 190; for the builder, not stage blockers):**
