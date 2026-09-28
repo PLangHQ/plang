@@ -71,11 +71,10 @@ public class CallTests
     [Test]
     public async Task Call_Tags_StartsEmpty()
     {
-        // Tags is now always-allocated (Tags.@this owns its lock; lazy alloc would have
-        // raced with the writer pattern). No tag written → Count == 0.
+        // Tags is always allocated (a lazy alloc would race the writer). No tag written → empty.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
-        await Assert.That(call.Tags.Count).IsEqualTo(0);
+        await Assert.That(await call.Tags.IsEmpty()).IsTrue();
     }
 
     [Test]

@@ -94,11 +94,13 @@ public sealed partial class @this : IAsyncDisposable
 
     // --- Tag tier ---
     /// <summary>
-    /// Free-form tags written by handlers (<c>tag</c> action) or C# code via <see cref="Tag"/>.
-    /// Always allocated (cost is one dict alloc per Call) so the lazy-init race goes away —
-    /// see <see cref="tag.@this"/> for thread-safety + iteration semantics.
+    /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
+    /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
     /// </summary>
-    public tag.@this Tags { get; } = new();
+    public global::app.type.item.dict.@this Tags { get; } = new();
+
+    // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
+    private readonly object _tagging = new();
 
     /// <summary>
     /// Constructed by <see cref="app.callstack.@this.Push"/>. Holds back-references to the
@@ -151,13 +153,14 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Writes <paramref name="tags"/> onto this Call — each entry rides in as its typed binding, staying lazy.
-    /// The <c>debug.tag</c> action's door. Thread-safe — Tags owns its lock.
+    /// Merges <paramref name="tags"/> into this Call's <see cref="Tags"/> — each entry rides in as its typed
+    /// binding, staying lazy; a key already there is overwritten. The <c>debug.tag</c> action's door.
     /// </summary>
     public void Tag(global::app.type.item.dict.@this tags, global::app.actor.context.@this context)
     {
-        foreach (var entry in tags.Entries(context))
-            Tags.Set(entry.Name, entry);
+        lock (_tagging)
+            foreach (var entry in tags.Entries(context))
+                Tags.Set(entry);
     }
 
     /// <summary>
