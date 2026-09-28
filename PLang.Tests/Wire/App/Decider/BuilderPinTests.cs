@@ -33,22 +33,33 @@ public class BuilderPinTests
         await Assert.That(Value(body, "Data")).IsEqualTo("%goal.Cache%");
     }
 
-    // `build.match …, on error key "ElseWithoutIf" call SourceError, on error call FixSteps first, then
-    // retry 1 times` — the refused answer is fixed FIRST, then matched again
+    // `build.match(…); on.error(Key="UnwrittenNumber", …ConfirmNumbers); on.error(Key="ElseWithoutIf", …SourceError);
+    // on.error(…FixSteps)` — its clauses follow it as siblings, asked in the order written: numbers the words don't
+    // write as digits are confirmed, an else apart from its if goes to the programmer, anything else is fixed
     [Test]
-    public async Task Compile_ARefusedAnswerIsFixedThenMatchedAgain()
+    public async Task Compile_ARefusedAnswerIsConfirmedOrFixed_InTheOrderWritten()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
         var compile = (await Installed(os)).Child.Items().Single(g => g.Name == "Compile");
 
         var step = compile.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });
-        // its clauses follow it, as siblings in the step's code
         var clauses = step.Code.Items().Skip(1).Where(a => a.Module.Name == "on" && a.Name == "error").ToList();
-        var source = clauses.Single(m => Value(m, "Key") == "ElseWithoutIf");
-        await Assert.That(Value(Recovery(source).Single(), "Name")).IsEqualTo("SourceError");
-        var fix = clauses.Single(m => m != source);
-        await Assert.That(Value(Recovery(fix).Single(), "Name")).IsEqualTo("FixSteps");
-        await Assert.That(Value(fix, "RetryCount")).IsEqualTo("1");
-        await Assert.That(Value(fix, "Order")).IsEqualTo("GoalFirst");
+        await Assert.That(clauses.Select(c => Value(c, "Key") ?? "*")).IsEquivalentTo(new[] { "UnwrittenNumber", "ElseWithoutIf", "*" },
+            TUnit.Assertions.Enums.CollectionOrdering.Matching);
+        await Assert.That(clauses.Select(c => Value(Recovery(c).Single(), "Name")))
+            .IsEquivalentTo(new[] { "ConfirmNumbers", "SourceError", "FixSteps" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
+    // FixSteps answers again and matches itself, so numbers left after the fix are confirmed too
+    [Test]
+    public async Task FixSteps_MatchesAgain_AndConfirmsNumbers()
+    {
+        await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
+        var fix = (await Installed(os)).Child.Items().Single(g => g.Name == "FixSteps");
+
+        var step = fix.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });
+        var clause = step.Code.Items().Skip(1).Single();
+        await Assert.That(Value(clause, "Key")).IsEqualTo("UnwrittenNumber");
+        await Assert.That(Value(Recovery(clause).Single(), "Name")).IsEqualTo("ConfirmNumbers");
     }
 }

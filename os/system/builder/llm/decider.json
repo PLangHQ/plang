@@ -8,6 +8,10 @@
       "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
       "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
     },
+    "goal.return": {
+      "true": "the step returns from the goal, now or as the body of its if: `return %result%`, `if %done%, return`",
+      "false": "the step doesn't return; calling another goal is not returning"
+    },
     "output.write": {
       "true": "the step shows or writes something out, to the user or to a named channel: `write out \"Hello\"`, `show %message%`, `write %x% to \"log\" channel`",
       "false": "the step shows nothing; `…, write to %x%` keeps a value in a variable, it is not output"

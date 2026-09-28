@@ -20,10 +20,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
-    // TRANSITIONAL — the clauses an older .pr nested under the action it just read ("modifier"), to follow it
-    // in its step's code. Only to load the .pr files built before clauses were siblings, for their rebuild.
-    internal List<global::app.goal.step.action.@this> Trailing { get; } = new();
-
     /// <summary>The one door. A null element is consumed and answered as the null citizen; the
     /// caller drops it.</summary>
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
@@ -82,28 +78,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "parameter":
                 case "parameters":
                     throw new global::app.error.PrFormatOutdatedException($"action key '{name}' is now 'property'");
-                // TRANSITIONAL — an older .pr's clauses, nested under their action: each one read as the clause
-                // it now is, to follow this action in its step's code; its "recovery" is its Recovery property.
-                case "modifier":
-                    Made();
-                    reader.BeginArray();
-                    while (reader.NextElement())
-                        Trailing.Add(Populate(ref reader, ctx));
-                    reader.EndArray();
-                    break;
-                case "recovery":
-                    var recovered = new global::app.goal.step.action.list.@this();
-                    reader.BeginArray();
-                    while (reader.NextElement())
-                        recovered.Add(Populate(ref reader, ctx));
-                    reader.EndArray();
-                    Made().Property.Add(new global::app.type.property.@this
-                    {
-                        Name = "Recovery",
-                        Type = ctx.Context.App.type.list[new global::app.type.@this("list", "action"), ctx.Context],
-                        Value = recovered,
-                    });
-                    break;
                 case "child":
                     // chain self-feeds: a child step's goal is this action's step's goal
                     var childSteps = new global::app.goal.step.list.@this();

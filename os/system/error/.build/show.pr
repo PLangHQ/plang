@@ -51,6 +51,15 @@
                 }
               ]
             }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
           ]
         }
       ],
@@ -90,39 +99,28 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"error","type":{"name":"text","template":"plang"},"value":"%error%","variable":[{"text":"%error%","code":[{"variable":"error"}]}]}]
+              "value": [{"name":"error","type":{"name":"item","template":"plang"},"value":"%error%","variable":[{"text":"%error%","code":[{"variable":"error"}]}]}]
             }
-          ],
-          "modifier": [
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
             {
-              "module": "on",
-              "name": "error",
-              "property": [
-                {
-                  "name": "StatusCode",
-                  "type": {
-                    "name": "number",
-                    "kind": "long"
-                  },
-                  "value": 404
-                },
-                {
-                  "name": "RetryCount",
-                  "type": {
-                    "name": "number",
-                    "kind": "long"
-                  },
-                  "value": 1
-                },
-                {
-                  "name": "Order",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "GoalFirst"
-                }
-              ],
-              "recovery": [
+              "name": "StatusCode",
+              "type": {
+                "name": "number"
+              },
+              "value": 404
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
                 {
                   "module": "goal",
                   "name": "call",
@@ -134,9 +132,42 @@
                       },
                       "value": "Fallback"
                     }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
                   ]
                 }
               ]
+            },
+            {
+              "name": "RetryCount",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            }
+          ],
+          "default": [
+            {
+              "name": "ignoreerror",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ]
         },
@@ -164,7 +195,7 @@
             {
               "name": "Value",
               "type": {
-                "name": "text",
+                "name": "item",
                 "template": "plang"
               },
               "value": "%!data%",
@@ -178,6 +209,15 @@
                   ]
                 }
               ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ]
         }
@@ -198,7 +238,7 @@
             {
               "name": "Data",
               "type": {
-                "name": "text",
+                "name": "item",
                 "template": "plang"
               },
               "value": "%text%",
@@ -266,6 +306,15 @@
                   },
                   "value": "/system/error/400.txt"
                 }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
               ]
             }
           ],
@@ -285,7 +334,7 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "text",
+                    "name": "item",
                     "template": "plang"
                   },
                   "value": "%error.StatusCode%",
@@ -306,15 +355,15 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "text"
+                    "name": "choice",
+                    "kind": "operator"
                   },
                   "value": ">="
                 },
                 {
                   "name": "Right",
                   "type": {
-                    "name": "number",
-                    "kind": "long"
+                    "name": "number"
                   },
                   "value": 500
                 }
@@ -322,7 +371,7 @@
               "child": [
                 {
                   "index": 0,
-                  "text": "call Runtime",
+                  "text": "goal.call(Name=\"Runtime\")",
                   "line": {
                     "number": 12
                   },
@@ -337,6 +386,15 @@
                             "name": "text"
                           },
                           "value": "Runtime"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "parallel",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
                         }
                       ]
                     }
@@ -396,6 +454,15 @@
                     "name": "text"
                   },
                   "value": "/system/error/500.txt"
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
                 }
               ]
             }
