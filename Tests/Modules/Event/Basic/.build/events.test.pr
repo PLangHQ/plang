@@ -1,0 +1,370 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "before each goal call LogBefore",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Item",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "text"
+                    },
+                    "value": "LogBefore"
+                  }
+                ],
+                "default": [
+                  {
+                    "name": "parallel",
+                    "type": {
+                      "name": "bool"
+                    },
+                    "value": false
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "event",
+              "type": {
+                "name": "text"
+              },
+              "value": "start"
+            },
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "after each goal call LogAfter",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Item",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "text"
+                    },
+                    "value": "LogAfter"
+                  }
+                ],
+                "default": [
+                  {
+                    "name": "parallel",
+                    "type": {
+                      "name": "bool"
+                    },
+                    "value": false
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "event",
+              "type": {
+                "name": "text"
+              },
+              "value": "start"
+            },
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %name% = \"hello\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %name% equals \"hello\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "call TestGoal",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestGoal"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %name% equals \"hello\", \"variable should survive goal call\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "variable should survive goal call"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Event/Basic/Events.test.goal",
+  "prPath": "/Modules/Event/Basic/.build/events.test.pr",
+  "hash": "e15ca9b06e2663d5fc75ec7f6c589dd3a09c9523c7404ba726ebff9c6c4f78f6",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

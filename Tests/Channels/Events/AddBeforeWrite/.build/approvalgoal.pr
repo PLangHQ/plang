@@ -1,0 +1,63 @@
+{
+  "name": "ApprovalGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %approvalCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%approvalCalled%",
+              "variable": [
+                {
+                  "text": "%approvalCalled%",
+                  "code": [
+                    {
+                      "variable": "approvalCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Channels/Events/AddBeforeWrite/ApprovalGoal.goal",
+  "prPath": "/Channels/Events/AddBeforeWrite/.build/approvalgoal.pr",
+  "hash": "d9fbb156e3aead4196942efb7edab8402e0809d52193eafe3f008b7d74add2c3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

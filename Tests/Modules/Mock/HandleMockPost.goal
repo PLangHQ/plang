@@ -1,2 +1,2 @@
 HandleMockPost
-- event skip action with value "post handled"
+- cancel the action with value "post handled"

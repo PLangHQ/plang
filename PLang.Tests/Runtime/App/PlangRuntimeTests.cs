@@ -77,13 +77,16 @@ public class PlangRuntimeTests : IDisposable
     }
 
     [Test]
-    public async Task EventOn_BeforeStep_BindsOnTheStepTypesStart()
+    public async Task OnEvent_BeforeEachStep_BindsOnTheStepTypesStart()
     {
         var context = _app.User.Context;
 
-        var onAction = new global::app.module.action.@event.On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
-            Goal = Make.Call("LogBefore"),
-            StepPattern = (global::app.type.item.text.@this)"*"
+        var onAction = new global::app.module.action.on.OnEvent(context)
+        {
+            Item = new global::app.data.@this<global::app.type.item.@this>("Item", _app.type.list["step"], context: context),
+            When = (global::app.type.item.choice.@this<global::app.@event.When>)global::app.@event.When.before,
+            Event = (global::app.type.item.text.@this)"start",
+            Action = Make.Call("LogBefore"),
         };
         await onAction.Start();
 

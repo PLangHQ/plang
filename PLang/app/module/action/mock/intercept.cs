@@ -1,176 +1,44 @@
-using System.Text.RegularExpressions;
-using app;
 using app.@event;
-using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.module.action.mock;
 
+/// <summary>
+/// Mocks a module (<c>file</c>) or one of its actions (<c>file.read</c>): a mock bound before it starts, for this
+/// actor. It answers in the action's place with <see cref="Return"/> or the goal <see cref="Call"/> calls; with
+/// neither it is a spy and only records. <see cref="Parameter"/> narrows it to calls whose parameters match.
+/// Answers the mock — its own record of the calls.
+/// </summary>
 [Action("intercept", Cacheable = false)]
 public partial class intercept : IContext
 {
+    /// <summary>What it mocks: a module name, or module.action.</summary>
     public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
     public partial data.@this? Return { get; init; }
     /// <summary>The call run in place of the intercepted action — a <c>goal.call</c> action.</summary>
     public partial data.@this<global::app.goal.step.action.@this>? Call { get; init; }
     public partial data.@this<global::app.type.item.dict.@this>? Parameter { get; init; }
 
-    public async Task<data.@this<global::app.mock.@this>> Start()
+    public async Task<data.@this<global::app.@event.binding.mock.@this>> Start()
     {
-        var handle = new global::app.mock.@this
-        {
-            Id = Guid.NewGuid().ToString("N")[..8],
-            Pattern = (await Pattern.Value())!.Clr<string>()!,
-            // A spy supplies neither a Return value nor a Call goal — it only
-            // observes. An unsupplied optional param is a non-null Uninitialized
-            // Data (null model), so "was it supplied?" is IsInitialized, not a
-            // C# null check on its absent-citizen value.
-            IsSpy = !(Return?.IsInitialized ?? false) && !(Call?.IsInitialized ?? false)
-        };
+        var pattern = (await Pattern.Value())!.Clr<string>()!;
+        var dot = pattern.IndexOf('.');
+        var moduleName = dot < 0 ? pattern : pattern[..dot];
+        var found = await Context.App.module.Get(moduleName);
+        var module = found.Success ? await found.Value() as global::app.module.@this : null;
+        global::app.type.item.@this? target = dot < 0 ? module : module?[pattern[(dot + 1)..]];
+        if (target == null)
+            return Context.Error<global::app.@event.binding.mock.@this>(new global::app.error.ActionError(
+                $"There is no {(dot < 0 ? "module" : "action")} '{pattern}' to mock", "NotFound", 404));
 
-        var returnValue = (Return == null ? null : await Return.Value());
-        var call = Call == null ? null : await Call.Value();
-        var paramMatchers = Parameter == null || await Parameter.IsEmpty() ? null
+        // A spy supplies neither a Return value nor a Call goal — it only observes. An unsupplied optional
+        // param is a non-null Uninitialized Data (null model), so "was it supplied?" is IsInitialized.
+        var returnValue = Return?.IsInitialized == true ? await Return.Value() : null;
+        var call = Call?.IsInitialized == true ? await Call.Value() : null;
+        var parameters = Parameter == null || await Parameter.IsEmpty() ? null
             : (await Parameter.Value()).Clr<Dictionary<string, object?>>();
 
-        Func<global::app.type.item.@this, data.@this, actor.context.@this, Task<data.@this>> handler = async (item, _, context) =>
-        {
-            // The action being intercepted is the item the action type's on.start fired for — no guessing
-            // from the step.
-            var currentAction = item as app.goal.step.action.@this;
-
-            // Check parameter matching if specified
-            if (paramMatchers != null && currentAction != null)
-            {
-                if (!await ParametersMatch(currentAction, context, paramMatchers))
-                    return Data(); // no match, let real action run
-            }
-
-            // Record the call
-            var capturedParams = await CaptureParameters(currentAction, context);
-            handle.RecordCall(capturedParams);
-
-            // Goal-based mock — start the held call in place of the action
-            if (call != null)
-                return await call.Start(context);
-
-            // Return value mock — the value, marked Handled, cancels the action and is its result
-            if (returnValue != null)
-            {
-                var mocked = Data(returnValue);
-                mocked.Handled = true;
-                return mocked;
-            }
-
-            // Spy mode — just tracked the call, let real action run
-            return Data();
-        };
-
-        // The registered binding carries the pattern and the id mock.reset finds; the mock itself is bound
-        // before the action type's start, for this actor, on the actions the pattern takes.
-        var binding = new EventBinding(
-            Trigger.BeforeAction,
-            (context, _, _) => Task.FromResult(context.Ok()),
-            actionPattern: (await Pattern.Value())!.Clr<string>()!);
-
-        handle.EventBindingId = binding.Id;
-
-        // Tag binding so mock.reset can find all mock bindings
-        binding.Targets.Add(handle);
-        binding.Targets.Add(Context.App.type.list["action"].Own().Bind("start", When.before, handler,
-            Context.Actor, global::app.@event.binding.Scope.actor,
-            (item, _) => item is app.goal.step.action.@this action && binding.MatchesAction(action.Module.Name, action.Name)));
-
-        Context.Events.Register(binding);
-
-        return Context.Ok<global::app.mock.@this>(handle);
-    }
-
-    private static async Task<Dictionary<string, object?>> CaptureParameters(app.goal.step.action.@this? action, actor.context.@this context)
-    {
-        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        if (action == null) return result;
-
-        foreach (var property in action.Property)
-            result[property.Name] = await ResolveParamValue(property, context);
-        return result;
-    }
-
-    private static async Task<bool> ParametersMatch(
-        app.goal.step.action.@this action, actor.context.@this context, Dictionary<string, object?> matchers)
-    {
-        foreach (var (name, expected) in matchers)
-        {
-            if (action[name] is not { } property) continue;
-
-            var actual = await ResolveParamValue(property, context);
-            if (!MatchValue(expected, actual))
-                return false;
-        }
-        return true;
-    }
-
-    private static async Task<object?> ResolveParamValue(global::app.type.property.@this property, actor.context.@this context)
-    {
-        // A live ref is a marked template — it renders itself through its own door.
-        if (property.Value is global::app.type.item.text.@this { Template: not null })
-            return (await property.Data(context).Value())?.ToString();
-
-        return property.Value;
-    }
-
-    /// <summary>
-    /// Converts a PLang pattern to a regex pattern.
-    /// - Standalone `*` (not preceded by `.` or `\`) becomes `.*`
-    /// - If pattern has regex-specific chars, used as-is
-    /// - Plain string is escaped for exact match
-    /// </summary>
-    public static string ToRegex(string pattern)
-    {
-        bool hasWildcard = false;
-        for (int i = 0; i < pattern.Length; i++)
-        {
-            if (pattern[i] == '*' && (i == 0 || (pattern[i - 1] != '.' && pattern[i - 1] != '\\')))
-            {
-                hasWildcard = true;
-                break;
-            }
-        }
-
-        if (hasWildcard)
-        {
-            var segments = new List<string>();
-            int start = 0;
-            for (int i = 0; i < pattern.Length; i++)
-            {
-                if (pattern[i] == '*' && (i == 0 || (pattern[i - 1] != '.' && pattern[i - 1] != '\\')))
-                {
-                    segments.Add(Regex.Escape(pattern[start..i]));
-                    segments.Add(".*");
-                    start = i + 1;
-                }
-            }
-            segments.Add(Regex.Escape(pattern[start..]));
-            return "^" + string.Join("", segments) + "$";
-        }
-
-        // Check if it looks like an intentional regex (has regex metacharacters)
-        bool looksLikeRegex = Regex.IsMatch(pattern, @"[\\^$+?\[\]{}()|]");
-        if (looksLikeRegex)
-            return "^" + pattern + "$";
-
-        // Plain string — exact match
-        return "^" + Regex.Escape(pattern) + "$";
-    }
-
-    public static bool MatchValue(object? pattern, object? actual)
-    {
-        if (pattern == null && actual == null) return true;
-        if (pattern == null || actual == null) return false;
-
-        var patternStr = pattern.ToString() ?? "";
-        var actualStr = actual.ToString() ?? "";
-
-        var regex = ToRegex(patternStr);
-        return Regex.IsMatch(actualStr, regex, RegexOptions.IgnoreCase);
+        var mock = target.Own().Bind("start", When.before,
+            side => new global::app.@event.binding.mock.@this(side, Context.Actor!, pattern, returnValue, call, parameters));
+        return Context.Ok<global::app.@event.binding.mock.@this>(mock);
     }
 }

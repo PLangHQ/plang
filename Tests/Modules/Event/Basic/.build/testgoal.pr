@@ -1,0 +1,37 @@
+{
+  "name": "TestGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"TestGoal executed\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestGoal executed"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Event/Basic/TestGoal.goal",
+  "prPath": "/Modules/Event/Basic/.build/testgoal.pr",
+  "hash": "ab016c2e73696c566611927677c4600100ca7c5c94267803d59a92537cbb354e",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

@@ -1,1 +1,1 @@
-Remove a specific mock or all active mocks, clearing their interceptors and call history
+Take a mock off (the action it mocked runs as itself again) and clear its record of calls

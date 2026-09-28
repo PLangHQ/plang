@@ -1,0 +1,296 @@
+{
+  "name": "Start",
+  "comment": "after step fires after each step",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %afterCount% = 0",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%afterCount%",
+              "variable": [
+                {
+                  "text": "%afterCount%",
+                  "code": [
+                    {
+                      "variable": "afterCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "after step call TrackAfterStep",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Item",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.step%",
+              "variable": [
+                {
+                  "text": "%!app.type.step%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "step"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "text"
+                    },
+                    "value": "TrackAfterStep"
+                  }
+                ],
+                "default": [
+                  {
+                    "name": "parallel",
+                    "type": {
+                      "name": "bool"
+                    },
+                    "value": false
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "event",
+              "type": {
+                "name": "text"
+              },
+              "value": "start"
+            },
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %value% = \"hello\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%value%",
+              "variable": [
+                {
+                  "text": "%value%",
+                  "code": [
+                    {
+                      "variable": "value"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %value2% = \"world\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%value2%",
+              "variable": [
+                {
+                  "text": "%value2%",
+                  "code": [
+                    {
+                      "variable": "value2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "world"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %afterCount% is greater than 0",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%afterCount%",
+              "variable": [
+                {
+                  "text": "%afterCount%",
+                  "code": [
+                    {
+                      "variable": "afterCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Event/AfterStep/EventAfterStep.test.goal",
+  "prPath": "/Modules/Event/AfterStep/.build/eventafterstep.test.pr",
+  "hash": "9569890aff276c99ededb565ab780471f3b97e360710a71407c88b4cf517358c",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

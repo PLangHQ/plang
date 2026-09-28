@@ -153,7 +153,7 @@ public class OutAttributeInventoryTests
     // 12. Mock ---------------------------------------------------------------
     [Test] public async Task Mock_NoOutProperties_TestOnlyType()
     {
-        var t = typeof(global::app.mock.@this);
+        var t = typeof(global::app.@event.binding.mock.@this);
         foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
             await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true))
                 .IsFalse()

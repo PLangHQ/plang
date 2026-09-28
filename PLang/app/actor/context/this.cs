@@ -88,12 +88,6 @@ public sealed class @this : IDisposable
     public ActorType Actor { get; }
 
     /// <summary>
-    /// Event bindings registered on this context.
-    /// Each actor's context has its own event collection.
-    /// </summary>
-    public global::app.@event.list.@this Events { get; } = new();
-
-    /// <summary>
     /// Test context — a Data with Properties for results, summary, etc.
     /// Set when --test flag is active. Accessible via %!test%.
     /// Properties are extensible — results, summary can be GoalCalls.

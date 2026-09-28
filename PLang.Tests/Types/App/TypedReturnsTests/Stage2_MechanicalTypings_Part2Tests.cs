@@ -23,15 +23,15 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task MockIntercept_Run_ReturnsTaskDataOfMock()
     {
         var ret = RunReturnType<global::app.module.action.mock.intercept>();
-        var expected = typeof(Task<global::app.data.@this<global::app.mock.@this>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.@event.binding.mock.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task MockMock_TypeLivesAtOBPSingularFolder()
     {
-        var t = typeof(global::app.mock.@this);
-        await Assert.That(t.Namespace).IsEqualTo("app.mock");
+        var t = typeof(global::app.@event.binding.mock.@this);
+        await Assert.That(t.Namespace).IsEqualTo("app.event.binding.mock");
         await Assert.That(t.Name).IsEqualTo("this");
     }
 

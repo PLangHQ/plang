@@ -62,9 +62,14 @@ public sealed class own : @this
         System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
         global::app.actor.@this actor, binding.Scope scope,
         System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
+        => Bind(@event, when, side => new binding.@this(side, handler, actor, scope, filter));
+
+    /// <summary>Binds the binding <paramref name="make"/> makes on the event named <paramref name="event"/>,
+    /// <paramref name="when"/> it runs — a kind of binding (a mock) that is its own handler.</summary>
+    public T Bind<T>(string @event, When when, System.Func<binding.list.@this, T> make) where T : binding.@this
     {
         var found = this[@event] ?? throw new KeyNotFoundException($"there is no event '{@event}'");
         binding.list.@this side = when == When.before ? found.before : found.after;
-        return side.Add(handler, actor, scope, filter);
+        return side.Add(make);
     }
 }

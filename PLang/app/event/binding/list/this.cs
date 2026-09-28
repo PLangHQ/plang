@@ -29,9 +29,14 @@ public abstract class @this : IReadOnlyList<binding.@this>
         System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
         global::app.actor.@this actor, binding.Scope scope,
         System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
+        => Add(side => new binding.@this(side, handler, actor, scope, filter));
+
+    /// <summary>Binds the binding <paramref name="make"/> makes on this side — a kind of binding (a mock) is born
+    /// knowing the list it is on; answers it.</summary>
+    internal T Add<T>(System.Func<@this, T> make) where T : binding.@this
     {
         if (!_open) throw new InvalidOperationException("the shared empty event takes no binding: bind through the item's own events");
-        var binding = new binding.@this(this, handler, actor, scope, filter);
+        var binding = make(this);
         lock (_gate) _bindings = [.. _bindings, binding];
         return binding;
     }

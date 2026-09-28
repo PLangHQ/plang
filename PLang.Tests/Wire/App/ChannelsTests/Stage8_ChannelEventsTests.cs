@@ -28,17 +28,6 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         => on.Own().Bind(@event, when, handler, app.User, Scope.actor);
 
     [Test]
-    public async Task Trigger_HasFiveValues_ForChannelLifecycle()
-    {
-        var names = Enum.GetNames(typeof(Trigger));
-        await Assert.That(names).Contains("BeforeWrite");
-        await Assert.That(names).Contains("AfterWrite");
-        await Assert.That(names).Contains("BeforeRead");
-        await Assert.That(names).Contains("AfterRead");
-        await Assert.That(names).Contains("OnAsk");
-    }
-
-    [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
     {
         var ch = StreamChannel.Memory("c");

@@ -48,15 +48,15 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     public async Task ActionTypedRow_ReadsAsHeldAction_BornWithTheStep()
     {
         var goal = await ReadOneAction("""
-        [ { "module": "event", "name": "on",
+        [ { "module": "on", "name": "event",
             "property": [
-              { "name": "Trigger", "type": { "name": "text" }, "value": "BeforeGoal" },
-              { "name": "Goal", "type": { "name": "action" },
+              { "name": "Event", "type": { "name": "text" }, "value": "start" },
+              { "name": "Action", "type": { "name": "action" },
                 "value": { "module": "goal", "name": "call",
                            "property": [ { "name": "Name", "type": { "name": "text" }, "value": "LogIt" } ] } } ] } ]
         """);
         var on = goal.Step[0].Code[0];
-        var held = on["Goal"]!.Value as global::app.goal.step.action.@this;
+        var held = on["Action"]!.Value as global::app.goal.step.action.@this;
         await Assert.That(held).IsNotNull();
         await Assert.That(held!.Module.Name).IsEqualTo("goal");
         await Assert.That(held.Name).IsEqualTo("call");

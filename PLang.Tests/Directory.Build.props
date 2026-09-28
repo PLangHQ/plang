@@ -55,8 +55,6 @@
     <Using Include="app.goal.step.action.@this" Alias="PrAction" />
     <Using Include="app.goal.@this" Alias="Goal" />
     <Using Include="app.goal.Visibility" Alias="Visibility" />
-    <Using Include="app.@event.Trigger" Alias="Trigger" />
-    <Using Include="app.@event.lifecycle.binding.@this" Alias="EventBinding" />
     <Using Include="app.channel.@this" Alias="Channel" />
     <Using Include="app.channel.type.stream.@this" Alias="StreamChannel" />
     <Using Include="app.channel.ChannelDirection" Alias="ChannelDirection" />

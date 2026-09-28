@@ -1,0 +1,37 @@
+{
+  "name": "LogBefore",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"Before goal fired\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "Before goal fired"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Event/Basic/LogBefore.goal",
+  "prPath": "/Modules/Event/Basic/.build/logbefore.pr",
+  "hash": "da73fbf2a3f97956b298120bae025b1f9f94b24ab4ccaffc99275147987cabe2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

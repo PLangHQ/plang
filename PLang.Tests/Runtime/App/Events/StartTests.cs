@@ -30,6 +30,7 @@ public class StartTests
         var step = new global::app.goal.step.@this { Goal = goal, Index = 0, Text = "set %x% = one" };
         goal.Step.Add(step);
         var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
+        set.Module = _app.Module("variable");   // this app's program: its module and catalog action are this app's
         set.Step = step;
         step.Code.Add(set);
         return (goal, step, set);

@@ -36,9 +36,6 @@ public class ActorChoiceTests
     [Test] public async Task GoalCall_System_SelectsSystem()
         => await SelectsSystem((await Bound<global::app.module.action.goal.Call>("goal", "call", "system")).Actor);
 
-    [Test] public async Task EventOn_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.@event.On>("event", "on", "system", ("Trigger", "BeforeGoal"))).Actor);
-
     [Test] public async Task EnvironmentStart_System_SelectsSystem()
         => await SelectsSystem((await Bound<global::app.module.action.environment.start>("environment", "start", "system")).Actor);
 

@@ -44,8 +44,8 @@
   "app.event.binding": {
     "word": null
   },
-  "app.event.moment": {
-    "word": null
+  "app.event.binding.mock": {
+    "word": "mock"
   },
   "app.event.on": {
     "word": null
@@ -61,9 +61,6 @@
   },
   "app.goal.step.action.modifier": {
     "word": "modifier"
-  },
-  "app.mock": {
-    "word": "mock"
   },
   "app.module": {
     "word": "module"

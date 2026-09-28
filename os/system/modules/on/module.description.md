@@ -1,1 +1,1 @@
-Events: what runs when something happens — on error, the action before it failed: retry it, run a recovery, or carry on
+Events: what runs when something happens — a goal call bound before or after an item's event (each goal or step starting, an action starting, a channel writing, reading or asking), cancelling the event from inside it, taking a binding off; and on error, the action before it failed: retry it, run a recovery, or carry on

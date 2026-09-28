@@ -1,0 +1,37 @@
+{
+  "name": "HandleMockPost",
+  "step": [
+    {
+      "index": 0,
+      "text": "cancel the action with value \"post handled\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "cancel",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "post handled"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Mock/HandleMockPost.goal",
+  "prPath": "/Modules/Mock/.build/handlemockpost.pr",
+  "hash": "8f1f48247d41439afe669216cc3f98297134a86232d8a4bd9085875840bbf8c2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

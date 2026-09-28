@@ -5,13 +5,13 @@ namespace app.module.action.mock;
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {
-    public partial data.@this<global::app.mock.@this> Mock { get; init; }
+    public partial data.@this<global::app.@event.binding.mock.@this> Mock { get; init; }
     public partial data.@this<global::app.type.item.number.@this> ExpectedCount { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Message { get; init; }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
     {
-        var mock = ((await Mock.Value()) as global::app.mock.@this)!;
+        var mock = (await Mock.Value())!;
         var expected = await ExpectedCount.Value();
         if (mock.CallCount != expected)
         {

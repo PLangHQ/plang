@@ -75,7 +75,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Mock_PlangTypeName_DerivesFromClassName()
     {
-        var name = _app.type.list[typeof(global::app.mock.@this)].ToString();
+        var name = _app.type.list[typeof(global::app.@event.binding.mock.@this)].ToString();
         await Assert.That(name).IsEqualTo("mock");
     }
 

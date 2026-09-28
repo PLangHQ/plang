@@ -17,67 +17,28 @@ public class SecurityFixTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    #region HIGH-1: Binding.Run try-finally
+    #region HIGH-1: a binding leaves its re-entrance guard even when its handler throws
 
     [Test]
     public async Task Binding_HandlerThrows_ExitEventStillCalled()
     {
         var context = _app.User.Context;
+        var step = new Step { Index = 0, Text = "s" };
 
-        // Create a binding whose handler throws
-        var binding = new EventBinding(
-            Trigger.BeforeGoal,
-            handler: (_, _, _) => throw new InvalidOperationException("handler crash"),
-            goalNamePattern: "*");
-
-        // First call — handler throws, but ExitEvent should still run
-        try { await binding.Run(context); }
-        catch (InvalidOperationException) { /* expected */ }
-
-        // Second call — if ExitEvent ran, TryEnterEvent succeeds again
-        // If ExitEvent was missed, TryEnterEvent returns false → Ok() silently
-        // We test by registering a side-effect handler and verifying it runs
-        var secondCallRan = false;
-        var binding2 = new EventBinding(
-            Trigger.BeforeGoal,
-            handler: (_, _, _) =>
-            {
-                secondCallRan = true;
-                return Task.FromResult(Data.Ok());
-            },
-            goalNamePattern: "*");
-
-        // The re-entrancy guard is per-binding-Id, so binding2 has a different Id.
-        // To test the SAME binding, we need to call Run on the SAME binding again.
-        var ranAgain = false;
-        var testBinding = new EventBinding(
-            Trigger.BeforeGoal,
-            handler: (context, _, _) =>
-            {
-                ranAgain = true;
-                return Task.FromResult(Data.Ok());
-            },
-            goalNamePattern: "*");
-
-        // Can't reuse original binding (throws). Create one that tracks calls:
+        // A binding whose handler throws the first time it fires
         var callCount = 0;
-        var fragileBinding = new EventBinding(
-            Trigger.BeforeGoal,
-            handler: (_, _, _) =>
-            {
-                callCount++;
-                if (callCount == 1)
-                    throw new InvalidOperationException("first call fails");
-                return Task.FromResult(Data.Ok());
-            },
-            goalNamePattern: "*");
+        var fragile = _app.type.list["step"].Own().Bind("start", global::app.@event.When.before, (_, result, _) =>
+        {
+            callCount++;
+            if (callCount == 1) throw new InvalidOperationException("first call fails");
+            return Task.FromResult(result);
+        }, _app.User, global::app.@event.binding.Scope.actor);
 
-        // First call throws
-        try { await fragileBinding.Run(context); }
+        try { await fragile.Start(step, context.Ok(), context); }
         catch (InvalidOperationException) { }
 
-        // Second call should succeed (ExitEvent ran in finally block)
-        var result = await fragileBinding.Run(context);
+        // Had the guard been left entered, the second firing would answer a silent success without running
+        var result = await fragile.Start(step, context.Ok(), context);
         await result.IsSuccess();
         await Assert.That(callCount).IsEqualTo(2);
     }

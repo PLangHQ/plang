@@ -1,0 +1,236 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "before action file.read call OverrideFileRead",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Item",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.module.file.read%",
+              "variable": [
+                {
+                  "text": "%!app.module.file.read%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "module"
+                    },
+                    {
+                      "property": "file"
+                    },
+                    {
+                      "property": "read"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "text"
+                    },
+                    "value": "/Modules/Event/Override/OverrideFileRead"
+                  }
+                ],
+                "default": [
+                  {
+                    "name": "parallel",
+                    "type": {
+                      "name": "bool"
+                    },
+                    "value": false
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "event",
+              "type": {
+                "name": "text"
+              },
+              "value": "start"
+            },
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \"nonexistent.json\", write to %content%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "nonexistent.json"
+            }
+          ],
+          "default": [
+            {
+              "name": "resolvevariables",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out %content%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/Modules/Event/Override/Start.goal",
+  "prPath": "/Modules/Event/Override/.build/start.pr",
+  "hash": "8c8536db2c4aa006f48641adc99524446a40d6402a24184dc29711ddb5bf1f7f",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}
