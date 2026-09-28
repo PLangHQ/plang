@@ -74,13 +74,14 @@ C# the steps go through:
 - `PickListTests` (`PLang.Tests/Wire/App/Decider/PickListTests.cs:62-78`) renders both templates and compares them with the Python harness's questions. **It sets `%decider%` to a native dict it built from `JsonDocument` (`:66-68`, `Answer(…)`), not through `file.read`.** So it can't see how the real `read … write to %decider%` value reaches Fluid.
 - The Python harness (`tools/decider/harness.py:296`) loads `decider.json` with `json.load`, so it has the same blind spot.
 - The eval measures the prompts the harness builds, which are the prompts the builder *should* render.
-- A builder rebuild whose LLM calls are served from the cache can't show a prompt-rendering change: the cached answer comes back whatever the prompt said.
+- The builder check (rebuild with the target `.pr` moved aside, then compare) is **not** masked by the LLM cache: `OpenAi.ComputeCacheKey` hashes every message's role and content plus model, temperature, schema and format, so any prompt change misses the cache. `llm.decider` has no cache. What it can't see is a bug present both before and after ("byte-identical" compares with the previous build), or a rendering change that yields the same `.pr`.
 
 ## Known issues
 
 - **2026-09-28 (app-systems, decisions 152/153): `decider.common` renders nothing in the real builder.**
   - `%decider%` is a file reference whose content is `clr(JsonElement)`, and neither Fluid's converter nor its door accessor turns that into something Fluid can iterate (Data flow, step 4). So stage 1 never asks the common questions.
   - Found by the coder while rebuilding `BuildGoal/start.pr`: the decider never listed `on.error`, so the check refused the LLM's correct clause.
+  - **It never worked.** A bisect with the pin (file.read of json → ui.render iterating `common`, joining `popular`) fails at every commit back to `bec5f56df`, the commit that introduced `decider1.template` (decider v5), where it rendered even less. The real builder has never asked stage 1's common questions; the harness and `PickListTests` always injected a parsed dict.
   - The fix belongs in how Fluid receives a plang container: one view over any non-leaf item that navigates and enumerates through the item's own doors (the kind's `Enumerate`/`Descend`), instead of a converter that switches on `dict`/`list`/`JsonNode`. It does not belong in the goal.
   - Pin it through `file.read` → `ui.render`.
   - Also check `decider.state.template:68,79`, which iterate `decider.popular` and `decider.common` the same way.
