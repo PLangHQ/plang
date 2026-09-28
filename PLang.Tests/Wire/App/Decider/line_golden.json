@@ -127,5 +127,21 @@
    ]
   ],
   "written": "goal.call(Name=?); on.timeout(After=?); on.error(Recovery=?)"
+ },
+ {
+  "name": "a loop leads, whatever its score put before it",
+  "nests": false,
+  "moves": [
+   [
+    "add",
+    "goal.call(Name=?)",
+    false
+   ],
+   [
+    "lead",
+    "loop.foreach(Collection=?)"
+   ]
+  ],
+  "written": "loop.foreach(Collection=?); goal.call(Name=?)"
  }
 ]

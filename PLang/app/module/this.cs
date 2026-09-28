@@ -70,19 +70,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal global::app.@this App => _list.App;
 
     /// <summary>Takes ownership of one action: its lifecycle entry AND its catalog element, born
-    /// as the subtype its handler says it is (a clause when it is an <see cref="IClause"/>). The module
-    /// is the only thing that ever adds to its own contents.</summary>
+    /// as the subtype its handler says it is (a clause when it is an <see cref="IClause"/>, a loop when it is an
+    /// <see cref="ILoop"/>). The module is the only thing that ever adds to its own contents.</summary>
     internal void Add(string actionName, System.Type? type, IAction? instance)
     {
         var clr = type ?? instance?.GetType();
-        var isClause = clr != null && typeof(global::app.module.IClause).IsAssignableFrom(clr);
         // The catalog element carries the [Action] cache flag so the teaching template can tag
         // [no-cache] — read off the attribute, its single source, not defaulted.
         var cacheable = clr?.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
         // The catalog element is born with its class's properties, reflected on first read.
-        global::app.goal.step.action.@this element = isClause
-            ? new global::app.goal.step.action.clause.@this
-                { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
+        global::app.goal.step.action.@this element =
+            clr != null && typeof(global::app.module.IClause).IsAssignableFrom(clr)
+                ? new global::app.goal.step.action.clause.@this
+                    { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
+            : clr != null && typeof(global::app.module.ILoop).IsAssignableFrom(clr)
+                ? new global::app.goal.step.action.loop.@this
+                    { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
             : new global::app.goal.step.action.@this
                 { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) };
         _action[actionName] = new Row(new global::app.module.list.ActionEntry(type, instance), element);

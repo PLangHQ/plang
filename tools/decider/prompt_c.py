@@ -175,7 +175,7 @@ def known_code(certain, text):
     (goal.step.list.Scope). A foreach first, binding its item to its collection's element; a
     `set %x% = literal|%y%`; each other action leaving its return as %!data%; a write to %x% last."""
     code, write = [], destination(text)
-    for a in sorted(certain, key=lambda a: 0 if a == 'loop.foreach' else 1):
+    for a in sorted(certain, key=lambda a: 0 if b.is_loop(*a.split('.', 1)) else 1):   # a loop leads (action.loop)
         if b.declared(*a.split('.', 1))[1]: continue   # a clause binds nothing
         if a == 'loop.foreach':
             if (c := first(text)):
@@ -210,7 +210,8 @@ def scope(store, code, text):
             _, name, value = action
             if value.startswith('%'):
                 if value.strip('%') in store: store[name] = store[value.strip('%')]
-            else: store[name] = literal_type(value)
+            # a text with variables inside is unknown, as variable.set's Scope has it
+            elif not re.search(r'%[^%\s]+%', value): store[name] = literal_type(value)
         else:
             _, collection, item = action
             t = store.get(collection, '')
@@ -229,6 +230,10 @@ class Line:
         into = self.body if self.body is not None else self.line
         if into and into[0] == '?': into[0] = call
         else: into.append(call)
+
+    def lead(self, call):
+        self.line.insert(0, call)
+        if self.head >= 0: self.head += 1
 
     def insert(self, call):
         into = self.body if self.body is not None else self.line
@@ -280,6 +285,7 @@ def user_message_c(goal, picks):
         for a in certain:
             call = prefill(a, s['text'])
             if b.declared(*a.split('.', 1))[1]: line.insert(call)
+            elif b.is_loop(*a.split('.', 1)): line.lead(call)
             else: line.add(call, link(a) == 0)
         if known: line.append(prefill('variable.set', s['text']))
         if line.written(): out += ' => formal: ' + line.written()

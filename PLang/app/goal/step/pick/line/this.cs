@@ -29,6 +29,13 @@ internal sealed class @this(bool nests)
         else into.Add(call);
     }
 
+    /// <summary>A loop: first, since what follows it is what it runs.</summary>
+    internal void Lead(string call)
+    {
+        _line.Insert(0, call);
+        if (_head >= 0) _head++;
+    }
+
     /// <summary>A clause: right after the first action where the step's actions go — the action it is a clause
     /// of (<c>?</c> while that isn't known).</summary>
     internal void Insert(string call)

@@ -26,6 +26,8 @@ CASES = [
      [['insert', 'on.error(Recovery=?)'], ['add', 'file.read(Path=?)', False]]),
     ('two clauses: the later one right after the action', False,
      [['add', 'goal.call(Name=?)', False], ['insert', 'on.error(Recovery=?)'], ['insert', 'on.timeout(After=?)']]),
+    ('a loop leads, whatever its score put before it', False,
+     [['add', 'goal.call(Name=?)', False], ['lead', 'loop.foreach(Collection=?)']]),
 ]
 
 out = []
@@ -34,6 +36,7 @@ for name, nests, moves in CASES:
     for m in moves:
         if m[0] == 'add': line.add(m[1], m[2])
         elif m[0] == 'insert': line.insert(m[1])
+        elif m[0] == 'lead': line.lead(m[1])
         else: line.append(m[1])
     out.append({'name': name, 'nests': nests, 'moves': moves, 'written': line.written()})
 json.dump(out, open(OUT, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)

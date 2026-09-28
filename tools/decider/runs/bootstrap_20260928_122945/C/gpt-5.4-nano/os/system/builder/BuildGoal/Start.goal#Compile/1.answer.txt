@@ -1,0 +1,3 @@
+[0] condition.if(Left=%goal.Step.IsCached%) { goal.return() }
+[2] goal.call(Name="Decide")
+[3] goal.call(Name="Properties")

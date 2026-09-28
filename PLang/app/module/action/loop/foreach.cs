@@ -9,7 +9,7 @@ namespace app.module.action.loop;
 /// Respects goal.return (Returned flag) and cancellation.
 /// </summary>
 [Action("foreach")]
-public partial class Foreach : IContext, IStep, IScope
+public partial class Foreach : IContext, IStep, IScope, ILoop
 {
     /// <summary>At the build's walk: the item is bound to its collection's element — the empty value
     /// of the collection's kind — when the store knows the collection and its kind.</summary>

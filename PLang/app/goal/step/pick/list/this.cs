@@ -330,14 +330,15 @@ public sealed class @this
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain).Select(l => Catalog(l.Name, context))
             .Where(a => a != null).Select(a => a!).ToList();
         var line = new List<string>();
-        foreach (var action in certain.OrderBy(a => a.Module.Name == "loop" && a.Name == "foreach" ? 0 : 1))
+        // each certain action adds itself (a loop leads: what follows it is its body)
+        foreach (var action in certain)
         {
             var name = $"{action.Module.Name}.{action.Name}";
             if (name == "loop.foreach")
             {
                 if (First() is not { } collection) continue;
                 var item = As.Match(text) is { Success: true } named ? named.Groups[1].Value : "item";
-                line.Add($"loop.foreach(Collection={collection.Text}, Item=%{item}%)");
+                action.Know(line, $"loop.foreach(Collection={collection.Text}, Item=%{item}%)");
             }
             else if (name == "variable.set")
             {

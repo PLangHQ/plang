@@ -24,13 +24,14 @@ public class LineTwinTests
                 {
                     case "add": line.Add(m[1].GetString()!, m[2].GetBoolean()); break;
                     case "insert": line.Insert(m[1].GetString()!); break;
+                    case "lead": line.Lead(m[1].GetString()!); break;
                     default: line.Append(m[1].GetString()!); break;
                 }
             }
             var expected = c.GetProperty("written").GetString();
             if (line.ToString() != expected) differ.Add($"{c.GetProperty("name").GetString()}\n  python: {expected}\n  c#:     {line}");
         }
-        await Assert.That(cases.Count).IsEqualTo(7);
+        await Assert.That(cases.Count).IsEqualTo(8);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 }

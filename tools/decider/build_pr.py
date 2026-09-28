@@ -102,6 +102,11 @@ def default_text(literal):
 # the one prompt A was rendered with.
 NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'clause'}
 
+def is_loop(module, action):
+    """A loop (loop.foreach): its handler is an ILoop (module/this.cs Add mints goal.step.action.loop) — it leads
+    its step's code, since what follows it is its body."""
+    return bool(re.search(r'class\s+\w+\s*:[^{]*\bILoop\b', handler_source(module, action) or ''))
+
 _decl = {}
 def declared(module, action, held_actions=True):
     """(properties, is_clause) as the handler declares them — the rows the plang catalog reflects
