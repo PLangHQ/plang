@@ -52,7 +52,7 @@ public class ChannelSetTests
             { Name = new global::app.type.item.text.@this("output"), Goal = Make.Call("LogIt") }.Start()).IsSuccess();
         await (await new global::app.module.action.channel.Set(ctx)
             { Name = new global::app.type.item.text.@this("chat"), Goal = Make.Call("LogIt"),
-              Direction = new global::app.type.item.text.@this("input"), Buffer = (global::app.type.item.number.@this)65536 }.Start()).IsSuccess();
+              Direction = (global::app.type.item.choice.@this<global::app.channel.ChannelDirection>)global::app.channel.ChannelDirection.Input, Buffer = (global::app.type.item.number.@this)65536 }.Start()).IsSuccess();
 
         var output = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("output")!;
         var chat = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("chat")!;

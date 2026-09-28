@@ -3,6 +3,7 @@ namespace app.channel;
 /// <summary>
 /// Direction of a channel (input, output, or bidirectional).
 /// </summary>
+[global::app.Attributes.PlangType("direction")]
 public enum ChannelDirection
 {
     Input,

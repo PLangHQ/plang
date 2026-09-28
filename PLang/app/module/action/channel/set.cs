@@ -23,9 +23,9 @@ public partial class Set : IContext
     public partial data.@this<global::app.type.item.duration.@this>? Timeout { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Mime { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Encoding { get; init; }
-    /// <summary>"input", "output", or "bidirectional". Unnamed, the channel decides (a channel called
-    /// "input" or "output" is that way).</summary>
-    public partial data.@this<global::app.type.item.text.@this>? Direction { get; init; }
+    /// <summary>Input, Output or Bidirectional. Unnamed, the channel decides (a channel called "input" or
+    /// "output" is that way).</summary>
+    public partial data.@this<global::app.type.item.choice.@this<global::app.channel.ChannelDirection>>? Direction { get; init; }
     public partial data.@this<app.type.item.variable.@this>? Encryption { get; init; }
     public partial data.@this<app.type.item.variable.@this>? Signing { get; init; }
 
@@ -35,7 +35,7 @@ public partial class Set : IContext
         var named = Actor == null ? null : await Actor.Value();
         var actor = named == null ? Context.Actor : (await (await Context.App.actor.Get(named.ToString()!)).Value())!;
         var ch = new app.channel.type.goal.@this(name.ToString(), call, actor,
-            direction: Direction == null ? null : (await Direction.Value())?.ToString(),
+            direction: Direction == null || await Direction.Value() is not { } way ? null : (global::app.channel.ChannelDirection)way,
             buffer: Buffer == null ? null : (await Buffer.Value())?.ToInt64(),
             timeout: Timeout == null ? null : (await Timeout.Value()) is { } to ? (TimeSpan)to : null,
             mime: Mime == null ? null : (await Mime.Value())?.ToString(),
