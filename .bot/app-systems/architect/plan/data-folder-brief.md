@@ -39,6 +39,11 @@ The folder is named for the concept, `identity` (Ingi: "so it is just /.data/ide
   - **Mixed** (`"/.data/file/%filename%"` with X's filename): any wire part makes it the sender's.
 - **What it takes:** a value carries its **origin**, and derived values inherit it (a rendered template takes the origin of the variables it used). Today a verified wire value drops its signature (`data/this.Transport.cs:24-27`; `wire/kind/plang/this.cs:81-83`), so in memory it can't tell where it came from. This is a small first step of `Documentation/Runtime2/cool.md`'s "Causal lineage" (only the outside origin, not the full graph).
 
+- **Simplified (Ingi: "it's more of a convention, a pattern to follow"):** the path decides where a file goes, always, with no magic. `.data/` is the taught pattern (`/.data/file/…`, `/.data/identity/%!identity%/file/…`), not forced on every write. Only two guards, both about origin:
+  - **(a)** a path, or part of one, that came from the wire is kept inside its identity's `file/`, so `../..` can't climb out;
+  - **(b)** content from the wire can't be written where code lives (`.build/`, `.goal`, `os/`).
+- **Saving into a folder (Ingi's next idea):** `save %!user.data% to folder`. The file takes the value's own name (the upload's filename, as a sanitised leaf). On a name clash it doesn't overwrite silently: the identity is **asked** (overwrite, or add a counter), and **the answer is stored as that identity's setting**, so it isn't asked again. That combines plang's ask, settings and identity.
+
 ## Open
 
 1. **Settled (Ingi): "they all have identity, cant write if they dont have identity."** Every writer has an identity. A value whose origin has no identity can't be written to disk. Still to settle: which identity each kind of input carries. A signed wire request carries its signer's. An `ask` answer carries the local user's. An LLM's answer and a url's content: the provider's, or the asking actor's? The latter would put them in the asker's folder.
