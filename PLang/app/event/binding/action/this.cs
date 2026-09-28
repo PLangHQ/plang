@@ -1,7 +1,7 @@
-namespace app.@event.binding.call;
+namespace app.@event.binding.action;
 
 /// <summary>
-/// A binding that runs a program's call (<c>on.event</c>) when its event fires. The call reads <c>%!event%</c> —
+/// A binding that runs a program's action (<c>on.event</c>'s — a goal call) when its event fires. The call reads <c>%!event%</c> —
 /// the running event, with <c>!item</c> (what it fired for) and <c>!result</c> (the result so far, its value) —
 /// held on the frame the event fired in for exactly as long as the call runs: gone when it returns, each parallel
 /// firing (its own frame) sees its own, and a nested event's call its own. No frame (a C#-only firing): no

@@ -65,7 +65,7 @@ public partial class OnEvent : IContext
         var call = (await Action.Value())!;
         global::app.@event.binding.Scope scope = await Scope.Value();
         var binding = own.Bind(named.Name, await When.Value(),
-            side => new global::app.@event.binding.call.@this(side, @event, call, Context.Actor!, scope));
+            side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope));
         return Context.Ok<global::app.@event.binding.@this>(binding);
     }
 }
