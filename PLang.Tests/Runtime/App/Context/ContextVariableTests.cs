@@ -87,7 +87,7 @@ public class ContextVariableTests
     {
         var context = _app.User.Context;
         var goal = new Goal { Name = "TestGoal" };
-        context.Goal = goal;
+        await using var inGoal = context.CallStack.Push(goal);
 
         var vars = _app.User.Context.Variable;
         var value = await vars.GetValue("!goal");
@@ -101,7 +101,7 @@ public class ContextVariableTests
     {
         var context = _app.User.Context;
         var step = new Step { Index = 0, Text = "test step" };
-        context.Step = step;
+        await using var inStep = context.CallStack.Push(step);
 
         var vars = _app.User.Context.Variable;
         var value = await vars.GetValue("!step");
@@ -184,7 +184,7 @@ public class ContextVariableTests
         // !goal is a DynamicData registered by RegisterContextVariables
         var context = _app.User.Context;
         var goal = new Goal { Name = "DynamicTest" };
-        context.Goal = goal;
+        await using var inGoal = context.CallStack.Push(goal);
 
         var goalValue = await vars.GetValue("!goal");
         await Assert.That(goalValue).IsNotNull();

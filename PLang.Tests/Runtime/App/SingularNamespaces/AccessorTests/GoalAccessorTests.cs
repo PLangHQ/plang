@@ -69,7 +69,7 @@ public class GoalAccessorTests
         await using var app = TestApp.Create("/test");
         var context = app.User.Context;
         var goal = Goal(app, "Running");
-        context.Goal = goal;
+        await using var running = context.CallStack.Push(goal);
 
         var current = app.goal.current(context);
 

@@ -62,7 +62,7 @@ public class DotDotTraversalRegressionTests
             Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context),
             LoadedFromPrPath = prPath
         };
-        context.Goal = goal;
+        await using var inGoal = context.CallStack.Push(goal);
 
         // The attack shape: a relative rawPath with enough .. to climb past
         // root. file.Resolve does Path.Combine(runtimeDir, raw) — pre-fix the
@@ -95,12 +95,12 @@ public class DotDotTraversalRegressionTests
             app.User.Channel.Register(new CannedChannel("n"));
 
             var prPath = Path.Resolve(System.IO.Path.Combine(root, "subdir", ".build", "probe.pr"), context);
-            context.Goal = new Goal
+            await using var inGoal = context.CallStack.Push(new Goal
             {
                 Name = "Probe",
                 Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context),
                 LoadedFromPrPath = prPath
-            };
+            });
 
             var relative = "../../" + System.IO.Path.GetFileName(secretPath);
             var p = (FilePath)Path.Resolve(relative, context);

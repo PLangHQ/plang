@@ -100,8 +100,8 @@ public class CallStackTreeTests
 
         await Assert.That(outer.Children.Count).IsEqualTo(2);
         // First child evicted; only the two newest remain.
-        await Assert.That(outer.Children[0].Action.Step!.Goal!.Name).IsEqualTo("B");
-        await Assert.That(outer.Children[1].Action.Step!.Goal!.Name).IsEqualTo("C");
+        await Assert.That(outer.Children[0].Goal!.Name).IsEqualTo("B");
+        await Assert.That(outer.Children[1].Goal!.Name).IsEqualTo("C");
     }
 
     [Test]

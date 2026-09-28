@@ -160,7 +160,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         {
             var frame = new global::app.snapshot.@this(s.Context);
             // The Call captures itself and reports whether it's a resumable position;
-            // goal-enter frames say no (no step/action to re-enter from).
+            // a goal's or a step's frame says no (no action to re-enter from).
             if (call.Capture(frame))
                 frames.Add(frame);
         }
@@ -286,22 +286,11 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             if (d.At > t) yield return d;
     }
 
-    private static call.Position FrameFromLive(call.@this call)
+    // The nearest frame outward that runs an action answers its position — a goal's or a step's frame has none.
+    private static call.Position? FrameFromLive(call.@this call)
     {
-        var step = call.Action.Step;
-        var goal = step?.Goal;
-        var stepIndex = step?.Index ?? -1;
-        var actionIndex = -1;
-        if (step != null)
-        {
-            for (int i = 0; i < step.Code.Count; i++)
-                if (ReferenceEquals(step.Code[i], call.Action))
-                {
-                    actionIndex = i;
-                    break;
-                }
-        }
-        // goal can be null in tests with hand-built actions; surface a synthetic empty Goal.
-        return new call.Position(call.Action, goal!, stepIndex, actionIndex, call.Id);
+        for (var node = call; node != null; node = node.Caller)
+            if (node.Position is { } position) return position;
+        return null;
     }
 }

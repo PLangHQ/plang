@@ -204,9 +204,9 @@ public class Error : global::app.type.item.@this
     /// Creates an error from an execution context. Captures step, goal, and Call chain automatically.
     /// </summary>
     public Error(string message, actor.context.@this context, string key = "Error", int statusCode = 400)
-        : this(message, context.Step, key, statusCode)
+        : this(message, context.CallStack.Step, key, statusCode)
     {
-        Goal = context.Goal;
+        Goal = context.CallStack.Goal;
         Context = context;
         CallFrames = context.CallStack.Current?.SnapshotChain() ?? (IReadOnlyList<Call>)Array.Empty<Call>();
     }

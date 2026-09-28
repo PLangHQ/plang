@@ -21,6 +21,7 @@ public class CallTests
         var action = MakeAction("X");
         await using var call = stack.Push(action);
         await Assert.That(ReferenceEquals(call.Action, action)).IsTrue();
+        await Assert.That(ReferenceEquals(call.Step, action.Step)).IsTrue();
     }
 
     [Test]

@@ -94,16 +94,6 @@ public sealed class @this : IDisposable
     public global::app.@event.list.@this Events { get; } = new();
 
     /// <summary>
-    /// The goal currently being executed.
-    /// </summary>
-    public Goal? Goal { get; set; }
-
-    /// <summary>
-    /// The step currently being executed.
-    /// </summary>
-    public Step? Step { get; set; }
-
-    /// <summary>
     /// Test context — a Data with Properties for results, summary, etc.
     /// Set when --test flag is active. Accessible via %!test%.
     /// Properties are extensible — results, summary can be GoalCalls.
@@ -159,8 +149,9 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!callStack", () => CallStack, this));
         vars.Set(new data.DynamicData("!trace", () => Trace, this));
         vars.Set(new data.DynamicData("!channels", () => Actor.Channel, this));
-        vars.Set(new data.DynamicData("!goal", () => Goal, this));
-        vars.Set(new data.DynamicData("!step", () => Step, this));
+        // the goal and step in play are the current frame's place — the stack is where they already live
+        vars.Set(new data.DynamicData("!goal", () => CallStack.Goal, this));
+        vars.Set(new data.DynamicData("!step", () => CallStack.Step, this));
         // %!error% reads the CALL STACK. The error is already recorded on the frame that
         // failed, and that frame is still live while its recovery runs (one frame per action,
         // spanning its modifiers), so nothing stores the error a second time. CallStack.Error
@@ -315,41 +306,6 @@ public sealed class @this : IDisposable
     public @this CreateChild(Variables? variables = null)
     {
         return new @this(App, Actor, variables ?? Variable.Clone(), this);
-    }
-
-    /// <summary>
-    /// Captures the current Step / Goal / Event anchors and sets them to the
-    /// action's for the dispatch's lifetime. On Dispose, restores. Used by
-    /// App.Run to scope the dispatch context — parallel dispatches of the same
-    /// Step (legal under Task.WhenAll on goal.call) restore cleanly because the
-    /// per-dispatch state rides the context, not the shared Step instance.
-    /// </summary>
-    public IDisposable AnchorScope(Action action)
-    {
-        var disposable = new AnchorScopeDisposable(this, action);
-        Step = action.Step;
-        Goal = action.Step?.Goal;
-        return disposable;
-    }
-
-    private readonly struct AnchorScopeDisposable : IDisposable
-    {
-        private readonly @this _ctx;
-        private readonly Step? _previousStep;
-        private readonly Goal? _previousGoal;
-
-        public AnchorScopeDisposable(@this context, Action action)
-        {
-            _ctx = context;
-            _previousStep = context.Step;
-            _previousGoal = context.Goal;
-        }
-
-        public void Dispose()
-        {
-            _ctx.Step = _previousStep;
-            _ctx.Goal = _previousGoal;
-        }
     }
 
     /// <summary>

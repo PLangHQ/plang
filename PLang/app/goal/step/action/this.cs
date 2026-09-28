@@ -185,11 +185,7 @@ public partial class @this
         {
             // The depth limit — trips at Push, before the frame is on the
             // stack, so the contract (returns Data, never throws) is held here.
-            var caller = context.CallStack.Current;
-            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
-            var overflowErr = new global::app.error.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
-            context.CallStack.Audit.Add(overflowErr);
-            return context.Error(overflowErr);
+            return context.Error(context.CallStack.Overflow(ex, Step?.Goal, Step));
         }
         await using var _call = call;
 
@@ -230,10 +226,14 @@ public partial class @this
     }
 
     /// <summary>
-    /// Dispatches this action inside the frame <see cref="Start"/> pushed for it: resolves the
-    /// handler, saves/restores Context anchors, and hands off to the Call, which owns the
-    /// exception translation. The frame is NOT created here — a retry dispatches again into
-    /// the same frame, and a modifier recovering from a failure is still inside it.
+    /// Dispatches this action inside the frame <see cref="Start"/> pushed for it: mints its handler,
+    /// resolves it, runs it, and records a failure on the frame. The frame is NOT created here — a
+    /// retry dispatches again into the same frame, and a modifier recovering from a failure is still
+    /// inside it.
+    /// <para>Deliberately catches OperationCanceledException — timeout.after depends on this: the
+    /// inner action's generated Start swallows OCE into a ServiceError result, so timeout.after
+    /// detects the timeout via CTS state + failed result; this catch is the safety net for a handler
+    /// that bubbles it differently. Step.Start's catch DOES exclude OCE — that asymmetry is intentional.</para>
     /// </summary>
     private async Task<global::app.data.@this> DispatchAsync(
         actor.context.@this context, global::app.callstack.call.@this call)
@@ -244,8 +244,38 @@ public partial class @this
         var (code, error) = Instance(context);
         if (error != null) return context.Error(error);
 
-        using var _anchor = context.AnchorScope(this);
-        return await call.Start(code!, context);
+        // `code` is the throwaway registry shell; Resolve builds the fresh, populated instance
+        // that runs. `real` is kept for the catch path's parameter snapshot.
+        module.ICodeGenerated? real = null;
+        try
+        {
+            var (resolved, resolveErr) = await code!.Resolve(this, context);
+            if (resolveErr != null)
+            {
+                call.Record(resolveErr, context);
+                return context.Error(resolveErr);
+            }
+            real = resolved;
+            var result = await real!.Start();
+            // The handler's parameters ride on its error, snapshotted here, not in the handler.
+            if (!result.Success && result.Error is { } err)
+            {
+                err.Params ??= real.SnapshotParams();
+                call.Record(err, context);
+            }
+            return result;
+        }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            // A typed AppException carries a domain Key (VariableNotFound, GoalNotFound, …) —
+            // kept; a bare exception defaults to ServiceError.
+            var appEx = ex as global::app.error.AppException;
+            var serviceErr = new global::app.error.ServiceError(
+                ex.Message, Step!, call.SnapshotChain(), appEx?.Key ?? "ServiceError", appEx?.StatusCode ?? 400) { Exception = ex };
+            serviceErr.Params = real?.SnapshotParams();
+            call.Record(serviceErr, context);
+            return context.Error(serviceErr);
+        }
     }
 
     /// <summary>This action, instantiated — the live object carrying its typed parameters and

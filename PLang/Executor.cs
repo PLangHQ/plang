@@ -85,6 +85,11 @@ namespace PLang
 
 			if (Flag<global::app.setting.@this>("!app") is { } appError) return (null, appError);
 
+			// A debug run shows each step's time: this run's call stacks time their frames. An explicit
+			// --callstack={"timing":false} below still has the last word.
+			if (app.Debug != null)
+				app.System.Setting.Set(new global::app.callstack.setting.@this().Path, new Dictionary<string, object?> { ["timing"] = true });
+
 			// Each actor owns its own call tree; both read the one setting (the user's falls back to the
 			// system's). (Service actors are spawned later — carrying the flag to them is a separate concern.)
 			if (Flag<global::app.callstack.setting.@this>("!callstack") is { } callstackError) return (null, callstackError);

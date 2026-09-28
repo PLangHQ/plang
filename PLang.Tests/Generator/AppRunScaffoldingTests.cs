@@ -5,10 +5,9 @@ using app.module.matrix.modifier;
 
 namespace PLang.Tests.App;
 
-// Contract tests for App.Run(action, context). App.Run owns callstack push/pop,
-// save/restore Context.Step/Goal/Event, try/catch/finally with ServiceError
-// translation, and frame.SnapshotVariables in finally. The generated handler
-// Start is thin — no scaffolding inside it.
+// Contract tests for App.Run(action, context). The action owns its callstack push/pop (its frame is the
+// goal and step in play while it runs), try/catch with ServiceError translation, and the parameter
+// snapshot on failure. The generated handler Start is thin — no scaffolding inside it.
 
 public class AppRunScaffoldingTests
 {
@@ -44,41 +43,49 @@ public class AppRunScaffoldingTests
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
-    // App.Run sets Context.Step = action.Step before handler runs; restores prior Step after.
+    // The step in play is the action's while it runs, and the caller's again once it ends — its frame popped.
     [Test]
-    public async Task AppRun_SavesAndRestoresContextStep()
+    public async Task AppRun_StepInPlay_IsTheActionsWhileItRuns_TheCallersAfter()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
+        var ctx = _app.User.Context;
 
         var stepBefore = new Step { Index = 9, Text = "before-step" };
-        _app.User.Context.Step = stepBefore;
+        await using var caller = ctx.CallStack.Push(stepBefore);
 
         var dispatchStep = new Step { Index = 0, Text = "dispatch-step" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action.Step = dispatchStep;
+        Step? during = null;
+        _app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (_, _, c) =>
+        {
+            during = c.CallStack.Step;
+            return Task.FromResult(c.Ok());
+        }, _app.User, global::app.@event.binding.Scope.actor);
 
-        await action.Start(_app.User.Context);
+        await action.Start(ctx);
 
-        // Restored after dispatch
-        await Assert.That(ReferenceEquals(_app.User.Context.Step, stepBefore)).IsTrue();
+        await Assert.That(ReferenceEquals(during, dispatchStep)).IsTrue();
+        await Assert.That(ReferenceEquals(ctx.CallStack.Step, stepBefore)).IsTrue();
     }
 
-    // Context.Goal is preserved (saved + restored) across the handler call.
+    // The goal in play is the caller's again once an action of another goal ends.
     [Test]
-    public async Task AppRun_SavesAndRestoresContextGoal()
+    public async Task AppRun_GoalInPlay_IsTheCallersAfter()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
+        var ctx = _app.User.Context;
 
         var goalBefore = new Goal { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", global::PLang.Tests.TestApp.SharedContext) };
-        _app.User.Context.Goal = goalBefore;
+        await using var caller = ctx.CallStack.Push(goalBefore);
 
         var step = new Step { Index = 0, Text = "s" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
         action.Step = step;
 
-        await action.Start(_app.User.Context);
+        await action.Start(ctx);
 
-        await Assert.That(ReferenceEquals(_app.User.Context.Goal, goalBefore)).IsTrue();
+        await Assert.That(ReferenceEquals(ctx.CallStack.Goal, goalBefore)).IsTrue();
     }
 
     // Handler throws → catch translates to Data.FromError with a ServiceError, frame is popped.

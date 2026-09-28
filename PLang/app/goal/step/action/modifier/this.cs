@@ -69,7 +69,7 @@ public class @this : global::app.goal.step.action.@this
         {
             // Pinpoint WHERE the misplaced "modifier" lives. Modifier actions don't carry their own
             // Step from the host, so fall back to the live runtime context for goal/step info.
-            var step = Step ?? context.Step;
+            var step = Step ?? context.CallStack.Step;
             var loc = (step?.Goal?.Name, step?.Goal?.Path, step?.Text, step?.Index) switch
             {
                 ({ } g, { } p, { } t, { } i) => $" — in goal {g} ({p}) step [{i}] \"{t}\"",

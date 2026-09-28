@@ -392,76 +392,37 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> Start(actor.context.@this context)
     {
-        var previousGoal = context.Goal;
-        context.Goal = this;
-
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
 
-        try
-        {
-            var answer = await on.start.Before(this, context);
-            var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
-            return await on.start.After(this, result, context);
-        }
-        finally
-        {
-            context.Goal = previousGoal;
-        }
-    }
-
-    // Starts the steps inside the goal's own frame, and folds a return that ends here.
-    private async Task<data.@this> Enter(actor.context.@this context)
-    {
-        // Goal-level Call frame. Step actions push under this; the goal frame outlives
-        // any single action's pop, so things like `debug.tag` can attach metadata to a
-        // scope that subsequent steps can still read (they navigate up via Current.Caller).
-        // A goal may call itself: the only limit is the depth guard, which trips at this Push —
-        // INSIDE the try, so a CallStackOverflowException becomes Data.FromError instead of a
-        // raw CLR exception escaping RunAsync.
-        //
-        // Action.Step is pinned to Step[0] as the frame's Step→Goal anchor (the debug call stack
-        // and the overflow error name the goal through it). This is the goal-entry frame, not
-        // "step 0 running" — observers reading goalCall.Action.Step should treat it as the goal
-        // anchor, not the currently-executing step (which is whatever the child stepCall.Action.Step
-        // points at).
-        var goalEntryAction = new global::app.goal.step.action.@this
-        {
-            Module = (await (await context.App.module.Get("goal")).Value())!,
-            Name = "enter",
-            Step = Step.Count > 0 ? Step[0] : null,
-        };
-
-        try
-        {
-            await using var goalCall = context.CallStack.Push(goalEntryAction);
-
-            var result = await Step.Start(context);
-
-            // Handle return depth
-            if (result.Returned)
-            {
-                result.ReturnDepth--;
-                if (result.ReturnDepth <= 0)
-                    result.Returned = false;
-            }
-
-            return result;
-        }
+        // The goal's own frame spans its whole run — what is bound before and after it, and its steps — so the
+        // goal in play is this one throughout. The frame outlives any single step, so things like `debug.tag`
+        // can attach metadata to a scope later steps still read (up via Current.Caller). A goal may call
+        // itself: the only limit is the depth guard, which trips at this Push.
+        global::app.callstack.call.@this frame;
+        try { frame = context.CallStack.Push(this); }
         catch (global::app.error.CallStackOverflowException ex)
         {
-            // The depth limit trips at Push, before the goal frame is on the stack.
-            // Convert to ServiceError so Goal.RunAsync's
-            // contract (returns Data, never throws) holds — outer Step.RunAsync's broad
-            // catch would otherwise produce a ServiceError without goal/step context.
-            var stack = context.CallStack;
-            var caller = stack.Current;
-            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
-            var serviceErr = new global::app.error.ServiceError(
-                ex.Message, goalEntryAction.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
-            stack.Audit.Add(serviceErr);
-            return context.Error(serviceErr);
+            return context.Error(context.CallStack.Overflow(ex, this, null));
         }
+        await using var _frame = frame;
+
+        var answer = await on.start.Before(this, context);
+        var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
+        return await on.start.After(this, result, context);
+    }
+
+    // Starts the steps, and folds a return that ends here.
+    private async Task<data.@this> Enter(actor.context.@this context)
+    {
+        var result = await Step.Start(context);
+        if (result.Returned)
+        {
+            result.ReturnDepth--;
+            if (result.ReturnDepth <= 0)
+                result.Returned = false;
+        }
+        return result;
     }
 
     public static @this NotFound(string name) => new()

@@ -331,7 +331,7 @@ public class Fluid : ITemplate
     private static global::app.type.item.path.@this GetTemplateBaseDir(Render action)
     {
         var context = action.Context;
-        var goalPath = context.Goal?.Path;
+        var goalPath = context.CallStack.Goal?.Path;
         if (goalPath != null)
         {
             var goalDir = goalPath.Parent;

@@ -97,6 +97,57 @@ public class CallStackSnapshotTests
     }
 
     [Test]
+    public async Task CallStack_RoundTrip_InsideGoalAndStepFrames_KeepsTheActionPositions()
+    {
+        // A real run's chain: goal → step → action (a call) → goal → step → action. Only the actions are
+        // resume points; the goal and step frames between them add nothing to the snapshot.
+        var (g1, s1, a1) = MakeFrame("FrOuter");
+        var (g2, s2, a2) = MakeFrame("FrInner");
+        var src = BuildAppWithGoals(g1, g2);
+        var stack = src.User.CallStack;
+
+        await using (stack.Push(g1))
+        await using (stack.Push(s1))
+        await using (stack.Push(a1))
+        await using (stack.Push(g2))
+        await using (stack.Push(s2))
+        await using (stack.Push(a2))
+        {
+            var snap = src.Snapshot(src.User.Context);
+
+            var (dg1, _, _) = MakeFrame("FrOuter");
+            var (dg2, _, _) = MakeFrame("FrInner");
+            var dst = BuildAppWithGoals(dg1, dg2);
+            await dst.Restore(snap, dst.User.Context);
+
+            var chain = dst.User.CallStack.RestoredChain!;
+            await Assert.That(chain.Count).IsEqualTo(2);
+            await Assert.That(chain[0].Goal.Name).IsEqualTo("FrOuter");
+            await Assert.That(chain[^1].Goal.Name).IsEqualTo("FrInner");
+            await Assert.That(chain[^1].StepIndex).IsEqualTo(s2.Index);
+            await Assert.That(chain[^1].ActionIndex).IsEqualTo(0);
+        }
+    }
+
+    [Test]
+    public async Task CallStack_BottomFrame_FromAStepFrame_IsTheNearestActionOutward()
+    {
+        // Inside a callee's step, before its first action: the resume point is the call that led here.
+        var (g1, s1, a1) = MakeFrame("BfOuter");
+        var (g2, s2, _) = MakeFrame("BfInner");
+        var app = BuildAppWithGoals(g1, g2);
+        var stack = app.User.CallStack;
+
+        await using var goal = stack.Push(g1);
+        await using var step = stack.Push(s1);
+        await using var call = stack.Push(a1);
+        await using var callee = stack.Push(g2);
+        await using var calleeStep = stack.Push(s2);
+
+        await Assert.That(stack.BottomFrame!.Action).IsSameReferenceAs(a1);
+    }
+
+    [Test]
     public async Task CallStack_BottomFrame_IdentifiesThrowingCall()
     {
         // On a *live* CallStack, BottomFrame is the deepest active frame.

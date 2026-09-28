@@ -73,7 +73,7 @@ public class CallStackAuditTests
         // call.Errors and stack.Audit. Test the data wiring by simulating the same writes.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
-        var sv = new ServiceError("crash", call.Action.Step!);
+        var sv = new ServiceError("crash", call.Step!);
         call.Errors.Add(sv);
         stack.Audit.Add(sv);
         await Assert.That(call.Errors.Contains(sv)).IsTrue();

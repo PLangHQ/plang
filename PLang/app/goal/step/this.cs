@@ -112,7 +112,15 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> Start(actor.context.@this context)
     {
-        context.Step = this;
+        // The step's own frame spans its whole run — what is bound before and after it, and its actions — so the
+        // step in play is this one throughout, and back to the caller's the moment it ends.
+        global::app.callstack.call.@this frame;
+        try { frame = context.CallStack.Push(this); }
+        catch (global::app.error.CallStackOverflowException ex)
+        {
+            return context.Error(context.CallStack.Overflow(ex, Goal, this));
+        }
+        await using var _frame = frame;
 
         var answer = await on.start.Before(this, context);
         data.@this result;

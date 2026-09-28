@@ -11,10 +11,17 @@ public partial class @this
 {
     public async Task<data.@this> Resume(actor.context.@this context, int fromActionIdx)
     {
-        context.Step = this;
-
         data.@this result = context.Ok();
         if (fromActionIdx < 0 || fromActionIdx >= Code.Count) return result;
+
+        // The step runs again — its frame is the step in play for its remaining actions
+        global::app.callstack.call.@this frame;
+        try { frame = context.CallStack.Push(this); }
+        catch (global::app.error.CallStackOverflowException ex)
+        {
+            return context.Error(context.CallStack.Overflow(ex, Goal, this));
+        }
+        await using var _frame = frame;
 
         try
         {

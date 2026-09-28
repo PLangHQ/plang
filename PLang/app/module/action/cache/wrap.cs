@@ -59,7 +59,7 @@ public partial class CacheWrap : IContext, IModifier
 
     private static string DefaultKey(actor.context.@this context)
     {
-        var step = context.Step;
+        var step = context.CallStack.Step;
         var goalPath = step?.Goal?.Path?.ToString() ?? "unknown";
         return $"step:{goalPath}:{step?.Index}";
     }

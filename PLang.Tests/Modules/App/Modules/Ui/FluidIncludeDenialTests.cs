@@ -49,7 +49,7 @@ public class FluidIncludeDenialTests
             Name = "Host",
             Path = global::app.type.item.path.@this.Resolve("/host.goal", app.User.Context)
         };
-        app.User.Context.Goal = goal;
+        await using var inGoal = app.User.Context.CallStack.Push(goal);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -82,7 +82,7 @@ public class FluidIncludeDenialTests
             Name = "Host",
             Path = global::app.type.item.path.@this.Resolve("/host.goal", app.User.Context)
         };
-        app.User.Context.Goal = goal;
+        await using var inGoal = app.User.Context.CallStack.Push(goal);
 
         var fluid = new global::app.module.action.ui.code.Fluid();
         var action = new global::app.module.action.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),

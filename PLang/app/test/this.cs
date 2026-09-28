@@ -128,7 +128,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var own = app.User.Context;
         Begin();
-        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. Time(own)];
+        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. await Time(own)];
 
         var seconds = context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToDouble();
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
@@ -160,25 +160,23 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
     }
 
-    // Times each of this test's goal's own steps into Timings, from the step's start to its end — bound on the
-    // step type's on.start, before and after. Answers the two bindings.
-    private global::app.@event.binding.@this[] Time(global::app.actor.context.@this context)
+    // Times each of this test's goal's own steps into Timings. A test always reports its step times, so its App's
+    // call stacks time their frames; the step type's after-binding runs inside the step's frame, whose Duration
+    // is then the step's whole time. Answers the binding.
+    private async System.Threading.Tasks.Task<global::app.@event.binding.@this[]> Time(global::app.actor.context.@this context)
     {
-        var starts = new System.Collections.Concurrent.ConcurrentDictionary<int, long>();
+        var system = context.App.System;
+        var callstack = new global::app.callstack.setting.@this().Path;
+        await system.Setting.Set(callstack + ".timing", system.Context.Ok(true));
+
         var entry = Goal.Path?.ToString();
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
-        var on = context.App.type.list["step"].Own();
         return
         [
-            on.Bind("start", global::app.@event.When.before, (item, _, ctx) =>
+            context.App.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, ctx) =>
             {
-                if (item is global::app.goal.step.@this step && Own(step)) starts[step.Index] = Stopwatch.GetTimestamp();
-                return System.Threading.Tasks.Task.FromResult(ctx.Ok());
-            }, context.Actor, global::app.@event.binding.Scope.actor),
-            on.Bind("start", global::app.@event.When.after, (item, _, ctx) =>
-            {
-                if (item is global::app.goal.step.@this step && Own(step) && starts.TryRemove(step.Index, out var start))
-                    Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = Stopwatch.GetElapsedTime(start) });
+                if (item is global::app.goal.step.@this step && Own(step) && ctx.CallStack.Current?.Duration is { } elapsed)
+                    Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
             }, context.Actor, global::app.@event.binding.Scope.actor),
         ];

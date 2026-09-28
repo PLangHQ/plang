@@ -263,7 +263,7 @@ public class StepErrorTests
         await using var engine = TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
         var step = new Step { Text = "test step" };
-        context.Step = step;
+        await using var inStep = context.CallStack.Push(step);
 
         var error = StepError.FromException(ex, context);
 

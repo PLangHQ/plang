@@ -26,20 +26,15 @@ public class ActionSyntheticTests
         await Assert.That(a.Synthetic).IsFalse();
     }
 
-    [Test] public async Task CallStackPush_StampsSynthetic_OnCallFrame()
+    [Test] public async Task CallFrame_OfASyntheticAction_IsNoResumePoint()
     {
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
-        var prLoaded = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
 
         await using var s1 = app.User.CallStack.Push(synthetic);
-        await Assert.That(s1.Synthetic).IsTrue();
-
-        // Pop s1 before pushing s2 to avoid caller chain
-        await s1.DisposeAsync();
-        await using var s2 = app.User.CallStack.Push(prLoaded);
-        await Assert.That(s2.Synthetic).IsFalse();
+        await Assert.That(s1.Action!.Synthetic).IsTrue();
+        await Assert.That(s1.IsResumable).IsFalse();
     }
 
     [Test] public async Task SnapshotWireSerializer_DropsSyntheticFrames()
@@ -51,7 +46,7 @@ public class ActionSyntheticTests
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8]));
         var prLoaded = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
         await using var call = app.User.CallStack.Push(prLoaded);
-        await Assert.That(call.Synthetic).IsFalse();
+        await Assert.That(call.Action!.Synthetic).IsFalse();
     }
 
     [Test] public async Task InMemorySnapshot_KeepsSyntheticFrames_ForDebugTelemetry()

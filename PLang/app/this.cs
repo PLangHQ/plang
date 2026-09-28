@@ -490,7 +490,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             // calling frame IS this invocation's provenance. Null at the boot edge (a wire write
             // before any goal runs), which is why Step stays nullable.
             // Never split compose from run here — the fusion is what makes this honest.
-            Step = context.CallStack.Current?.Action.Step,
+            Step = context.CallStack.Step,
         };
         return await entity.Start(context);
     }

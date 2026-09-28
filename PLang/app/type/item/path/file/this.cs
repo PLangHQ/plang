@@ -93,7 +93,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         // that have no LoadedFromPrPath.
         if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
         {
-            var goal = context.Goal;
+            var goal = context.CallStack.Goal;
             var runtimeDir = goal?.GetRuntimeDirectory();
             if (runtimeDir != null)
             {

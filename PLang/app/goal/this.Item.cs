@@ -47,7 +47,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>The goal running for the asker — what <c>%!goal%</c> answers.</summary>
-    public static @this? Current(global::app.actor.context.@this context) => context.Goal;
+    public static @this? Current(global::app.actor.context.@this context) => context.CallStack.Goal;
 
     /// <summary>The app's goals: the list that reads them from their <c>.pr</c>.</summary>
     public static global::app.goal.list.@this List(global::app.@this app) => new(app);

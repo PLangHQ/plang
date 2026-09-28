@@ -15,39 +15,24 @@ public sealed partial class @this
     /// Excludes: timing tier (StartedAt/CompletedAt), Diffs, in-flight network state,
     /// Items bag, Tags. Those are runtime-only audit per the architect's drop bucket.
     ///
-    /// <para>Returns whether this frame is a resumable re-entry point. A goal-enter
-    /// frame's synthetic Action isn't in any Step's Actions (actionIndex -1), so it
-    /// carries no position to resume from — the Call says so itself; the collection
-    /// doesn't inspect the captured shape to decide.</para>
+    /// <para>Returns whether this frame is a resumable re-entry point (<see cref="IsResumable"/>): a goal's or a
+    /// step's frame, or an action composed in C#, carries no position to resume from and writes nothing.</para>
     /// </summary>
     public bool Capture(global::app.snapshot.@this s)
     {
-        var step = Action.Step;
-        var goal = step?.Goal;
-        var actionIndex = step != null ? step.Code.IndexOf(this.Action) : -1;
+        if (!IsResumable) return false;
         // Name is the goal's identity for Restore: a v0.2 .pr holds many goals
         // sharing one PrPath (the file), so PrPath alone can't pick the right one.
-        s.Write("goalName",    goal?.Name   ?? "");
-        s.Write("goalPrPath",  goal?.PrPath?.ToString() ?? "");
-        s.Write("goalHash",    goal?.Hash   ?? "");
-        s.Write("stepIndex",   step?.Index  ?? -1);
-        s.Write("actionIndex", actionIndex);
+        s.Write("goalName",    Goal?.Name   ?? "");
+        s.Write("goalPrPath",  Goal?.PrPath?.ToString() ?? "");
+        s.Write("goalHash",    Goal?.Hash   ?? "");
+        s.Write("stepIndex",   Step!.Index);
+        s.Write("actionIndex", Index);
         // The module's NAME, not the element: an element is a live graph node whose Actions lead
         // back to their Module. Restore checks the live action at the position against these.
-        s.Write("actionModule", Action.Module.Name);
+        s.Write("actionModule", Action!.Module.Name);
         s.Write("actionName",   Action.Name);
         s.Write("id",           Id);
-        return actionIndex >= 0;
+        return true;
     }
-
-    private static int IndexOfAction(
-        System.Collections.Generic.List<global::app.goal.step.action.@this> actions,
-        global::app.goal.step.action.@this needle)
-    {
-        for (int i = 0; i < actions.Count; i++)
-            if (ReferenceEquals(actions[i], needle))
-                return i;
-        return -1;
-    }
-
 }

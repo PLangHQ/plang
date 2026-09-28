@@ -125,10 +125,9 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_DefaultKey_DerivedFromGoalPathAndStepIndex()
     {
-        // Populate context.Step so default key resolver can read Goal.Path + Step.Index
+        // The action's step is the step in play while it runs — the default key reads its Goal.Path + Index
         var goal = new Goal { Path = global::app.type.item.path.@this.Resolve("/foo/bar.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 7, Goal = goal };
-        Ctx.Step = step;
 
         var action = new PrAction
         {
@@ -137,7 +136,8 @@ public class CacheWrapTests
             {
                 new("name", "%b%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000) } // no Key
+            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000) }, // no Key
+            Step = step,
         };
 
         await action.Start(Ctx);

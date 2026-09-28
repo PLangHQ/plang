@@ -181,9 +181,9 @@ public sealed class @this
     private async Task<data.@this> Watch(global::app.type.item.variable.@this variable, string change,
         data.@this? stored, actor.context.@this context)
     {
-        var goalName = context.Goal?.Name ?? "?";
-        var stepIndex = context.Step?.Index.ToString() ?? "?";
-        var stepText = context.Step?.Text;
+        var goalName = context.CallStack.Goal?.Name ?? "?";
+        var stepIndex = context.CallStack.Step?.Index.ToString() ?? "?";
+        var stepText = context.CallStack.Step?.Text;
         if (stepText != null && stepText.Length > 60) stepText = stepText[..60];
 
         var sb = new StringBuilder();
@@ -196,11 +196,11 @@ public sealed class @this
 
     private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
     {
-        var step = context.Step;
+        var step = context.CallStack.Step;
         if (step == null) return context.Ok();
         if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
-        var goalName = context.Goal?.Name ?? "?";
+        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
         sb.AppendLine($"=== DEBUG [BEFORE]: Step [{step.Index}] of {goalName} ===");
@@ -224,14 +224,7 @@ public sealed class @this
         {
             sb.AppendLine("  Call Stack:");
             foreach (var call in callStack.Current.SnapshotChain())
-            {
-                var goal = call.Action.Step?.Goal;
-                var stepIdx = call.Action.Step?.Index ?? -1;
-                var name = goal?.Name ?? call.Action.Module.Name;
-                var stepInfo = stepIdx >= 0 ? $" (step {stepIdx + 1})" : "";
-                var pathInfo = goal?.Path != null ? $" in {goal.Path}" : "";
-                sb.AppendLine($"    at {name}.{call.Action.Name}{stepInfo}{pathInfo}");
-            }
+                sb.AppendLine($"    at {call}");
         }
 
         AppendStepVariables(sb, context);
@@ -243,14 +236,16 @@ public sealed class @this
 
     private static async Task<data.@this> AfterStepHandler(actor.context.@this context, int? stepFilter)
     {
-        var step = context.Step;
+        var step = context.CallStack.Step;
         if (step == null) return context.Ok();
         if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
-        var goalName = context.Goal?.Name ?? "?";
+        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
-        sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName} ===");
+        // the after-binding runs inside the step's frame: its Duration is the step's time so far
+        var took = context.CallStack.Current?.Duration is { } elapsed ? $" ({elapsed.TotalMilliseconds:0.###} ms)" : "";
+        sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName}{took} ===");
 
         AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
@@ -410,7 +405,7 @@ public sealed class @this
 
     private static async Task<data.@this> AfterGoalHandler(actor.context.@this context)
     {
-        var goalName = context.Goal?.Name ?? "?";
+        var goalName = context.CallStack.Goal?.Name ?? "?";
         var debug = context.App?.Debug;
         if (debug != null)
             await debug.Write($"--- DEBUG: Goal '{goalName}' completed ---{Environment.NewLine}");
@@ -419,11 +414,11 @@ public sealed class @this
 
     private static async Task<data.@this> BeforeActionHandler(actor.context.@this context, int? stepFilter)
     {
-        var step = context.Step;
+        var step = context.CallStack.Step;
         if (step == null) return context.Ok();
         if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
-        var goalName = context.Goal?.Name ?? "?";
+        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
 
@@ -435,11 +430,11 @@ public sealed class @this
 
     private static async Task<data.@this> AfterActionHandler(actor.context.@this context, int? stepFilter)
     {
-        var step = context.Step;
+        var step = context.CallStack.Step;
         if (step == null) return context.Ok();
         if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
-        var goalName = context.Goal?.Name ?? "?";
+        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
 
@@ -451,7 +446,7 @@ public sealed class @this
 
     private static void AppendStepVariables(StringBuilder sb, actor.context.@this context)
     {
-        var step = context.Step;
+        var step = context.CallStack.Step;
         if (step == null) return;
 
         var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

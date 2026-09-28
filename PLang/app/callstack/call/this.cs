@@ -1,7 +1,4 @@
 using System.Diagnostics;
-using app.error;
-using ActionEntity = app.goal.step.action.@this;
-
 namespace app.callstack.call;
 
 /// <summary>
@@ -29,11 +26,16 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public string Id { get; }
 
-    /// <summary>
-    /// The action being executed. OBP ref — navigate <c>Action.Step.Goal.Parent</c> for
-    /// the static call site.
-    /// </summary>
-    public ActionEntity Action { get; }
+    /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step or action is in.
+    /// Null for an action composed in C#, which holds no step.</summary>
+    public global::app.goal.@this? Goal { get; }
+
+    /// <summary>The step in play at this frame — the step a step's frame runs, or the action's. Null in a goal's
+    /// own frame and for an action composed in C#.</summary>
+    public global::app.goal.step.@this? Step { get; }
+
+    /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
+    public global::app.goal.step.action.@this? Action { get; }
 
     /// <summary>
     /// Sync parent in this execution chain — whatever AsyncLocal.Current was at Push time.
@@ -62,14 +64,6 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.error.Error? Error => Handled ? null : Errors.Newest;
 
     /// <summary>
-    /// Mirror of <see cref="Action.@this.Synthetic"/> stamped at Push time. False
-    /// for PR-built actions (the wire-restorable case); true for C#-composed
-    /// actions. Snapshot wire-serialisation filters synthetic frames out since
-    /// they're recreated naturally by the resumed execution.
-    /// </summary>
-    public bool Synthetic { get; }
-
-    /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
     /// <see cref="child.list.@this"/>. Allocated lazily via the constructor below so the
     /// back-reference to the parent CallStack is set before any Add can land.
@@ -83,8 +77,9 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>UTC timestamp at Pop. Null while in flight.</summary>
     public DateTimeOffset? CompletedAt { get; private set; }
 
-    /// <summary>Wall duration. Null until Pop.</summary>
-    public TimeSpan? Duration => CompletedAt - StartedAt;
+    /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
+    /// popped, its whole duration. Null when the Timing flag was off at Push.</summary>
+    public TimeSpan? Duration => _stopwatch?.Elapsed;
 
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>
@@ -107,17 +102,20 @@ public sealed partial class @this : IAsyncDisposable
     /// remove self from Children when history is off.
     /// </summary>
     internal @this(
-        ActionEntity action,
+        global::app.goal.@this? goal,
+        global::app.goal.step.@this? step,
+        global::app.goal.step.action.@this? action,
         @this? caller,
         app.callstack.@this stack,
         @this? previousCurrent,
         Variables? diffSource)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
+        Goal = goal;
+        Step = step;
         Action = action;
         Caller = caller;
         Depth = (caller?.Depth ?? 0) + 1;
-        Synthetic = action.Synthetic;
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
@@ -208,59 +206,6 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public int Depth { get; }
 
-    /// <summary>
-    /// Starts the resolved handler under this Call frame. Wraps:
-    ///   - <c>handler.Resolve(action, context)</c> then its <c>Start()</c>
-    ///   - <c>SnapshotParams</c> onto <c>Error.Params</c>
-    ///   - <see cref="Record"/> on failure (which stamps CallFrames and files the error)
-    ///   - OperationCanceledException swallowing into ServiceError (timeout.after
-    ///     contract: inner action's generated Start swallows OCE; this
-    ///     catch is the safety net for handlers that bubble it differently)
-    /// Returns the handler's result (or a ServiceError-wrapped result on
-    /// caught exception).
-    /// </summary>
-    public async Task<data.@this> Start(module.ICodeGenerated handler, actor.context.@this context)
-    {
-        // `handler` is the throwaway registry shell; Resolve builds the fresh, populated
-        // instance we actually run. `real` is captured for the catch-path snapshot.
-        module.ICodeGenerated? real = null;
-        try
-        {
-            var (resolved, resolveErr) = await handler.Resolve(Action, context);
-            if (resolveErr != null)
-            {
-                Record(resolveErr, context);
-                return context.Error(resolveErr);
-            }
-            real = resolved;
-            var result = await real!.Start();
-            // Stamp __SnapshotParams onto Error.Params if the handler returned an error
-            // without one already populated. (The snapshot lives here, not in the handler.)
-            if (!result.Success && result.Error is { } err)
-            {
-                if (err.Params == null) err.Params = real.SnapshotParams();
-                Record(err, context);
-            }
-            return result;
-        }
-        // Deliberately catches OperationCanceledException — timeout.after depends on this:
-        // the inner action's generated Execute() swallows OCE into a ServiceError result,
-        // so timeout.after detects the timeout via CTS state + failed result, not via OCE
-        // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            // A typed AppException carries a domain Key (VariableNotFound, GoalNotFound, …) —
-            // preserve it; a bare exception defaults to ServiceError. Losing the Key here is
-            // why an unset %ref% surfaced as "ServiceError" instead of "VariableNotFound".
-            var appEx = ex as global::app.error.AppException;
-            var serviceErr = new ServiceError(
-                ex.Message, Action.Step!, SnapshotChain(), appEx?.Key ?? "ServiceError", appEx?.StatusCode ?? 400) { Exception = ex };
-            serviceErr.Params = real?.SnapshotParams();
-            Record(serviceErr, context);
-            return context.Error(serviceErr);
-        }
-    }
-
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does
     /// not carry yet: the failing chain, the context of the run it met here, and — under --debug —
     /// the variables as they are now (not by default: variables can hold secrets). Then files it on
@@ -276,6 +221,29 @@ public sealed partial class @this : IAsyncDisposable
         if (Errors.Any(x => ReferenceEquals(x, error))) return;
         Errors.Add(error);
         _stack.Audit.Add(error);
+    }
+
+    /// <summary>The action's index in its step; -1 when the frame runs no action, or its step doesn't hold it.</summary>
+    public int Index => Action != null && Step != null ? Step.Code.IndexOf(Action) : -1;
+
+    /// <summary>A resume point: an action its step holds. A goal's or a step's frame is not one, nor an action
+    /// composed in C#, which no step holds — the resumed run makes those again.</summary>
+    public bool IsResumable => Index >= 0;
+
+    /// <summary>This frame's action where it stands, with this frame's Id — the snapshot surrogate; null in a
+    /// goal's or a step's frame.</summary>
+    public Position? Position => Action is { } action
+        ? new Position(action, Goal!, Step?.Index ?? -1, Index, Id)
+        : null;
+
+    /// <summary>Its line in a stack trace: <c>Start.set (step 3) in /Start.goal</c>.</summary>
+    public override string ToString()
+    {
+        var name = Goal?.Name ?? Action?.Module.Name ?? "?";
+        if (Action != null) name += "." + Action.Name;
+        var step = Step != null ? $" (step {Step.Index + 1})" : "";
+        var path = Goal?.Path != null ? $" in {Goal.Path}" : "";
+        return name + step + path;
     }
 
     /// <summary>

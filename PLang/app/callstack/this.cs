@@ -1,5 +1,4 @@
 using app.error;
-using ActionEntity = app.goal.step.action.@this;
 using @bool = global::app.type.item.@bool.@this;
 using number = global::app.type.item.number.@this;
 
@@ -56,6 +55,14 @@ public sealed partial class @this
     /// </summary>
     public call.@this? Current => _current.Value;
 
+    /// <summary>The goal in play on this branch (<c>%!goal%</c>) — the current frame's; null before any frame is
+    /// pushed. The stack is where it already lives, so nothing stores it a second time.</summary>
+    public global::app.goal.@this? Goal => _current.Value?.Goal;
+
+    /// <summary>The step in play on this branch (<c>%!step%</c>) — the current frame's; null outside any step
+    /// (a goal's own frame, an action composed in C#, before any frame is pushed).</summary>
+    public global::app.goal.step.@this? Step => _current.Value?.Step;
+
     /// <summary>
     /// The error in play — what PLang reads as <c>%!error%</c>. Walks <c>Caller</c> outward from
     /// <see cref="Current"/> and answers with the first frame that holds an unrecovered error;
@@ -79,10 +86,10 @@ public sealed partial class @this
 
     /// <summary>
     /// Maximum depth of the synchronous Caller chain before a runaway is treated as a cycle.
-    /// Default 1000 — high enough that legitimate recursion has headroom but low enough
-    /// that real infinite loops don't blow the stack.
+    /// Default 1500 — a goal level is three frames (goal, step, action), so a program recurses about 500
+    /// levels: headroom for legitimate recursion, low enough that real infinite loops don't blow the stack.
     /// </summary>
-    public int MaxDepth { get; init; } = 1000;
+    public int MaxDepth { get; init; } = 1500;
 
     /// <summary>
     /// Pushes a new <see cref="call.@this"/>, sets it as the AsyncLocal Current, appends to
@@ -91,9 +98,19 @@ public sealed partial class @this
     /// The returned Call IS <see cref="IAsyncDisposable"/> — use <c>await using</c> for
     /// automatic Pop.
     /// </summary>
-    /// <param name="action">The action being dispatched.</param>
-    /// <param name="variables">Variables instance for diff capture (when Flags.Diff is on).</param>
-    public call.@this Push(ActionEntity action, Variables? variables = null)
+    /// <param name="goal">The goal starting — its frame's goal is itself.</param>
+    public call.@this Push(global::app.goal.@this goal) => Push(goal, null, null, null);
+
+    /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
+    public call.@this Push(global::app.goal.step.@this step) => Push(step.Goal, step, null, null);
+
+    /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
+    /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
+    public call.@this Push(global::app.goal.step.action.@this action, Variables? variables = null)
+        => Push(action.Step?.Goal, action.Step, action, variables);
+
+    private call.@this Push(global::app.goal.@this? goal, global::app.goal.step.@this? step,
+        global::app.goal.step.action.@this? action, Variables? variables)
     {
         var caller = _current.Value;
 
@@ -101,7 +118,7 @@ public sealed partial class @this
         if (caller != null && caller.Depth >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
-        var call = new call.@this(action, caller, this, caller, variables ?? Variables);
+        var call = new call.@this(goal, step, action, caller, this, caller, variables ?? Variables);
 
         // Children owns its own lock + FIFO eviction policy.
         caller?.Children.Add(call);
@@ -112,6 +129,24 @@ public sealed partial class @this
         if (caller == null) _root = call;
         _current.Value = call;
         return call;
+    }
+
+    /// <summary>
+    /// The depth limit met, as the run's error: <paramref name="goal"/> and <paramref name="step"/> are where the
+    /// frame that never pushed would have run, and the error carries the chain it would have joined. Filed in the
+    /// audit.
+    /// </summary>
+    public global::app.error.Error Overflow(CallStackOverflowException ex, global::app.goal.@this? goal, global::app.goal.step.@this? step)
+    {
+        var error = new ServiceError(ex.Message, "CallStackOverflow", 500)
+        {
+            Step = step,
+            Goal = goal,
+            CallFrames = Current?.SnapshotChain() ?? Array.Empty<call.@this>(),
+            Exception = ex,
+        };
+        Audit.Add(error);
+        return error;
     }
 
     /// <summary>
