@@ -1,6 +1,6 @@
 ## Now
 
-Done: 1–8g, and 8h's code parts (see `test/plan/app-systems/done.list`). What's left is `test/plan/app-systems/start.goal`: each behaviour as a comment, with the step that runs its test. Checks that can't be a test are in `test/plan/app-systems/checks.md`. The architect can't write outside `.bot/`, so edits to these go through the coder.
+Done: 1–8g, and 8h's code parts (see `test/plan/app-systems/done.list`). The plan is `test/plan/app-systems/start.md` (the why, each stage's developer payoff and decisions, how it's proven, the checks tests can't show), with `start.goal` beside it (each behaviour as a comment with the step that runs its test). The architect can't write outside `.bot/`, so edits to these go through the coder.
 
 - A plan's tests live in its own folder, lowercase and singular: `test/plan/app-systems/`, each at the path of what it tests (`module/on/cache/…`). They're built only when Ingi says so; the coder may ask.
 - Hand-over: the spec goals plus the OBP rules; the implementation is a conversation between the coder and the architect.
