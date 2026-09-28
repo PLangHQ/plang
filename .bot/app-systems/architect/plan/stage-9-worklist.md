@@ -67,6 +67,7 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **Two sync-over-async sites, fixed when their callers move:** `Fluid.cs:378` (the IFileProvider include) and `OpenAi.cs:736` (`ReadAsDataUri`).
 - **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
 - **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
+- **A future fork needs its own `%!data%`** (decision 212, the coder's risk). Every action sets `%!data%` in the actor's memory. That's safe while flows are sequential, but a parallel foreach or a listener accept loop must run in `Calls.Isolate` or a frame that binds `!data`.
 - **The identity module's turn in 9b (decisions 205, 207, 208, Ingi):**
   - `%Identity%` is a new DynamicData, the user identity's **public key** (text). In a local run, with no caller, it's the system identity's key. `%MyIdentity%` stays the system identity object (`actor/this.cs:109`).
   - **Public keys are written URL-safe base64** (RFC 4648 §5: `-`/`_`, no `=`). The encode is `signing/code/Ed25519.cs:177`; every decode (signature verify, key import at `:204`) reads the same form. Pre-1.0, so no migration. The test identities and signed fixtures get regenerated.
