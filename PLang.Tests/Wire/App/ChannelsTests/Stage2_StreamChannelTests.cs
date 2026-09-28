@@ -130,19 +130,65 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task StreamChannel_Ask_TimesOutPerChannelTimeoutConfig()
+    public async Task StreamChannel_Ask_WaitsPastTheChannelsTimeout_ForItsAnswer()
     {
-        // Pipe with no writer → Read blocks forever; Timeout=PT1S triggers AskTimeout.
-        var pipe = new BlockingStream();
-        var ch = new StreamChannel("i", pipe, ChannelDirection.Input, ownsStream: false)
+        // A question waits for its answer: the answer comes after the channel's Timeout, and is taken.
+        var ch = new StreamChannel("i", new LateStream("late answer\n", TimeSpan.FromMilliseconds(300)), ChannelDirection.Input, ownsStream: false)
         {
             Mime = "text/plain",
-            Timeout = TimeSpan.FromMilliseconds(100)
+            Timeout = TimeSpan.FromMilliseconds(50)
         };
         app.User.Channel.Register(ch);
         var result = await ch.Ask(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.User.Context) });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("AskTimeout");
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("late answer");
+    }
+
+    [Test]
+    public async Task OutputAsk_EndsWhenTheRunIsCancelled()
+    {
+        // The run's cancellation (a timeout on the ask, a test's timeout, Ctrl-C) is what ends a waiting ask.
+        await using var own = global::PLang.Tests.TestApp.Create("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], autoWireConsoleChannels: false);
+        own.User.Channel.Register(new StreamChannel(global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
+        var ctx = own.User.Context;
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        ctx.PushCancellation(cts);
+        try
+        {
+            var ask = new global::app.module.action.output.ask(ctx) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: ctx) };
+            var result = await ask.Start();
+            await result.IsFailure();
+            await Assert.That(cts.IsCancellationRequested).IsTrue();
+        }
+        finally { ctx.PopCancellation(); }
+    }
+
+    // Answers one line after a delay — longer than the channel's Timeout.
+    private sealed class LateStream(string text, TimeSpan delay) : Stream
+    {
+        private readonly byte[] _bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        private int _at;
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => _bytes.Length;
+        public override long Position { get => _at; set { } }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
+        {
+            if (_at == 0) await Task.Delay(delay, ct);
+            var n = Math.Min(buffer.Length, _bytes.Length - _at);
+            _bytes.AsMemory(_at, n).CopyTo(buffer);
+            _at += n;
+            return n;
+        }
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct)
+            => ReadAsync(buffer.AsMemory(offset, count), ct).AsTask();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     [Test]

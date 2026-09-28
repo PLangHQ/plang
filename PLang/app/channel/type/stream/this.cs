@@ -122,14 +122,13 @@ public sealed class @this : global::app.channel.type.session.@this
             return action.Context.Error(new ServiceError(
                 $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400));
 
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeoutCts.CancelAfter(Timeout);
-
+        // A question waits for its answer — no limit of its own. The program's limit (a timeout on the ask) and the
+        // run's cancellation arrive through ct.
         try
         {
             using var reader = new StreamReader(Stream, ResolveEncoding(),
                 detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
-            var line = await reader.ReadLineAsync(timeoutCts.Token);
+            var line = await reader.ReadLineAsync(ct);
             // Null from ReadLineAsync = stream EOF. There's no interactive
             // answerer (closed pipe, redirected stdin, non-interactive runner).
             // Fail-fast instead of letting the caller loop on "" forever.
@@ -139,12 +138,8 @@ public sealed class @this : global::app.channel.type.session.@this
                     "ChannelEof", 400));
             return action.Context.Ok(line);
         }
-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
-        {
-            return action.Context.Error(new ServiceError(
-                $"Channel '{Name}' ask timed out after {Timeout}", "AskTimeout", 408));
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException
+                                                 or OperationCanceledException))
         {
             return action.Context.Error(new ServiceError(
                 $"Failed to ask on channel '{Name}': {ex.Message}", "AskError") { Exception = ex });

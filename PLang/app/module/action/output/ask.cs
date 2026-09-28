@@ -87,7 +87,8 @@ public partial class ask : IContext
         // contract here so callers never see the legacy string-bearing form.
         var input = Context.Actor?.Channel.Get(global::app.channel.list.@this.Input)
             ?? throw new InvalidOperationException("No input channel registered on actor");
-        var askResult = await input.AskAsync(this);
+        // The wait ends when the run's cancellation says so — the program's timeout on the ask, a test's, Ctrl-C.
+        var askResult = await input.AskAsync(this, Context.CancellationToken);
         if (!askResult.Success) return data.@this<Ask>.From(askResult);
         // Stream-channel shape: a bare string answer. Lift into a resolved Ask
         // (no Snapshot needed — the answer is already here).
