@@ -214,6 +214,7 @@ if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
 - The app's identity is read back through the same format that writes it (the `.pr` reading the `[Store]` face), not by hand with `JsonDocument` (`app/this.cs:413-437`).
 - The Settings section's `id`, `name` and `environment` in `app.setting`: trace `app.pr` against the settings rows first, so there is one store.
 - CLR leaves on app become plang types: `Created`, `Updated` and `StartedAt` → datetime, `Uptime` → duration, `Environment` and `Id` → text.
+- **One `DynamicData` (decision 149):** 8f added a Data form (`Func<data?>`, forwarding `Peek`/`Properties`) for `%!event%` beside the value form on the `computed` cell. It becomes one form, the Data form, once `computed`'s factory takes the asker's context (`!app` resolves its kind through it).
 - Trace first, no ruling yet:
   - `OsDirectory` vs `OsAbsolutePath`: a null `OsDirectory` changes what `Authorize` treats as in root (`path/this.Authorize.cs:116`), so this is security-relevant.
   - Where the variable memory (`variable/list/this.cs`, the actor's context's) belongs, now that plang's `app.variable.list` is its `.list`. | no |
