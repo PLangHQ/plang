@@ -36,8 +36,8 @@ public class Stage0_NamedChannelsTests
     public async Task Builder_BuildEnd_DisposesBuilderChannel()
     {
         Channels.CreateMemoryChannel("builder");
-        var removed = await Channels.RemoveAsync("builder");
-        await Assert.That(removed).IsTrue();
+        var removed = await Channels.Remove("builder", global::PLang.Tests.TestApp.SharedContext);
+        await removed.IsSuccess();
         await Assert.That(Channels.Get("builder")).IsNull();
     }
 

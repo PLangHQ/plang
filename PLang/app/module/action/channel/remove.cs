@@ -1,34 +1,18 @@
-using app.error;
-
 namespace app.module.action.channel;
 
 /// <summary>
-/// Unregisters a channel by name. Refuses for the default channels
-/// (<see cref="app.channel.list.@this.Defaults"/> — output/error/input) which the
-/// boot invariant requires; use <c>channel.set</c> to re-bind their backing.
+/// Unregisters a channel by name, on the actor named (else the asker's). A default channel
+/// (output/error/input) can't be removed — the boot invariant needs it; <c>channel.set</c> replaces its backing.
 /// PLang surface:
 ///   - remove channel "logger"
 /// </summary>
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
+    [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
     public partial data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? Actor { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var name = (await Name.Value())?.Clr<string>();
-        if (string.IsNullOrEmpty(name))
-            return Context.Error(new ServiceError("Channel name is required", "ValueRequired", 400));
-
-        if (global::app.channel.list.@this.Defaults.Any(d => string.Equals(d, name, StringComparison.OrdinalIgnoreCase)))
-            return Context.Error(new ServiceError(
-                $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
-                "ChannelInvariantViolation", 400));
-
-        var removed = await (await Context.For(Actor)).Actor.Channel.RemoveAsync(name);
-        if (!removed)
-            return Context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
-        return Context.Ok();
-    }
+    public Task<data.@this> Start() => Name.Use(name =>
+        Context.App.actor.list.Use(Actor, Context, actor => actor.Channel.Remove(name.ToString(), Context)));
 }

@@ -91,4 +91,26 @@ public class ChannelSetTests
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
     }
+
+    // channel.remove: a registered channel goes; a default one is the boot invariant's (replaced, never
+    // removed); one not there is NotFound.
+    [Test]
+    public async Task Remove_TakesARegisteredChannel_RefusesADefault_AndOneNotThere()
+    {
+        var ctx = _app.actor.list.User.Context;
+        global::app.module.action.channel.Remove Of(string name) => new(ctx) { Name = new global::app.type.item.text.@this(name) };
+        await (await new global::app.module.action.channel.Set(ctx)
+            { Name = new global::app.type.item.text.@this("logger"), Goal = Make.Call("LogIt") }.Start()).IsSuccess();
+
+        await (await Of("logger").Start()).IsSuccess();
+        await Assert.That(ctx.Actor!.Channel.Get("logger")).IsNull();
+
+        var output = await Of("output").Start();
+        await output.IsFailure();
+        await Assert.That(output.Error!.Key).IsEqualTo("ChannelInvariantViolation");
+
+        var missing = await Of("nope").Start();
+        await missing.IsFailure();
+        await Assert.That(missing.Error!.Key).IsEqualTo("ChannelNotFound");
+    }
 }

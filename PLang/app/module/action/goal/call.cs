@@ -64,8 +64,11 @@ public partial class Call : IContext
             return Context.Error(new global::app.error.ActionError($"Goal '{Name.Peek()}' not found.", "GoalNotFound", 404));
 
         // the actor named runs it; none named, this one
-        var execContext = await Context.For(Actor);
+        return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));
+    }
 
+    private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)
+    {
         // The arguments bind in the call's own frame, in the memory the callee runs in: they are the
         // callee's for as long as it runs and gone when it returns; any other write the callee makes
         // reaches that memory as it would without the call. Data just flows — each argument binds under

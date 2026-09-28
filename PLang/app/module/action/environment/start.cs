@@ -15,10 +15,10 @@ public partial class start : IContext
     /// <summary>The actor to start on, by name. If null, starts on the current context.</summary>
     public partial data.@this<global::app.type.item.choice.@this<actor.Name>>? Actor { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var runContext = await Context.For(Actor);
+    public Task<data.@this> Start() => Context.App.actor.list.Use(Actor, Context, runner => Run(runner.Context));
 
+    private async Task<data.@this> Run(global::app.actor.context.@this runContext)
+    {
         // Polymorphic: forwarded result type depends on the dispatched target.
         var call = Goal == null ? null : await Goal.Value();
         if (call != null)

@@ -39,7 +39,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// <summary>Closes the open session, if there is one.</summary>
     public async Task Close()
     {
-        if (Session is { } session) await session.Actor.Channel.RemoveAsync(session.Name);
+        if (Session is { } session) await session.Actor.Channel.Remove(session.Name, session.Actor.Context);
     }
 
     // The actor test's setting names — one of the app's, which the actor list holds.

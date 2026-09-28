@@ -25,6 +25,15 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     /// <summary>The actor <paramref name="name"/> names — the closed set's own members.</summary>
     public actor.@this this[Name name] => name == Name.system ? System : User;
 
+    /// <summary>The actor a step names (<paramref name="named"/>), handed to <paramref name="then"/> — the asker's
+    /// own when none is named. A name that didn't resolve is its own answer.</summary>
+    public async Task<data.@this> Use(data.@this<global::app.type.item.choice.@this<Name>>? named,
+        global::app.actor.context.@this asker, Func<actor.@this, Task<data.@this>> then)
+    {
+        if (named == null || await named.IsEmpty()) return await then(asker.Actor);
+        return await named.Use(name => then(this[name]));
+    }
+
     public async ValueTask DisposeAsync()
     {
         await System.DisposeAsync();

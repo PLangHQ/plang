@@ -87,11 +87,26 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         _channels[channel.Name] = channel;
     }
 
-    public async Task<bool> RemoveAsync(string name)
+    /// <summary>Registers <paramref name="channel"/> in place of the one by its name, which is disposed — a default
+    /// channel is replaced this way, never left out.</summary>
+    public async Task Set(channel.@this channel)
     {
-        if (!_channels.TryRemove(name, out var channel)) return false;
+        if (_channels.TryRemove(channel.Name, out var old)) await old.DisposeAsync();
+        Register(channel);
+    }
+
+    /// <summary>Removes the channel named <paramref name="name"/>. A default channel can't be — the boot invariant
+    /// needs it; its backing is replaced with <see cref="Set"/> — and one not registered is NotFound.</summary>
+    public async Task<data.@this> Remove(string name, global::app.actor.context.@this context)
+    {
+        if (Defaults.Any(d => string.Equals(d, name, StringComparison.OrdinalIgnoreCase)))
+            return context.Error(new ServiceError(
+                $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
+                "ChannelInvariantViolation", 400));
+        if (!_channels.TryRemove(name, out var channel))
+            return context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
         await channel.DisposeAsync();
-        return true;
+        return context.Ok();
     }
 
     public bool Contains(string name) => _channels.ContainsKey(name);

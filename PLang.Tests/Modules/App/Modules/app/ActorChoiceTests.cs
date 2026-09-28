@@ -47,7 +47,7 @@ public class ActorChoiceTests
         => await SelectsSystem((await ChannelSet("system")).Actor);
 
     [Test] public async Task ChannelRemove_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.channel.Remove>("channel", "remove", "system")).Actor);
+        => await SelectsSystem((await Bound<global::app.module.action.channel.Remove>("channel", "remove", "system", ("Name", "c"))).Actor);
 
     [Test]
     public async Task GoalCall_SystemActor_RunsOnSystemContext()

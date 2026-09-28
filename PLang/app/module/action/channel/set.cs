@@ -35,13 +35,14 @@ public partial class Set : IContext
     {
         var given = await Given();
         if (!given.Success) return given;
-        var context = await Context.For(Actor);
-        var born = await Context.App.type.list[typeof(app.channel.type.goal.@this)].Create(given.Peek(), context);
-        return await born.Use<app.channel.type.goal.@this>(async channel =>
+        return await Context.App.actor.list.Use(Actor, Context, async actor =>
         {
-            await channel.Actor.Channel.RemoveAsync(channel.Name);
-            channel.Actor.Channel.Register(channel);
-            return born;
+            var born = await Context.App.type.list[typeof(app.channel.type.goal.@this)].Create(given.Peek(), actor.Context);
+            return await born.Use<app.channel.type.goal.@this>(async channel =>
+            {
+                await channel.Actor.Channel.Set(channel);
+                return born;
+            });
         });
     }
 }
