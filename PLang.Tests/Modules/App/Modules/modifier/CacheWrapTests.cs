@@ -162,7 +162,8 @@ public class CacheWrapTests
     public async Task Wrap_CachedResult_RestoredAsDataVariable()
     {
         // Pre-cache a value, then execute — a hit is the action's result, so %!data% is the cached value.
-        var stashed = Ctx.Ok("restored");        await Ctx.App!.Cache.SetAsync("restore-key", stashed,
+        var stashed = Ctx.Ok("restored");
+        await Ctx.App!.Cache.SetAsync("restore-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
         var action = global::PLang.Tests.Shared.Make.With(new PrAction
@@ -179,5 +180,43 @@ public class CacheWrapTests
         var dataVar = await Ctx.Variable.Get("!data");
         await Assert.That(dataVar).IsNotNull();
         await Assert.That((await dataVar.Value())?.ToString()).IsEqualTo("restored");
+    }
+
+    [Test]
+    public async Task ARecoverysResult_IsNeverCached()
+    {
+        // error.throw; on.error(Recovery=[set %r%]); on.cache: recovery answers on the error outcome, after the
+        // attempt's after-start — the store sees only the failed work.
+        var action = global::PLang.Tests.Shared.Make.With(
+            global::PLang.Tests.Shared.Make.Action("error", "throw", ("Message", "boom")),
+            global::PLang.Tests.Shared.Make.Action("on", "error", global::PLang.Tests.Shared.Make.Recovery(
+                global::PLang.Tests.Shared.Make.Action("variable", "set",
+                    global::PLang.Tests.Shared.Make.Param("Name", "r", "variable"), ("Value", "recovered")))),
+            CacheModifier(60_000, "recovery-key"));
+
+        var result = await action.Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await Ctx.Variable.GetValue("r"))).IsEqualTo("recovered");
+        await Assert.That(await Ctx.App!.Cache.GetAsync("recovery-key")).IsNull();
+    }
+
+    [Test]
+    public async Task AClause_IsNotAStep_DataAfterItIsTheActionsResult()
+    {
+        // math.add(1, 2); on.cache(…); variable.set(%sum%, %!data%) — the clause was bound at read and never
+        // starts, so %!data% is still the add's result when the set reads it.
+        var code = new global::app.goal.step.action.list.@this();
+        code.Add(global::PLang.Tests.Shared.Make.Action("math", "add", ("A", 1), ("B", 2)));
+        code.Add(CacheModifier(60_000, "sum-key"));
+        code.Add(global::PLang.Tests.Shared.Make.Action("variable", "set",
+            global::PLang.Tests.Shared.Make.Param("Name", "sum", "variable"), ("Value", "%!data%")));
+        code.Bind();
+
+        var result = await code.Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await Ctx.Variable.GetValue("sum"))?.ToString()).IsEqualTo("3");
+        await Assert.That(await Ctx.App!.Cache.GetAsync("sum-key")).IsNotNull();
     }
 }

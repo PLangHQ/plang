@@ -54,7 +54,7 @@ public class AppRunScaffoldingTests
 
         var dispatchStep = new Step { Index = 0, Text = "dispatch-step" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
-        action.Step = dispatchStep;
+        action = action.In(dispatchStep);
         Step? during = null;
         _app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (_, _, c) =>
         {
@@ -80,7 +80,7 @@ public class AppRunScaffoldingTests
 
         var step = new Step { Index = 0, Text = "s" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
-        action.Step = step;
+        action = action.In(step);
 
         await action.Start(ctx);
 
@@ -169,14 +169,8 @@ public class AppRunScaffoldingTests
         cts.Cancel();
         _app.User.Context.PushCancellation(cts);
 
-        var action = TestAction.Create("matrix.plain", "stringplain", ("path", "x"));
-        var step = new Step
-        {
-            Index = 0,
-            Text = "test",
-            Code = new StepActions { action }
-        };
-        action.Step = step;
+        var step = new Step { Index = 0, Text = "test" };
+        step.Code.Add(TestAction.Create("matrix.plain", "stringplain", ("path", "x")).In(step));
 
         await Assert.That(async () => await step.Start(_app.User.Context))
             .ThrowsExactly<OperationCanceledException>();

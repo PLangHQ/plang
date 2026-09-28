@@ -49,12 +49,11 @@ Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
 {%- assign names = shown | split: "|" -%}
 {%- for n in names -%}
 {%- if n == "" -%}{%- continue -%}{%- endif -%}
-{%- if n == "on.error" -%}{%- assign holds = true -%}{%- endif -%}
 {%- assign mn = n | split: "." | first -%}
 {%- assign an = n | split: "." | last -%}
 {%- assign m = modules | where: "Name", mn | first -%}
-{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
-{%- for p in a.Property -%}{%- capture face -%}{{ p.Type }}{%- endcapture -%}{%- if face == "action" -%}{%- assign holds = true -%}{%- endif -%}{%- endfor -%}
+{%- assign a = m.Action | where: "Name", an | first -%}
+{%- for p in a.Property -%}{%- capture face -%}{{ p.Type }}{%- endcapture -%}{%- if face == "action" or face == "list<action>" -%}{%- assign holds = true -%}{%- endif -%}{%- endfor -%}
 {%- endfor -%}
 {%- if holds -%}{%- unless shown contains "|goal.call|" -%}{%- assign shown = shown | append: "goal.call|" -%}{%- endunless -%}{%- endif -%}
 {%- assign names = shown | split: "|" -%}
@@ -64,7 +63,7 @@ Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
 {%- assign mn = n | split: "." | first -%}
 {%- assign an = n | split: "." | last -%}
 {%- assign m = modules | where: "Name", mn | first -%}
-{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- assign a = m.Action | where: "Name", an | first -%}
 {%- for p in a.Property -%}
 {%- capture face -%}{{ p.Type }}{%- endcapture -%}
 {%- assign mark = "|" | append: face | append: "|" -%}
@@ -78,8 +77,7 @@ Types
 {%- if want != "" -%}
 {%- assign found = false -%}
 {%- for m in modules -%}
-{%- assign actions = m.Action | concat: m.Modifier -%}
-{%- for a in actions -%}
+{%- for a in m.Action -%}
 {%- for p in a.Property -%}
 {%- unless found -%}
 {%- capture face -%}{{ p.Type }}{%- endcapture -%}
@@ -119,7 +117,7 @@ Keys
 {%- assign mn = n | split: "." | first -%}
 {%- assign an = n | split: "." | last -%}
 {%- assign m = modules | where: "Name", mn | first -%}
-{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first %}
+{%- assign a = m.Action | where: "Name", an | first %}
 
 ## {{ n }}({% for p in a.Property %}{{ p.Name }}{% unless p.Required %}?{% endunless %}: {{ p.Type }}{% if p.HasDefault %} = {{ p.Default }}{% endif %}{% unless forloop.last %}, {% endunless %}{% endfor %})
 {%- if a.Description -%}

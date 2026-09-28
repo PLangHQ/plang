@@ -31,7 +31,7 @@ public class StartTests
         goal.Step.Add(step);
         var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
         set.Module = _app.Module("variable");   // this app's program: its module and catalog action are this app's
-        set.Step = step;
+        set = set.In(step);
         step.Code.Add(set);
         return (goal, step, set);
     }

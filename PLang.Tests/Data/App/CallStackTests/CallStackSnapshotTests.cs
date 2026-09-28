@@ -9,8 +9,7 @@ public class CallStackSnapshotTests
     {
         var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
-        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName };
-        action.Step = step;
+        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName, Step = step };
         step.Code.Add(action);
         goal.Step.Add(step);
         return (goal, step, action);

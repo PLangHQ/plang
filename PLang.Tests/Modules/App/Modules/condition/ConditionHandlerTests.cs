@@ -75,12 +75,9 @@ public class ConditionHandlerTests : IDisposable
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) })
         };
 
-        var step = new Step
-        {
-            Index = 0, Text = "if true, write true-branch",
-            Code = new StepActions { condAction, thenAction }
-        };
-        condAction.Step = step;
+        var step = new Step { Index = 0, Text = "if true, write true-branch" };
+        step.Code.Add(condAction.In(step));
+        step.Code.Add(thenAction);
 
         var result = await step.Start(_app.User.Context);
 
@@ -127,12 +124,11 @@ public class ConditionHandlerTests : IDisposable
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) })
         };
 
-        var step = new Step
-        {
-            Index = 0, Text = "if false then, else write else",
-            Code = new StepActions { condAction, thenAction, elseCondAction, elseAction }
-        };
-        condAction.Step = step;
+        var step = new Step { Index = 0, Text = "if false then, else write else" };
+        step.Code.Add(condAction.In(step));
+        step.Code.Add(thenAction);
+        step.Code.Add(elseCondAction);
+        step.Code.Add(elseAction);
 
         var result = await step.Start(_app.User.Context);
 

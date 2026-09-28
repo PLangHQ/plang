@@ -133,4 +133,26 @@ public class TimeoutAfterTests
 
         await result.IsSuccess();
     }
+
+    [Test]
+    public async Task After_EachRetry_IsAFreshAttempt_WithAFreshDeadline()
+    {
+        // timer.sleep(2000); on.timeout(100); on.error(RetryCount=2): three attempts, each cut at its own 100ms.
+        // A deadline shared across the attempts would be spent by the first, and the retries would fail at once.
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        {
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("timer"),
+            Name = "sleep",
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 2000, context: Ctx) })
+        }, TimeoutModifier(100), global::PLang.Tests.Shared.Make.Action("on", "error", ("RetryCount", 2)));
+
+        var start = DateTimeOffset.UtcNow;
+        var result = await action.Start(Ctx);
+        var elapsed = DateTimeOffset.UtcNow - start;
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
+        await Assert.That(elapsed.TotalMilliseconds).IsGreaterThanOrEqualTo(280);
+        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(1500);
+    }
 }

@@ -44,7 +44,7 @@ step {{ s.Index }}: {% if s.Line.Indent > 0 %}{% for i in (1..s.Line.Indent) %} 
 {%- assign about = m.Description | strip -%}
 {{ nl }}- {{ n }}: {{ about }}
 {%- if m.Notes -%}{%- assign notes = m.Notes | strip -%}{{ nl }}  notes: {{ notes }}{%- endif -%}
-{%- assign acts = m.Action | concat: m.Modifier | sort: "Name" -%}
+{%- assign acts = m.Action | sort: "Name" -%}
 {%- for a in acts -%}
 {%- if a.Examples -%}
 {%- assign parts = "|" | append: a.Examples | split: "Step text: `" -%}
@@ -69,7 +69,7 @@ step {{ s.Index }}: {% if s.Line.Indent > 0 %}{% for i in (1..s.Line.Indent) %} 
 {%- assign mn = p | split: "." | first -%}
 {%- assign an = p | split: "." | last -%}
 {%- assign m = modules | where: "Name", mn | first -%}
-{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- assign a = m.Action | where: "Name", an | first -%}
 {%- assign about = a.Description | strip -%}
 {{ nl }}- {{ p }}: {{ about }}
 {%- endfor -%}
@@ -80,7 +80,7 @@ step {{ s.Index }}: {% if s.Line.Indent > 0 %}{% for i in (1..s.Line.Indent) %} 
 {%- assign mn = c[0] | split: "." | first -%}
 {%- assign an = c[0] | split: "." | last -%}
 {%- assign m = modules | where: "Name", mn | first -%}
-{%- assign a = m.Action | concat: m.Modifier | where: "Name", an | first -%}
+{%- assign a = m.Action | where: "Name", an | first -%}
 {%- assign about = a.Description | strip -%}
 {{ nl }}- {{ c[0] }}: {{ about }}
 {%- if a.Examples -%}

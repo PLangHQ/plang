@@ -1,1 +1,1 @@
-Intercept errors from the preceding action; optionally retry, run a recovery action chain, or suppress the error
+Answer when the action before it fails; optionally retry it, run a recovery, or carry on past the error

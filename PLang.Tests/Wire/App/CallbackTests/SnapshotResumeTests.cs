@@ -19,7 +19,7 @@ public class SnapshotResumeTests
     {
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
-        action.Step = step;
+        action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
         return step;

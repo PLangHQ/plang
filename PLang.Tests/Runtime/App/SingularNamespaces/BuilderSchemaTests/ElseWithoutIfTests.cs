@@ -122,9 +122,7 @@ public class ElseWithoutIfTests
         var goal = global::app.goal.@this.Parse("G\n- if %count% > 0\n    - call ProcessItems\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
         var ifStep = goal.Step[0];
-        var condition = If();
-        condition.Step = ifStep;
-        ifStep.Code.Add(condition);
+        ifStep.Code.Add(If().In(ifStep));
 
         var error = await ifStep.Code.Validate(ctx);
 
@@ -140,16 +138,11 @@ public class ElseWithoutIfTests
         var goal = global::app.goal.@this.Parse("G\n- else\n- if %n% > 5, call Big\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
         var elseStep = goal.Step[0];
-        var elseAction = Else();
-        elseAction.Step = elseStep;
-        elseStep.Code.Add(elseAction);
+        elseStep.Code.Add(Else().In(elseStep));
         var ifStep = goal.Step[1];
         foreach (var a in new[] { Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
                                   Make.Action("goal", "call", ("Name", "Big")) })
-        {
-            a.Step = ifStep;
-            ifStep.Code.Add(a);
-        }
+            ifStep.Code.Add(a.In(ifStep));
         var elseVerdict = await elseStep.Validate(ctx);
         var besideVerdict = await ifStep.Validate(ctx);
 
@@ -205,9 +198,9 @@ public class ElseWithoutIfTests
     public async Task ElseWithoutIf_NamesItsStep_WhenTheActionHoldsOne()
     {
         await using var app = TestApp.Create("/test");
-        var goal = Make.Goal("G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else", Else()));
+        var goal = Make.Goal("G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else"));
         var elseStep = goal.Step[1];
-        elseStep.Code[0].Step = elseStep;
+        elseStep.Code.Add(Else().In(elseStep));
 
         var error = await elseStep.Code.Validate(app.System.Context);
 

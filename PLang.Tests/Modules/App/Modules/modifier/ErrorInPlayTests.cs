@@ -49,7 +49,7 @@ public class ErrorInPlayTests
         };
         var step = new Step { Goal = goal, Text = $"step of {name}" };
         // The .pr load applies the template seam; without it a %var% parameter never resolves.
-        foreach (var a in actions) { TemplateStamp.Apply(a); a.Step = step; step.Code.Add(a); }
+        foreach (var a in actions) { TemplateStamp.Apply(a); step.Code.Add(a.In(step)); }
         goal.Step.Add(step);
         _app.goal.list.Add(goal);
         return goal;

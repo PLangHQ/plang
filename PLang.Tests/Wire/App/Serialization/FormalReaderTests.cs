@@ -68,6 +68,22 @@ public class FormalReaderTests
         await Assert.That(written).Contains("; on.cache(");
     }
 
+    // A duration is written as the type teaches it (ISO 8601) and reads to its length.
+    [Test]
+    public async Task AClausesDuration_WrittenIso_ReadsToItsLength()
+    {
+        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"PT0.1S\"); on.cache(Duration=\"PT5M\")", out _);
+
+        await read.IsSuccess();
+        var code = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToList();
+        var context = global::PLang.Tests.TestApp.SharedContext;
+        // a run reads the row as its Data — the raw slice lifts to the declared type there
+        var after = await code[1]["After"]!.Data(context).Value();
+        var duration = await code[2]["Duration"]!.Data(context).Value();
+        await Assert.That((System.TimeSpan)(global::app.type.item.duration.@this)after!).IsEqualTo(System.TimeSpan.FromMilliseconds(100));
+        await Assert.That((System.TimeSpan)(global::app.type.item.duration.@this)duration!).IsEqualTo(System.TimeSpan.FromMinutes(5));
+    }
+
     [Test]
     public async Task AClause_LeadingTheStep_IsRefused()
     {

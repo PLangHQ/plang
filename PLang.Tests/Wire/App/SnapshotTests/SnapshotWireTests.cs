@@ -87,7 +87,7 @@ public class SnapshotWireTests
     {
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
-        action.Step = step;
+        action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
         return step;
@@ -163,7 +163,7 @@ public class SnapshotWireTests
     {
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", expr));
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
-        action.Step = step;
+        action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
         return step;

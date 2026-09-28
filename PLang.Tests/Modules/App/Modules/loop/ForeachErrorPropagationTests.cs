@@ -93,10 +93,9 @@ public class ForeachErrorPropagationTests
             Goal = innerGoal,
             Index = 0,
             Text = "if true, call MissingGoal",
-            Code = new StepActions { innerCondAction, innerGoalCall }
         };
-        innerCondAction.Step = innerStep;
-        innerGoalCall.Step = innerStep;
+        innerStep.Code.Add(innerCondAction.In(innerStep));
+        innerStep.Code.Add(innerGoalCall.In(innerStep));
         innerGoal.Step.Add(innerStep);
         _app.goal.list.Add(innerGoal);
 

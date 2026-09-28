@@ -113,16 +113,12 @@ public partial class @this
 
     /// <summary>The step this action belongs to — a BIRTH FACT for every action that is part of a
     /// PROGRAM: the reader builds the step shell first and hands it down at construction, so it is
-    /// never stamped in afterwards. Null is not a repair hole, it is a real state: three kinds of
+    /// never stamped in afterwards. Null is not a repair hole, it is a real state: two kinds of
     /// action exist outside any program and therefore have no step — a catalog element (a
-    /// module-minted descriptor), a synthetic action composed in C# (<c>app.Run(new sign{...})</c>,
-    /// the signing/verify/ask seam), and — until recovery moves into <c>Child</c> — a recovery
-    /// action materialised from a parameter value.</summary>
-    /// <remarks><c>internal set</c>, not <c>init</c>, for exactly one more step: <c>on.error</c>
-    /// must hand recovery actions the enclosing step. When recovery is read at load like every
-    /// other action, that last stamp goes and this tightens to <c>init</c>.</remarks>
+    /// module-minted descriptor), and a synthetic action composed in C# (<c>app.Run(new sign{...})</c>,
+    /// the signing/verify/ask seam).</summary>
     [JsonIgnore]
-    public Step? Step { get; internal set; }
+    public Step? Step { get; init; }
 
     // Teaching prose (Description / Notes / Examples) is no longer stored on the action host — it lives
     // as lazy `file` handles on the class-zoom partial (this.Schema.cs), over
