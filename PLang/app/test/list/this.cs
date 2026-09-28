@@ -89,6 +89,63 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         return executed;
     }
 
+    /// <summary>
+    /// The tests under <paramref name="root"/>: every file matching <paramref name="pattern"/> (walking
+    /// subfolders when <paramref name="recursive"/>), listed through the path's gate — an out-of-root root is
+    /// a prompt or a denial, never a silent empty list. A file whose built goal is fresh becomes its test as a
+    /// run takes it; one that isn't (no .pr, a stale or refused .pr) is a Stale test naming why. A pattern or
+    /// a flag that didn't resolve is its own answer.
+    /// </summary>
+    public Task<data.@this> Discover(global::app.type.item.path.@this root,
+        data.@this<global::app.type.item.text.@this> pattern, data.@this<global::app.type.item.@bool.@this> recursive,
+        actor.context.@this context)
+        => pattern.Use(match => recursive.Use(async deep =>
+        {
+            var listed = await root.List(match.ToString(), deep.Value, context);
+            if (!listed.Success) return listed;
+            var found = new List<data.@this>();
+            if (await listed.Value() is global::app.type.item.list.@this files)
+                foreach (var row in files.Items(context))
+                    // .test.goal files resolve only under the file scheme; another scheme is skipped
+                    if (await row.Value<global::app.type.item.path.@this>() is global::app.type.item.path.file.@this file)
+                        found.Add(new data.@this("", await Of(file, context), context: context));
+            return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
+                new global::app.type.item.list.@this<global::app.test.@this>(found));
+        }));
+
+    // The test a .test.goal file is: its goal read first (even with no .pr the source names the test), then
+    // its built .pr — fresh (the same hash) is the test as a run takes it; anything else is Stale, saying why.
+    private async Task<global::app.test.@this> Of(global::app.type.item.path.file.@this file, actor.context.@this context)
+    {
+        var goalRead = await file.Read(context);
+        var goalContent = goalRead.Success ? await goalRead.Value() : null;
+        if (!goalRead.Success)
+            return Stale(new global::app.goal.@this { Path = file }, "goal read error: " + (goalRead.Error?.Message ?? ""));
+        var source = goalContent as global::app.goal.@this
+            ?? global::app.goal.@this.Parse(goalContent?.ToString() ?? "", file, context)
+            ?? new global::app.goal.@this { Path = file };
+
+        if (source.PrPath is not global::app.type.item.path.file.@this pr) return Stale(source, "no PrPath derivable from goal source");
+        var prExists = await pr.ExistsAsync(context);
+        if (!prExists.Success || (await prExists.Value())?.Value != true) return Stale(source, "no .pr");
+
+        // The .pr lands as a file reference; its value is what its format (.pr → goal) decodes. A .pr the reader
+        // refuses (an old format names itself: PrFormatOutdated) is a test that could not load, never an
+        // aborted discovery.
+        var prRead = await pr.Read(context);
+        if (!prRead.Success) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
+        global::app.goal.@this? built;
+        try { built = (await prRead.Value()) as global::app.goal.@this; }
+        catch (global::app.error.AppException refused) { return Stale(source, refused.Message); }
+        if (built == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
+        if (!string.Equals(source.Hash, built.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
+
+        return await global::app.test.@this.From(built, context);
+
+        static global::app.test.@this Stale(global::app.goal.@this goal, string reason)
+            => new() { Goal = goal, Status = Status.Stale, StatusReason = reason };
+    }
+
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
     // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, a child of this one,
     // testing it (its session open) — the App lives exactly as long as the run.
