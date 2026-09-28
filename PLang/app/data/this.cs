@@ -305,7 +305,8 @@ public partial class @this
         if (!Success || Exits) return this;
         if (Peek() is not TAs held)
             return Context.Error(new global::app.error.Error(
-                $"'{Name}' is a {Type.Name}, not a {typeof(TAs).Name}", "NotA", 400));
+                $"'{Name}' is a {Type.Name}, not a {(typeof(global::app.type.item.@this).IsAssignableFrom(typeof(TAs)) ? global::app.type.item.@this.NameOf(typeof(TAs)) : typeof(TAs).Name)}",
+                "NotA", 400));
         return await then(held);
     }
 

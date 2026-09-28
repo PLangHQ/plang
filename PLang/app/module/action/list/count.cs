@@ -5,19 +5,7 @@ public partial class Count : IContext
 {
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
 
-    public async Task<data.@this<global::app.type.item.number.@this>> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-        var countData = await data.Get("Count");
-
-        // The typed surface answers in a `number` (raw int covers IList infra).
-        var counted = countData.IsInitialized ? await countData.Value() : null;
-        if (counted is global::app.type.item.number.@this n)
-            return Context.Ok<global::app.type.item.number.@this>(n);
-
-        // Fallback: enumerate
-        int count = 0;
-        foreach (var _ in await data.EnumerateItems()) count++;
-        return Context.Ok<global::app.type.item.number.@this>(count);
-    }
+    public async Task<data.@this<global::app.type.item.number.@this>> Start() => data.@this<global::app.type.item.number.@this>.From(
+        await ListName.Use(name => name.Use<app.type.item.list.@this>(Context,
+            list => Task.FromResult<data.@this>(Context.Ok<global::app.type.item.number.@this>(list.Count)))));
 }

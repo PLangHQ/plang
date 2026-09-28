@@ -111,6 +111,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return await Start(context);
     }
 
+    /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, handed to <paramref name="then"/>: its
+    /// value touched first (lazy content — a json list, a file's content — becomes what it is), so a variable
+    /// used as a list is its content. A failure, an ask, or a value that isn't a TAs is the answer.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this> Use<TAs>(actor.context.@this context,
+        System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then)
+    {
+        var held = await Start(context);
+        if (held.Success && !held.Exits) await held.Value();
+        return await held.Use(then);
+    }
+
     /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/>
     /// — the Data the caller read — so a newer value written in between is left alone; answers whether
     /// it now holds the value. A deeper variable's Data is born per read, so there it just writes.</summary>

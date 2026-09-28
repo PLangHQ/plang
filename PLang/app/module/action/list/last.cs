@@ -5,23 +5,6 @@ public partial class Last : IContext
 {
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-        var countData = await data.Get("Count");
-
-        // The typed surface answers in a `number`; raw int covers IList infra.
-        int count = (countData.IsInitialized ? await countData.Value() : null) switch
-        {
-            global::app.type.item.number.@this n => n.ToInt32(),
-            _ => 0,
-        };
-        if (count > 0)
-        {
-            var last = await data.Get($"[{count - 1}]");
-            if (last.IsInitialized) return Context.Ok((await last.Value()));
-        }
-
-        return Context.Ok();
-    }
+    public Task<data.@this> Start() => ListName.Use(name => name.Use<app.type.item.list.@this>(Context,
+        list => Task.FromResult(list.Last(Context) ?? Context.Ok())));
 }

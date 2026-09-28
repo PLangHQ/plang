@@ -14,21 +14,6 @@ public partial class Any : IContext
     public partial data.@this<global::app.type.item.choice.@this<condition.Operator>> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.item.@bool.@this>> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-        var key = (await Key.Value())!.Clr<string>()!;
-        var rightVal = await Value.Value();
-        var right = rightVal != null ? new data.@this("", rightVal, context: Context) : null;
-        var op = (global::app.module.action.condition.Operator)(await Operator.Value())!;
-
-        foreach (var (_, item) in await data.EnumerateItems())
-        {
-            // The first match — or an error — is the answer; a miss moves on to the next item.
-            var matched = await op.Evaluate(await item.Get(key), right, Context);
-            if (!matched.Success || matched.ToBoolean()) return matched;
-        }
-
-        return Context.Ok<global::app.type.item.@bool.@this>(false, Context.App.type.list["bool"]);
-    }
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Start() => data.@this<global::app.type.item.@bool.@this>.From(
+        await ListName.Use(name => name.Use<app.type.item.list.@this>(Context, list => list.Any(Key, Operator, Value, Context))));
 }

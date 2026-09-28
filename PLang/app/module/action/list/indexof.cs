@@ -6,17 +6,7 @@ public partial class IndexOf : IContext
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.item.number.@this>> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-
-        // Membership through THE comparison entry: matches only on Equal, never errors.
-        foreach (var (key, item) in await data.EnumerateItems())
-        {
-            if (await item.Compare(Value) == global::app.data.Comparison.Equal)
-                return Context.Ok<global::app.type.item.number.@this>(Convert.ToInt32((await key.Value())));
-        }
-
-        return Context.Ok<global::app.type.item.number.@this>(-1);
-    }
+    public async Task<data.@this<global::app.type.item.number.@this>> Start() => data.@this<global::app.type.item.number.@this>.From(
+        await ListName.Use(name => name.Use<app.type.item.list.@this>(Context,
+            async list => Context.Ok<global::app.type.item.number.@this>(await list.Index(Value)))));
 }

@@ -773,13 +773,51 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return false;
     }
 
-    /// <summary>Value-membership for a bare value — wraps it as a row and routes through
-    /// the same <see cref="Contains(Data)"/> comparison (a <c>text</c> matches
-    /// case-insensitively via its own equality). The <c>Add(item)</c> sibling for asks;
-    /// returns the plang <c>@bool</c>. (TODO: the other list predicates — IsEmpty, etc. —
-    /// still return CLR bool; migrate them in the "plang predicates return @bool" pass.)</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(global::app.type.item.@this value, actor.context.@this context)
-        => await Contains(new Data("", value, context: context));
+    /// <summary>The position of the first element equal to <paramref name="needle"/> (through the same
+    /// comparison as <see cref="Contains(Data)"/>), or -1 when none is.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.number.@this> Index(Data needle)
+    {
+        var position = 0;
+        foreach (var element in Items(needle.Context))
+        {
+            if (await element.Compare(needle) == global::app.data.Comparison.Equal) return position;
+            position++;
+        }
+        return -1;
+    }
+
+    /// <summary>The element at <paramref name="index"/> — or, out of range, an error naming the range.</summary>
+    public async System.Threading.Tasks.Task<Data> At(global::app.data.@this<global::app.type.item.number.@this> index, actor.context.@this context)
+    {
+        var at = (await index.Value())!;
+        return At(at.ToInt32(), context) ?? context.Error(new global::app.error.ValidationError(
+            $"Index {at} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
+    }
+
+    /// <summary>The elements' text, one after another with <paramref name="separator"/> between them.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Join(
+        global::app.data.@this<global::app.type.item.text.@this> separator, actor.context.@this context)
+    {
+        var parts = new List<string>();
+        foreach (var element in Items(context)) parts.Add((await element.Value())?.ToString() ?? "");
+        return string.Join((await separator.Value())?.ToString() ?? "", parts);
+    }
+
+    /// <summary>Whether any element's <paramref name="field"/> holds against <paramref name="value"/> under
+    /// <paramref name="op"/>: the first that does — or an error — is the answer, else false.</summary>
+    public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        Data value, actor.context.@this context)
+    {
+        var key = (await field.Value())!.ToString();
+        var compare = (global::app.module.action.condition.Operator)(await op.Value())!;
+        foreach (var element in Items(context))
+        {
+            var matched = await compare.Evaluate(await element.Get(key), value, context);
+            if (!matched.Success || matched.ToBoolean()) return matched;
+        }
+        return context.Ok<global::app.type.item.@bool.@this>(false);
+    }
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()

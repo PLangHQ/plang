@@ -6,15 +6,6 @@ public partial class Get : IContext
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
     public partial data.@this<global::app.type.item.number.@this> Index { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-        var item = await data.Get($"[{(await Index.Value())}]");
-
-        if (!item.IsInitialized)
-            return Context.Error(
-                new app.error.ValidationError($"Index {(await Index.Value())} out of range for '{(await ListName.Value())}'"));
-
-        return Context.Ok((await item.Value()));
-    }
+    public Task<data.@this> Start() => ListName.Use(name => name.Use<app.type.item.list.@this>(Context,
+        list => list.At(Index, Context)));
 }

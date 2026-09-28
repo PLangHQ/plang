@@ -50,8 +50,8 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// <typeparamref name="T"/>, a caller can pass what converts to T (e.g. a bare
     /// <c>string</c> to a <c>list&lt;text&gt;</c>: <c>Contains("http")</c> lifts via
     /// <c>text</c>'s own <c>string</c> operator). Routes through the base membership.</summary>
-    public System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(T value, global::app.actor.context.@this context)
-        => Contains((global::app.type.item.@this)value, context);
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(T value, global::app.actor.context.@this context)
+        => await Contains(new global::app.data.@this("", value, context: context));
 
     /// <summary>A <c>list&lt;T&gt;</c> is a RE-TAG of a list, not an element walk: wrap the
     /// list's rows as-is. Each row converts to <typeparamref name="T"/> only when taken out

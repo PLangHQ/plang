@@ -5,11 +5,6 @@ public partial class First : IContext
 {
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-        var first = await data.Get("[0]");
-
-        return first.IsInitialized ? Context.Ok((await first.Value())) : Context.Ok();
-    }
+    public Task<data.@this> Start() => ListName.Use(name => name.Use<app.type.item.list.@this>(Context,
+        list => Task.FromResult(list.First(Context) ?? Context.Ok())));
 }

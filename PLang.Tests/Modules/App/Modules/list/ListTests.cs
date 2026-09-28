@@ -151,7 +151,7 @@ public class ListTests
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        await Assert.That(result.Error!.Key).IsEqualTo("IndexOutOfRange");
         await Assert.That(result.Error!.Message).Contains("out of range");
     }
 
