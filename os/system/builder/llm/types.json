@@ -44,6 +44,9 @@
   "app.event.binding": {
     "word": null
   },
+  "app.event.binding.call": {
+    "word": null
+  },
   "app.event.binding.mock": {
     "word": "mock"
   },

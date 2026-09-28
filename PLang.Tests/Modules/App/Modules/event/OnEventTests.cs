@@ -67,6 +67,38 @@ public class OnEventTests
     }
 
     [Test]
+    [Arguments("%!app.type.step.on.after%", "after")]
+    [Arguments("%!channels.audit.on.write%", "audit")]
+    public async Task APathThatReachesNothingAtBuild_IsAWarning_NamingTheHop(string path, string hop)
+    {
+        var builder = new System.IO.MemoryStream();
+        _app.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        var action = Make.Action("on", "event", ("Event", path), ("When", "before"), ("Action", Make.Call("Log")));
+        var (handler, error) = await action.Bind(Ctx);
+        await Assert.That(error).IsNull();
+
+        var built = await ((global::app.module.IClass)handler!).Build();
+
+        await built.IsSuccess();
+        var written = System.Text.Encoding.UTF8.GetString(builder.ToArray());
+        await Assert.That(written).Contains("reaches nothing at");
+        await Assert.That(written).Contains(hop);
+    }
+
+    [Test]
+    public async Task APathThatReachesAnEventAtBuild_WarnsNothing()
+    {
+        var builder = new System.IO.MemoryStream();
+        _app.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        var (handler, _) = await Make.Action("on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
+            ("Action", Make.Call("Log"))).Bind(Ctx);
+
+        await (await ((global::app.module.IClass)handler!).Build()).IsSuccess();
+
+        await Assert.That(builder.Length).IsEqualTo(0);
+    }
+
+    [Test]
     public async Task WhatIsNotAnEvent_IsTheError()
     {
         var bound = await On("%!app.type.goal%", "before", "Log");

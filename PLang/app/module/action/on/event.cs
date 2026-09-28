@@ -27,6 +27,30 @@ public partial class OnEvent : IContext
     [Default(global::app.@event.binding.Scope.actor)]
     public partial data.@this<global::app.type.item.choice.@this<global::app.@event.binding.Scope>> Scope { get; init; }
 
+    /// <summary>
+    /// Build-time hint: the event's path is walked hop by hop, and one that reaches nothing surfaces a
+    /// {action, message} warning on Channel("builder") naming that hop. Never a refusal — the item may only
+    /// exist at run (a channel a step before it creates); a path that reaches a value that is not an event is
+    /// refused by the slot's own type.
+    /// </summary>
+    public async Task<data.@this> Build()
+    {
+        if (__action?["Event"]?.Value?.Variable is not [{ } path, ..]) return Context.Ok();
+
+        data.@this? reached = null;
+        foreach (var hop in path.Code.Items())
+        {
+            reached = await hop.Start(reached, Context);
+            if (reached.IsInitialized && reached.Success) continue;
+            var warning = new global::app.type.item.dict.@this()
+                .Set("action", $"{__action.Module}.{__action.Name}")
+                .Set("message", $"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs");
+            if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
+            break;
+        }
+        return Context.Ok();
+    }
+
     public async Task<data.@this<global::app.@event.binding.@this>> Start()
     {
         // The path navigates event ← its on ← the item. An item nothing is bound on answers the shared empty
@@ -38,25 +62,10 @@ public partial class OnEvent : IContext
 
         var own = item.Own();
         var @event = own[named.Name]!;
-        global::app.@event.When when = await When.Value();
-        global::app.@event.binding.Scope scope = await Scope.Value();
         var call = (await Action.Value())!;
-        var binding = own.Bind(named.Name, when, async (fired, result, context) =>
-        {
-            // %!event% is the running event; what it fired for and the result so far (its value — a property
-            // holds a value, never a Data; a failed result is %!error%) are this firing's own. It lives on the
-            // frame the event fired in, for exactly as long as the call runs: gone when it returns, and each
-            // parallel firing (its own frame) sees its own. No frame (a C#-only firing): no %!event%.
-            var running = new global::app.data.@this("!event", @event, context: context);
-            running.Properties.Set("item", fired);
-            running.Properties.Set("result", result.Peek());
-            var frame = context.CallStack.Current;
-            if (frame == null) return await call.Start(context);
-            var outer = frame.Event;
-            frame.Event = running;
-            try { return await call.Start(context); }
-            finally { frame.Event = outer; }
-        }, Context.Actor!, scope);
+        global::app.@event.binding.Scope scope = await Scope.Value();
+        var binding = own.Bind(named.Name, await When.Value(),
+            side => new global::app.@event.binding.call.@this(side, @event, call, Context.Actor!, scope));
         return Context.Ok<global::app.@event.binding.@this>(binding);
     }
 }
