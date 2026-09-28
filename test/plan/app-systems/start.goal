@@ -23,6 +23,8 @@ Stage9
 / every value is born through its type, so a program can hook any value's birth (plus checks.md: the module pass)
 / "after file create" fires when a file value is born
 - call /plan/app-systems/app/type/file/CreateFiresOnBirth
+/ converting a value to another type is a birth: "set %p% as path" fires "after path create"
+- call /plan/app-systems/app/type/path/AsPathIsABirth
 
 Stage10
 / the app knows its types, and its own facts are plang values

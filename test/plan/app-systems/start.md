@@ -17,6 +17,13 @@ Each stage is a goal in [start.goal](start.goal); each behaviour there is a comm
 
 **9: every value is born through its type.** A developer can hook the birth of any value: `after file create, call LoadFixture`, e.g. for tests with fake files. Inside, every module action becomes a one-line door to the object that does the work.
 - *Decisions:* `type.Create` is the one async birth door and fires `on.create`; `Make` is the internal build (`on.create` fires once per value). A birth is a value coming into the program from outside the type system.
+- *Stage 9 decisions (175):*
+  1. Converting to another type is a birth (`set %p% as path = "a.txt"` fires `after path create`). A value's own delayed parse, or the same type re-kinded, is not.
+  2. A carrier answers its own failure or hands its value whole (`Path.Use(p => p.Read(…))`), so every action is one line.
+  3. `path.Read` is path's one read verb. It lands a reference; the content is that reference's own value. `channel/type/file` and `channel/type/http` are deleted, because the file and url values already are that.
+  4. `signing.sign` is a one-line door to the signature's owner.
+  5. The test report and failure text move to os templates later, not in this stage.
+  6. The split: 9a (the `Use` door, file.read, one read verb, births through `type.Create`, the channel collapse); 9b (the other modules, one per commit); 9c (`module/action/<m>/<a>.cs` → `module/<m>/action/<a>.cs`, matching `%!app.module.<m>.action.<a>%`).
 
 **10: the app knows its types.** `%!app.list%` lists them; a plugin's types join; one name can't be taken twice; the app's facts are plang values (`created` is a datetime); typed lists hold their type; the app's name is its setting.
 - *Decisions:* the store is born ready; `code`, `clr` and `table` live under `app.type.item`; the app's identity is read through the same format that writes it.

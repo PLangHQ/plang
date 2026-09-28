@@ -689,6 +689,19 @@ public class @this<T> : @this
         return v ?? fallback;
     }
 
+    /// <summary>This carrier's value, handed whole to <paramref name="then"/> — or, when it didn't resolve
+    /// (an unset %var%, a bad scheme), this carrier itself, its error the answer; when it resolved to
+    /// nothing, a ValueRequired error. Only this carrier is resolved, and one that already failed is not
+    /// asked again (a second ask would replace its first error).</summary>
+    public async System.Threading.Tasks.Task<@this> Use(System.Func<T, System.Threading.Tasks.Task<@this>> then)
+    {
+        var value = Success ? await Value() : default;
+        if (!Success) return this;
+        if (value is null)
+            return Context.Error(new global::app.error.Error($"'{Name}' has no value", "ValueRequired", 400));
+        return await then(value);
+    }
+
 
     /// <summary>
     /// Explicit pass-through: retype a base <see cref="@this"/> as

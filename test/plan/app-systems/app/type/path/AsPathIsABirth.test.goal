@@ -1,0 +1,10 @@
+/ Stage 9 (decision 175): converting a value to another type is that value's birth, so the new type's create fires.
+/ "a.txt" is text; as a path it is a new value, born through the path type.
+Start
+- set %created% = 0
+- after path create, call CountCreated
+- set %p% as path = "a.txt"
+- assert %created% equals 1, "converting to another type is a birth"
+
+CountCreated
+- set %created% = %created% + 1

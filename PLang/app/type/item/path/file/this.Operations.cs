@@ -49,6 +49,36 @@ public sealed partial class @this
 
     // --- Reads ---------------------------------------------------------------
 
+    /// <summary>A file lands as a <c>file</c> reference, a folder as a <c>directory</c>; nothing there is
+    /// NotFound (404) now, at the read, not at first touch. The stat tells which.</summary>
+    public override async Task<data.@this> Read(data.@this<global::app.type.item.@bool.@this> template, actor.context.@this context)
+    {
+        var stat = await Stat(context);
+        if (!stat.Success) return stat;
+        var info = await stat.Value();
+        if (info is not { Exists: true })
+            return context.Error(new ServiceError($"Not found: {this}", "NotFound", 404));
+        if (info.IsFile == false)
+            return new data.@this("directory", new global::app.type.item.directory.@this(this), context: context);
+        var marked = await template.ToBooleanAsync() ? "plang" : null;
+        return new data.@this(FileName, new global::app.type.item.file.@this(this, context, marked), context: context);
+    }
+
+    /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing. A file
+    /// missing now (or one the build may not stat) is a warning on the build's "builder" channel, never a
+    /// failure — the read at run asks again under its own grant.</summary>
+    public override async Task<data.@this> Expect(actor.context.@this context)
+    {
+        if (string.IsNullOrEmpty(Extension) || MimeType(context) == "application/octet-stream") return context.Ok();
+        var exists = await ExistsAsync(context);
+        string? message = !exists.Success
+            ? $"could not check '{this}': {exists.Error?.Message} ({exists.Error?.Key})"
+            : !await exists.ToBooleanAsync() ? $"'{this}' does not exist on disk" : null;
+        if (message != null && context.Actor.Channel.Get("builder") is { } builder)
+            await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this().Set("message", message)));
+        return context.Ok(context.App.type.list[new global::app.type.item.file.@this(this, context).Type, context]);
+    }
+
     /// <summary>
     /// MIME-aware read. Authorize → (Builder snapshot for .pr) → bytes for
     /// binary MIME, text+TryConvert for the rest. The Data's <c>Type</c> is

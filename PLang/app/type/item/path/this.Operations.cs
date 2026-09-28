@@ -59,6 +59,15 @@ public abstract partial class @this
     // ReadText stays polymorphic (bare Data): the MIME-stamped Type carries the
     // shape (string for text, byte[] for binary, structured for json/yaml). The
     // other verbs have a single fixed shape — typed.
+    /// <summary>What reading this location lands: a reference to what is there, with nothing read — its
+    /// content is the reference's own value, read at first touch. <paramref name="template"/> marks the
+    /// content a template (its variables are filled at use).</summary>
+    public abstract Task<data.@this> Read(data.@this<global::app.type.item.@bool.@this> template, actor.context.@this context);
+
+    /// <summary>Read's build face: the type <see cref="Read"/> lands, with no content read — the build knows
+    /// what a later step captures.</summary>
+    public abstract Task<data.@this> Expect(actor.context.@this context);
+
     public abstract Task<data.@this> ReadText(actor.context.@this context);
     public abstract Task<data.@this<global::app.type.item.binary.@this>> ReadBytes(actor.context.@this context);
     public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context);

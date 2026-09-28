@@ -1,113 +1,22 @@
-using app.type;
-using app.type.list;
-
 namespace app.module.action.file;
 
 /// <summary>
-/// Reads a file and returns its content as Data.
-/// When ResolveVariables is true, %var% patterns in the content are resolved
-/// (with infrastructure variables blocked for security).
-///
-/// The Authorize call lives inside the Path verb impl (FilePath.ReadText etc.) —
-/// the handler no longer carries an authorization preamble. This is the
-/// codeanalyzer v2 #1 fix: gate centralised, not duplicated.
+/// <c>read X</c> lands a reference to what is at X — a <c>file</c>, a <c>url</c> or a <c>directory</c> —
+/// with nothing read; the content is that reference's own value, read at first touch. The path knows what
+/// reading it lands.
 /// </summary>
 [Action("read")]
 public partial class Read : IContext
 {
+    [IsNotNull]
     public partial data.@this<path> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> ResolveVariables { get; init; }
 
-    // `read X` yields a REFERENCE — a `file` (local), `url` (remote), or
-    // `directory` — with NOTHING read: existence is verified by a stat (so a
-    // missing path still errors at the read step), but the content stays on
-    // disk until first examination, where the value door reads + parses +
-    // narrows the Data to the content's type (an image becomes one when used).
-    public async Task<data.@this> Start()
-    {
-        // Resolve the path door first; the guard reads .Success AFTER the await —
-        // resolution errors (bad scheme, unset %var%) only surface once the door
-        // has run, so a pre-await guard would inspect an unresolved Data.
-        var path = await Path.Value();
-        if (!Path.Success) return Path;   // typed scheme error, not an NRE
+    public Task<data.@this> Start() => Path.Use(path => path.Read(ResolveVariables, Context));
 
-        // Remote scheme → a url reference. No fetch — consent and I/O land at
-        // first examination through the door.
-        if (path is global::app.type.item.path.http.@this)
-            return new data.@this("url", new global::app.type.item.url.@this(path!, Context),
-                Context.App.type.list[new global::app.type.@this("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null), Context],
-                context: Context);
-
-        // Stat once: NotFound surfaces at the read step (not at first touch),
-        // and the stat tells file from directory.
-        var stat = await path!.Stat(Context);
-        if (!stat.Success) return stat;
-        var info = await stat.Value();
-        if (info is not { Exists: true })
-            return Context.Error(new global::app.error.ServiceError(
-                $"Not found: {path}", "NotFound", 404));
-
-        if (info.IsFile == false)
-            return new data.@this("directory", new global::app.type.item.directory.@this(path),
-                Context.App.type.list["directory"], context: Context);
-
-        // The reference: the extension rides as the kind (the content-kind
-        // inference input — `.json` narrows to dict, `.csv` to table/list). ResolveVariables is the
-        // programmer marking the content a template: the file is born with the marker, and its text
-        // renders itself when it is used — nothing is read here.
-        var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
-        var template = await ResolveVariables.ToBooleanAsync() ? "plang" : null;
-        return new data.@this(path.FileName, new global::app.type.item.file.@this(path, Context, template),
-            Context.App.type.list[new global::app.type.@this("file", kind, template: template), Context], context: Context);
-    }
-
-    /// <summary>
-    /// Compile-time hint: a read of a literal local path lands a `file`
-    /// reference whose kind is the extension — the terminal variable.set
-    /// carries {file, ext} so it stores the reference as-is (the content type
-    /// only appears at runtime, when examination narrows). Variable references
-    /// and unknown extensions yield bare Ok(). A literal path that
-    /// doesn't exist on disk surfaces a {action, message} warning dict on
-    /// Channel("builder") but
-    /// still returns the inferred type — missing files are non-fatal at build
-    /// time.
-    /// </summary>
-    public async Task<data.@this> Build()
-    {
-        // A path marked a template holds a variable that has no binding yet at build time — the
-        // marker says so, never the characters in it.
-        var raw = __action?["Path"]?.Value?.ToString();
-        if (string.IsNullOrEmpty(raw) || Path.HasVariable) return Context.Ok();
-
-        var p = await Path.Value();
-        if (p == null || string.IsNullOrEmpty(p.Extension)) return Context.Ok();
-        if (p.MimeType(Context) == "application/octet-stream") return Context.Ok();
-
-        // The same reference the runtime lands — {file, <ext>} — so build-time and runtime
-        // stamps can't drift; the content type appears only when runtime examination narrows.
-        var inferred = Context.App.type.list[new global::app.type.@this("file", p.Extension.TrimStart('.')), Context];
-
-        // Build warnings, written only while a build has its "builder" channel open: a missing
-        // file, or a probe that couldn't answer (denied at build time) carrying its error. Neither
-        // fails the build — the runtime read asks again under its own grant.
-        var exists = await p.ExistsAsync(Context);
-        string? message = !exists.Success
-            ? $"file.read: could not check literal path '{raw}': {exists.Error?.Message} ({exists.Error?.Key})"
-            : !await exists.ToBooleanAsync() ? $"file.read: literal path '{raw}' does not exist on disk" : null;
-        if (message != null)
-        {
-            // Advisory build warning as a native dict {action, message} —
-            // `action` is the source attribution (the handler reduces to its
-            // own identity; a live handler has no wire form).
-            string source = __action == null ? "" : $"{__action.Module}.{__action.Name}";
-            var warning = new global::app.type.item.dict.@this()
-                .Set("action", source)
-                .Set("message", message);
-            if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
-        }
-
-        return Context.Ok(inferred);
-    }
+    /// <summary>A literal path's reference type, for the step that captures it; a path holding a variable
+    /// is known only at run.</summary>
+    public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(path => path.Expect(Context));
 }

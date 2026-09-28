@@ -171,6 +171,15 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     // --- Reads ---------------------------------------------------------------
 
+    /// <summary>A remote location lands as a <c>url</c> reference — no fetch: consent and I/O come at first
+    /// touch, through the reference's own value.</summary>
+    public override Task<data.@this> Read(data.@this<global::app.type.item.@bool.@this> template, actor.context.@this context)
+        => Task.FromResult(new data.@this("url", new global::app.type.item.url.@this(this, context), context: context));
+
+    /// <summary>The <c>url</c> reference's type — the build asks nothing of the remote.</summary>
+    public override Task<data.@this> Expect(actor.context.@this context)
+        => Task.FromResult<data.@this>(context.Ok(context.App.type.list[new global::app.type.item.url.@this(this, context).Type, context]));
+
     public override async Task<data.@this> ReadText(actor.context.@this context)
     {
         var verb = Verb.Read;

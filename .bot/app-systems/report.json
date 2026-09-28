@@ -658,6 +658,20 @@
           "context": "8a (c66b52541): events and on on every object; shared empty on, bindings, clone starts unbound"
         }
       ]
+    },
+    {
+      "id": "0125ff55-91a0-4bd6-8ac5-9140baedd96e",
+      "bot": "coder",
+      "timestamp_start": "2026-09-28T12:00:00Z",
+      "timestamp_end": null,
+      "intent": "Stage 9a commit 1: the data<T>.Use door and file.read as the template action (path.Read/Expect)",
+      "before": {
+        "assumptions": "8h closed (ad7b306d4); decision 175 settles the stage 9 split",
+        "risk": "file.read Build type-hint tests depend on the registry lookup; http build no longer probes"
+      },
+      "plan": ".bot/app-systems/coder/v10/plan.md",
+      "actions": [],
+      "after": null
     }
   ]
 }

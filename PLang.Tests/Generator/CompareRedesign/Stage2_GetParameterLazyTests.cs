@@ -70,14 +70,35 @@ public class Stage2_GetParameterLazyTests
     }
 
     [Test]
-    public async Task RepresentativeHandler_AwaitGuardUse_Shape()
+    public async Task Use_OnACarrierThatDidNotResolve_AnswersItsOwnError_ContinuationNeverRuns()
     {
-        // file/read.cs: value read via `await Path.Value()`, the resolution-error guard
-        // `if (!Path.Success)` AFTER the await, use after the guard.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "PLang", "app", "module", "action", "file", "read.cs"));
-        var awaitIdx = src.IndexOf("await Path.Value()", StringComparison.Ordinal);
-        var guardIdx = src.IndexOf("if (!Path.Success)", StringComparison.Ordinal);
-        await Assert.That(awaitIdx >= 0).IsTrue();
-        await Assert.That(guardIdx > awaitIdx).IsTrue();
+        // A handler hands a carrier's value on through Use; a carrier whose resolution failed
+        // answers itself — its typed error — and what it would have been handed to never runs.
+        await using var app = TestApp.Create("/app");
+        var context = app.User.Context;
+        var slot = new Data("path", "s3://bucket/key", context: context);
+        var failedPath = slot.As<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
+        var ran = false;
+
+        var answer = await failedPath.Use(_ => { ran = true; return Task.FromResult(context.Ok()); });
+
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("SchemeNotRegistered");
+        await Assert.That(ran).IsFalse();
+    }
+
+    [Test]
+    public async Task Use_OnAResolvedCarrier_HandsItsValueWhole()
+    {
+        await using var app = TestApp.Create("/app");
+        var context = app.User.Context;
+        var slot = new Data("path", "/tmp/x.txt", context: context);
+        var carrier = slot.As<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
+        global::app.type.item.path.@this? handed = null;
+
+        var answer = await carrier.Use(p => { handed = p; return Task.FromResult(context.Ok()); });
+
+        await answer.IsSuccess();
+        await Assert.That(handed).IsSameReferenceAs(await carrier.Value());
     }
 }
