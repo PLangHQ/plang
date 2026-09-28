@@ -62,8 +62,11 @@ public class ChannelAccessorTests
         var listType = typeof(global::app.channel.list.@this);
         // The naked Write/Read/Ask (the element-level abstract surface) MUST be absent
         // from the registry — that's the type-switch-on-element-kind smell the rule kills.
+        // Its own members only: as an item it inherits item's serialize Write(IWriter), which is no I/O.
+        const System.Reflection.BindingFlags own = System.Reflection.BindingFlags.DeclaredOnly
+            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
         foreach (var n in new[] { "Write", "Read", "Ask" })
-            await Assert.That(listType.GetMethod(n)).IsNull();
+            await Assert.That(listType.GetMethod(n, own)).IsNull();
 
         // Polymorphic shape lives on the element (the transport Write, beside item's serialize Write(IWriter)).
         var elem = typeof(global::app.channel.@this);

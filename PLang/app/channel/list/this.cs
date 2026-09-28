@@ -13,7 +13,7 @@ namespace app.channel.list;
 /// (Stage 6). App.Run enforces the invariant that every actor that performs I/O has
 /// all three before user code runs.
 /// </summary>
-public sealed class @this : IAsyncDisposable
+public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
     private readonly app.@this _app;
@@ -31,13 +31,6 @@ public sealed class @this : IAsyncDisposable
     /// an Actor).
     /// </summary>
     internal global::app.actor.@this? Actor { get; }
-
-    /// <summary>
-    /// The context this channel collection births its result Data from — its
-    /// owning actor's context, or the App's system context for Service-owned
-    /// channels (Service is not an Actor).
-    /// </summary>
-    private actor.context.@this Context => Actor?.Context ?? _app.System.Context;
 
     public const string Output = "output";
     public const string Error = "error";
@@ -67,14 +60,16 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public data.@this Verify()
     {
+        // the result is born in the owning actor's context, or the system's for a Service's channels
+        var context = Actor?.Context ?? _app.System.Context;
         foreach (var name in Defaults)
         {
             if (!_channels.ContainsKey(name))
-                return Context.Error(new ServiceError(
+                return context.Error(new ServiceError(
                     $"Channel '{name}' not registered. Default channels ({string.Join(", ", Defaults)}) must be wired before goals run.",
                     "MissingRequiredChannelAtBoot", 500));
         }
-        return Context.Ok();
+        return context.Ok();
     }
 
     /// <summary>
@@ -116,6 +111,15 @@ public sealed class @this : IAsyncDisposable
     public IEnumerable<channel.@this> list => _channels.Values;
 
     public IEnumerable<string> ChannelNames => _channels.Keys;
+
+    /// <summary>One step down: the list's own members first, then a channel by name —
+    /// <c>%!app.actor.user.channel.output%</c> is the channel a program binds its events on.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+    {
+        var member = await base.Get(parent, key);
+        if (member.IsInitialized) return member;
+        return Get(key) is { } channel ? new global::app.data.@this(key, channel, parent: parent) : member;
+    }
 
     public async ValueTask DisposeAsync()
     {

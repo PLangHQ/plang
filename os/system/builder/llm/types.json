@@ -8,6 +8,9 @@
   "app.channel": {
     "word": "channel"
   },
+  "app.channel.list": {
+    "word": null
+  },
   "app.channel.type.file": {
     "word": null
   },

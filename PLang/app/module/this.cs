@@ -106,6 +106,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.goal.step.action.@this? this[string actionName]
         => _action.TryGetValue(actionName, out var row) ? row.Element : null;
 
+    /// <summary>One step down: the module's own members first (<c>.name</c>, <c>.action</c>, …), then one of its
+    /// actions by name — <c>%!app.module.file.read%</c> is the catalog action a program binds events on.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+    {
+        var member = await base.Get(parent, key);
+        if (member.IsInitialized) return member;
+        return this[key] is { } action ? new global::app.data.@this(key, action, parent: parent) : member;
+    }
+
     /// <summary>The handler CLR type for one of this module's actions — the owner's answer, read
     /// off its OWN entry and handed TRANSIENTLY to the reflection leaf. It never rides on the action.</summary>
     internal System.Type? Handler(string actionName)
