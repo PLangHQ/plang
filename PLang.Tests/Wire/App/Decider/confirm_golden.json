@@ -1,0 +1,39 @@
+{
+ "numbers": [
+  {
+   "step": 1,
+   "action": "on.error",
+   "property": "RetryCount",
+   "value": "1",
+   "text": "call Flaky, on error retry once, ignore",
+   "id": "s1_on.error.RetryCount=1"
+  },
+  {
+   "step": 4,
+   "action": "on.error",
+   "property": "RetryCount",
+   "value": "2",
+   "text": "call Save, on error retry twice over 10 seconds",
+   "id": "s4_on.error.RetryCount=2"
+  }
+ ],
+ "state": "A plang step is a sentence saying what to do, written in any human language. Its code is a list of actions, each\nwith properties. The code of each step below writes a number the step does not write as digits. A step can still\ngive that number in words, in any language (\"once\" gives 1, \"twice\" 2, \"a minute\" 60 seconds); or the number is\nnot in the step at all, and was invented.\n\nThe steps:\n- step 1: call Flaky, on error retry once, ignore\n- step 4: call Save, on error retry twice over 10 seconds\n\nThe actions named:\n- on.error: Answer when the action before it fails; optionally retry it, run a recovery, or carry on past the error\n  A clause: it comes right after the action it is a clause of, as the next action of the step. It answers when that action fails — after the attempt, so an `on.timeout` deadline is past and an `on.cache` stores only real work.\n\nRecovery — the actions to run when the action fails: what the step says after \"on error\" (or \"if it fails\", in any language).\nStatusCode — handle only errors with this status code.\nKey — handle only errors with this key (`on error key \"NotFound\"`).\nMessage — handle only errors whose message contains this text.\nRetryCount — how many times to run the action again (\"retry 3 times\"); each retry is a fresh attempt.\nRetryOver — the time the retries are spread over, a duration (\"over 30 seconds\" → \"PT30S\").\nOrder — GoalFirst when the step runs the recovery before retrying (\"call X, then retry\"); left out for the default, retrying first (\"retry 3 times, then call X\").\nIgnoreError — true when the step says to carry on past the error.\n\n- The recovery runs only on error: it is never also an action of the step.\n- StatusCode, Key and Message filter which errors are handled; they never hold what the recovery does. Left out when the step names no filter.\n- Several on.error clauses are asked in the order written; the first that matches takes the error, and the others never see it.",
+ "questions": {
+  "s1_on.error.RetryCount=1": {
+   "type": "noul",
+   "instructions": "Step 1 is `call Flaky, on error retry once, ignore`. Its code writes on.error(RetryCount=1). Does step 1 give RetryCount the value 1?",
+   "criteria": {
+    "true": "the step's words give that value, in any wording or language",
+    "false": "the step's words don't give it: the value is invented"
+   }
+  },
+  "s4_on.error.RetryCount=2": {
+   "type": "noul",
+   "instructions": "Step 4 is `call Save, on error retry twice over 10 seconds`. Its code writes on.error(RetryCount=2). Does step 4 give RetryCount the value 2?",
+   "criteria": {
+    "true": "the step's words give that value, in any wording or language",
+    "false": "the step's words don't give it: the value is invented"
+   }
+  }
+ }
+}

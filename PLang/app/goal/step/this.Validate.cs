@@ -27,9 +27,9 @@ public sealed partial class @this
     private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])");
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""");
 
-    /// <summary>What the step's words hold that its code doesn't: a %variable%, a quoted literal — and a
-    /// number its code writes that its words don't (an invented value, RetryCount=1 on a step that
-    /// retries nothing). Read after the code dropped what it didn't need to write, so a default left out
+    /// <summary>What the step's words hold that its code doesn't: a %variable%, a quoted literal — and what the
+    /// code writes that the words don't: a variable, a text. (A number is <see cref="Unwritten"/>'s: words can
+    /// give it without digits.) Read after the code dropped what it didn't need to write, so a default left out
     /// doesn't count.</summary>
     public async System.Threading.Tasks.Task<List<string>> Cover(global::app.actor.context.@this context)
     {
@@ -45,16 +45,41 @@ public sealed partial class @this
             if (!v.StartsWith("%!") && !Text.Contains(v)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
             if (l.Length > 0 && !written.Contains(l)) problems.Add($"step {Index}: \"{l}\" is in the step but not in your answer");
-        var said = Number.Matches(Text).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
-        foreach (var n in Number.Matches(Quoted.Replace(written, "")).Select(m => m.Value).Distinct())
-            if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
-                problems.Add($"step {Index}: your answer writes {n}, which the step doesn't — leave out what the step doesn't give");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
         // step that names no X) — a choice's option, a number and a dict's keys are not texts
         foreach (var t in (await Texts(Code.Items(), context)).Distinct())
             if (t.Length > 0 && !Text.Contains(t, System.StringComparison.OrdinalIgnoreCase))
                 problems.Add($"step {Index}: your answer writes \"{t}\", which the step doesn't — leave out what the step doesn't give");
         return problems;
+    }
+
+    /// <summary>The numbers the code writes that the step's words don't write as digits, each with the action and
+    /// property writing it — a value the words may give in any language ("retry once"), or an invented one. Only
+    /// digits are read: whether the words give it is the decider's to say (<see cref="unwritten.@this"/>).</summary>
+    public async System.Threading.Tasks.Task<List<unwritten.@this>> Unwritten(global::app.actor.context.@this context)
+    {
+        var said = Number.Matches(Text).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
+        var found = new List<unwritten.@this>();
+        await Walk(Code.Items());
+        return found.Distinct().ToList();
+
+        async System.Threading.Tasks.Task Walk(IEnumerable<global::app.goal.step.action.@this> actions)
+        {
+            foreach (var a in actions)
+            {
+                foreach (var p in a.Property)
+                {
+                    if (p.Value is null || p.Value is global::app.goal.step.action.@this or global::app.goal.step.action.list.@this) continue;
+                    var writer = new global::app.type.format.formal.Writer();
+                    await p.Value.Output(writer, global::app.View.Store, context);
+                    foreach (var n in Number.Matches(Quoted.Replace(writer.ToString(), "")).Select(m => m.Value))
+                        if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
+                            found.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
+                }
+                await Walk(a.Held);
+                foreach (var child in a.Child.Items()) await Walk(child.Code.Items());
+            }
+        }
     }
 
     // Every text property value the code writes, as written (its own Store writer — a template is not

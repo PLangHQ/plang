@@ -1,0 +1,20 @@
+{% comment %}
+The decider's questions for confirming numbers (BuildGoal/Start.goal ConfirmNumbers): one yes/no per number a step's
+code writes that its words don't write as digits, under the number's id (goal.step.unwritten Id). A no refuses the
+number as invented; the check that found it reads no human language — the decider does the reading.
+The eval's shape (tools/decider/prompt_c.py confirm_questions); keep the two equal.
+Needs: numbers (the UnwrittenNumber error's Details.numbers).
+{% endcomment %}
+{
+{%- assign sep = "" -%}
+{%- for n in numbers -%}
+{%- capture ask %}Step {{ n.Step }} is `{{ n.Text }}`. Its code writes {{ n.Action }}({{ n.Property }}={{ n.Value }}). Does step {{ n.Step }} give {{ n.Property }} the value {{ n.Value }}?{% endcapture %}
+{{ sep }}
+  {{ n.Id | json }}: {
+    "type": "noul",
+    "instructions": {{ ask | json }},
+    "criteria": {"true": "the step's words give that value, in any wording or language", "false": "the step's words don't give it: the value is invented"}
+  }
+{%- assign sep = "," -%}
+{%- endfor %}
+}

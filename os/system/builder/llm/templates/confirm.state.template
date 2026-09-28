@@ -1,0 +1,37 @@
+{% comment %}
+The decider's state for confirming numbers (BuildGoal/Start.goal ConfirmNumbers): a step's code writes a number its
+words don't write as digits ("retry once" → RetryCount=1). The words may give it in any language, or the number is
+invented; the decider says which. Each step asked about, and each action named, with what its properties mean.
+The eval's shape (tools/decider/prompt_c.py confirm_state); keep the two equal.
+Needs: numbers (the UnwrittenNumber error's Details.numbers), modules (%!app.module.list%).
+{% endcomment %}
+{%- capture nl %}
+{% endcapture -%}
+A plang step is a sentence saying what to do, written in any human language. Its code is a list of actions, each
+with properties. The code of each step below writes a number the step does not write as digits. A step can still
+give that number in words, in any language ("once" gives 1, "twice" 2, "a minute" 60 seconds); or the number is
+not in the step at all, and was invented.
+{{ nl }}The steps:
+{%- assign seen = "|" -%}
+{%- for n in numbers -%}
+{%- assign mark = "|" | append: n.Step | append: "|" -%}
+{%- unless seen contains mark -%}
+{{ nl }}- step {{ n.Step }}: {{ n.Text }}
+{%- assign seen = seen | append: n.Step | append: "|" -%}
+{%- endunless -%}
+{%- endfor -%}
+{{ nl }}{{ nl }}The actions named:
+{%- assign named = "|" -%}
+{%- for n in numbers -%}
+{%- assign mark = "|" | append: n.Action | append: "|" -%}
+{%- unless named contains mark -%}
+{%- assign mn = n.Action | split: "." | first -%}
+{%- assign an = n.Action | split: "." | last -%}
+{%- assign m = modules | where: "Name", mn | first -%}
+{%- assign a = m.Action | where: "Name", an | first -%}
+{%- assign about = a.Description | strip -%}
+{{ nl }}- {{ n.Action }}: {{ about }}
+{%- if a.Notes -%}{%- assign notes = a.Notes | strip -%}{{ nl }}  {{ notes }}{%- endif -%}
+{%- assign named = named | append: n.Action | append: "|" -%}
+{%- endunless -%}
+{%- endfor -%}

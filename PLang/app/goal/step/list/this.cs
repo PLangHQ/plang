@@ -82,8 +82,14 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// holding code keeps it —
     /// a retry answers only the refused steps. Null when every step has code; otherwise one error
     /// holding each refused step's problems, every one at once, and the steps under Details["steps"].
+    /// <para>A number the code writes that the words don't write as digits (<c>step.Unwritten</c>) is the
+    /// decider's to confirm: when those numbers are the answer's only problems, the error is
+    /// <c>UnwrittenNumber</c> with them under Details["numbers"], and their steps stay open; read again with the
+    /// decider's <paramref name="confirmed"/> answers, a number it denies is refused as invented. Among other
+    /// problems, an unconfirmed number is refused with them.</para>
     /// </summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Read(string answer, actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Read(string answer, actor.context.@this context,
+        global::app.type.item.dict.@this? confirmed = null)
     {
         var whole = new List<string>();
         var heads = Head.Matches(answer);
@@ -103,6 +109,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         var refused = new SortedDictionary<int, List<string>>();
         void Refuse(int i, string why) { if (!refused.TryGetValue(i, out var p)) refused[i] = p = new(); p.Add(why); }
         string? key = null;
+        // numbers the words don't write as digits, still to be confirmed by the decider
+        var unconfirmed = new List<global::app.goal.step.unwritten.@this>();
 
         // Each open step's line, read.
         var read = new Dictionary<int, global::app.goal.step.action.list.@this>();
@@ -174,6 +182,13 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             // the answer holds what the step's words say — checked on the answer as written, before the
             // handlers' Build may change it
             foreach (var uncovered in await step.Cover(context)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
+            // a number the words don't write as digits: confirmed by the decider, or asked
+            var asked = false;
+            foreach (var number in await step.Unwritten(context))
+            {
+                if (confirmed == null) { unconfirmed.Add(number); asked = true; }
+                else if (!await number.Given(confirmed, context)) Refuse(i, $"step {i} (\"{step.Text}\") — {number.Message}");
+            }
             // only code that judged itself sound is built
             if (invalid == null && await actions.Build(context) is { } failed)
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
@@ -182,7 +197,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 ? (new List<string>(), new List<global::app.warning.@this>()) : step.Pick.Agree(actions);
             foreach (var why in disagree) Refuse(i, why);
             foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
-            if (refused.ContainsKey(i)) step.Code = new global::app.goal.step.action.list.@this();   // open again
+            if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this();   // open again
             else
             {
                 // the step takes its code: with its warnings, and its defaults frozen
@@ -191,7 +206,21 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             }
         }
 
-        if (whole.Count == 0 && refused.Count == 0) return null;
+        if (whole.Count == 0 && refused.Count == 0 && unconfirmed.Count == 0) return null;
+        // the only problems are numbers to confirm: the decider is asked (the builder's ConfirmNumbers)
+        if (whole.Count == 0 && refused.Count == 0)
+            return new global::app.error.Error(
+                $"{unconfirmed.Count} number(s) the steps don't write as digits: {string.Join("; ", unconfirmed.Select(n => $"step {n.Step} {n.Action}.{n.Property}={n.Value}"))}",
+                "UnwrittenNumber", 400)
+            {
+                Details = new()
+                {
+                    ["numbers"] = unconfirmed,
+                    ["steps"] = string.Join(", ", unconfirmed.Select(n => n.Step).Distinct()),
+                },
+            };
+        // among other problems, an unconfirmed number is refused with them
+        foreach (var number in unconfirmed) Refuse(number.Step, $"step {number.Step} (\"{number.Text}\") — {number.Message}");
         var problems = whole.Concat(refused.Values.SelectMany(p => p)).ToList();
         return new global::app.error.Error(string.Join("; ", problems), key ?? "StepsRefused", 400)
         {

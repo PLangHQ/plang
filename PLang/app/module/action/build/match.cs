@@ -18,6 +18,10 @@ public partial class match : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Answer { get; init; }
 
+    /// <summary>The decider's answers to the numbers a first match found unwritten (<c>UnwrittenNumber</c>): one
+    /// yes/no per number, by its id. A number it denies is refused as invented.</summary>
+    public partial data.@this<global::app.type.item.dict.@this>? Confirmed { get; init; }
+
     [Code]
     public partial IBuilder Builder { get; }
 

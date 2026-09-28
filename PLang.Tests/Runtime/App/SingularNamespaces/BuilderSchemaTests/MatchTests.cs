@@ -49,14 +49,81 @@ public class MatchTests
         foreach (var step in goal.Step.Items()) await step.Pick.Take(dict, [], context);
     }
 
-    private static async Task<global::app.data.@this> Match(Goal goal, string answer, global::app.actor.context.@this context)
+    private static async Task<global::app.data.@this> Match(Goal goal, string answer, global::app.actor.context.@this context,
+        Dictionary<string, object?>? confirmed = null)
     {
         var action = new global::app.module.action.build.match(context)
         {
             Goal = context.Ok<Goal>(goal),
             Answer = context.Ok<global::app.type.item.text.@this>(answer),
+            Confirmed = confirmed == null ? null : context.Ok<global::app.type.item.dict.@this>(Make.Dict(confirmed, context)),
         };
         return await new global::app.module.action.build.code.Default().Match(action);
+    }
+
+    // The decider's yes or no to one number, under its id.
+    private static Dictionary<string, object?> Confirm(string id, double noul)
+        => new() { [id] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = noul } };
+
+    private static Goal RetryOnce() => Make.Goal("G", Make.Step("call Flaky, on error retry once, ignore"));
+    private const string RetryOnceAnswer = "[0] goal.call(Name=\"Flaky\"); on.error(RetryCount=1, IgnoreError=true)";
+
+    [Test]
+    public async Task ANumberTheWordsDontWriteAsDigits_IsAskedOfTheDecider_AndTheStepStaysOpen()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = RetryOnce();
+        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"));
+
+        var result = await Match(goal, RetryOnceAnswer, app.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnwrittenNumber");
+        var numbers = (List<global::app.goal.step.unwritten.@this>)result.Error.Details!["numbers"]!;
+        await Assert.That(numbers.Single().Id).IsEqualTo("s0_on.error.RetryCount=1");
+        await Assert.That(goal.Step[0].Code.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ANumberTheDeciderConfirms_IsTaken()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = RetryOnce();
+        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"));
+
+        var result = await Match(goal, RetryOnceAnswer, app.System.Context, Confirm("s0_on.error.RetryCount=1", 0.97));
+
+        await result.IsSuccess();
+        await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
+    }
+
+    [Test]
+    public async Task ANumberTheDeciderDenies_IsRefusedAsInvented()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = RetryOnce();
+        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"));
+
+        var result = await Match(goal, RetryOnceAnswer, app.System.Context, Confirm("s0_on.error.RetryCount=1", 0.03));
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
+    }
+
+    [Test]
+    public async Task AmongOtherProblems_AnUnwrittenNumberIsRefusedWithThem()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
+        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
+
+        var result = await Match(goal, RetryOnceAnswer, app.System.Context);   // step 1 has no line
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(result.Error.Message).Contains("step 1 (\"write out \"b\"\") has no entry");
+        await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
     }
 
     [Test]

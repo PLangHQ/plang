@@ -494,27 +494,75 @@ def written(value):
 
 NUMBER = re.compile(r'(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])')
 
-def numbers_of(rows):
-    """Every number the answer writes as a value — however deep (arguments, held actions, clauses)."""
+def unwritten(i, text, rows):
+    """The numbers the answer writes that the step's words don't write as digits (step.Unwritten), each with
+    the action and property writing it: {step, action, property, value, text, id}. The words may still give
+    one in any language ("retry once"): the decider is asked (confirm_questions); only digits are read here.
+    Read after S1, so a dropped default doesn't count."""
+    said = {float(n) for n in NUMBER.findall(text)}
     out = []
-    def walk(v):
-        if isinstance(v, bool): return
-        if isinstance(v, (int, float)): out.append(v)
-        elif isinstance(v, dict):
-            for x in v.values(): walk(x)
-        elif isinstance(v, list):
-            for x in v: walk(x)
-    for a in rows:
-        for r in a.get('property') or []: walk(r['value'])
-        for c in a.get('child') or []: out += numbers_of(c.get('action') or [])
+
+    def nums(v):
+        if isinstance(v, bool): return []
+        if isinstance(v, (int, float)): return [v]
+        if isinstance(v, dict): return [n for x in v.values() for n in nums(x)]
+        if isinstance(v, list): return [n for x in v for n in nums(x)]
+        return []
+
+    def written(n):   # as the formal writer writes a number
+        return str(int(n)) if float(n).is_integer() else repr(float(n))
+
+    def walk(actions):
+        for a in actions:
+            if not isinstance(a, dict): continue
+            for r in a.get('property') or []:
+                v = r['value']
+                held = [v] if f.is_action(v) else v if isinstance(v, list) and v and all(f.is_action(x) for x in v) else None
+                if held is not None: walk(held); continue
+                for n in nums(v):
+                    if float(n) in said: continue
+                    action, value = f'{a["module"]}.{a["name"]}', written(n)
+                    u = {'step': i, 'action': action, 'property': r['name'], 'value': value, 'text': text,
+                         'id': f's{i}_{action}.{r["name"]}={value}'}
+                    if u not in out: out.append(u)
+            for c in a.get('child') or []: walk(c.get('action') or [])
+    walk(rows)
     return out
 
-def invented_numbers(text, rows):
-    """The numbers the answer writes that the step's text doesn't — an invented value (RetryCount=1 on a
-    step that retries nothing). A number is plang's own literal, like a quoted text; read after S1, so a
-    dropped default doesn't count."""
-    written = {float(n) for n in NUMBER.findall(text)}
-    return [n for n in dict.fromkeys(numbers_of(rows)) if float(n) not in written]
+def given(u, confirmed):
+    """Whether the decider's answer says the step's words give the number (unwritten.Given)."""
+    return ((confirmed.get(u['id']) or {}).get('noul') or 0) >= 0.5
+
+def confirm_state(numbers):
+    """The decider's state for confirming numbers — byte for byte os/system/builder/llm/templates/confirm.state.template."""
+    out = ('A plang step is a sentence saying what to do, written in any human language. Its code is a list of actions, each\n'
+           'with properties. The code of each step below writes a number the step does not write as digits. A step can still\n'
+           'give that number in words, in any language ("once" gives 1, "twice" 2, "a minute" 60 seconds); or the number is\n'
+           'not in the step at all, and was invented.\n\nThe steps:')
+    seen = []
+    for n in numbers:
+        if n['step'] in seen: continue
+        seen.append(n['step']); out += f'\n- step {n["step"]}: {n["text"]}'
+    out += '\n\nThe actions named:'
+    named = []
+    for n in numbers:
+        if n['action'] in named: continue
+        named.append(n['action'])
+        module, action = n['action'].split('.', 1)
+        d = f'{b.ROOT}/os/system/modules/{module}/{action}'
+        about = open(d + '.description.md', encoding='utf-8').read().strip() if os.path.exists(d + '.description.md') else ''
+        out += f'\n- {n["action"]}: {about}'
+        if os.path.exists(d + '.notes.md'): out += f'\n  {open(d + ".notes.md", encoding="utf-8").read().strip()}'
+    return out
+
+def confirm_questions(numbers):
+    """The decider's questions for confirming numbers, one noul per number under its id (confirm.template)."""
+    return {n['id']: {'type': 'noul',
+                      'instructions': f'Step {n["step"]} is `{n["text"]}`. Its code writes {n["action"]}({n["property"]}={n["value"]}). '
+                                      f'Does step {n["step"]} give {n["property"]} the value {n["value"]}?',
+                      'criteria': {'true': "the step's words give that value, in any wording or language",
+                                   'false': "the step's words don't give it: the value is invented"}}
+            for n in numbers}
 
 def texts_of(rows):
     """Every text-typed property value the answer writes — the actions, the actions they hold, their
@@ -536,8 +584,11 @@ def invented_texts(text, rows):
 
 WHOLE = ('has no entry', 'is extra', 'is labelled', 'has no index', 'is not an object')
 
-def check(goal, picks, parsed):
-    """(whole-answer refusals, {step: refusals}, warnings) of a parsed formal answer {i: rows}.
+def check(goal, picks, parsed, confirmed=None):
+    """(whole-answer refusals, {step: refusals}, warnings, numbers to confirm) of a parsed formal answer {i: rows}.
+    A number the step's words don't write as digits (unwritten) is the decider's to confirm: with its
+    `confirmed` answers, one it denies is refused as invented; without, when those numbers are the only
+    problems they are returned to be asked (build.match's UnwrittenNumber), else refused with the rest.
     Whole: the answer doesn't line up with the goal (an extra or renumbered entry). Per step: no entry,
     no actions, the chain rule, a body over indented steps that isn't a copy (fold), the agreement
     with the decider, a %variable% of the step's text missing from its answer. Nulls on optional
@@ -550,7 +601,7 @@ def check(goal, picks, parsed):
     for i in range(len(steps)):
         if i not in parsed: per_step.setdefault(i, []).append(f'step {i} ("{steps[i]["text"]}") has no entry')
     whole = [f'entry {i} is extra: the goal has {len(steps)} steps' for i in parsed if i >= len(steps)]
-    warnings = []
+    warnings, pending = [], []
     for i, rows in parsed.items():
         if i >= len(steps): continue
         problems = per_step.setdefault(i, [])
@@ -565,8 +616,16 @@ def check(goal, picks, parsed):
                      for v in dict.fromkeys(re.findall(r'%[^%\s]+%', f.write(written[i], types=False)))
                      if not v.startswith('%!') and v not in steps[i]['text']]
         problems += [f'step {i}: "{l}" is in the step but not in your answer' for l in uncovered_literals(steps[i]['text'], written[i])]
-        problems += [f'step {i}: your answer writes {n}, which the step doesn\'t — leave out what the step doesn\'t give'
-                     for n in invented_numbers(steps[i]['text'], rows)]
+        for u in unwritten(i, steps[i]['text'], rows):
+            if confirmed is None: pending.append(u)
+            elif not given(u, confirmed):
+                problems.append(f'step {i}: your answer writes {u["value"]}, which the step doesn\'t — leave out what the step doesn\'t give')
         problems += [f'step {i}: your answer writes "{t}", which the step doesn\'t — leave out what the step doesn\'t give'
                      for t in invented_texts(steps[i]['text'], rows)]
-    return whole, {i: p for i, p in per_step.items() if p}, warnings
+    refused = {i: p for i, p in per_step.items() if p}
+    if pending and (whole or refused):   # among other problems, an unconfirmed number is refused with them
+        for u in pending:
+            refused.setdefault(u['step'], []).append(
+                f'step {u["step"]}: your answer writes {u["value"]}, which the step doesn\'t — leave out what the step doesn\'t give')
+        pending = []
+    return whole, refused, warnings, pending

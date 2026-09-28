@@ -78,11 +78,11 @@ def judge(prompt, case, picks, text):
         return (b.normalize(goal, answer) if not refused else answer), refused, [], [], before
     raise ValueError('C is judged per step: judge_c')
 
-def judge_c(case, picks, parsed, errors, whole):
-    """C, per step: (answer for scoring, whole-answer refusals, {step: refusals}, warnings, agreement).
-    A line that doesn't parse refuses its own step, naming the line; the rest of the answer stands."""
+def judge_c(case, picks, parsed, errors, whole, confirmed=None):
+    """C, per step: (answer for scoring, whole-answer refusals, {step: refusals}, warnings, agreement, numbers
+    to confirm). A line that doesn't parse refuses its own step, naming the line; the rest of the answer stands."""
     goal = e.goal_of(case)
-    w, per_step, warnings = c.check(goal, picks, parsed)
+    w, per_step, warnings, pending = c.check(goal, picks, parsed, confirmed)
     whole = whole + [x for x in w if not any(x.startswith(f'step {i} ') for i in errors)]
     # a line that doesn't parse still reports every problem it shows: its parse error, and each action it
     # names that isn't one of the step's
@@ -91,7 +91,16 @@ def judge_c(case, picks, parsed, errors, whole):
         per_step.setdefault(i, []).append(f'step {i} does not parse: {ex.reason} — in: {ex.text.strip()}')
         per_step[i] += c.unlisted(i, c.named(ex.text), picks.get(i, {}), texts.get(i, ''))
     agreement = [r for p in per_step.values() for r in p if 'decider' in r or "isn't one of step" in r]
-    return {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}, whole, per_step, warnings, agreement
+    if errors: pending = []   # a line that doesn't parse is a problem: numbers ride with it, as refusals
+    return {'step': [{'index': i, 'action': parsed[i]} for i in sorted(parsed)]}, whole, per_step, warnings, agreement, pending
+
+def confirm(case, picks, parsed, errors, whole, pending, calls):
+    """The builder's ConfirmNumbers: the decider is asked whether the step's words give each number; the answer
+    is judged again with those answers (build.match Confirmed)."""
+    resp, secs, _ = h.ask(c.confirm_state(pending), c.confirm_questions(pending))
+    calls.append({'seconds': secs, 'confirm': len(pending)})
+    confirmed = resp.get('answers') or {}
+    return judge_c(case, picks, parsed, errors, whole, confirmed) + (confirmed,)
 
 def own(case, read):
     """A parsed answer with each step written in formal read from its own text instead (step.IsFormal):
@@ -118,7 +127,10 @@ def one_c(model, case, picks):
     open(os.path.join(folder, '1.answer.txt'), 'w', encoding='utf-8').write(text1)
     parsed, errors, whole = own(case, f.parse_steps(text1))
     before = {'step': [{'index': i, 'action': copy.deepcopy(parsed[i])} for i in sorted(parsed)]}
-    first, whole1, steps1, warn1, agree1 = judge_c(case, picks, parsed, errors, whole)
+    first, whole1, steps1, warn1, agree1, pending1 = judge_c(case, picks, parsed, errors, whole)
+    confirmed1 = None
+    if pending1:   # the only problems are numbers the words don't write as digits: the decider is asked
+        first, whole1, steps1, warn1, agree1, _, confirmed1 = confirm(case, picks, parsed, errors, whole, pending1, calls)
     caught = set(range(len(case['steps']))) if whole1 else set(steps1)
     final, whole2, steps2, warn2, agree2 = first, whole1, steps1, warn1, agree1
     if whole1 or steps1:
@@ -140,7 +152,9 @@ def one_c(model, case, picks):
             errors2 = {i: x for i, x in errors2.items() if i in steps1}
             whole2 = [x for x in whole2 if not x.endswith('answered twice')]
             parsed2 = merged
-        final, whole2, steps2, warn2, agree2 = judge_c(case, picks, parsed2, errors2, whole2)
+        final, whole2, steps2, warn2, agree2, pending2 = judge_c(case, picks, parsed2, errors2, whole2)
+        if pending2:
+            final, whole2, steps2, warn2, agree2, _, _ = confirm(case, picks, parsed2, errors2, whole2, pending2, calls)
         if agree1 and not agree2: warn2 = warn2 + [f'settled on retry: {x}' for x in agree1]
     goal = e.goal_of(case)
     unsure = [s['index'] for s in goal['steps'] if c.is_unsure(picks.get(s['index'], {}), s['text'])]
@@ -149,7 +163,8 @@ def one_c(model, case, picks):
             'unsure': unsure, 'popular_used': popular,
             'refused1': whole1 + [r for p in steps1.values() for r in p], 'caught': sorted(caught),
             'final': final, 'refused2': (whole2 + [r for p in steps2.values() for r in p]) if (whole1 or steps1) else [],
-            'warnings': warn2, 'disagreements': agree1, 'calls': calls}
+            'warnings': warn2, 'disagreements': agree1, 'calls': calls,
+            'confirmed': confirmed1}
 
 RETRY = {'B': 'Your answer was rejected by the validator: {why}\n\nReturn the corrected answer in the same shape.',
          'C': 'Your answer was refused: {why}\n\nAnswer again: the whole goal, one line per step, in formal.'}

@@ -36,16 +36,28 @@ Compile
 - condition.if(Left=%goal.Step.IsAnswered%) { build.match(Goal=%goal%, Answer=""); goal.return() }
 - call Decide
 - call Properties
-- build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Order="GoalFirst", RetryCount=1, Recovery=[goal.call(Name="FixSteps")])
+- build.match(Goal=%goal%, Answer=%answer%); on.error(Key="UnwrittenNumber", Recovery=[goal.call(Name="ConfirmNumbers")]); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Recovery=[goal.call(Name="FixSteps")])
 
 
 / The answer was refused for some steps — each refusal names its step and every problem at once.
 / Continue the conversation with them; only those steps are answered again, and the others keep the
-/ code they took.
+/ code they took. The answer is read again here, so numbers it leaves to confirm are confirmed too.
 FixSteps
 - call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
 - set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
 - llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%
+- build.match(Goal=%goal%, Answer=%answer%); on.error(Key="UnwrittenNumber", Recovery=[goal.call(Name="ConfirmNumbers")])
+
+
+/ The answer's code writes numbers its steps don't write as digits ("retry once" → 1). Whether the words
+/ give them is the decider's to say, one yes/no per number; the answer is read again with those answers,
+/ and a number the decider denies is refused as invented.
+ConfirmNumbers
+- set %numbers% = %!error.Details.numbers%
+- render template "/system/builder/llm/templates/confirm.state.template", write to %confirmState%
+- render template "/system/builder/llm/templates/confirm.template", write to %confirmQuestions%
+- llm.decider State=%confirmState%, Question=%confirmQuestions%, write to %confirmed%
+- build.match Goal=%goal%, Answer=%answer%, Confirmed=%confirmed%
 
 
 / Sub-goal recursion — the same three stages, attached to the parent trace.

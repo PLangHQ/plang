@@ -233,9 +233,10 @@ public class Default : IBuilder
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
         var answer = (await action.Answer.Value())!;
+        var confirmed = action.Confirmed == null ? null : await action.Confirmed.Value();
 
         // The goal's steps read and judge the answer; the builder only reacts.
-        if (await goal.Step.Read(answer.ToString(), context) is { } refusal)
+        if (await goal.Step.Read(answer.ToString(), context, confirmed is { IsNull: false } ? confirmed : null) is { } refusal)
             return context.Error(refusal);
         return context.Ok(true);
     }
