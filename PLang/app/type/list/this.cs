@@ -166,6 +166,7 @@ public sealed partial class @this
             Namespace = entry.Namespace,
             Alias = entry.Alias,
             Owned = entry.Owned,
+            From = entry.From,
             Internal = entry.Internal,
             Property = entry.Property,
             Values = kind is global::app.type.item.choice.set.@this set ? set.Values : entry.Values,

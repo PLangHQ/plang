@@ -40,11 +40,11 @@ public class OpenAiImageDenialTests
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 137, 80, 78, 71 });
 
         // Drive the handler the way the LLM Query flow does — through
-        // ResolveImage. Denial → AuthGate fails inside path.ReadAsDataUri
+        // ResolveImage. Denial → AuthGate fails inside the file's Read
         // → ResolveImage falls through (no bytes shipped). PNG magic bytes
         // (89 50 4E 47) base64-encode to a string starting with "iVBOR" —
         // it MUST NOT appear in the wire content.
-        var content = global::app.module.action.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.User.Context);
+        var content = await global::app.module.action.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.User.Context);
         var serialized = System.Text.Json.JsonSerializer.Serialize(content);
         await Assert.That(serialized).DoesNotContain("iVBOR");
     }
@@ -59,7 +59,7 @@ public class OpenAiImageDenialTests
         // through the gated verb (mutating to plain System.IO would still
         // produce the same bytes; the proof of *routing* is in the in-root
         // pair with the out-of-root denial test above).
-        var content = global::app.module.action.llm.code.OpenAi.ResolveImage(file, app, app.User.Context);
+        var content = await global::app.module.action.llm.code.OpenAi.ResolveImage(file, app, app.User.Context);
         var serialized = System.Text.Json.JsonSerializer.Serialize(content);
         await Assert.That(serialized).Contains("iVBOR");
         await Assert.That(serialized).Contains("data:image/png;base64,");

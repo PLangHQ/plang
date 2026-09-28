@@ -89,8 +89,8 @@ public class Fluid : ITemplate
 
 
         // Configure file provider for {% include %} / {% render %} tags
-        var basePath = GetTemplateBaseDir(action);
-        options.FileProvider = new PlangFileProvider(action.Context.App, basePath, action.Context);
+        var includes = new PlangFileProvider(GetTemplateBaseDir(action), action.Context);
+        options.FileProvider = includes;
 
         var fluidContext = new TemplateContext(options);
 
@@ -117,6 +117,9 @@ public class Fluid : ITemplate
         // Render with HTML encoding for security (XSS prevention)
         try
         {
+            // Fluid asks for an include through a synchronous file provider: every include the template
+            // names is read first, through the gate, so the render reads them from memory.
+            await includes.Load(fluidTemplate, parser);
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
             return action.Context.Ok<global::app.type.item.text.@this>(writer.ToString());
@@ -294,48 +297,69 @@ public class Fluid : ITemplate
 
     // --- Microsoft.Extensions.FileProviders adapter for Fluid's include/render tags ---
 
+    // The includes a render reads, read before it: Fluid asks its file provider synchronously, so each
+    // include the template names — and each one those name — is read first, through the gate, and the
+    // provider answers from memory. An include named by a variable isn't known before the render, and
+    // answers not found.
     private sealed class PlangFileProvider : IFileProvider
     {
-        private readonly global::app.@this _app;
+        // Fluid asks for an include by its name with this extension added when it has none.
+        private const string Extension = ".liquid";
         private readonly global::app.type.item.path.@this _basePath;
         private readonly global::app.actor.context.@this _context;
+        private readonly Dictionary<string, string> _read = new(StringComparer.OrdinalIgnoreCase);
 
-        public PlangFileProvider(global::app.@this app, global::app.type.item.path.@this basePath, global::app.actor.context.@this context)
+        public PlangFileProvider(global::app.type.item.path.@this basePath, global::app.actor.context.@this context)
         {
-            _app = app;
             _basePath = basePath;
             _context = context;
         }
 
-        public IFileInfo GetFileInfo(string subpath)
+        /// <summary>Reads every include <paramref name="template"/> names, and the includes they name.</summary>
+        public async Task Load(IFluidTemplate template, FluidParser parser)
         {
-            // Fluid appends ".liquid" to include paths — try both with and without
-            var candidates = new[] { subpath, StripLiquidExtension(subpath) };
-            foreach (var candidate in candidates)
+            var pending = new Queue<IFluidTemplate>();
+            pending.Enqueue(template);
+            while (pending.TryDequeue(out var next))
+                foreach (var name in new Included().In(next))
+                {
+                    var asked = name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) ? name : name + Extension;
+                    if (_read.ContainsKey(asked) || await Text(asked) is not { } text) continue;
+                    _read[asked] = text;
+                    if (parser.TryParse(text, out var partial, out _)) pending.Enqueue(partial);
+                }
+        }
+
+        // The include's text — Fluid's name, or the name as written (without the added extension); null when
+        // neither is there. The probe and the read go through AuthGate(Read): an out-of-root include
+        // (`{% include '../../etc/passwd' %}`) is a prompt or a denial, never a silent read, and a failed
+        // probe or read fails the render; only "absent" is not found. Content that decodes to bytes
+        // (octet-stream, an unmapped extension) is UTF-8 text.
+        private async Task<string?> Text(string asked)
+        {
+            foreach (var candidate in new[] { asked, asked[..^Extension.Length] })
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
                 var resolved = _basePath.Combine(candidate);
-                // ExistsAsync routes through AuthGate(Read). Out-of-root template
-                // includes (`{% include '../../etc/passwd' %}`) surface as
-                // permission prompts or denials — not silent file reads. A failed
-                // probe (denied, unreadable) fails the render; only "absent" is not-found.
-                var exists = resolved.ExistsAsync(_context).GetAwaiter().GetResult();
+                var exists = await resolved.ExistsAsync(_context);
                 if (!exists.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
                         exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);
-                if ((exists.Peek() as global::app.type.item.@bool.@this)?.Value == true)
-                    return new PlangFileInfo(resolved, candidate, _context);
+                if ((exists.Peek() as global::app.type.item.@bool.@this)?.Value != true) continue;
+                var landed = await resolved.Read(_context);
+                var read = landed.Success ? await landed.Value() : null;
+                if (!landed.Success)
+                    throw new global::app.error.AppException($"include '{candidate}': {landed.Error?.Message}",
+                        landed.Error?.Key ?? "IncludeFailed", landed.Error?.StatusCode ?? 500);
+                return read is global::app.type.item.binary.@this bin
+                    ? System.Text.Encoding.UTF8.GetString(bin.Value)
+                    : read?.ToString() ?? "";
             }
-            return new NotFoundFileInfo(subpath);
+            return null;
         }
 
-        private static string StripLiquidExtension(string path)
-        {
-            const string ext = ".liquid";
-            return path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)
-                ? path[..^ext.Length]
-                : path;
-        }
+        public IFileInfo GetFileInfo(string subpath)
+            => _read.TryGetValue(subpath, out var text) ? new Include(subpath, text) : new NotFoundFileInfo(subpath);
 
         public IDirectoryContents GetDirectoryContents(string subpath)
             => new NotFoundDirectoryContents();
@@ -344,46 +368,48 @@ public class Fluid : ITemplate
             => NullChangeToken.Singleton;
     }
 
-    private sealed class PlangFileInfo : IFileInfo
+    // The include and render tags a template names by a literal, wherever they sit in it.
+    private sealed class Included : AstVisitor
     {
-        private readonly global::app.type.item.path.@this _path;
-        private readonly global::app.actor.context.@this _context;
+        private readonly List<string> _names = new();
 
-        public PlangFileInfo(global::app.type.item.path.@this path, string name, global::app.actor.context.@this context)
+        public IReadOnlyList<string> In(IFluidTemplate template)
         {
-            _path = path;
+            if (template is global::Fluid.Parser.FluidTemplate parsed)
+                foreach (var statement in parsed.Statements) Visit(statement);
+            return _names;
+        }
+
+        protected override Statement VisitIncludeStatement(IncludeStatement include)
+        {
+            if (include.Path is LiteralExpression literal) _names.Add(literal.Value.ToStringValue());
+            return base.VisitIncludeStatement(include);
+        }
+
+        protected override Statement VisitRenderStatement(RenderStatement render)
+        {
+            _names.Add(render.Path);
+            return base.VisitRenderStatement(render);
+        }
+    }
+
+    // An include read before the render.
+    private sealed class Include : IFileInfo
+    {
+        private readonly byte[] _content;
+
+        public Include(string name, string text)
+        {
             Name = name;
-            _context = context;
+            _content = System.Text.Encoding.UTF8.GetBytes(text);
         }
 
         public bool Exists => true;
-        public long Length
-        {
-            get
-            {
-                var stat = _path.Stat(_context).GetAwaiter().GetResult();
-                return stat.Success && (stat.Peek() as global::app.type.item.path.@this.StatInfo)?.Length is long n ? n : 0;
-            }
-        }
-        public string? PhysicalPath => _path.Absolute;
+        public long Length => _content.Length;
+        public string? PhysicalPath => null;
         public string Name { get; }
         public DateTimeOffset LastModified => DateTimeOffset.UtcNow;
         public bool IsDirectory => false;
-
-        public Stream CreateReadStream()
-        {
-            // The include lands as a reference through AuthGate(Read) — out-of-root templates
-            // surface as denials before any disk access. Template MIMEs that
-            // map to bytes (octet-stream, unmapped extensions) come back as
-            // raw bytes; UTF-8 decode them. Text passes through.
-            var landed = _path.Read(_context).GetAwaiter().GetResult();
-            var read = landed.Success ? landed.Value().AsTask().GetAwaiter().GetResult() : null;
-            string content;
-            if (read is global::app.type.item.binary.@this bin)
-                content = System.Text.Encoding.UTF8.GetString(bin.Value);
-            else
-                content = read?.ToString() ?? "";
-            return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
-        }
+        public Stream CreateReadStream() => new MemoryStream(_content, writable: false);
     }
 }

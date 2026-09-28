@@ -305,17 +305,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (raw is string or byte[])
             return new item.source(raw, this);
 
-        // A container / domain value is already native (dict, list, path, image, …) — hold it; one that
-        // this type is made FROM (a path declared a file: the file is born from its path and is-a path)
-        // is made by this type's own lift — only when what it makes carries the raw as its prior, so a
-        // container declared as another type is still held. A template=plang declaration stamps the
-        // container so its .Value() resolves nested %var% leaves (mirrors how a text carries the
-        // template) — the source path below already carries it.
+        // A container / domain value is already native (dict, list, path, image, …) — hold it; a value of a
+        // type this type is born from (its From: a path declared a file) is made into this type by its own
+        // lift. A template=plang declaration stamps the container so its .Value() resolves nested %var%
+        // leaves (mirrors how a text carries the template) — the source path below already carries it.
         if (raw is item.@this { IsLeaf: false } native)
         {
-            if (!native.Is(this) && _byContext(raw, context) is { } made && !ReferenceEquals(made, native)
-                && string.Equals(made.Type.Name, Name, System.StringComparison.OrdinalIgnoreCase)
-                && made.Is(native.Type)) native = made;
+            if (!native.Is(this) && From.Any(native.Type.Is) && _byContext(raw, context) is { } made) native = made;
             if (Template != null && native.Template == null) native.Template = Template;
             return native;
         }
@@ -564,6 +560,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [JsonIgnore]
     internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get; init; } = [];
 
+    /// <summary>The types a value of this type is born from (<c>path</c> for file, url and directory: each is
+    /// the reference to what is at a path), declared by its class as a static <c>From</c>. A value of one of
+    /// them declared as this type is made into it; any other container declared as this type is held.
+    /// Never null.</summary>
+    [JsonIgnore]
+    public IReadOnlyList<string> From { get; init; } = [];
+
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
     /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —
     /// naming answers it — and stays out of their face.</summary>
@@ -595,6 +598,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
         Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
+        From = Declared<IReadOnlyList<string>>("From") ?? [];
         Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
                                                | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.

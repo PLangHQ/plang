@@ -203,7 +203,7 @@ public sealed class OpenAi : ILlm
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, app, context),
+                ["messages"] = await ToApiMessages(messages, app, context),
                 ["temperature"] = (await action.Temperature.Value())!.ToDouble(),
                 ["max_completion_tokens"] = (await action.MaxTokens.Value())!.ToInt64()
             };
@@ -638,7 +638,7 @@ public sealed class OpenAi : ILlm
 
     // --- Message formatting ---
 
-    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app, actor.context.@this context)
+    private static async Task<List<object>> ToApiMessages(List<LlmMessage> messages, global::app.@this app, actor.context.@this context)
     {
         var result = new List<object>();
         foreach (var msg in messages)
@@ -685,7 +685,7 @@ public sealed class OpenAi : ILlm
 
                 foreach (var image in msg.Images)
                 {
-                    var imageContent = ResolveImage(image, app, context);
+                    var imageContent = await ResolveImage(image, app, context);
                     contentParts.Add(imageContent);
                 }
 
@@ -709,7 +709,7 @@ public sealed class OpenAi : ILlm
 
     // internal so OpenAiImageDenialTests can invoke the handler directly
     // (the public Query path requires a real OpenAI HTTP setup).
-    internal static object ResolveImage(string image, global::app.@this app, actor.context.@this context)
+    internal static async Task<object> ResolveImage(string image, global::app.@this app, actor.context.@this context)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -722,7 +722,7 @@ public sealed class OpenAi : ILlm
         }
 
         // Try file path — its reference's raw content, gated: in-root fast-passes, out-of-root
-        // surfaces as a permission prompt or denial. Sync-wait: message formatting is sync.
+        // surfaces as a permission prompt or denial.
         // The probe is whether the image names a file: a string that can't be a path at all (a base64 payload
         // too long or with characters no path takes) is no file, and neither is a path to nothing (404). Any
         // other failure — a denied read, an IO error — is the query's, not a guess at base64.
@@ -731,8 +731,8 @@ public sealed class OpenAi : ILlm
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { }
         if (imgPath != null)
         {
-            var content = imgPath.Read(context).GetAwaiter().GetResult()
-                .Use<global::app.type.item.IContent>(async file => await file.Content(context)).GetAwaiter().GetResult();
+            var content = await (await imgPath.Read(context))
+                .Use<global::app.type.item.IContent>(async file => await file.Content(context));
             // OpenAI takes an attached image as a data URI — composed here, at its boundary.
             if (content.Success && content.Peek() is global::app.type.item.binary.@this { Value.Length: > 0 } bytes)
             {

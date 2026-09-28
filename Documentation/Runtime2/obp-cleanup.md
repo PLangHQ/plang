@@ -270,3 +270,12 @@ plain enum; its own item.
 `Recovery=[goal.call(Name=?)]`), which the writer can't write: its values are real values. Fix when cheap:
 a hole value the writer writes as `?`, and the prefill built as catalog actions with hole rows, written by
 the writer. The eval twin (`tools/decider/prompt_c.py` `Line`/`prefill`) moves with it.
+
+## type.list.Full copies every fact by hand [logged 2026-09-28, stage 9a]
+
+`type/list/this.cs` `Full(type, name)` makes a kind/strict/template variant of a registered type by
+listing each fact of the entry in an initializer (`Alias`, `Owned`, `From`, `Internal`, `Property`, `Values`,
+`Shape`, `ConstructorSignature`, `Example`, `Description`, `Namespace`). Flat copy: a new fact on the type
+has to be remembered here too, and a forgotten one makes the variant silently lack it (a template-marked
+`file` didn't know it is born `From` a path until it was added). The variant should hold its entry (the
+facts read through it) or the type should copy itself with only the declaration changed.

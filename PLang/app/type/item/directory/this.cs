@@ -13,6 +13,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Example => "/docs";
     public static string Description => "A folder, by its path.";
     public static string Shape => "string";
+    public static IReadOnlyList<string> From => ["path"];
 
     /// <summary>The is-a lattice — a directory is-a path.</summary>
     public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
