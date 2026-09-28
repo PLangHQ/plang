@@ -86,5 +86,11 @@ public partial class request : IContext
     /// variable.set can stamp Response.Body's expected shape. Variable
     /// references and unknown extensions defer to runtime Content-Type dispatch.
     /// </summary>
-    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, Context.App, "Url");
+    // A literal url says what its body will be by its extension — the path's Kind; none for a %variable% url
+    // or an extension no type has.
+    public async Task<data.@this> Build() => Url.HasVariable ? Context.Ok() : await Url.Use(url =>
+    {
+        var kind = global::app.type.item.path.@this.Resolve(url.ToString(), Context).Kind(Context);
+        return Task.FromResult(kind.IsNull ? Context.Ok() : Context.Ok(kind));
+    });
 }

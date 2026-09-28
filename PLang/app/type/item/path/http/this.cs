@@ -176,6 +176,17 @@ public sealed partial class @this : global::app.type.item.path.@this
     public override async Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null)
         => await context.App.type.list["url"].Create(this, context, "url");
 
+    /// <summary>The URL's own extension: its path's, without the query or fragment (<c>…/data.json?v=2</c> is
+    /// <c>.json</c>).</summary>
+    internal override string Extension
+    {
+        get
+        {
+            var cut = Raw.IndexOfAny(['?', '#']);
+            return global::app.Utils.PathHelper.GetExtension(cut < 0 ? Raw : Raw[..cut]);
+        }
+    }
+
     /// <summary>The <c>url</c> reference's type — the build asks nothing of the remote.</summary>
     public override Task<data.@this> Expect(actor.context.@this context)
         => Task.FromResult<data.@this>(context.Ok(context.App.type.list[new global::app.type.item.url.@this(this, context).Type, context]));

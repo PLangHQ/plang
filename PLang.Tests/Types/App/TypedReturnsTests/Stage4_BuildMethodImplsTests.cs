@@ -152,6 +152,23 @@ public class Stage4_BuildMethodImplsTests
         await Assert.That(AsType(result).kind.Name).IsEqualTo("json");
     }
 
+    // A url's extension is its path's — the query and fragment are not part of it.
+    [Test]
+    public async Task HttpRequest_Build_LiteralUrlWithAQuery_InfersTypeFromThePathsExtension()
+    {
+        var result = await Build("http", "request", ("Url", "https://api/x.json?v=2#top"));
+        await result.IsSuccess();
+        await Assert.That(AsType(result).kind.Name).IsEqualTo("json");
+    }
+
+    // The run-time face reads the same extension: a url with a query still decodes as json.
+    [Test]
+    public async Task AUrlWithAQuery_ItsMimeTypeIsItsPathsExtensions()
+    {
+        var url = global::app.type.item.path.@this.Resolve("https://api/x.json?v=2", _app.actor.list.User.Context);
+        await Assert.That(url.MimeType(_app.actor.list.User.Context)).IsEqualTo("application/json");
+    }
+
     [Test]
     public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_InfersBinaryWithExtensionKind()
     {

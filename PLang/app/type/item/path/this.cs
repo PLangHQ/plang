@@ -198,7 +198,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     }
 
     // INTERNAL: the raw extension feeds Kind + the `!extension` projection.
-    internal string Extension => _extension ??= PathHelper.GetExtension(_location.Clr<string>() ?? "");
+    internal virtual string Extension => _extension ??= PathHelper.GetExtension(_location.Clr<string>() ?? "");
     [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location.Clr<string>() ?? "");
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location.Clr<string>() ?? "");

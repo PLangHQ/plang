@@ -69,5 +69,11 @@ public partial class upload : IContext
     // Plain Data — body lazy (from Content-Type), metadata in Properties.
     public async Task<data.@this> Start() => await Http.UploadAsync(this);
 
-    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, Context.App, "Url");
+    // A literal url says what its body will be by its extension — the path's Kind; none for a %variable% url
+    // or an extension no type has.
+    public async Task<data.@this> Build() => Url.HasVariable ? Context.Ok() : await Url.Use(url =>
+    {
+        var kind = global::app.type.item.path.@this.Resolve(url.ToString(), Context).Kind(Context);
+        return Task.FromResult(kind.IsNull ? Context.Ok() : Context.Ok(kind));
+    });
 }
