@@ -13,5 +13,5 @@ public partial class NotContains : IContext
     public partial IAssert Assert { get; }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start() =>
-        AssertSnapshot.WithVariables(await Assert.NotContains(this), Context);
+        await Assert.NotContains(this);
 }

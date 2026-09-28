@@ -13,12 +13,15 @@ public class AssertionError : Error
     public AssertionError(string message, string key = "AssertionFailed", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    public AssertionError(object? expected, object? actual, string? userMessage = null)
+    /// <param name="variables">The variables when the assertion failed — for the failure's report.</param>
+    public AssertionError(object? expected, object? actual, string? userMessage = null,
+        global::app.type.item.dict.@this? variables = null)
         : base(FormatMessage(expected, actual, userMessage), "AssertionFailed", 400)
     {
         Expected = expected;
         Actual = actual;
         UserMessage = userMessage;
+        Variables = variables;
     }
 
     private static string FormatMessage(object? expected, object? actual, string? userMessage)

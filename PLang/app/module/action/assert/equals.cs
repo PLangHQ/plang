@@ -13,5 +13,5 @@ public partial class Equals : IContext
     public partial IAssert Assert { get; }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start() =>
-        AssertSnapshot.WithVariables(await Assert.Equals(this), Context);
+        await Assert.Equals(this);
 }
