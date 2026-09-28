@@ -52,3 +52,15 @@ User-facing chatter → `await context.Actor.Channel[global::app.channel.list.@t
 ```
 - A plan's validation tests live in its own folder, `test/plan/<id>/` (id = the plan's branch), each at the path of what it tests; the plan's index is `test/plan/<id>/start.goal` (each behaviour a comment, the step under it runs its test). Tests that aren't a plan's stay in the concept tree (`test/module/on/…`).
 ```
+
+## coder — v10 — 2026-09-28
+**Target:** /CLAUDE.md
+**Why:** Stage 9a (decision 175/176) collapsed path's read verbs: `ReadText`, `ReadBytes`, `ReadAsBase64`, `ReadAsDataUri` are gone; `path.Read` lands a reference and its content is that reference's own value (raw bytes via `IContent.Content`). The System.IO rule's verb list names the deleted verbs, so a bot following it would reach for methods that no longer exist.
+**Proposed change:** in the "No `System.IO.*` reaches in production C#" bullet, replace the verb list
+```
+(`ReadText`, `WriteText`, `List`, `Stat`, `ReadBytes`, `ExistsAsync`, `MoveTo`, `CopyTo`, …)
+```
+with
+```
+(`Read`, `WriteText`, `WriteBytes`, `List`, `Stat`, `ExistsAsync`, `MoveTo`, `CopyTo`, …) — `path.Read` lands a reference (`file`/`url`/`directory`); its content is the reference's value, its raw bytes `IContent.Content`
+```

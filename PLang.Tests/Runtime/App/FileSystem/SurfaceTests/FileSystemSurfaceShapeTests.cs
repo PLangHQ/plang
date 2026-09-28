@@ -20,10 +20,10 @@ public class FileSystemSurfaceShapeTests
 
     [Test] public async Task ActionHandlers_AreThinShells_NoPerHandlerShortCircuit()
     {
-        // The path verb surface lives on the abstract base — ReadText/WriteText/
+        // The path verb surface lives on the abstract base — Read/WriteText/
         // Delete/MoveTo/CopyTo. Handlers are thin shells over it.
         var pathType = typeof(global::app.type.item.path.@this);
-        await Assert.That(pathType.GetMethod("ReadText")).IsNotNull();
+        await Assert.That(pathType.GetMethod("Read")).IsNotNull();
         var ctx = typeof(global::app.actor.context.@this);
         await Assert.That(pathType.GetMethod("WriteText", new[] { typeof(string), ctx })).IsNotNull();
         await Assert.That(pathType.GetMethod("Delete", new[] { ctx })).IsNotNull();

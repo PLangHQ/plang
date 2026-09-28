@@ -45,7 +45,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             var content = $"contract {Guid.NewGuid()}";
             var written = await p.WriteText(content, context);
             await written.IsSuccess();
-            var read = await p.ReadText(context);
+            var read = await p.Touch(context);
             await read.IsSuccess();
             await Assert.That((await read.Value())?.ToString()).IsEqualTo(content);
         }
@@ -94,7 +94,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             await src.WriteText("copy me", context);
             var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
             await copied.IsSuccess();
-            var read = await dst.ReadText(context);
+            var read = await dst.Touch(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("copy me");
             var srcStill = await src.ExistsAsync(context);
             await Assert.That((await srcStill.Value())?.ToString()).IsEqualTo("true");
@@ -112,7 +112,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             await src.WriteText("move me", context);
             var moved = await src.MoveTo(dst, overwrite: true, context);
             await moved.IsSuccess();
-            var read = await dst.ReadText(context);
+            var read = await dst.Touch(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("move me");
             var srcGone = await src.ExistsAsync(context);
             await Assert.That((await srcGone.Value())?.ToString()).IsEqualTo("false");
@@ -125,7 +125,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Denied(await Fixture.CreateFresh());
         try
         {
-            var read = await p.ReadText(context);
+            var read = await p.Touch(context);
             await read.IsFailure();
             await Assert.That(read.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
@@ -149,7 +149,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Denied(await Fixture.CreateFresh());
         try
         {
-            var read = await p.ReadText(context);
+            var read = await p.Touch(context);
             await read.IsFailure();
             // Every scheme routes refusal through the same base Authorize gate —
             // the Error is a PermissionDenied with the same key/status.

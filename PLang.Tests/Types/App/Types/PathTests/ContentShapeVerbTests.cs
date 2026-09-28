@@ -7,7 +7,8 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Batch 7. Content-shape verbs.
+/// A file's raw content: <c>path.Read</c> lands the reference, and its <see cref="global::app.type.item.IContent"/>
+/// hands the bytes — through the same Read gate as every other read.
 /// </summary>
 public class ContentShapeVerbTests
 {
@@ -18,6 +19,9 @@ public class ContentShapeVerbTests
         System.IO.Directory.CreateDirectory(root);
         return TestApp.Create(root);
     }
+
+    private static async Task<global::app.data.@this> Content(FilePath p, global::app.actor.context.@this context)
+        => await (await p.Read(context)).Use<global::app.type.item.IContent>(async file => await file.Content(context));
 
     private sealed class CannedChannel : global::app.channel.@this
     {
@@ -34,19 +38,18 @@ public class ContentShapeVerbTests
         }
     }
 
-    [Test] public async Task ReadAsBase64_InRoot_ReturnsBase64OfFileBytes()
+    [Test] public async Task Content_InRoot_IsTheFilesBytes()
     {
         var app = NewApp(out var root);
         var file = System.IO.Path.Combine(root, "data.bin");
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
         System.IO.File.WriteAllBytes(file, bytes);
-        var p = new FilePath(file);
-        var result = await p.ReadAsBase64(app.User.Context);
+        var result = await Content(new FilePath(file), app.User.Context);
         await result.IsSuccess();
-        await Assert.That((await result.Value())!.Clr<string>()!).IsEqualTo(System.Convert.ToBase64String(bytes));
+        await Assert.That((result.Peek() as global::app.type.item.binary.@this)!.Value).IsEquivalentTo(bytes);
     }
 
-    [Test] public async Task ReadAsBase64_OutOfRoot_DeniedAnswer_DoesNotReadFile()
+    [Test] public async Task Content_OutOfRoot_DeniedAnswer_DoesNotReadFile()
     {
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
@@ -54,14 +57,13 @@ public class ContentShapeVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 42, 43 });
-        var p = new FilePath(outOfRoot);
-        var result = await p.ReadAsBase64(app.User.Context);
+        var result = await Content(new FilePath(outOfRoot), app.User.Context);
         await result.IsFailure();
         // Differentiate denial from file-not-found / other IO errors.
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }
 
-    [Test] public async Task ReadAsBase64_GatesUnderReadVerb_NotWriteOrExecute()
+    [Test] public async Task Content_GatesUnderReadVerb_NotWriteOrExecute()
     {
         var app = NewApp(out _);
         var canned = new CannedChannel("n");
@@ -70,46 +72,17 @@ public class ContentShapeVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "data.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 1 });
-        var p = new FilePath(outOfRoot);
-        await p.ReadAsBase64(app.User.Context);
+        await Content(new FilePath(outOfRoot), app.User.Context);
         await Assert.That(canned.Prompts.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(canned.Prompts[0]).Contains("read");
     }
 
-    [Test] public async Task ReadAsDataUri_InRoot_ReturnsDataUriWithCorrectMimePrefix()
+    [Test] public async Task Content_OfAFolder_IsNotA_Content()
     {
         var app = NewApp(out var root);
-        var file = System.IO.Path.Combine(root, "img.png");
-        var bytes = new byte[] { 137, 80, 78, 71 };
-        System.IO.File.WriteAllBytes(file, bytes);
-        var p = new FilePath(file);
-        var result = await p.ReadAsDataUri(app.User.Context);
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.Clr<string>()!).StartsWith("data:image/png;base64,");
-    }
-
-    [Test] public async Task ReadAsDataUri_OnUnknownExtension_FallsBackToOctetStream()
-    {
-        var app = NewApp(out var root);
-        var file = System.IO.Path.Combine(root, "blob.weirdext");
-        System.IO.File.WriteAllBytes(file, new byte[] { 1, 2, 3 });
-        var p = new FilePath(file);
-        var result = await p.ReadAsDataUri(app.User.Context);
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.Clr<string>()!).StartsWith("data:application/octet-stream;base64,");
-    }
-
-    [Test] public async Task ReadAsDataUri_OutOfRoot_DeniedAnswer_ReturnsDataFail()
-    {
-        var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
-        var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.png");
-        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
-        System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 1 });
-        var p = new FilePath(outOfRoot);
-        var result = await p.ReadAsDataUri(app.User.Context);
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "sub"));
+        var result = await Content(new FilePath(System.IO.Path.Combine(root, "sub")), app.User.Context);
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
+        await Assert.That(result.Error!.Key).IsEqualTo("NotA");
     }
 }

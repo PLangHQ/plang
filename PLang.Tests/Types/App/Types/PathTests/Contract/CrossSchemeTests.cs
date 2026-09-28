@@ -26,7 +26,7 @@ public class CrossSchemeTests
         await src.WriteText("cross hello", context);
         var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
         await copied.IsSuccess();
-        var read = await dst.ReadText(context);
+        var read = await dst.Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("cross hello");
     }
 
@@ -42,7 +42,7 @@ public class CrossSchemeTests
         await src.WriteText("reverse hello", context);
         var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
         await copied.IsSuccess();
-        var read = await dst.ReadText(context);
+        var read = await dst.Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("reverse hello");
     }
 
@@ -58,7 +58,7 @@ public class CrossSchemeTests
         await src.WriteText("move cross", context);
         var moved = await src.MoveTo(dst, overwrite: true, context);
         await moved.IsSuccess();
-        var read = await dst.ReadText(context);
+        var read = await dst.Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("move cross");
         var srcGone = await src.ExistsAsync(context);
         await Assert.That((await srcGone.Value())).IsEqualTo(false);

@@ -51,11 +51,12 @@ public sealed class @this
             if (!exists.Success) return exists;
             if ((await exists.Value())?.Value != true) continue;
 
-            // ReadText already MIME-deserializes .pr → Goal via the FilePath.ReadText path. A setup file that
-            // doesn't read or parse is the answer — setup doesn't run past it.
-            var read = await file.ReadText(context);
+            // The .pr lands as a file reference whose value its format decodes into a goal. A setup file
+            // that doesn't read or parse is the answer — setup doesn't run past it.
+            var read = await file.Read(context);
+            var content = read.Success ? await read.Value() : null;
             if (!read.Success) return read;
-            if ((await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
+            if (content as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
 
             _goals.Add(goal);
         }

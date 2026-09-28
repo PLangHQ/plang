@@ -349,13 +349,14 @@ public sealed partial class @this
             return answer;
         try
         {
-            // The path reads itself AND parses by MIME — a .pr reads back as a goal.
-            var read = await pr.ReadText(context);
-            if (!read.Success || read.Peek().IsNull)
+            // The .pr lands as a file reference; its value is the content its format decodes — a goal.
+            var read = await pr.Read(context);
+            var content = read.Success ? await read.Value() : null;
+            if (!read.Success || content is null || content.IsNull)
                 return context.Error(read.Error ?? new global::app.error.Error($"Failed to read goal file: {pr}"));
-            if (await read.Value() is not @this goal)
+            if (content is not @this goal)
                 return context.Error(read.Error ?? new global::app.error.Error(
-                    $"Failed to parse goal file: {pr} — read produced {(await read.Value()).GetType().Name}, not a goal"));
+                    $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
             // relative file.read resolves against the goal's actual on-disk folder.

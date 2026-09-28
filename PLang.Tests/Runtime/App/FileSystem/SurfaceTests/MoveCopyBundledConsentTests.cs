@@ -236,7 +236,7 @@ public class MoveCopyBundledConsentTests
         await Assert.That(roundTripped).IsEqualTo("v1-still-here");
         // And the v2 surface sees the same bytes.
         var v2 = new Path(abs);
-        var v2Read = await v2.ReadText(app.User.Context);
+        var v2Read = await v2.Touch(app.User.Context);
         await v2Read.IsSuccess();
         await Assert.That((await v2Read.Value())?.ToString()).IsEqualTo("v1-still-here");
     }

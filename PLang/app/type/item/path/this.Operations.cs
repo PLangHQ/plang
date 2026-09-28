@@ -56,20 +56,20 @@ public abstract partial class @this
     // FilePath and documented as no-ops by non-FS schemes — the no-op lives
     // inside the scheme, not as a branch the handler picks.
 
-    // ReadText stays polymorphic (bare Data): the MIME-stamped Type carries the
-    // shape (string for text, byte[] for binary, structured for json/yaml). The
+    // Read is polymorphic (bare Data): it lands a file, url or directory reference. The
     // other verbs have a single fixed shape — typed.
     /// <summary>What reading this location lands: a reference to what is there, with nothing read — its
     /// content is the reference's own value, read at first touch. <paramref name="template"/> marks the
     /// content a template (its variables are filled at use).</summary>
-    public abstract Task<data.@this> Read(data.@this<global::app.type.item.@bool.@this> template, actor.context.@this context);
+    public abstract Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null);
 
     /// <summary>Read's build face: the type <see cref="Read"/> lands, with no content read — the build knows
     /// what a later step captures.</summary>
     public abstract Task<data.@this> Expect(actor.context.@this context);
 
-    public abstract Task<data.@this> ReadText(actor.context.@this context);
-    public abstract Task<data.@this<global::app.type.item.binary.@this>> ReadBytes(actor.context.@this context);
+    /// <summary>The raw bytes at this location, through the gate — what a reference this path lands samples
+    /// when its content is first touched. Content is the reference's (<see cref="Read"/>), not the path's.</summary>
+    internal abstract Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context);
     public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context);
     public abstract Task<data.@this<StatInfo>> Stat(actor.context.@this context);
 
@@ -91,40 +91,6 @@ public abstract partial class @this
         Task.FromResult(context.Error(
             new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
-    // Content-shape verbs: when a third-party API needs the file's content
-    // in a specific shape (base64, data URI, parsed JSON, ...), the verb
-    // lives on Path so the gate fires inside and the action handler never
-    // reaches for <see cref="Absolute"/>. Each composes <see cref="ReadBytes"/>
-    // + formatting on top — same AuthGate path as every other read.
-
-    /// <summary>
-    /// Reads the file as bytes (gated) and base64-encodes them. Use sites:
-    /// OpenAI image attachments, sealing binary payloads into JSON-only
-    /// transports. Auth is bundled (single Read prompt).
-    /// </summary>
-    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsBase64(actor.context.@this context)
-    {
-        var bytes = await ReadBytes(context);
-        if (!bytes.Success || bytes.Peek().IsNull)
-            return data.@this<global::app.type.item.text.@this>.From(bytes);
-        return context.Ok<global::app.type.item.text.@this>(System.Convert.ToBase64String((await bytes.Value())!.Value));
-    }
-
-    /// <summary>
-    /// Reads the file as bytes (gated), base64-encodes them, and wraps with
-    /// <c>data:&lt;mime&gt;;base64,</c>. Use sites: embedded image tags, mail
-    /// attachments, any wire payload that wants self-contained binary.
-    /// </summary>
-    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsDataUri(actor.context.@this context)
-    {
-        var bytes = await ReadBytes(context);
-        if (!bytes.Success || bytes.Peek().IsNull)
-            return data.@this<global::app.type.item.text.@this>.From(bytes);
-        var mime = MimeType(context);
-        if (string.IsNullOrEmpty(mime)) mime = "application/octet-stream";
-        return context.Ok<global::app.type.item.text.@this>($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
-    }
-
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
     public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound, actor.context.@this context);
 
@@ -143,7 +109,7 @@ public abstract partial class @this
     // --- Cross-scheme defaults — virtual; subclasses override for fast paths ---
 
     /// <summary>
-    /// Cross-scheme copy default: ReadBytes from this, WriteBytes to destination.
+    /// Cross-scheme copy default: the bytes from this, WriteBytes to destination.
     /// <paramref name="overwrite"/> / <paramref name="includeSubfolders"/> are
     /// filesystem-only — a byte-stream copy has no folder tree and no in-place
     /// target, so they are no-ops here. Authorization is performed by the
@@ -152,11 +118,11 @@ public abstract partial class @this
     /// </summary>
     public virtual async Task<data.@this<@this>> CopyTo(@this destination, bool overwrite, bool includeSubfolders, actor.context.@this context)
     {
-        var read = await ReadBytes(context);
+        var read = await Bytes(context);
         if (!read.Success || read.Exits) return data.@this<@this>.From(read);
         byte[]? copyBytes = (await read.Value())?.Value;
         if (copyBytes == null)
-            return context.Error<@this>(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
+            return context.Error<@this>(new error.Error("CopyTo: the source's bytes did not come back as bytes.", "CopyToReadShape", 500));
         return await destination.WriteBytes(copyBytes, context);
     }
 

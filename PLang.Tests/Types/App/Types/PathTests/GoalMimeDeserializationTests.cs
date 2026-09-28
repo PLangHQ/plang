@@ -34,7 +34,7 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Start.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs);
-        var read = await p.ReadText(app.User.Context);
+        var read = await p.Touch(app.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo(SimpleGoalText);
     }
@@ -45,7 +45,7 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Start.test.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs);
-        var read = await p.ReadText(app.User.Context);
+        var read = await p.Touch(app.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo(SimpleGoalText);
     }
@@ -57,7 +57,7 @@ public class GoalMimeDeserializationTests
         var json = "{\"path\":\"Start.goal\",\"name\":\"Start\"}";
         await System.IO.File.WriteAllTextAsync(prAbs, json);
         var p = new FilePath(prAbs);
-        var read = await p.ReadText(app.User.Context);
+        var read = await p.Touch(app.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value()) is Goal).IsTrue();
     }
@@ -69,7 +69,7 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Start.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs);
-        var read = await p.ReadText(app.User.Context);
+        var read = await p.Touch(app.User.Context);
         var text = (await read.Value())?.ToString() ?? "";
         var goal = Goal.Parse(text, p, app.User.Context);
         await Assert.That(goal).IsNotNull();
@@ -82,7 +82,7 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Bad.goal");
         await System.IO.File.WriteAllTextAsync(abs, "");
         var p = new FilePath(abs);
-        var read = await p.ReadText(app.User.Context);
+        var read = await p.Touch(app.User.Context);
         var text = (await read.Value())?.ToString() ?? "";
         await Assert.That(Goal.Parse(text, p, app.User.Context)).IsNull();
     }

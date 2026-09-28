@@ -97,7 +97,7 @@ public class HandlerShapeTests
         }
     }
 
-    [Test] public async Task ReadHandler_Delegates_To_PathReadText()
+    [Test] public async Task ReadHandler_Delegates_To_PathRead()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
@@ -108,7 +108,7 @@ public class HandlerShapeTests
         var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var viaHandler = await handler.Start();
-        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText(app.User.Context);
+        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).Touch(app.User.Context);
 
         await Assert.That(viaHandler.Success).IsEqualTo(viaPath.Success);
         await Assert.That((await viaHandler.Value())?.ToString()).IsEqualTo((await viaPath.Value())?.ToString());

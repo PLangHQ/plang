@@ -14,7 +14,7 @@ namespace PLang.Tests.App.FileSystem.SurfaceTests;
 public class FileSystemPermissionFlowTests
 {
     public static System.Collections.Generic.IEnumerable<string> SinglePathMethodNames() =>
-        new[] { "ReadText", "ReadBytes", "Exists", "List", "Stat",
+        new[] { "Read", "Bytes", "Exists", "List", "Stat",
                 "WriteText", "WriteBytes", "Append", "Mkdir", "Delete" };
 
     private static global::app.@this NewApp(out string root)
@@ -49,8 +49,8 @@ public class FileSystemPermissionFlowTests
     // through an explicit await/cast so the test can stay shape-agnostic.
     private static async Task<global::app.data.@this> Dispatch(string method, Path path, global::app.actor.context.@this context) => method switch
     {
-        "ReadText"   => await path.ReadText(context),
-        "ReadBytes"  => await path.ReadBytes(context),
+        "Read"   => await path.Touch(context),
+        "Bytes"  => await path.Bytes(context),
         "Exists"     => await path.ExistsAsync(context),
         "List"       => await path.List(context),
         "Stat"       => await path.Stat(context),
@@ -67,8 +67,8 @@ public class FileSystemPermissionFlowTests
         var p = System.IO.Path.Combine(root, "fixture");
         switch (method)
         {
-            case "ReadText":
-            case "ReadBytes":
+            case "Read":
+            case "Bytes":
             case "Append":
             case "Stat":
             case "Exists":

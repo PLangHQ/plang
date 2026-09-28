@@ -52,7 +52,7 @@ public class DebugTraceWriteTests
         // bytes land on disk.
         await app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, context, toFile: true);
         // Read back via the same gated verb.
-        var read = await app.Debug._currentLlmFilePath!.ReadText(context);
+        var read = await app.Debug._currentLlmFilePath!.Touch(context);
         await read.IsSuccess();
         var content = (await read.Value())?.ToString() ?? "";
         await Assert.That(content).Contains("LLM TEST");

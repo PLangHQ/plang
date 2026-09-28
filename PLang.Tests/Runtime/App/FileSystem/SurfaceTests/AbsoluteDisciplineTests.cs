@@ -73,7 +73,7 @@ public class AbsoluteDisciplineTests
         // Path verbs internally use .Absolute — confirm a verb call succeeds
         // on an in-root Path (the .Absolute reach inside the verb is allowed).
         await p.WriteText("hi", app.User.Context);
-        var r = await p.ReadText(app.User.Context);
+        var r = await p.Touch(app.User.Context);
         await r.IsSuccess();
     }
 

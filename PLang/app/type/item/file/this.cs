@@ -13,7 +13,7 @@ namespace app.type.item.file;
 /// (<c>FilePath</c>/<c>HttpPath</c>); this type owns content laziness.</para>
 /// </summary>
 [global::app.Attributes.PlangType("file")]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IContent
 {
     public static string Example => "/config/settings.json";
     public static string Description => "A file, by its path; its content is read when it is used.";
@@ -64,38 +64,24 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         new global::app.type.@this("file", typeof(@this)) { kind = _kind, Template = Template };
 
     /// <summary>
-    /// The value door — read + parse through the file channel (mime stamps the
-    /// content's {type, kind}; the auth gate rides on <c>Path.ReadBytes</c>) and
-    /// answer with the CONTENT's own instance (a json file answers as its json
-    /// host, <c>clr(JsonElement)</c>, navigated by the json kind), this file stamped as its prior. Single storage: the parsed
-    /// value is the one copy. FILE authors its own failures — an IO/parse
-    /// failure lands on the data binding, answer absent.
-    /// <para>Owns the raw byte read (idempotent via <c>_bytes</c>) — <c>.Value()</c>
-    /// is the one materialize door; the sync <c>Bytes</c> getter serves the cached
-    /// bytes the leaf write emits.</para>
+    /// The value door — the <see cref="Content"/> sample decoded by the file's format (its mime stamps the
+    /// content's {type, kind}), answering with the CONTENT's own instance (a json file answers as its json
+    /// host, <c>clr(JsonElement)</c>, navigated by the json kind), this file stamped as its prior. Single
+    /// storage: the parsed value is the one copy. FILE authors its own failures — an IO/parse failure lands
+    /// on the data binding, answer absent. The sync <c>Bytes</c> getter serves the sampled bytes the leaf
+    /// write emits.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // The sample: one auth-gated read per value per program run — a later
         // narrow (another alias, a cached binding) serves from memory, never
         // from a re-read. The format decodes FROM the sample.
-        byte[] bytes;
-        if (_bytes != null) bytes = _bytes;
-        else
-        {
-            var readBytes = await Path.ReadBytes(data.Context);
-            // The path's read error rides through WHOLE — its key, message and inner
-            // exception — instead of being flattened into a bare-string IOException.
-            if (!readBytes.Success) { data.Fail(readBytes.Error!); return Absent; }
-            var bin = await readBytes.Value();
-            bytes = _bytes = bin?.Value ?? System.Array.Empty<byte>();
-            var mime = Path.MimeType(data.Context);
-            _isText = mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
-                || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
-                || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase);
-        }
+        var sample = await Content(data.Context);
+        // The path's read error rides through WHOLE — its key, message and inner
+        // exception — instead of being flattened into a bare-string IOException.
+        if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
         // The file's format decodes its content, with the asker's context.
-        var read = await data.Context.App.type.list.Mime(Path.MimeType(data.Context)).Decode(bytes, data.Context);
+        var read = await data.Context.App.type.list.Mime(Path.MimeType(data.Context)).Decode(Bytes, data.Context);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
@@ -123,6 +109,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return await materialized.Get(parent, key);
     }
 
+
+    /// <summary>The raw bytes, read once through the path's gate; a later ask serves them from memory.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.binary.@this>> Content(global::app.actor.context.@this context)
+    {
+        if (_bytes != null) return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(_bytes));
+        var read = await Path.Bytes(context);
+        if (!read.Success || read.Exits) return read;
+        _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
+        var mime = Path.MimeType(context);
+        _isText = mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase);
+        return read;
+    }
 
     /// <summary>Truthiness of a reference is its location's: does it exist.</summary>
     public override bool IsTruthy() => Path is global::app.type.item.path.file.@this fp && fp.Exists;

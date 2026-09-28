@@ -952,10 +952,10 @@ public sealed class Default : IHttp
     // endpoint).
     internal static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
-        // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
+        // The file lands as a reference and hands its raw content; the gate fires inside —
         // out-of-root paths the actor hasn't granted bubble up as Fail.
         var resolved = global::app.type.item.path.@this.Resolve(path, context);
-        var read = await resolved.ReadBytes(context);
+        var read = await (await resolved.Read(context)).Use<global::app.type.item.IContent>(async file => await file.Content(context));
         if (!read.Success || await read.Value() == null)
             return (null, read.Error
                 ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
@@ -996,11 +996,11 @@ public sealed class Default : IHttp
             var value = kvp.Value?.ToString() ?? "";
             if (value.StartsWith('@'))
             {
-                // Gated read via path verb. AuthGate(Read) fires; out-of-root
+                // The file's raw content through its reference. The gate fires; out-of-root
                 // form fields the actor hasn't authorized get denied at the
                 // gate, not silently exfiltrated.
                 var fp = global::app.type.item.path.@this.Resolve(value[1..], context);
-                var read = await fp.ReadBytes(context);
+                var read = await (await fp.Read(context)).Use<global::app.type.item.IContent>(async file => await file.Content(context));
                 if (!read.Success || await read.Value() == null)
                     return (null, read.Error
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));

@@ -415,9 +415,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync(System.Context!);
         if (!exists.Success || (await exists.Value())?.Value != true) return;
-        // app.pr is the app's identity, not a goal: read its bytes. ReadText would map the .pr
-        // extension to the goal reader, which refuses a file that isn't a goal.
-        var bytes = await prPath.ReadBytes(System.Context!);
+        // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
+        // format's goal reader, which refuses a file that isn't a goal.
+        var bytes = await (await prPath.Read(System.Context!)).Use<global::app.type.item.IContent>(async file => await file.Content(System.Context!));
         if (!bytes.Success)
             throw new InvalidOperationException($"{prPath} could not be read: {bytes.Error?.Message}");
         if (bytes.Peek().IsNull) return;

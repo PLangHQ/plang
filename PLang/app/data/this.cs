@@ -296,6 +296,19 @@ public partial class @this
     /// </summary>
     public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.item.@null.@this.Instance;
 
+    /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
+    /// or, when it failed or exits the goal (an ask the gate suspends on), this carrier itself; when what it
+    /// holds isn't one, a NotA error. Taken as held, never materialized: a reference hands itself, not its
+    /// content.</summary>
+    public async System.Threading.Tasks.Task<@this> Use<TAs>(System.Func<TAs, System.Threading.Tasks.Task<@this>> then)
+    {
+        if (!Success || Exits) return this;
+        if (Peek() is not TAs held)
+            return Context.Error(new global::app.error.Error(
+                $"'{Name}' is a {Type.Name}, not a {typeof(TAs).Name}", "NotA", 400));
+        return await then(held);
+    }
+
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
     internal bool HasRaw => _item is global::app.type.item.source;
 
@@ -690,13 +703,13 @@ public class @this<T> : @this
     }
 
     /// <summary>This carrier's value, handed whole to <paramref name="then"/> — or, when it didn't resolve
-    /// (an unset %var%, a bad scheme), this carrier itself, its error the answer; when it resolved to
-    /// nothing, a ValueRequired error. Only this carrier is resolved, and one that already failed is not
-    /// asked again (a second ask would replace its first error).</summary>
+    /// (an unset %var%, a bad scheme) or exits the goal (an ask), this carrier itself, its error the answer;
+    /// when it resolved to nothing, a ValueRequired error. Only this carrier is resolved, and one that
+    /// already failed is not asked again (a second ask would replace its first error).</summary>
     public async System.Threading.Tasks.Task<@this> Use(System.Func<T, System.Threading.Tasks.Task<@this>> then)
     {
         var value = Success ? await Value() : default;
-        if (!Success) return this;
+        if (!Success || Exits) return this;
         if (value is null)
             return Context.Error(new global::app.error.Error($"'{Name}' has no value", "ValueRequired", 400));
         return await then(value);

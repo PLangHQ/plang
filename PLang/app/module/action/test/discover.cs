@@ -67,9 +67,10 @@ public partial class discover : IContext
     {
         // Read the .goal source first — even when the .pr is missing or
         // corrupt, the source goal is enough to identify the file.
-        // ReadText returns a typed Goal when the file MIME is application/
-        // plang-goal, or a string fallback that we explicitly parse.
-        var goalRead = await goalFile.ReadText(Context);
+        // Its value is a typed Goal when the file MIME is application/
+        // plang-goal, or a text that we explicitly parse.
+        var goalRead = await goalFile.Read(Context);
+        var goalContent = goalRead.Success ? await goalRead.Value() : null;
         if (!goalRead.Success)
         {
             // Build a minimal goal from just the file's path so Test.Goal
@@ -83,8 +84,8 @@ public partial class discover : IContext
         }
         // Born-typed: text content rides as the text wrapper; its string form
         // is ToString (a Goal already matched the first arm).
-        var sourceGoal = (await goalRead.Value()) as Goal
-            ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile, Context)
+        var sourceGoal = goalContent as Goal
+            ?? Goal.Parse(goalContent?.ToString() ?? "", goalFile, Context)
             ?? new Goal { Path = goalFile };
 
         // PrPath is derived on the goal from its Path. The corresponding
@@ -112,9 +113,8 @@ public partial class discover : IContext
             };
         }
 
-        // Read the .pr through the gated verb. MIME maps .pr → Goal via
-        // ReadText's TryConvert branch.
-        var prRead = await prFile.ReadText(Context);
+        // The .pr lands as a file reference; its value is what its format (.pr → Goal) decodes.
+        var prRead = await prFile.Read(Context);
         if (!prRead.Success)
         {
             return new global::app.test.@this()

@@ -9,7 +9,7 @@ namespace app.channel.type.file;
 /// produces lazy Data, exactly like every other channel kind.
 ///
 /// <para>The channel does no <c>System.IO</c> of its own — it reads bytes through
-/// <see cref="global::app.type.item.path.@this.ReadBytes"/>, which carries the
+/// <see cref="global::app.type.item.path.@this.Bytes"/>, which carries the
 /// <c>AuthGate</c> (the actor permission model). So the file boundary inherits the
 /// same gate the rest of the path surface enforces; PLNG002 stays clean.</para>
 /// </summary>
@@ -39,9 +39,9 @@ public sealed class @this : global::app.channel.@this
 
     public override async Task<global::app.data.@this> Read(CancellationToken ct = default)
     {
-        // ReadBytes carries the AuthGate AND surfaces missing-file / IO failures
+        // Bytes carries the AuthGate AND surfaces missing-file / IO failures
         // as an error Data (it owns the System.IO), so the channel stays clean.
-        var bytes = await _path.ReadBytes(_context);
+        var bytes = await _path.Bytes(_context);
         if (!bytes.Success) return bytes;
         return await Read((await bytes.Value())!.Value, ct);
     }

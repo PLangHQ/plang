@@ -51,16 +51,17 @@ public sealed partial class @this
 
     /// <summary>A file lands as a <c>file</c> reference, a folder as a <c>directory</c>; nothing there is
     /// NotFound (404) now, at the read, not at first touch. The stat tells which.</summary>
-    public override async Task<data.@this> Read(data.@this<global::app.type.item.@bool.@this> template, actor.context.@this context)
+    public override async Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null)
     {
+        // A failure, or an ask the gate suspends on (it exits the goal), is the read's answer as it is.
         var stat = await Stat(context);
-        if (!stat.Success) return stat;
+        if (!stat.Success || stat.Exits) return stat;
         var info = await stat.Value();
         if (info is not { Exists: true })
             return context.Error(new ServiceError($"Not found: {this}", "NotFound", 404));
         if (info.IsFile == false)
             return new data.@this("directory", new global::app.type.item.directory.@this(this), context: context);
-        var marked = await template.ToBooleanAsync() ? "plang" : null;
+        var marked = template != null && await template.ToBooleanAsync() ? "plang" : null;
         return new data.@this(FileName, new global::app.type.item.file.@this(this, context, marked), context: context);
     }
 
@@ -79,58 +80,7 @@ public sealed partial class @this
         return context.Ok(context.App.type.list[new global::app.type.item.file.@this(this, context).Type, context]);
     }
 
-    /// <summary>
-    /// MIME-aware read. Authorize → (Builder snapshot for .pr) → bytes for
-    /// binary MIME, text+TryConvert for the rest. The Data's <c>Type</c> is
-    /// stamped from the file extension's MIME so downstream variable.set into a
-    /// typed slot round-trips correctly. Replaces today's
-    /// <c>file/code/Default.cs::Default.Read</c>.
-    /// </summary>
-    public override async Task<data.@this> ReadText(actor.context.@this context)
-    {
-        if (await AuthGate(Verb.Read, context) is { } early) return early;
-
-        // The file's format — its extension's MIME ({goal} for .pr, {item, json} for .json, {text} for
-        // .txt), the SAME derivation build-time file.read.Build() uses, so build and runtime agree. It
-        // decodes the bytes; materialization is deferred (see below).
-        var format = context.App.type.list.Mime(MimeType(context));
-
-        // During build: a .pr may be mid-rewrite on disk — read the snapshotted bytes.
-        // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.
-        // TODO(build-mode-inversion): build mode sniffed from a foreign layer (the file op
-        // shouldn't know build mode exists) — invert to a build-born .pr read decorator (plan §6.D).
-        if (context.App.Mode.Value == global::app.Mode.Build && Extension == ".pr")
-        {
-            var snapshot = context.App.Build!.GetPrSnapshot(Absolute);
-            if (snapshot != null)
-                return await format.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), context, Raw);
-        }
-
-        if (!System.IO.File.Exists(Absolute))
-            return context.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
-
-        try
-        {
-            var bytes = await System.IO.File.ReadAllBytesAsync(Absolute);
-
-            // Record the .pr in the build snapshot cache so a later read this build sees
-            // the pre-overwrite content. Perimeter decode — a string only appears here.
-            // TODO(build-mode-inversion): foreign-layer build sniff — invert (plan §6.D).
-            if (context.App.Mode.Value == global::app.Mode.Build && Extension == ".pr")
-                context.App.Build!.SnapshotPrFile(Absolute, System.Text.Encoding.UTF8.GetString(bytes));
-
-            // The format decodes the bytes — the one door a channel read takes too: a value's format
-            // holds the raw bytes unread under its {type, kind} (a .pr → the goal reader on first
-            // touch, a .json → clr(json)); plang's own format is the whole Data they are.
-            return await format.Decode(bytes, context, Raw);
-        }
-        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
-        {
-            return context.Error(new global::app.error.ServiceError(ex.Message, "IOError", 500));
-        }
-    }
-
-    public override async Task<data.@this<global::app.type.item.binary.@this>> ReadBytes(actor.context.@this context)
+    internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
         if (!System.IO.File.Exists(Absolute))
@@ -217,7 +167,7 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// The write door, <see cref="ReadText"/>'s mirror: the file's extension is a format, and the format
+    /// The write door, the file reference's value door mirrored: the file's extension is a format, and the format
     /// writes the value (<c>.pr</c> → goal's, <c>.json</c> → json). A caller says where, never how. Returns
     /// the resulting Path wrapped in Data so the .pr's typed slot round-trips.
     /// </summary>
@@ -325,7 +275,7 @@ public sealed partial class @this
     /// Same-scheme move with action-level options. Bundled-consent for the
     /// out-of-root pair stays — calls into BundledTransfer with the overwrite
     /// option threaded through PerformTransfer. Cross-scheme moves fall
-    /// through to the base default (ReadBytes → WriteBytes → Delete).
+    /// through to the base default (Bytes → WriteBytes → Delete).
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> MoveTo(global::app.type.item.path.@this destination, bool overwrite, actor.context.@this context)
     {

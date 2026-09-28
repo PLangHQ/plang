@@ -27,10 +27,13 @@ Several subsystems have resource limits to prevent abuse:
 
 Action handlers and engine code under `PLang/app/**` must NOT call
 `System.IO.*` directly. The only allowed filesystem surface is the
-`app.type.path.@this` verb set (`ReadText`, `ReadBytes`, `WriteText`,
+`app.type.path.@this` verb set (`Read`, `WriteText`,
 `WriteBytes`, `Append`, `Mkdir`, `Delete`, `List`, `Stat`, `MoveTo`,
 `CopyTo`, `ExistsAsync`, `AsBooleanAsync`). Every one of those methods
 passes through `FilePath.AuthGate(verb)` before touching the disk.
+`Read` lands a reference (`file`, `url`, `directory`); its content is the
+reference's own value, and its raw bytes are `IContent.Content` — both read
+through the path's gated internal `Bytes`.
 
 A handler reaching for `System.IO.File`, `System.IO.Directory`,
 `System.IO.FileInfo`, or `System.IO.Path.*` (Combine/GetDirectoryName/
@@ -75,8 +78,8 @@ escape hatch. Any reach for `.Absolute` outside `app.type.path.**`
 means a third-party API (sqlite, image library, `Assembly.LoadFrom`) is
 about to touch the filesystem with no gate. Handlers MUST `await
 path.Authorize(verb)` first and check `auth.Success` before reading
-`.Absolute`. The verb surface (`ReadText`, `WriteText`, `List`, `Stat`,
-`ReadBytes`, ...) does this automatically — reach for verbs first;
+`.Absolute`. The verb surface (`Read`, `WriteText`, `List`, `Stat`,
+...) does this automatically — reach for verbs first;
 only fall through to `.Absolute` + manual `Authorize` when a
 third-party API genuinely takes over the file (D9b — sqlite is the
 canonical case).

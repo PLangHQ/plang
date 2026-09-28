@@ -37,7 +37,7 @@ public class HttpPathTests
         await Grant(app, context, url);
         await new HttpPath(url).WriteText("the body", context);
 
-        var result = await new HttpPath(url).ReadText(context);
+        var result = await new HttpPath(url).Touch(context);
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("the body");
     }
@@ -49,7 +49,7 @@ public class HttpPathTests
         var url = server.NewResourceUrl();   // never written → 404
         await Grant(app, context, url);
 
-        var result = await new HttpPath(url).ReadText(context);
+        var result = await new HttpPath(url).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
@@ -65,7 +65,7 @@ public class HttpPathTests
         var write = await new HttpPath(url).WriteText("posted body", context);
         await write.IsSuccess();
 
-        var read = await new HttpPath(url).ReadText(context);
+        var read = await new HttpPath(url).Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("posted body");
     }
 
@@ -93,7 +93,7 @@ public class HttpPathTests
         var del = await new HttpPath(url).Delete(context);
         await del.IsSuccess();
 
-        var read = await new HttpPath(url).ReadText(context);
+        var read = await new HttpPath(url).Touch(context);
         await read.IsFailure();
         await Assert.That(read.Error!.StatusCode).IsEqualTo(404);
     }
@@ -156,7 +156,7 @@ public class HttpPathTests
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
 
-        await new HttpPath(url).ReadText(context);
+        await new HttpPath(url).Touch(context);
 
         var captured = server.Requests.FirstOrDefault(r => r.Method == "GET");
         await Assert.That(captured).IsNotNull();
@@ -172,7 +172,7 @@ public class HttpPathTests
         server.MapStatus(u, 401);
         await Grant(app, context, u);
 
-        var result = await new HttpPath(u).ReadText(context);
+        var result = await new HttpPath(u).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(401);
     }
@@ -188,7 +188,7 @@ public class HttpPathTests
         var url = $"http://127.0.0.1:{deadPort}/nothing";
         await Grant(app, context, url);
 
-        var result = await new HttpPath(url).ReadText(context);
+        var result = await new HttpPath(url).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NetworkError");
     }
@@ -202,8 +202,8 @@ public class HttpPathTests
         await new HttpPath(url).WriteText("body", context);
 
         var path = new HttpPath(url);
-        await path.ReadText(context);
-        await path.ReadText(context);
+        await path.Touch(context);
+        await path.Touch(context);
 
         var gets = server.Requests.Count(r => r.Method == "GET" && r.Path == new System.Uri(url).AbsolutePath);
         await Assert.That(gets).IsEqualTo(2);
@@ -220,7 +220,7 @@ public class HttpPathTests
         // Many instances issuing requests concurrently — a per-instance client
         // would exhaust sockets; a shared static client pools connections.
         var tasks = Enumerable.Range(0, 50)
-            .Select(_ => new HttpPath(url).ReadText(context));
+            .Select(_ => new HttpPath(url).Touch(context));
         var results = await Task.WhenAll(tasks);
         await Assert.That(results.All(r => r.Success)).IsTrue();
     }

@@ -27,7 +27,7 @@ public class FilePathVerbTests
         var p = At(app, root, "rt.txt");
         var w = await p.WriteText("round-trip", app.User.Context);
         await w.IsSuccess();
-        var r = await p.ReadText(app.User.Context);
+        var r = await p.Touch(app.User.Context);
         await r.IsSuccess();
         await Assert.That((await r.Value())?.ToString()).IsEqualTo("round-trip");
     }
@@ -38,7 +38,7 @@ public class FilePathVerbTests
         var p = At(app, root, "rt.bin");
         var bytes = new byte[] { 1, 2, 3, 9, 8, 7 };
         await p.WriteBytes(bytes, app.User.Context);
-        var r = await p.ReadBytes(app.User.Context);
+        var r = await p.Bytes(app.User.Context);
         await r.IsSuccess();
         await Assert.That(((global::app.type.item.binary.@this)(await r.Value())!).Value).IsEquivalentTo(bytes);
     }
@@ -83,7 +83,7 @@ public class FilePathVerbTests
         var p = At(app, root, "ap.txt");
         await p.WriteText("abc", app.User.Context);
         await p.Append("def", app.User.Context);
-        var r = await p.ReadText(app.User.Context);
+        var r = await p.Touch(app.User.Context);
         await Assert.That((await r.Value())?.ToString()).IsEqualTo("abcdef");
     }
 
@@ -128,7 +128,7 @@ public class FilePathVerbTests
         var p = new FilePath(System.IO.Path.Combine(root, "newsub", "deep", "f.txt"));
         var w = await p.WriteText("nested", app.User.Context);
         await w.IsSuccess();
-        var r = await p.ReadText(app.User.Context);
+        var r = await p.Touch(app.User.Context);
         await Assert.That((await r.Value())?.ToString()).IsEqualTo("nested");
     }
 
@@ -136,7 +136,7 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "ghost.txt");
-        var r = await p.ReadText(app.User.Context);
+        var r = await p.Touch(app.User.Context);
         await r.IsFailure();
     }
 }

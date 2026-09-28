@@ -9,7 +9,7 @@ namespace app.type.item.url;
 /// composed <c>HttpPath</c>.
 /// </summary>
 [global::app.Attributes.PlangType("url")]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IContent
 {
     public static string Example => "https://example.com/data.json";
     public static string Description => "A web address; its content is fetched when it is used.";
@@ -49,31 +49,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         new global::app.type.@this("url", typeof(@this)) { kind = _kind };
 
     /// <summary>
-    /// The value door — fetch + parse through the file channel (mime stamps the
-    /// content's {type, kind}; the consent gate rides on <c>Path.ReadBytes</c>)
-    /// and answer with the CONTENT's own instance, this url stamped as its
-    /// prior. Single storage: the fetched bytes are released after the parse.
-    /// <para>Owns the one consent-gated GET (idempotent via <c>_bytes</c>) —
-    /// <c>.Value()</c> is the one materialize door; the sync <c>Bytes</c> getter
-    /// serves the cached bytes.</para>
+    /// The value door — the <see cref="Content"/> sample decoded by its format (the response's
+    /// Content-Type first) and answer with the CONTENT's own instance, this url stamped as its prior.
+    /// The sync <c>Bytes</c> getter serves the sampled bytes.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        // The sample: one consent-gated fetch per value per program run — the
-        // channel stamps + parses FROM the sample, never a second GET.
-        // URL authors its own failures (fetch stories) onto the data binding.
-        byte[] bytes;
-        if (_bytes != null) bytes = _bytes;
-        else
-        {
-            var readBytes = await Path.ReadBytes(data.Context);
-            // The fetch error rides through WHOLE — its key, message and inner exception —
-            // instead of being flattened into a bare-string HttpRequestException.
-            if (!readBytes.Success) { data.Fail(readBytes.Error!); return Absent; }
-            _contentType = await readBytes.Properties.Get<string>("contentType");
-            var bin = await readBytes.Value();
-            bytes = _bytes = bin?.Value ?? System.Array.Empty<byte>();
-        }
+        // The sample: one consent-gated fetch per value per program run — the format decodes FROM the
+        // sample, never a second GET. URL authors its own failures (fetch stories) onto the data binding:
+        // the fetch error rides through WHOLE — its key, message and inner exception.
+        var sample = await Content(data.Context);
+        if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
+        var bytes = Bytes;
         // The content's format by precedence: the response Content-Type rules; else the URL extension
         // is the hint (.json → json); else a typeless web response is text, not raw bytes. The format
         // decodes it, with the asker's context.
@@ -92,6 +79,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return answer;
     }
 
+
+    /// <summary>The raw bytes, fetched once through the path's consent gate (the response's Content-Type
+    /// kept with them); a later ask serves them from memory.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.binary.@this>> Content(global::app.actor.context.@this context)
+    {
+        if (_bytes != null) return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(_bytes));
+        var read = await Path.Bytes(context);
+        if (!read.Success || read.Exits) return read;
+        _contentType = await read.Properties.Get<string>("contentType");
+        _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
+        return read;
+    }
 
     public string ContentText() => System.Text.Encoding.UTF8.GetString(_bytes ?? System.Array.Empty<byte>());
     public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();

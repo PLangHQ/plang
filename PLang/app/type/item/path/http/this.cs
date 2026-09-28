@@ -173,25 +173,18 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>A remote location lands as a <c>url</c> reference — no fetch: consent and I/O come at first
     /// touch, through the reference's own value.</summary>
-    public override Task<data.@this> Read(data.@this<global::app.type.item.@bool.@this> template, actor.context.@this context)
+    public override Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null)
         => Task.FromResult(new data.@this("url", new global::app.type.item.url.@this(this, context), context: context));
 
     /// <summary>The <c>url</c> reference's type — the build asks nothing of the remote.</summary>
     public override Task<data.@this> Expect(actor.context.@this context)
         => Task.FromResult<data.@this>(context.Ok(context.App.type.list[new global::app.type.item.url.@this(this, context).Type, context]));
 
-    public override async Task<data.@this> ReadText(actor.context.@this context)
-    {
-        var verb = Verb.Read;
-        if (await AuthGate(verb, context) is { } early) return early;
-        return await Send(HttpMethod.Get, content: null, readBody: true, verb, context);
-    }
-
-    public override async Task<data.@this<global::app.type.item.binary.@this>> ReadBytes(actor.context.@this context)
+    internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {
         var verb = Verb.Read;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
-        return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context, asBytes: true));
+        return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context));
     }
 
     public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context)
@@ -343,10 +336,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// <paramref name="verb"/> rides along so the redirect hop's AuthGate
     /// uses the same verb the calling FS-action started with.
     /// </summary>
-    private Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, Verb verb, actor.context.@this context, bool asBytes = false)
-        => SendWithHops(method, content, readBody, verb, asBytes, MaxRedirectHops, context);
+    private Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, Verb verb, actor.context.@this context)
+        => SendWithHops(method, content, readBody, verb, MaxRedirectHops, context);
 
-    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, bool readBody, Verb verb, bool asBytes, int hopsLeft, actor.context.@this context)
+    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, bool readBody, Verb verb, int hopsLeft, actor.context.@this context)
     {
         try
         {
@@ -358,25 +351,21 @@ public sealed partial class @this : global::app.type.item.path.@this
 
             // 3xx → manual redirect with consent + fresh signing on each hop.
             if ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 && resp.Headers.Location != null)
-                return await FollowRedirect(resp, method, content, readBody, verb, asBytes, hopsLeft, context);
+                return await FollowRedirect(resp, method, content, readBody, verb, hopsLeft, context);
 
             if (!resp.IsSuccessStatusCode)
                 return context.Error(MapStatus(resp.StatusCode));
 
             if (!readBody) return context.Ok();
 
-            // Wrap bytes born-native so ReadBytes→From<binary> extracts the value
+            // Wrap bytes born-native so Bytes→From<binary> extracts the value
             // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
             // The response Content-Type rides as a Property so the url door can stamp
             // by it (Content-Type rules over the URL extension); empty when the server
             // sent none.
-            if (asBytes)
-            {
-                var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
-                bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
-                return bytesData;
-            }
-            return context.Ok(await resp.Content.ReadAsStringAsync());
+            var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+            bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
+            return bytesData;
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
@@ -393,7 +382,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// keep method and body.
     /// </summary>
     private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, HttpMethod method, HttpContent? content,
-        bool readBody, Verb verb, bool asBytes, int hopsLeft, actor.context.@this context)
+        bool readBody, Verb verb, int hopsLeft, actor.context.@this context)
     {
         if (hopsLeft <= 0)
             return context.Error(new Error(
@@ -433,7 +422,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         // The consent prompt for the new host. AuthGate returns null on grant.
         if (await nextPath.AuthGate(verb, context) is { } denial) return denial;
 
-        return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1, context);
+        return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, hopsLeft - 1, context);
     }
 
     /// <summary>

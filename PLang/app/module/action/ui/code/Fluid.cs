@@ -44,11 +44,12 @@ public class Fluid : ITemplate
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative(action.Context);
-            var readResult = await pathData.ReadText(action.Context);
+            var readResult = await pathData.Read(action.Context);
+            var read = readResult.Success ? await readResult.Value() : null;
             if (!readResult.Success)
                 return action.Context.Error<global::app.type.item.text.@this>(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
-            templateContent = (await readResult.Value())?.ToString() ?? "";
+            templateContent = read?.ToString() ?? "";
         }
 
         // Parse
@@ -371,16 +372,17 @@ public class Fluid : ITemplate
 
         public Stream CreateReadStream()
         {
-            // ReadText routes through AuthGate(Read) — out-of-root templates
+            // The include lands as a reference through AuthGate(Read) — out-of-root templates
             // surface as denials before any disk access. Template MIMEs that
-            // map to byte[] (octet-stream, unmapped extensions) come back as
-            // raw bytes; UTF-8 decode them. String-valued reads pass through.
-            var read = _path.ReadText(_context).GetAwaiter().GetResult();
+            // map to bytes (octet-stream, unmapped extensions) come back as
+            // raw bytes; UTF-8 decode them. Text passes through.
+            var landed = _path.Read(_context).GetAwaiter().GetResult();
+            var read = landed.Success ? landed.Value().AsTask().GetAwaiter().GetResult() : null;
             string content;
-            if (read.Peek() is global::app.type.item.binary.@this bin)
+            if (read is global::app.type.item.binary.@this bin)
                 content = System.Text.Encoding.UTF8.GetString(bin.Value);
             else
-                content = read.Peek()?.ToString() ?? "";
+                content = read?.ToString() ?? "";
             return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
         }
     }

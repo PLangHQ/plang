@@ -721,10 +721,8 @@ public sealed class OpenAi : ILlm
             };
         }
 
-        // Try file path — gated through path.ReadAsDataUri (D9a content-shape
-        // verb). AuthGate(Read) fires inside; in-root fast-passes, out-of-root
-        // surfaces as a permission prompt or denial. Sync-wait: message
-        // formatting is sync and the bytes-then-encode pipeline is cheap.
+        // Try file path — its reference's raw content, gated: in-root fast-passes, out-of-root
+        // surfaces as a permission prompt or denial. Sync-wait: message formatting is sync.
         // The probe is whether the image names a file: a string that can't be a path at all (a base64 payload
         // too long or with characters no path takes) is no file, and neither is a path to nothing (404). Any
         // other failure — a denied read, an IO error — is the query's, not a guess at base64.
@@ -733,20 +731,23 @@ public sealed class OpenAi : ILlm
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { }
         if (imgPath != null)
         {
-            var dataUri = imgPath.ReadAsDataUri(context).GetAwaiter().GetResult();
-            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Peek()?.ToString()))
+            var content = imgPath.Read(context).GetAwaiter().GetResult()
+                .Use<global::app.type.item.IContent>(async file => await file.Content(context)).GetAwaiter().GetResult();
+            // OpenAI takes an attached image as a data URI — composed here, at its boundary.
+            if (content.Success && content.Peek() is global::app.type.item.binary.@this { Value.Length: > 0 } bytes)
             {
+                var mime = imgPath.MimeType(context);
                 return new Dictionary<string, object>
                 {
                     ["type"] = "image_url",
                     ["image_url"] = new Dictionary<string, string>
                     {
-                        ["url"] = dataUri.Peek()?.ToString()
+                        ["url"] = $"data:{mime};base64,{Convert.ToBase64String(bytes.Value)}"
                     }
                 };
             }
-            if (!dataUri.Success && dataUri.Error?.StatusCode != 404)
-                throw new InvalidOperationException($"the image '{imgPath}' couldn't be read: {dataUri.Error?.Message}");
+            if (!content.Success && content.Error?.StatusCode != 404)
+                throw new InvalidOperationException($"the image '{imgPath}' couldn't be read: {content.Error?.Message}");
         }
 
         // Assume base64

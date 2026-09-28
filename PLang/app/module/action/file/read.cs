@@ -14,7 +14,7 @@ public partial class Read : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> ResolveVariables { get; init; }
 
-    public Task<data.@this> Start() => Path.Use(path => path.Read(ResolveVariables, Context));
+    public Task<data.@this> Start() => Path.Use(path => path.Read(Context, ResolveVariables));
 
     /// <summary>A literal path's reference type, for the step that captures it; a path holding a variable
     /// is known only at run.</summary>

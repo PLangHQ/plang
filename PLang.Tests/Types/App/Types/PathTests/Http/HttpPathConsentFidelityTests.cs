@@ -59,7 +59,7 @@ public class HttpPathConsentFidelityTests
         var url = "https://аpple.com/login";
 
         // Read so Authorize fires and renders the prompt.
-        _ = await new HttpPath(url).ReadText(context);
+        _ = await new HttpPath(url).Touch(context);
 
         await Assert.That(ch.LastQuestion).Contains("xn--pple-43d.com");
         await Assert.That(ch.LastQuestion).DoesNotContain("аpple.com");
@@ -75,7 +75,7 @@ public class HttpPathConsentFidelityTests
         var (_, context, ch) = MakeApp();
         var url = "https://apple.com/login";
 
-        _ = await new HttpPath(url).ReadText(context);
+        _ = await new HttpPath(url).Touch(context);
 
         await Assert.That(ch.LastQuestion).Contains("apple.com");
         await Assert.That(ch.LastQuestion).DoesNotContain("xn--");
@@ -114,7 +114,7 @@ public class HttpPathConsentFidelityTests
         var (_, context, ch) = MakeApp();
         var url = "https://attacker:pwd@victim.example/admin";
 
-        _ = await new HttpPath(url).ReadText(context);
+        _ = await new HttpPath(url).Touch(context);
 
         await Assert.That(ch.LastQuestion).DoesNotContain("attacker");
         await Assert.That(ch.LastQuestion).DoesNotContain("pwd");

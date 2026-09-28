@@ -15,33 +15,9 @@ public sealed partial class @this
 {
     private readonly actor.context.@this _context;
 
-    /// <summary>
-    /// Snapshot of .pr file content (raw JSON) loaded at first access during build.
-    /// Keyed by absolute file path. When a .pr file is overwritten during build,
-    /// the snapshot provides the original content for re-deserialization.
-    /// </summary>
-    private readonly Dictionary<string, string> _prSnapshot = new(StringComparer.OrdinalIgnoreCase);
-
-    // .pr writes go through goal.Output (Store view) via the channel serializer — the old STJ PrWrite
-    // options + [Store]-filter modifier are gone. [Store] filtering now lives in the Output path
-    // (Tagged.PropertiesFor selects [Store] for View.Store; goal/step/action reflect via OutputTagged).
-
-    /// <summary>
-    /// Snapshots .pr file content if not already captured.
-    /// Called from file.Read paths during building.
-    /// </summary>
-    public void SnapshotPrFile(string absolutePath, string content)
-    {
-        _prSnapshot.TryAdd(absolutePath, content);
-    }
-
-    /// <summary>
-    /// Gets snapshotted .pr file content. Returns null if not snapshotted.
-    /// </summary>
-    public string? GetPrSnapshot(string absolutePath)
-    {
-        return _prSnapshot.TryGetValue(absolutePath, out var content) ? content : null;
-    }
+    // .pr writes go through goal.Output (Store view) via the channel serializer; [Store] filtering
+    // lives in the Output path (Tagged.PropertiesFor selects [Store] for View.Store; goal/step/action
+    // reflect via OutputTagged).
 
     public @this(actor.context.@this context)
     {

@@ -213,7 +213,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (_bytes == null && Path != null)
         {
-            var read = await Path.ReadBytes(data.Context);
+            var read = await Path.Bytes(data.Context);
             // The path's read error rides through WHOLE — its key, message and inner
             // exception — instead of being flattened into a bare-string IOException.
             if (!read.Success)
