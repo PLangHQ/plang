@@ -1,8 +1,8 @@
 ## Now
 
-Done: 1–8g, and 8h's code parts (see [`spec/done.list`](spec/done.list)). What's left is [`spec/AppSystems.goal`](spec/AppSystems.goal), each step naming its test; checks that can't be a test are in [`spec/checks.md`](spec/checks.md).
+Done: 1–8g, and 8h's code parts (see [`spec/done.list`](spec/done.list)). What's left is [`spec/start.goal`](spec/start.goal) (placed at `test/plan/app-systems/start.goal`): each behaviour as a comment, with the step that runs its test. Checks that can't be a test are in [`spec/checks.md`](spec/checks.md).
 
-- Tests live at the path of what they test, in singular folders (`Test/Module/On/Cache/`). They're built only when Ingi says so; the coder may ask.
+- A plan's tests live in its own folder, lowercase and singular: `test/plan/app-systems/`, each at the path of what it tests (`module/on/cache/…`). They're built only when Ingi says so; the coder may ask.
 - Hand-over: the spec goals plus the OBP rules; the implementation is a conversation between the coder and the architect.
 
 ## 2026-09-27 night — Ingi asleep; the architect decides (his words: "I want you to make decisions")
