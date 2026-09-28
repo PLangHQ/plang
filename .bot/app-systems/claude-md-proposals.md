@@ -44,3 +44,11 @@ User-facing chatter → `await context.Actor.Channel[global::app.channel.list.@t
 ```
 - A test lives at the path of what it tests (`Test/Module/On/Cache/`, `Test/App/Type/`), in singular folders — never in a folder named for a branch, stage or plan.
 ```
+
+## architect — app-systems — 2026-09-28 (refines the entry above)
+**Target:** /CLAUDE.md ("Running plang Tests")
+**Why:** Ingi refined the layout: lowercase, and a folder per plan. Filed on Ingi's explicit request.
+**Proposed change:** use `test/` (lowercase) instead of `Test/`, and add:
+```
+- A plan's validation tests live in its own folder, `test/plan/<id>/` (id = the plan's branch), each at the path of what it tests; the plan's index is `test/plan/<id>/start.goal` (each behaviour a comment, the step under it runs its test). Tests that aren't a plan's stay in the concept tree (`test/module/on/…`).
+```
