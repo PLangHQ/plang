@@ -279,3 +279,11 @@ listing each fact of the entry in an initializer (`Alias`, `Owned`, `From`, `Int
 has to be remembered here too, and a forgotten one makes the variant silently lack it (a template-marked
 `file` didn't know it is born `From` a path until it was added). The variant should hold its entry (the
 facts read through it) or the type should copy itself with only the declaration changed.
+
+## list.Add chooses extend or append by asking what the value is [logged 2026-09-28, stage 9b list]
+
+`type/item/list/this.cs` `Add(value, at, ctx)` asks `await value.Value() is @this items` to decide whether the
+value's elements join (extend: an O(1) chunk, nothing copied) or the value is one element (append). A fork on
+the value's type, moved from the handler into the list, not dissolved. The direction: the value hands over its
+rows — a list its elements, anything else itself — as a member on item with no `is`. Kept for now because the
+extend path joins a list as one chunk (reference semantics, no copy); a rows hand-over must keep that.

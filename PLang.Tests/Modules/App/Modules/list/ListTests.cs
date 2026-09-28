@@ -383,6 +383,87 @@ public class ListTests
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
     }
 
+    // --- Where: the value answers ---
+
+    private static global::app.type.item.choice.@this<global::app.module.action.condition.Operator> Op(string op)
+        => (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator(op);
+
+    [Test]
+    public async Task Where_OnAList_KeepsTheElementsWhoseFieldHolds()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("users", new List<object?>
+        {
+            new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
+            new Dictionary<string, object?> { ["name"] = "b", ["age"] = 10L },
+        });
+
+        var result = await new Where(context) { ListName = new app.type.item.variable.@this("users"),
+            Field = (global::app.type.item.text.@this)"age", Operator = Op(">"),
+            Value = new global::app.data.@this("", 20L, context: context) }.Start();
+
+        await result.IsSuccess();
+        var kept = (global::app.type.item.list.@this)(await result.Value())!;
+        await Assert.That(kept.CountRaw).IsEqualTo(1);
+        await Assert.That((await (await kept.First(context)!.Get("name")).Value())?.ToString()).IsEqualTo("a");
+    }
+
+    [Test]
+    public async Task Where_OnADict_KeepsItOrNothing()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
+
+        var kept = await new Where(context) { ListName = new app.type.item.variable.@this("user"),
+            Field = (global::app.type.item.text.@this)"age", Operator = Op(">"),
+            Value = new global::app.data.@this("", 20L, context: context) }.Start();
+        var dropped = await new Where(context) { ListName = new app.type.item.variable.@this("user"),
+            Field = (global::app.type.item.text.@this)"age", Operator = Op("<"),
+            Value = new global::app.data.@this("", 20L, context: context) }.Start();
+
+        await Assert.That(await kept.Value()).IsTypeOf<global::app.type.item.dict.@this>();
+        await Assert.That((await dropped.Value()) is null or { IsNull: true }).IsTrue();
+    }
+
+    [Test]
+    public async Task Where_OnAScalar_HasNoFields()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("n", 5L);
+
+        var result = await new Where(context) { ListName = new app.type.item.variable.@this("n"),
+            Field = (global::app.type.item.text.@this)"age", Operator = Op(">"),
+            Value = new global::app.data.@this("", 20L, context: context) }.Start();
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("WhereOnApex");
+    }
+
+    [Test]
+    public async Task Remove_OutOfRange_IsIndexOutOfRange()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("myList", new List<object?> { "a" });
+
+        var result = await new Remove(context) { ListName = new app.type.item.variable.@this("myList"),
+            Value = new global::app.data.@this("", null, context: context), AtIndex = (global::app.type.item.number.@this)5 }.Start();
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("IndexOutOfRange");
+    }
+
+    [Test]
+    public async Task Sort_ByAFieldThatDidNotResolve_IsItsOwnAnswer_NotASortByValue()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("myList", new List<object?> { 2L, 1L });
+
+        var result = await new Sort(context) { ListName = new app.type.item.variable.@this("myList"),
+            By = new global::app.data.@this<global::app.type.item.text.@this>("by", null, context: context) }.Start();
+
+        await result.IsFailure();
+    }
+
     [Test]
     public async Task Any_NoMatch_ReturnsFalse()
     {

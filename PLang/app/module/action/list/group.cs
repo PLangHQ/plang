@@ -7,37 +7,6 @@ public partial class Group : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Start()
-    {
-        var data = await (await ListName.Value())!.Start(Context);
-        var key = (await Key.Value())!.Clr<string>()!;
-
-        // Buckets are native lists of the element Data — each bucket is itself
-        // navigable (you can sort/where inside one). Insertion order preserved.
-        var buckets = new Dictionary<string, app.type.item.list.@this>();
-        var order = new List<string>();
-        foreach (var (_, item) in await data.EnumerateItems())
-        {
-            var keyData = await item.Get(key);
-            var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";
-            if (!buckets.TryGetValue(keyValue, out var bucket))
-            {
-                bucket = new app.type.item.list.@this();
-                buckets[keyValue] = bucket;
-                order.Add(keyValue);
-            }
-            bucket.Add(item);
-        }
-
-        var result = new app.type.item.list.@this();
-        foreach (var k in order)
-        {
-            var bucketDict = new app.type.item.dict.@this();
-            bucketDict.Set(new global::app.data.@this("key", k, context: Context));
-            bucketDict.Set(new global::app.data.@this("items", buckets[k], context: Context));
-            result.Add(new global::app.data.@this("", bucketDict, context: Context));
-        }
-
-        return Context.Ok(result);
-    }
+    public async Task<data.@this<app.type.item.list.@this>> Start() => data.@this<app.type.item.list.@this>.From(
+        await ListName.Use(name => name.Use<app.type.item.list.@this>(Context, list => list.Group(Key, Context))));
 }

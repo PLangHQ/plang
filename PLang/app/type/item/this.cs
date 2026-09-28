@@ -440,6 +440,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => System.Threading.Tasks.ValueTask.FromResult(false);
 
     /// <summary>
+    /// What of this value holds when its <paramref name="field"/> is compared to <paramref name="value"/>
+    /// under <paramref name="op"/> (<c>where %users% age &gt; 20</c>) — each type owns its answer: a list keeps
+    /// the elements that do, a dict keeps itself or nothing. The default: a value with no fields has nothing
+    /// to scope into.
+    /// </summary>
+    public virtual System.Threading.Tasks.Task<global::app.data.@this> Where(
+        global::app.data.@this<global::app.type.item.text.@this> field,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this value, global::app.actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.ValidationError(
+            $"'where {field.Peek()} …' needs a list or dict to scope into — a {Type.Name} has no fields.", "WhereOnApex")));
+
+    /// <summary>
     /// Emptiness — each type owns its own answer: text → whitespace-only,
     /// dict/list → no entries, null/absent → empty. Async because a reference
     /// may load to answer (same precedent as <see cref="AsBooleanAsync"/>).

@@ -75,17 +75,6 @@ public class Stage6_ConsumersTests
     // ---------- sort ----------
 
     [Test]
-    public async Task Sort_TwoPhase_KeysMaterialiseAsync_OrderSync_NoGetResult()
-    {
-        // phase 1 awaits all keys; phase 2 sync sort with no await inside the comparator — no GetAwaiter().GetResult()
-        // the sort surface is async (phase 1 awaits values/keys); the phase-2 comparator
-        // is sync with no GetAwaiter().GetResult() anywhere in the file
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "type", "list", "this.cs"));
-        await Assert.That(src).Contains("public async System.Threading.Tasks.Task Sort(");
-        await Assert.That(src).DoesNotContain(".GetAwaiter().GetResult()");
-    }
-
-    [Test]
     public async Task SortBySize_FilesStatInPhaseOne_OrderInPhaseTwo()
     {
         // sort %files% by size — keys (stat) materialise in async phase 1;

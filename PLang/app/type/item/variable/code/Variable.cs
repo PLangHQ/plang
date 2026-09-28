@@ -35,6 +35,7 @@ public sealed class Variable : Hop
     internal async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(global::app.actor.context.@this context)
     {
         if (Name.StartsWith('!') && await Start(null, context) is { IsInitialized: true } held) return held;
-        return await context.Variable.Ensure(Name, () => new global::app.type.item.dict.@this());
+        return await context.Variable.Ensure(Name,
+            () => context.App.type.list["dict"].Create(new System.Collections.Generic.Dictionary<string, object?>(), context));
     }
 }

@@ -835,31 +835,111 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return (Data)context.Ok(this);
         });
 
-    /// <summary>Removes the element at <paramref name="at"/> when that is a position, else the first element
-    /// equal to <paramref name="value"/>. Answers this list.</summary>
+    /// <summary>Removes the element at <paramref name="at"/> when one is given (-1 is none) — outside the
+    /// list is IndexOutOfRange — else the first element equal to <paramref name="value"/>. Answers this list.</summary>
     public System.Threading.Tasks.Task<Data> Remove(Data value, global::app.data.@this<global::app.type.item.number.@this> at,
         actor.context.@this context)
         => at.Use(async index =>
         {
+            if (index >= Count)
+                return context.Error(new global::app.error.ValidationError($"Index {index} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
             if (index >= 0) RemoveAt(index);
             else await Remove((object?)value, context);
             return (Data)context.Ok(this);
         });
 
     /// <summary>Sorts this list (<see cref="Sort(string?, bool, actor.context.@this)"/>) by
-    /// <paramref name="by"/> when given; elements that have no order between them are an error, not a throw.
-    /// Answers this list.</summary>
+    /// <paramref name="by"/> when one is given — a field that didn't resolve is its own answer; elements that
+    /// have no order between them are an error, not a throw. Answers this list.</summary>
     public System.Threading.Tasks.Task<Data> Sort(global::app.data.@this<global::app.type.item.text.@this>? by,
         global::app.data.@this<global::app.type.item.@bool.@this> descending, actor.context.@this context)
-        => descending.Use(async down =>
+        => descending.Use(down => by is not { IsInitialized: true }
+            ? Sorted(null, down.Value, context)
+            : by.Use(field => Sorted(field.ToString(), down.Value, context)));
+
+    private async System.Threading.Tasks.Task<Data> Sorted(string? by, bool descending, actor.context.@this context)
+    {
+        try { await Sort(by, descending, context); }
+        catch (global::app.data.IncomparableException ex)
         {
-            try { await Sort(by == null ? null : (await by.Value())?.ToString(), down.Value, context); }
-            catch (global::app.data.IncomparableException ex)
+            return context.Error(new global::app.error.ValidationError(ex.Message));
+        }
+        return context.Ok(this);
+    }
+
+    /// <summary>The elements with their duplicates dropped (the first of each kept) — equal through the one
+    /// compare path, so equivalent dicts collapse to one. A new list, born through its type.</summary>
+    public async System.Threading.Tasks.Task<Data> Unique(actor.context.@this context)
+    {
+        var kept = new List<Data>();
+        foreach (var element in Items(context))
+        {
+            var seen = false;
+            foreach (var k in kept)
+                if (await element.Compare(k) == global::app.data.Comparison.Equal) { seen = true; break; }
+            if (!seen) kept.Add(element);
+        }
+        return await context.App.type.list["list"].Create(new @this(kept), context);
+    }
+
+    /// <summary>The elements with every nested list's elements lifted in its place, however deep; any other
+    /// element kept as it is. A new list, born through its type.</summary>
+    public async System.Threading.Tasks.Task<Data> Flatten(actor.context.@this context)
+    {
+        var flat = new @this();
+        await Lift(this, flat, context);
+        return await context.App.type.list["list"].Create(flat, context);
+
+        static async System.Threading.Tasks.Task Lift(@this source, @this into, actor.context.@this context)
+        {
+            foreach (var element in source.Items(context))
+                if (await element.Value() is @this nested) await Lift(nested, into, context);
+                else into.Add(element);
+        }
+    }
+
+    /// <summary>The elements grouped by their <paramref name="key"/> field, in first-seen order: a list of
+    /// <c>{key, items}</c>, each <c>items</c> a list of its elements (navigable in turn). A key that didn't
+    /// resolve is its own answer. A new list, born through its type.</summary>
+    public System.Threading.Tasks.Task<Data> Group(global::app.data.@this<global::app.type.item.text.@this> key,
+        actor.context.@this context)
+        => key.Use(async field =>
+        {
+            var buckets = new Dictionary<string, @this>();
+            var order = new List<string>();
+            foreach (var element in Items(context))
             {
-                return context.Error(new global::app.error.ValidationError(ex.Message));
+                var held = await element.Get(field.ToString());
+                var name = held.IsInitialized ? (await held.Value())?.ToString() ?? "" : "";
+                if (!buckets.TryGetValue(name, out var bucket))
+                {
+                    buckets[name] = bucket = new @this();
+                    order.Add(name);
+                }
+                bucket.Add(element);
             }
-            return (Data)context.Ok(this);
+            var groups = order.Select(name => new Dictionary<string, object?> { ["key"] = name, ["items"] = buckets[name] }).ToList();
+            return await context.App.type.list["list"].Create(groups, context);
         });
+
+    /// <summary>The elements whose <paramref name="field"/> holds against <paramref name="value"/> under
+    /// <paramref name="op"/> — each element is the subject its field is read from. A field, an operator or a
+    /// comparison that fails is the answer. A new list, born through its type.</summary>
+    public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        Data value, actor.context.@this context)
+        => field.Use(name => op.Use(async compare =>
+        {
+            var operation = (global::app.module.action.condition.Operator)compare;
+            var kept = new @this();
+            foreach (var element in Items(context))
+            {
+                var holds = await operation.Evaluate(await element.Get(name.ToString()), value, context);
+                if (!holds.Success) return holds;
+                if (holds.ToBoolean()) kept.Add(element);
+            }
+            return await context.App.type.list["list"].Create(kept, context);
+        }));
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()

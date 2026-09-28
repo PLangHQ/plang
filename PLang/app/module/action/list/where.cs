@@ -3,14 +3,9 @@ using app.module.action.condition;
 namespace app.module.action.list;
 
 /// <summary>
-/// Filters by a scoped predicate. <c>where</c> is a dict+list capability: the
-/// predicate's bare field name resolves against the <em>subject</em>.
-///
-/// <para>On a <b>list</b> the subject is each element — <c>where %users% age &gt; 20</c>
-/// keeps the elements whose <c>age</c> passes (list.where = dict.where per element).
-/// On a <b>dict</b> the subject is the dict itself — <c>where %user% age &gt; 20</c>
-/// keeps or drops the one dict (bare <c>age</c> → <c>%self.age%</c>). A scalar has
-/// no fields to scope into, so <c>5 where age &gt; 20</c> is a clean error.</para>
+/// Filters by a scoped predicate: the predicate's bare field name resolves against the subject — each element
+/// of a list (<c>where %users% age &gt; 20</c> keeps the elements whose <c>age</c> passes), a dict itself (kept
+/// or dropped). The value answers (<c>item.Where</c>); a scalar has no fields to scope into.
 /// </summary>
 [Action("where", Cacheable = false)]
 public partial class Where : IContext
@@ -25,41 +20,6 @@ public partial class Where : IContext
     /// <summary>The right-hand comparison value of the predicate.</summary>
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var subject = await (await ListName.Value())!.Start(Context);
-        var field = (await Field.Value())!.Clr<string>()!;
-        Operator op = (await Operator.Value())!;
-        var subjectVal = await subject.Value();
-
-        if (subjectVal is app.type.item.list.@this list)
-        {
-            // list.where delegates to dict.where per element — subject is each element.
-            var kept = new app.type.item.list.@this();
-            foreach (var item in list.Items(Context))
-            {
-                var keepItem = await Keep(item, field, op);
-                if (!keepItem.Success) return Context.Error(keepItem.Error!);
-                if (keepItem.ToBoolean()) kept.Add(item);
-            }
-            return Context.Ok(kept, Context.App.type.list["list"]);
-        }
-
-        if (subjectVal is app.type.item.dict.@this)
-        {
-            // dict.where is the leaf — subject is the dict itself, kept or dropped.
-            var keep = await Keep(subject, field, op);
-            if (!keep.Success) return Context.Error(keep.Error!);
-            return Context.Ok(keep.ToBoolean() ? subjectVal : null,
-                Context.App.type.list["dict"]);
-        }
-
-        // The apex has no fields to scope into — `5 where age > 20` is meaningless.
-        return Context.Error(new app.error.ValidationError(
-            $"'where {field} …' needs a list or dict to scope into — '{(await ListName.Value())}' is a {subject.Type.Name}, which has no fields.",
-            "WhereOnApex"));
-    }
-
-    private async Task<data.@this<global::app.type.item.@bool.@this>> Keep(data.@this subject, string field, Operator op)
-        => await op.Evaluate(await subject.Get(field), Value, Context);
+    public Task<data.@this> Start() => ListName.Use(name => name.Use<app.type.item.@this>(Context,
+        subject => subject.Where(Field, Operator, Value, Context)));
 }

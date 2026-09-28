@@ -99,16 +99,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         => Code.Set(value, context);
 
     /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/>
-    /// makes, written there. A bare name does it in one step (runs asking at once all answer the same
-    /// Data); a deeper variable reads, then writes.</summary>
+    /// gives birth to, written there. A bare name does it in one step (runs asking at once all answer the
+    /// same Data); a deeper variable reads, then writes. A refused birth or write is the answer.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(
-        System.Func<global::app.type.item.@this> value, actor.context.@this context)
+        System.Func<System.Threading.Tasks.ValueTask<global::app.data.@this>> value, actor.context.@this context)
     {
         if (Code.Count == 1) return await context.Variable.Ensure(Code.Root.Name, value);
         var held = await Start(context);
         if (held.IsInitialized) return held;
-        await Set(value(), context);
-        return await Start(context);
+        var born = await value();
+        if (!born.Success || born.Handled) return born;
+        var written = await Set(born.Peek(), context);
+        return written.Success ? await Start(context) : written;
     }
 
     /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, handed to <paramref name="then"/>: its
@@ -123,9 +125,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, changed in place by
-    /// <paramref name="then"/>, then kept as the variable's value (<see cref="Replace"/>). The change's answer
-    /// is the answer — unless keeping it isn't allowed (what is bound on the set refusing it). A failure, an
-    /// ask, or a value that isn't a TAs is the answer, nothing changed.</summary>
+    /// <paramref name="then"/>, then written back (<see cref="Replace"/>) — for a bare name holding that very
+    /// instance there is nothing to write and nothing fires; a deeper variable (or a value that became a
+    /// new instance when touched) is written, so what is bound on the set runs AFTER the change is made: a
+    /// refusal there is the answer, but the change is already in the value. A failure, an ask, or a value
+    /// that isn't a TAs is the answer, nothing changed.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this> Change<TAs>(actor.context.@this context,
         System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then) where TAs : global::app.type.item.@this
     {

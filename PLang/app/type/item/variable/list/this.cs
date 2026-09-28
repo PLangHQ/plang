@@ -202,21 +202,24 @@ public partial class @this
     private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%").Variable.Single();
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
-    /// <paramref name="value"/> makes, stored under it in one step: runs asking at once all answer
-    /// the same Data, never each a value of their own. A forked flow's own scope keeps
-    /// <see cref="Set(string, object?)"/>'s rules.</summary>
-    public async System.Threading.Tasks.ValueTask<data.@this> Ensure(string name, System.Func<global::app.type.item.@this> value)
+    /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
+    /// the same Data, never each a value of their own. A birth that is refused or answered otherwise is the
+    /// answer, nothing stored. A forked flow's own scope keeps <see cref="Set(string, object?)"/>'s rules.</summary>
+    public async System.Threading.Tasks.ValueTask<data.@this> Ensure(string name,
+        System.Func<System.Threading.Tasks.ValueTask<data.@this>> value)
     {
         var existing = await Get(name);
         if (existing.IsInitialized) return existing;
+        var born = await value();
+        if (!born.Success || born.Handled) return born;
+        var made = born.Peek();
         if (Calls.Current != null)
-            return await Set(name, value());
+            return await Set(name, made);
 
-        var made = value();
         if (await Before(Events?.set, name, made) is { } refused) return refused;
-        data.@this? born = null;
-        var held = _variables.GetOrAdd(name, _ => born = new data.@this(name, made, context: _context));
-        return ReferenceEquals(held, born) ? await After(name, null, held) : held;
+        data.@this? stored = null;
+        var held = _variables.GetOrAdd(name, _ => stored = new data.@this(name, made, context: _context));
+        return ReferenceEquals(held, stored) ? await After(name, null, held) : held;
     }
 
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still

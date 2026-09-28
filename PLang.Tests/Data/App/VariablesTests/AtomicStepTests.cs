@@ -68,7 +68,7 @@ public class AtomicStepTests : System.IAsyncDisposable
         var existing = new List();
         await store.Set("l", existing);
 
-        var held = await store.Ensure("l", () => new List());
+        var held = await store.Ensure("l", () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.User.Context));
 
         await Assert.That(ReferenceEquals(await held.Value(), existing)).IsTrue();
     }
@@ -79,7 +79,8 @@ public class AtomicStepTests : System.IAsyncDisposable
         var store = new Variables(_app.User.Context);
 
         var held = await Task.WhenAll(Enumerable.Range(0, 200)
-            .Select(_ => Task.Run(async () => await (await store.Ensure("l", () => new List())).Value())));
+            .Select(_ => Task.Run(async () => await (await store.Ensure("l",
+                () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.User.Context))).Value())));
 
         await Assert.That(held.Distinct(ReferenceEqualityComparer.Instance).Count()).IsEqualTo(1);
     }

@@ -8,28 +8,6 @@ public partial class Range : IContext
     [Default(1)]
     public partial data.@this<global::app.type.item.number.@this> Step { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Start()
-    {
-        // Typed reads; the numbers lower at the loop bounds — the handler's
-        // own int boundary.
-        var stepN = (await Step.Value())!;
-        if (stepN == 0)
-            return Context.Error<app.type.item.list.@this>(
-                new app.error.ValidationError("Step cannot be zero", "InvalidStep"));
-
-        var list = new app.type.item.list.@this();
-        int start = (await From.Value())!.ToInt32(), end = (await To.Value())!.ToInt32(), step = stepN.ToInt32();
-        if (step > 0)
-        {
-            for (int i = start; i <= end; i += step)
-                list.Add(new global::app.data.@this("", i, context: Context));
-        }
-        else
-        {
-            for (int i = start; i >= end; i += step)
-                list.Add(new global::app.data.@this("", i, context: Context));
-        }
-
-        return Context.Ok(list);
-    }
+    public async Task<data.@this<app.type.item.list.@this>> Start() => data.@this<app.type.item.list.@this>.From(
+        await From.Use(from => from.Range(To, Step, Context)));
 }
