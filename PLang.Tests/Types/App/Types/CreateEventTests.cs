@@ -78,6 +78,33 @@ public class CreateEventTests : System.IAsyncDisposable
         await Assert.That(fired).IsEqualTo(1);
     }
 
+    [Test] public async Task ReadingAFile_IsTheBirthOfAFile_ThroughItsTypesCreate()
+    {
+        System.IO.Directory.CreateDirectory(app.AbsolutePath);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "born.txt"), "x");
+        object? seen = null;
+        On("file", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
+
+        var landed = await global::app.type.item.path.@this.Resolve("born.txt", Ctx).Read(Ctx);
+
+        await landed.IsSuccess();
+        await Assert.That(seen).IsTypeOf<global::app.type.item.file.@this>();
+        await Assert.That(seen).IsSameReferenceAs(landed.Peek());
+    }
+
+    [Test] public async Task AFileMadeFromAPath_IsTheReferenceToIt_WithTheDeclaredTemplate()
+    {
+        var path = global::app.type.item.path.@this.Resolve("some.txt", Ctx);
+        var type = app.type.list[new global::app.type.@this("file", (string?)null, template: "plang"), Ctx];
+
+        var born = await type.Create(path, Ctx);
+
+        await born.IsSuccess();
+        await Assert.That(born.Peek()).IsTypeOf<global::app.type.item.file.@this>();
+        await Assert.That(((global::app.type.item.file.@this)born.Peek()).Path).IsSameReferenceAs(path);
+        await Assert.That(born.Peek().Template).IsEqualTo("plang");
+    }
+
     [Test] public async Task DecodedContent_IsABirth_ThroughItsTypesCreate()
     {
         object? seen = null;

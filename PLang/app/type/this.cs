@@ -305,11 +305,17 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (raw is string or byte[])
             return new item.source(raw, this);
 
-        // A container / domain value is already native (dict, list, path, image, …) — hold it. A
-        // template=plang declaration stamps the container so its .Value() resolves nested %var% leaves
-        // (mirrors how a text carries the template) — the source path below already carries it.
+        // A container / domain value is already native (dict, list, path, image, …) — hold it; one that
+        // this type is made FROM (a path declared a file: the file is born from its path and is-a path)
+        // is made by this type's own lift — only when what it makes carries the raw as its prior, so a
+        // container declared as another type is still held. A template=plang declaration stamps the
+        // container so its .Value() resolves nested %var% leaves (mirrors how a text carries the
+        // template) — the source path below already carries it.
         if (raw is item.@this { IsLeaf: false } native)
         {
+            if (!native.Is(this) && _byContext(raw, context) is { } made && !ReferenceEquals(made, native)
+                && string.Equals(made.Type.Name, Name, System.StringComparison.OrdinalIgnoreCase)
+                && made.Is(native.Type)) native = made;
             if (Template != null && native.Template == null) native.Template = Template;
             return native;
         }

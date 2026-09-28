@@ -27,7 +27,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(global::app.type.item.path.@this path)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        // Born from a path — its type in this value's history, so `is path` answers from the chain.
+        history.Add(path);
     }
+
+    /// <summary>A directory is made from its path; anything else declines.</summary>
+    public static @this? Create(object? raw) => raw switch
+    {
+        @this self => self,
+        global::app.type.item.path.@this path => new @this(path),
+        _ => null,
+    };
 
     /// <summary>
     /// The children's locations as a native <c>list</c> of <c>path</c> values,

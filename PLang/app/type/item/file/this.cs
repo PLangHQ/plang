@@ -51,6 +51,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         history.Add(path);
     }
 
+    /// <summary>A file is made from its path: the reference to what is there, nothing read. Anything else
+    /// declines.</summary>
+    public static @this? Create(object? raw, global::app.actor.context.@this? ctx) => raw switch
+    {
+        @this self => self,
+        global::app.type.item.path.@this path when ctx != null => new @this(path, ctx),
+        _ => null,
+    };
+
     /// <summary>True once the content is in memory (the reference was examined).</summary>
     public bool IsLoaded => _bytes != null;
 

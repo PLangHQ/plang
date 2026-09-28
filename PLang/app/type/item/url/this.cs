@@ -37,6 +37,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         history.Add(path);
     }
 
+    /// <summary>A url is made from its path: the reference to what is there, nothing fetched. Anything else
+    /// declines.</summary>
+    public static @this? Create(object? raw, global::app.actor.context.@this? ctx) => raw switch
+    {
+        @this self => self,
+        global::app.type.item.path.@this path when ctx != null => new @this(path, ctx),
+        _ => null,
+    };
+
     /// <summary>The remote host — location surface, never fetches.</summary>
     public string Host =>
         System.Uri.TryCreate(Path.Absolute, System.UriKind.Absolute, out var u) ? u.Host : "";

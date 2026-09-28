@@ -171,10 +171,10 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     // --- Reads ---------------------------------------------------------------
 
-    /// <summary>A remote location lands as a <c>url</c> reference — no fetch: consent and I/O come at first
-    /// touch, through the reference's own value.</summary>
-    public override Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null)
-        => Task.FromResult(new data.@this("url", new global::app.type.item.url.@this(this, context), context: context));
+    /// <summary>A remote location lands as a <c>url</c> reference, born through its type — no fetch: consent
+    /// and I/O come at first touch, through the reference's own value.</summary>
+    public override async Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null)
+        => await context.App.type.list["url"].Create(this, context, "url");
 
     /// <summary>The <c>url</c> reference's type — the build asks nothing of the remote.</summary>
     public override Task<data.@this> Expect(actor.context.@this context)

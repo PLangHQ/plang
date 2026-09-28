@@ -66,6 +66,26 @@ public class SetTests
         await Assert.That((await context.Variable.Get("count"))!.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
+    // A value converted to another type is born: `set %p% as path = "a.txt"` fires the path type's create.
+    // The same type re-kinded is the same value, not a birth.
+    [Test]
+    public async Task Set_AsAnotherType_IsABirth_SameTypeIsNot()
+    {
+        var context = _app.User.Context;
+        var births = new List<string>();
+        foreach (var name in new[] { "path", "number" })
+            _app.type.list[name].Own().Bind("create", global::app.@event.When.after,
+                (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
+                _app.User, global::app.@event.binding.Scope.actor);
+
+        var asPath = await TestAction.Create("variable", "set", ("name", "%p%"), ("value", "a.txt"), ("type", "path")).Start(context);
+        var asNumber = await TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", new global::app.type.@this("number", "int"))).Start(context);
+
+        await asPath.IsSuccess();
+        await asNumber.IsSuccess();
+        await Assert.That(births).IsEquivalentTo(new[] { "path" });
+    }
+
     [Test]
     public async Task Set_ReturnsOk()
     {

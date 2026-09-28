@@ -250,16 +250,22 @@ public partial class Set : IContext, IScope, IKeep
                 && !string.Equals(Value.Type.Name, type.Name, StringComparison.OrdinalIgnoreCase)
                 && Value.Is(type);
 
-            // `as <type>` is a converter: the TYPE makes a value of itself (kind-aware).
-            // A byte-backed family (image) keeps a literal path-string — the Type entity
-            // carries the declared meaning and the value loads later.
+            // `as <type>` is a converter: the TYPE makes a value of itself (kind-aware), and a value
+            // converted to another type is born — its type's on.create fires (a before may refuse or
+            // answer instead). A byte-backed family (image) keeps a literal path-string — the Type
+            // entity carries the declared meaning and the value loads later.
             if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
             {
-                // Create throws on a bad conversion (the throw boundary) — converted is a
+                // The build throws on a bad conversion (the throw boundary) — converted is a
                 // materialized leaf, so this re-types eagerly. A kind-validatable target defers:
                 // its failure surfaces when the value loads (its own load validates and throws);
                 // anything else surfaces the failure here.
-                try { converted = type.Make(converted, Context); }
+                try
+                {
+                    var born = await type.Create(converted, Context, name);
+                    if (!born.Success || born.Handled) return born;
+                    converted = born.Peek();
+                }
                 catch (System.Exception ex) when (ex is System.FormatException
                                                   or System.InvalidOperationException or System.Text.Json.JsonException)
                 {

@@ -59,10 +59,11 @@ public sealed partial class @this
         var info = await stat.Value();
         if (info is not { Exists: true })
             return context.Error(new ServiceError($"Not found: {this}", "NotFound", 404));
+        // The reference is born through its type, so a program's `after file create` sees it.
         if (info.IsFile == false)
-            return new data.@this("directory", new global::app.type.item.directory.@this(this), context: context);
+            return await context.App.type.list["directory"].Create(this, context, "directory");
         var marked = template != null && await template.ToBooleanAsync() ? "plang" : null;
-        return new data.@this(FileName, new global::app.type.item.file.@this(this, context, marked), context: context);
+        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: marked), context].Create(this, context, FileName);
     }
 
     /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing. A file
