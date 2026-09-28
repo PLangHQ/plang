@@ -28,9 +28,6 @@ public partial class download : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 
-    /// <summary>Custom signing options for the download request.</summary>
-    public partial data.@this<sign>? SignOptions { get; init; }
-
     /// <summary>Goal to call with TransferProgress updates during download.</summary>
     [GoalCallback("progress")]
     public partial data.@this<global::app.goal.step.action.@this>? OnProgress { get; init; }

@@ -38,9 +38,6 @@ public partial class upload : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 
-    /// <summary>Custom signing options for the upload request.</summary>
-    public partial data.@this<sign>? SignOptions { get; init; }
-
     /// <summary>Explicit content format hint. Null = auto-detect from Content type.</summary>
     public partial data.@this<global::app.type.item.choice.@this<ContentAs>>? As { get; init; }
 

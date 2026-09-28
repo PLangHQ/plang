@@ -43,9 +43,6 @@ public partial class request : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 
-    /// <summary>Custom signing options. Overrides default signing behavior (contracts, headers, expiry).</summary>
-    public partial data.@this<sign>? SignOptions { get; init; }
-
     /// <summary>Goal to call for each streamed chunk.</summary>
     [GoalCallback("chunk")]
     public partial data.@this<global::app.goal.step.action.@this>? OnStream { get; init; }
