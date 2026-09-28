@@ -74,6 +74,7 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
   - Noted: `%MyIdentity%`'s DynamicData resolves sync-over-async (`actor/this.cs:113`).
 - **Kept unfixed on purpose: the llm query's own cache (`RestoreFromCache`, decision 194).** Ingi wants it as the full sweep's specimen: "I dont want to fix it now, I want to be learning oppertunity". The smells and the checked grep tells are in `plan/obp-example-llm-cache.md`. Don't touch it in 9b except where a change elsewhere forces it.
 - **`OnValidateResponse` sets `%response%` in the caller's memory** (the same fault as OnToolCall's; decision 194: a frame for the validator).
+- **A lone `if %x%` compiles to `== true` in a long goal** (decision 221). It's context-dependent (right in a 3-step goal, wrong in Start's 15 steps), four teaching wordings failed, and the eval's `start[0]` shows it every round. The robust fix is a visible decider question ("is Left compared to a value, or its own truth?"), the ConfirmNumbers pattern, so the prefill closes Operator when it's a truth test. `BuildGoal/start.pr` stays at its 8h build until then.
 - **Builder observations from 9a's plan tests (decision 190; for the builder, not stage blockers):**
   - `on/event.notes.md` never teaches a type's own event (`after file create` → `%!app.type.file.on.create%`, the birth). The compile copies the goal example.
   - The decider says yes to goal.call on a step that leads with "after …".
