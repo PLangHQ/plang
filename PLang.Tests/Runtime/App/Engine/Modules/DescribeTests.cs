@@ -7,8 +7,8 @@ public class DescribeTests
     [Test]
     public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
     {
-        var app = TestApp.Create("/test"); var modules = app.module.list;
-        modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
+        var app = TestApp.Create("/test");
+        app.module.Register("testmod", "datapath", typeof(FakeDataPathAction));
 
         var action = app.Module("testmod")["datapath"];
         await Assert.That(action).IsNotNull();

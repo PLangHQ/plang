@@ -131,10 +131,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public AppStatics Statics { get; } = new();
 
     /// <summary>
-    /// The type named <c>module</c> — <c>%!app.module%</c>: its <c>list</c> is the app's modules (and the
-    /// discovery that registers their actions), <c>Get(name)</c> is one module as a result.
+    /// The app's module — <c>%!app.module%</c>: an empty module whose <c>list</c> is every module the app loads,
+    /// registering their actions; <c>Get(name)</c> is one module as a result.
     /// </summary>
-    public global::app.type.@this<global::app.module.@this, global::app.module.list.@this> module { get; }
+    public global::app.module.@this module { get; }
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -283,7 +283,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         variable = new(this);
         // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
         // are one object
-        type.list.Replace(module);
         type.list.Replace(goal);
         type.list.Replace(test);
         type.list.Replace(variable);
@@ -619,7 +618,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         await actor.list.DisposeAsync();
 
-        await module.list.DisposeAsync();
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
         // The store, if it was opened: awaited (an open still under way finishes first) and disposed, so

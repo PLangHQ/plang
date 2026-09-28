@@ -75,8 +75,7 @@ public class StartGoalTests
     {
         await using var engine = TestApp.Create("/app");
 
-        var capture = new CapturingWriteHandler();
-        engine.module.list.Register("output", "write", capture);
+        var capture = new CapturedOutput(engine);
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set user",
@@ -89,7 +88,7 @@ public class StartGoalTests
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(capture.Lines).Contains("Hello World!");
+        await Assert.That(capture.Text).Contains("Hello World!");
     }
 
     [Test]
@@ -97,8 +96,7 @@ public class StartGoalTests
     {
         await using var engine = TestApp.Create("/app");
 
-        var capture = new CapturingWriteHandler();
-        engine.module.list.Register("output", "write", capture);
+        var capture = new CapturedOutput(engine);
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write literal",
@@ -109,7 +107,7 @@ public class StartGoalTests
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(capture.Lines).Contains("no variables here");
+        await Assert.That(capture.Text).Contains("no variables here");
     }
 
     // An EMBEDDED reference to an unset variable is an error, same as a full-match one —
@@ -120,8 +118,7 @@ public class StartGoalTests
     {
         await using var engine = TestApp.Create("/app");
 
-        var capture = new CapturingWriteHandler();
-        engine.module.list.Register("output", "write", capture);
+        _ = new CapturedOutput(engine);
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write with unknown var",
@@ -227,41 +224,6 @@ public class StartGoalTests
         // This proves the fallback chain works: no defaults → no attribute → auto-derive
         var data = await context.Variable.Get("x");
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("y");
-    }
-
-    #endregion
-
-    #region Helpers
-
-    /// <summary>
-    /// A test handler that captures written content instead of writing to Console.
-    /// Implements IAction + ICodeGenerated manually since the source generator doesn't run on test projects.
-    /// </summary>
-    private class CapturingWriteHandler : IAction, ICodeGenerated
-    {
-        public List<string> Lines { get; } = new();
-
-        public global::app.goal.step.action.@this Action { get; set; } = null!;
-        public global::app.@this App { get; private set; } = null!;
-        public global::app.actor.context.@this Context { get; private set; } = null!;
-        public System.Type? ParameterType => null;
-
-        public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
-        { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.Error?>(null); }
-
-        public async Task<Data> Start()
-        {
-            // The run's own Data from the program's property, born with this run's context.
-            var contentData = Action?["Data"]?.Data(Context);
-            if (contentData != null)
-            {
-                // Resolve via the value's OWN door — a template (text- or source-born) fills
-                // its %refs%; a plain value answers itself. Mirrors real output.write, no regex.
-                var item = await contentData.Value();
-                Lines.Add(item?.ToString() ?? "");
-            }
-            return Context.App.Ok();
-        }
     }
 
     #endregion

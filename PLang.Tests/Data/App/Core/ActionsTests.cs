@@ -29,7 +29,7 @@ public class ActionsTests
     }
 
 
-    // --- GetActions integration tests (uses real global::app.module.list.@this + assembly discovery) ---
+    // --- GetActions integration tests (uses the app's module + assembly discovery) ---
 
     [Test]
     public async Task GetActions_ReturnsNonEmptyActions()
@@ -89,7 +89,7 @@ public class ActionsTests
     }
 
 
-    // --- ValidateActions tests (uses real global::app.module.list.@this + assembly discovery) ---
+    // --- ValidateActions tests (uses the app's module + assembly discovery) ---
 
     [Test]
     public async Task ValidateActions_NullActions_ReturnsError()
@@ -310,7 +310,7 @@ public class ActionsTests
     }
 
     /// <summary>
-    /// Mimics what GetActions() in PlangModule does — uses global::app.module.list.@this to discover handlers.
+    /// Mimics what GetActions() in PlangModule does — uses the app's module to discover handlers.
     /// </summary>
     private static StepActions DiscoverActions()
     {

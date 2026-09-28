@@ -62,6 +62,11 @@ public partial class @this
     [JsonIgnore]
     public new bool Cacheable { get; init; } = true;
 
+    /// <summary>The class that runs this action — held by the module's catalog action, which is born from it; a
+    /// program's action asks its module (<c>Module.Create</c>).</summary>
+    [JsonIgnore]
+    internal System.Type? Class { get; init; }
+
     /// <summary>
     /// True when this action was constructed inline in C# (default for
     /// <c>new SomeAction { ... }</c>). False when materialized from a .pr

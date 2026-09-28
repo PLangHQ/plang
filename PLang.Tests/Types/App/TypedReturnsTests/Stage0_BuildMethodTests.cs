@@ -23,11 +23,11 @@ public class Stage0_BuildMethodTests
     public void Setup()
     {
         _app = new global::app.@this("/app");
-        _app.module.list.RegisterType("typedreturns", "noopbuild", typeof(NoopBuild));
-        _app.module.list.RegisterType("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
-        _app.module.list.RegisterType("typedreturns", "buildfails", typeof(BuildFails));
-        _app.module.list.RegisterType("typedreturns", "buildbareok", typeof(BuildBareOk));
-        _app.module.list.RegisterType("typedreturns", "buildordered", typeof(BuildOrdered));
+        _app.module.Register("typedreturns", "noopbuild", typeof(NoopBuild));
+        _app.module.Register("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
+        _app.module.Register("typedreturns", "buildfails", typeof(BuildFails));
+        _app.module.Register("typedreturns", "buildbareok", typeof(BuildBareOk));
+        _app.module.Register("typedreturns", "buildordered", typeof(BuildOrdered));
         BuildOrdered.InvocationLog.Clear();
     }
 

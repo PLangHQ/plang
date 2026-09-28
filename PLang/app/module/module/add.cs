@@ -10,7 +10,7 @@ public partial class Add : IContext
     public Task<data.@this> Start() => Path.Use(path => Context.App.Code.Load(path, Context, async (assembly, _) =>
     {
         var ns = Namespace == null ? null : (await Namespace.Value())?.ToString();
-        var count = Context.App.module.list.Discover(assembly, ns);
+        var count = Context.App.module.Discover(assembly, ns);
         return Data(new type.module { name = path.FileNameWithoutExtension, actions = count });
     }));
 }

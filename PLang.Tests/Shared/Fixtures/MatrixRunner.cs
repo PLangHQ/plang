@@ -115,7 +115,7 @@ public static class MatrixRunner
     {
         var (module, actionName) = ModuleAndAction<TAction>();
         if (app.Module(module)[actionName] != null) return;
-        app.module.list.RegisterType(module, actionName, typeof(TAction));
+        app.module.Register(module, actionName, typeof(TAction));
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ public static class MatrixRunner
             var moduleNs = type.Namespace!;
             var module = moduleNs.Substring("app.module.".Length);
             if (app.Module(module)[actionName] == null)
-                app.module.list.RegisterType(module, actionName, type);
+                app.module.Register(module, actionName, type);
         }
     }
 

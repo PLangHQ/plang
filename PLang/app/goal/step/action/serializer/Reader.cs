@@ -54,9 +54,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (name)
             {
                 // The wire carries the module NAME; the action holds the element. Resolving here
-                // means a .pr naming a module that no longer exists fails at LOAD (the registry
-                // indexer throws) instead of mid-execution.
-                case "module": module = ctx.Context.App.module.list[reader.String()]; break;
+                // means a .pr naming a module that no longer exists fails at LOAD instead of mid-execution.
+                case "module":
+                    var named = reader.String();
+                    module = ctx.Context.App.module.Named(named)
+                        ?? throw new System.Text.Json.JsonException($"module '{named}' isn't one of this app's modules.");
+                    break;
                 // The .pr's own keys are the only keys — the LLM answers in them too, so the answer
                 // reads through the same door a built .pr does.
                 case "name": actionName = reader.String(); break;

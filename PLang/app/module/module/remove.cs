@@ -13,7 +13,7 @@ public partial class Remove : IContext
     public Task<data.@this> Start() => Name.Use(async name =>
         await (await Context.App.module.Get(name.ToString())).Use<global::app.module.@this>(async module =>
         {
-            await Context.App.module.list.Remove(module, Context);
+            await module.Remove(Context);
             return Context.Ok();
         }));
 }

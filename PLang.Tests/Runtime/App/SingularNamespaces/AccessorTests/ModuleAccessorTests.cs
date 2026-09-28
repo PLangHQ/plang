@@ -5,7 +5,7 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
-// app.module is the module type: app.module.Get("file") selects, app.module.list enumerates. A module is
+// app.module is the app's module: app.module.Get("file") selects, app.module.list enumerates. A module is
 // never inside anything, so the element's Current answers nothing a program walks into.
 public class ModuleAccessorTests
 {
@@ -61,10 +61,9 @@ public class ModuleAccessorTests
         await Assert.That(read.Peek()).IsSameReferenceAs(app.module.list);
     }
 
-    [Test] public async Task ModuleList_IndexOfUnknownName_Throws()
+    [Test] public async Task Module_NamedUnknown_IsNull()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(() => { _ = app.module.list["nope"]; return Task.CompletedTask; })
-            .Throws<System.Text.Json.JsonException>();
+        await Assert.That(app.module.Named("nope")).IsNull();
     }
 }

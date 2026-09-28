@@ -37,7 +37,7 @@ public class ProseDoorFluidTests
             System.IO.File.WriteAllText(System.IO.Path.Combine(mdRoot, FixtureModule, file), body);
 
         var app = global::PLang.Tests.TestApp.Create(tempDir);
-        app.module.list.RegisterType(FixtureModule, "setvalue", typeof(FixtureAction));
+        app.module.Register(FixtureModule, "setvalue", typeof(FixtureAction));
         return app;
     }
 

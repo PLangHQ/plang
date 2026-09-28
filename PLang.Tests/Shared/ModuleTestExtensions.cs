@@ -7,5 +7,5 @@ public static class ModuleTestExtensions
     /// module for, one outside the app holding no actions (the unknown module a test's action names).</summary>
     public static global::app.module.@this Module(this global::app.@this app, string name)
         => app.module.list.Items().FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase))
-           ?? new global::app.module.@this(name, app.module.list);
+           ?? new global::app.module.@this(name, app.module);
 }

@@ -387,8 +387,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var throwingHandler = new ThrowingHandler();
-        engine.module.list.Register("throwing", "fail", throwingHandler);
+        engine.module.Register("throwing", "fail", typeof(ThrowingHandler));
 
         var step = MakeStep("throwing", "fail");
         var context = engine.actor.list.User.Context;
@@ -407,8 +406,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var nonGeneratedHandler = new NonGeneratedHandler();
-        engine.module.list.Register("legacy", "do", nonGeneratedHandler);
+        engine.module.Register("legacy", "do", typeof(NonGeneratedHandler));
 
         var step = MakeStep("legacy", "do");
         var context = engine.actor.list.User.Context;
@@ -418,30 +416,6 @@ public class EngineTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionError");
-    }
-
-    [Test]
-    public async Task DisposeAsync_DisposesDisposableHandlers()
-    {
-        var engine = global::PLang.Tests.TestApp.Create("/app");
-        var disposableHandler = new DisposableHandler();
-        engine.module.list.Register("disposable", "do", disposableHandler);
-
-        await engine.DisposeAsync();
-
-        await Assert.That(disposableHandler.IsDisposed).IsTrue();
-    }
-
-    [Test]
-    public async Task DisposeAsync_DisposesAsyncDisposableHandlers()
-    {
-        var engine = global::PLang.Tests.TestApp.Create("/app");
-        var asyncDisposableHandler = new AsyncDisposableHandler();
-        engine.module.list.Register("asyncdisposable", "do", asyncDisposableHandler);
-
-        await engine.DisposeAsync();
-
-        await Assert.That(asyncDisposableHandler.IsDisposed).IsTrue();
     }
 
     [Test]
@@ -534,42 +508,14 @@ public class EngineTests
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
-    private class DisposableHandler : IAction, ICodeGenerated, IDisposable
-    {
-        public global::app.goal.step.action.@this Action { get; set; } = null!;
-        public global::app.@this App { get; private set; } = null!;
-        public global::app.actor.context.@this Context { get; private set; } = null!;
-        public System.Type? ParameterType => null;
-        public bool IsDisposed { get; private set; }
-
-        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
-        { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.Error?>(null); }
-        public Task<Data> Start() => Task.FromResult(Context.App!.Ok());
-        public void Dispose() => IsDisposed = true;
-    }
-
-    private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
-    {
-        public global::app.goal.step.action.@this Action { get; set; } = null!;
-        public global::app.@this App { get; private set; } = null!;
-        public global::app.actor.context.@this Context { get; private set; } = null!;
-        public System.Type? ParameterType => null;
-        public bool IsDisposed { get; private set; }
-
-        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
-        { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.Error?>(null); }
-        public Task<Data> Start() => Task.FromResult(Context.App!.Ok());
-        public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
-    }
-
     private class ThrowingHandler : IAction, ICodeGenerated
     {
         public global::app.goal.step.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
+
+        public ThrowingHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<Data> Start()

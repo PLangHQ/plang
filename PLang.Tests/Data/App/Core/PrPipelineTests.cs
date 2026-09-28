@@ -19,8 +19,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = TestApp.Create(fixturesDir);
 
-        var capture = new CapturingWriteHandler();
-        engine.module.list.Register("output", "write", capture);
+        var capture = new CapturedOutput(engine);
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
         var loadResult = await engine.goal.Load("FullPipeline.pr");
@@ -37,7 +36,7 @@ public class PrPipelineTests
         await Assert.That((await context.Variable.GetValue("message"))).IsEqualTo("Hello, World!");
 
         // Output captured (variable interpolation in output.write)
-        await Assert.That(capture.Lines).Contains("Hello, World!");
+        await Assert.That(capture.Text).Contains("Hello, World!");
 
         // Defaults resolved — step 0 has defaults: [{ type: "string" }]
         var greetingData = await context.Variable.Get("greeting");
@@ -52,8 +51,7 @@ public class PrPipelineTests
         await using var engine = TestApp.Create(fixturesDir);
 
         // Capture output
-        var capture = new CapturingWriteHandler();
-        engine.module.list.Register("output", "write", capture);
+        var capture = new CapturedOutput(engine);
 
         // Load and execute
         var loadResult = await engine.goal.Load("ReadFile.pr");
@@ -71,7 +69,7 @@ public class PrPipelineTests
         await Assert.That(content!.ToString()).IsEqualTo("Hello from test file");
 
         // Output.write resolved %content% and wrote it
-        await Assert.That(capture.Lines.Count).IsGreaterThanOrEqualTo(1);
+        await Assert.That(capture.Text).Contains("Hello from test file");
     }
 
     #region File Path Resolution
@@ -238,32 +236,5 @@ public class PrPipelineTests
             return fallback;
 
         throw new DirectoryNotFoundException("Could not find PLang.Tests/Shared/Fixtures/pr/");
-    }
-
-    /// <summary>
-    /// Captures output.write calls for assertion. Same pattern as StartGoalTests.
-    /// </summary>
-    private class CapturingWriteHandler : IAction, ICodeGenerated
-    {
-        public List<string> Lines { get; } = new();
-
-        public global::app.goal.step.action.@this Action { get; set; } = null!;
-        public global::app.@this App { get; private set; } = null!;
-        public global::app.actor.context.@this Context { get; private set; } = null!;
-        public System.Type? ParameterType => null;
-
-        public Task<global::app.error.Error?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
-        { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.Error?>(null); }
-
-        public async Task<Data> Start()
-        {
-            var action = Action;
-            var context = Context;
-            // the property's value renders itself when it is marked a template — never guessed
-            object? content = action?["Data"] is { } property ? (await property.Data(context).Value())?.ToString() : null;
-            if (content != null)
-                Lines.Add(content.ToString()!);
-            return context.App.Ok();
-        }
     }
 }

@@ -91,10 +91,8 @@ public class AppRunScaffoldingTests
     [Test]
     public async Task AppRun_HandlerThrows_TranslatesToServiceError_AndPopsFrame()
     {
-        // Use ThrowingHandler-equivalent: the matrix snapshot handler returns FromError but doesn't throw.
-        // Build a handler instance that throws.
-        var thrower = new ThrowingMatrixHandler();
-        _app.module.list.Register("matrix.throwing", "throw", thrower);
+        // The matrix snapshot handler returns FromError but doesn't throw; this one throws.
+        _app.module.Register("matrix.throwing", "throw", typeof(ThrowingMatrixHandler));
 
         var currentBefore = _app.actor.list.User.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
@@ -143,8 +141,7 @@ public class AppRunScaffoldingTests
     [Test]
     public async Task AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate()
     {
-        var oceThrower = new OceThrowingHandler();
-        _app.module.list.Register("matrix.oce", "throwoce", oceThrower);
+        _app.module.Register("matrix.oce", "throwoce", typeof(OceThrowingHandler));
 
         var action = MakeAction("matrix.oce", "throwoce");
 
@@ -193,6 +190,8 @@ public class AppRunScaffoldingTests
 // Hand-written handler that throws — used to exercise App.Run's catch path.
 internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.module.ICodeGenerated
 {
+    public ThrowingMatrixHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
+
     public global::app.goal.step.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
@@ -210,6 +209,8 @@ internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.m
 // Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
 internal class OceThrowingHandler : global::app.module.IAction, global::app.module.ICodeGenerated
 {
+    public OceThrowingHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
+
     public global::app.goal.step.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;

@@ -134,7 +134,7 @@ public sealed class Coverage
     /// it fired, then each condition site's branches (its declared chain, else what was observed) marked
     /// hit or missed, with the totals and the branches no test took.
     /// </summary>
-    public string Text(global::app.module.list.@this modules)
+    public string Text(global::app.type.item.list.@this<global::app.module.@this> modules)
     {
         var sb = new System.Text.StringBuilder();
         sb.AppendLine();

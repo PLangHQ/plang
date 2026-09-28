@@ -181,8 +181,7 @@ public sealed class @this
         // A cached step is already built, and a step written in formal is its code: the decider is
         // asked nothing about either.
         if (_step.IsCached || _step.IsFormal) return;
-        var modules = (global::app.type.item.list.@this<global::app.module.@this>)await context.App.module.list.all(context);
-        _modules = modules.Items().ToDictionary(m => m.Name, StringComparer.OrdinalIgnoreCase);
+        _modules = context.App.module.list.Items().ToDictionary(m => m.Name, StringComparer.OrdinalIgnoreCase);
         var prefix = Key("");
         foreach (var entry in answer.Entries(context))
         {
@@ -204,7 +203,7 @@ public sealed class @this
         IsUnsure = Unsure(context);
         _listed = Listing();
         Formal = Prefill(context);
-        Known = await Code(modules, context);
+        Known = await Code(context.App.module.list, context);
     }
 
     // ---------------------------------------------------------------- the answer against the picks

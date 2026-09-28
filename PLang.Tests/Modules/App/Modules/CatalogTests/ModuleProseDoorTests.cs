@@ -30,7 +30,7 @@ public class ModuleProseDoorTests
         Directory.CreateDirectory(Path.Combine(_mdRoot, FixtureModule));
 
         _app = TestApp.Create(_tempDir);
-        _app.module.list.RegisterType(FixtureModule, FixtureAction1, typeof(FixtureAction));
+        _app.module.Register(FixtureModule, FixtureAction1, typeof(FixtureAction));
     }
 
     [After(Test)]

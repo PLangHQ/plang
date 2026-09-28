@@ -34,8 +34,8 @@ public sealed class Formal
     private readonly global::app.goal.step.@this _step;
     private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
 
-    /// <summary>Born with the step it reads for and the modules its actions are picked from — the
-    /// caller awaited them once (<c>app.module.list.all(context)</c>); the read itself stays synchronous.</summary>
+    /// <summary>Born with the step it reads for and the modules its actions are picked from
+    /// (<c>app.module.list</c>); the read stays synchronous.</summary>
     public Formal(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
     {
         _step = step;
