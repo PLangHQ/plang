@@ -203,6 +203,14 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
         writer.EndArray();
     }
 
+    /// <summary>The actions after <paramref name="a"/> in this chain — what a loop that leads its step runs
+    /// for each element. None when <paramref name="a"/> isn't in the chain or is its last.</summary>
+    public IReadOnlyList<Action> After(Action a)
+    {
+        var at = IndexOf(a);
+        return at < 0 ? [] : Items().Skip(at + 1).ToList();
+    }
+
     /// <summary>The coverage key — an action's index by reference identity (the same instance the
     /// chain ran), or -1 when absent.</summary>
     public int IndexOf(Action a)

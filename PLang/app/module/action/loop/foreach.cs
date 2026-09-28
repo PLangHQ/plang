@@ -1,5 +1,4 @@
 using app;
-using Action = app.goal.step.action.@this;
 
 namespace app.module.action.loop;
 
@@ -36,7 +35,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         // naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
         var collectionValue = await Collection.Value();
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
-            return Context.Ok(Result(itemCount: 0, completed: true));
+            return await Result(itemCount: 0, completed: true);
 
         var itemVariable = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");
         var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
@@ -49,19 +48,15 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         var savedItem = await itemVariable.Start(Context);
         var savedKey = keyVariable != null ? await keyVariable.Start(Context) : null;
 
-        // The loop body — the actions after this foreach in the step's chain (v0.1 flat model).
-        // Materialized once; the Handled flag below stops the outer chain from re-running them.
-        var chain = Step?.Code;
-        int myIndex = chain?.IndexOf(__action) ?? -1;
-        var bodyActions = myIndex >= 0
-            ? chain!.Items().Skip(myIndex + 1).ToList()
-            : new List<Action>();
+        // The loop body — the actions after this foreach in the step's chain. The Handled flag below stops
+        // the outer chain from re-running them.
+        var bodyActions = Step?.Code.After(__action!) ?? [];
 
         // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
         foreach (var (key, item) in await Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return Context.Ok(Result(count, completed: false));
+                return await Result(count, completed: false);
 
             await itemVariable.Set(item, Context);
             // Optional param: absent slots are non-null Uninitialized (null model), so
@@ -83,35 +78,17 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         if (savedItem.IsInitialized) await itemVariable.Set(savedItem, Context);
         if (keyVariable != null && savedKey is { IsInitialized: true }) await keyVariable.Set(savedKey, Context);
 
-        var loopResult = Context.Ok(Result(count, completed: true));
+        var loopResult = await Result(count, completed: true);
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;
     }
 
     /// <summary>
-    /// The foreach result as a native <c>dict</c> — <c>itemCount</c> (how many
-    /// items ran) and <c>completed</c> (false when cancelled or returned early).
-    /// A plain-data result, so it rides as a dict, not a dedicated type.
+    /// The foreach result, born as a native <c>dict</c> — <c>itemCount</c> (how many items ran) and
+    /// <c>completed</c> (false when cancelled). A plain-data result, so it rides as a dict, not a dedicated type.
     /// </summary>
-    private static global::app.type.item.dict.@this Result(int itemCount, bool completed)
-        => new global::app.type.item.dict.@this()
-            .Set("itemCount", (long)itemCount)
-            .Set("completed", completed);
-
-    /// <summary>
-    /// Gets the actions after this foreach in the same step — they form the loop body.
-    /// </summary>
-    private global::app.goal.step.action.list.@this GetBodyActions()
-    {
-        var actions = Step?.Code;
-        if (actions == null || __action == null) return new();
-
-        int myIndex = actions.IndexOf(__action);
-        if (myIndex < 0 || myIndex + 1 >= actions.Count) return new();
-
-        var body = new global::app.goal.step.action.list.@this();
-        foreach (var a in actions.Items().Skip(myIndex + 1)) body.Add(a);
-        return body;
-    }
+    private async Task<data.@this> Result(int itemCount, bool completed)
+        => await Context.App.type.list["dict"].Create(
+            new Dictionary<string, object?> { ["itemCount"] = (long)itemCount, ["completed"] = completed }, Context);
 }
