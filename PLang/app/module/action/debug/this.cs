@@ -94,7 +94,7 @@ public sealed class @this
             if (_context.App.Code.Get<global::app.module.action.llm.code.ILlm>().Provider is global::app.module.action.llm.code.OpenAi oai)
             {
                 var context = _context.App.actor.list.User.Context;
-                var toFile = string.Equals(llm.Output.ToString(), "file", StringComparison.OrdinalIgnoreCase);
+                var toFile = (TraceOutput)llm.Output == TraceOutput.file;
 
                 oai.OnBeforeRequest += async (messages, schema) =>
                 {
@@ -613,5 +613,14 @@ public class LlmDebug
     /// File mode is the only way to get the full system prompt or raw response when they
     /// exceed maxLength, since maxLength is for terminal display.
     /// </summary>
-    public global::app.type.item.text.@this Output { get; set; } = "stderr";
+    public global::app.type.item.choice.@this<TraceOutput> Output { get; set; } = TraceOutput.stderr;
+}
+
+/// <summary>Where an enabled LLM trace block goes: labeled to stderr (truncated to maxLength), or whole to a
+/// per-call file.</summary>
+[global::app.Attributes.PlangType("traceoutput")]
+public enum TraceOutput
+{
+    stderr,
+    file,
 }
