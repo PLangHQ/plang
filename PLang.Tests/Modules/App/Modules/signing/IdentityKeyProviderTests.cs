@@ -68,7 +68,7 @@ public class IdentityKeyProviderTests
         await Assert.That(identity).IsNotNull();
 
         // Ed25519 keys are 32 bytes each
-        var pubBytes = Convert.FromBase64String(identity!.PublicKey);
+        var pubBytes = System.Buffers.Text.Base64Url.DecodeFromChars(identity!.PublicKey);
         var privBytes = Convert.FromBase64String(identity.PrivateKey);
         await Assert.That(pubBytes.Length).IsEqualTo(32);
         await Assert.That(privBytes.Length).IsEqualTo(32);

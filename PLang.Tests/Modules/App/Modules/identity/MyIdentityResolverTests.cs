@@ -64,8 +64,8 @@ public class MyIdentityResolverTests
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsNotNull();
 
-        // Should be base64
-        var bytes = Convert.FromBase64String((await child.Value())!.ToString()!);
+        // URL-safe base64
+        var bytes = System.Buffers.Text.Base64Url.DecodeFromChars((await child.Value())!.ToString()!);
         await Assert.That(bytes.Length).IsEqualTo(32);
     }
 

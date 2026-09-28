@@ -32,7 +32,7 @@ public class IdentityDataTests
 
     private Identity CreateTestIdentity() => new("test")
     {
-        PublicKey = "dGVzdHB1YmxpY2tleQ==",
+        PublicKey = "dGVzdHB1YmxpY2tleQ",
         PrivateKey = "dGVzdHByaXZhdGVrZXk=",
         IsDefault = true,
         IsArchived = false,
@@ -43,7 +43,7 @@ public class IdentityDataTests
     public async Task ToString_ReturnsPublicKey()
     {
         var identity = CreateTestIdentity();
-        await Assert.That(identity.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
+        await Assert.That(identity.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ");
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class IdentityDataTests
         var data = new Data("test", identity, context: _app.System.Context);
         var child = await data.Get("PublicKey");
         await Assert.That(child).IsNotNull();
-        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ");
     }
 
     [Test]

@@ -115,6 +115,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 ? (result.Peek() as global::app.type.item.@this)?.Clr<Identity>() ?? result.Peek() as Identity
                 : null;
         }, Context));
+
+        // %Identity% — who this actor acts for: its identity's public key (a caller's, in a service), else, in a
+        // local run, the system's own (%MyIdentity%, through its cell).
+        Context.Variable.Set("Identity", new data.DynamicData("Identity", () =>
+            Identity?.PublicKey ?? (app.System.Context.Variable.Peek("MyIdentity")?.Peek() as Identity)?.PublicKey, Context));
     }
 
     /// <summary>

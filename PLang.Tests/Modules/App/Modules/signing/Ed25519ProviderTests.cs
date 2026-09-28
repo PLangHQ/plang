@@ -39,18 +39,41 @@ public class Ed25519ProviderTests
         var kp = _provider.GenerateKeyPair().keys!;
 
         // Should not throw — valid base64
-        var pubBytes = Convert.FromBase64String(kp.PublicKey);
+        var pubBytes = System.Buffers.Text.Base64Url.DecodeFromChars(kp.PublicKey);
         var privBytes = Convert.FromBase64String(kp.PrivateKey);
 
         await Assert.That(pubBytes.Length).IsGreaterThan(0);
         await Assert.That(privBytes.Length).IsGreaterThan(0);
     }
 
+    // %Identity% is a public key: written URL-safe, it is a path segment, a URL part or a file name as it is.
+    [Test]
+    public async Task GenerateKeyPair_PublicKeyIsUrlSafe()
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            var kp = _provider.GenerateKeyPair().keys!;
+            await Assert.That(kp.PublicKey.IndexOfAny(['+', '/', '='])).IsEqualTo(-1).Because(kp.PublicKey);
+        }
+    }
+
+    // A signature made before keys were written URL-safe carries its key in standard base64 — it still verifies.
+    [Test]
+    public async Task Verify_AKeyWrittenInStandardBase64_StillVerifies()
+    {
+        var kp = _provider.GenerateKeyPair().keys!;
+        var standard = Convert.ToBase64String(System.Buffers.Text.Base64Url.DecodeFromChars(kp.PublicKey));
+        var unsigned = Unsigned(standard);
+        var signed = unsigned.Signed(_provider.Sign(unsigned, new global::app.type.item.text.@this(kp.PrivateKey)));
+
+        await Assert.That(_provider.Verify(signed).Value).IsTrue();
+    }
+
     [Test]
     public async Task GenerateKeyPair_PublicKeyIs32Bytes()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var pubBytes = Convert.FromBase64String(kp.PublicKey);
+        var pubBytes = System.Buffers.Text.Base64Url.DecodeFromChars(kp.PublicKey);
 
         await Assert.That(pubBytes.Length).IsEqualTo(32);
     }

@@ -85,7 +85,7 @@ public class IdentityHandlerTests
         await Assert.That(identity.PrivateKey).IsNotNull();
 
         // Base64-decodable, correct lengths (32 bytes each for Ed25519)
-        var pubBytes = Convert.FromBase64String(identity.PublicKey);
+        var pubBytes = System.Buffers.Text.Base64Url.DecodeFromChars(identity.PublicKey);
         var privBytes = Convert.FromBase64String(identity.PrivateKey);
         await Assert.That(pubBytes.Length).IsEqualTo(32);
         await Assert.That(privBytes.Length).IsEqualTo(32);

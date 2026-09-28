@@ -17,8 +17,15 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     /// <summary>Identity name (e.g., "default", "work").</summary>
     [LlmBuilder, Out, Store] public string Name { get; set; } = "Identity";
 
-    /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed Datas.</summary>
-    [LlmBuilder, Out, Store] public string PublicKey { get; set; } = "";
+    /// <summary>The Ed25519 public key, URL-safe base64 (- and _, no =) — <c>%Identity%</c>, used as it is as a
+    /// path segment, a URL part or a file name. Used as the identity in signed Datas. A key stored before keys
+    /// were written URL-safe reads back in that form.</summary>
+    [LlmBuilder, Out, Store] public string PublicKey
+    {
+        get => _publicKey;
+        set => _publicKey = value.Replace('+', '-').Replace('/', '_').TrimEnd('=');
+    }
+    private string _publicKey = "";
 
     /// <summary>Base64-encoded Ed25519 private key. Marked [Sensitive] — excluded from output serialization.
     /// [Store] so it round-trips local sqlite persistence (signing needs it on re-read).</summary>

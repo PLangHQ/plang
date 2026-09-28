@@ -173,8 +173,10 @@ public class Ed25519 : ISigning
             var publicKeyBytes = key.Export(KeyBlobFormat.RawPublicKey);
             var privateKeyBytes = key.Export(KeyBlobFormat.RawPrivateKey);
 
+            // A public key is written URL-safe (- and _, no =): it is %Identity%, used as it is as a path
+            // segment, a URL part or a file name.
             return (new KeyPair(
-                Convert.ToBase64String(publicKeyBytes),
+                System.Buffers.Text.Base64Url.EncodeToString(publicKeyBytes),
                 Convert.ToBase64String(privateKeyBytes)), null);
         }
         catch (Exception ex)
@@ -200,7 +202,9 @@ public class Ed25519 : ISigning
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
-        var publicKeyBytes = Convert.FromBase64String(signature.Identity.ToString());
+        // the signer's key as it was written — URL-safe, or standard base64 from before keys were
+        var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(
+            signature.Identity.ToString().Replace('+', '-').Replace('/', '_').TrimEnd('='));
         var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
         return new global::app.type.item.@bool.@this(algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value));
     }
