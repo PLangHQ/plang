@@ -176,7 +176,7 @@ public class AppRunScaffoldingTests
             .ThrowsExactly<OperationCanceledException>();
     }
 
-    // Action.Handled (mock.intercept / event.skipAction) bypasses App.Run entirely — no frame, no snapshot.
+    // Action.Handled (a before that answers in the action's place) bypasses App.Run entirely — no frame, no snapshot.
     [Test]
     public async Task AppRun_NotCalled_WhenHandledOverride()
     {

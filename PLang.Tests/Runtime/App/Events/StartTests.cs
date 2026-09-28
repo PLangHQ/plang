@@ -141,15 +141,18 @@ public class StartTests
         await Assert.That(await IsSet("x")).IsFalse();
     }
 
+    // A mock is a before on the catalog action that answers in its place (handled): the action doesn't run, and
+    // the action type's afters — coverage, debug — still see it.
     [Test] public async Task AMockedAction_StillReachesTheActionTypesAfterBindings()
     {
-        var (_, step, _) = Program();
+        var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        await (await new global::app.module.action.mock.intercept(context)
+        _bound.Add(set.Module[set.Name]!.Own().Bind("start", When.before, (_, _, ctx) =>
         {
-            Pattern = (global::app.type.item.text.@this)"variable.set",
-            Return = new global::app.data.@this("", "mocked", context: context),
-        }.Start()).IsSuccess();
+            var mocked = ctx.Ok("mocked");
+            mocked.Handled = true;
+            return Task.FromResult(mocked);
+        }, _app.actor.list.User, Scope.actor));
         var coverage = new global::app.test.Coverage();
         coverage.Watch(context);
         // debug binds the same way coverage does: on the action type's after, for the User actor

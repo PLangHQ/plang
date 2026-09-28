@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Reflection contracts for mock.intercept, builder.{types,actions,goals},
+// Reflection contracts for builder.{types,actions,goals},
 // test.tag — each handler's Start() must produce a typed Data<T> whose T is
 // either a domain record or a primitive (never Data<object>).
 
@@ -18,22 +18,6 @@ public class Stage2_MechanicalTypings_Part2Tests
 
     private static System.Type RunReturnType<THandler>()
         => typeof(THandler).GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
-
-    [Test]
-    public async Task MockIntercept_Run_ReturnsTaskDataOfMock()
-    {
-        var ret = RunReturnType<global::app.module.action.mock.intercept>();
-        var expected = typeof(Task<global::app.data.@this<global::app.@event.binding.mock.@this>>);
-        await Assert.That(ret).IsEqualTo(expected);
-    }
-
-    [Test]
-    public async Task MockMock_TypeLivesAtOBPSingularFolder()
-    {
-        var t = typeof(global::app.@event.binding.mock.@this);
-        await Assert.That(t.Namespace).IsEqualTo("app.event.binding.mock");
-        await Assert.That(t.Name).IsEqualTo("this");
-    }
 
     // build.goals is typed directly to its natural collection shape (list<goal>) rather than
     // wrapped in a dedicated record — Build.goal iterates it as a list.
@@ -59,14 +43,6 @@ public class Stage2_MechanicalTypings_Part2Tests
         // surviving observable guarantee.
         await Assert.That(ret == bareData || ret == dataOfBool).IsTrue()
             .Because("test.tag must be bare Task<Data> or Task<Data<global::app.type.item.@bool.@this>>.");
-    }
-
-    [Test]
-    public async Task ModulesDescribe_MockIntercept_AdvertisesMockReturnType()
-    {
-        var row = _app.Module("mock")["intercept"];
-        await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo(_app.type.list["mock"]);
     }
 
     [Test]

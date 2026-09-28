@@ -70,15 +70,6 @@ public class Stage0_PlangTypeRemovalTests
     }
 
 
-    // app.mock.@this is an @this class — its PLang type name derives
-    // from the last namespace segment ("mock"), not the class name ("@this").
-    [Test]
-    public async Task Mock_PlangTypeName_DerivesFromClassName()
-    {
-        var name = _app.type.list[typeof(global::app.@event.binding.mock.@this)].ToString();
-        await Assert.That(name).IsEqualTo("mock");
-    }
-
     // app.test.@this is a named value type carrying [PlangType("test")] —
     // its PLang name is the explicit attribute value ("test").
     [Test]

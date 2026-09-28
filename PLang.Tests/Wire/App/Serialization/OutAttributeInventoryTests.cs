@@ -150,16 +150,6 @@ public class OutAttributeInventoryTests
         await Assert.That(HasOut(typeof(global::app.module.action.output.Ask), "Answer")).IsTrue();
     }
 
-    // 12. Mock ---------------------------------------------------------------
-    [Test] public async Task Mock_NoOutProperties_TestOnlyType()
-    {
-        var t = typeof(global::app.@event.binding.mock.@this);
-        foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
-            await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true))
-                .IsFalse()
-                .Because($"Mock.{p.Name} is local test state; nothing on Mock should ship");
-    }
-
     // 13. condition.Operator -------------------------------------------------
     [Test] public async Task ConditionOperator_Value_HasOut()
     {
