@@ -29,22 +29,42 @@ _sets = {}
 def closed_set(cs_name):
     """(kind, options) of a closed set, read off its C# declaration: the name it declares with
     [PlangType("…")], and its enum members — or, for a named-set class, its Registry keys."""
-    short = cs_name.split('.')[-1]
-    if short in _sets: return _sets[short]
-    for p in glob.glob(f'{ROOT}/PLang/app/**/*.cs', recursive=True):
+    parts = [p for p in cs_name.replace('global::', '').split('.') if p]
+    short = parts[-1]
+    # a folder's @this (`code.kind.@this`) is named by its folder: only that folder's this.cs is it
+    folder = parts[-2] if short == '@this' and len(parts) > 1 else None
+    key = f'{folder}/@this' if folder else short
+    if key in _sets: return _sets[key]
+    files = glob.glob(f'{ROOT}/PLang/app/**/{folder}/this.cs', recursive=True) if folder \
+        else glob.glob(f'{ROOT}/PLang/app/**/*.cs', recursive=True)
+    for p in files:
         src = open(p, encoding='utf-8').read()
-        m = re.search(rf'\[global::app\.Attributes\.PlangType\("(?P<kind>\w+)"\)\]\s*public\s+(?:sealed\s+)?(?P<what>enum|class)\s+{short}\b', src)
+        m = re.search(rf'\[global::app\.Attributes\.PlangType\("(?P<kind>\w+)"\)\]\s*public\s+(?:sealed\s+)?(?P<what>enum|class)\s+{re.escape(short)}(?!\w)', src)
         if not m: continue
         if m.group('what') == 'enum':
             body = src[m.end():].split('{', 1)[1].split('}', 1)[0]
             body = re.sub(r'/\*.*?\*/', '', re.sub(r'//[^\n]*', '', body), flags=re.S)
             options = [re.sub(r'\s*=.*', '', v).strip() for v in body.split(',') if v.strip()]
+        elif 'typeof(ICode)' in src:
+            # a provider kind: its options are the ICode-derived interfaces, each named by its interface
+            options = provider_kinds()
         else:
             options = re.findall(r'\["([^"]+)"\]\s*=', src)
-        _sets[short] = (m.group('kind'), options)
-        return _sets[short]
-    _sets[short] = (short.lower(), [])
-    return _sets[short]
+        _sets[key] = (m.group('kind'), options)
+        return _sets[key]
+    _sets[key] = ((folder or short).lower(), [])
+    return _sets[key]
+
+def provider_kinds():
+    """The provider interfaces the runtime declares — every interface deriving ICode, directly or through
+    another (ISigning : IKey) — each named as code.kind names it: ISigning → signing."""
+    bases = {}
+    for p in glob.glob(f'{ROOT}/PLang/app/**/*.cs', recursive=True):
+        for m in re.finditer(r'\binterface\s+(I\w+)\s*:\s*([^{]+)\{', open(p, encoding='utf-8').read()):
+            bases[m.group(1)] = [b.strip().split('.')[-1] for b in m.group(2).split(',')]
+    def derives(face, seen=()):
+        return any(b == 'ICode' or (b in bases and b not in seen and derives(b, seen + (face,))) for b in bases.get(face, []))
+    return sorted(face[1:].lower() for face in bases if derives(face))
 
 def plang_type(cs):
     """A C# slot type as its plang name. Generic arguments are stripped FIRST, so list<X> is list
@@ -81,7 +101,7 @@ def returns(module, action):
     return plang_type(m.group('type'))
 
 def handler_source(module, action):
-    for p in glob.glob(f'{ROOT}/PLang/app/module/action/{module}/*.cs'):
+    for p in glob.glob(f'{ROOT}/PLang/app/module/{module}/*.cs'):
         src = open(p, encoding='utf-8').read()
         if re.search(rf'\[Action\("{re.escape(action)}"', src, re.I): return src
     return None

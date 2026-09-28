@@ -39,11 +39,11 @@ def plang_type(raw):
 
 def parameters(module, action):
     """Every parameter an action declares, with its plang-ish type and whether it is optional."""
-    for path in (f'{ROOT}/PLang/app/module/action/{module}/{action}.cs',
-                 f'{ROOT}/PLang/app/module/action/{module}/{action.lower()}.cs'):
+    for path in (f'{ROOT}/PLang/app/module/{module}/{action}.cs',
+                 f'{ROOT}/PLang/app/module/{module}/{action.lower()}.cs'):
         if os.path.exists(path): break
     else:
-        hits = [p for p in glob.glob(f'{ROOT}/PLang/app/module/action/{module}/**/*.cs', recursive=True)
+        hits = [p for p in glob.glob(f'{ROOT}/PLang/app/module/{module}/**/*.cs', recursive=True)
                 if re.search(rf'\[Action\("{re.escape(action)}"', open(p, encoding='utf-8').read(), re.I)]
         if not hits: return None
         path = hits[0]
@@ -104,10 +104,10 @@ NAMED_SET = re.compile(r'^\s*\["([^"]+)"\]\s*=', re.M)
 
 def options(type_name):
     if not type_name or type_name in ('item', 'text', 'number', 'bool', 'path', 'list', 'dict'): return None
-    for p in glob.glob(f'{ROOT}/PLang/app/module/action/**/{type_name}.cs', recursive=True):
+    for p in glob.glob(f'{ROOT}/PLang/app/module/**/{type_name}.cs', recursive=True):
         keys = NAMED_SET.findall(open(p, encoding='utf-8').read())
         if keys: return {k: f'the option {k}' for k in dict.fromkeys(keys)}
-    for p in glob.glob(f'{ROOT}/PLang/app/module/action/**/*.cs', recursive=True) + \
+    for p in glob.glob(f'{ROOT}/PLang/app/module/**/*.cs', recursive=True) + \
              glob.glob(f'{ROOT}/PLang/app/type/**/*.cs', recursive=True):
         try: src = open(p, encoding='utf-8').read()
         except Exception: continue

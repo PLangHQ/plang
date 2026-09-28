@@ -1,0 +1,1 @@
+[0] condition.if(Left=%goal.IsCached%) { goal.return(Data=%goal.Cache%) }

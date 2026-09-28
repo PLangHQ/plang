@@ -13,7 +13,7 @@ public sealed class @this
         .ToArray();
 
     [global::app.Attributes.Choices]
-    public static string[] Choices(actor.context.@this? context) => [.. Interfaces.Select(Named)];
+    public static string[] Choices(actor.context.@this? context) => [.. Interfaces.Select(Named).Order(System.StringComparer.Ordinal)];
 
     /// <summary>The interface this kind's providers serve — the registry's key.</summary>
     public System.Type Interface { get; }
