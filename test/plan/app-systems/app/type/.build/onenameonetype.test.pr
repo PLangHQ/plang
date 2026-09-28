@@ -1,0 +1,274 @@
+{
+  "name": "Start",
+  "comment": "Stage 10a: one name, one type. A plugin declaring a built-in's name fails loudly, as an error result.\nIdentityShadow.dll declares \"identity\" (TestFixtures/IdentityShadow/Shadow.cs), copied next to this test.",
+  "step": [
+    {
+      "index": 0,
+      "text": "code.load Path=\"IdentityShadow.dll\", on error key \"TypeLoadCollision\" call Refused",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "code",
+          "name": "load",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "IdentityShadow.dll"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "TypeLoadCollision"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "Refused"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignoreerror",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %refused% equals \"TypeLoadCollision\", \"a second 'identity' is refused\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "TypeLoadCollision"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%refused%",
+              "variable": [
+                {
+                  "text": "%refused%",
+                  "code": [
+                    {
+                      "variable": "refused"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a second 'identity' is refused"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!app.type.identity.name% equals \"identity\", \"the built-in identity still stands\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "identity"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.identity.name%",
+              "variable": [
+                {
+                  "text": "%!app.type.identity.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "identity"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the built-in identity still stands"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Refused",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %refused% = %!error.Key%",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%refused%",
+                  "variable": [
+                    {
+                      "text": "%refused%",
+                      "code": [
+                        {
+                          "variable": "refused"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/app/type/OneNameOneType.test.goal",
+      "prPath": "/plan/app-systems/app/type/.build/onenameonetype.test.pr",
+      "hash": "fe1fd7996b5ad179aa83280826451ee54a8c8b4882b84ae4512827cd91f6859d",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/app/type/OneNameOneType.test.goal",
+  "prPath": "/plan/app-systems/app/type/.build/onenameonetype.test.pr",
+  "hash": "9a584ed62ab9e310cbe1aa01db3c58791937367e4d57f3e5847b357edca3a7ff",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

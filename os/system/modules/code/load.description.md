@@ -1,1 +1,1 @@
-Load a provider from a DLL path and register it in the app's provider registry
+Load a DLL: the types it declares join the app's types, and the providers it brings are registered
