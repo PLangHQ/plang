@@ -45,4 +45,27 @@ Read at 26a9d8222. The comparison goes at the end.
 - **Where the binding at code read lives:** the step's code list (`action.list`) reading its actions. Each `on.*` action binds itself onto the action before it (behaviour on the element). What does its `Start` do at run: nothing?
 - **The `.pr` shape:** `Modifier` and `Recovery` nested under the action → siblings. Every `.pr` with a modifier gets rebuilt (no backward compat), and the reader and the formal writer change.
 - **A sibling `on.*` started at run would overwrite `%!data%`** (`action.Start` writes its result to `!data`, `:222-223`), so a `variable.set(Value=%!data%)` after `file.read(…); on.cache(…)` would get the on-action's empty answer. What was bound at read must not run as a step action.
-- **`cache.wrap` setting `!data` on a hit** duplicates `action.Start`'s own `!data` write (`action/this.cs:222-223`). With a cancel, the answer is the result, and `Start` writes `!data` once.
+- **`cache.wrap` setting `!data` on a hit** (the rest of this point follows the comparison below)
+
+## Comparison with the coder's trace (`.bot/app-systems/coder/v9/8g-trace.md`, 5e54c63ae; read after mine was pushed, 7fceb96aa)
+
+- **Same:**
+  - the crux (wrappers, not a before/after pair);
+  - the mapping (cache and timeout on start's before/after, error as the outcome);
+  - retry needs a door on the action;
+  - the per-attempt-deadline question;
+  - the builder templates.
+- **The coder's adds:**
+  - the concrete format keys (`"modifier"`/`"recovery"` at `action/this.Item.cs:66-85`, `serializer/Reader.cs:73-92`);
+  - **the Python twins** (`tools/decider/{formal,prompt_c,build_pr,…}`), which I missed again (the lesson from 7f);
+  - the C# test folders;
+  - the two built `.pr` files that carry modifiers.
+- **Mine adds:**
+  - the behaviour table as pins;
+  - the error outcome must fire after after-start (cache and timeout semantics);
+  - a retry must re-run the whole attempt (shared deadlines break timeout retries);
+  - **the `%!data%` clobber** if a bound `on.*` is started at run;
+  - cache's hit state against a reset TTL.
+- **Lesson:** my builder-side sweep again stopped at the templates. The Python twins are part of every builder-visible change.
+
+The rest of the `cache.wrap` point: duplicates `action.Start`'s own `!data` write (`action/this.cs:222-223`). With a cancel, the answer is the result, and `Start` writes `!data` once.
