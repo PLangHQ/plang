@@ -17,8 +17,7 @@ public partial class start : IContext
 
     public async Task<data.@this> Start()
     {
-        var named = Actor == null ? null : await Actor.Value();
-        var runContext = named == null ? Context : (await (await Context.App.actor.Get(named.ToString()!)).Value())!.Context;
+        var runContext = await Context.For(Actor);
 
         // Polymorphic: forwarded result type depends on the dispatched target.
         var call = Goal == null ? null : await Goal.Value();

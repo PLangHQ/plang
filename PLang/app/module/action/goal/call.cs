@@ -63,11 +63,8 @@ public partial class Call : IContext
         if (goal == null)
             return Context.Error(new global::app.error.ActionError($"Goal '{Name.Peek()}' not found.", "GoalNotFound", 404));
 
-        // No actor given (param absent OR its value is null) → run in the current
-        // actor's context. Only resolve Actor when it actually holds one, so a null
-        // value never tries to convert into an actor.
-        var named = Actor == null || await Actor.IsEmpty() ? null : await Actor.Value();
-        var execContext = named == null ? Context : (await (await Context.App.actor.Get(named.ToString()!)).Value())!.Context;
+        // the actor named runs it; none named, this one
+        var execContext = await Context.For(Actor);
 
         // The arguments bind in the call's own frame, in the memory the callee runs in: they are the
         // callee's for as long as it runs and gone when it returns; any other write the callee makes

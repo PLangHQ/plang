@@ -87,6 +87,12 @@ public sealed class @this : IDisposable
     /// </summary>
     public ActorType Actor { get; }
 
+    /// <summary>The context a step runs in when it names an actor (<paramref name="actor"/>): that actor's; this
+    /// one when none is named.</summary>
+    public async System.Threading.Tasks.ValueTask<@this> For(
+        data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? actor)
+        => actor == null || await actor.IsEmpty() ? this : App.actor.list[(await actor.Value())!].Context;
+
     /// <summary>
     /// Test context — a Data with Properties for results, summary, etc.
     /// Set when --test flag is active. Accessible via %!test%.

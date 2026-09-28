@@ -26,9 +26,7 @@ public partial class Remove : IContext
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));
 
-        var named = Actor == null ? null : await Actor.Value();
-        var actor = named == null ? Context.Actor : (await (await Context.App.actor.Get(named.ToString()!)).Value())!;
-        var removed = await actor.Channel.RemoveAsync(name);
+        var removed = await (await Context.For(Actor)).Actor.Channel.RemoveAsync(name);
         if (!removed)
             return Context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
         return Context.Ok();

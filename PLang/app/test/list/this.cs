@@ -44,13 +44,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 
     // The actor test's setting names — one of the app's, which the actor list holds.
     private global::app.actor.@this Actor
-    {
-        get
-        {
-            var named = _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Actor.ToString();
-            return _app.actor.list.Items().First(a => string.Equals(a.Name, named, StringComparison.OrdinalIgnoreCase));
-        }
-    }
+        => _app.actor.list[_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Actor];
 
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;

@@ -35,8 +35,7 @@ public partial class Set : IContext
     {
         var given = await Given();
         if (!given.Success) return given;
-        var context = Actor == null || await Actor.Given() is not { } named ? Context
-            : (await (await Context.App.actor.Get(named.Peek().ToString()!)).Value())!.Context;
+        var context = await Context.For(Actor);
         var born = await Context.App.type.list[typeof(app.channel.type.goal.@this)].Create(given.Peek(), context);
         return await born.Use<app.channel.type.goal.@this>(async channel =>
         {

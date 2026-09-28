@@ -22,6 +22,9 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     /// <summary>The user actor, for end-user operations. Linked to System's cancellation token.</summary>
     public actor.@this User { get; }
 
+    /// <summary>The actor <paramref name="name"/> names — the closed set's own members.</summary>
+    public actor.@this this[Name name] => name == Name.system ? System : User;
+
     public async ValueTask DisposeAsync()
     {
         await System.DisposeAsync();
