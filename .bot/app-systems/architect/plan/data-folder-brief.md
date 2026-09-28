@@ -42,7 +42,7 @@ The folder is named for the concept, `identity` (Ingi: "so it is just /.data/ide
 - **Simplified (Ingi: "it's more of a convention, a pattern to follow"):** the path decides where a file goes, always, with no magic. `.data/` is the taught pattern (`/.data/file/…`, `/.data/identity/%!identity%/file/…`), not forced on every write. Only two guards, both about origin:
   - **(a)** a path, or part of one, that came from the wire is kept inside its identity's `file/`, so `../..` can't climb out;
   - **(b)** content from the wire can't be written where code lives (`.build/`, `.goal`, `os/`).
-- **Saving into a folder (Ingi's next idea):** `save %!user.data% to folder, write to %file%`, and `file.save` returns the saved file (decision 179), so `%file.name%` is the final name. The file takes the value's own name (the upload's filename, as a sanitised leaf). On a name clash it doesn't overwrite silently: the identity is **asked** (overwrite, or add a counter), and **the answer is stored as that identity's setting**, so it isn't asked again. That combines plang's ask, settings and identity.
+- **Saving into a folder (Ingi's next idea):** `save %!user.data% to folder, write to %path%`. `file.save` returns the path it saved to (decision 179), so `%path.name%` is the final name, and `read file %path%` reads it back. The file takes the value's own name (the upload's filename, as a sanitised leaf). On a name clash it doesn't overwrite silently: the identity is **asked** (overwrite, or add a counter), and **the answer is stored as that identity's setting**, so it isn't asked again. That combines plang's ask, settings and identity.
 
 ## Open
 
