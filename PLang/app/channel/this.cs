@@ -142,7 +142,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
         else
         {
             try { result = await Write(data, ct); }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+            // A program's own error (AppException — a %var% not set while the value renders) keeps its key and
+            // travels to the action; what else a channel's transport throws is a write error.
+            catch (Exception ex) when (ex is not (global::app.error.AppException or NullReferenceException
+                                                  or OutOfMemoryException or StackOverflowException))
             {
                 result = data.Context.Error(new global::app.error.ServiceError(
                     $"Channel '{Name}' write failed: {ex.Message}", "WriteError") { Exception = ex });

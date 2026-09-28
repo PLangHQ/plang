@@ -60,7 +60,9 @@ public sealed class @this : global::app.channel.type.session.@this
                 await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
             return result;
         }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        // Only the transport fails here as a write error; a program's own error raised while the value renders
+        // (a %var% not set) keeps its key and travels to the action.
+        catch (Exception ex) when (ex is IOException or ObjectDisposedException or NotSupportedException)
         {
             return data.Context.Error(new ServiceError(
                 $"Failed to write to channel '{Name}': {ex.Message}", "WriteError") { Exception = ex });
