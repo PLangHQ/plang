@@ -67,6 +67,10 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **Two sync-over-async sites, fixed when their callers move:** `Fluid.cs:378` (the IFileProvider include) and `OpenAi.cs:736` (`ReadAsDataUri`).
 - **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
 - **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
+- **Builder observations from 9a's plan tests (decision 190; for the builder, not stage blockers):**
+  - `on/event.notes.md` never teaches a type's own event (`after file create` → `%!app.type.file.on.create%`, the birth). The compile copies the goal example.
+  - The decider says yes to goal.call on a step that leads with "after …".
+  - `set.examples.md` teaches only the trailing `as` (`= "…" as text`), so `set %p% as path = "a.txt"` loses its Type.
 - **The llm tool call (decision 185, a live security fault):**
   - `ParseToolArguments` (`llm/code/OpenAi.cs:603`) binds every name the model sends, not only the tool's `Declared` rows (`:1058`) that its schema showed. The argument frame is read before the caller's memory (`variable/call/list/this.cs:7`), so the model can shadow a caller variable such as `%userId%`. Bind only declared names, and refuse the rest back to the model.
   - `OnToolCall` sets `name`, `arguments`, `status` and `result` in the caller's memory (`:541-543`, `:589-592`). Bind them in a call frame, the way the tool's arguments are.
