@@ -663,15 +663,93 @@
       "id": "0125ff55-91a0-4bd6-8ac5-9140baedd96e",
       "bot": "coder",
       "timestamp_start": "2026-09-28T12:00:00Z",
-      "timestamp_end": null,
-      "intent": "Stage 9a commit 1: the data<T>.Use door and file.read as the template action (path.Read/Expect)",
+      "timestamp_end": "2026-09-28T19:00:00Z",
+      "intent": "Stage 9: close 9a (births through type.Create, one read verb, the Use/Follow doors) and move 9b's modules onto their owners",
       "before": {
         "assumptions": "8h closed (ad7b306d4); decision 175 settles the stage 9 split",
         "risk": "file.read Build type-hint tests depend on the registry lookup; http build no longer probes"
       },
       "plan": ".bot/app-systems/coder/v10/plan.md",
-      "actions": [],
-      "after": null
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/item/path/",
+            "PLang/app/module/action/file/read.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "9a.1-9a.2: Use/Use<TAs>, path.Read, IContent, ReadText gone"
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/file/this.cs",
+            "PLang/app/module/action/variable/set.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "9a.3/9a.5: births via type.Create, From, Follow; keep unread"
+        },
+        {
+          "paths": [
+            "PLang/app/channel/type/file",
+            "PLang/app/channel/type/http"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "9a.4"
+        },
+        {
+          "paths": [
+            "PLang/app/module/action/list/",
+            "PLang/app/type/item/list/this.cs",
+            "PLang/app/type/item/variable/"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "9b.list"
+        },
+        {
+          "paths": [
+            "PLang/app/module/action/llm/code/OpenAi.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "9b.llm: declared-only tool args, frames, one answer decoder"
+        },
+        {
+          "paths": [
+            "PLang/app/module/action/loop/foreach.cs",
+            "PLang/app/module/action/code/",
+            "PLang/app/module/action/module/add.cs",
+            "PLang/app/channel/type/goal/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "9b.loop/code/channel"
+        },
+        {
+          "paths": [
+            "test/plan/app-systems/"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "plan tests rewritten in compiling plang; done.list"
+        }
+      ],
+      "after": {
+        "status": "9a closed; 9b: list, llm, loop, code, channel done",
+        "health": "full sweep at baseline; plang 8/8",
+        "notes": "waiting on Ingi: frame scope, ordering over a missing field"
+      }
     }
   ]
 }
