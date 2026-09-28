@@ -1,5 +1,5 @@
 {
- "about": "Stage-3 golden set: five whole goals, one request each, scored per step. The menu per step is the right one (the decider is not under test): the step's OWN actions — an action held as a value (channel.set's Goal) or as a modifier's recovery is not on it. Expected answers written by hand. The earlier 32 one-step cases are in git history (0da24055e). A value {\"$oneOf\": [...]} accepts any of its alternatives; an expected value with \"module\" is an action (an action-typed property).",
+ "about": "Stage-3 golden set: whole goals, one request each, scored per step. The menu per step is the right one (the decider is not under test): the step's OWN actions — an action held as a value (channel.set's Goal) or as a modifier's recovery is not on it. Expected answers written by hand. The earlier 32 one-step cases are in git history (0da24055e). A value {\"$oneOf\": [...]} accepts any of its alternatives; an expected value with \"module\" is an action (an action-typed property).",
  "cases": [
   {
    "id": "build",
@@ -290,6 +290,24 @@
                         "Recovery": [{"module": "goal", "name": "call", "property": {"Name": "Fallback"}}]}},
           {"module": "variable", "name": "set", "property": {"Name": "%text%", "Value": "%!data%"}}],
     "2": [{"module": "output", "name": "write", "property": {"Data": "%text%", "channel": "error"}}]
+   }
+  },
+  {
+   "id": "guard",
+   "covers": "a lone `if %x%` is Left's own truth — no Operator, no Right — with its body (a return with a value; a write on a non-bool Left, where `== true` would be wrong); `throw %!error%` re-raises the error (Data, not Message) with a fix suggestion",
+   "goal": "Guard",
+   "steps": [
+    {"text": "if %goal.IsCached%, return %goal.Cache%", "indent": 0},
+    {"text": "if %items%, write out \"There are items\"", "indent": 0},
+    {"text": "throw %!error%, fix suggestion %hint%", "indent": 0}
+   ],
+   "menu": {"0": ["condition.if", "goal.return"], "1": ["condition.if", "output.write"], "2": ["error.throw"]},
+   "expect": {
+    "0": [{"module": "condition", "name": "if", "property": {"Left": "%goal.IsCached%"},
+           "child": [{"text": "return %goal.Cache%", "action": [{"module": "goal", "name": "return", "property": {"Data": "%goal.Cache%"}}]}]}],
+    "1": [{"module": "condition", "name": "if", "property": {"Left": "%items%"},
+           "child": [{"text": "write out \"There are items\"", "action": [{"module": "output", "name": "write", "property": {"Data": "There are items"}}]}]}],
+    "2": [{"module": "error", "name": "throw", "property": {"Data": "%!error%", "FixSuggestion": "%hint%"}}]
    }
   }
  ]

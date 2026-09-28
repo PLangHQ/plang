@@ -3859,5 +3859,179 @@
   ],
   "formal": "output.write(Data: item = %text%, channel: text = \"error\")",
   "untyped": "output.write(Data=%text%, channel=\"error\")"
+ },
+ {
+  "goal": "guard",
+  "index": 0,
+  "text": "if %goal.IsCached%, return %goal.Cache%",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%goal.IsCached%",
+      "variable": [
+       {
+        "text": "%goal.IsCached%",
+        "code": [
+         {
+          "variable": "goal"
+         },
+         {
+          "property": "IsCached"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "child": [
+     {
+      "text": "return %goal.Cache%",
+      "code": [
+       {
+        "module": "goal",
+        "name": "return",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "item",
+           "template": "plang"
+          },
+          "value": "%goal.Cache%",
+          "variable": [
+           {
+            "text": "%goal.Cache%",
+            "code": [
+             {
+              "variable": "goal"
+             },
+             {
+              "property": "Cache"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %goal.IsCached%) { goal.return(Data: item = %goal.Cache%) }",
+  "untyped": "condition.if(Left=%goal.IsCached%) { goal.return(Data=%goal.Cache%) }"
+ },
+ {
+  "goal": "guard",
+  "index": 1,
+  "text": "if %items%, write out \"There are items\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%items%",
+      "variable": [
+       {
+        "text": "%items%",
+        "code": [
+         {
+          "variable": "items"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "child": [
+     {
+      "text": "write out \"There are items\"",
+      "code": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "There are items"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %items%) { output.write(Data: text = \"There are items\") }",
+  "untyped": "condition.if(Left=%items%) { output.write(Data=\"There are items\") }"
+ },
+ {
+  "goal": "guard",
+  "index": 2,
+  "text": "throw %!error%, fix suggestion %hint%",
+  "pr": [
+   {
+    "module": "error",
+    "name": "throw",
+    "property": [
+     {
+      "name": "Data",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%!error%",
+      "variable": [
+       {
+        "text": "%!error%",
+        "code": [
+         {
+          "variable": "!error"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "FixSuggestion",
+      "type": {
+       "name": "text",
+       "template": "plang"
+      },
+      "value": "%hint%",
+      "variable": [
+       {
+        "text": "%hint%",
+        "code": [
+         {
+          "variable": "hint"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "error.throw(Data: item = %!error%, FixSuggestion: text = \"%hint%\")",
+  "untyped": "error.throw(Data=%!error%, FixSuggestion=\"%hint%\")"
  }
 ]

@@ -29,7 +29,7 @@ public class PrEnvelopeTests : System.IAsyncDisposable
             if (!first.Contains("\"code\"") || System.Text.RegularExpressions.Regex.IsMatch(first, "\"action\"\\s*:"))
                 differ.Add($"{goal.Key} writes no `code`: {first}");
         }
-        await Assert.That(goals.Count).IsEqualTo(6);
+        await Assert.That(goals.Count).IsEqualTo(7);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 

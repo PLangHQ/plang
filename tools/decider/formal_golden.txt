@@ -66,3 +66,13 @@
 [10] goal.call(Name: text = "SendReport", Parameter: list = {to: text = "ops@example.com", subject: text = "Weekly report"}); on.error(Recovery: list<action> = [goal.call(Name: text = "LogFailure")])
 [11] output.write(Data: text = "Report sent", channel: text = "log")
 
+# show
+[0] variable.set(Name: variable = %template%, Value: text = "/system/error/%error.StatusCode%.txt")
+[1] ui.render(Template: text = "%template%", Parameter: list = {error: item = %error%}); on.error(StatusCode: number = 404, RetryCount: number = 1, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: text = "Fallback")]); variable.set(Name: variable = %text%, Value: item = %!data%)
+[2] output.write(Data: item = %text%, channel: text = "error")
+
+# guard
+[0] condition.if(Left: item = %goal.IsCached%) { goal.return(Data: item = %goal.Cache%) }
+[1] condition.if(Left: item = %items%) { output.write(Data: text = "There are items") }
+[2] error.throw(Data: item = %!error%, FixSuggestion: text = "%hint%")
+
