@@ -21,7 +21,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
     {
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
-        return await new global::app.channel.type.file.@this(p, app.User.Context).Read();
+        return await p.Decoded(app.User.Context);
     }
 
     [Test]

@@ -86,7 +86,7 @@ public class Stage2_NavigationAsyncTests
         await using var app = NewApp(out var root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
-        var d = await new global::app.channel.type.file.@this(p, app.User.Context).Read();
+        var d = await p.Decoded(app.User.Context);
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // read step: nothing parsed
         var port = await (await d.Get("port")).Value();      // first navigation parses
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);

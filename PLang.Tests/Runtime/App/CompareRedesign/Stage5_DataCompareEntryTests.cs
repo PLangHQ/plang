@@ -36,7 +36,7 @@ public class Stage5_DataCompareEntryTests
         await using var app = NewApp(out var root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"));
         await (await p.WriteText("42", app.User.Context)).IsSuccess();
-        var pending = await new global::app.channel.type.file.@this(p, app.User.Context).Read();   // raw-backed
+        var pending = await p.Decoded(app.User.Context);   // raw-backed
         await Assert.That(pending.MaterializeCount()).IsEqualTo(0);
         var result = await pending.Compare(D(app, 42, "number"));
         await Assert.That(pending.MaterializeCount()).IsEqualTo(1);   // exactly one await-read per operand
@@ -51,7 +51,7 @@ public class Stage5_DataCompareEntryTests
         await using var app = NewApp(out var root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"));
         await (await p.WriteText("42", app.User.Context)).IsSuccess();
-        var pending = await new global::app.channel.type.file.@this(p, app.User.Context).Read();
+        var pending = await p.Decoded(app.User.Context);
         _ = await pending.Compare(D(app, 5, "number"));       // the compare reads both values
         await Assert.That(pending.MaterializeCount()).IsGreaterThanOrEqualTo(1);   // pending is read
     }

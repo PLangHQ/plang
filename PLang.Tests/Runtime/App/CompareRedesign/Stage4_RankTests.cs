@@ -45,7 +45,7 @@ public class Stage4_RankTests
         await using var app2 = new global::app.@this(root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("5", app2.User.Context)).IsSuccess();
-        var pending = await new global::app.channel.type.file.@this(p, app2.User.Context).Read();   // raw-backed, unparsed
+        var pending = await p.Decoded(app2.User.Context);   // raw-backed, unparsed
         var other = D(app2, 5, "number");
         _ = await pending.Compare(other);
         await Assert.That(pending.MaterializeCount()).IsGreaterThanOrEqualTo(1);   // compare reads the value

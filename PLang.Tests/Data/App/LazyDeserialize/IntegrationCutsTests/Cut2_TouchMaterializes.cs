@@ -4,7 +4,6 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using data = global::app.data.@this;
 using type = global::app.type.@this;
-using filechannel = global::app.channel.type.file.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 
@@ -34,7 +33,7 @@ public class Cut2_TouchMaterializes
         var p = new filepath(System.IO.Path.Combine(root, "config.json"));
         await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
 
-        var d = await new filechannel(p, app.User.Context).Read();
+        var d = await p.Decoded(app.User.Context);
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // navigate materializes
@@ -47,7 +46,7 @@ public class Cut2_TouchMaterializes
         var p = new filepath(System.IO.Path.Combine(root, "report.csv"));
         await (await p.WriteText("name,age\nAda,36\n", app.User.Context)).IsSuccess();
 
-        var d = await new filechannel(p, app.User.Context).Read();
+        var d = await p.Decoded(app.User.Context);
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await (await (await d.Get("rows")).Get("0")).Get("name")).Value())?.ToString()).IsEqualTo("Ada");

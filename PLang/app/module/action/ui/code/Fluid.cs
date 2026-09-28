@@ -299,8 +299,8 @@ public class Fluid : ITemplate
 
     // The includes a render reads, read before it: Fluid asks its file provider synchronously, so each
     // include the template names — and each one those name — is read first, through the gate, and the
-    // provider answers from memory. An include named by a variable isn't known before the render, and
-    // answers not found.
+    // provider answers from memory. An include named by a variable isn't known before the render: the
+    // provider answers it with an error naming it.
     private sealed class PlangFileProvider : IFileProvider
     {
         // Fluid asks for an include by its name with this extension added when it has none.
@@ -308,6 +308,8 @@ public class Fluid : ITemplate
         private readonly global::app.type.item.path.@this _basePath;
         private readonly global::app.actor.context.@this _context;
         private readonly Dictionary<string, string> _read = new(StringComparer.OrdinalIgnoreCase);
+        // Every include named by a literal, found or not — a name outside it was named by a variable.
+        private readonly HashSet<string> _named = new(StringComparer.OrdinalIgnoreCase);
 
         public PlangFileProvider(global::app.type.item.path.@this basePath, global::app.actor.context.@this context)
         {
@@ -324,7 +326,7 @@ public class Fluid : ITemplate
                 foreach (var name in new Included().In(next))
                 {
                     var asked = name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) ? name : name + Extension;
-                    if (_read.ContainsKey(asked) || await Text(asked) is not { } text) continue;
+                    if (!_named.Add(asked) || await Text(asked) is not { } text) continue;
                     _read[asked] = text;
                     if (parser.TryParse(text, out var partial, out _)) pending.Enqueue(partial);
                 }
@@ -359,7 +361,11 @@ public class Fluid : ITemplate
         }
 
         public IFileInfo GetFileInfo(string subpath)
-            => _read.TryGetValue(subpath, out var text) ? new Include(subpath, text) : new NotFoundFileInfo(subpath);
+            => _read.TryGetValue(subpath, out var text) ? new Include(subpath, text)
+             : _named.Contains(subpath) ? new NotFoundFileInfo(subpath)
+             : throw new global::app.error.AppException(
+                 $"include '{subpath}' is named by a variable — an include is read before the render, so write its name out",
+                 "IncludeNotLiteral", 400);
 
         public IDirectoryContents GetDirectoryContents(string subpath)
             => new NotFoundDirectoryContents();
