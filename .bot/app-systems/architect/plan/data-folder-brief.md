@@ -26,11 +26,11 @@ Ingi, 2026-09-28 (a curious-architect conversation):
 The folder is named for the concept, `identity` (Ingi: "so it is just /.data/identity/%identity%/file.txt"). The developer writes the path:
 
 ```
-- save %report% to "/.data/identity/%identity%/report.pdf"   → .data/identity/<id>/report.pdf
+- save %report% to "/.data/identity/%Identity%/report.pdf"   → .data/identity/<id>/report.pdf
 %!app.actor.user.identity.list%                              the identities that have reached this app
 ```
 
-(To confirm: is there a kind level inside an identity's folder (`file/`, `setting/`), or do files sit directly in it? And is the running request's identity `%!identity%`?)
+(Settled, decision 205, Ingi: "there should be a dynamicdata for %Identity%, %Identity% is the user.identity, %MyIdentity% is the system.identity". The pattern is `/.data/identity/%Identity%/…`. `%MyIdentity%` is already a DynamicData (`actor/this.cs:109`); `%Identity%` is new. The kind level inside an identity's folder is settled above.)
 
 - **The boundary follows where a value came from, not who is running** (Ingi: "if we change /change.txt, that is coming from source … it never came from the wire"; "we can check when we are writing file down to disk, did this come from the wire or source").
   - The check lives at the path's write gate (`AuthGate`), which every file verb already passes through.
