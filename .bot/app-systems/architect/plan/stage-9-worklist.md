@@ -50,6 +50,7 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
   - the static helpers `Parameters`, `Value` (a property rendering itself belongs on the property) and `Match`;
   - `item as action` in `Handle`;
   - `Pattern` is a string mirror of what it's bound on.
+- **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
 - **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
 
