@@ -43,6 +43,8 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **From Ingi's one-or-many scan (2026-09-27):** `module.list.RegisterType/Register` should become the module's own action list's `Add` (shape waiting on Ingi, because `app/module/action/list/` is the `list` module's handler folder); `step.list.Body(index)` should be the step's body, built by the parser (`goal.Parse`, `goal/this.cs:498`), with build.fold left only to check (Ingi leans (b); this changes the `.pr` format, so the `.pr` files are rebuilt and it needs an eval).
 - **`AskError`** (`error/AskError.cs`) has no producer since `setting.get` went (decision 71). Delete it, or give it its real producer.
 - **`LlmDebug.Output`** (`module/action/debug/setting`) is `text`, compared to `"file"` as a string (decision 67). Make it a choice.
+- **Births move onto `type.Create` (decisions 138–140).** About 58 `new …type.item.X.@this(` sites outside `app/type/`, plus alias forms (`new dict()`, `new path(…)`), move onto the async door, so `on.create` fires. **The trap:** `Create` returns `ValueTask<data>`, so a caller that hands its result to an `object` slot (`new data(name, t.Create(…))`) compiles and silently holds a ValueTask. 8e found four such sites. **The check:** put `[Obsolete]` on the door temporarily; it lists every caller as a warning. Revert it after.
+- **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
 
 ## Outside `Start()`
