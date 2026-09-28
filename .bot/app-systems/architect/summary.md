@@ -4,7 +4,7 @@ Done: 1–8g, and 8h's code parts (see `test/plan/app-systems/done.list`). The p
 
 - A plan's tests live in its own folder, lowercase and singular: `test/plan/app-systems/`, each at the path of what it tests (`module/on/cache/…`). They're built only when Ingi says so; the coder may ask.
 - Hand-over: the spec goals plus the OBP rules; the implementation is a conversation between the coder and the architect.
-- **At the merge into runtime2 (Ingi, 2026-09-28):** the test-layout change (`Tests/` → `test/`, lowercase singular, the 49 test `.pr` removed; 6678203fe) is handled as its own step then. Decide whether it lands first or together, and rebase any branch that touches `Tests/` onto `test/`. Apply the CLAUDE.md proposal (`test/`, `test/plan/<id>/`) at the same time.
+- **At the merge into runtime2:** the test-layout change (`Tests/` → `test/`, lowercase singular, the 49 test `.pr` removed; 6678203fe) simply merges with app-systems. Branches run in a line, one after another (Ingi: "no other branches are editing those files, it's always a line"), so nothing needs rebasing. Apply the CLAUDE.md proposal (`test/`, `test/plan/<id>/`) with the merge.
 
 ## 2026-09-27 night — Ingi asleep; the architect decides (his words: "I want you to make decisions")
 
