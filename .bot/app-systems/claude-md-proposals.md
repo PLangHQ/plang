@@ -72,3 +72,11 @@ with
 ```
 **envelope** — a hand-built wrapper around Data's shape, usually to carry what `[JsonIgnore]` keeps off the wire or out of the store: `new Dictionary<string, object?> { ["Value"] = …, ["Model"] = … }` stored, then unpacked by name (`entry.Name == "Value"`). The field list gets written at every site that packs or unpacks it, and the value is often kept twice (read and raw). Fix: store the Data whole and mark what should persist for the view (`[Out]`/Store); if a module wraps Data to cache it, it is doing the cache's job. Tells: `\["Value"\]` or `Name == "Value"` outside `app/data/`; a comment saying code goes around `[JsonIgnore]`. *Worked example (kept unfixed as the sweep's specimen):* the llm query's own cache (`llm/code/OpenAi.cs`, `RestoreFromCache`).
 ```
+
+## architect — app-systems — 2026-09-28
+**Target:** /CLAUDE.md (Runtime2 Conventions, near "Lazy params")
+**Why:** Stage 9b turned every action handler into a one-line door to the owning type, and two signature styles grew side by side: list members taking carriers (`list.At(data<number>)`) and number members taking values (`n.Round(number)`). Decision 231 settles it. Without a written rule, each module picks its own style again.
+**Proposed change:**
+```
+- **Owners take values; handlers open carriers.** A type's operation takes plang values (items: `number`, `text`, `path`), never `data<T>` carriers and never CLR primitives. The action handler opens its carriers through `Use` (`Path.Use(p => Pattern.Use(pat => p.List(pat, …)))`), whose failure is the action's answer; for several optional settings, the generated `Given()`. The CLR lowering happens only at the real boundary inside the owner (the System.IO call, the .NET API).
+```
