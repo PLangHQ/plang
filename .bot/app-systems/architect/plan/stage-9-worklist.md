@@ -67,6 +67,11 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **Two sync-over-async sites, fixed when their callers move:** `Fluid.cs:378` (the IFileProvider include) and `OpenAi.cs:736` (`ReadAsDataUri`).
 - **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
 - **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
+- **The llm tool call (decision 185, a live security fault):**
+  - `ParseToolArguments` (`llm/code/OpenAi.cs:603`) binds every name the model sends, not only the tool's `Declared` rows (`:1058`) that its schema showed. The argument frame is read before the caller's memory (`variable/call/list/this.cs:7`), so the model can shadow a caller variable such as `%userId%`. Bind only declared names, and refuse the rest back to the model.
+  - `OnToolCall` sets `name`, `arguments`, `status` and `result` in the caller's memory (`:541-543`, `:589-592`). Bind them in a call frame, the way the tool's arguments are.
+  - Whether a valued row stops yielding to the model is waiting on Ingi (`plan/service-brief.md`).
+- **Delete `app/service/`** (the per-call scope: no production callers; one test, `Stage8_ChannelEventsTests.cs:205`). Decision 185 reverses 129's "services stay".
 - **`condition.Operator` lives in a module's action folder** (`module/action/condition/Operator.cs`), and since 9b.list.1 the list type depends on it (`list.Any` takes `choice<Operator>`). A type must not reach up into a module. Operator is comparison (`data.Comparison` is in `app.data`), so it moves there when condition comes up in 9b.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
 
