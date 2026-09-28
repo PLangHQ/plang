@@ -42,14 +42,10 @@ public partial class Call : IContext
         // name is only known at run and stays authored; a goal in the caller's own file (a child, or
         // the file's root) stays bare — it wins by rule and cannot be shadowed. A goal not found yet
         // may be built later in the same run, so the name is left as written.
-        var caller = __action?.Step?.Goal;
-        if (await Callee() is { } target
-            && (await Name.Value())?.RawText is { } authored
-            && !Equals(target.Path, caller?.Path) && target.Address is { } address
-            && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase)
+        if (await Callee() is { } target && target.Reference(__action?.Step?.Goal) is { } address
+            && !string.Equals(address, (await Name.Value())?.RawText, System.StringComparison.OrdinalIgnoreCase)
             && __action!["Name"] is { } name)
-            __action.Property.Set(new global::app.type.property.@this
-                { Name = name.Name, Type = name.Type, Value = new global::app.type.item.text.@this(address), Properties = name.Properties });
+            __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));
 
         if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
 
@@ -66,8 +62,7 @@ public partial class Call : IContext
         }
         // The argument list is the action's own property — replace it with the survivors.
         if (kept.Count != args.CountRaw && __action?["Parameter"] is { } arguments)
-            __action.Property.Set(new global::app.type.property.@this
-                { Name = arguments.Name, Type = arguments.Type, Value = new global::app.type.item.list.@this(kept), Properties = arguments.Properties });
+            __action.Property.Set(arguments.Holding(new global::app.type.item.list.@this(kept)));
         return Context.Ok();
     }
 

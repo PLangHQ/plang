@@ -99,6 +99,10 @@ public sealed class @this
     /// <summary>The value's properties bag, as the .pr carries it.</summary>
     public global::app.data.Properties Properties { get; init; } = new();
 
+    /// <summary>This property holding <paramref name="value"/> instead — everything else it is, kept.</summary>
+    public @this Holding(global::app.type.item.@this value) => new()
+        { Name = Name, Type = Type, Nullable = Nullable, Default = Default, Value = value, Properties = Properties };
+
     /// <summary>Writes the property's row — <c>{name, type, value, properties?}</c>, the value as held
     /// (a wire relays its raw verbatim).</summary>
     public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
