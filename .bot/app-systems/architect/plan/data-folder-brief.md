@@ -30,6 +30,8 @@ The folder is named for the concept, `identity` (Ingi: "so it is just /.data/ide
 %!app.actor.user.identity.list%                              the identities that have reached this app
 ```
 
+(Decision 207, Ingi: "it is the public key = %Identity% in plang code. yes, I think user.identity would go into .data/identites/%identity%/data.sqlite". So `%Identity%` is the user identity's **public key** (text). In a local run, with no caller, it falls back to the system's identity. An identity's own store is `.data/identity/%Identity%/setting/data.sqlite` (singular folder, with the kind level he settled earlier). **Open:** the key is standard base64 (`signing/code/Ed25519.cs:177`), which contains `/` about half the time, so as a folder name it would nest.)
+
 (Settled, decision 205, Ingi: "there should be a dynamicdata for %Identity%, %Identity% is the user.identity, %MyIdentity% is the system.identity". The pattern is `/.data/identity/%Identity%/…`. `%MyIdentity%` is already a DynamicData (`actor/this.cs:109`); `%Identity%` is new. The kind level inside an identity's folder is settled above.)
 
 - **The boundary follows where a value came from, not who is running** (Ingi: "if we change /change.txt, that is coming from source … it never came from the wire"; "we can check when we are writing file down to disk, did this come from the wire or source").
