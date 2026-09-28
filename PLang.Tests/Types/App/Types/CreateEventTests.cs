@@ -125,6 +125,21 @@ public class CreateEventTests : System.IAsyncDisposable
         await Assert.That(kept.IsLoaded).IsTrue();
     }
 
+    [Test] public async Task WhatAnActionWasGiven_HoldsAGivenFileUnread()
+    {
+        System.IO.Directory.CreateDirectory(app.AbsolutePath);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "given.txt"), "x");
+        await Ctx.Variable.Set("doc", await global::app.type.item.path.@this.Resolve("given.txt", Ctx).Read(Ctx));
+
+        var (handler, _) = await TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%doc%")).Bind(Ctx);
+        var given = await ((global::app.module.action.variable.Set)handler!).Given();
+
+        await given.IsSuccess();
+        var file = (given.Peek() as global::app.type.item.dict.@this)!.Get("Value", Ctx)!.Peek() as global::app.type.item.file.@this;
+        await Assert.That(file).IsNotNull();
+        await Assert.That(file!.IsLoaded).IsFalse();
+    }
+
     [Test] public async Task AFileMadeFromAPath_IsTheReferenceToIt_WithTheDeclaredTemplate()
     {
         var path = global::app.type.item.path.@this.Resolve("some.txt", Ctx);

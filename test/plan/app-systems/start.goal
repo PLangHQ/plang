@@ -1,14 +1,21 @@
 / app-systems: every %!app.X% is the type X, and the plang path, the C# path and the file path say the same thing.
-/ Done: 1–8g, and 8h's code parts (done.list beside this goal). This goal is the plan's index and its validation:
+/ Done: 1–8h and 9a (done.list beside this goal). This goal is the plan's index and its validation:
 / each stage is a sub-goal, each comment a behaviour we want, and the step under it runs the test that proves it.
 / Tests live under this plan's folder at the path of what they test. Checks that can't be a test are in checks.md.
 / Built only when Ingi says so.
 Start
 - call Stage8h
 - call Stage9
-- call Stage10
-- call Stage11
-- call Stage12
+- call Stage10a
+- call Stage10b
+- call Stage10c
+- call Stage10d
+- call Stage10e
+- call Stage11a
+- call Stage11b
+- call Stage11c
+- call Stage12a
+- call Stage12b
 
 Stage8h
 / the builder builds itself, and plain words compile to what they mean (plus checks.md: the rebuild, the eval)
@@ -25,33 +32,68 @@ Stage9
 - call /plan/app-systems/app/type/file/CreateFiresOnBirth
 / converting a value to another type is a birth: "set %p% as path" fires "after path create"
 - call /plan/app-systems/app/type/path/AsPathIsABirth
+/ a loop's item is the loop's own: it doesn't outlive the loop
+- call /plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop
+/ the loop body's other writes reach the caller: a running total survives the loop
+- call /plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller
+/ a call's parameter doesn't outlive the call; the caller's variable of that name is its own again
+- call /plan/app-systems/module/goal/call/ParameterEndsWithTheCall
+/ a callback's write reaches the caller; its %message% ends with it
+- call /plan/app-systems/module/channel/set/CallbackWriteReachesTheCaller
 
-Stage10
-/ the app knows its types, and its own facts are plang values
+Stage10a
+/ registration: %!app.type.list% lists every type a program can use
 / the app lists its types
 - call /plan/app-systems/app/type/AppListsItsTypes
 / a plugin's type joins the app
 - call /plan/app-systems/app/type/PluginTypeJoinsTheApp
-/ one name, one type: a plugin can't take a built-in's name
+/ one name, one type: a plugin can't take a built-in's name (a clash fails loudly)
 - call /plan/app-systems/app/type/OneNameOneType
-/ the app's facts are plang values
-- call /plan/app-systems/app/AppFactsArePlangValues
+
+Stage10b
+/ typed lists: list<text> is made by the type itself, a kind carries its element
 / a typed list holds its type
 - call /plan/app-systems/app/type/list/TypedListHoldsItsType
-/ the app's name is its setting
-- call /plan/app-systems/app/setting/AppNameIsItsSetting
+/ a list read doesn't copy itself
 
-Stage11
-/ one door per thing; C# tests reach the app through its own doors (plus checks.md: C# suites, the dead-goal warning)
-/ one door to an actor
+Stage10c
+/ the app's facts are plang values
+/ %!app.created% is a datetime, uptime a duration
+- call /plan/app-systems/app/AppFactsArePlangValues
+/ id, name and environment are the app's settings
+- call /plan/app-systems/app/setting/AppNameIsItsSetting
+/ a channel's settings are plang values
+/ the app's identity is read back through the format that writes it; the store is ready when the app is
+
+Stage10d
+/ formats live with their owners: a type's formats are its kinds
+/ json's writer and reader live with the json kind, text's with text, the step notation with the action
+/ the test report's format is a real format kind (json, junit), each writing its own report file
+
+Stage10e
+/ one form of computed value: %Now% and %!event% are computed on each read, one way
+
+Stage11a
+/ the actor is reached one way: %!app.actor.system% and %!app.actor.user%, no second app.System/app.User
 - call /plan/app-systems/app/actor/OneDoorToAnActor
 
-Stage12
-/ a programmer's mistake is an error with its own key, never a crash
+Stage11b
+/ tests reach the app through its own doors (checks.md: every C# test passes with the test-only helpers gone)
+
+Stage11c
+/ nothing unreached goes unnoticed
+/ the builder warns about goals nothing calls (checks.md)
+/ the test report shows what the tests reached
+
+Stage12a
+/ the exception pass: a programmer's mistake is an error with its own key, never a crash
 / a value that takes no child is an error result
 - call /plan/app-systems/app/type/item/SetChildOnAValueIsAnError
 / an unknown setting is an error result
 - call /plan/app-systems/app/setting/UnknownSettingIsAnError
+
+Stage12b
+/ born knowing: a goal knows where it was loaded from when it's born, not stamped on after
 
 / Done, kept as validation that the modifiers-as-clauses logic works
 Stage8g

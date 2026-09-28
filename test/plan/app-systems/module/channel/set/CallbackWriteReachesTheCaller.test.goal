@@ -1,0 +1,10 @@
+/ A goal channel calls back into a goal for each message: its writes reach the writer, while %message% ends
+/ with the callback.
+Start
+- set channel "log" call Log
+- write "hello" to "log" channel
+- assert %logged% equals "hello", "the callback's write reaches the caller"
+- assert %message% is null, "the message ends with the callback"
+
+Log
+- set %logged% = %message%

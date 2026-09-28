@@ -29,15 +29,20 @@ public partial class Set : IContext
     public partial data.@this<app.type.item.variable.@this>? Encryption { get; init; }
     public partial data.@this<app.type.item.variable.@this>? Signing { get; init; }
 
-    // The channel is born from what the step gave, through its type; it replaces one of the same name.
+    // The channel is born from what the step gave, through its type, for the actor named (else the asker);
+    // it replaces one of the same name.
     public async Task<data.@this> Start()
     {
         var given = await Given();
         if (!given.Success) return given;
-        var born = await Context.App.type.list[typeof(app.channel.type.goal.@this)].Create(given.Peek(), Context);
-        if (!born.Success || born.Handled || born.Peek() is not app.channel.type.goal.@this channel) return born;
-        await channel.Actor.Channel.RemoveAsync(channel.Name);
-        channel.Actor.Channel.Register(channel);
-        return born;
+        var context = Actor == null || await Actor.Given() is not { } named ? Context
+            : (await (await Context.App.actor.Get(named.Peek().ToString()!)).Value())!.Context;
+        var born = await Context.App.type.list[typeof(app.channel.type.goal.@this)].Create(given.Peek(), context);
+        return await born.Use<app.channel.type.goal.@this>(async channel =>
+        {
+            await channel.Actor.Channel.RemoveAsync(channel.Name);
+            channel.Actor.Channel.Register(channel);
+            return born;
+        });
     }
 }

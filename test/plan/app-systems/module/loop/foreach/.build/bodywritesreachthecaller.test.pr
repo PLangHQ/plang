@@ -1,0 +1,311 @@
+{
+  "name": "Start",
+  "comment": "The loop body's writes to names the loop doesn't bind are the caller's: a running total survives the loop.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %total% = 0",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%total%",
+              "variable": [
+                {
+                  "text": "%total%",
+                  "code": [
+                    {
+                      "variable": "total"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach [1, 2, 3], call AddUp",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "list"
+              },
+              "value": [1,2,3]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "AddUp"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %total% equals 6, \"each run of the body adds to the caller's total\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 6
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%total%",
+              "variable": [
+                {
+                  "text": "%total%",
+                  "code": [
+                    {
+                      "variable": "total"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "each run of the body adds to the caller's total"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "AddUp",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %total% = %total% + %item%",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%total%",
+                  "variable": [
+                    {
+                      "text": "%total%",
+                      "code": [
+                        {
+                          "variable": "total"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%total%",
+                  "variable": [
+                    {
+                      "text": "%total%",
+                      "code": [
+                        {
+                          "variable": "total"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller.test.goal",
+      "prPath": "/plan/app-systems/module/loop/foreach/.build/bodywritesreachthecaller.test.pr",
+      "hash": "c8eaacdedc9e2beaf5849c417512bf8c3eba70289f088aa80c1309c863ba66e9",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller.test.goal",
+  "prPath": "/plan/app-systems/module/loop/foreach/.build/bodywritesreachthecaller.test.pr",
+  "hash": "f1b8807146988653f229ead67ced35f17376371643a2aec8ebda95d165375301",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

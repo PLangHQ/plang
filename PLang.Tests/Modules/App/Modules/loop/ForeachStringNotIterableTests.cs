@@ -37,7 +37,8 @@ public class ForeachStringNotIterableTests
                 Make.Action("loop", "foreach",
                     ("collection", "%s%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "DoNothing")))));
+                    ("name", "DoNothing")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
@@ -61,12 +62,13 @@ public class ForeachStringNotIterableTests
                 Make.Action("loop", "foreach",
                     ("collection", "%s%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "DoNothing")))));
+                    ("name", "DoNothing")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         await step.Start(context);
 
-        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo("hello");
     }
 
     // Same single-iteration shape for non-iterable scalars in general.
@@ -83,7 +85,8 @@ public class ForeachStringNotIterableTests
                 Make.Action("loop", "foreach",
                     ("collection", "%n%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "DoNothing")))));
+                    ("name", "DoNothing")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
@@ -91,6 +94,6 @@ public class ForeachStringNotIterableTests
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(1L);
-        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo(42);
+        await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo(42);
     }
 }

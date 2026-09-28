@@ -1,0 +1,8 @@
+/ The loop body's writes to names the loop doesn't bind are the caller's: a running total survives the loop.
+Start
+- set %total% = 0
+- foreach [1, 2, 3], call AddUp
+- assert %total% equals 6, "each run of the body adds to the caller's total"
+
+AddUp
+- set %total% = %total% + %item%

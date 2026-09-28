@@ -1,0 +1,11 @@
+/ A call's parameter is the callee's own: it doesn't outlive the call, and a caller's variable of the same
+/ name is the caller's again after it.
+Start
+- set %city% = "Oslo"
+- call Visit city="Reykjavik", unit="metric"
+- assert %visited% equals "Reykjavik", "the goal ran with its argument"
+- assert %city% equals "Oslo", "the caller's own %city% is its own again"
+- assert %unit% is null, "the parameter ends with the call"
+
+Visit
+- set %visited% = %city%

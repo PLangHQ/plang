@@ -25,7 +25,12 @@ public class ChannelSetTests
     public async Task Set_HeldCall_RegistersAChannelThatRunsIt()
     {
         var ctx = _app.User.Context;
-        var call = Make.Call("LogIt", ("level", "debug"));
+        // the goal copies its argument and the message into variables that reach the caller
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("SeeIt",
+            Make.Step("set %seenLevel% = %level%, set %seenMessage% = %message%",
+                Make.Action("variable", "set", Make.Param("Name", "seenLevel", "variable"), Make.Param("Value", "%level%", "variable")),
+                Make.Action("variable", "set", Make.Param("Name", "seenMessage", "variable"), Make.Param("Value", "%message%", "variable"))))));
+        var call = Make.Call("SeeIt", ("level", "debug"));
         var action = new global::app.module.action.channel.Set(ctx)
         {
             Name = new global::app.type.item.text.@this("logger"),
@@ -39,7 +44,11 @@ public class ChannelSetTests
 
         // A message runs the call as itself — its own argument binds.
         await (await channel.Write(ctx.Ok("hello"))).IsSuccess();
-        await Assert.That((await (await ctx.Variable.Get("level"))!.Value())?.RawText).IsEqualTo("debug");
+        await Assert.That((await (await ctx.Variable.Get("seenLevel"))!.Value())?.RawText).IsEqualTo("debug");
+        await Assert.That((await (await ctx.Variable.Get("seenMessage"))!.Value())?.RawText).IsEqualTo("hello");
+        // the argument and the message end with the run
+        await Assert.That((await ctx.Variable.Get("level")).IsInitialized).IsFalse();
+        await Assert.That((await ctx.Variable.Get("message")).IsInitialized).IsFalse();
     }
 
     // What the step doesn't give, the channel decides: its own defaults, and — unnamed — a channel called

@@ -33,8 +33,16 @@ public sealed class @this
     /// </summary>
     public call.@this Push(IEnumerable<data.@this>? parameters, global::app.goal.step.action.@this? held = null)
     {
-        var caller = _current.Value;
-        var call = new call.@this(parameters, caller, this, held);
+        var call = new call.@this(parameters, _current.Value, this, held);
+        _current.Value = call;
+        return call;
+    }
+
+    /// <summary>Pushes a call with memory of its own (<see cref="call.isolated.@this"/>): every write under it
+    /// stays in it. <c>await using</c> for automatic Pop.</summary>
+    public call.@this Isolate(IEnumerable<data.@this>? parameters, global::app.goal.step.action.@this? held = null)
+    {
+        var call = new call.isolated.@this(parameters, _current.Value, this, held);
         _current.Value = call;
         return call;
     }

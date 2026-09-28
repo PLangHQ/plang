@@ -6,7 +6,7 @@ plang's own structure should be as navigable and as honest as a program's data. 
 
 ## Done
 
-Stages 1–8g, and 8h's code parts. See [done.list](done.list).
+Stages 1–8h and 9a. See [done.list](done.list).
 
 ## What's left, and what each gives the developer
 
@@ -25,12 +25,22 @@ Each stage is a goal in [start.goal](start.goal); each behaviour there is a comm
   5. The test report and failure text move to os templates later, not in this stage.
   6. The split: 9a (the `Use` door, file.read, one read verb, births through `type.Create`, the channel collapse); 9b (the other modules, one per commit); 9c (`module/action/<m>/<a>.cs` → `module/<m>/action/<a>.cs`, matching `%!app.module.<m>.action.<a>%`).
 
-**10: the app knows its types.** `%!app.list%` lists them; a plugin's types join; one name can't be taken twice; the app's facts are plang values (`created` is a datetime); typed lists hold their type; the app's name is its setting.
-- *Decisions:* the store is born ready; `code`, `clr` and `table` live under `app.type.item`; the app's identity is read through the same format that writes it.
+**10: the app knows its types.** Every type a program can use is listed at `%!app.type.list%`, and a type is the plang value it says it is.
+- **10a: registration.** Built-in types and a plugin's types join `%!app.type.list%`; one name can't be taken twice (a clash fails loudly). `%!app.list%` is kept for the apps running under this app, later.
+- **10b: typed lists.** `list<text>` is made by the type itself: a kind carries its element. A list read no longer copies itself.
+- **10c: the app's facts are plang values.** `%!app.created%` is a datetime, `uptime` a duration; a channel's settings are plang values. The app's identity is read back through the same format that writes it, the store is ready when the app is, and `id`, `name` and `environment` are the app's settings.
+- **10d: formats live with their owners.** A type's formats are its kinds; json's writer and reader live with the json kind, text's with text, the step notation with the action. The test report's format is a real format kind (json, junit), and each writes its own report file.
+- **10e: one form of computed value.** A value computed on each read (`%Now%`, `%!event%`) has one form.
+- *Decisions:* the store is born ready; `code`, `clr` and `table` live under `app.type.item`; the app's identity is read through the same format that writes it; `%!app.type.list%` lists the types (Ingi); the format machinery moves to its owners, and test's format enum dissolves into format kinds (Ingi).
 
-**11: one door per thing.** `%!app.actor.system%`, not a second `%!app.system%`. The builder warns you about goals nothing calls, and the C# tests reach the app through its own doors.
+**11: one door per thing.** Each thing is reached one way.
+- **11a: the actor is reached one way.** `%!app.actor.system%` and `%!app.actor.user%`; no second `app.System`/`app.User`. A shortcut, if ever wanted, is a goal that returns the value, not a second property (Ingi).
+- **11b: tests reach the app through its own doors.** The C# tests start actions the way plang does, not through test-only helpers.
+- **11c: nothing unreached goes unnoticed.** The builder warns about goals nothing calls; the test report shows what the tests reached.
 
 **12: mistakes you can catch precisely.** A programmer's mistake is an error with its own key (`on error key "CannotSet"`), never a generic crash.
+- **12a: the exception pass.** Every `throw` in the code this branch touched is either plang itself broken, or becomes an error in the result.
+- **12b: born knowing.** A goal knows where it was loaded from when it's born, not stamped on after.
 
 ## How it's proven
 
@@ -54,7 +64,7 @@ These are checks, run and reported by the coder.
 - Every existing C# test passes; each handler in the stage 9 worklist is a one-line hand-over, and the OBP review of each module is clean.
 - The births moved onto `type.Create` leave no caller that drops its `ValueTask` (a temporary `[Obsolete]` on the door lists none).
 
-**11**
+**11b–c**
 - Every C# test passes with `TestApp` and `TestAction` deleted, and `App.Run<TAction>` retired.
 - Building a folder with an unreached goal `Unused` emits a warning naming it.
 

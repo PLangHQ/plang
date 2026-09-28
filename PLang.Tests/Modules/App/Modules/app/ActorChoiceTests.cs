@@ -52,11 +52,10 @@ public class ActorChoiceTests
     [Test]
     public async Task GoalCall_SystemActor_RunsOnSystemContext()
     {
-        _app.goal.list.Add(new global::app.goal.@this
-        {
-            Name = "TestGoal",
-            Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext)
-        });
+        // the goal copies its parameter into %seen% — a write that reaches the actor it ran for
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
+            Make.Step("set %seen% = %onSystem%",
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%onSystem%", "variable"))))));
         var action = new global::app.module.action.goal.Call(Ctx)
         {
             Name = new global::app.type.item.text.@this("TestGoal"),
@@ -67,8 +66,8 @@ public class ActorChoiceTests
 
         await (await action.Start()).IsSuccess();
 
-        await Assert.That((await _app.System.Context.Variable.Get("onSystem")).HasValue).IsTrue();
-        await Assert.That((await _app.User.Context.Variable.Get("onSystem")).HasValue).IsFalse();
+        await Assert.That((await _app.System.Context.Variable.Get("seen")).HasValue).IsTrue();
+        await Assert.That((await _app.User.Context.Variable.Get("seen")).HasValue).IsFalse();
     }
 
     [Test]

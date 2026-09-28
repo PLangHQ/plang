@@ -1,0 +1,326 @@
+{
+  "name": "Start",
+  "comment": "A call's parameter is the callee's own: it doesn't outlive the call, and a caller's variable of the same\nname is the caller's again after it.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %city% = \"Oslo\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%city%",
+              "variable": [
+                {
+                  "text": "%city%",
+                  "code": [
+                    {
+                      "variable": "city"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "Oslo"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call Visit city=\"Reykjavik\", unit=\"metric\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "Visit"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"city","type":{"name":"text"},"value":"Reykjavik"},{"name":"unit","type":{"name":"text"},"value":"metric"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %visited% equals \"Reykjavik\", \"the goal ran with its argument\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Reykjavik"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%visited%",
+              "variable": [
+                {
+                  "text": "%visited%",
+                  "code": [
+                    {
+                      "variable": "visited"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the goal ran with its argument"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %city% equals \"Oslo\", \"the caller's own %city% is its own again\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Oslo"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%city%",
+              "variable": [
+                {
+                  "text": "%city%",
+                  "code": [
+                    {
+                      "variable": "city"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "the caller's own %city% is its own again",
+              "variable": [
+                {
+                  "text": "%city%",
+                  "code": [
+                    {
+                      "variable": "city"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %unit% is null, \"the parameter ends with the call\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%unit%",
+              "variable": [
+                {
+                  "text": "%unit%",
+                  "code": [
+                    {
+                      "variable": "unit"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the parameter ends with the call"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Visit",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %visited% = %city%",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%visited%",
+                  "variable": [
+                    {
+                      "text": "%visited%",
+                      "code": [
+                        {
+                          "variable": "visited"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%city%",
+                  "variable": [
+                    {
+                      "text": "%city%",
+                      "code": [
+                        {
+                          "variable": "city"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/goal/call/ParameterEndsWithTheCall.test.goal",
+      "prPath": "/plan/app-systems/module/goal/call/.build/parameterendswiththecall.test.pr",
+      "hash": "3077f9fe2ad39bbfeca615d20483a7d1f2f8d169b81c79b1f8d1c2585894417e",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/goal/call/ParameterEndsWithTheCall.test.goal",
+  "prPath": "/plan/app-systems/module/goal/call/.build/parameterendswiththecall.test.pr",
+  "hash": "983e5c8f24e16052f12df58b0dea873684c8b7c442cd4e2b6b3cb0f89fa6a585",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

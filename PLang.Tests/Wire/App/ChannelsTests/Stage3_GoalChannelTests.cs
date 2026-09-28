@@ -14,7 +14,7 @@ namespace PLang.Tests.App.ChannelsTests;
 public class Stage3_GoalChannelTests
 {
     [Test]
-    public async Task GoalChannel_WriteCore_InvokesGoalWithDataBound()
+    public async Task GoalChannel_WriteCore_TheMessageEndsWithTheRun()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g1");
         var goal = new EngineGoal { Name = "Probe", Path = global::app.type.item.path.@this.Resolve("Probe.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Probe.pr", global::PLang.Tests.TestApp.SharedContext) };
@@ -24,8 +24,8 @@ public class Stage3_GoalChannelTests
         var result = await ch.Write(dataIn);
         await result.IsSuccess();
 
-        var captured = await app.User.Context.Variable.Get("message");
-        await Assert.That((await captured.Value())?.ToString()).IsEqualTo("payload-A");
+        // %message% is the goal's argument (read inside it: the test below); it isn't left behind
+        await Assert.That((await app.User.Context.Variable.Get("message")).IsInitialized).IsFalse();
     }
 
     // The goal reads what was written as its argument %message% — from its very first step.

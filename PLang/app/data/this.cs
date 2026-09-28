@@ -296,14 +296,21 @@ public partial class @this
     /// </summary>
     public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.item.@null.@this.Instance;
 
-    /// <summary>This optional carrier as the step gave it: null when it wasn't given (absent), else itself,
-    /// resolved — its <c>Success</c> says whether it resolved. A given carrier that didn't resolve (an unset
+    /// <summary>This optional carrier as the step gave it: null when it wasn't given (absent), else what it
+    /// is — a reference (<c>%file%</c>) the Data it names, unread (<see cref="Follow"/>); any other value
+    /// itself, resolved. Its <c>Success</c> says whether it resolved: a given carrier that didn't (an unset
     /// <c>%size%</c>) is its own answer, never "not given" (which would quietly take a default).</summary>
-    public async System.Threading.Tasks.ValueTask<@this?> Given()
+    public virtual async System.Threading.Tasks.ValueTask<@this?> Given()
     {
         if (!IsInitialized) return null;
-        if (Success) await Value();
-        return this;
+        if (!IsVariable)
+        {
+            if (Success) await Value();
+            return this;
+        }
+        var named = await Follow(Context);
+        return named.IsInitialized ? named
+            : Context.Error(new global::app.error.Error($"'{Name}' names a variable that holds nothing", "VariableNotFound", 404));
     }
 
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
@@ -710,6 +717,16 @@ public class @this<T> : @this
     {
         var v = await Value();
         return v ?? fallback;
+    }
+
+    /// <summary>A typed carrier as the step gave it: null when absent, else itself, resolved through its typed
+    /// door — the slot's type asks for the conversion (a number from text); its <c>Success</c> says whether it
+    /// resolved.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Given()
+    {
+        if (!IsInitialized) return null;
+        if (Success) await Value();
+        return this;
     }
 
     /// <summary>This carrier's value, handed whole to <paramref name="then"/> — or, when it didn't resolve

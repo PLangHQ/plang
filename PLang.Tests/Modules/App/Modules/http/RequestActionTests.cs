@@ -590,16 +590,19 @@ public class RequestActionTests
             Content = new StringContent("chunk1\n", Encoding.UTF8, "text/plain")
         });
 
-        // `on stream call HandleChunk myChunk=%chunk%` — the chunk binds as %chunk%, then the held
-        // call binds its authored argument over it.
+        // `on stream call KeepChunk myChunk=%chunk%` — the chunk binds as %chunk%, then the held
+        // call binds its authored argument over it; the goal keeps what it was handed in %seen%.
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("KeepChunk",
+            Make.Step("set %seen% = %myChunk%",
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%myChunk%", "variable"))))));
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = Make.Call("HandleChunk", ("myChunk", "%chunk%")),
+            OnStream = Make.Call("KeepChunk", ("myChunk", "%chunk%")),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
 
         await result.IsSuccess();
-        var lastValue = await Ctx.Variable.Get("myChunk");
+        var lastValue = await Ctx.Variable.Get("seen");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That((await lastValue!.Value())?.RawText).IsEqualTo("chunk1");
     }

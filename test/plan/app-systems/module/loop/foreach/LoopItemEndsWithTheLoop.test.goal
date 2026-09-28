@@ -1,0 +1,9 @@
+/ A loop's item is the loop's own: inside the body it is each element, after the loop it is gone.
+Start
+- set %names% = ["a", "b"]
+- foreach %names%, call Remember
+- assert %last% equals "b", "inside the body the item is each element"
+- assert %item% is null, "the loop's item ends with the loop"
+
+Remember
+- set %last% = %item%

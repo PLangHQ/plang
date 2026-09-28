@@ -1,21 +1,13 @@
 namespace app.type.item.variable.call;
 
 /// <summary>
-/// One forked flow's variable scope — a mutable overlay over the actor-shared
-/// <see cref="Variables.@this"/> dictionary.
-///
-/// Push points are the operators that fork a new flow (a tool invocation, a parallel
-/// foreach iteration, a listener accept loop) — not the goal-call boundary, and not a
-/// channel write or a callback, which are calls in the caller's flow. Sequential
-/// <c>goal.call</c> stays in the caller's flow and writes/reads pass through
-/// whatever scope (or none) is currently active.
-///
-/// Reads walk this overlay first, then the <see cref="Caller"/> chain. Writes
-/// (routed by <see cref="Variables.@this.Set"/> when an overlay is active) land
-/// in the innermost overlay only — they do not leak to siblings, and they
-/// disappear when the scope disposes.
+/// A call's frame over the actor's <see cref="Variables.@this"/>: the names it was born with — a loop's
+/// <c>%item%</c>, a call's parameters, a callback's state. Reads walk this frame first, then the
+/// <see cref="Caller"/> chain, then the actor's memory. A write to a name this frame binds stays here and
+/// ends with it; a write to any other name goes where it would without the frame — the nearest enclosing
+/// frame that binds it, else the actor's memory (<see cref="Keeper"/>).
 /// </summary>
-public sealed class @this : IAsyncDisposable
+public class @this : IAsyncDisposable
 {
     private readonly Dictionary<string, data.@this> _entries =
         new(StringComparer.OrdinalIgnoreCase);
@@ -31,7 +23,7 @@ public sealed class @this : IAsyncDisposable
     // names are FOR. A call nested deeper in the same flow is not it.
     private readonly global::app.goal.step.action.@this? _for;
 
-    internal @this(IEnumerable<data.@this>? parameters, @this? caller, call.list.@this owner,
+    protected internal @this(IEnumerable<data.@this>? parameters, @this? caller, call.list.@this owner,
         global::app.goal.step.action.@this? held = null)
     {
         Caller = caller;
@@ -45,6 +37,10 @@ public sealed class @this : IAsyncDisposable
             _born.Add(p.Name);
         }
     }
+
+    /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it binds the name, else
+    /// the nearest caller that does; null when none does — the write goes to the actor's memory.</summary>
+    internal virtual @this? Keeper(string name) => _born.Contains(name) ? this : Caller?.Keeper(name);
 
     /// <summary>True when this frame was pushed FOR <paramref name="call"/> and born with
     /// <paramref name="name"/> — its runner supplied it (a tool's argument). A name set later in the
@@ -82,19 +78,14 @@ public sealed class @this : IAsyncDisposable
         }
     }
 
-    /// <summary>
-    /// Writes <paramref name="value"/> into this overlay under <paramref name="name"/>.
-    /// Does not propagate to <see cref="Caller"/> — siblings are isolated.
-    /// </summary>
+    /// <summary>Writes <paramref name="value"/> into this frame under <paramref name="name"/> (the frame
+    /// <see cref="Keeper"/> chose).</summary>
     public void Set(string name, data.@this value)
     {
         _entries[name] = value;
     }
 
-    /// <summary>
-    /// True if this overlay (not the Caller chain) holds an entry for <paramref name="name"/>.
-    /// Used by Variables.Set to decide whether the existing binding lives in this scope.
-    /// </summary>
+    /// <summary>True if this frame (not the Caller chain) holds an entry for <paramref name="name"/>.</summary>
     public bool ContainsLocal(string name) => _entries.ContainsKey(name);
 
     public ValueTask DisposeAsync()

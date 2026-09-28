@@ -106,11 +106,10 @@ public partial class @this
     // and what it held before (null when it was new).
     private (data.@this Stored, bool Changed, object? Before) Bind(string name, object? value)
     {
-        // If a Calls overlay is active (we're inside a forked flow — channel fire,
-        // parallel foreach iteration, etc.), route the write into the overlay so
-        // siblings can't see it. Reads cascade overlay → caller chain → underlying
-        // dict, so subsequent gets here see the new value.
-        var frame = Calls.Current;
+        // Inside a call, the write lands in the frame that binds the name (a loop's %item%, a call's
+        // parameter), or — none does — in the actor's memory, as it would without the call. Reads cascade
+        // frame → caller chain → memory, so later gets see the new value.
+        var frame = Calls.Current?.Keeper(name);
 
         // Data value: replace under `name`. In-place mutation of prev
         // is wrong: a Data may be aliased under multiple keys (e.g. Action stores the step result
@@ -136,11 +135,8 @@ public partial class @this
 
         if (frame != null)
         {
-            // If the binding already exists in *this* overlay, rebind it — mint a
-            // new Data, never mutate in place. This is the branch that bites inside
-            // channel-fire / parallel-foreach: a `set` in a forked flow mutating its
-            // overlay Data in place would rewrite a value the parent already stored.
-            // Rebinding keeps the captured value independent.
+            // The binding exists in the keeping frame: rebind it — mint a new Data, never mutate in
+            // place, so a value a caller already captured stays independent.
             if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
             {
                 var rebound = new data.@this(name, value, context: _context);
@@ -204,7 +200,7 @@ public partial class @this
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
     /// the same Data, never each a value of their own. A birth that is refused or answered otherwise is the
-    /// answer, nothing stored. A forked flow's own scope keeps <see cref="Set(string, object?)"/>'s rules.</summary>
+    /// answer, nothing stored. A name a call's frame keeps follows <see cref="Set(string, object?)"/>'s rules.</summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Ensure(string name,
         System.Func<System.Threading.Tasks.ValueTask<data.@this>> value)
     {
@@ -213,7 +209,7 @@ public partial class @this
         var born = await value();
         if (!born.Success || born.Handled) return born;
         var made = born.Peek();
-        if (Calls.Current != null)
+        if (Calls.Current?.Keeper(name) != null)
             return await Set(name, made);
 
         if (await Before(Events?.set, name, made) is { } refused) return refused;
@@ -232,7 +228,7 @@ public partial class @this
         if (ReferenceEquals(expected.Peek(), value)) return expected;
         if (await Before(Events?.set, name, value) is { } refused) return refused;
 
-        var frame = Calls.Current;
+        var frame = Calls.Current?.Keeper(name);
         if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
                           : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
             return held ?? expected;
@@ -371,9 +367,14 @@ public partial class @this
     /// </summary>
     public IEnumerable<KeyValuePair<string, data.@this>> GetAll()
     {
-        return _variables
-            .Where(kvp => !kvp.Key.StartsWith("!"))
-            .OrderByDescending(kvp => kvp.Value.Updated);
+        // what a read sees: the current call's names first (they shadow the actor's), then the memory
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (Calls.Current is { } frame)
+            foreach (var name in frame.Names)
+                if (!name.StartsWith('!') && seen.Add(name) && frame.TryGet(name, out var framed))
+                    yield return new(name, framed);
+        foreach (var kvp in _variables.Where(kvp => !kvp.Key.StartsWith("!")).OrderByDescending(kvp => kvp.Value.Updated))
+            if (seen.Add(kvp.Key)) yield return kvp;
     }
 
     /// <summary>

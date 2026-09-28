@@ -143,13 +143,27 @@ public class CallsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task SetInsideOverlay_DoesNotLeakToUnderlying()
+    public async Task SetInsideCall_ANameItDoesNotBind_ReachesUnderlying_ItsOwnEndsWithIt()
     {
-        // Writes inside an overlay stay in the overlay. After dispose, the
+        var vars = new AppVars(_app.User.Context);
+        vars.Set("k", "underlying");
+        var scope = vars.Calls.Push(new[] { _app.Data("own", 1) });
+        vars.Set("k", "written");
+        vars.Set("own", 2);
+
+        await scope.DisposeAsync();
+        await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("written");
+        await Assert.That((await vars.Get("own")).IsInitialized).IsFalse();
+    }
+
+    [Test]
+    public async Task SetInsideIsolatedFrame_DoesNotLeakToUnderlying()
+    {
+        // Writes inside an isolated frame stay in it. After dispose, the
         // actor-shared dict is unchanged.
         var vars = new AppVars(_app.User.Context);
         vars.Set("k", "underlying");
-        var scope = vars.Calls.Push(null);
+        var scope = vars.Calls.Isolate(null);
         vars.Set("k", "scoped");
         await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("scoped");
 
@@ -158,12 +172,12 @@ public class CallsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task SetInsideOverlay_NewName_DoesNotEscape()
+    public async Task SetInsideIsolatedFrame_NewName_DoesNotEscape()
     {
-        // A name that didn't exist before the push, written inside the overlay,
+        // A name that didn't exist before the push, written inside an isolated frame,
         // is gone after dispose.
         var vars = new AppVars(_app.User.Context);
-        var scope = vars.Calls.Push(null);
+        var scope = vars.Calls.Isolate(null);
         vars.Set("fresh", 42);
         await Assert.That((await (await vars.Get("fresh")).Value())?.ToString()).IsEqualTo("42");
 
@@ -172,7 +186,7 @@ public class CallsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task SetInsideOverlay_DoesNotLeakToSiblingOverlay()
+    public async Task SetInsideIsolatedFrame_DoesNotLeakToSiblingFrame()
     {
         // Two parallel flows: one writes into its overlay, the other reads. The
         // reader must NOT see the writer's value. This is the production race
@@ -185,7 +199,7 @@ public class CallsTests : System.IAsyncDisposable
 
         async Task<string> Writer()
         {
-            await using var _ = vars.Calls.Push(null);
+            await using var _ = vars.Calls.Isolate(null);
             vars.Set("k", "writer-only");
             writerStarted.TrySetResult(true);
             await readerCanRead.Task;          // hold the overlay open

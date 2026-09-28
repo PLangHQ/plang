@@ -1,0 +1,303 @@
+{
+  "name": "Start",
+  "comment": "A loop's item is the loop's own: inside the body it is each element, after the loop it is gone.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %names% = [\"a\", \"b\"]",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%names%",
+              "variable": [
+                {
+                  "text": "%names%",
+                  "code": [
+                    {
+                      "variable": "names"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["a","b"]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach %names%, call Remember",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%names%",
+              "variable": [
+                {
+                  "text": "%names%",
+                  "code": [
+                    {
+                      "variable": "names"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "Remember"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %last% equals \"b\", \"inside the body the item is each element\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "b"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "inside the body the item is each element"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %item% is null, \"the loop's item ends with the loop\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the loop's item ends with the loop"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Remember",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %last% = %item%",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%last%",
+                  "variable": [
+                    {
+                      "text": "%last%",
+                      "code": [
+                        {
+                          "variable": "last"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop.test.goal",
+      "prPath": "/plan/app-systems/module/loop/foreach/.build/loopitemendswiththeloop.test.pr",
+      "hash": "345a6cc966d7dfa78e44cb29dc2f5fabbdda397ea7f703c029026960389d26bf",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop.test.goal",
+  "prPath": "/plan/app-systems/module/loop/foreach/.build/loopitemendswiththeloop.test.pr",
+  "hash": "4131b89773635bd5d26050e6cbbf5a901d0698da7f7662f1e80ed653d1e5a211",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

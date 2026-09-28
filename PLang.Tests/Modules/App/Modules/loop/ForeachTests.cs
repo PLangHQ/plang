@@ -28,13 +28,16 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "ProcessItem")))));
+                    ("name", "ProcessItem")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
 
+        // the body ran for each element (its write reaches the caller); the loop's own %item% ends with it
         await result.IsSuccess();
-        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");
+        await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo("c");
+        await Assert.That((await context.Variable.Get("item")).IsInitialized).IsFalse();
     }
 
     [Test]
@@ -66,13 +69,16 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%items%"), Make.Param("item", "%myItem%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "DoNothing")))));
+                    ("name", "DoNothing")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%myItem%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
 
+        // the named item was the element inside the body; it ends with the loop
         await result.IsSuccess();
-        await Assert.That((await context.Variable.GetValue("myItem"))).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo("hello");
+        await Assert.That((await context.Variable.Get("myItem")).IsInitialized).IsFalse();
     }
 
     [Test]
@@ -112,18 +118,18 @@ public class ForeachTests
                 Make.Action("loop", "foreach",
                     Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "Noop")))));
+                    ("name", "Noop")),
+                Make.Action("variable", "set", Make.Param("Name", "seenKey", "variable"), Make.Param("Value", "%key%", "variable")),
+                Make.Action("variable", "set", Make.Param("Name", "seenVal", "variable"), Make.Param("Value", "%val%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
 
         await result.IsSuccess();
-        // %key% should be the dictionary key (string "greeting"), not numeric index (0)
-        var key = await context.Variable.GetValue("key");
-        await Assert.That(key).IsEqualTo("greeting");
-        // %val% should be the value ("hello"), not a KeyValuePair struct
-        var val = await context.Variable.GetValue("val");
-        await Assert.That(val).IsEqualTo("hello");
+        // inside the body %key% is the dictionary key (string "greeting"), not the numeric index (0)
+        await Assert.That(await context.Variable.GetValue("seenKey")).IsEqualTo("greeting");
+        // and %val% is the value ("hello"), not a KeyValuePair struct
+        await Assert.That(await context.Variable.GetValue("seenVal")).IsEqualTo("hello");
     }
 
     [Test]
@@ -182,13 +188,16 @@ public class ForeachTests
             ("name", "%plan.system%"), ("value", "sys-prompt"));
         await (await setChild.Start(context)).IsSuccess();
 
-        var action = TestAction.Create("loop", "foreach",
-            ("collection", "%plan.steps%"), ("item", "%planStep%"));
-        var result = await action.Start(context);
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("PlanStepRunner",
+            Make.Step("foreach %plan.steps% item=%planStep%, set %seen% = %planStep%",
+                Make.Action("loop", "foreach",
+                    Make.Template("collection", "%plan.steps%"), Make.Param("item", "%planStep%", "variable")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%planStep%", "variable")))));
+        var result = await goal.Step[0].Start(context);
 
         await result.IsSuccess();
-        var planStep = await context.Variable.Get("planStep");   // last step (index 1)
-        var idx = await (await planStep.Get("index")).Value();
+        var seen = await context.Variable.Get("seen");   // last step (index 1)
+        var idx = await (await seen.Get("index")).Value();
         await Assert.That(idx?.ToString()).IsEqualTo("1");
     }
 }

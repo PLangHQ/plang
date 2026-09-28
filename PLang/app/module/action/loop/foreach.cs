@@ -41,42 +41,33 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
         int count = 0;
 
-        // Loop-in-a-loop: an inner loop reuses the same %item%/%key% names and would
-        // leave them clobbered for the OUTER loop's body after it returns. Save the
-        // outer bindings now and restore them when this loop exits — so a nested
-        // `foreach` doesn't bleed its last item up into the enclosing loop.
-        var savedItem = await itemVariable.Start(Context);
-        var savedKey = keyVariable != null ? await keyVariable.Start(Context) : null;
-
         // The loop body — the actions after this foreach in the step's chain. The Handled flag below stops
         // the outer chain from re-running them.
         var bodyActions = Step?.Code.After(__action!) ?? [];
 
-        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
+        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element). Each run of the
+        // body is a call whose frame binds %item% (and %key%): the loop's own names end with it — an outer
+        // loop's %item% is its own again after a nested one — while the body's other writes (a running
+        // total) reach the caller.
         foreach (var (key, item) in await Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
                 return await Result(count, completed: false);
 
-            await itemVariable.Set(item, Context);
+            var bound = new List<data.@this> { item.Copy(itemVariable.Name) };
             // Optional param: absent slots are non-null Uninitialized (null model), so
             // "was a key named?" is IsInitialized, not a C# null check.
-            if (keyVariable != null)
-                await keyVariable.Set(key, Context);
+            if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));
 
-            foreach (var action in bodyActions)
-            {
-                var result = await action.Start(Context);
-                if (result.Returned) return result;
-                if (!result.Success) return result;
-            }
+            await using (Context.Variable.Calls.Push(bound))
+                foreach (var action in bodyActions)
+                {
+                    var result = await action.Start(Context);
+                    if (result.Returned) return result;
+                    if (!result.Success) return result;
+                }
             count++;
         }
-
-        // Restore the outer loop's bindings (see savedItem above) — a nested loop
-        // must not leave its last item/key visible to the enclosing loop's body.
-        if (savedItem.IsInitialized) await itemVariable.Set(savedItem, Context);
-        if (keyVariable != null && savedKey is { IsInitialized: true }) await keyVariable.Set(savedKey, Context);
 
         var loopResult = await Result(count, completed: true);
         if (bodyActions.Count > 0)

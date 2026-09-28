@@ -547,7 +547,7 @@ public sealed class OpenAi : ILlm
             else
             {
                 data.@this goalResult;
-                await using (context.Variable.Calls.Push(parameters, tool.Held))
+                await using (context.Variable.Calls.Isolate(parameters, tool.Held))
                     goalResult = await tool.Held.Start(context);
 
                 if (goalResult.Success)

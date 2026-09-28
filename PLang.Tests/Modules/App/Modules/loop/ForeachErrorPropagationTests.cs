@@ -38,6 +38,7 @@ public class ForeachErrorPropagationTests
             Make.Step("foreach %items%, call NonExistentGoal item=%item%",
                 Make.Action("loop", "foreach",
                     ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("name", "NonExistentGoal")))));
         var step = goal.Step[0];
@@ -47,8 +48,8 @@ public class ForeachErrorPropagationTests
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
-        // Loop must stop on first failure — item stays on first element, not last.
-        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("a");
+        // Loop must stop on first failure — the body saw the first element, not the last.
+        await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo("a");
     }
 
     /// <summary>
@@ -136,12 +137,13 @@ public class ForeachErrorPropagationTests
                 Make.Action("loop", "foreach",
                     ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
                 Make.Action("goal", "call",
-                    ("name", "Noop")))));
+                    ("name", "Noop")),
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");
+        await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo("c");
     }
 }

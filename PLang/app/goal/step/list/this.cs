@@ -95,7 +95,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         var heads = Head.Matches(answer);
         // an empty answer is whole: a step it leaves unanswered has no entry (one written in formal needs none)
         if (answer.Trim().Length > 0 && (heads.Count == 0 || answer[..heads[0].Index].Trim().Length > 0))
-            whole.Add("each step's line starts with its index: [0] action; action");
+            whole.Add($"each step's line starts with its index: [0] action; action — the answer starts: {answer.Trim()[..System.Math.Min(120, answer.Trim().Length)]}");
         var lines = new Dictionary<int, string>();
         for (int n = 0; n < heads.Count; n++)
         {

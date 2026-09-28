@@ -17,9 +17,9 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// <summary>A goal channel is born from its settings — a dict of them by name (what channel.set was given).</summary>
     public static IReadOnlyList<string> From => ["dict"];
 
-    /// <summary>The goal channel <paramref name="raw"/>'s settings describe, read by this channel's own property names:
-    /// Name and Goal (a <c>goal.call</c>) are required; Actor names the actor it runs for (else the asker's);
-    /// a setting not there keeps the channel's own default. Anything else declines.</summary>
+    /// <summary>The goal channel <paramref name="raw"/>'s settings describe, read by this channel's own property names,
+    /// for the actor whose context it is born in: Name and Goal (a <c>goal.call</c>) are required; a setting not
+    /// there keeps the channel's own default. Anything else declines.</summary>
     public static @this? Create(object? raw, global::app.actor.context.@this? ctx)
     {
         if (raw is @this self) return self;
@@ -27,12 +27,9 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         global::app.type.item.@this? Setting(string name) => settings.Get(name, ctx)?.Peek() is { IsNull: false } v ? v : null;
         if (Setting(nameof(Name))?.ToString() is not { Length: > 0 } name
             || Setting(nameof(Goal)) is not global::app.goal.step.action.@this goal) return null;
-        var actor = Setting(nameof(Actor))?.ToString() is { } named
-            ? ctx.App.actor.list.Items().FirstOrDefault(a => string.Equals(a.Name, named, StringComparison.OrdinalIgnoreCase)) ?? ctx.Actor
-            : ctx.Actor;
         // The settings are CLR values the transport uses, lowered here at the channel's birth — the interim
         // boundary, until a channel's settings are plang values the transport lowers at its own use.
-        return new @this(name, goal, actor,
+        return new @this(name, goal, ctx.Actor,
             direction: Setting(nameof(Direction)) is global::app.type.item.choice.@this<ChannelDirection> way ? (ChannelDirection)way : null,
             buffer: (Setting(nameof(Buffer)) as global::app.type.item.number.@this)?.ToInt64(),
             timeout: Setting(nameof(Timeout)) is global::app.type.item.duration.@this after ? (TimeSpan)after : null,
@@ -46,7 +43,7 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     public global::app.goal.step.action.@this Goal { get; }
 
     /// <summary>The argument the written value reaches the goal as: <c>%message%</c>.</summary>
-    public const string MessageName = "message";
+    private const string MessageName = "message";
 
     private readonly AsyncLocal<bool> _executing = new();
 
@@ -110,15 +107,15 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         // call, listener accept-loop, etc.) has already pushed a Calls overlay,
         // and AsyncLocal carries it down to here.
         // The written value is the call's argument %message% — bound as goal.call binds its own
-        // arguments, a variable of that name where the goal runs. (%!data% is the action before's
+        // arguments, in a frame that ends with the run. (%!data% is the action before's
         // result; the call's own run replaces it before the goal's first step reads it.)
-        await context.Variable.Set(MessageName, new data.@this(MessageName, data.Peek(), data.Type, context: context));
+        var message = new data.@this(MessageName, data.Peek(), data.Type, context: context);
 
         var prev = _executing.Value;
         _executing.Value = true;
         try
         {
-            return await Goal.Start(context);
+            await using (context.Variable.Calls.Push([message])) return await Goal.Start(context);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

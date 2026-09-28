@@ -24,6 +24,18 @@ public class GoalCallTests
 
     private static global::app.type.item.text.@this Text(string s) => new(s);
 
+    // A goal that copies what %<param>% is while it runs into %seen% — a write that reaches the caller,
+    // since a call's own parameters end with it.
+    private async Task<string> Seer(string param)
+    {
+        var name = "Seer_" + param;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(name,
+            Make.Step($"set %seen% = %{param}%",
+                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", $"%{param}%", "variable")))));
+        _app.goal.list.Add(goal);
+        return name;
+    }
+
     [Test]
     public async Task Call_ExistingGoal_RunsSuccessfully()
     {
@@ -48,16 +60,16 @@ public class GoalCallTests
     {
         var action = new Call(_app.User.Context)
         {
-            Name = Text("TestGoal"),
+            Name = Text(await Seer("myParam")),
             Parameter = new global::app.type.item.list.@this(
                 new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) })
         };
         var result = await action.Start();
 
+        // the goal ran with %myParam%; the parameter ends with the call
         await result.IsSuccess();
-        var param = await _app.User.Context.Variable.Get("myParam");
-        await Assert.That(param).IsNotNull();
-        await Assert.That(param!.ToString()).IsEqualTo("myValue");
+        await Assert.That(await ValueOf("seen")).IsEqualTo("myValue");
+        await Assert.That((await _app.User.Context.Variable.Get("myParam")).IsInitialized).IsFalse();
     }
 
     // --- a valued row is "this value unless the invocation supplied one" ---
@@ -82,12 +94,12 @@ public class GoalCallTests
     public async Task HeldCall_RunnerSilent_ValuedRowIsTheDefault()
     {
         var ctx = _app.User.Context;
-        var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("units", "metric", context: ctx) });
+        var tool = Make.Tool(await Seer("units"), parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
         await using (ctx.Variable.Calls.Push(System.Array.Empty<Data>(), tool))
         {
             await tool.Start(ctx);
-            await Assert.That(await ValueOf("units")).IsEqualTo("metric");
+            await Assert.That(await ValueOf("seen")).IsEqualTo("metric");
         }
     }
 
@@ -131,9 +143,11 @@ public class GoalCallTests
         var ctx = _app.User.Context;
         await ctx.Variable.Set("a", "five");
 
-        await Make.Call("TestGoal", ("a", "one")).Start(ctx);
+        await Make.Call(await Seer("a"), ("a", "one")).Start(ctx);
 
-        await Assert.That(await ValueOf("a")).IsEqualTo("one");
+        // the goal saw the argument; the caller's own %a% is its own again after
+        await Assert.That(await ValueOf("seen")).IsEqualTo("one");
+        await Assert.That(await ValueOf("a")).IsEqualTo("five");
     }
 
     [Test]
@@ -144,8 +158,8 @@ public class GoalCallTests
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("a", "nine", context: ctx) }, other))
         {
-            await Make.Call("TestGoal", ("a", "one")).Start(ctx);
-            await Assert.That(await ValueOf("a")).IsEqualTo("one");
+            await Make.Call(await Seer("a"), ("a", "one")).Start(ctx);
+            await Assert.That(await ValueOf("seen")).IsEqualTo("one");
         }
     }
 

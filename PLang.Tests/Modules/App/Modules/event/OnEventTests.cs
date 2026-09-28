@@ -200,16 +200,16 @@ public class OnEventTests
     [Test]
     public async Task ABinding_FiresOnlyWhileItsActorRuns()
     {
-        Goal("Watch");
+        Goal("Watch", Keep("seen", "%watched%"));
         Goal("Target");
         await Bind("%!app.goal[\"/Target\"].on.start%", "before", "Watch", ("watched", true));
 
         await Make.Call("Target").Start(_app.System.Context);
-        await Assert.That((await _app.System.Context.Variable.Get("watched")).IsInitialized).IsFalse();
+        await Assert.That((await _app.System.Context.Variable.Get("seen")).IsInitialized).IsFalse();
 
         // the same goal under the actor that bound it: it fires
         await Make.Call("Target").Start(Ctx);
-        await Assert.That((await Ctx.Variable.Get("watched")).IsInitialized).IsTrue();
+        await Assert.That((await Ctx.Variable.Get("seen")).IsInitialized).IsTrue();
     }
 
     [Test]

@@ -94,25 +94,28 @@ public partial class Call : IContext
         var named = Actor == null || await Actor.IsEmpty() ? null : await Actor.Value();
         var execContext = named == null ? Context : (await (await Context.App.actor.Get(named.ToString()!)).Value())!.Context;
 
-        // Data just flows — each argument binds under its name as-is, no inspection, no resolve;
-        // it resolves on its own door when the callee reads it. Goal-call is not a fork: the writes
-        // land in whatever scope the caller's flow is in.
+        // The arguments bind in the call's own frame, in the memory the callee runs in: they are the
+        // callee's for as long as it runs and gone when it returns; any other write the callee makes
+        // reaches that memory as it would without the call. Data just flows — each argument binds under
+        // its name as-is, unresolved until the callee reads it.
         // A row that carries no value is a declaration ("this goal takes a city"), not an argument —
         // it binds nothing. A valued row is "this value unless the invocation supplied one": a runner
         // that forks (a tool invocation) runs this call inside a frame born with the arguments it
-        // supplies, and a supplied name wins. A call in the flow (plain, or a callback) has no such
-        // frame, so its rows always bind.
-        // Each argument binds as its own Data born with the CALLER's context: `place=%city%` loads
-        // from the caller's memory whoever reads it, stays unresolved until read, and the shared row
-        // never enters the callee's variables. The list loads on this run's own copy, never the row.
+        // supplies, and a supplied name wins.
+        // Each argument binds as its own Data: `place=%city%` is the caller's %city% as it is now, and the
+        // shared row never enters the callee's variables. The list loads on this run's own copy, never the row.
+        var bound = new List<data.@this>();
         if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this args)
             foreach (var arg in args.Items(Context))
             {
                 if (arg.Peek() is not { IsNull: false }) continue;
                 if (execContext.Variable.Supplies(__action, arg.Name)) continue;
-                await execContext.Variable.Set(arg.Name, arg.Copy(Context));
+                // A reference argument (`goal=%goal%`) binds what it names now, unread — a frame entry that
+                // named itself would cycle when read.
+                bound.Add((await arg.Follow(Context)).Copy(arg.Name));
             }
 
-        return await goal.Start(execContext);
+        await using (execContext.Variable.Calls.Push(bound))
+            return await goal.Start(execContext);
     }
 }
