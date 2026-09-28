@@ -47,7 +47,9 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     /// <summary>Runs every hop but the last to reach the parent, and the last writes itself: a member
     /// sets that member, an index that key, a <c>!</c> name the binding's Properties, a bare root
     /// rebinds the variable. A root that holds nothing becomes an empty dict when a member or key is
-    /// written into it; a <c>!</c> name written straight on the root needs the variable to exist.</summary>
+    /// written into it; a <c>!</c> name written straight on the root needs the variable to exist. A node on
+    /// the way that holds nothing leaves the write nowhere to land: an error naming that node, never a
+    /// quiet success.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(object? value, global::app.actor.context.@this context)
     {
         var hops = Items().ToList();
@@ -59,7 +61,11 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
         for (int i = 1; i < hops.Count - 1; i++)
         {
             parent = await hops[i].Start(parent, context);
-            if (!parent.IsInitialized || !parent.Success) return parent;
+            if (!parent.Success) return parent;
+            if (!parent.IsInitialized)
+                return context.Error(new global::app.error.Error(
+                    $"%{string.Concat(hops.Take(i + 1).Select(h => h.Text))}% holds nothing, so %{string.Concat(hops.Select(h => h.Text))}% has nowhere to be written",
+                    "VariableNotFound", 404));
         }
         return await hops[^1].Set(parent, value, context);
     }

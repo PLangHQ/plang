@@ -24,6 +24,41 @@ public class VariableCodeTests
     private static global::app.type.item.list.@this List(params string[] values)
         => new(values.Select(v => (global::app.type.item.@this)new global::app.type.item.text.@this(v)));
 
+    // ---- a write through a node that holds nothing ----
+
+    // %!app.user…% after the app stopped holding its actors: the write has nowhere to land — an error
+    // naming the node that holds nothing, never a quiet success.
+    [Test]
+    public async Task Set_ThroughANodeThatHoldsNothing_IsAnError_NamingIt()
+    {
+        var written = await One("%!app.user.callstack.setting.timing%").Set(Context.Ok(true), Context);
+
+        await written.IsFailure();
+        await Assert.That(written.Error!.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(written.Error.Message).Contains("%!app.user%");
+    }
+
+    // A read of a node that holds nothing is "not set" — as any unset variable reads (`is null` is true).
+    [Test]
+    public async Task Read_ThroughANodeThatHoldsNothing_IsNotSet()
+    {
+        var read = await One("%!app.user.callstack%").Start(Context);
+
+        await Assert.That(read.IsInitialized).IsFalse();
+        await read.IsSuccess();
+    }
+
+    [Test]
+    public async Task Set_ThroughAMissingKey_IsAnError_NamingIt()
+    {
+        await Context.Variable.Set("user", new Dictionary<string, object?> { ["name"] = "a" });
+
+        var written = await One("%user.address.city%").Set(Context.Ok("Reykjavik"), Context);
+
+        await written.IsFailure();
+        await Assert.That(written.Error!.Message).Contains("%user.address%");
+    }
+
     // ---- the parser ----
 
     [Test]
