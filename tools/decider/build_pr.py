@@ -290,7 +290,7 @@ def type_line(face, options):
     name = face.split('<', 1)[0]
     line = f'- {face}'
     if name != 'choice' and (description := type_static(name, 'Description')): line += f' — {description}'
-    if options: line += f' — one of: {", ".join(options)}'
+    if options: line += f' — one of: {", ".join(f"{chr(34)}{o}{chr(34)}" for o in options)}'   # quoted, as formal writes an option
     if name != 'choice' and (example := type_static(name, 'Example')): line += f' (e.g. {example})'
     return line
 
