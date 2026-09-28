@@ -82,17 +82,25 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 
     public void Register(channel.@this channel)
     {
-        channel.Channels = this;
-        if (channel.Actor == null) channel.Actor = Actor!;
+        Adopt(channel);
         _channels[channel.Name] = channel;
     }
 
-    /// <summary>Registers <paramref name="channel"/> in place of the one by its name, which is disposed — a default
-    /// channel is replaced this way, never left out.</summary>
+    /// <summary>Registers <paramref name="channel"/> in place of the one by its name, which is disposed after — one
+    /// write, so the name always resolves (a default channel is replaced this way, never left out).</summary>
     public async Task Set(channel.@this channel)
     {
-        if (_channels.TryRemove(channel.Name, out var old)) await old.DisposeAsync();
-        Register(channel);
+        Adopt(channel);
+        channel.@this? old = null;
+        _channels.AddOrUpdate(channel.Name, channel, (_, previous) => { old = previous; return channel; });
+        if (old != null && !ReferenceEquals(old, channel)) await old.DisposeAsync();
+    }
+
+    // A channel registered here belongs to this list and, unless it names another, to its actor.
+    private void Adopt(channel.@this channel)
+    {
+        channel.Channels = this;
+        if (channel.Actor == null) channel.Actor = Actor!;
     }
 
     /// <summary>Removes the channel named <paramref name="name"/>. A default channel can't be — the boot invariant
