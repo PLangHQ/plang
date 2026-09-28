@@ -64,3 +64,11 @@ with
 ```
 (`Read`, `WriteText`, `WriteBytes`, `List`, `Stat`, `ExistsAsync`, `MoveTo`, `CopyTo`, …) — `path.Read` lands a reference (`file`/`url`/`directory`); its content is the reference's value, its raw bytes `IContent.Content`
 ```
+
+## architect — app-systems — 2026-09-28
+**Target:** Documentation/v0.2/obp-smells.md (Value layer) and /CLAUDE.md (OBP Shape Smells, Value layer)
+**Why:** Ingi, 2026-09-28, on the llm query's own cache: "this is obpv. I dont want to fix it now, I want to be learning oppertunity, so we can then spot them when we do full sweep on the code base." CLAUDE.md forbids enveloping Data ("Data is not enveloped"), but the smell catalog has no name for it, so a review can't cite it by name and the sweep has no tell. The specimen is kept unfixed on purpose; the worked example, with checked grep tells, is `.bot/app-systems/architect/plan/obp-example-llm-cache.md`. Filed on Ingi's explicit request.
+**Proposed change:** add to obp-smells.md under Value layer, and one line to the CLAUDE.md quick list:
+```
+**envelope** — a hand-built wrapper around Data's shape, usually to carry what `[JsonIgnore]` keeps off the wire or out of the store: `new Dictionary<string, object?> { ["Value"] = …, ["Model"] = … }` stored, then unpacked by name (`entry.Name == "Value"`). The field list gets written at every site that packs or unpacks it, and the value is often kept twice (read and raw). Fix: store the Data whole and mark what should persist for the view (`[Out]`/Store); if a module wraps Data to cache it, it is doing the cache's job. Tells: `\["Value"\]` or `Name == "Value"` outside `app/data/`; a comment saying code goes around `[JsonIgnore]`. *Worked example (kept unfixed as the sweep's specimen):* the llm query's own cache (`llm/code/OpenAi.cs`, `RestoreFromCache`).
+```
