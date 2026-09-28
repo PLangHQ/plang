@@ -142,7 +142,7 @@ public static class Make
 
     /// <summary>
     /// An action with its clauses after it (<c>on.error</c>, <c>on.cache</c>, <c>on.timeout</c>, made with
-    /// <see cref="Action"/>) — bound on it the way a program's read binds a step's code. Returns the action.
+    /// <see cref="Action"/>) — attached to it the way a program's read attaches a step's code. Returns the action.
     /// </summary>
     public static global::app.goal.step.action.@this With(
         global::app.goal.step.action.@this action, params global::app.goal.step.action.@this[] clauses)
@@ -150,7 +150,7 @@ public static class Make
         var code = new global::app.goal.step.action.list.@this();
         code.Add(action);
         foreach (var clause in clauses) code.Add(clause);
-        code.Bind();
+        code.Attach();
         return action;
     }
 
@@ -202,8 +202,8 @@ public static class Make
             var actionNode = new global::app.goal.step.action.list.@this();
             foreach (var action in steps[i].Actions)
                 actionNode.Add(action);
-            // the code is in: each clause binds on the action before it, as the reader does
-            actionNode.Bind();
+            // the code is in: each clause attaches to the action before it, as the reader does
+            actionNode.Attach();
 
             stepNode.Add(new global::app.goal.step.@this
             {

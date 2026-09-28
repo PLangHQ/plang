@@ -163,7 +163,9 @@ public sealed class Formal
 
         private void Attach(List<global::app.goal.step.action.@this> actions, (global::app.goal.step.action.@this Action, int At) read)
         {
-            if (read.Action.IsClause && actions.Count == 0)
+            // each action names the step action it belongs to; one that belongs to none is a clause with no action
+            var before = actions.Aggregate((global::app.goal.step.action.@this?)null, (anchor, a) => a.Anchor(anchor));
+            if (read.Action.Anchor(before) == null)
                 Fail($"{read.Action.Module.Name}.{read.Action.Name} is a clause of the action before it; step {_index} has none", read.At);
             actions.Add(read.Action);
         }
@@ -181,11 +183,8 @@ public sealed class Formal
             var owner = Module(module);
             var catalog = owner?[name];
             if (catalog == null) Fail($"`{module}.{name}` is not an action", start);
-            var isClause = catalog!.IsClause;
-            var isCondition = module == "condition" && name is "if" or "elseif" or "else";
-
             // made by its catalog element: a clause is born a clause
-            var action = catalog.Program(_step);
+            var action = catalog!.Program(_step);
 
             Take("(");
             var given = new HashSet<string>();
@@ -226,12 +225,8 @@ public sealed class Formal
             {
                 Space();
                 var brace = _pos;
-                if (isClause)
-                    Fail($"`{module}.{name}` takes no {{ }}: write the action first, then {module}.{name} after it — " +
-                         $"next.action(…); {module}.{name}(…)", brace);
-                if (!isCondition)
-                    Fail($"`{module}.{name}` contains no actions: only a condition takes {{ }} (its body); " +
-                         $"write the actions one after the other: {module}.{name}(…); next.action(…)");
+                // the action says why it takes no body, when it takes none
+                if (action.Nest() is { } refused) Fail(refused, brace);
                 Take("{");
                 if (Peek("}"))
                 {

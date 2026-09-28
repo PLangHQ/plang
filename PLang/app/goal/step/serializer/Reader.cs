@@ -63,8 +63,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                             action.Trailing.Clear();
                         }
                     reader.EndArray();
-                    // the code is in: each clause binds on the action before it
-                    step.Code.Bind();
+                    // the code is in: each clause attaches to the action before it
+                    step.Code.Attach();
                     break;
                 case "intent": step.Intent = reader.String(); break;
                 case "source": step.Source = reader.String(); break;

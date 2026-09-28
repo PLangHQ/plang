@@ -121,6 +121,10 @@ def prefill(action, text):
         return f'variable.set(Name={d}, Value=%!data%)'
     required = [f'{n}=?' for n, p in props.items() if not p['nullable'] and p['default'] is None]
     if action == 'goal.call' and ARGUMENTS.search(text): required.append('Parameter={?}')
+    # a list of actions it holds (on.error's Recovery): `on error call X` names what it runs — a goal.call, its
+    # Name still to fill; otherwise `?` like any other value (a `?` left in is refused like any other)
+    required += [f'{n}=[goal.call(Name=?)]' if ON_ERROR_CALL.search(text) else f'{n}=?'
+                 for n, p in props.items() if p['type'] == 'list<action>']
     return f'{action}(' + ', '.join(required) + ')'
 
 # The known code's words (goal/step/pick/list Code): a step's first variable, a foreach's `as` name, and
@@ -246,18 +250,16 @@ def user_message_c(goal, picks):
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
         certain = sorted([a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)],
                          key=link)   # a certain condition chain leads (action.Link); the rest by score
-        filled = [prefill(a, s['text']) for a in certain if not b.declared(*a.split('.', 1))[1]]
-        # a certain clause is shown right after the step's first action — the action it is a clause of
-        for m in [a for a in certain if b.declared(*a.split('.', 1))[1]]:
-            head = prefill(m, s['text'])
-            if 'Recovery' in b.declared(*m.split('.', 1))[0]:
-                # `on error call X` names what the recovery runs: a goal.call — a known action, its Name
-                # still to fill, `?` like any other value (a `?` left in is refused like any other)
-                if ON_ERROR_CALL.search(s['text']):
-                    head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=[goal.call(Name=?)])'
-                else:
-                    head = head[:-1] + ('' if head[:-1].endswith('(') else ', ') + 'Recovery=?)'
-            filled = [filled[0] if filled else '?', head] + filled[1:]
+        # each certain pick takes its own place (action.Prefill): a step action after the ones before it (or
+        # where a clause left `?`), a clause right after the step's first action — the action it is a clause of
+        filled = []
+        for a in certain:
+            call = prefill(a, s['text'])
+            if b.declared(*a.split('.', 1))[1]:
+                if not filled: filled.append('?')
+                filled.insert(1, call)
+            elif filled and filled[0] == '?': filled[0] = call
+            else: filled.append(call)
         if known: filled.append(prefill('variable.set', s['text']))
         if filled: out += ' => formal: ' + '; '.join(filled)
         types = scope(store, known_code([a for a, p in step_picks if p >= CERTAIN], s['text']), s['text'])
@@ -336,8 +338,8 @@ def disagreements(i, rows, picks_i, text=''):
     action = None
     for a in rows:
         if not f.is_clause(a['module'], a['name']): action = a; continue
-        recovery = next((r['value'] for r in a.get('property') or [] if r['name'] == 'Recovery'), None) or []
-        if action and any(same(x, action) for x in recovery if f.is_action(x)):
+        held = [x for r in a.get('property') or [] for x in (r['value'] if isinstance(r['value'], list) else [r['value']])]
+        if action and any(same(x, action) for x in held if f.is_action(x)):
             refused.append(f'step {i}: the Recovery of {a["module"]}.{a["name"]} runs {action["module"]}.{action["name"]}, the action it is a clause of — '
                            'Recovery holds what the step runs on error')
     # the variable the step's words write (write to %x%, or %x% = … on a step that tests no condition —

@@ -74,7 +74,7 @@ public sealed class @this
     public IReadOnlyList<listed.@this> Listed => _listed;
 
     /// <summary>The step's starting formal: its certain actions — a condition chain first, in chain
-    /// order, the rest by score — <c>?</c> where a value is still needed, a certain modifier right after
+    /// order, the rest by score — <c>?</c> where a value is still needed, a certain clause right after
     /// the first action, a <c>write to %x%</c> filled in last.
     /// Null when nothing is certain.</summary>
     public string? Formal { get; private set; }
@@ -314,18 +314,9 @@ public sealed class @this
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known != null))
             .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!)
             .OrderBy(a => a.Link ?? 3).ToList();
-        var filled = certain.Where(a => !a.IsClause).Select(a => Call(a, text)).ToList();
-        foreach (var m in certain.Where(a => a.IsClause))
-        {
-            var head = Call(m, text);
-            if (m.Module.Name == "on" && m.Name == "error")
-            {
-                var comma = head.EndsWith("()") ? "" : ", ";
-                head = head[..^1] + comma + (OnErrorCall.IsMatch(text) ? "Recovery=[goal.call(Name=?)])" : "Recovery=?)");
-            }
-            // a certain clause is shown right after the step's first action — the action it is a clause of
-            filled = [filled.Count > 0 ? filled[0] : "?", head, .. filled.Skip(1)];
-        }
+        // each certain action takes its own place (a clause right after the action it is a clause of)
+        var filled = new List<string>();
+        foreach (var action in certain) action.Prefill(filled, Call(action, text));
         if (known != null) filled.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         return filled.Count > 0 ? string.Join("; ", filled) : null;
     }
@@ -338,7 +329,7 @@ public sealed class @this
         var text = _step.Text;
         var known = Destination();
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain).Select(l => Catalog(l.Name, context))
-            .Where(a => a != null && !a.IsClause).Select(a => a!).ToList();
+            .Where(a => a != null).Select(a => a!).ToList();
         var line = new List<string>();
         foreach (var action in certain.OrderBy(a => a.Module.Name == "loop" && a.Name == "foreach" ? 0 : 1))
         {
@@ -354,7 +345,7 @@ public sealed class @this
                 if (known != null || Assigned() is not { } set) continue;
                 line.Add($"variable.set(Name={set.Name}, Value={set.Value})");
             }
-            else line.Add($"{name}()");
+            else action.Know(line, $"{name}()");
         }
         if (known != null) line.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         if (line.Count == 0) return new();
@@ -364,12 +355,15 @@ public sealed class @this
         return new();
     }
 
-    // One action as the pre-fill starts it: its required properties as `?` — and a goal.call whose step
-    // passes arguments, its Parameter.
+    // One action as the pre-fill starts it: its required properties as `?` — a goal.call whose step passes
+    // arguments, its Parameter; and a list of actions it holds (on.error's Recovery), a goal.call when the step
+    // says `on error … call`, else `?`.
     private static string Call(global::app.goal.step.action.@this action, string text)
     {
         var required = action.Property.Where(p => p.Required).Select(p => $"{p.Name}=?").ToList();
         if (action.Module.Name == "goal" && action.Name == "call" && Arguments.IsMatch(text)) required.Add("Parameter={?}");
+        foreach (var held in action.Property.Where(p => p.Type.Name == "list" && p.Type.kind.Name == "action"))
+            required.Add(OnErrorCall.IsMatch(text) ? $"{held.Name}=[goal.call(Name=?)]" : $"{held.Name}=?");
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", required)})";
     }
 

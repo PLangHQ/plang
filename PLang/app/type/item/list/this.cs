@@ -244,6 +244,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             yield return (new Data("", i++, context: context), item);
     }
 
+    /// <summary>A list holds its elements by position.</summary>
+    public override bool IsSequence => true;
+
     /// <summary>The flattened element Data at <paramref name="index"/>, handed out with the
     /// asker's context, or C# null when out of range.</summary>
     internal Data? At(int index, actor.context.@this context)

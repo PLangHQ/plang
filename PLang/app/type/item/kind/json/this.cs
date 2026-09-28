@@ -85,6 +85,9 @@ public sealed class @this : global::app.type.kind.@this
             foreach (var p in e.EnumerateObject()) yield return Data(p.Name, p.Value, null, ctx);
     }
 
+    /// <summary>A json array holds its children by position; an object by name.</summary>
+    public override bool IsSequence(object host) => ((JsonElement)host).ValueKind == JsonValueKind.Array;
+
     // Writing a child onto an immutable json object: materialize it into a mutable dict whose
     // members STAY lazy (each a Data over its own child node), then set the new key. The json
     // content becomes the dict's keys, never the JsonElement's BCL surface.

@@ -270,6 +270,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                       new global::app.data.@this("", this, context: context));
     }
 
+    /// <summary>Whether this value holds its children by position (a list) rather than by name (a dict, a
+    /// json object, a domain value's members). A single value is not a sequence.</summary>
+    public virtual bool IsSequence => false;
+
     /// <summary>
     /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
     /// answer. True when the answer depends on nothing but the value itself

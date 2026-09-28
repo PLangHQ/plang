@@ -34,10 +34,8 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
-            // a clause was bound on the action before it when the program was read — it is not a step
-            if (action.IsClause) continue;
             context.CancellationToken.ThrowIfCancellationRequested();
-            result = await action.Start(context);
+            result = await action.Follow(result, context);
             if (result.ShouldExit() || result.Handled) break;         // return/exit, or a legit event-handled stop
             if (action.IsCondition && await result.ToBooleanAsync())
             {
@@ -68,16 +66,16 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
         }
     }
 
-    /// <summary>Binds each clause in this code on the step action before it (<c>read x; on.error(…);
-    /// on.cache(…)</c> — both on read) — what the program's read does once its code is in. Clauses are bound for
-    /// every actor running the program, and never started as steps.</summary>
-    public void Bind()
+    /// <summary>Attaches each action to the step action it follows (<c>read x; on.error(…); on.cache(…)</c> — both
+    /// clauses on read) — what the program's read does once its code is in. Clauses are attached for every actor
+    /// running the program, and never started as steps.</summary>
+    public void Attach()
     {
-        Action? stepAction = null;
+        Action? before = null;
         foreach (var action in Items())
         {
-            if (!action.IsClause) { stepAction = action; continue; }
-            if (stepAction != null) action.Bind(stepAction);
+            action.Attach(before);
+            before = action.Anchor(before);
         }
     }
 
@@ -171,17 +169,13 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     public async System.Threading.Tasks.Task<global::app.error.Error?> Build(actor.context.@this context)
     {
         var causes = new List<global::app.error.Error>();
-        Action? stepAction = null;
+        Action? before = null;
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
             if (await action.Build(context) is { } failed) causes.Add(failed);
-            if (!action.IsClause) { stepAction = action; continue; }
-            // a clause's recovery is what runs on error — running the very action it is a clause of is a retry
-            if (stepAction != null && action.Held.Any(stepAction.Same))
-                causes.Add(new global::app.error.Error(
-                    $"the Recovery of {action.Module}.{action.Name} runs {stepAction.Module}.{stepAction.Name}, the action it is " +
-                    "a clause of — Recovery holds what the step runs on error", "RecoveryIsTheAction", 400));
+            if (action.Refuse(before) is { } refused) causes.Add(refused);
+            before = action.Anchor(before);
         }
 
         if (causes.Count == 0) return null;

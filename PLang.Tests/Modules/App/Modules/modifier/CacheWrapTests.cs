@@ -211,7 +211,7 @@ public class CacheWrapTests
         code.Add(CacheModifier(60_000, "sum-key"));
         code.Add(global::PLang.Tests.Shared.Make.Action("variable", "set",
             global::PLang.Tests.Shared.Make.Param("Name", "sum", "variable"), ("Value", "%!data%")));
-        code.Bind();
+        code.Attach();
 
         var result = await code.Start(Ctx);
 

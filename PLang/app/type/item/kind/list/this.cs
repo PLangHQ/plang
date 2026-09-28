@@ -68,6 +68,9 @@ public sealed class @this : global::app.type.kind.@this
             yield return Data("", el, null, ctx);
     }
 
+    /// <summary>A CLR collection holds its children by position.</summary>
+    public override bool IsSequence(object host) => true;
+
     // A collection writes as an array of self-writes — each element through its own kind.
     public override async global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.type.format.IWriter writer, global::app.View mode,

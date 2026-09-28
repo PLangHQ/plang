@@ -161,6 +161,10 @@ public class @this
         object obj, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Name}' is not enumerable");
 
+    /// <summary>Whether a host of this kind holds its children by position (an array) rather than by name (an
+    /// object's members).</summary>
+    public virtual bool IsSequence(object host) => false;
+
     /// <summary>Write a child <paramref name="key"/> onto a host of this kind — the kind owns HOW
     /// its content takes a new child (<paramref name="isIndex"/> tells positional from named).
     /// Returns the value carried as an item; a kind with no writable content throws.</summary>

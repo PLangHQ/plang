@@ -81,4 +81,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             yield return (new global::app.data.@this("", i++, context: context),
                           new global::app.data.@this("", row, context: context));
     }
+
+    /// <summary>A table holds its rows by position.</summary>
+    public override bool IsSequence => true;
 }

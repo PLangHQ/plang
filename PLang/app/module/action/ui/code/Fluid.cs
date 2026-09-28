@@ -193,27 +193,20 @@ public class Fluid : ITemplate
     /// A plang container as a template sees it — any item that is not a leaf, read through the item's own
     /// doors: a member or an index through its <c>Get</c> (a file reference narrows to its content there, a
     /// json host descends by its kind), its children through its <c>EnumerateItems</c>. It reaches Fluid in
-    /// liquid's own two shapes, as the item iterates (<see cref="Liquid"/>): positionally, an array — so
-    /// <c>join</c>, <c>sort</c>, <c>map</c>, <c>where</c> act on it; by name, a hash — a <c>{% for %}</c> yields
-    /// <c>[key, value]</c> pairs (<c>{% for c in decider.common %}{{ c[0] }}</c>). A value that iterates as
-    /// itself (a goal, an action) is a hash of its members. A leaf reached is handed to Fluid as its raw
-    /// backing, so truthiness, comparison and <c>where:</c> see a real string or number.
+    /// liquid's own two shapes, as the item says it holds its children (<see cref="global::app.type.item.@this.IsSequence"/>):
+    /// by position, an array — so <c>join</c>, <c>sort</c>, <c>map</c>, <c>where</c> act on it; by name, a hash —
+    /// a <c>{% for %}</c> yields <c>[key, value]</c> pairs (<c>{% for c in decider.common %}{{ c[0] }}</c>). A leaf
+    /// reached is handed to Fluid as its raw backing, so truthiness, comparison and <c>where:</c> see a real
+    /// string or number.
     /// </summary>
     private sealed class Item(global::app.type.item.@this item, global::app.actor.context.@this context) : ObjectValueBase(item)
     {
-        /// <summary><paramref name="container"/> in the liquid shape its own iteration gives it.</summary>
+        /// <summary><paramref name="container"/> in the liquid shape it holds its children in.</summary>
         internal static FluidValue Liquid(global::app.type.item.@this container, global::app.actor.context.@this context,
             TemplateOptions options)
-        {
-            using var pairs = container.EnumerateItems(context).GetEnumerator();
-            if (!pairs.MoveNext()) return new ArrayValue(System.Array.Empty<FluidValue>());
-            var (key, value) = pairs.Current;
-            if (ReferenceEquals(value.Peek(), container) || key.Peek() is not global::app.type.item.number.@this)
-                return new Item(container, context);
-            var elements = new List<FluidValue> { Lowered(value.Peek(), options) };
-            while (pairs.MoveNext()) elements.Add(Lowered(pairs.Current.value.Peek(), options));
-            return new ArrayValue(elements);
-        }
+            => container.IsSequence
+                ? new ArrayValue(container.EnumerateItems(context).Select(pair => Lowered(pair.value.Peek(), options)).ToList())
+                : new Item(container, context);
 
         public override async ValueTask<FluidValue> GetValueAsync(string name, TemplateContext ctx)
             => Lowered(await (await item.Get(Parent, name)).Value(), ctx.Options);
@@ -221,13 +214,10 @@ public class Fluid : ITemplate
         public override async ValueTask<FluidValue> GetIndexAsync(FluidValue index, TemplateContext ctx)
             => Lowered(await (await item.Get(Parent, index.ToStringValue(), isIndex: index.Type == FluidValues.Number)).Value(), ctx.Options);
 
-        // A hash iterates as [key, value] pairs; a value that iterates as itself has no children to yield.
+        // A hash iterates as [key, value] pairs.
         public override IEnumerable<FluidValue> Enumerate(TemplateContext ctx)
-        {
-            foreach (var (key, value) in item.EnumerateItems(context))
-                if (!ReferenceEquals(value.Peek(), item))
-                    yield return new ArrayValue(new[] { Lowered(key.Peek(), ctx.Options), Lowered(value.Peek(), ctx.Options) });
-        }
+            => item.EnumerateItems(context).Select(pair =>
+                (FluidValue)new ArrayValue(new[] { Lowered(pair.key.Peek(), ctx.Options), Lowered(pair.value.Peek(), ctx.Options) }));
 
         public override string ToStringValue() => item.ToString() ?? "";
 

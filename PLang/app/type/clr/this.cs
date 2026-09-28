@@ -140,6 +140,9 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(global::app.actor.context.@this context)
         => Kind.Enumerate(Value, context);
 
+    /// <summary>The host is a sequence when its <see cref="Kind"/> holds it by position (a json array, a CLR list).</summary>
+    public override bool IsSequence => Kind.IsSequence(Value);
+
     /// <summary>Iterates as (key, value) pairs — the carrier delegates enumeration to its
     /// <see cref="Kind"/> (json array elements / object members), pairing each with its key
     /// (array → index, object → member name). Mirrors list/dict; without it the base yields

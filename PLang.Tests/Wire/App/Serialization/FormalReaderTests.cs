@@ -60,7 +60,7 @@ public class FormalReaderTests
 
         await read.IsSuccess();
         var code = (global::app.goal.step.action.list.@this)read.Peek()!;
-        await Assert.That(code.Items().Skip(1).All(a => a.IsClause)).IsTrue();
+        await Assert.That(code.Items().Skip(1).All(a => a is global::app.goal.step.action.clause.@this)).IsTrue();
         await Assert.That(Clauses(read)).IsEqualTo("on.timeout, on.error, on.cache");
         var written = await Written(read);
         await Assert.That(written).Contains("; on.timeout(");

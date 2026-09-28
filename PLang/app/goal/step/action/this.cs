@@ -213,18 +213,44 @@ public partial class @this
         return await on.start.After(this, data, context);
     }
 
-    /// <summary>Whether this action is a clause of the one before it (<c>on.error</c>, <c>on.cache</c>,
-    /// <c>on.timeout</c>): bound at read, never started as a step. A step action is not.</summary>
-    internal virtual bool IsClause => false;
-
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
     /// one is (the role was decided when its module registered it).</summary>
     internal virtual @this Program(global::app.goal.step.@this? step)
         => new() { Module = Module, Name = Name, Step = step, Synthetic = false };
 
-    /// <summary>Binds this action on <paramref name="action"/>, the step action before it — what a clause does
-    /// when its program is read. A step action binds nothing.</summary>
-    internal virtual void Bind(@this action) { }
+    // A step's code is a walk of its actions, each answering its own part. A step action runs and anchors
+    // what follows it; a clause (clause.@this) overrides each part.
+
+    /// <summary>Attaches this action to <paramref name="before"/>, the step action it follows — what the program's
+    /// read does once a step's code is in. A step action attaches to nothing.</summary>
+    internal virtual void Attach(@this? before) { }
+
+    /// <summary>The step action the actions after this one belong to: this one.</summary>
+    internal virtual @this? Anchor(@this? before) => this;
+
+    /// <summary>This action's turn in its step's chain, after <paramref name="result"/>: it starts, and its result
+    /// is the chain's.</summary>
+    internal virtual Task<global::app.data.@this> Follow(global::app.data.@this result, actor.context.@this context)
+        => Start(context);
+
+    /// <summary>What the build refuses in this action as it follows <paramref name="before"/>: nothing.</summary>
+    internal virtual global::app.error.Error? Refuse(@this? before) => null;
+
+    /// <summary>This catalog action's place in a step's pre-filled formal: after the ones before it — or at the
+    /// head, where a clause left <c>?</c> for the action it is a clause of.</summary>
+    internal virtual void Prefill(List<string> filled, string call)
+    {
+        if (filled.Count > 0 && filled[0] == "?") filled[0] = call;
+        else filled.Add(call);
+    }
+
+    /// <summary>What this catalog action adds to a step's known code: its call.</summary>
+    internal virtual void Know(List<string> line, string call) => line.Add(call);
+
+    /// <summary>Why this action takes no <c>{ }</c> body; null for a condition, whose body it is.</summary>
+    internal virtual string? Nest() => IsCondition ? null
+        : $"`{Module.Name}.{Name}` contains no actions: only a condition takes {{ }} (its body); " +
+          $"write the actions one after the other: {Module.Name}.{Name}(…); next.action(…)";
 
     /// <summary>
     /// Dispatches this action inside the frame <see cref="Start"/> pushed for it: mints its handler,
