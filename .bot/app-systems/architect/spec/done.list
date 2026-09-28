@@ -16,6 +16,6 @@ app-systems: what is done (stages 1–8g; 8h's code parts). The summary says onl
 fixed on the way: the 5-second first signature (500 identities made in a loop); a failed signature is an error, not a silent unsigned write; one default provider per interface
 
 validated by (built when Ingi says):
-  Test/Module/On/Timeout/RetryGetsAFreshDeadline
-  Test/Module/On/Cache/RecoveryIsNeverCached
-  Test/Module/On/DataIsLeftAloneAfterAClause
+  test/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline
+  test/plan/app-systems/module/on/cache/RecoveryIsNeverCached
+  test/plan/app-systems/module/on/DataIsLeftAloneAfterAClause
