@@ -122,15 +122,31 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return await held.Use(then);
     }
 
-    /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/>
-    /// — the Data the caller read — so a newer value written in between is left alone; answers whether
-    /// it now holds the value. A deeper variable's Data is born per read, so there it just writes.</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Replace(global::app.data.@this expected,
-        global::app.type.item.@this value, actor.context.@this context)
+    /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, changed in place by
+    /// <paramref name="then"/>, then kept as the variable's value (<see cref="Replace"/>). The change's answer
+    /// is the answer — unless keeping it isn't allowed (what is bound on the set refusing it). A failure, an
+    /// ask, or a value that isn't a TAs is the answer, nothing changed.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this> Change<TAs>(actor.context.@this context,
+        System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then) where TAs : global::app.type.item.@this
     {
-        if (Code.Count == 1) return await context.Variable.Replace(Code.Root.Name, expected, value);
-        return (await Set(value, context)).Success;
+        var held = await Start(context);
+        if (held.Success && !held.Exits) await held.Value();
+        return await held.Use<TAs>(async value =>
+        {
+            var changed = await then(value);
+            if (!changed.Success || changed.Exits) return changed;
+            var kept = await Replace(held, value, context);
+            return kept.Success && !kept.Handled ? changed : kept;
+        });
     }
+
+    /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/>
+    /// — the Data the caller read — so a newer value written in between is left alone and is the answer;
+    /// what is bound on the set answers too. A deeper variable's Data is born per read, so there it just
+    /// writes.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Replace(global::app.data.@this expected,
+        global::app.type.item.@this value, actor.context.@this context)
+        => Code.Count == 1 ? await context.Variable.Replace(Code.Root.Name, expected, value) : await Set(value, context);
 
     /// <summary>What the variable holds, through that value's own door (a container deep-renders, a
     /// template renders, a scalar answers itself). Loud: a variable that holds nothing throws — a

@@ -221,25 +221,24 @@ public partial class @this
 
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
     /// holds <paramref name="expected"/> — the Data the caller read — in one step; a newer value set
-    /// in between is left alone. Answers whether the name now holds the value. When
-    /// <paramref name="expected"/> already holds it there is nothing to write. What is bound before the set
-    /// refusing or cancelling it: not written, false.</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Replace(string name, data.@this expected, global::app.type.item.@this value)
+    /// in between is left alone, and is the answer. When <paramref name="expected"/> already holds the
+    /// value there is nothing to write. What is bound before the set refusing or cancelling it is the answer;
+    /// so is what is bound after it.</summary>
+    public async System.Threading.Tasks.ValueTask<data.@this> Replace(string name, data.@this expected, global::app.type.item.@this value)
     {
-        if (ReferenceEquals(expected.Peek(), value)) return true;
-        if (await Before(Events?.set, name, value) is not null) return false;
+        if (ReferenceEquals(expected.Peek(), value)) return expected;
+        if (await Before(Events?.set, name, value) is { } refused) return refused;
 
         var frame = Calls.Current;
         if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
                           : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
-            return false;
+            return held ?? expected;
 
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
-        else if (!_variables.TryUpdate(name, rebound, expected)) return false;
-        await After(name, expected.Peek(), rebound);
-        return true;
+        else if (!_variables.TryUpdate(name, rebound, expected)) return await Get(name);
+        return await After(name, expected.Peek(), rebound);
     }
 
 

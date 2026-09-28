@@ -89,7 +89,7 @@ public class RowModelTests : System.IAsyncDisposable
     {
         var a = Of(30, 10);
         a.Add(Of(20, 5));                       // extend → [30, 10, 20, 5]
-        a.SortByValue(descending: false, global::PLang.Tests.TestApp.SharedContext);       // → [5, 10, 20, 30]
+        a.Sort(null, descending: false, global::PLang.Tests.TestApp.SharedContext);       // → [5, 10, 20, 30]
 
         await Assert.That(a.Count).IsEqualTo(4);
         await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("5");

@@ -419,46 +419,29 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>Reverses the flattened slots — collapses the rows into one flat list
-    /// (a new order is a new flat list, per the row model).</summary>
-    public void Reverse()
+    /// (a new order is a new flat list, per the row model). Answers this list.</summary>
+    public @this Reverse()
     {
         var flat = Slots().ToList();
         flat.Reverse();
         ResetTo(flat);
+        return this;
     }
 
     /// <summary>
-    /// Sorts by element value through THE comparison entry — so `sort` and
-    /// `if a &gt; b` agree, nulls sort last, and a mixed-type list errors.
-    /// Two-phase: phase 1 materialises every element through the door (async —
-    /// all I/O lands here); phase 2 orders sync on the in-memory values.
+    /// Sorts through THE comparison entry — so `sort` and `if a &gt; b` agree, nulls sort last, and a
+    /// mixed-type list errors (<see cref="global::app.data.IncomparableException"/>). Each element is its own
+    /// key, or its <paramref name="by"/> field (`sort %people% by "age"`). Two-phase: phase 1 resolves every
+    /// key through the door (async — all I/O lands here); phase 2 orders sync on the in-memory values.
     /// Collapses the rows into one flat list.
     /// </summary>
-    public async System.Threading.Tasks.Task SortByValue(bool descending, actor.context.@this context)
-    {
-        var flat = new List<Data>(Items(context));
-        var values = new Dictionary<Data, object?>(ReferenceEqualityComparer.Instance);
-        foreach (var d in flat) values[d] = await d.Value();
-        var sorted = await SortAsync(flat, async (a, b) =>
-        {
-            int c = await OrderOf(a, b, values[a], values[b]);
-            return descending ? -c : c;
-        });
-        ResetTo(sorted);
-    }
-
-    /// <summary>
-    /// Sorts by an element field (`sort %people% by "age"`) — phase 1 resolves each
-    /// element's <paramref name="field"/> child and its value through the door
-    /// (async); phase 2 orders sync on the pre-resolved keys.
-    /// </summary>
-    public async System.Threading.Tasks.Task SortByField(string field, bool descending, actor.context.@this context)
+    public async System.Threading.Tasks.Task Sort(string? by, bool descending, actor.context.@this context)
     {
         var flat = new List<Data>(Items(context));
         var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
         foreach (var d in flat)
         {
-            var key = await d.Get(field);
+            var key = by == null ? d : await d.Get(by);
             keys[d] = (key, await key.Value());
         }
         var sorted = await SortAsync(flat, async (a, b) =>
@@ -786,38 +769,97 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return -1;
     }
 
-    /// <summary>The element at <paramref name="index"/> — or, out of range, an error naming the range.</summary>
-    public async System.Threading.Tasks.Task<Data> At(global::app.data.@this<global::app.type.item.number.@this> index, actor.context.@this context)
-    {
-        var at = (await index.Value())!;
-        return At(at.ToInt32(), context) ?? context.Error(new global::app.error.ValidationError(
-            $"Index {at} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
-    }
+    /// <summary>The element at <paramref name="index"/> — or, out of range, an error naming the range; an
+    /// index that didn't resolve is its own answer.</summary>
+    public System.Threading.Tasks.Task<Data> At(global::app.data.@this<global::app.type.item.number.@this> index, actor.context.@this context)
+        => index.Use(at => System.Threading.Tasks.Task.FromResult(At(at, context) ?? context.Error(
+            new global::app.error.ValidationError($"Index {at} out of range (0..{CountRaw - 1})", "IndexOutOfRange"))));
 
-    /// <summary>The elements' text, one after another with <paramref name="separator"/> between them.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Join(
-        global::app.data.@this<global::app.type.item.text.@this> separator, actor.context.@this context)
-    {
-        var parts = new List<string>();
-        foreach (var element in Items(context)) parts.Add((await element.Value())?.ToString() ?? "");
-        return string.Join((await separator.Value())?.ToString() ?? "", parts);
-    }
+    /// <summary>The elements' text, one after another with <paramref name="separator"/> between them; a
+    /// separator that didn't resolve is its own answer.</summary>
+    public System.Threading.Tasks.Task<Data> Join(global::app.data.@this<global::app.type.item.text.@this> separator,
+        actor.context.@this context)
+        => separator.Use(async between =>
+        {
+            var parts = new List<string>();
+            foreach (var element in Items(context)) parts.Add((await element.Value())?.ToString() ?? "");
+            return (Data)context.Ok<global::app.type.item.text.@this>(string.Join(between.ToString(), parts));
+        });
 
     /// <summary>Whether any element's <paramref name="field"/> holds against <paramref name="value"/> under
-    /// <paramref name="op"/>: the first that does — or an error — is the answer, else false.</summary>
-    public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
+    /// <paramref name="op"/>: the first that does — or an error — is the answer, else false. A field or an
+    /// operator that didn't resolve is its own answer.</summary>
+    public System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
         Data value, actor.context.@this context)
-    {
-        var key = (await field.Value())!.ToString();
-        var compare = (global::app.module.action.condition.Operator)(await op.Value())!;
-        foreach (var element in Items(context))
+        => field.Use(key => op.Use(async compare =>
         {
-            var matched = await compare.Evaluate(await element.Get(key), value, context);
-            if (!matched.Success || matched.ToBoolean()) return matched;
-        }
-        return context.Ok<global::app.type.item.@bool.@this>(false);
-    }
+            var operation = (global::app.module.action.condition.Operator)compare;
+            foreach (var element in Items(context))
+            {
+                var matched = await operation.Evaluate(await element.Get(key.ToString()), value, context);
+                if (!matched.Success || matched.ToBoolean()) return matched;
+            }
+            return (Data)context.Ok<global::app.type.item.@bool.@this>(false);
+        }));
+
+    /// <summary>Adds <paramref name="value"/> at <paramref name="at"/> when that is a position in this list,
+    /// else at the end: a list's elements join this one (nothing copied), anything else is one element that
+    /// points at the value's current instance. Answers this list.</summary>
+    public System.Threading.Tasks.Task<Data> Add(Data value, global::app.data.@this<global::app.type.item.number.@this> at,
+        actor.context.@this context)
+        => at.Use(async index =>
+        {
+            var positioned = index >= 0 && index <= Count;
+            if (await value.Value() is @this items)
+            {
+                if (positioned) Insert(index, items); else Add(items);
+            }
+            else
+            {
+                var element = new Data(value.Name, value.Peek(), value.Type, context: context);
+                if (positioned) Insert(index, element); else Add(element);
+            }
+            return (Data)context.Ok(this);
+        });
+
+    /// <summary>The element at <paramref name="index"/> becomes <paramref name="value"/> (pointing at its
+    /// current instance) — an index outside the list is IndexOutOfRange. Answers this list.</summary>
+    public System.Threading.Tasks.Task<Data> SetAt(global::app.data.@this<global::app.type.item.number.@this> index, Data value,
+        actor.context.@this context)
+        => index.Use(async at =>
+        {
+            if (at < 0 || at >= Count)
+                return context.Error(new global::app.error.ValidationError($"Index {at} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
+            SetAt(at, new Data(value.Name, await value.Value(), value.Type, context: context));
+            return (Data)context.Ok(this);
+        });
+
+    /// <summary>Removes the element at <paramref name="at"/> when that is a position, else the first element
+    /// equal to <paramref name="value"/>. Answers this list.</summary>
+    public System.Threading.Tasks.Task<Data> Remove(Data value, global::app.data.@this<global::app.type.item.number.@this> at,
+        actor.context.@this context)
+        => at.Use(async index =>
+        {
+            if (index >= 0) RemoveAt(index);
+            else await Remove((object?)value, context);
+            return (Data)context.Ok(this);
+        });
+
+    /// <summary>Sorts this list (<see cref="Sort(string?, bool, actor.context.@this)"/>) by
+    /// <paramref name="by"/> when given; elements that have no order between them are an error, not a throw.
+    /// Answers this list.</summary>
+    public System.Threading.Tasks.Task<Data> Sort(global::app.data.@this<global::app.type.item.text.@this>? by,
+        global::app.data.@this<global::app.type.item.@bool.@this> descending, actor.context.@this context)
+        => descending.Use(async down =>
+        {
+            try { await Sort(by == null ? null : (await by.Value())?.ToString(), down.Value, context); }
+            catch (global::app.data.IncomparableException ex)
+            {
+                return context.Error(new global::app.error.ValidationError(ex.Message));
+            }
+            return (Data)context.Ok(this);
+        });
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()

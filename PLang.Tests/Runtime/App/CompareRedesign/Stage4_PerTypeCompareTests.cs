@@ -179,7 +179,7 @@ public class Stage4_PerTypeCompareTests
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
         list.Add(new Data("", 1, context: ctx));
-        await list.SortByValue(descending: false, global::PLang.Tests.TestApp.SharedContext);
+        await list.Sort(null, descending: false, global::PLang.Tests.TestApp.SharedContext);
         await Assert.That((await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("3");
         await Assert.That(await (await list.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())!.IsEmpty()).IsTrue();   // nulls last

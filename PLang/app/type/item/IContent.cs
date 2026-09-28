@@ -5,6 +5,7 @@ namespace app.type.item;
 /// its format; <see cref="Content"/> is the content as it is, the bytes the reference samples once (through
 /// its location's gate) and decodes from.
 /// </summary>
+[global::app.Attributes.PlangType("content")]
 public interface IContent
 {
     /// <summary>The raw bytes, read once, as the asker whose <paramref name="context"/> it is.</summary>

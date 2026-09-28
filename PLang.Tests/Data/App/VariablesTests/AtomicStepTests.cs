@@ -22,10 +22,28 @@ public class AtomicStepTests : System.IAsyncDisposable
         var newer = new List();
         await store.Set("l", newer);
 
-        var written = await store.Replace("l", held, new List());
+        var answer = await store.Replace("l", held, new List());
 
-        await Assert.That(written).IsFalse();
+        // the newer value is left alone, and it is the answer
+        await Assert.That(ReferenceEquals(await answer.Value(), newer)).IsTrue();
         await Assert.That(ReferenceEquals(await (await store.Get("l")).Value(), newer)).IsTrue();
+    }
+
+    [Test]
+    public async Task Replace_WhatIsBoundOnTheSetRefusing_IsTheAnswer_NothingWritten()
+    {
+        var store = _app.User.Context.Variable;
+        await store.Set("l", new List());
+        var held = await store.Get("l");
+        _app.variable.Own().Bind("set", global::app.@event.When.before,
+            (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Error(new global::app.error.Error("not today", "Refused", 403))),
+            _app.User, global::app.@event.binding.Scope.actor);
+
+        var answer = await store.Replace("l", held, new List());
+
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("Refused");
+        await Assert.That(ReferenceEquals(await store.Get("l"), held)).IsTrue();
     }
 
     [Test]
@@ -38,7 +56,8 @@ public class AtomicStepTests : System.IAsyncDisposable
 
         var written = await store.Replace("l", held, value);
 
-        await Assert.That(written).IsTrue();
+        await written.IsSuccess();
+        await Assert.That(ReferenceEquals(await written.Value(), value)).IsTrue();
         await Assert.That(ReferenceEquals(await (await store.Get("l")).Value(), value)).IsTrue();
     }
 

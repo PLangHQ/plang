@@ -5,18 +5,7 @@ public partial class Reverse : IContext
 {
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Start()
-    {
-        var name = (await ListName.Value())!;
-        var held = await name.Start(Context);
-        if (await held.Value() is not app.type.item.list.@this nl)
-            return Context.Error<app.type.item.list.@this>(
-                new app.error.ValidationError($"Variable '{name}' is not a list"));
-        // Persist the retrieved instance so the in-place reverse sticks — unless a newer value
-        // took the name in between.
-        await name.Replace(held, nl, Context);
-
-        nl.Reverse();
-        return Context.Ok(nl);
-    }
+    public async Task<data.@this<app.type.item.list.@this>> Start() => data.@this<app.type.item.list.@this>.From(
+        await ListName.Use(name => name.Change<app.type.item.list.@this>(Context,
+            list => Task.FromResult<data.@this>(Context.Ok(list.Reverse())))));
 }

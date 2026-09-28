@@ -155,6 +155,33 @@ public class ListTests
         await Assert.That(result.Error!.Message).Contains("out of range");
     }
 
+    [Test]
+    public async Task Get_WithNoIndex_IsAnError_NotACrash()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("myList", new List<object?> { "a" });
+
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = global::app.data.@this<global::app.type.item.number.@this>.Uninitialized("index") };
+        var result = await action.Start();
+
+        // the index's own answer — it never resolved to a number
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("NumberConversionFailed");
+    }
+
+    [Test]
+    public async Task Count_OfAText_IsNotAList()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("word", "abc");
+
+        var result = await new Count(context) { ListName = new app.type.item.variable.@this("word") }.Start();
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotA");
+        await Assert.That(result.Error!.Message).Contains("not a list");
+    }
+
     // --- Count ---
 
     [Test]

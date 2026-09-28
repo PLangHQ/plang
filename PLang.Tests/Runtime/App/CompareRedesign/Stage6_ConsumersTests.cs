@@ -81,8 +81,7 @@ public class Stage6_ConsumersTests
         // the sort surface is async (phase 1 awaits values/keys); the phase-2 comparator
         // is sync with no GetAwaiter().GetResult() anywhere in the file
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "type", "list", "this.cs"));
-        await Assert.That(src).Contains("public async System.Threading.Tasks.Task SortByValue");
-        await Assert.That(src).Contains("public async System.Threading.Tasks.Task SortByField");
+        await Assert.That(src).Contains("public async System.Threading.Tasks.Task Sort(");
         await Assert.That(src).DoesNotContain(".GetAwaiter().GetResult()");
     }
 
@@ -105,7 +104,7 @@ public class Stage6_ConsumersTests
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
                 files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name)), context: ctx));
 
-            await files.SortByField("size", descending: false, global::PLang.Tests.TestApp.SharedContext);
+            await files.Sort("size", descending: false, global::PLang.Tests.TestApp.SharedContext);
 
             var ordered = files.Items(global::PLang.Tests.TestApp.SharedContext).Select(d => d.Peek()?.ToString() ?? "").ToList();
             await Assert.That(ordered[0]).Contains("tiny.txt");

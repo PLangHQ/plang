@@ -8,46 +8,11 @@ public partial class Add : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Start()
-    {
-        var listName = (await ListName.Value())!;
-        // What %l% holds, or a new list stored in one step — runs adding at once all reach one list.
-        var data = await listName.Ensure(() => new app.type.item.list.@this(), Context);
-        var existing = (await data.Value());
-        var list = existing as app.type.item.list.@this;
-
-        if (list == null)
+    // A list when the variable holds none (runs adding at once all reach one list), then the value is added.
+    public async Task<data.@this<app.type.item.list.@this>> Start() => data.@this<app.type.item.list.@this>.From(
+        await ListName.Use(async name =>
         {
-            // Promote a non-list (or legacy raw list) value into the native list type.
-            list = new app.type.item.list.@this();
-            if (data.HasValue)
-                list.Add(new data.@this("", existing, context: Context));
-            await listName.Set(list, Context);
-        }
-
-        // The entry mints its OWN Data pointing at the value's current
-        // instance — O(1), nothing copied. Collections are reference
-        // semantics: `add %b% to %a%` shares %b%'s list instance (a later
-        // in-place mutation of %b% is visible through %a%, like C#), while a
-        // later `set %b% = ...` rebinds %b% and never touches the entry.
-        var value = await Value.Value();
-
-        // Typed read — number end to end; the list lowers inside its own boundary.
-        var atIndex = (await AtIndex.Value())!;
-        var positioned = atIndex >= 0 && atIndex <= list.Count;
-        if (value is app.type.item.list.@this items)
-        {
-            // Adding a list EXTENDS: its elements join this list (an O(1) chunk, nothing copied).
-            if (positioned) list.Insert(atIndex, items);
-            else list.Add(items);
-        }
-        else
-        {
-            data.@this toAdd = new data.@this(Value.Name, value, Value.Type, context: Context);
-            if (positioned) list.Insert(atIndex, toAdd);
-            else list.Add(toAdd);
-        }
-
-        return Context.Ok(list);
-    }
+            await name.Ensure(() => new app.type.item.list.@this(), Context);
+            return await name.Change<app.type.item.list.@this>(Context, list => list.Add(Value, AtIndex, Context));
+        }));
 }

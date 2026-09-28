@@ -24,9 +24,13 @@ namespace app.Attributes;
 /// reflection by <c>app.type.list.@this.BuildTypeEntries</c> — declare
 /// <c>public static string Example =&gt; "…";</c> on the type itself.
 /// </para>
+///
+/// <para>A capability interface (<c>IContent</c>) declares its word too, so a value asked for as one is named
+/// the plang way (<c>content</c>) — an interface is never registered as a type of its own.</para>
 /// </summary>
 [System.AttributeUsage(
-    System.AttributeTargets.Class | System.AttributeTargets.Struct | System.AttributeTargets.Enum,
+    System.AttributeTargets.Class | System.AttributeTargets.Struct | System.AttributeTargets.Enum
+    | System.AttributeTargets.Interface,
     AllowMultiple = false)]
 public sealed class PlangTypeAttribute : System.Attribute
 {

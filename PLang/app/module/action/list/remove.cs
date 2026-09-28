@@ -8,21 +8,6 @@ public partial class Remove : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }
 
-    public async Task<data.@this<app.type.item.list.@this>> Start()
-    {
-        var listName = (await ListName.Value())!;
-        var held = await listName.Start(Context);
-        if (await held.Value() is not app.type.item.list.@this nl)
-            return Context.Error<app.type.item.list.@this>(
-                new app.error.ValidationError($"Variable '{listName}' is not a list"));
-        // Persist the retrieved instance so the in-place remove sticks — unless a newer value
-        // took the name in between.
-        await listName.Replace(held, nl, Context);
-
-        // Typed read — number end to end; the list lowers inside its own boundary.
-        var atIndex = (await AtIndex.Value())!;
-        if (atIndex >= 0) nl.RemoveAt(atIndex);
-        else await nl.Remove((await Value.Value()), Context);
-        return Context.Ok(nl);
-    }
+    public async Task<data.@this<app.type.item.list.@this>> Start() => data.@this<app.type.item.list.@this>.From(
+        await ListName.Use(name => name.Change<app.type.item.list.@this>(Context, list => list.Remove(Value, AtIndex, Context))));
 }

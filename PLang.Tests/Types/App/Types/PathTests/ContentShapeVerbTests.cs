@@ -84,5 +84,6 @@ public class ContentShapeVerbTests
         var result = await Content(new FilePath(System.IO.Path.Combine(root, "sub")), app.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotA");
+        await Assert.That(result.Error!.Message).Contains("not a content");
     }
 }
