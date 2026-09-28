@@ -151,11 +151,14 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Writes a single tag onto this Call. Used by C# handlers (<c>cache.hit=true</c>,
-    /// <c>http.status=503</c>, <c>llm.tokens=2400</c>) and by the <c>tag</c> PLang action.
-    /// Thread-safe — Tags owns its lock.
+    /// Writes <paramref name="tags"/> onto this Call — each entry rides in as its typed binding, staying lazy.
+    /// The <c>debug.tag</c> action's door. Thread-safe — Tags owns its lock.
     /// </summary>
-    public void Tag(global::app.type.item.text.@this key, global::app.data.@this value) => Tags.Set(key, value);
+    public void Tag(global::app.type.item.dict.@this tags, global::app.actor.context.@this context)
+    {
+        foreach (var entry in tags.Entries(context))
+            Tags.Set(entry.Name, entry);
+    }
 
     /// <summary>
     /// Typed metadata bag. Use this to attach handler-specific structured data

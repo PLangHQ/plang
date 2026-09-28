@@ -5,8 +5,11 @@ namespace PLang.Tests.App.Modules.debug;
 
 public class TagActionTests
 {
+    private static Tag Tagging(global::app.@this app, Dictionary<string, object?> tags)
+        => new(app.actor.list.User.Context) { Tags = tags.ToDictData(app.actor.list.User.Context) };
+
     [Test]
-    public async Task Tag_PairsForm_MergesIntoCallerTags()
+    public async Task Tag_MergesIntoCallerTags()
     {
         // Real PLang flow: outer scope (goal) has its own Call, then the tag action's
         // dispatch pushes another Call under it. Tag must write to the OUTER (caller),
@@ -15,9 +18,7 @@ public class TagActionTests
         await using var app = TestApp.Create("/app");
         await using var outer = app.actor.list.User.CallStack.Push(MakeAction("Goal"));
         await using var tagCall = app.actor.list.User.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
-        var action = new Tag(app.actor.list.User.Context) { Pairs = new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" }.ToDictData(app.actor.list.User.Context)
-        };
-        await action.Start();
+        await Tagging(app, new() { ["k1"] = "v1", ["k2"] = "v2" }).Start();
 
         await Assert.That(outer.Tags.Count).IsEqualTo(2);
         await Assert.That(outer.Tags["k1"].Peek()?.ToString()).IsEqualTo("v1");
@@ -26,14 +27,13 @@ public class TagActionTests
         await Assert.That(tagCall.Tags.Count).IsEqualTo(0);
     }
 
+    // A bare label is written as the dict {label: true}.
     [Test]
-    public async Task Tag_LabelForm_SetsTagsLabelTrue()
+    public async Task Tag_LabelAsTrue_SetsTagsLabelTrue()
     {
         await using var app = TestApp.Create("/app");
         await using var call = app.actor.list.User.CallStack.Push(MakeAction("Goal"));
-        var action = new Tag(app.actor.list.User.Context) { Label = new global::app.data.@this<global::app.type.item.text.@this>("Label", "manual-checkpoint", context: app.actor.list.User.Context)
-        };
-        await action.Start();
+        await Tagging(app, new() { ["manual-checkpoint"] = true }).Start();
 
         await Assert.That(await call.Tags["manual-checkpoint"].ToBooleanAsync()).IsTrue();
     }
@@ -43,9 +43,7 @@ public class TagActionTests
     {
         await using var app = TestApp.Create("/app");
         // No Push — Current is null.
-        var action = new Tag(app.actor.list.User.Context) { Label = new global::app.data.@this<global::app.type.item.text.@this>("Label", "x", context: app.actor.list.User.Context)
-        };
-        var result = await action.Start();
+        var result = await Tagging(app, new() { ["x"] = true }).Start();
         await result.IsSuccess();
     }
 
@@ -56,9 +54,7 @@ public class TagActionTests
         await using var call = app.actor.list.User.CallStack.Push(MakeAction("Goal"));
         await Assert.That(call.Tags.Count).IsEqualTo(0);
 
-        var action = new Tag(app.actor.list.User.Context) { Label = new global::app.data.@this<global::app.type.item.text.@this>("Label", "x", context: app.actor.list.User.Context)
-        };
-        await action.Start();
+        await Tagging(app, new() { ["x"] = true }).Start();
         await Assert.That(call.Tags.Count).IsEqualTo(1);
         await Assert.That(await call.Tags["x"].ToBooleanAsync()).IsTrue();
     }

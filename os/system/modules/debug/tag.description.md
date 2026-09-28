@@ -1,1 +1,1 @@
-Attach diagnostic tags (key=value pairs or a single label) to the current call
+Attach diagnostic tags (a dict of key=value pairs) to the current call
