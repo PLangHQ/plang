@@ -1,7 +1,0 @@
-/ Stage 10 (decision 129, app tree 4 and 12): the app's facts are plang values, not CLR leaves, and the store is a
-/ store, not a pending Task.
-Start
-- assert %!app.created!type.name% equals "datetime"
-- assert %!app.startedat!type.name% equals "datetime"
-- assert %!app.uptime!type.name% equals "duration"
-- assert %!app.store!type.name% equals "store", "the store is born ready and opens itself on first use"

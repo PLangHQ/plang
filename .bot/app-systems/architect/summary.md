@@ -1,6 +1,6 @@
 ## What's left, as plang (2026-09-28, Ingi: "write it up as test, that we can keep that as validation that our logic is working")
 
-The branch's summary is [`spec/AppSystems.goal`](spec/AppSystems.goal): a root goal with a sub-goal per stage, whose steps are the behaviour we want. Each behaviour is a test in `spec/<Stage>/`, which the coder places in `Tests/AppSystems/<Stage>/`; checks that can't be a `.test.goal` are in [`spec/checks.md`](spec/checks.md). A stage is done when its tests pass, its checks hold, and its OBP review is clean.
+The branch's summary is [`spec/AppSystems.goal`](spec/AppSystems.goal): a root goal with a sub-goal per stage, whose steps are the behaviour we want, each naming its test. **Tests live at the path of what they test** (Ingi: "Tests/AppSystems/ is obpv"): `Tests/Modules/On/Cache/`, `Tests/App/Type/`, and so on, never a branch or stage folder, and with no second copy in `.bot/`. Checks that can't be a `.test.goal` are in [`spec/checks.md`](spec/checks.md). A stage is done when its tests pass, its checks hold, and its OBP review is clean.
 
 **The spec tests are built only when Ingi says so** (Ingi, 2026-09-28). Until then they stay placed as unbuilt source in `Tests/AppSystems/`. The coder may ask when it thinks a stage is ready; the request goes to Ingi.
 
@@ -8,12 +8,12 @@ The branch's summary is [`spec/AppSystems.goal`](spec/AppSystems.goal): a root g
 
 | stage | state | spec |
 |---|---|---|
-| 8g | done; the tests validate it | `spec/Stage8g/` (3) |
-| 8h | steps 2–3 done (7fc596b18); step 1 ("retry once") and the rebuild remain | `spec/Stage8h/` (3) + checks |
-| 9 | shape (worklist + OBP review), plus one visible payoff | `spec/Stage9/` (1) + checks |
-| 10 | not started | `spec/Stage10/` (6) |
-| 11 | shape, plus one door to an actor | `spec/Stage11/` (1) + checks |
-| 12 | not started | `spec/Stage12/` (2) |
+| 8g | done; the tests validate it | 3 tests |
+| 8h | steps 2–3 done (7fc596b18); step 1 ("retry once") and the rebuild remain | 3 tests + checks |
+| 9 | shape (worklist + OBP review), plus one visible payoff | 1 test + checks |
+| 10 | not started | 6 tests |
+| 11 | shape, plus one door to an actor | 1 test + checks |
+| 12 | not started | 2 tests |
 
 ## 2026-09-27 night — Ingi asleep; the architect decides (his words: "I want you to make decisions")
 
