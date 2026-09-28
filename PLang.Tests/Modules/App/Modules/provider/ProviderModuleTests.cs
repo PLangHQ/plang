@@ -41,6 +41,10 @@ public class ProviderModuleTests
 
     private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
+    // A provider kind as a .pr row carries it — the name, made a kind by the slot.
+    private global::app.data.@this<global::app.type.item.choice.@this<global::app.module.code.kind.@this>> Kind(string name)
+        => new global::app.data.@this("Type", name, context: Ctx).As<global::app.type.item.choice.@this<global::app.module.code.kind.@this>>();
+
     // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/Shared/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(
         System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Shared", "Fixtures", "dlls"));
@@ -187,7 +191,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
         var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"second",
-            Type = (global::app.type.item.text.@this)"signing"
+            Type = Kind("signing")
         };
         var result = await action.Start();
 
@@ -200,7 +204,7 @@ public class ProviderModuleTests
     {
         // ed25519 is registered as default at engine startup
         var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"ed25519",
-            Type = (global::app.type.item.text.@this)"signing"
+            Type = Kind("signing")
         };
         var result = await action.Start();
 
@@ -212,7 +216,7 @@ public class ProviderModuleTests
     public async Task Remove_NonExistent_ReturnsError()
     {
         var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
-            Type = (global::app.type.item.text.@this)"signing"
+            Type = Kind("signing")
         };
         var result = await action.Start();
 
@@ -224,12 +228,12 @@ public class ProviderModuleTests
     public async Task Remove_UnknownType_ReturnsError()
     {
         var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"anything",
-            Type = (global::app.type.item.text.@this)"invalid"
+            Type = Kind("invalid")
         };
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
     #endregion
@@ -245,7 +249,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(second);
 
         var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"second",
-            Type = (global::app.type.item.text.@this)"signing"
+            Type = Kind("signing")
         };
         var result = await action.Start();
 
@@ -259,7 +263,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
 
         var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
-            Type = (global::app.type.item.text.@this)"signing"
+            Type = Kind("signing")
         };
         var result = await action.Start();
 
@@ -271,12 +275,12 @@ public class ProviderModuleTests
     public async Task SetDefault_UnknownType_ReturnsError()
     {
         var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"anything",
-            Type = (global::app.type.item.text.@this)"invalid"
+            Type = Kind("invalid")
         };
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
     #endregion
@@ -326,7 +330,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.item.text.@this)"signing"
+        var action = new global::app.module.code.list(Ctx) { Type = Kind("signing")
         };
         var result = await action.Start();
 
@@ -336,12 +340,12 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.item.text.@this)"quantum"
+        var action = new global::app.module.code.list(Ctx) { Type = Kind("quantum")
         };
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
     #endregion

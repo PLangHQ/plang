@@ -1,1 +1,1 @@
-Remove a named provider from the registry, optionally filtering by provider type
+Remove a named provider of one kind from the registry

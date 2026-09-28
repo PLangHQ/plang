@@ -211,32 +211,6 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Resolves a PLang provider type name to its CLR type.
-    /// Owns the mapping — callers don't need to know interface types.
-    /// </summary>
-    public System.Type? ResolveType(string? typeName)
-    {
-        return typeName?.ToLowerInvariant() switch
-        {
-            "signing" or "isigningprovider" => typeof(ISigning),
-            "key" or "ikeyprovider" => typeof(IKey),
-            "identity" or "iidentityprovider" => typeof(IIdentity),
-            "crypto" or "icryptoprovider" => typeof(ICrypto),
-            "http" or "ihttpprovider" => typeof(global::app.module.http.code.IHttp),
-            "evaluator" or "ievaluator" => typeof(global::app.module.condition.code.IEvaluator),
-            "assert" or "iassertprovider" => typeof(global::app.module.assert.code.IAssert),
-            // "file" / "ifileprovider" removed — file actions no longer route through a
-            // [Code]-partial provider; FilePath holds the verb impls directly.
-            "template" or "itemplateprovider" => typeof(ITemplate),
-            "llm" or "illmprovider" => typeof(global::app.module.llm.code.ILlm),
-            "decider" or "ideciderprovider" => typeof(global::app.module.llm.code.IDecider),
-            "builder" or "ibuilderprovider" => typeof(global::app.module.build.code.IBuilder),
-            null or "" => typeof(ISigning),
-            _ => null
-        };
-    }
-
-    /// <summary>
     /// Registers built-in default providers. Called by App constructor.
     /// Each module owns its default provider — this method is the single registration point.
     /// </summary>

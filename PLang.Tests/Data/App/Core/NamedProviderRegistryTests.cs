@@ -231,62 +231,39 @@ public class NamedProviderRegistryTests
 
     #endregion
 
-    #region ResolveType
+    #region Provider kind
 
     [Test]
-    public async Task ResolveType_Signing_ReturnsISigningProvider()
+    public async Task Kind_NamesItsInterface()
     {
-        var result = _app.Code.ResolveType("signing");
-        await Assert.That(result).IsEqualTo(typeof(ISigning));
+        await Assert.That(new global::app.module.code.kind.@this("signing").Interface).IsEqualTo(typeof(ISigning));
+        await Assert.That(new global::app.module.code.kind.@this("identity").Interface).IsEqualTo(typeof(IIdentity));
+        await Assert.That(new global::app.module.code.kind.@this("crypto").Interface).IsEqualTo(typeof(ICrypto));
+        await Assert.That(new global::app.module.code.kind.@this("key").Interface).IsEqualTo(typeof(IKey));
     }
 
     [Test]
-    public async Task ResolveType_Identity_ReturnsIIdentityProvider()
+    public async Task Kind_CaseInsensitive()
     {
-        var result = _app.Code.ResolveType("identity");
-        await Assert.That(result).IsEqualTo(typeof(IIdentity));
+        var kind = new global::app.module.code.kind.@this("SIGNING");
+        await Assert.That(kind.Interface).IsEqualTo(typeof(ISigning));
+        await Assert.That(kind.Value).IsEqualTo("signing");
     }
 
     [Test]
-    public async Task ResolveType_Crypto_ReturnsICryptoProvider()
+    public async Task Kind_Unknown_IsRefused()
     {
-        var result = _app.Code.ResolveType("crypto");
-        await Assert.That(result).IsEqualTo(typeof(ICrypto));
+        await Assert.That(() => new global::app.module.code.kind.@this("quantum")).Throws<ArgumentException>();
     }
 
+    // Every interface the registry serves at startup is a kind the program can name.
     [Test]
-    public async Task ResolveType_Key_ReturnsIKeyProvider()
+    public async Task Kind_Choices_CoverEveryRegisteredInterface()
     {
-        var result = _app.Code.ResolveType("key");
-        await Assert.That(result).IsEqualTo(typeof(IKey));
-    }
-
-    [Test]
-    public async Task ResolveType_Unknown_ReturnsNull()
-    {
-        var result = _app.Code.ResolveType("quantum");
-        await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task ResolveType_Null_DefaultsToSigning()
-    {
-        var result = _app.Code.ResolveType(null);
-        await Assert.That(result).IsEqualTo(typeof(ISigning));
-    }
-
-    [Test]
-    public async Task ResolveType_Empty_DefaultsToSigning()
-    {
-        var result = _app.Code.ResolveType("");
-        await Assert.That(result).IsEqualTo(typeof(ISigning));
-    }
-
-    [Test]
-    public async Task ResolveType_CaseInsensitive()
-    {
-        var result = _app.Code.ResolveType("SIGNING");
-        await Assert.That(result).IsEqualTo(typeof(ISigning));
+        var choices = global::app.module.code.kind.@this.Choices(null);
+        foreach (var provider in _app.Code.List())
+            foreach (var face in provider.GetType().GetInterfaces().Where(i => i != typeof(global::app.module.code.ICode) && typeof(global::app.module.code.ICode).IsAssignableFrom(i)))
+                await Assert.That(choices).Contains(face.Name[1..].ToLowerInvariant());
     }
 
     #endregion

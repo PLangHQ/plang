@@ -1,25 +1,20 @@
 namespace app.module.code;
 
 /// <summary>
-/// Removes a named provider from the registry.
+/// Removes a named provider of one kind from the registry.
 /// PLang: remove provider 'custom-crypto' from signing
 /// </summary>
 [Action("remove", Cacheable = false)]
 public partial class remove : IContext
 {
     /// <summary>Name of the provider to remove.</summary>
+    [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
 
-    /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
-    public partial data.@this<global::app.type.item.text.@this>? Type { get; init; }
+    /// <summary>The kind of provider it is.</summary>
+    [IsNotNull]
+    public partial data.@this<global::app.type.item.choice.@this<kind.@this>> Type { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        var typeName = Type == null ? null : (await Type.Value())?.Clr<string>();
-        var providerType = Context.App.Code.ResolveType(typeName);
-        if (providerType == null)
-            return Error(new global::app.error.ActionError($"Unknown provider type '{typeName}'", "UnknownType", 400));
-
-        return Context.App.Code.Remove(providerType, (await Name.Value())!.Clr<string>()!);
-    }
+    public Task<data.@this> Start() => Type.Use(kind => Name.Use(name =>
+        Task.FromResult(Context.App.Code.Remove(kind.Value.Interface, name.ToString()))));
 }

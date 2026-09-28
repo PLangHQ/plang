@@ -1,1 +1,1 @@
-List registered providers, optionally filtered by type (signing, crypto, identity, key)
+List registered providers, optionally of one kind (signing, crypto, identity, key, …)
