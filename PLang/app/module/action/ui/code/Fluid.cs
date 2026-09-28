@@ -69,34 +69,22 @@ public class Fluid : ITemplate
         // (Kind/Value/Context), never the host's own members — so `{{ module.Name }}` over a
         // carried host reads blank. The strategy routes member access on any plang item through
         // Get so a host, a scalar's backing, and a navigated child all resolve through one door;
-        // everything else falls back to reflection. Dict/list ride their read-through views
-        // (converted before member access), so this catches the items reflection can't navigate.
+        // everything else falls back to reflection. A container is converted before member access
+        // (Item, below), so this catches a leaf handed to Fluid whole (a date's .Ticks).
         options.MemberAccessStrategy = new PlangDoorStrategy(action.Context) { IgnoreCasing = true };
-
-        // Make PLang native collections / JsonNode Fluid-readable WITHOUT copying.
-        // Fluid binds via reflection / IDictionary / IEnumerable only — it doesn't
-        // use PLang's variable navigator — so a native dict/list (which implement
-        // domain interfaces, not IDictionary/IEnumerable) and a JsonNode (what
-        // `set … type=json` produces) render empty: `{{ x.key }}` / `{% for %}`
-        // yield nothing even though `%x.key%` resolves in PLang. That silently
-        // blanked the builder's compile prompt (picked actions + per-action schemas)
-        // and made the compiler guess blind — the branch-wide build mis-maps.
-        //
-        // The converter wraps natives in lazy READ-THROUGH views (zero copy): a
-        // dict reads keys on demand (O(1) member access), a list streams its
-        // elements (Fluid arrays any IEnumerable eagerly anyway — same cost as a
-        // real CLR list, no extra copy; we do NOT deep-copy via Clr). Nested
-        // natives convert lazily because the converter re-runs at each member
-        // access. A JsonNode routes through the universal parse to natives, then
-        // the same views. Converters run wherever FluidValue.Create does — both
-        // the variable-binding loops below and nested access during rendering.
-        options.ValueConverters.Add(value => NativeCollectionConverter(value, action.Context));
 
         // The null citizen (typeless or typed-empty slot) renders as nothing and is
         // falsy — same as an undefined variable. Without this it would stringify via
         // ToString() to the literal "null".
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@null.@this ? NilValue.Instance : null);
+
+        // A plang container — a dict, a list, a json host, a file's content, any value that is not a
+        // leaf — is one Fluid value that reads through the item's own doors (Item, below), whatever the
+        // container is. Converters run wherever FluidValue.Create does — the variable-binding loops
+        // below and every member or element a render reaches.
+        options.ValueConverters.Add(value =>
+            value is global::app.type.item.@this { IsLeaf: false } container ? Item.Liquid(container, action.Context, options) : null);
 
 
         // Configure file provider for {% include %} / {% render %} tags
@@ -202,110 +190,52 @@ public class Fluid : ITemplate
     }
 
     /// <summary>
-    /// Fluid value converter — turns a PLang native <c>dict</c>/<c>list</c> or a
-    /// <c>JsonNode</c> into a lazy read-through view Fluid can navigate, without
-    /// copying. Returns <c>null</c> for anything else so Fluid's own mapping runs.
-    /// (See the registration site for why this is needed.)
+    /// A plang container as a template sees it — any item that is not a leaf, read through the item's own
+    /// doors: a member or an index through its <c>Get</c> (a file reference narrows to its content there, a
+    /// json host descends by its kind), its children through its <c>EnumerateItems</c>. It reaches Fluid in
+    /// liquid's own two shapes, as the item iterates (<see cref="Liquid"/>): positionally, an array — so
+    /// <c>join</c>, <c>sort</c>, <c>map</c>, <c>where</c> act on it; by name, a hash — a <c>{% for %}</c> yields
+    /// <c>[key, value]</c> pairs (<c>{% for c in decider.common %}{{ c[0] }}</c>). A value that iterates as
+    /// itself (a goal, an action) is a hash of its members. A leaf reached is handed to Fluid as its raw
+    /// backing, so truthiness, comparison and <c>where:</c> see a real string or number.
     /// </summary>
-    private static object? NativeCollectionConverter(object value, global::app.actor.context.@this context) => value switch
+    private sealed class Item(global::app.type.item.@this item, global::app.actor.context.@this context) : ObjectValueBase(item)
     {
-        app.type.item.dict.@this d => new NativeDictView(d, context),
-        app.type.item.list.@this l => new NativeListView(l, context),
-        // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
-        // structural, JSON-DOM sized) and the natives then ride the views above.
-        System.Text.Json.Nodes.JsonNode jn => new app.type.item.serializer.json(context).Parse(jn) switch
+        /// <summary><paramref name="container"/> in the liquid shape its own iteration gives it.</summary>
+        internal static FluidValue Liquid(global::app.type.item.@this container, global::app.actor.context.@this context,
+            TemplateOptions options)
         {
-            app.type.item.dict.@this d => new NativeDictView(d, context),
-            app.type.item.list.@this l => new NativeListView(l, context),
-            var scalar => scalar, // a bare JSON scalar — Fluid maps it directly
-        },
-        _ => null,
-    };
+            using var pairs = container.EnumerateItems(context).GetEnumerator();
+            if (!pairs.MoveNext()) return new ArrayValue(System.Array.Empty<FluidValue>());
+            var (key, value) = pairs.Current;
+            if (ReferenceEquals(value.Peek(), container) || key.Peek() is not global::app.type.item.number.@this)
+                return new Item(container, context);
+            var elements = new List<FluidValue> { Lowered(value.Peek(), options) };
+            while (pairs.MoveNext()) elements.Add(Lowered(pairs.Current.value.Peek(), options));
+            return new ArrayValue(elements);
+        }
 
-    /// <summary>
-    /// Lazy read-through <see cref="IDictionary{TKey,TValue}"/> over a native
-    /// <c>dict</c> — Fluid maps <c>IDictionary&lt;string,object&gt;</c> to a
-    /// dictionary value with O(1) keyed access, so a member read touches one entry
-    /// (never copies the dict). Read-only: writes throw. Entry values stay raw so
-    /// nested natives re-convert lazily on access. The render's context hands the entries out.
-    /// </summary>
-    private sealed class NativeDictView(app.type.item.dict.@this d, global::app.actor.context.@this context) : IDictionary<string, object?>
-    {
-        // The backing native — the `store` filter reaches the value itself and drives its writer.
-        internal app.type.item.dict.@this Native => d;
+        public override async ValueTask<FluidValue> GetValueAsync(string name, TemplateContext ctx)
+            => Lowered(await (await item.Get(Parent, name)).Value(), ctx.Options);
 
-        public object? this[string key]
-        {
-            get => d.Get(key, context)?.Peek();
-            set => throw new NotSupportedException("template view is read-only");
-        }
-        public ICollection<string> Keys => d.KeyNames.ToList();
-        public ICollection<object?> Values => d.Entries(context).Select(e => (object?)e.Peek()).ToList();
-        public int Count => d.CountRaw;
-        public bool IsReadOnly => true;
-        public bool ContainsKey(string key) => d.Has(key);
-        public bool TryGetValue(string key, out object? value)
-        {
-            var entry = d.Get(key, context);
-            value = entry?.Peek();
-            return entry != null;
-        }
-        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
-        {
-            foreach (var e in d.Entries(context))
-                yield return new KeyValuePair<string, object?>(e.Name, e.Peek());
-        }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-        public void Add(string key, object? value) => throw new NotSupportedException("template view is read-only");
-        public void Add(KeyValuePair<string, object?> item) => throw new NotSupportedException("template view is read-only");
-        public bool Remove(string key) => throw new NotSupportedException("template view is read-only");
-        public bool Remove(KeyValuePair<string, object?> item) => throw new NotSupportedException("template view is read-only");
-        public void Clear() => throw new NotSupportedException("template view is read-only");
-        public bool Contains(KeyValuePair<string, object?> item) => d.Has(item.Key);
-        public void CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
-        {
-            foreach (var kv in this) array[arrayIndex++] = kv;
-        }
-    }
+        public override async ValueTask<FluidValue> GetIndexAsync(FluidValue index, TemplateContext ctx)
+            => Lowered(await (await item.Get(Parent, index.ToStringValue(), isIndex: index.Type == FluidValues.Number)).Value(), ctx.Options);
 
-    /// <summary>
-    /// Lazy read-through <see cref="IList{T}"/> over a native <c>list</c>. Fluid
-    /// arrays any <see cref="System.Collections.IEnumerable"/> eagerly (the same
-    /// cost it pays for a real CLR list), so this streams the element values
-    /// once with no extra copy. Read-only: writes throw. Element values stay raw
-    /// so nested natives re-convert lazily. The render's context hands the items out.
-    /// </summary>
-    private sealed class NativeListView(app.type.item.list.@this l, global::app.actor.context.@this context) : IList<object?>
-    {
-        // The backing native — the `store` filter reaches the value itself (see NativeDictView.Native).
-        internal app.type.item.list.@this Native => l;
+        // A hash iterates as [key, value] pairs; a value that iterates as itself has no children to yield.
+        public override IEnumerable<FluidValue> Enumerate(TemplateContext ctx)
+        {
+            foreach (var (key, value) in item.EnumerateItems(context))
+                if (!ReferenceEquals(value.Peek(), item))
+                    yield return new ArrayValue(new[] { Lowered(key.Peek(), ctx.Options), Lowered(value.Peek(), ctx.Options) });
+        }
 
-        public object? this[int index]
-        {
-            get => l.At(index, context)?.Peek();
-            set => throw new NotSupportedException("template view is read-only");
-        }
-        public int Count => l.CountRaw;
-        public bool IsReadOnly => true;
-        public IEnumerator<object?> GetEnumerator()
-        {
-            foreach (var item in l.Items(context))
-                yield return item.Peek();
-        }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-        public int IndexOf(object? item)
-        {
-            int i = 0;
-            foreach (var v in this) { if (Equals(v, item)) return i; i++; }
-            return -1;
-        }
-        public bool Contains(object? item) => IndexOf(item) >= 0;
-        public void CopyTo(object?[] array, int arrayIndex) { foreach (var v in this) array[arrayIndex++] = v; }
-        public void Add(object? item) => throw new NotSupportedException("template view is read-only");
-        public void Insert(int index, object? item) => throw new NotSupportedException("template view is read-only");
-        public void RemoveAt(int index) => throw new NotSupportedException("template view is read-only");
-        public bool Remove(object? item) => throw new NotSupportedException("template view is read-only");
-        public void Clear() => throw new NotSupportedException("template view is read-only");
+        public override string ToStringValue() => item.ToString() ?? "";
+
+        // The item navigated from — its own Data, with the render's context.
+        private global::app.data.@this Parent => new("", item, context: context);
+
+        private static FluidValue Lowered(object? value, TemplateOptions options)
+            => FluidValue.Create(value is global::app.type.item.@this reached ? reached.Backing : value, options);
     }
 
     /// <summary>

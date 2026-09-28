@@ -202,11 +202,11 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task Pile2_Fluid_RendersViaTextSerializer_NoToRaw()
     {
-        // ui/Fluid.cs — natives render through lazy read-through views (zero copy);
-        // no ToRaw deep-copy call. (The one mention is the comment stating that.)
+        // ui/Fluid.cs — a container renders through one value reading the item's own doors (Item);
+        // no deep-copy lowering of a container.
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "ui", "code", "Fluid.cs"));
         await Assert.That(src).DoesNotContain(".Clr<object>()");
-        await Assert.That(src).Contains("NativeCollectionConverter");
+        await Assert.That(src).Contains("private sealed class Item(");
     }
 
     // ---------- demolition (the things that must NOT exist) ----------

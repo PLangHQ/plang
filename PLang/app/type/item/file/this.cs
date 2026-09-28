@@ -66,8 +66,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>
     /// The value door — read + parse through the file channel (mime stamps the
     /// content's {type, kind}; the auth gate rides on <c>Path.ReadBytes</c>) and
-    /// answer with the CONTENT's own instance (a json file answers as
-    /// <c>dict</c>), this file stamped as its prior. Single storage: the parsed
+    /// answer with the CONTENT's own instance (a json file answers as its json
+    /// host, <c>clr(JsonElement)</c>, navigated by the json kind), this file stamped as its prior. Single storage: the parsed
     /// value is the one copy. FILE authors its own failures — an IO/parse
     /// failure lands on the data binding, answer absent.
     /// <para>Owns the raw byte read (idempotent via <c>_bytes</c>) — <c>.Value()</c>
@@ -111,8 +111,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>
     /// Navigation is first-touch: a file is a reference to content, so it narrows itself
-    /// (read + parse by mime — json→dict) via the Data door, which caches the parsed value
-    /// back onto <paramref name="parent"/> (the file Data BECOMES a dict in place, read-once),
+    /// (read + decode by mime — json→its json host) via the Data door, which caches the decoded value
+    /// back onto <paramref name="parent"/> (the file Data BECOMES its content in place, read-once),
     /// then navigates the parsed value. A read/parse failure surfaces the parent's error.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(

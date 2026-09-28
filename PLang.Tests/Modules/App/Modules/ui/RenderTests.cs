@@ -63,6 +63,31 @@ public class RenderTests : IDisposable
             .IsEqualTo(global::app.type.item.number.@this.Overflow.Promote);
     }
 
+    // `read "d.json", write to %d%` then a template iterating it — the builder's Decide reads decider.json this way.
+    // The read leaves a file reference; the template's member access and for-loop see its content.
+    [Test]
+    public async Task Render_AReadJsonFile_IteratesItsDictAndList()
+    {
+        WriteTemplateFile("d.json", "{\"common\": {\"a.x\": {\"true\": \"yes-a\"}, \"b.y\": {\"true\": \"yes-b\"}}, \"popular\": [\"p1\", \"p2\"]}");
+        var context = _app.User.Context;
+        var code = new global::app.goal.step.action.list.@this();
+        code.Add(global::PLang.Tests.Shared.Make.Action("file", "read", ("Path", "/d.json")));
+        code.Add(global::PLang.Tests.Shared.Make.Action("variable", "set",
+            global::PLang.Tests.Shared.Make.Param("Name", "d", "variable"), ("Value", "%!data%")));
+        await (await code.Start(context)).IsSuccess();
+
+        var action = new Render(context)
+        {
+            Template = (global::app.type.item.text.@this)
+                "{% for c in d.common %}{{ c[0] }}={{ c[1].true }};{% endfor %}|{{ d.popular | join: \",\" }}",
+            IsFile = (global::app.type.item.@bool.@this)false
+        };
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("a.x=yes-a;b.y=yes-b;|p1,p2");
+    }
+
     // --- Batch 1: Core Render Behavior ---
 
     [Test]
