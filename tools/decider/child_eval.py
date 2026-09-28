@@ -85,6 +85,8 @@ def same_value(expected, got):
     if isinstance(expected, (int, float)) and isinstance(got, (int, float)):
         return float(expected) == float(got)
     if isinstance(expected, list) and isinstance(got, list):
+        if expected and isinstance(expected[0], dict) and 'module' in expected[0]:   # a list of actions (a Recovery)
+            return not compare_actions(expected, got, '')
         if expected and isinstance(expected[0], dict):   # argument rows: name + value
             return len(expected) == len(got) and all(
                 isinstance(g, dict) and e['name'] == g.get('name') and same_value(e['value'], g.get('value'))
@@ -120,16 +122,6 @@ def compare_actions(expected, got, where, loose_split=False):
             if name not in (e.get('property') or {}):
                 misses.append(f'{at} {e["module"]}.{e["name"]}: extra {name} = {got_rows[name]!r}')
         misses += compare_child(e.get('child'), g.get('child'), f'{at} child', e.get('note', '').startswith('one child step'))
-        misses += compare_modifiers(e.get('modifier') or [], g.get('modifier') or [], f'{at} {e["module"]}.{e["name"]} modifier')
-    return misses
-
-def compare_modifiers(expected, got, where):
-    """A modifier is an action that wraps the one it sits on; its recovery is a list of actions."""
-    if not isinstance(got, list): return [f'{where}: not a list']
-    misses = compare_actions(expected, got, where) if expected or got else []
-    for i, (e, g) in enumerate(zip(expected, got)):
-        if isinstance(g, dict) and (e.get('recovery') or g.get('recovery')):
-            misses += compare_actions(e.get('recovery') or [], g.get('recovery') or [], f'{where}[{i}] recovery')
     return misses
 
 # A child's text is compared with the golden's words — except for an answer in formal, where a child's

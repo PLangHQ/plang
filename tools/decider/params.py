@@ -179,7 +179,6 @@ def label_params(step):
             # are not plang types and are a separate leak — not a parameter question.
             if p.get('name') == 'Type': continue
             out[(n, m, an, p.get('name'))] = p.get('value')
-        for mod in a.get('modifier') or a.get('modifiers') or []: walk(mod)
         for c in a.get('child') or []:
             for ca in c.get('action') or c.get('actions') or []: walk(ca)
     for a in step.get('_raw', []): walk(a)

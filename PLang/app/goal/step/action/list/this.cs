@@ -13,7 +13,7 @@ namespace app.goal.step.action.list;
 /// the coverage-key <see cref="IndexOf"/> (items are responsible for themselves — Rule 5). Twin of
 /// <see cref="app.goal.step.list.@this"/>.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Action>
+public sealed class @this : global::app.type.item.list.@this<Action>, global::app.type.item.ICreate<@this>
 {
     // Two ways to be born: EMPTY (callers Add each action in — the reader, Nest), or ADOPT a list
     // value's rows (the value→slot materialization, set %step.action% = %json%).
@@ -34,6 +34,8 @@ public sealed class @this : global::app.type.item.list.@this<Action>
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
+            // a clause was bound on the action before it when the program was read — it is not a step
+            if (action.IsClause) continue;
             context.CancellationToken.ThrowIfCancellationRequested();
             result = await action.Start(context);
             if (result.ShouldExit() || result.Handled) break;         // return/exit, or a legit event-handled stop
@@ -51,8 +53,8 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     /// gather into one error for the chain.
     /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
     /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
-    /// <summary>The actions this code runs as its own (<c>module.action</c>): top level, a condition's
-    /// body, the modifiers — not an action held as a value, nor a modifier's recovery.</summary>
+    /// <summary>The actions this code runs as its own (<c>module.action</c>): top level with its clauses, a
+    /// condition's body — not an action held as a value, nor a clause's recovery.</summary>
     public IEnumerable<string> Own
     {
         get
@@ -62,8 +64,20 @@ public sealed class @this : global::app.type.item.list.@this<Action>
                 yield return $"{a.Module.Name}.{a.Name}";
                 foreach (var child in a.Child.Items())
                     foreach (var name in child.Code.Own) yield return name;
-                foreach (var m in a.Modifier) yield return $"{m.Module.Name}.{m.Name}";
             }
+        }
+    }
+
+    /// <summary>Binds each clause in this code on the step action before it (<c>read x; on.error(…);
+    /// on.cache(…)</c> — both on read) — what the program's read does once its code is in. Clauses are bound for
+    /// every actor running the program, and never started as steps.</summary>
+    public void Bind()
+    {
+        Action? stepAction = null;
+        foreach (var action in Items())
+        {
+            if (!action.IsClause) { stepAction = action; continue; }
+            if (stepAction != null) action.Bind(stepAction);
         }
     }
 
@@ -157,8 +171,18 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     public async System.Threading.Tasks.Task<global::app.error.Error?> Build(actor.context.@this context)
     {
         var causes = new List<global::app.error.Error>();
+        Action? stepAction = null;
         for (int i = 0; i < Count; i++)
-            if (await this[i].Build(context) is { } failed) causes.Add(failed);
+        {
+            var action = this[i];
+            if (await action.Build(context) is { } failed) causes.Add(failed);
+            if (!action.IsClause) { stepAction = action; continue; }
+            // a clause's recovery is what runs on error — running the very action it is a clause of is a retry
+            if (stepAction != null && action.Held.Any(stepAction.Same))
+                causes.Add(new global::app.error.Error(
+                    $"the Recovery of {action.Module}.{action.Name} runs {stepAction.Module}.{stepAction.Name}, the action it is " +
+                    "a clause of — Recovery holds what the step runs on error", "RecoveryIsTheAction", 400));
+        }
 
         if (causes.Count == 0) return null;
         return new global::app.error.Error(

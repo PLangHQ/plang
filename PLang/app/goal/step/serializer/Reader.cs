@@ -56,8 +56,15 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.BeginArray();
                     while (reader.NextElement())
                         if (action.Read(ref reader, null, ctx) is global::app.goal.step.action.@this a)
+                        {
                             step.Code.Add(a);
+                            // TRANSITIONAL — an older .pr's nested clauses follow their action
+                            foreach (var clause in action.Trailing) step.Code.Add(clause);
+                            action.Trailing.Clear();
+                        }
                     reader.EndArray();
+                    // the code is in: each clause binds on the action before it
+                    step.Code.Bind();
                     break;
                 case "intent": step.Intent = reader.String(); break;
                 case "source": step.Source = reader.String(); break;

@@ -61,17 +61,15 @@ public class AfterActionPayloadTests
         await captured!.IsSuccess();
     }
 
-    // timeout.after wrapping variable.set: the action type's after fires for the modifier, then for the inner
-    // action. Confirms coverage inventory includes modifiers.
+    // variable.set with an on.timeout clause: the clause is bound, never started — the action type's after fires
+    // once, for variable.set (the clause is covered when its action starts).
     [Test]
-    public async Task AfterAction_ForModifierAction_FiresSeparatelyFromInnerAction()
+    public async Task AfterAction_AClause_IsNeverStarted_OnlyItsActionFires()
     {
-        var inner = Make.Modified(
-            Make.Action("variable", "set", Make.Param("Name", "y", "variable"), ("Value", 7)),
-            Make.Action("timeout", "after", ("Ms", 5000)));
-
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ModifierGoal",
-            Make.Step("mod set", inner)));
+            Make.Step("mod set",
+                Make.Action("variable", "set", Make.Param("Name", "y", "variable"), ("Value", 7)),
+                Make.Action("on", "timeout", ("After", System.TimeSpan.FromSeconds(5))))));
         _app.goal.list.Add(goal);
 
         var observed = new List<(string Module, string Name)>();
@@ -83,10 +81,9 @@ public class AfterActionPayloadTests
 
         await _app.Start(goal, _app.User.Context);
 
-        // Exact count and order — duplicate firings would corrupt coverage counts silently.
-        await Assert.That(observed.Count).IsEqualTo(2);
-        await Assert.That(observed[0]).IsEqualTo(("timeout", "after"));
-        await Assert.That(observed[1]).IsEqualTo(("variable", "set"));
+        // Exact count — duplicate firings would corrupt coverage counts silently.
+        await Assert.That(observed.Count).IsEqualTo(1);
+        await Assert.That(observed[0]).IsEqualTo(("variable", "set"));
     }
 
     // A before-binding is handed the action about to run, and the result as it stands: a plain success.

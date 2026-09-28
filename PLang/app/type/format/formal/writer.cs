@@ -12,8 +12,8 @@ namespace app.type.format.formal;
 /// array (<c>[a, b]</c>), a dict its object (<c>{"k": v}</c>, keys quoted). The action, its property rows and
 /// a list of arguments write their own shapes through the structure below, each in its formal branch
 /// (<see cref="Token"/> is the <see cref="IWriter.Format"/> they branch on): a call
-/// (<see cref="BeginCall"/>), a row (<see cref="Row"/>), a body (<see cref="BeginBody"/>); a modifier is
-/// the next call after its action. The writer owns the layout — separators and quoting — so the text is
+/// (<see cref="BeginCall"/>), a row (<see cref="Row"/>), a body (<see cref="BeginBody"/>); a clause
+/// (<c>on.error</c>, …) is the next call after its action. The writer owns the layout — separators and quoting — so the text is
 /// the same byte for byte whoever writes it.</para>
 /// </summary>
 public sealed class Writer : IWriter
@@ -198,9 +198,19 @@ public sealed class Writer : IWriter
     }
 
     /// <summary>A sequence of actions: <c>a; b</c> — a step's, or a condition's body inside
-    /// <see cref="BeginBody"/>.</summary>
-    public void BeginActions() { Element(); Open(Frame.Actions); }
-    public void EndActions() => Close();
+    /// <see cref="BeginBody"/>. Held as a row's value (on.error's Recovery) it is a list: <c>[a, b]</c>.</summary>
+    public void BeginActions()
+    {
+        if (_frames.Peek().Kind == Frame.Record) { BeginArray(0); return; }
+        Element();
+        Open(Frame.Actions);
+    }
+
+    public void EndActions()
+    {
+        if (_frames.Peek().Kind == Frame.Array) { EndArray(); return; }
+        Close();
+    }
 
     /// <summary>A condition's body, inline: <c> { a; b }</c>.</summary>
     public void BeginBody() { _out.Append(" { "); Open(Frame.Body); }

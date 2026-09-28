@@ -94,9 +94,9 @@
     "2": [{"module": "variable", "name": "set", "property": {"Name": "%trace%", "Value": {"$oneOf": [
            "{\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"menu\": null, \"subGoals\": [], \"durationMs\": 0}",
            {"id": "%!trace.id%", "timestamp": "%Now%", "goal": "%goal%", "menu": null, "subGoals": [], "durationMs": 0}]}}}],
-    "3": [{"module": "goal", "name": "call", "property": {"Name": "Compile"},
-           "modifier": [{"module": "on", "name": "error",
-                         "recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}]}],
+    "3": [{"module": "goal", "name": "call", "property": {"Name": "Compile"}},
+          {"module": "on", "name": "error",
+           "property": {"Recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}}],
     "4": [{"module": "variable", "name": "set", "property": {"Name": "%trace.menu%", "Value": "%menu%"}}],
     "5": [{"module": "variable", "name": "set", "property": {"Name": "%parentGoal%", "Value": "%goal%"}}],
     "6": [{"module": "loop", "name": "foreach", "property": {"Collection": "%parentGoal.Child%"}},
@@ -109,9 +109,9 @@
     "10": [{"module": "variable", "name": "set", "property": {"Name": "%trace.durationMs%", "Value": "%elapsedMs%"}}],
     "11": [{"module": "file", "name": "save", "property": {"Path": "/.build/traces/%!trace.id%/%goal.Name%.json", "Value": "%trace%"}}],
     "12": [{"module": "list", "name": "add", "property": {"ListName": "%traceGoals%", "Value": "%goal.Name%"}}],
-    "13": [{"module": "build", "name": "fold", "property": {"Goal": "%goal%"},
-            "modifier": [{"module": "on", "name": "error",
-                          "recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}]}],
+    "13": [{"module": "build", "name": "fold", "property": {"Goal": "%goal%"}},
+           {"module": "on", "name": "error",
+            "property": {"Recovery": [{"module": "goal", "name": "call", "property": {"Name": "HandleBuildFailure"}}]}}],
     "14": [{"module": "build", "name": "goalsSave", "property": {"Goal": "%goal%"}}]
    }
   },
@@ -265,9 +265,9 @@
           {"module": "variable", "name": "set", "property": {"Name": "%html%", "Value": "%!data%"}}],
     "9": [{"module": "file", "name": "save", "property": {"Path": "/reports/week.html", "Value": "%html%"}}],
     "10": [{"module": "goal", "name": "call", "property": {"Name": "SendReport",
-             "Parameter": [{"name": "to", "value": "ops@example.com"}, {"name": "subject", "value": "Weekly report"}]},
-            "modifier": [{"module": "on", "name": "error",
-                          "recovery": [{"module": "goal", "name": "call", "property": {"Name": "LogFailure"}}]}]}],
+             "Parameter": [{"name": "to", "value": "ops@example.com"}, {"name": "subject", "value": "Weekly report"}]}},
+           {"module": "on", "name": "error",
+            "property": {"Recovery": [{"module": "goal", "name": "call", "property": {"Name": "LogFailure"}}]}}],
     "11": [{"module": "output", "name": "write", "property": {"Data": "Report sent", "channel": "log"}}]
    }
   }

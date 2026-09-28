@@ -1,8 +1,7 @@
 namespace PLang.Tests.App.Modules.modifier;
 
 /// <summary>
-/// Tests for the cache.wrap modifier handler.
-/// Wraps an action with cache lookup before and cache store after.
+/// Tests for the on.cache clause: a cache lookup before the action starts, a store after.
 /// </summary>
 public class CacheWrapTests
 {
@@ -18,34 +17,29 @@ public class CacheWrapTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static global::app.goal.step.action.modifier.@this CacheModifier(long durationMs, string? key = null, bool sliding = false)
+    // An on.cache clause keeping a result for durationMs.
+    private static PrAction CacheModifier(long durationMs, string? key = null, bool sliding = false)
     {
-        var parameters = new List<global::app.data.@this>
+        var parameters = new List<(string, object?)>
         {
-            new("durationMs", durationMs, context: global::PLang.Tests.TestApp.SharedContext),
-            new("sliding", sliding, context: global::PLang.Tests.TestApp.SharedContext)
+            ("Duration", System.TimeSpan.FromMilliseconds(durationMs)),
+            ("Sliding", sliding),
         };
-        if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
-        return new global::app.goal.step.action.modifier.@this
-        {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("cache"),
-            Name = "wrap",
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters)
-        };
+        if (key != null) parameters.Add(("Key", key));
+        return global::PLang.Tests.Shared.Make.Action("on", "cache", [.. parameters]);
     }
 
     [Test]
     public async Task Wrap_CacheMiss_RunsActionAndStoresResult()
     {
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%x%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "first", context: global::PLang.Tests.TestApp.SharedContext)
-            }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000, "miss-key") }
-        };
+            })
+        }, CacheModifier(60_000, "miss-key"));
 
         var result = await action.Start(Ctx);
 
@@ -66,15 +60,14 @@ public class CacheWrapTests
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
         // variable.set would put "fresh-value" but the cache hit bypasses dispatch.
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh-value", context: global::PLang.Tests.TestApp.SharedContext)
-            }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000, "hit-key") }
-        };
+            })
+        }, CacheModifier(60_000, "hit-key"));
 
         var result = await action.Start(Ctx);
 
@@ -87,12 +80,11 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_ActionFailure_DoesNotCache()
     {
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("error"), Name = "throw",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("message", "boom", context: global::PLang.Tests.TestApp.SharedContext) }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000, "fail-key") }
-        };
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("message", "boom", context: global::PLang.Tests.TestApp.SharedContext) })
+        }, CacheModifier(60_000, "fail-key"));
 
         var result = await action.Start(Ctx);
 
@@ -106,15 +98,14 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_CustomKey_UsedWhenProvided()
     {
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%a%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
-            }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000, "my-custom-key") }
-        };
+            })
+        }, CacheModifier(60_000, "my-custom-key"));
 
         await action.Start(Ctx);
 
@@ -129,16 +120,15 @@ public class CacheWrapTests
         var goal = new Goal { Path = global::app.type.item.path.@this.Resolve("/foo/bar.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 7, Goal = goal };
 
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%b%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000) }, // no Key
             Step = step,
-        };
+        }, CacheModifier(60_000));
 
         await action.Start(Ctx);
 
@@ -153,15 +143,14 @@ public class CacheWrapTests
         // this asserts by behavior: sliding=true should still populate the cache
         // and cached values should be retrievable. The handler plumbs Sliding through
         // to CacheSettings; if it didn't, this entry wouldn't be stored at all.
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%c%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "slide", context: global::PLang.Tests.TestApp.SharedContext)
-            }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000, "slide-key", sliding: true) }
-        };
+            })
+        }, CacheModifier(60_000, "slide-key", sliding: true));
 
         await action.Start(Ctx);
 
@@ -172,20 +161,18 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_CachedResult_RestoredAsDataVariable()
     {
-        // Pre-cache a value, then execute — the handler should put the cached Data
-        // into Variables under name !data so the next action can read it via %!data%.
+        // Pre-cache a value, then execute — a hit is the action's result, so %!data% is the cached value.
         var stashed = Ctx.Ok("restored");        await Ctx.App!.Cache.SetAsync("restore-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
-        var action = new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
                 new("name", "%d%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh", context: global::PLang.Tests.TestApp.SharedContext)
-            }),
-            Modifier = new global::app.goal.step.action.modifier.list.@this { CacheModifier(60_000, "restore-key") }
-        };
+            })
+        }, CacheModifier(60_000, "restore-key"));
 
         await action.Start(Ctx);
 

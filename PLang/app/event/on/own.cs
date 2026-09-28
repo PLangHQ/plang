@@ -18,6 +18,7 @@ public sealed class own : @this
     private write? _write;
     private read? _read;
     private ask? _ask;
+    private error? _error;
 
     internal own() { }
 
@@ -29,6 +30,9 @@ public sealed class own : @this
 
     /// <summary>This item's own create — the one its indexer answers under <c>create</c>, held.</summary>
     public override create create => _create ??= (create)this["create"]!;
+
+    /// <summary>This item's own error — the one its indexer answers under <c>error</c>, held.</summary>
+    public override error error => _error ??= (error)this["error"]!;
 
     /// <summary>This item's own set — the one its indexer answers under <c>set</c>, held.</summary>
     public override set set => _set ??= (set)this["set"]!;

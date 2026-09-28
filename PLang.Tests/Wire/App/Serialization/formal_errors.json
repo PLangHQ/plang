@@ -37,7 +37,7 @@
  },
  {
   "input": "on.error(Recovery=[goal.call(Name=\"Y\")])",
-  "message": "line 1, column 1: on.error modifies the action before it; step 0 has none"
+  "message": "line 1, column 1: on.error is a clause of the action before it; step 0 has none"
  },
  {
   "input": "on.error() { goal.call(Name=\"X\"); goal.call(Name=\"Y\") }",
@@ -93,7 +93,7 @@
  },
  {
   "input": "on.error(Recovery=[goal.call(Name=\"Fix\")]); file.read(Path=\"x\")",
-  "message": "line 1, column 1: on.error modifies the action before it; step 0 has none"
+  "message": "line 1, column 1: on.error is a clause of the action before it; step 0 has none"
  },
  {
   "input": "file.read(Path=\"x\"); on.error(Recovery=[goal.call(Name=\"Fix\")]) { goal.call(Name=\"Y\") }",

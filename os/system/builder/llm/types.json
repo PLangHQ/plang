@@ -47,6 +47,9 @@
   "app.event.binding.action": {
     "word": null
   },
+  "app.event.binding.clause": {
+    "word": null
+  },
   "app.event.binding.mock": {
     "word": "mock"
   },
@@ -62,8 +65,8 @@
   "app.goal.step.action": {
     "word": "action"
   },
-  "app.goal.step.action.modifier": {
-    "word": "modifier"
+  "app.goal.step.action.clause": {
+    "word": "clause"
   },
   "app.module": {
     "word": "module"

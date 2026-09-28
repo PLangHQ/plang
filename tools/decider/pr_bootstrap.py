@@ -57,9 +57,6 @@ def ren_action(a):
     rn(a, "parameters", "property")
     rn(a, "parameter", "property")
     rn(a, "defaults", "default")
-    rn(a, "modifiers", "modifier")
-    if "modifier" in a:
-        a["modifier"] = [ren_action(m) for m in a["modifier"]]
     if "child" in a:
         a["child"] = [ren_step(s) for s in a["child"]]
     return a

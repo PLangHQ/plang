@@ -58,24 +58,23 @@ public sealed partial class @this
     }
 
     // Every text property value the code writes, as written (its own Store writer — a template is not
-    // rendered): the actions, the actions they hold, their modifiers and recovery, their bodies.
+    // rendered): the actions (their clauses among them), the actions they hold (a callback, a recovery), their
+    // bodies.
     private async System.Threading.Tasks.Task<List<string>> Texts(
         IEnumerable<global::app.goal.step.action.@this> actions, global::app.actor.context.@this context)
     {
         var texts = new List<string>();
         foreach (var a in actions)
         {
+            texts.AddRange(await Texts(a.Held, context));
             foreach (var p in a.Property)
             {
-                if (p.Value is global::app.goal.step.action.@this held) { texts.AddRange(await Texts([held], context)); continue; }
                 if (p.Type?.Name != "text" || p.Value is null) continue;
                 var writer = new global::app.type.format.formal.Writer();
                 await p.Value.Output(writer, global::app.View.Store, context);
                 var json = writer.ToString();
                 if (json.StartsWith('"') && System.Text.Json.JsonSerializer.Deserialize<string>(json) is { } s) texts.Add(s);
             }
-            texts.AddRange(await Texts(a.Modifier, context));   // a modifier is an action: its recovery is walked with it
-            texts.AddRange(await Texts(a.Recovery.Items(), context));
             foreach (var child in a.Child.Items()) texts.AddRange(await Texts(child.Code.Items(), context));
         }
         return texts;

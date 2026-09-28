@@ -21,42 +21,23 @@ public class ErrorInPlayTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static PrAction Throw(string message,
-        global::app.goal.step.action.modifier.list.@this? modifiers = null) =>
-        new()
+    // An error.throw with its on.error clauses after it.
+    private static PrAction Throw(string message, PrAction[]? modifiers = null) =>
+        global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
                 { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) }),
-            Modifier = modifiers ?? new global::app.goal.step.action.modifier.list.@this()
-        };
+        }, modifiers ?? []);
 
-    private static global::app.goal.step.action.modifier.@this ErrorHandler(
-        params (string name, object? value)[] parameters) =>
-        new()
-        {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("on"), Name = "error",
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters
-                .Select(p => new global::app.data.@this(p.name, p.value,
-                    context: global::PLang.Tests.TestApp.SharedContext)).ToList())
-        };
+    // An on.error clause with these properties.
+    private static PrAction ErrorHandler(params (string name, object? value)[] parameters)
+        => global::PLang.Tests.Shared.Make.Action("on", "error", parameters);
 
-    /// <summary>An error handler whose recovery chain calls <paramref name="goalName"/>.
-    /// Recovery actions are structure on the modifier, not one of its parameters.</summary>
-    private static global::app.goal.step.action.modifier.@this ErrorHandlerCalling(
-        string goalName, params (string name, object? value)[] parameters)
-    {
-        var handler = ErrorHandler(parameters);
-        handler.Recovery.Add(new PrAction
-        {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"), Name = "call",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
-            {
-                new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
-            })
-        });
-        return handler;
-    }
+    /// <summary>An on.error clause whose Recovery calls <paramref name="goalName"/>.</summary>
+    private static PrAction ErrorHandlerCalling(string goalName, params (string name, object? value)[] parameters)
+        => global::PLang.Tests.Shared.Make.Action("on", "error",
+            [.. parameters, global::PLang.Tests.Shared.Make.Recovery(global::PLang.Tests.Shared.Make.Call(goalName))]);
 
     /// <summary>Registers a goal whose single step runs the given actions.</summary>
     private Goal RegisterGoal(string name, params PrAction[] actions)
@@ -178,7 +159,7 @@ public class ErrorInPlayTests
         RegisterGoal("Recover", CaptureError("seen"));
 
         var action = Throw("the original failure",
-            modifiers: new global::app.goal.step.action.modifier.list.@this
+            modifiers: new PrAction[]
             {
                 ErrorHandlerCalling("Recover", ("order", "GoalFirst"))
             });
@@ -203,32 +184,25 @@ public class ErrorInPlayTests
     };
 
     /// <summary>
-    /// A modifier's own verdict is in play for the recovery outside it. The deadline belongs to
-    /// timeout.after, not to the sleep it cancelled, so the error an enclosing `on error` recovers
-    /// from is the TIMEOUT — not the inner action's cancellation, and not nothing.
-    /// <para>This is why the verdict is recorded on the action's frame rather than a frame of the
-    /// modifier's own: a modifier's frame would already have popped by the time on.error reads
-    /// the chain, and the walk never descends into closed children.</para>
+    /// A clause's own verdict is in play for the recovery. The deadline belongs to on.timeout, not to the sleep
+    /// it cancelled, so the error `on error` recovers from is the TIMEOUT — not the inner action's
+    /// cancellation, and not nothing. The verdict is recorded on the action's frame, where the error outcome
+    /// — after the attempt — reads it.
     /// </summary>
     [Test]
-    public async Task ErrorInPlay_DuringRecovery_IsTheModifiersOwnVerdict()
+    public async Task ErrorInPlay_DuringRecovery_IsTheTimeoutsOwnVerdict()
     {
         RegisterGoal("Recover", CaptureErrorKey("seenKey"));
 
         var ctx = global::PLang.Tests.TestApp.SharedContext;
-        var sleep = new PrAction
+        // timer.sleep(3s); on.error(GoalFirst, Recovery=[call Recover]); on.timeout(1ms) — the recovery runs on
+        // the error outcome, after the attempt, and sees the verdict the deadline produced.
+        var sleep = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = ctx.App.Module("timer"), Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
-        };
-        // The slot folds index 0 outermost, so on.error wraps timeout.after wraps the sleep —
-        // the recovery is outside the deadline and sees the verdict the deadline produced.
-        sleep.Modifier.Add(ErrorHandlerCalling("Recover", ("order", "GoalFirst")));
-        sleep.Modifier.Add(new global::app.goal.step.action.modifier.@this
-        {
-            Module = ctx.App.Module("timeout"), Name = "after",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1L, context: ctx) })
-        });
+        }, ErrorHandlerCalling("Recover", ("order", "GoalFirst")),
+           global::PLang.Tests.Shared.Make.Action("on", "timeout", ("After", System.TimeSpan.FromMilliseconds(1))));
 
         var result = await sleep.Start(Ctx);
 

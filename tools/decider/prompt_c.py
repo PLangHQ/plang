@@ -107,10 +107,10 @@ ON_ERROR_CALL = re.compile(r'on error[^,;]*?\bcall\b', re.I)
 ARGUMENTS = re.compile(r'\bcall\b[^,]*?\s[A-Za-z_]\w*\s*=', re.I)   # `call X name=value`: the step passes arguments
 
 def holds_actions(action):
-    """Does this action take actions as a value — an action-typed property, or a modifier's Recovery?"""
+    """Does this action take actions as a value — an action-typed property, or a list of them (on.error's Recovery)?"""
     module, name = action.split('.', 1)
     props, _ = b.declared(module, name)
-    return f.takes_recovery(module, name) or any(p['type'] == 'action' for p in props.values())
+    return any(p['type'] in ('action', 'list<action>') for p in props.values())
 
 def prefill(action, text):
     """One pick as the formal line pre-fills it: its required properties as `?`, what the step already
@@ -164,8 +164,6 @@ def every_action(rows):
         for r in a.get('property') or []:
             vals = r['value'] if isinstance(r['value'], list) else [r['value']]
             out += every_action([v for v in vals if isinstance(v, dict) and 'module' in v])
-        for m in a.get('modifier') or []: out += every_action(m.get('recovery') or [])
-        out += every_action(a.get('recovery') or [])
         for c in a.get('child') or []: out += every_action(c.get('action') or [])
     return out
 
@@ -180,7 +178,7 @@ def known_code(certain, text):
     `set %x% = literal|%y%`; each other action leaving its return as %!data%; a write to %x% last."""
     code, write = [], destination(text)
     for a in sorted(certain, key=lambda a: 0 if a == 'loop.foreach' else 1):
-        if b.declared(*a.split('.', 1))[1]: continue   # a modifier binds nothing
+        if b.declared(*a.split('.', 1))[1]: continue   # a clause binds nothing
         if a == 'loop.foreach':
             if (c := first(text)):
                 item = m.group(1) if (m := AS.search(text)) else 'item'
@@ -249,10 +247,10 @@ def user_message_c(goal, picks):
         certain = sorted([a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)],
                          key=link)   # a certain condition chain leads (action.Link); the rest by score
         filled = [prefill(a, s['text']) for a in certain if not b.declared(*a.split('.', 1))[1]]
-        # a certain modifier is shown right after the step's first action — the action it modifies
+        # a certain clause is shown right after the step's first action — the action it is a clause of
         for m in [a for a in certain if b.declared(*a.split('.', 1))[1]]:
             head = prefill(m, s['text'])
-            if f.takes_recovery(*m.split('.', 1)):
+            if 'Recovery' in b.declared(*m.split('.', 1))[0]:
                 # `on error call X` names what the recovery runs: a goal.call — a known action, its Name
                 # still to fill, `?` like any other value (a `?` left in is refused like any other)
                 if ON_ERROR_CALL.search(s['text']):
@@ -284,13 +282,12 @@ def user_message_c(goal, picks):
 
 # ---------------------------------------------------------------- the check
 def own_actions(rows):
-    """The step's own actions: top level, a condition's body, the modifiers — not what a property holds
-    (channel.set's Goal) nor a modifier's Recovery."""
+    """The step's own actions: top level (its clauses among them), a condition's body — not what a
+    property holds (channel.set's Goal, on.error's Recovery)."""
     out = []
     for a in rows:
         out.append(f'{a["module"]}.{a["name"]}')
         for c in a.get('child') or []: out += own_actions(c.get('action') or [])
-        for m in a.get('modifier') or []: out.append(f'{m["module"]}.{m["name"]}')
     return out
 
 def held_actions(rows):
@@ -301,9 +298,6 @@ def held_actions(rows):
             v = r['value']
             for x in (v if isinstance(v, list) else [v]):
                 if f.is_action(x): out.append(f'{x["module"]}.{x["name"]}'); walk(x)
-        for m in a.get('modifier') or []:
-            for x in m.get('recovery') or []: out.append(f'{x["module"]}.{x["name"]}'); walk(x)
-            walk(m)
         for c in a.get('child') or []:
             for x in c.get('action') or []: walk(x)
     for a in rows: walk(a)
@@ -339,11 +333,13 @@ def disagreements(i, rows, picks_i, text=''):
     def same(x, y):
         return (x['module'], x['name']) == (y['module'], y['name']) and \
                [(r['name'], r['value']) for r in x.get('property') or []] == [(r['name'], r['value']) for r in y.get('property') or []]
+    action = None
     for a in rows:
-        for m in a.get('modifier') or []:
-            if any(same(x, a) for x in m.get('recovery') or []):
-                refused.append(f'step {i}: the Recovery of {m["module"]}.{m["name"]} runs {a["module"]}.{a["name"]}, the action it wraps — '
-                               'Recovery holds what the step runs on error')
+        if not f.is_clause(a['module'], a['name']): action = a; continue
+        recovery = next((r['value'] for r in a.get('property') or [] if r['name'] == 'Recovery'), None) or []
+        if action and any(same(x, action) for x in recovery if f.is_action(x)):
+            refused.append(f'step {i}: the Recovery of {a["module"]}.{a["name"]} runs {action["module"]}.{action["name"]}, the action it is a clause of — '
+                           'Recovery holds what the step runs on error')
     # the variable the step's words write (write to %x%, or %x% = … on a step that tests no condition —
     # there `=` compares) is written by a variable.set of the step's own code (pick.list Writes)
     tests = (picks_i.get('condition.if') or 0) >= POSSIBLE
@@ -409,8 +405,6 @@ def drop_nulls(rows):
             for x in (v if isinstance(v, list) else [v]):
                 if f.is_action(x): drop_nulls([x])
         for c in a.get('child') or []: drop_nulls(c.get('action') or [])
-        drop_nulls(a.get('modifier') or [])
-        for m in a.get('modifier') or []: drop_nulls(m.get('recovery') or [])
 
 def is_default(value, default, declared):
     """Does the value equal the property's declared default (as the catalogue prints it)?"""
@@ -436,8 +430,6 @@ def drop_defaults(rows):
             for x in (v if isinstance(v, list) else [v]):
                 if f.is_action(x): drop_defaults([x])
         for c in a.get('child') or []: drop_defaults(c.get('action') or [])
-        drop_defaults(a.get('modifier') or [])
-        for m in a.get('modifier') or []: drop_defaults(m.get('recovery') or [])
 
 def uncovered(text, rows):
     """The %variables% the step's text writes that its answer doesn't hold anywhere — a value, a Name,
@@ -455,7 +447,7 @@ def values_of(rows):
     def walk(v):
         if isinstance(v, dict):
             for k, x in v.items():
-                if k not in ('module', 'name', 'type', 'property', 'modifier', 'child', 'recovery', 'action', 'frozen'): out.append(str(k))
+                if k not in ('module', 'name', 'type', 'property', 'child', 'action', 'frozen'): out.append(str(k))
                 walk(x)
         elif isinstance(v, list):
             for x in v: walk(x)
@@ -463,8 +455,6 @@ def values_of(rows):
     for a in rows:
         for r in a.get('property') or []: walk(r['value']); out.append(r['name'])
         for c in a.get('child') or []: out += values_of(c.get('action') or [])
-        out += values_of(a.get('modifier') or [])
-        for m in a.get('modifier') or []: out += values_of(m.get('recovery') or [])
     return out
 
 def uncovered_literals(text, rows):
@@ -482,7 +472,7 @@ def written(value):
 NUMBER = re.compile(r'(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])')
 
 def numbers_of(rows):
-    """Every number the answer writes as a value — however deep (arguments, held actions, modifiers)."""
+    """Every number the answer writes as a value — however deep (arguments, held actions, clauses)."""
     out = []
     def walk(v):
         if isinstance(v, bool): return
@@ -494,8 +484,6 @@ def numbers_of(rows):
     for a in rows:
         for r in a.get('property') or []: walk(r['value'])
         for c in a.get('child') or []: out += numbers_of(c.get('action') or [])
-        out += numbers_of(a.get('modifier') or [])
-        for m in a.get('modifier') or []: out += numbers_of(m.get('recovery') or [])
     return out
 
 def invented_numbers(text, rows):
@@ -507,15 +495,14 @@ def invented_numbers(text, rows):
 
 def texts_of(rows):
     """Every text-typed property value the answer writes — the actions, the actions they hold, their
-    modifiers and recovery, their bodies (step.Texts)."""
+    clauses' recovery, their bodies (step.Texts)."""
     out = []
     for a in rows:
         for r in a.get('property') or []:
             v = r.get('value')
             if isinstance(v, dict) and 'module' in v: out += texts_of([v]); continue
+            if isinstance(v, list) and v and all(f.is_action(x) for x in v): out += texts_of(v); continue
             if (r.get('type') or {}).get('name') == 'text' and isinstance(v, str): out.append(v)
-        out += texts_of(a.get('modifier') or [])   # a modifier is an action: its recovery is walked with it
-        out += texts_of(a.get('recovery') or [])
         for c in a.get('child') or []: out += texts_of(c.get('action') or [])
     return out
 

@@ -49,9 +49,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override string ToString() => Name;
 
     // The module's actions — ITS OWN storage, filled as each one registers. One map, because the
-    // ROLE is decided once, here: an action carrying [Modifier] is minted as the modifier subtype
-    // at registration, so "the type IS the role" needs no second home and no flag. Action and
-    // Modifier are filtered views over this one map.
+    // ROLE is decided once, here: an action whose handler is a clause (IClause — on.error, on.cache,
+    // on.timeout) is minted as the clause subtype at registration, so "the type IS the role" needs no
+    // second home and no flag; a program action is made by its catalog element (Program).
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Row> _action
         = new(System.StringComparer.OrdinalIgnoreCase);
 
@@ -70,38 +70,30 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal global::app.@this App => _list.App;
 
     /// <summary>Takes ownership of one action: its lifecycle entry AND its catalog element, born
-    /// as the subtype its <c>[Modifier]</c> attribute says it is. The module is the only thing that
-    /// ever adds to its own contents.</summary>
+    /// as the subtype its handler says it is (a clause when it is an <see cref="IClause"/>). The module
+    /// is the only thing that ever adds to its own contents.</summary>
     internal void Add(string actionName, System.Type? type, IAction? instance)
     {
         var clr = type ?? instance?.GetType();
-        var isModifier = clr?.GetCustomAttribute<global::app.module.ModifierAttribute>() != null;
+        var isClause = clr != null && typeof(global::app.module.IClause).IsAssignableFrom(clr);
         // The catalog element carries the [Action] cache flag so the teaching template can tag
         // [no-cache] — read off the attribute, its single source, not defaulted.
         var cacheable = clr?.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
         // The catalog element is born with its class's properties, reflected on first read.
-        global::app.goal.step.action.@this element = isModifier
-            ? new global::app.goal.step.action.modifier.@this
+        global::app.goal.step.action.@this element = isClause
+            ? new global::app.goal.step.action.clause.@this
                 { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
             : new global::app.goal.step.action.@this
                 { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) };
         _action[actionName] = new Row(new global::app.module.list.ActionEntry(type, instance), element);
     }
 
-    /// <summary>The module's standalone actions as the NATIVE plang list — a view over the one map;
-    /// the type IS the role. Filterable by the list module, renderable by templates.</summary>
-    public global::app.type.item.list.@this Action => View(modifiers: false);
+    /// <summary>The module's actions as the NATIVE plang list — step actions and clauses alike (the type
+    /// IS the role). Filterable by the list module, renderable by templates.</summary>
+    public global::app.type.item.list.@this Action
+        => new(_action.Values.Select(r => (object?)r.Element).ToList());
 
-    /// <summary>The module's modifiers as the NATIVE plang list — the catalog's "# Modifiers"
-    /// section renders from here.</summary>
-    public global::app.type.item.list.@this Modifier => View(modifiers: true);
-
-    private global::app.type.item.list.@this View(bool modifiers)
-        => new(_action.Values.Select(r => r.Element)
-                 .Where(e => e is global::app.goal.step.action.modifier.@this == modifiers)
-                 .Select(e => (object?)e).ToList());
-
-    /// <summary>Select one catalog element by action name — action OR modifier; the type answers
+    /// <summary>Select one catalog element by action name — a step action or a clause; the type answers
     /// the role. Null when the name isn't in this module.</summary>
     public global::app.goal.step.action.@this? this[string actionName]
         => _action.TryGetValue(actionName, out var row) ? row.Element : null;

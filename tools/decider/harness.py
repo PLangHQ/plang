@@ -165,9 +165,8 @@ def goals(limit=None, seed=0, chosen=True):
         except Exception: continue
         sts = d.get('step') or d.get('steps') or []
         steps = []
-        def walk(a):   # an action, its modifiers, its child steps, and recovery actions riding as a parameter value
+        def walk(a):   # an action, its child steps, and actions riding as a property value (a recovery)
             if a.get('module'): yield (a['module'], a.get('action') or a.get('name'))
-            for mod in a.get('modifier') or a.get('modifiers') or []: yield from walk(mod)
             for child in a.get('child') or []:
                 for ca in child.get('action') or child.get('actions') or []: yield from walk(ca)
             for p in a.get('property') or a.get('parameter') or a.get('parameters') or []:

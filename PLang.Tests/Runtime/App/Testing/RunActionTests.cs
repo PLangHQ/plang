@@ -196,7 +196,7 @@ public class RunActionTests
     [Test]
     public async Task Run_TimeoutExceeded_TestMarkedTimeout()
     {
-        // timeout.after wrapping a long-running action — the inner action blows the
+        // A long-running action — it blows the
         // outer test-level timeout. For a CPU-bound-free fixture: use timer.wait
         // or a large sleep. Simplest: construct a goal that sleeps.
         var slow = await BuildFixture("Slow.test.goal", "Slow", new (string, string, List<Data>)[]

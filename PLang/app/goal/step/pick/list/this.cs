@@ -137,18 +137,13 @@ public sealed class @this
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""|'[^']*'");
 
     // Every action in the code, wherever it sits: the step's actions, the actions they hold, their
-    // modifiers' recovery, their bodies.
+    // clauses' recovery, their bodies.
     private IEnumerable<global::app.goal.step.action.@this> Every(IEnumerable<global::app.goal.step.action.@this> actions)
     {
         foreach (var a in actions)
         {
             yield return a;
-            foreach (var p in a.Property)
-                if (p.Value is global::app.goal.step.action.@this held)
-                    foreach (var h in Every([held])) yield return h;
-            foreach (var m in a.Modifier)
-                foreach (var r in Every(m.Recovery.Items())) yield return r;
-            foreach (var r in Every(a.Recovery.Items())) yield return r;
+            foreach (var h in Every(a.Held)) yield return h;
             foreach (var child in a.Child.Items())
                 foreach (var c in Every(child.Code.Items())) yield return c;
         }
@@ -271,20 +266,10 @@ public sealed class @this
     {
         foreach (var a in actions)
         {
-            foreach (var p in a.Property)
-                if (p.Value is global::app.goal.step.action.@this held)
-                {
-                    yield return $"{held.Module.Name}.{held.Name}";
-                    foreach (var name in Held([held])) yield return name;
-                }
-            foreach (var m in a.Modifier)
+            foreach (var held in a.Held)
             {
-                foreach (var r in m.Recovery.Items())
-                {
-                    yield return $"{r.Module.Name}.{r.Name}";
-                    foreach (var name in Held([r])) yield return name;
-                }
-                foreach (var name in Held([m])) yield return name;
+                yield return $"{held.Module.Name}.{held.Name}";
+                foreach (var name in Held([held])) yield return name;
             }
             foreach (var child in a.Child.Items())
                 foreach (var name in Held(child.Code.Items())) yield return name;
@@ -329,8 +314,8 @@ public sealed class @this
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known != null))
             .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!)
             .OrderBy(a => a.Link ?? 3).ToList();
-        var filled = certain.Where(a => a is not global::app.goal.step.action.modifier.@this).Select(a => Call(a, text)).ToList();
-        foreach (var m in certain.Where(a => a is global::app.goal.step.action.modifier.@this))
+        var filled = certain.Where(a => !a.IsClause).Select(a => Call(a, text)).ToList();
+        foreach (var m in certain.Where(a => a.IsClause))
         {
             var head = Call(m, text);
             if (m.Module.Name == "on" && m.Name == "error")
@@ -338,7 +323,7 @@ public sealed class @this
                 var comma = head.EndsWith("()") ? "" : ", ";
                 head = head[..^1] + comma + (OnErrorCall.IsMatch(text) ? "Recovery=[goal.call(Name=?)])" : "Recovery=?)");
             }
-            // a certain modifier is shown right after the step's first action — the action it modifies
+            // a certain clause is shown right after the step's first action — the action it is a clause of
             filled = [filled.Count > 0 ? filled[0] : "?", head, .. filled.Skip(1)];
         }
         if (known != null) filled.Add($"variable.set(Name={known.Text}, Value=%!data%)");
@@ -353,7 +338,7 @@ public sealed class @this
         var text = _step.Text;
         var known = Destination();
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain).Select(l => Catalog(l.Name, context))
-            .Where(a => a != null && a is not global::app.goal.step.action.modifier.@this).Select(a => a!).ToList();
+            .Where(a => a != null && !a.IsClause).Select(a => a!).ToList();
         var line = new List<string>();
         foreach (var action in certain.OrderBy(a => a.Module.Name == "loop" && a.Name == "foreach" ? 0 : 1))
         {

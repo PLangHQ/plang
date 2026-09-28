@@ -186,28 +186,12 @@ public class ElseWithoutIfTests
             Make.Step("mark",
                 Make.Action("variable", "set", Make.Param("Name", "%fixPropertiesRan%", "variable"), ("Value", "yes")))));
 
-        var keyed = new global::app.goal.step.action.modifier.@this
-        {
-            Module = app.Module("on"), Name = "error",
-            Property = Make.Properties(new List<global::app.data.@this> { new("key", "ElseWithoutIf", context: shared) })
-        };
-        keyed.Recovery.Add(Make.Call("SourceError"));
-        var retry = new global::app.goal.step.action.modifier.@this
-        {
-            Module = app.Module("on"), Name = "error",
-            Property = Make.Properties(new List<global::app.data.@this>
-            {
-                new("order", "GoalFirst", context: shared),
-                new("retryCount", 2, context: shared)
-            })
-        };
-        retry.Recovery.Add(Make.Call("FixProperties"));
+        var keyed = Make.Action("on", "error", ("Key", "ElseWithoutIf"), Make.Recovery(Make.Call("SourceError")));
+        var retry = Make.Action("on", "error", ("Order", "GoalFirst"), ("RetryCount", 2), Make.Recovery(Make.Call("FixProperties")));
 
-        // Apply, failing the way build.validate does on a standalone `- else`.
-        var apply = Make.Action("error", "throw",
-            ("Message", "step 2 \"else\" — an else must be in the same step as its if."), ("Key", "ElseWithoutIf"));
-        apply.Modifier.Add(keyed);
-        apply.Modifier.Add(retry);
+        // Apply, failing the way build.validate does on a standalone `- else` — its two on.error clauses after it.
+        var apply = Make.With(Make.Action("error", "throw",
+            ("Message", "step 2 \"else\" — an else must be in the same step as its if."), ("Key", "ElseWithoutIf")), keyed, retry);
 
         var result = await apply.Start(ctx);
 

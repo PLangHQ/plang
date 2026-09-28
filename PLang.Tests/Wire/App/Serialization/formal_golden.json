@@ -39,8 +39,7 @@
       },
       "value": true
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %path%, Value: text = \"/\", AsDefault: bool = true)",
@@ -89,8 +88,7 @@
       },
       "value": true
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %!build.cache%, Value: bool = true, AsDefault: bool = true)",
@@ -139,8 +137,7 @@
       },
       "value": true
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %!build.summary%, Value: bool = true, AsDefault: bool = true)",
@@ -178,12 +175,10 @@
          },
          "value": "BuilderChannel"
         }
-       ],
-       "modifier": []
+       ]
       }
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "channel.set(Name: text = \"builder\", Goal: action = goal.call(Name: text = \"BuilderChannel\"))",
@@ -238,8 +233,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "goal.call(Name: text = \"EmitBuildEvent\", Parameter: list = {kind: text = \"build-path\", path: item = %path%})",
@@ -253,8 +247,7 @@
    {
     "module": "build",
     "name": "load",
-    "property": [],
-    "modifier": []
+    "property": []
    },
    {
     "module": "variable",
@@ -295,8 +288,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "build.load(); variable.set(Name: variable = %app%, Value: item = %!data%)",
@@ -329,8 +321,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -371,8 +362,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "build.goals(Path: path = %path%); variable.set(Name: variable = %goals%, Value: item = %!data%)",
@@ -427,8 +417,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "goal.call(Name: text = \"EmitBuildEvent\", Parameter: list = {kind: text = \"goals-found\", goals: item = %goals%})",
@@ -461,8 +450,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "goal",
@@ -501,8 +489,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "loop.foreach(Collection: item = %goals%); goal.call(Name: text = \"BuildGoal\", Parameter: list = {goal: item = %item%})",
@@ -556,8 +543,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "file.save(Path: path = \"/.build/traces/%!trace.id%/manifest.json\", Value: item = %traceGoals%)",
@@ -571,8 +557,7 @@
    {
     "module": "build",
     "name": "appSave",
-    "property": [],
-    "modifier": []
+    "property": []
    }
   ],
   "formal": "build.appSave()",
@@ -627,8 +612,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "goal.call(Name: text = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goalHeader\", goal: item = %goal%})",
@@ -681,8 +665,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %buildStart%, Value: item = %Now.Ticks%)",
@@ -751,8 +734,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %trace%, Value: text = \"{\\\"id\\\": \\\"%!trace.id%\\\", \\\"timestamp\\\": \\\"%Now%\\\", \\\"goal\\\": %goal%, \\\"menu\\\": null, \\\"subGoals\\\": [], \\\"durationMs\\\": 0}\")",
@@ -774,14 +756,19 @@
       },
       "value": "Compile"
      }
-    ],
-    "modifier": [
+    ]
+   },
+   {
+    "module": "on",
+    "name": "error",
+    "property": [
      {
-      "module": "on",
-      "name": "error",
-      "property": [],
-      "modifier": [],
-      "recovery": [
+      "name": "Recovery",
+      "type": {
+       "name": "list",
+       "kind": "action"
+      },
+      "value": [
        {
         "module": "goal",
         "name": "call",
@@ -793,8 +780,7 @@
           },
           "value": "HandleBuildFailure"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -851,8 +837,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %trace.menu%, Value: item = %menu%)",
@@ -902,8 +887,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %parentGoal%, Value: item = %goal%)",
@@ -939,8 +923,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "goal",
@@ -979,8 +962,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "loop.foreach(Collection: item = %parentGoal.Child%); goal.call(Name: text = \"BuildSubGoal\", Parameter: list = {subGoal: item = %item%})",
@@ -1030,8 +1012,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %goal%, Value: item = %parentGoal%)",
@@ -1085,8 +1066,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -1127,8 +1107,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "math.subtract(A: item = %Now.Ticks%, B: item = %buildStart%); variable.set(Name: variable = %elapsedTicks%, Value: item = %!data%)",
@@ -1168,8 +1147,7 @@
       },
       "value": 10000
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -1210,8 +1188,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "math.divide(A: item = %elapsedTicks%, B: number = 10000); variable.set(Name: variable = %elapsedMs%, Value: item = %!data%)",
@@ -1264,8 +1241,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %trace.durationMs%, Value: item = %elapsedMs%)",
@@ -1330,8 +1306,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "file.save(Path: path = \"/.build/traces/%!trace.id%/%goal.Name%.json\", Value: item = %trace%)",
@@ -1384,8 +1359,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "list.add(ListName: variable = %traceGoals%, Value: item = %goal.Name%)",
@@ -1418,14 +1392,19 @@
        }
       ]
      }
-    ],
-    "modifier": [
+    ]
+   },
+   {
+    "module": "on",
+    "name": "error",
+    "property": [
      {
-      "module": "on",
-      "name": "error",
-      "property": [],
-      "modifier": [],
-      "recovery": [
+      "name": "Recovery",
+      "type": {
+       "name": "list",
+       "kind": "action"
+      },
+      "value": [
        {
         "module": "goal",
         "name": "call",
@@ -1437,8 +1416,7 @@
           },
           "value": "HandleBuildFailure"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -1475,8 +1453,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "build.goalsSave(Goal: goal = %goal%)",
@@ -1515,8 +1492,7 @@
       },
       "value": 0.5
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %threshold%, Value: number = 0.5)",
@@ -1572,8 +1548,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %modules%, Value: item = %!app.module.list%)",
@@ -1629,8 +1604,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %state.goal%, Value: item = %goal.Name%)",
@@ -1666,8 +1640,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "goal",
@@ -1706,8 +1679,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = \"AddStepToState\", Parameter: list = {step: item = %item%})",
@@ -1740,8 +1712,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "goal",
@@ -1780,8 +1751,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "loop.foreach(Collection: item = %modules%); goal.call(Name: text = \"AddModuleToState\", Parameter: list = {module: item = %item%})",
@@ -1803,8 +1773,7 @@
       },
       "value": "/system/builder/llm/templates/deciderModuleQuestions.template"
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -1845,8 +1814,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "ui.render(Template: text = \"/system/builder/llm/templates/deciderModuleQuestions.template\"); variable.set(Name: variable = %moduleQuestions%, Value: item = %!data%)",
@@ -1897,8 +1865,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -1939,8 +1906,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "llm.decider(State: text = \"%state%\", Question: dict = %moduleQuestions%); variable.set(Name: variable = %moduleAnswer%, Value: item = %!data%)",
@@ -1962,8 +1928,7 @@
       },
       "value": "/system/builder/llm/templates/deciderActionQuestions.template"
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -2004,8 +1969,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "ui.render(Template: text = \"/system/builder/llm/templates/deciderActionQuestions.template\"); variable.set(Name: variable = %actionQuestions%, Value: item = %!data%)",
@@ -2056,8 +2020,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -2098,8 +2061,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "llm.decider(State: text = \"%state%\", Question: dict = %actionQuestions%); variable.set(Name: variable = %actionAnswer%, Value: item = %!data%)",
@@ -2154,8 +2116,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "goal.call(Name: text = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goal-decided\", goal: item = %goal%})",
@@ -2188,8 +2149,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -2230,8 +2190,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "file.read(Path: path = \"orders/%orderId%.json\"); variable.set(Name: variable = %order%, Value: item = %!data%)",
@@ -2266,8 +2225,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -2308,8 +2266,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "list.count(ListName: variable = %order.items%); variable.set(Name: variable = %itemCount%, Value: item = %!data%)",
@@ -2358,7 +2315,6 @@
       "value": 0
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "write out \"Your cart is empty\"",
@@ -2374,8 +2330,7 @@
           },
           "value": "Your cart is empty"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2419,7 +2374,6 @@
       "value": 1
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "write out \"One item\"",
@@ -2435,8 +2389,7 @@
           },
           "value": "One item"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2446,7 +2399,6 @@
     "module": "condition",
     "name": "else",
     "property": [],
-    "modifier": [],
     "child": [
      {
       "text": "write out \"%itemCount% items\"",
@@ -2473,8 +2425,7 @@
            }
           ]
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2530,7 +2481,6 @@
       "value": "@"
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "throw \"Invalid email address\"",
@@ -2546,8 +2496,7 @@
           },
           "value": "Invalid email address"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2596,7 +2545,6 @@
       "value": "isnotempty"
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "call ApplyCoupon code=%order.coupon%, order=%order%",
@@ -2659,8 +2607,7 @@
            }
           ]
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2716,7 +2663,6 @@
       "value": "number"
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "throw \"The total must be a number\"",
@@ -2732,8 +2678,7 @@
           },
           "value": "The total must be a number"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2789,7 +2734,6 @@
       "value": "IS"
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "set %vat% = 0.24",
@@ -2822,8 +2766,7 @@
           },
           "value": 0.24
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2833,7 +2776,6 @@
     "module": "condition",
     "name": "else",
     "property": [],
-    "modifier": [],
     "child": [
      {
       "text": "set %vat% = 0.25",
@@ -2866,8 +2808,7 @@
           },
           "value": 0.25
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -2925,8 +2866,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -2967,8 +2907,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "math.multiply(A: item = %order.total%, B: item = %vat%); variable.set(Name: variable = %vatAmount%, Value: item = %!data%)",
@@ -3020,7 +2959,6 @@
       "value": "#"
      }
     ],
-    "modifier": [],
     "child": [
      {
       "text": "add %order.note% to %notes%",
@@ -3067,8 +3005,7 @@
            }
           ]
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -3116,8 +3053,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "output.write(Data: text = \"Total: %order.total%, VAT: %vatAmount%\")",
@@ -3146,8 +3082,7 @@
       },
       "value": "*.log"
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -3188,8 +3123,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "file.list(Path: path = \"/logs\", Pattern: text = \"*.log\"); variable.set(Name: variable = %files%, Value: item = %!data%)",
@@ -3228,8 +3162,7 @@
       },
       "value": []
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "variable.set(Name: variable = %errors%, Value: list = [])",
@@ -3262,8 +3195,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "goal",
@@ -3302,8 +3234,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "loop.foreach(Collection: item = %files%); goal.call(Name: text = \"ScanFile\", Parameter: list = {file: item = %item%})",
@@ -3344,8 +3275,7 @@
       },
       "value": "isempty"
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "condition.if(Left: item = %errors%, Operator: choice<operator> = \"isempty\")",
@@ -3367,8 +3297,7 @@
       },
       "value": "No errors this week"
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "output.write(Data: text = \"No errors this week\")",
@@ -3382,8 +3311,7 @@
    {
     "module": "goal",
     "name": "return",
-    "property": [],
-    "modifier": []
+    "property": []
    }
   ],
   "formal": "goal.return()",
@@ -3431,8 +3359,7 @@
       },
       "value": "list"
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "condition.if(Left: item = %files%, Operator: choice<operator> = \"is\", Right: text = \"list\")",
@@ -3454,8 +3381,7 @@
       },
       "value": "Scanned the log files"
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "output.write(Data: text = \"Scanned the log files\")",
@@ -3503,8 +3429,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    },
    {
     "module": "variable",
@@ -3545,8 +3470,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "ui.render(Template: text = \"report.html\", Parameter: list = {errors: item = %errors%}); variable.set(Name: variable = %html%, Value: item = %!data%)",
@@ -3586,8 +3510,7 @@
        }
       ]
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "file.save(Path: path = \"/reports/week.html\", Value: item = %html%)",
@@ -3631,14 +3554,19 @@
        }
       ]
      }
-    ],
-    "modifier": [
+    ]
+   },
+   {
+    "module": "on",
+    "name": "error",
+    "property": [
      {
-      "module": "on",
-      "name": "error",
-      "property": [],
-      "modifier": [],
-      "recovery": [
+      "name": "Recovery",
+      "type": {
+       "name": "list",
+       "kind": "action"
+      },
+      "value": [
        {
         "module": "goal",
         "name": "call",
@@ -3650,8 +3578,7 @@
           },
           "value": "LogFailure"
          }
-        ],
-        "modifier": []
+        ]
        }
       ]
      }
@@ -3684,8 +3611,7 @@
       },
       "value": "log"
      }
-    ],
-    "modifier": []
+    ]
    }
   ],
   "formal": "output.write(Data: text = \"Report sent\", channel: text = \"log\")",

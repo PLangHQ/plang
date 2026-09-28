@@ -62,14 +62,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             writer.Name("default");
             await Default.Output(writer, mode, context);
         }
-        // The modifiers wrapping the action — omitted when there are none, like child and recovery.
-        if (Modifier.Count > 0)
-        {
-            writer.Name("modifier");
-            writer.BeginArray(Modifier.Count);
-            foreach (var m in Modifier) await m.Output(writer, mode, context);
-            writer.EndArray();
-        }
         // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
         // Each child step writes itself; the tree serializes recursively.
         if (Child.Count > 0)
@@ -77,18 +69,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             writer.Name("child");
             await Child.Output(writer, mode, context);   // step.list writes its own bare array
         }
-        // The body of an `on error` clause — omitted on every action but on.error.
-        if (Recovery.Count > 0)
-        {
-            writer.Name("recovery");
-            await Recovery.Output(writer, mode, context);   // action.list writes its own bare array
-        }
         writer.EndObject();
     }
 
-    /// <summary>The action in formal: its own call; a condition's body inline after it (<c>{ a; b }</c>);
-    /// then its modifiers after it in their list's order — each the next call in the same sequence:
-    /// <c>file.read(…); on.error(…); cache.wrap(…)</c>. (Read back in any order, they sort the same.)</summary>
+    /// <summary>The action in formal: its own call, then a condition's body inline after it (<c>{ a; b }</c>).
+    /// A clause (<c>on.error</c>, …) is its step's next call, written by the step like any action.</summary>
     private async System.Threading.Tasks.ValueTask Formal(global::app.type.format.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
@@ -100,24 +85,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 foreach (var action in step.Code.Items()) await action.Output(writer, mode, context);
             writer.EndBody();
         }
-        foreach (var modifier in Modifier) await modifier.Call(writer, mode, context);
     }
 
-    /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties, its frozen defaults
-    /// (<c>?=</c>), and a modifier's Recovery (<c>Recovery: list&lt;action&gt; = [a, b]</c>).</summary>
+    /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties and its frozen defaults
+    /// (<c>?=</c>).</summary>
     private async System.Threading.Tasks.ValueTask Call(global::app.type.format.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginCall(Module.Name, Name);
         foreach (var p in Property) await p.Row(writer, frozen: false, mode, context);
         foreach (var p in Default) await p.Row(writer, frozen: true, mode, context);
-        if (Recovery.Count > 0)
-        {
-            writer.Row("Recovery", "list<action>");
-            writer.BeginArray((int)Recovery.Count);
-            foreach (var action in Recovery.Items()) await action.Output(writer, mode, context);
-            writer.EndArray();
-        }
         writer.EndCall();
     }
 }

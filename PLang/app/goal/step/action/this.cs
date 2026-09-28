@@ -46,25 +46,12 @@ public partial class @this
     [JsonIgnore]
     public global::app.type.property.list.@this Default { get; init; } = new();
 
-    /// <summary>The modifiers wrapping this action (on.error, cache.wrap, timeout.after), outermost
-    /// first — by each one's declared layer. The list owns how they compose around the action (<c>Modifier.Wrap</c>).</summary>
-    [Store, Debug, Default]
-    public modifier.list.@this Modifier { get; init; } = new();
-
     /// <summary>The branch body of a control-flow action (the steps that run when this condition fires).
     /// Empty on every non-control-flow action — the fire gate is <c>Child.Count &gt; 0 &amp;&amp; truthy</c>.
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
     public global::app.goal.step.list.@this Child { get; set; } = new();
-
-    /// <summary>The actions that run when this one's recovery fires — the body of an `on error`
-    /// clause. Empty on every action but <c>on.error</c>. A structural slot like
-    /// <see cref="Modifier"/> and <see cref="Child"/>, not a parameter value: an action is program,
-    /// not data, so it is read at load through the same door as any other action and is born
-    /// holding the enclosing step. A <c>action.list</c>, so it runs itself.</summary>
-    [Store, Debug, Default]
-    public global::app.goal.step.action.list.@this Recovery { get; set; } = new();
 
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
@@ -189,31 +176,12 @@ public partial class @this
         }
         await using var _call = call;
 
-        var answer = await on.start.Before(this, context);
-        global::app.data.@this data;
-        if (answer is { Handled: true })
-        {
-            // Cancelled: a before-binding's answer is this action's result (mock.intercept, event.skipAction).
-            // Clear Handled so the outer step loop doesn't misread "dispatch was short-circuited" as "stop the
-            // step" — the next action in the chain still needs to run on this result.
-            data = answer;
-            data.Handled = false;
-        }
-        else if (answer is { Success: false })
-            data = answer;
-        else if (Modifier.Count == 0)
-            data = await DispatchAsync(context, call);
-        else
-        {
-            // The modifiers wrap the action's own dispatch — the list composes them (outermost first,
-            // `on error` clauses written together as one try/catch); then the action type's after fires once
-            // per modifier so coverage tracks presence (a modifier wraps, it never runs the standalone path).
-            var (execute, wrapError) = await Modifier.Wrap(() => DispatchAsync(context, call), context);
-            if (wrapError != null) return context.Error(wrapError);
-            data = await execute!();
-            foreach (var modifier in Modifier)
-                await context.App.action.on.start.after.Start(modifier, data, context);
-        }
+        var data = await Attempt(context);
+
+        // The error outcome — after the attempt's own after-start, so a cache stores only the real work and a
+        // recovery runs outside the attempt's deadline. The first clause bound on it that takes the failure
+        // answers (a retry, a recovery, an ignore); a failure no clause takes stands.
+        if (!data.Success) data = await on.error.Catch(this, data, context);
 
         // %!data% is the last action's result, stored AS-IS. A reference stays a
         // reference and a lazy source stays unread — %!data% never forces a value.
@@ -221,9 +189,46 @@ public partial class @this
         // value here would read a pending file / resolve a %ref% at every action.
         if (data.Success)
             await context.Variable.Set("!data", data);
+        return data;
+    }
 
+    /// <summary>
+    /// One attempt of this action, inside the frame <see cref="Start"/> pushed for it: what is bound before its
+    /// start, its dispatch, what is bound after it. A before that fails or cancels is the attempt's result, and
+    /// every after still runs on it. A retry (<c>on.error</c>) is another attempt in the same frame — a fresh
+    /// deadline, a fresh cache lookup.
+    /// </summary>
+    internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
+    {
+        var answer = await on.start.Before(this, context);
+        global::app.data.@this data;
+        if (answer is { Handled: true })
+        {
+            // Cancelled: a before-binding's answer is this action's result (a mock, a cache hit, on.cancel).
+            // Clear Handled so the outer step loop doesn't misread "dispatch was short-circuited" as "stop the
+            // step" — the next action in the chain still needs to run on this result.
+            data = answer;
+            data.Handled = false;
+        }
+        else if (answer is { Success: false })
+            data = answer;
+        else
+            data = await DispatchAsync(context, context.CallStack.Current!);
         return await on.start.After(this, data, context);
     }
+
+    /// <summary>Whether this action is a clause of the one before it (<c>on.error</c>, <c>on.cache</c>,
+    /// <c>on.timeout</c>): bound at read, never started as a step. A step action is not.</summary>
+    internal virtual bool IsClause => false;
+
+    /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
+    /// one is (the role was decided when its module registered it).</summary>
+    internal virtual @this Program(global::app.goal.step.@this? step)
+        => new() { Module = Module, Name = Name, Step = step, Synthetic = false };
+
+    /// <summary>Binds this action on <paramref name="action"/>, the step action before it — what a clause does
+    /// when its program is read. A step action binds nothing.</summary>
+    internal virtual void Bind(@this action) { }
 
     /// <summary>
     /// Dispatches this action inside the frame <see cref="Start"/> pushed for it: mints its handler,

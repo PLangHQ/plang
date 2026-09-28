@@ -13,7 +13,6 @@ public static class TemplateStamp
     {
         Stamp(action.Property);
         Stamp(action.Default);
-        foreach (var modifier in action.Modifier) Apply(modifier);
     }
 
     private static void Stamp(global::app.type.property.list.@this properties)

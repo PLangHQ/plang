@@ -19,7 +19,7 @@ GOLDEN = json.load(open(os.path.join(HERE, 'child_golden.json'), encoding='utf-8
 MOCK = '/shared/coder/2.0/checkout/expected.txt'
 
 def rows_of(a):
-    """A golden expected action ({module, name, property: {Name: value}, child, modifier, recovery}) as
+    """A golden expected action ({module, name, property: {Name: value}, child}) as
     .pr rows, each typed the way the parser types it: the declared type, or the literal's own in an
     open slot."""
     declared = f.properties(a['module'], a['name'])
@@ -29,15 +29,14 @@ def rows_of(a):
         spec = declared.get(name, {'type': 'item'})
         arguments = False
         if f.is_action(v): v = rows_of(v)
+        elif isinstance(v, list) and v and all(f.is_action(x) for x in v): v = [rows_of(x) for x in v]
         elif spec['type'].startswith('list') and isinstance(v, list) and v and isinstance(v[0], dict) and 'name' in v[0]:
             # argument rows: each marked on its own row (a %variable% in its value); the list is not
             v = [f.listed({'name': r['name'], 'type': f.marked(f.typed('item', r['value']), r['value']), 'value': r['value']}) for r in v]
             arguments = True
         typed = f.typed(spec['type'], v)
         props.append(f.listed({'name': name, 'type': typed if arguments else f.marked(typed, v), 'value': v}))
-    out = {'module': a['module'], 'name': a['name'], 'property': props,
-           'modifier': [rows_of(m) for m in a.get('modifier') or []]}
-    if a.get('recovery'): out['recovery'] = [rows_of(r) for r in a['recovery']]
+    out = {'module': a['module'], 'name': a['name'], 'property': props}
     if a.get('child'): out['child'] = [{'text': c['text'], 'action': [rows_of(x) for x in c['action']]} for c in a['child']]
     return out
 
@@ -48,10 +47,9 @@ def without_child_text(actions):
         for c in a.get('child') or []:
             c.pop('text', None)
             for x in c['action']: strip(x)
-        for m in a.get('modifier') or []: strip(m)
-        for r in a.get('recovery') or []: strip(r)
         for p in a.get('property') or []:
-            if f.is_action(p['value']): strip(p['value'])
+            for x in (p['value'] if isinstance(p['value'], list) else [p['value']]):
+                if f.is_action(x): strip(x)
     for a in out: strip(a)
     return out
 
@@ -125,9 +123,8 @@ def main():
         except f.FormalError as e:
             mock = [('parse', str(e))]
 
-    # 3b. the notation's own cases, not in the golden: a frozen default, two modifiers after their action
-    #     (the first written innermost; outermost first in the action's modifier list), an explicit type
-    #     in an open slot
+    # 3b. the notation's own cases, not in the golden: a frozen default, two clauses after their action
+    #     (siblings, in the order written), an explicit type in an open slot
     own = {}
     for text in ['goal.return(Depth: number ?= 1)',
                  'goal.call(Name="X"); on.error(Key="B", Recovery=[goal.call(Name="RB")]); on.error(Key="A", Recovery=[goal.call(Name="RA")])',
@@ -193,8 +190,8 @@ def main():
     for text, (verdict, written, rows) in own.items():
         print(f'   {text}\n      -> {verdict}; written back: {written!r}')
         if rows and 'on.error' in text:
-            print(f'      wrapped: {rows[0]["module"]}.{rows[0]["name"]}, modifier keys in order: '
-                  + ', '.join(next(r["value"] for r in m["property"] if r["name"] == "Key") for m in rows[0]["modifier"]))
+            print(f'      action: {rows[0]["module"]}.{rows[0]["name"]}, clause keys in order: '
+                  + ', '.join(next(r["value"] for r in m["property"] if r["name"] == "Key") for m in rows[1:]))
         if rows and 'frozen' in json.dumps(rows): print('      frozen:', [r for r in rows[0]['property'] if r.get('frozen')])
     print('\nparse errors:')
     for t, e in errors.items(): print(f'   {t!r}\n      -> {e}')

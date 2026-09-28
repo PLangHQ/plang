@@ -14,10 +14,9 @@ namespace app.goal.step.action.serializer;
 ///   row     = Name [ ":" type ] ( "=" | "?=" ) value          ?= : a frozen default (the action's Default)
 ///   value   = "text" | number | true | false | null | %variable% | [ … ] | { … } | action
 /// </code>
-/// <para><c>{ }</c> is only a condition's body (its child step). A modifier follows the action it modifies,
-/// in the same list — <c>file.read(…); on.error(…); cache.wrap(…)</c>, in any order: the action's
-/// modifier list places each by its declared layer. A modifier's recovery is its
-/// <c>Recovery=[…]</c>.</para>
+/// <para><c>{ }</c> is only a condition's body (its child step). A clause follows the action it is a clause
+/// of, as its sibling in the same list — <c>file.read(…); on.error(…); on.cache(…)</c> — in the order written.
+/// on.error's recovery is its <c>Recovery=[…]</c>, a list of actions.</para>
 ///
 /// <para>A value's type never comes from the text alone: it is the catalogue's declared type for the
 /// property, or — in an open <c>item</c> slot — the written type if any, else the literal's own. A written
@@ -142,8 +141,8 @@ public sealed class Formal
 
         // ---------------------------------------------------------------- actions
 
-        /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end. A modifier modifies
-        /// the action before it in the same list; its modifier list places it by its layer.</summary>
+        /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end. A clause is a clause of
+        /// the action before it in the same list, and follows it there.</summary>
         public List<global::app.goal.step.action.@this> Actions(string? closing)
         {
             var actions = new List<global::app.goal.step.action.@this>();
@@ -164,10 +163,9 @@ public sealed class Formal
 
         private void Attach(List<global::app.goal.step.action.@this> actions, (global::app.goal.step.action.@this Action, int At) read)
         {
-            if (read.Action is not global::app.goal.step.action.modifier.@this modifier) { actions.Add(read.Action); return; }
-            if (actions.Count == 0)
-                Fail($"{modifier.Module.Name}.{modifier.Name} modifies the action before it; step {_index} has none", read.At);
-            actions[^1].Modifier.Add(modifier);
+            if (read.Action.IsClause && actions.Count == 0)
+                Fail($"{read.Action.Module.Name}.{read.Action.Name} is a clause of the action before it; step {_index} has none", read.At);
+            actions.Add(read.Action);
         }
 
         // The module named, out of the ones this read was handed; null when none answers to it.
@@ -183,14 +181,11 @@ public sealed class Formal
             var owner = Module(module);
             var catalog = owner?[name];
             if (catalog == null) Fail($"`{module}.{name}` is not an action", start);
-            var isModifier = catalog is global::app.goal.step.action.modifier.@this;
+            var isClause = catalog!.IsClause;
             var isCondition = module == "condition" && name is "if" or "elseif" or "else";
 
-            global::app.goal.step.action.@this action = catalog is global::app.goal.step.action.modifier.@this
-                ? new global::app.goal.step.action.modifier.@this { Step = _step, Synthetic = false }
-                : new global::app.goal.step.action.@this { Step = _step, Synthetic = false };
-            action.Module = owner!;
-            action.Name = name;
+            // made by its catalog element: a clause is born a clause
+            var action = catalog.Program(_step);
 
             Take("(");
             var given = new HashSet<string>();
@@ -203,22 +198,24 @@ public sealed class Formal
                 var at = _pos;
                 var prop = Ident();
                 if (!given.Add(prop)) Fail($"`{prop}` is given twice", at);
-                if (prop == "Recovery" && isModifier && module == "on" && name == "error")
-                {
-                    WrittenType(prop, "list<action>");
-                    Take("=");
-                    var recovery = Value(null);
-                    if (recovery.Items == null || recovery.Items.Count == 0 || recovery.Items.Any(i => i.Action == null))
-                        Fail("`Recovery` is a list of actions: [goal.call(Name=\"X\")]", at);
-                    foreach (var r in recovery.Items!) action.Recovery.Add(r.Action!);
-                    continue;
-                }
-                var declared = catalog!.Property[prop];
+                var declared = catalog.Property[prop];
                 if (declared == null)
                 {
                     var have = catalog.Property.Select(p => p.Name).ToList();
-                    if (isModifier && module == "on" && name == "error") have.Add("Recovery");
                     Fail($"`{module}.{name}` has no property `{prop}` (it has {(have.Count > 0 ? string.Join(", ", have) : "none")})", at);
+                }
+                // a list of actions (on.error's Recovery) is program: each action read here, holding this step
+                if (declared!.Type.Name == "list" && declared.Type.kind.Name == "action")
+                {
+                    WrittenType(prop, "list<action>");
+                    Take("=");
+                    var written = Value(null);
+                    if (written.Items == null || written.Items.Count == 0 || written.Items.Any(i => i.Action == null))
+                        Fail($"`{prop}` is a list of actions: [goal.call(Name=\"X\")]", at);
+                    var actions = new global::app.goal.step.action.list.@this();
+                    foreach (var r in written.Items!) actions.Add(r.Action!);
+                    action.Property.Add(new global::app.type.property.@this { Name = prop, Type = declared.Type, Value = actions });
+                    continue;
                 }
                 var (row, frozen) = Row(prop, declared!);
                 (frozen ? action.Default : action.Property).Add(row);
@@ -229,7 +226,7 @@ public sealed class Formal
             {
                 Space();
                 var brace = _pos;
-                if (isModifier)
+                if (isClause)
                     Fail($"`{module}.{name}` takes no {{ }}: write the action first, then {module}.{name} after it — " +
                          $"next.action(…); {module}.{name}(…)", brace);
                 if (!isCondition)

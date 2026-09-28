@@ -55,6 +55,7 @@ def plang_type(cs):
         kind, _ = closed_set(cs.split('<')[-1].rstrip('>'))
         return f'choice<{kind}>'
     if 'goal.step.action.@this' in outer: return 'action'
+    if 'goal.step.action.list.@this' in outer: return 'list<action>'
     if 'variable' in outer.lower(): return 'variable'
     # the type's class names it (types.json); a spelling that is no type's class (a global alias) is read off it
     name = h.type_word(outer)
@@ -99,11 +100,11 @@ def default_text(literal):
 # What the catalog hid before builder-formal: host values and the graph items. Now only a host value
 # (`clr`) is hidden (app/type/property/list/this.cs Reflect); held_actions=False gives the old catalog,
 # the one prompt A was rendered with.
-NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'modifier'}
+NOT_ON_MENU = {'clr', 'goal', 'step', 'action', 'clause'}
 
 _decl = {}
 def declared(module, action, held_actions=True):
-    """(properties, is_modifier) as the handler declares them — the rows the plang catalog reflects
+    """(properties, is_clause) as the handler declares them — the rows the plang catalog reflects
     (app/type/property/list/this.cs Reflect), an IChannel action's synthetic `channel` row added last.
     Only a host (`clr`) slot is hidden: an action held as a value (channel.set Goal), the goal
     build.fold works on, a step build.validate judges — each is the step's to write."""
@@ -129,7 +130,8 @@ def declared(module, action, held_actions=True):
                                   'literal': d.group('value').strip() if d else None}
     if re.search(r'class\s+\w+\s*:[^{]*\bIChannel\b', src):
         props['channel'] = {'type': 'text', 'options': None, 'nullable': True, 'default': None, 'literal': None}
-    _decl[key] = (props, '[Modifier(' in src)
+    # a clause (on.error, on.cache, on.timeout): its handler is an IClause (module/this.cs Add)
+    _decl[key] = (props, bool(re.search(r'class\s+\w+\s*:[^{]*\bIClause\b', src)))
     return _decl[key]
 
 def menu_row(name, p):
@@ -385,7 +387,8 @@ def typed(row, fallback, where):
 
 def pr_action(a, where=''):
     """One answered action in the .pr's own shape. Every row carries the type the model gave it —
-    the .pr reader rejects a value slot that has none — and modifiers / recovery nest as given."""
+    the .pr reader rejects a value slot that has none. A clause (on.error, …) is its step's sibling, and
+    on.error's Recovery is a list<action> row, each action in its own shape."""
     module, name = a.get('module'), a.get('name')
     if name is None and 'action' in a:
         DEVIATIONS.append(f'{where} {module}: element key "action", not "name"')
@@ -403,10 +406,11 @@ def pr_action(a, where=''):
             value = [{**r, 'type': typed(r, 'item', f'{where} {p["name"]}')} for r in value]
         # A held action (a callback slot) is program: it is written in the action's own shape.
         if t.get('name') == 'action' and isinstance(value, dict): value = pr_action(value, where)
+        # A list of actions (on.error's Recovery) is program too: each in the action's own shape.
+        if t.get('name') == 'list' and t.get('kind') == 'action' and isinstance(value, list):
+            value = [pr_action(x, where) for x in value]
         params.append({'name': p['name'], 'type': t, 'value': value})
-    out = {'module': module, 'name': name, 'property': params,
-           'modifier': [pr_action(m, where) for m in a.get('modifier') or []]}
-    if a.get('recovery'): out['recovery'] = [pr_action(r, where) for r in a['recovery']]
+    out = {'module': module, 'name': name, 'property': params}
     # A condition's body: steps of its own, each {text, action}.
     if a.get('child'):
         out['child'] = [{'text': c.get('text', ''), 'action': [pr_action(x, f'{where} child') for x in c.get('action') or []]}
@@ -414,7 +418,7 @@ def pr_action(a, where=''):
     return out
 
 def pr_goal(goal, answer, rel):
-    """The answer is in the .pr's own keys — step, action, name, property, modifier, recovery. The
+    """The answer is in the .pr's own keys — step, action, name, property, child. The
     older plural keys are read but RECORDED, never silently absorbed."""
     if 'steps' in answer: DEVIATIONS.append(f'{goal["name"]}: answer key "steps", not "step"')
     by_index = {}

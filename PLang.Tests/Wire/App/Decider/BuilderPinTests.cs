@@ -12,6 +12,10 @@ public class BuilderPinTests
     // a property's value as written (a text literal reads back quoted)
     private static string? Value(global::app.goal.step.action.@this action, string name) => action[name]?.Value?.ToString()?.Trim('"');
 
+    // an on.error clause's Recovery — the actions its property holds
+    private static IEnumerable<global::app.goal.step.action.@this> Recovery(global::app.goal.step.action.@this onError)
+        => ((global::app.goal.step.action.list.@this)onError["Recovery"]!.Value!).Items();
+
     // `if %goal.IsCached%, return %goal.Cache%` — a bare if (Left's own truth) whose body returns the cache
     [Test]
     public async Task Start_ACachedGoalReturnsItsCache()
@@ -37,12 +41,13 @@ public class BuilderPinTests
         await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
         var compile = (await Installed(os)).Child.Items().Single(g => g.Name == "Compile");
 
-        var match = compile.Step.Items().Select(s => s.Code[0]).Single(a => a.Module.Name == "build" && a.Name == "match");
-        await Assert.That($"{match.Module.Name}.{match.Name}").IsEqualTo("build.match");
-        var source = match.Modifier.Single(m => Value(m, "Key") == "ElseWithoutIf");
-        await Assert.That(Value(source.Recovery.Items().Single(), "Name")).IsEqualTo("SourceError");
-        var fix = match.Modifier.Single(m => m != source);
-        await Assert.That(Value(fix.Recovery.Items().Single(), "Name")).IsEqualTo("FixSteps");
+        var step = compile.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });
+        // its clauses follow it, as siblings in the step's code
+        var clauses = step.Code.Items().Skip(1).Where(a => a.Module.Name == "on" && a.Name == "error").ToList();
+        var source = clauses.Single(m => Value(m, "Key") == "ElseWithoutIf");
+        await Assert.That(Value(Recovery(source).Single(), "Name")).IsEqualTo("SourceError");
+        var fix = clauses.Single(m => m != source);
+        await Assert.That(Value(Recovery(fix).Single(), "Name")).IsEqualTo("FixSteps");
         await Assert.That(Value(fix, "RetryCount")).IsEqualTo("1");
         await Assert.That(Value(fix, "Order")).IsEqualTo("GoalFirst");
     }

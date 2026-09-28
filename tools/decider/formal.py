@@ -15,10 +15,9 @@ new lines included, may sit between any two tokens.
     list      = "[" [ value { "," value } ] "]"
     dict      = "{" [ key ":" value { "," key ":" value } ] "}"      key = name | "text"
 
-`{ }` is only a condition's body (its child). A modifier follows the action it modifies, in the same
-list: `file.read(…); on.error(…); cache.wrap(…)`, in any order — the action's `modifier` list places
-each by its declared layer ([Modifier(Order)]), outermost first. A modifier's recovery is its `Recovery`
-property.
+`{ }` is only a condition's body (its child). A clause (on.error, on.cache, on.timeout) follows the action
+it is a clause of, as its sibling in the same list — `file.read(…); on.error(…); on.cache(…)` — in the order
+written. on.error's recovery is its `Recovery` property, a list of actions.
 
 A value's TYPE never comes from the model. Written or not, it is the property's declared type, or —
 where that is `item`, the open slot — the written type if any, else the literal's own (a quoted text is
@@ -37,7 +36,7 @@ import build_pr as b
 import variables as ref
 
 CONDITIONS = {('condition', 'if'), ('condition', 'elseif'), ('condition', 'else')}
-RECOVERY = 'Recovery'   # a modifier's property holding the actions it runs when the wrapped action fails
+RECOVERY = 'Recovery'   # on.error's property holding the actions it runs when the action before it fails
 SYMBOL = re.compile(r'[=!<>]+')                     # a choice's symbol option written bare: Operator=>=
 
 class FormalError(Exception):
@@ -58,24 +57,9 @@ def is_action(v):
     a dict literal may have a `module` key ({module: %item%}) and is still a dict."""
     return isinstance(v, dict) and 'module' in v and 'name' in v
 
-def is_modifier(module, name):
+def is_clause(module, name):
+    """A clause of the action before it — its handler is an IClause (on.error, on.cache, on.timeout)."""
     return b.declared(module, name)[1]
-
-LAYER = re.compile(r'\[Modifier\(Order\s*=\s*(\d+)\)\]')
-
-def layer(module, name):
-    """How far out a modifier wraps — its handler's [Modifier(Order = N)] (modifier/this.cs Layer)."""
-    m = LAYER.search(b.handler_source(module, name) or '')
-    return int(m.group(1)) if m else 0
-
-def attach(modifiers, m):
-    """A modifier takes its place by its layer: after every one of its layer or an outer one (modifier.list Add)."""
-    at = len(modifiers)
-    while at > 0 and layer(modifiers[at - 1]['module'], modifiers[at - 1]['name']) > layer(m['module'], m['name']): at -= 1
-    modifiers.insert(at, m)
-
-def takes_recovery(module, name):
-    return (module, name) == ('on', 'error')
 
 def known(module, name):
     return b.handler_source(module, name) is not None
@@ -162,8 +146,8 @@ class _Reader:
         return self.pos >= len(self.text)
 
     def actions(self, closing=None):
-        """action { ";" action } — up to `closing` or the end. A modifier modifies the action before it
-        in the same list; its modifier list places it by its layer."""
+        """action { ";" action } — up to `closing` or the end. A clause is a clause of the action before it
+        in the same list, and follows it there."""
         out = []
         self.attach(out, self.action())
         while not (self.peek(closing) if closing else self.at_end()):
@@ -177,11 +161,9 @@ class _Reader:
 
     def attach(self, out, read):
         act, at = read
-        if not is_modifier(act['module'], act['name']):
-            out.append(act); return
-        if not out:
-            self.fail(f'{act["module"]}.{act["name"]} modifies the action before it; step {self.index} has none', at)
-        attach(out[-1]['modifier'], act)
+        if is_clause(act['module'], act['name']) and not out:
+            self.fail(f'{act["module"]}.{act["name"]} is a clause of the action before it; step {self.index} has none', at)
+        out.append(act)
 
     # action = module "." name "(" props ")" [ "{" actions "}" ] — (the action, where it starts)
     def action(self):
@@ -190,36 +172,35 @@ class _Reader:
         module = self.ident(); self.take('.'); name = self.ident()
         if not known(module, name): self.fail(f'`{module}.{name}` is not an action', start)
         declared = properties(module, name)
-        modifier = is_modifier(module, name)
+        clause = is_clause(module, name)
         self.take('(')
-        rows, recovery = [], None
+        rows = []
         while not self.peek(')'):
             if self.at_end(): self.fail(f'`{module}.{name}(` is not closed: expected `)`')
             if self.text.startswith('…', self.pos):
                 self.fail(f'a `…` is still there: fill in {module}.{name}\'s properties, as the step gives them')
-            if rows or recovery is not None: self.take(',')
+            if rows: self.take(',')
             self.space()
             at = self.pos
             prop = self.ident()
-            if prop == RECOVERY and takes_recovery(module, name):
-                if recovery is not None: self.fail(f'`{prop}` is given twice', at)
+            if prop not in declared:
+                self.fail(f'`{module}.{name}` has no property `{prop}` (it has {", ".join(declared) or "none"})', at)
+            if any(r['name'] == prop for r in rows): self.fail(f'`{prop}` is given twice', at)
+            # a list of actions (on.error's Recovery) is program: each action read here
+            if declared[prop]['type'] == 'list<action>':
                 self.written_type(prop, 'list<action>')
                 self.take('=')
-                recovery = self.value()
-                if not (isinstance(recovery, list) and recovery and all(is_action(x) for x in recovery)):
+                actions = self.value()
+                if not (isinstance(actions, list) and actions and all(is_action(x) for x in actions)):
                     self.fail(f'`{prop}` is a list of actions: [goal.call(Name="X")]', at)
+                rows.append({'name': prop, 'type': {'name': 'list', 'kind': 'action'}, 'value': actions})
                 continue
-            if prop not in declared:
-                have = list(declared) + ([RECOVERY] if takes_recovery(module, name) else [])
-                self.fail(f'`{module}.{name}` has no property `{prop}` (it has {", ".join(have) or "none"})', at)
-            if any(r['name'] == prop for r in rows): self.fail(f'`{prop}` is given twice', at)
             rows.append(self.row(prop, declared[prop]))
         self.take(')')
-        act = {'module': module, 'name': name, 'property': rows, 'modifier': []}
-        if recovery is not None: act['recovery'] = recovery
+        act = {'module': module, 'name': name, 'property': rows}
         if self.peek('{'):
             self.space(); brace = self.pos
-            if modifier:
+            if clause:
                 self.fail(f'`{module}.{name}` takes no {{ }}: write the action first, then {module}.{name} after it — '
                           f'next.action(…); {module}.{name}(…)', brace)
             if (module, name) not in CONDITIONS:
@@ -361,7 +342,7 @@ class _Reader:
         for word, v in (('true', True), ('false', False), ('null', None)):
             if re.compile(rf'{word}\b').match(t, p): self.pos = p + len(word); return v
         if self.at_action():
-            # an action held as a value stands alone: a modifier there has no action before it
+            # an action held as a value stands alone: a clause there has no action before it
             held = []
             self.attach(held, self.action())
             return held[0]
@@ -471,18 +452,13 @@ def _head(a, types=True):
         return f'{name}: {t} {op} {value}' if types else f'{name}{" ?=" if op == "?=" else "="}{value}'
     props = [prop(r['name'], face(r['type']), '?=' if r.get('frozen') else '=', write_value(r['value'], r.get('type'), types))
              for r in a.get('property') or []]
-    if a.get('recovery'):
-        props.append(prop(RECOVERY, 'list<action>', '=', write_value(a['recovery'], None, types)))
     return f'{a["module"]}.{a["name"]}({", ".join(props)})'
 
 def write_action(a, types=True):
-    """One action; a condition's body inline in { }; then its modifiers after it in their list's order
-    (outermost first, by layer)."""
+    """One action; a condition's body inline in { }. A clause is the step's next action, written like any."""
     s = _head(a, types)
     if a.get('child'):
         s += ' { ' + '; '.join(write_action(x, types) for c in a['child'] for x in c.get('action') or []) + ' }'
-    for m in a.get('modifier') or []:
-        s += '; ' + _head(m, types)
     return s
 
 def write_actions(actions, types=True):

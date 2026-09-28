@@ -36,8 +36,9 @@ public class FormalReaderTests
         return string.Join("\n", differ);
     }
 
-    private static string Modifiers(global::app.data.@this read) =>
-        string.Join(", ", ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Single().Modifier
+    // The clauses after the step's first action, in the order they stand in its code.
+    private static string Clauses(global::app.data.@this read) =>
+        string.Join(", ", ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Skip(1)
             .Select(m => $"{m.Module.Name}.{m.Name}{(m["StatusCode"] is { } s ? $"({s.Value})" : "")}"));
 
     // a goal's name in an action slot is refused where it's read, naming the fix — never held as a value
@@ -53,16 +54,27 @@ public class FormalReaderTests
     }
 
     [Test]
-    public async Task Modifiers_WrittenInEitherOrder_NestTheSame()
+    public async Task Clauses_AreTheActionsSiblings_InTheOrderWritten_AndWriteBackSo()
     {
-        var one = Read("file.read(Path=\"a.txt\"); timeout.after(Ms=100); on.error(Recovery=[goal.call(Name=\"Fix\")]); cache.wrap()", out _);
-        var other = Read("file.read(Path=\"a.txt\"); cache.wrap(); on.error(Recovery=[goal.call(Name=\"Fix\")]); timeout.after(Ms=100)", out _);
+        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(Recovery=[goal.call(Name=\"Fix\")]); on.cache(Duration=\"00:05:00\")", out _);
 
-        await one.IsSuccess();
-        await other.IsSuccess();
-        await Assert.That(Modifiers(one)).IsEqualTo("on.error, cache.wrap, timeout.after");
-        await Assert.That(Modifiers(other)).IsEqualTo("on.error, cache.wrap, timeout.after");
-        await Assert.That(await Written(other)).IsEqualTo(await Written(one));
+        await read.IsSuccess();
+        var code = (global::app.goal.step.action.list.@this)read.Peek()!;
+        await Assert.That(code.Items().Skip(1).All(a => a.IsClause)).IsTrue();
+        await Assert.That(Clauses(read)).IsEqualTo("on.timeout, on.error, on.cache");
+        var written = await Written(read);
+        await Assert.That(written).Contains("; on.timeout(");
+        await Assert.That(written).Contains("; on.error(Recovery: list<action> = [goal.call(");
+        await Assert.That(written).Contains("; on.cache(");
+    }
+
+    [Test]
+    public async Task AClause_LeadingTheStep_IsRefused()
+    {
+        var read = Read("on.error(IgnoreError=true)", out _);
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Message).Contains("is a clause of the action before it");
     }
 
     [Test]
@@ -83,10 +95,10 @@ public class FormalReaderTests
     [Test]
     public async Task TwoOnErrorClauses_KeepTheOrderWritten()
     {
-        var read = Read("file.read(Path=\"a.txt\"); timeout.after(Ms=100); on.error(StatusCode=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
+        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(StatusCode=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
 
         await read.IsSuccess();
-        await Assert.That(Modifiers(read)).IsEqualTo("on.error(404), on.error, timeout.after");
+        await Assert.That(Clauses(read)).IsEqualTo("on.timeout, on.error(404), on.error");
     }
 
     [Test]
@@ -166,17 +178,20 @@ public class FormalReaderTests
     }
 
     [Test]
-    public async Task EveryAction_IsBornHoldingTheStep_ModifiersOfOneLayerKeepTheOrderWritten()
+    public async Task EveryAction_IsBornHoldingTheStep_ClausesKeepTheOrderWritten()
     {
-        // two on.error clauses are one layer: B is written first, so B is asked first
+        // two on.error clauses: B is written first, so B is asked first
         var read = Read("goal.call(Name=\"X\"); on.error(Key=\"B\", Recovery=[goal.call(Name=\"RB\")]); on.error(Key=\"A\", Recovery=[goal.call(Name=\"RA\")])", out var step);
-        var actions = (global::app.goal.step.action.list.@this)read.Peek()!;
-        var call = actions.Items().Single();
+        var actions = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToList();
+        var call = actions[0];
         await Assert.That(call.Name).IsEqualTo("call");
         await Assert.That(call.Step).IsSameReferenceAs(step);
+        var clauses = actions.Skip(1).ToList();
         // a row's value is held raw, as its slice ("A"), until a run reads it
-        await Assert.That(string.Join(",", call.Modifier.Select(m => m.Property["Key"]!.Value!.ToString()))).IsEqualTo("\"B\",\"A\"");
-        await Assert.That(call.Modifier[0].Recovery.Items().Single().Step).IsSameReferenceAs(step);
+        await Assert.That(string.Join(",", clauses.Select(m => m.Property["Key"]!.Value!.ToString()))).IsEqualTo("\"B\",\"A\"");
+        await Assert.That(clauses[0].Step).IsSameReferenceAs(step);
+        var recovery = (global::app.goal.step.action.list.@this)clauses[0]["Recovery"]!.Value!;
+        await Assert.That(recovery.Items().Single().Step).IsSameReferenceAs(step);
     }
 
     [Test]

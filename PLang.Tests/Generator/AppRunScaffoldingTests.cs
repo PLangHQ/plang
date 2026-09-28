@@ -1,7 +1,6 @@
 using PLang.Tests.App.Fixtures;
 using app.module.matrix.plain;
 using app.module.matrix.markers;
-using app.module.matrix.modifier;
 
 namespace PLang.Tests.App;
 

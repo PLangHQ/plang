@@ -4,10 +4,9 @@ namespace app.goal.step.action.serializer;
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>action</c> — the read-side
 /// mirror of <see cref="app.goal.step.action.@this.Output"/>. Walks the handed
 /// <see cref="app.type.format.IReader"/> in place (the channel already made the one reader and
-/// positioned it): the action's bare shape <c>{module, name, property[], default?[], modifier[]}</c>.
-/// Each property row is read into a property — raw, no Data, no context.
-/// A modifier rides action's own shape — each element in the <c>modifiers</c> array is populated as the
-/// subtype so catalog/Is asks answer "modifier".
+/// positioned it): the action's bare shape <c>{module, name, property[], default?[], child?[]}</c>.
+/// Each property row is read into a property — raw, no Data, no context. The action is made by its
+/// module's catalog element (<c>Program</c>) — a clause (<c>on.error</c>, …) when that element is one.
 /// <para>The reader is BORN with the step whose actions it reads, so every action it makes is born
 /// holding that step — the same birth fact one level up. Having no parameterless constructor is what
 /// keeps it out of the type-reader registry: the registry mints only readers that need no parent
@@ -21,6 +20,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
+    // TRANSITIONAL — the clauses an older .pr nested under the action it just read ("modifier"), to follow it
+    // in its step's code. Only to load the .pr files built before clauses were siblings, for their rebuild.
+    internal List<global::app.goal.step.action.@this> Trailing { get; } = new();
+
     /// <summary>The one door. A null element is consumed and answered as the null citizen; the
     /// caller drops it.</summary>
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
@@ -28,20 +31,27 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("action", kind);
-        // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic.
-        var action = new global::app.goal.step.action.@this { Step = _step, Synthetic = false };
-        Populate(ref reader, action, ctx);
-        return action;
+        return Populate(ref reader, ctx);
     }
 
-    // Fills a fresh action (or its modifier subtype) off the handed reader — the shared walk, so a
-    // modifier element (same wire as an action) populates the subtype instance without re-parsing.
-    // The children this action owns take their parent from the reader: modifiers and recovery
-    // actions the same step, child steps that step's goal — the chain self-feeds.
-    private void Populate<TReader>(ref TReader reader,
-        global::app.goal.step.action.@this action, global::app.type.reader.ReadContext ctx)
+    // Reads one action off the handed reader. The wire carries the module and the name first; the action is made
+    // then — by the module's catalog element, so a clause is born a clause — and everything after fills it.
+    // The children it owns take their parent from the reader: an action held as a value the same step, child
+    // steps that step's goal — the chain self-feeds.
+    private global::app.goal.step.action.@this Populate<TReader>(ref TReader reader, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
+        global::app.module.@this? module = null;
+        string? actionName = null;
+        global::app.goal.step.action.@this? action = null;
+        global::app.goal.step.action.@this Made()
+            => action ??= module == null || actionName == null
+                ? throw new global::app.error.PrFormatOutdatedException("an action's module and name come first")
+                // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic. A name
+                // the module doesn't carry still reads (validation names it), as a plain action.
+                : module[actionName]?.Program(_step)
+                  ?? new global::app.goal.step.action.@this { Module = module, Name = actionName, Step = _step, Synthetic = false };
+
         reader.BeginObject();
         while (reader.NextName(out var name))
         {
@@ -50,45 +60,49 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // The wire carries the module NAME; the action holds the element. Resolving here
                 // means a .pr naming a module that no longer exists fails at LOAD (the registry
                 // indexer throws) instead of mid-execution.
-                case "module": action.Module = ctx.Context.App.module.list[reader.String()]; break;
+                case "module": module = ctx.Context.App.module.list[reader.String()]; break;
                 // The .pr's own keys are the only keys — the LLM answers in them too, so the answer
                 // reads through the same door a built .pr does.
-                case "name": action.Name = reader.String(); break;
+                case "name": actionName = reader.String(); break;
                 case "property":
+                    var made = Made();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Property.Add(Property(reader.RawValue(), ctx));
+                        made.Property.Add(Property(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 case "default":
+                    var withDefault = Made();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Default.Add(Property(reader.RawValue(), ctx));
+                        withDefault.Default.Add(Property(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 // The old key: skipping it would load the action with no properties, silently.
                 case "parameter":
                 case "parameters":
                     throw new global::app.error.PrFormatOutdatedException($"action key '{name}' is now 'property'");
+                // TRANSITIONAL — an older .pr's clauses, nested under their action: each one read as the clause
+                // it now is, to follow this action in its step's code; its "recovery" is its Recovery property.
                 case "modifier":
+                    Made();
                     reader.BeginArray();
                     while (reader.NextElement())
-                    {
-                        // A modifier belongs to its action's step, like the action itself.
-                        var modifier = new global::app.goal.step.action.modifier.@this { Step = _step };
-                        Populate(ref reader, modifier, ctx);
-                        action.Modifier.Add(modifier);
-                    }
+                        Trailing.Add(Populate(ref reader, ctx));
                     reader.EndArray();
                     break;
                 case "recovery":
-                    // Recovery actions are actions, read here like any other and born holding the
-                    // SAME step as the action they recover — a real step, not an invented one.
+                    var recovered = new global::app.goal.step.action.list.@this();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        if (Read(ref reader, null, ctx) is global::app.goal.step.action.@this recovered)
-                            action.Recovery.Add(recovered);
+                        recovered.Add(Populate(ref reader, ctx));
                     reader.EndArray();
+                    Made().Property.Add(new global::app.type.property.@this
+                    {
+                        Name = "Recovery",
+                        Type = ctx.Context.App.type.list[new global::app.type.@this("list", "action"), ctx.Context],
+                        Value = recovered,
+                    });
                     break;
                 case "child":
                     // chain self-feeds: a child step's goal is this action's step's goal
@@ -99,7 +113,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         if (stepReader.Read(ref reader, null, ctx) is global::app.goal.step.@this child)
                             childSteps.Add(child);
                     reader.EndArray();
-                    action.Child = childSteps;
+                    Made().Child = childSteps;
                     break;
                 // a key this format doesn't write is an older builder's: skipping it would load a
                 // different action, silently
@@ -107,12 +121,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
+        return Made();
     }
 
-    // One property row — {name, type, value, properties?}. A property whose type is `action` holds
-    // program, not a value: its action is read HERE, by the reader born with the step, so it is born
-    // holding that step — the same birth fact as recovery and child; the type-reader registry cannot
-    // mint one. Every other value is read by its type. Nothing is loaded and no Data is made.
+    // One property row — {name, type, value, properties?}. A property whose type is `action` or `list<action>`
+    // holds program, not a value: its action(s) are read HERE, by the reader born with the step, so they are born
+    // holding that step; the type-reader registry cannot mint one. Every other value is read by its type. Nothing
+    // is loaded and no Data is made.
     private global::app.type.property.@this Property(byte[] raw, global::app.type.reader.ReadContext ctx)
     {
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
@@ -158,7 +173,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             bytes.Read();
             var slot = new global::app.type.format.json.Reader(bytes, held);
             var born = ctx with { Variable = variables };
-            value = type!.Name == "action" ? Read(ref slot, null, born) : type.Read(ref slot, born);
+            value = type!.Name == "action" ? Read(ref slot, null, born)
+                : type.Name == "list" && type.kind.Name == "action" ? Actions(ref slot, born)
+                : type.Read(ref slot, born);
         }
         // No value slot — a typed absence under its declared type.
         if (value == null && type is { IsNull: false })
@@ -170,5 +187,17 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             Value = value,
             Properties = properties ?? new(),
         };
+    }
+
+    // A list<action> slot (on.error's Recovery): each action read by this reader, born holding the step.
+    private global::app.goal.step.action.list.@this Actions<TReader>(ref TReader reader, global::app.type.reader.ReadContext ctx)
+        where TReader : global::app.type.format.IReader, allows ref struct
+    {
+        var actions = new global::app.goal.step.action.list.@this();
+        reader.BeginArray();
+        while (reader.NextElement())
+            if (Read(ref reader, null, ctx) is global::app.goal.step.action.@this action) actions.Add(action);
+        reader.EndArray();
+        return actions;
     }
 }

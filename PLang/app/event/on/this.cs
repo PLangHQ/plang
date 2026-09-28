@@ -45,6 +45,7 @@ public class @this : global::app.type.item.@this
     private static readonly write NoWrite = (write)None["write"];
     private static readonly read NoRead = (read)None["read"];
     private static readonly ask NoAsk = (ask)None["ask"];
+    private static readonly error NoError = (error)None["error"];
 
     /// <summary>The event named <paramref name="name"/>; null when there is no event of that name.</summary>
     public virtual global::app.@event.@this? this[string name] => None.GetValueOrDefault(name);
@@ -57,6 +58,9 @@ public class @this : global::app.type.item.@this
 
     /// <summary>The create — what runs before and after a value of the item (a type) is born.</summary>
     public virtual create create => NoCreate;
+
+    /// <summary>The error — what answers when the item fails.</summary>
+    public virtual error error => NoError;
 
     /// <summary>The set — what runs before and after the item is set.</summary>
     public virtual set set => NoSet;

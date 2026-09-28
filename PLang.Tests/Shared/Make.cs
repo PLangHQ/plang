@@ -42,11 +42,10 @@ public static class Make
     public static global::app.goal.step.action.@this Action(
         string module, string actionName, params (string name, object? value)[] parameters)
     {
-        var action = new global::app.goal.step.action.@this
-        {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module),
-            Name = actionName,
-        };
+        // made by its catalog element, as the reader makes it: an on.error / on.cache / on.timeout is a clause
+        var owner = global::PLang.Tests.TestApp.SharedContext.App.Module(module);
+        var action = owner[actionName]?.Program(null)
+            ?? new global::app.goal.step.action.@this { Module = owner, Name = actionName };
         foreach (var (name, value) in parameters)
             // Param(...) hands back a ready Data carrying an explicit type; a plain tuple value
             // borns its natural type — EXCEPT a string carrying a %ref% (full or embedded), which
@@ -142,20 +141,25 @@ public static class Make
         => Param(name, value, new global::app.type.@this("text", template: "plang"));
 
     /// <summary>
-    /// Wraps an action with one or more modifier actions (e.g. <c>timeout.after</c>,
-    /// <c>on.error</c>, <c>cache</c>). The modifiers run around the inner action;
-    /// each fires its own lifecycle events. Returns the same inner action for nesting
-    /// inside <see cref="Step"/>.
+    /// An action with its clauses after it (<c>on.error</c>, <c>on.cache</c>, <c>on.timeout</c>, made with
+    /// <see cref="Action"/>) — bound on it the way a program's read binds a step's code. Returns the action.
     /// </summary>
-    public static global::app.goal.step.action.@this Modified(
-        global::app.goal.step.action.@this inner,
-        params global::app.goal.step.action.@this[] modifiers)
+    public static global::app.goal.step.action.@this With(
+        global::app.goal.step.action.@this action, params global::app.goal.step.action.@this[] clauses)
     {
-        foreach (var m in modifiers)
-            inner.Modifier.Add(m as global::app.goal.step.action.modifier.@this
-                ?? new global::app.goal.step.action.modifier.@this
-                { Module = m.Module, Name = m.Name, Property = m.Property, Default = m.Default });
-        return inner;
+        var code = new global::app.goal.step.action.list.@this();
+        code.Add(action);
+        foreach (var clause in clauses) code.Add(clause);
+        code.Bind();
+        return action;
+    }
+
+    /// <summary>on.error's Recovery row — the actions that run to recover.</summary>
+    public static (string name, object? value) Recovery(params global::app.goal.step.action.@this[] actions)
+    {
+        var list = new global::app.goal.step.action.list.@this();
+        foreach (var a in actions) list.Add(a);
+        return ("Recovery", new global::app.data.@this("Recovery", list, context: global::PLang.Tests.TestApp.SharedContext));
     }
 
     /// <summary>
@@ -198,6 +202,8 @@ public static class Make
             var actionNode = new global::app.goal.step.action.list.@this();
             foreach (var action in steps[i].Actions)
                 actionNode.Add(action);
+            // the code is in: each clause binds on the action before it, as the reader does
+            actionNode.Bind();
 
             stepNode.Add(new global::app.goal.step.@this
             {

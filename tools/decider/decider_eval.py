@@ -1,6 +1,6 @@
 """The decider alone (stages 1 and 2, no stage-3 call) on the golden goals: which actions it picks per
 step, with their scores, against the actions the golden expects (its menu: every action the step uses,
-its conditions' bodies and modifiers included).
+its conditions' bodies and clauses included).
 
     stage 1  per step one choice (which module does the main work) + noul per common action
                                                                         harness.stage1
