@@ -44,4 +44,5 @@ Read at 26a9d8222. The comparison goes at the end.
 - **Where the error outcome fires relative to after-start:** cache's store must see only the real work's success, and timeout's clear must not strip a retry's deadline.
 - **Where the binding at code read lives:** the step's code list (`action.list`) reading its actions. Each `on.*` action binds itself onto the action before it (behaviour on the element). What does its `Start` do at run: nothing?
 - **The `.pr` shape:** `Modifier` and `Recovery` nested under the action → siblings. Every `.pr` with a modifier gets rebuilt (no backward compat), and the reader and the formal writer change.
+- **A sibling `on.*` started at run would overwrite `%!data%`** (`action.Start` writes its result to `!data`, `:222-223`), so a `variable.set(Value=%!data%)` after `file.read(…); on.cache(…)` would get the on-action's empty answer. What was bound at read must not run as a step action.
 - **`cache.wrap` setting `!data` on a hit** duplicates `action.Start`'s own `!data` write (`action/this.cs:222-223`). With a cancel, the answer is the result, and `Start` writes `!data` once.
