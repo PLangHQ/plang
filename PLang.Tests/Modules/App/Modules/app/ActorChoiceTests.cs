@@ -26,6 +26,10 @@ public class ActorChoiceTests
         return (T)handler!;
     }
 
+    // channel.set requires its Name and Goal — the actor choice is read beside them
+    private Task<global::app.module.action.channel.Set> ChannelSet(object? actor)
+        => Bound<global::app.module.action.channel.Set>("channel", "set", actor, ("Name", "c"), ("Goal", global::PLang.Tests.Shared.Make.Call("G")));
+
     private async Task SelectsSystem(global::app.data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? slot)
     {
         var named = await slot!.Value();
@@ -40,7 +44,7 @@ public class ActorChoiceTests
         => await SelectsSystem((await Bound<global::app.module.action.environment.start>("environment", "start", "system")).Actor);
 
     [Test] public async Task ChannelSet_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.channel.Set>("channel", "set", "system")).Actor);
+        => await SelectsSystem((await ChannelSet("system")).Actor);
 
     [Test] public async Task ChannelRemove_System_SelectsSystem()
         => await SelectsSystem((await Bound<global::app.module.action.channel.Remove>("channel", "remove", "system")).Actor);
@@ -70,7 +74,7 @@ public class ActorChoiceTests
     [Test]
     public async Task UnknownName_Declines_NamingTheOptions()
     {
-        var slot = (await Bound<global::app.module.action.channel.Set>("channel", "set", "service")).Actor!;
+        var slot = (await ChannelSet("service")).Actor!;
 
         await Assert.That(await slot.Value()).IsNull();
         await Assert.That(slot.Error!.Message).Contains("system");
@@ -81,7 +85,7 @@ public class ActorChoiceTests
     public async Task VariableHoldingAName_Selects()
     {
         await Ctx.Variable.Set("who", "user");
-        var slot = (await Bound<global::app.module.action.channel.Set>("channel", "set", "%who%")).Actor!;
+        var slot = (await ChannelSet("%who%")).Actor!;
 
         var named = await slot.Value();
         await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.User)).IsTrue();
@@ -91,7 +95,7 @@ public class ActorChoiceTests
     public async Task VariableHoldingAnActor_Declines()
     {
         await Ctx.Variable.Set("who", _app.System);
-        var slot = (await Bound<global::app.module.action.channel.Set>("channel", "set", "%who%")).Actor!;
+        var slot = (await ChannelSet("%who%")).Actor!;
 
         await Assert.That(await slot.Value()).IsNull();
         await Assert.That(slot.Success).IsFalse();

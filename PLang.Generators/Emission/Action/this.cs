@@ -49,6 +49,7 @@ public static class @this
         EmitProperties(sb, info);
         EmitRawArgsCtor(sb, info);
         EmitDataAndErrorHelpers(sb, info);
+        EmitGiven(sb, info);
         EmitResolve(sb, info);
         EmitAttach(sb, info);
         EmitLive(sb, info);
@@ -153,6 +154,34 @@ public static class @this
 
                 """);
         }
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// <c>Given()</c>: what the step gave the action — each parameter it supplied (a [Default] included),
+    /// resolved through its own slot (<c>data.Given</c>) and kept by its name in a dict; one it didn't supply
+    /// isn't there. The first given parameter that didn't resolve is the answer instead. A handler that builds
+    /// a domain object from optional settings hands this on whole.
+    /// </summary>
+    private static void EmitGiven(StringBuilder sb, ActionClassInfo info)
+    {
+        var props = info.Properties.OfType<DataProperty>().ToList();
+        if (props.Count == 0) return;
+        sb.AppendLine("        /// <summary>What the step gave this action: each parameter it supplied, resolved and kept by its name;");
+        sb.AppendLine("        /// one it didn't supply isn't there. A given parameter that didn't resolve is the answer instead.</summary>");
+        sb.AppendLine("        public async global::System.Threading.Tasks.Task<global::app.data.@this> Given()");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var __given = new global::System.Collections.Generic.Dictionary<string, object?>();");
+        foreach (var p in props)
+        {
+            sb.AppendLine($"            if (await {p.Name}.Given() is {{ }} __g{p.Name})");
+            sb.AppendLine("            {");
+            sb.AppendLine($"                if (!__g{p.Name}.Success) return __g{p.Name};");
+            sb.AppendLine($"                __given[\"{p.Name}\"] = __g{p.Name}.Peek();");
+            sb.AppendLine("            }");
+        }
+        sb.AppendLine("            return await Context.App.type.list[\"dict\"].Create(__given, Context);");
+        sb.AppendLine("        }");
         sb.AppendLine();
     }
 

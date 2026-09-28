@@ -12,10 +12,38 @@ namespace app.channel.type.goal;
 /// named <c>"output"</c> can't loop back into itself; sibling and late-registered
 /// channels stay visible.
 /// </summary>
-public class @this : global::app.channel.type.session.@this
+public class @this : global::app.channel.type.session.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The call this channel runs for each write — a <c>goal.call</c> action.</summary>
-    public global::app.goal.step.action.@this Call { get; }
+    /// <summary>A goal channel is born from its settings — a dict of them by name (what channel.set was given).</summary>
+    public static IReadOnlyList<string> From => ["dict"];
+
+    /// <summary>The goal channel <paramref name="raw"/>'s settings describe, read by this channel's own property names:
+    /// Name and Goal (a <c>goal.call</c>) are required; Actor names the actor it runs for (else the asker's);
+    /// a setting not there keeps the channel's own default. Anything else declines.</summary>
+    public static @this? Create(object? raw, global::app.actor.context.@this? ctx)
+    {
+        if (raw is @this self) return self;
+        if (raw is not global::app.type.item.dict.@this settings || ctx == null) return null;
+        global::app.type.item.@this? Setting(string name) => settings.Get(name, ctx)?.Peek() is { IsNull: false } v ? v : null;
+        if (Setting(nameof(Name))?.ToString() is not { Length: > 0 } name
+            || Setting(nameof(Goal)) is not global::app.goal.step.action.@this goal) return null;
+        var actor = Setting(nameof(Actor))?.ToString() is { } named
+            ? ctx.App.actor.list.Items().FirstOrDefault(a => string.Equals(a.Name, named, StringComparison.OrdinalIgnoreCase)) ?? ctx.Actor
+            : ctx.Actor;
+        // The settings are CLR values the transport uses, lowered here at the channel's birth — the interim
+        // boundary, until a channel's settings are plang values the transport lowers at its own use.
+        return new @this(name, goal, actor,
+            direction: Setting(nameof(Direction)) is global::app.type.item.choice.@this<ChannelDirection> way ? (ChannelDirection)way : null,
+            buffer: (Setting(nameof(Buffer)) as global::app.type.item.number.@this)?.ToInt64(),
+            timeout: Setting(nameof(Timeout)) is global::app.type.item.duration.@this after ? (TimeSpan)after : null,
+            mime: Setting(nameof(Mime))?.ToString(),
+            encoding: Setting(nameof(Encoding))?.ToString(),
+            encryption: (Setting(nameof(Encryption)) as global::app.type.item.variable.@this)?.Name,
+            signing: (Setting(nameof(Signing)) as global::app.type.item.variable.@this)?.Name);
+    }
+
+    /// <summary>The goal this channel runs for each write — a <c>goal.call</c> action.</summary>
+    public global::app.goal.step.action.@this Goal { get; }
 
     /// <summary>The argument the written value reaches the goal as: <c>%message%</c>.</summary>
     public const string MessageName = "message";
@@ -31,15 +59,15 @@ public class @this : global::app.channel.type.session.@this
     /// finds no channel there instead of looping back into itself.</summary>
     public override bool Available => !IsExecuting;
 
-    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="call"/> for <paramref name="actor"/>.
+    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="goal"/> for <paramref name="actor"/>.
     /// A setting that isn't given keeps the channel's own default. Without a direction, a channel called
     /// <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an ask).</summary>
-    public @this(string name, global::app.goal.step.action.@this call, global::app.actor.@this actor,
+    protected @this(string name, global::app.goal.step.action.@this goal, global::app.actor.@this actor,
         ChannelDirection? direction = null, long? buffer = null, TimeSpan? timeout = null, string? mime = null,
         string? encoding = null, string? encryption = null, string? signing = null)
     {
         Name = name;
-        Call = call;
+        Goal = goal;
         Actor = actor;
         Direction = direction
             ?? (string.Equals(name, list.@this.Input, StringComparison.OrdinalIgnoreCase) ? ChannelDirection.Input
@@ -90,7 +118,7 @@ public class @this : global::app.channel.type.session.@this
         _executing.Value = true;
         try
         {
-            return await Call.Start(context);
+            return await Goal.Start(context);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

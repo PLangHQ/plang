@@ -35,7 +35,7 @@ public class ChannelSetTests
         await (await action.Start()).IsSuccess();
         var channel = ctx.Actor!.Channel.Get("logger") as global::app.channel.type.goal.@this;
         await Assert.That(channel).IsNotNull();
-        await Assert.That(channel!.Call).IsSameReferenceAs(call);
+        await Assert.That(channel!.Goal).IsSameReferenceAs(call);
 
         // A message runs the call as itself — its own argument binds.
         await (await channel.Write(ctx.Ok("hello"))).IsSuccess();

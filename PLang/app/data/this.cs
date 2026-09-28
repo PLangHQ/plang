@@ -296,6 +296,16 @@ public partial class @this
     /// </summary>
     public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.item.@null.@this.Instance;
 
+    /// <summary>This optional carrier as the step gave it: null when it wasn't given (absent), else itself,
+    /// resolved — its <c>Success</c> says whether it resolved. A given carrier that didn't resolve (an unset
+    /// <c>%size%</c>) is its own answer, never "not given" (which would quietly take a default).</summary>
+    public async System.Threading.Tasks.ValueTask<@this?> Given()
+    {
+        if (!IsInitialized) return null;
+        if (Success) await Value();
+        return this;
+    }
+
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
     /// or, when it failed or exits the goal (an ask the gate suspends on), this carrier itself; when what it
     /// holds isn't one, a NotA error. Taken as held, never materialized: a reference hands itself, not its

@@ -77,6 +77,16 @@ public static class Make
         return list;
     }
 
+    /// <summary>A goal channel named <paramref name="name"/> running <paramref name="call"/> for <paramref name="actor"/>,
+    /// born through its type from its settings — as channel.set births one.</summary>
+    public static async Task<global::app.channel.type.goal.@this> GoalChannel(string name,
+        global::app.goal.step.action.@this call, global::app.actor.@this actor)
+    {
+        var born = await actor.Context.App.type.list[typeof(global::app.channel.type.goal.@this)]
+            .Create(new Dictionary<string, object?> { ["Name"] = name, ["Goal"] = call }, actor.Context);
+        return (global::app.channel.type.goal.@this)born.Peek();
+    }
+
     /// <summary>A <c>goal.call</c> action: <c>Name</c> is the goal, each argument one row of its
     /// <c>Parameter</c> list — the shape a callback slot holds.</summary>
     public static global::app.goal.step.action.@this Call(string goal, params (string name, object? value)[] arguments)
