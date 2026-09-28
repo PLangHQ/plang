@@ -112,6 +112,8 @@ public sealed class Entry
             "variable" => Read(ref reader, ctx).Single(),
             _ => throw new global::app.error.PrFormatOutdatedException($"index key '{kind}' isn't in this .pr format"),
         };
+        if (reader.NextName(out var extra))
+            throw new global::app.error.PrFormatOutdatedException($"index key '{extra}' isn't in this .pr format");
         reader.EndObject();
         return key;
     }

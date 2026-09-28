@@ -1,0 +1,348 @@
+{
+  "name": "Start",
+  "comment": "A where on a field no item has is a misspelling: an error with its own key, naming the field — never a\nsilently empty list.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %users% = [{\"name\": \"a\", \"age\": 30}, {\"name\": \"b\", \"age\": 10}]",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","age":30},{"name":"b","age":10}]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.where %users% where agee > 20, write to %old%, on error key \"FieldNotFound\" call Caught",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "where",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Field",
+              "type": {
+                "name": "text"
+              },
+              "value": "agee"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "FieldNotFound"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "Caught"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignoreerror",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%old%",
+              "variable": [
+                {
+                  "text": "%old%",
+                  "code": [
+                    {
+                      "variable": "old"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %caught% contains \"agee\", \"the error names the misspelled field\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "agee"
+            },
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the error names the misspelled field"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %caught% = %!error.Message%",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Message%",
+                  "variable": [
+                    {
+                      "text": "%!error.Message%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Message"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/list/where/MisspelledFieldIsAnError.test.goal",
+      "prPath": "/plan/app-systems/module/list/where/.build/misspelledfieldisanerror.test.pr",
+      "hash": "b6bcb130b91f2a230fed257ae1b7e4524fb5a0c7cc0193519e6f5179bbcd5ce3",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/list/where/MisspelledFieldIsAnError.test.goal",
+  "prPath": "/plan/app-systems/module/list/where/.build/misspelledfieldisanerror.test.pr",
+  "hash": "b10f40aa93a3497dfe0d6ea0b0893cebb4dfcad9bdca95dda7905a772be9454a",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

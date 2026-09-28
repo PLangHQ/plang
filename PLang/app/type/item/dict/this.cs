@@ -426,23 +426,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(_value.Count == 0);
 
-    /// <summary>The field is this dict's own entry (a missing key is NotFound through the operator).</summary>
-    public override System.Threading.Tasks.Task<Data> Holds(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
-        Data value, actor.context.@this context)
-        => field.Use(name => op.Use(async compare => (Data)await ((global::app.data.Operator)compare)
-            .Evaluate(Get(name.ToString(), context) ?? Data.NotFound(name.ToString()), value, context)));
+    /// <summary>A dict's field is its entry.</summary>
+    public override System.Threading.Tasks.Task<Data?> Field(string name, actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(Get(name, context));
 
-    /// <summary>This dict is the subject: it is kept when its field holds (<see cref="Holds"/>), else nothing
-    /// is. A field, an operator or a comparison that fails is the answer.</summary>
-    public override async System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
+    /// <summary>A dict's fields are its keys.</summary>
+    public override IEnumerable<string> Fields => _value.Keys;
+
+    /// <summary>This dict is the subject, its own only item: kept when its field holds under the operator,
+    /// else nothing is. A field it doesn't have is a misspelling, an error naming it. A field, an operator or
+    /// a comparison that fails is the answer.</summary>
+    public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
-    {
-        var holds = await Holds(field, op, value, context);
-        if (!holds.Success) return holds;
-        return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
-    }
+        => field.Use(name => op.Use(async compare =>
+        {
+            if (await Field(name.ToString(), context) is not { } held) return NoField(name.ToString(), Fields, context);
+            var holds = await ((global::app.data.Operator)compare).Holds(held, value, context);
+            if (!holds.Success) return holds;
+            return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
+        }));
 
     // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 

@@ -1,0 +1,10 @@
+/ A field only some items have is optional data: an order keeps the items that have it and hold, and
+/ "is null" keeps the items without it.
+Start
+- set %users% = [{"name": "a", "age": 30}, {"name": "b"}]
+- list.where %users% where age > 20, write to %old%
+- assert %old.Count% equals 1, "only the item with an age over 20"
+- assert %old[0].name% equals "a"
+- list.where %users% where age is null, write to %ageless%
+- assert %ageless.Count% equals 1, "the item without an age"
+- assert %ageless[0].name% equals "b"

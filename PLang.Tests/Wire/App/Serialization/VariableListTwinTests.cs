@@ -25,6 +25,31 @@ public class VariableListTwinTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // A variable with an index — a number or a variable key — reads back from the .pr it was written to.
+    [Test]
+    public async Task AnIndexedVariable_ReadsBackFromThePr_AndRuns()
+    {
+        await using var app = TestApp.Create("/app");
+        var ctx = app.User.Context;
+        var goal = await RealGoalLoad.ViaChannel(app, Make.Goal("Indexed",
+            Make.Step("set %first% = %users[0].name%",
+                Make.Action("variable", "set", Make.Param("Name", "first", "variable"), Make.Param("Value", "%users[0].name%", "variable"))),
+            Make.Step("set %picked% = %users[%i%].name%",
+                Make.Action("variable", "set", Make.Param("Name", "picked", "variable"), Make.Param("Value", "%users[%i%].name%", "variable")))));
+        await ctx.Variable.Set("users", new List<object?>
+        {
+            new Dictionary<string, object?> { ["name"] = "a" },
+            new Dictionary<string, object?> { ["name"] = "b" },
+        });
+        await ctx.Variable.Set("i", 1L);
+
+        await (await goal.Step[0].Start(ctx)).IsSuccess();
+        await (await goal.Step[1].Start(ctx)).IsSuccess();
+
+        await Assert.That((await ctx.Variable.GetValue("first"))?.ToString()).IsEqualTo("a");
+        await Assert.That((await ctx.Variable.GetValue("picked"))?.ToString()).IsEqualTo("b");
+    }
+
     // Every {name, type, value} row, at any depth.
     private static IEnumerable<JsonObject> Rows(JsonNode? node)
     {

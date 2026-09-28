@@ -434,6 +434,81 @@ public class ListTests
         await Assert.That((await none.Value())?.ToString()).IsEqualTo("false");
     }
 
+    private async Task<global::app.data.@this> WhereOf(global::app.actor.context.@this context, string subject, string field, string op, object? value)
+        => await new Where(context) { ListName = new app.type.item.variable.@this(subject),
+            Field = (global::app.type.item.text.@this)field, Operator = Op(op),
+            Value = new global::app.data.@this("", value, context: context) }.Start();
+
+    // A field no item has is a misspelling: an error naming it and the fields the items have — for every
+    // operator, and for any too.
+    [Test]
+    public async Task Where_AFieldNoItemHas_IsAnError_NamingItAndTheFieldsThereAre()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("users", new List<object?>
+        {
+            new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
+            new Dictionary<string, object?> { ["name"] = "b" },
+        });
+
+        foreach (var op in new[] { "==", ">", "contains" })
+        {
+            var result = await WhereOf(context, "users", "agee", op, 30L);
+            await result.IsFailure();
+            await Assert.That(result.Error!.Key).IsEqualTo("FieldNotFound");
+            await Assert.That(result.Error.Message).Contains("agee");
+            await Assert.That(result.Error.Message).Contains("name, age");
+        }
+        var any = await new Any(context) { ListName = new app.type.item.variable.@this("users"),
+            Key = (global::app.type.item.text.@this)"agee", Operator = Op("=="),
+            Value = new global::app.data.@this("", 30L, context: context) }.Start();
+        await any.IsFailure();
+        await Assert.That(any.Error!.Key).IsEqualTo("FieldNotFound");
+    }
+
+    // A field only some items have filters: an item without it doesn't match an order or ==, and matches is null.
+    [Test]
+    public async Task Where_AFieldSomeItemsHave_FiltersByTheItemsThatHaveIt()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("users", new List<object?>
+        {
+            new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
+            new Dictionary<string, object?> { ["name"] = "b" },
+        });
+
+        async Task<List<string?>> Names(global::app.data.@this result)
+        {
+            await result.IsSuccess();
+            var names = new List<string?>();
+            foreach (var user in ((global::app.type.item.list.@this)(await result.Value())!).Items(context))
+                names.Add((await (await user.Get("name")).Value())?.ToString());
+            return names;
+        }
+
+        await Assert.That(await Names(await WhereOf(context, "users", "age", ">", 20L))).IsEquivalentTo(new[] { "a" });
+        await Assert.That(await Names(await WhereOf(context, "users", "age", "<", 99L))).IsEquivalentTo(new[] { "a" });
+        await Assert.That(await Names(await WhereOf(context, "users", "age", "==", 30L))).IsEquivalentTo(new[] { "a" });
+        await Assert.That(await Names(await WhereOf(context, "users", "age", "==", null))).IsEquivalentTo(new[] { "b" });
+    }
+
+    [Test]
+    public async Task Where_OnAnEmptyList_KeepsNothing_AndOnADictWithoutTheField_IsAnError()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("nobody", new List<object?>());
+        memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
+
+        var empty = await WhereOf(context, "nobody", "agee", "==", 30L);
+        await empty.IsSuccess();
+        await Assert.That(((global::app.type.item.list.@this)(await empty.Value())!).CountRaw).IsEqualTo(0);
+
+        var typo = await WhereOf(context, "user", "agee", "==", 30L);
+        await typo.IsFailure();
+        await Assert.That(typo.Error!.Key).IsEqualTo("FieldNotFound");
+        await Assert.That(typo.Error.Message).Contains("age");
+    }
+
     [Test]
     public async Task Where_OnADict_KeepsItOrNothing()
     {

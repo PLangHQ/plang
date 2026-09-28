@@ -440,17 +440,27 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => System.Threading.Tasks.ValueTask.FromResult(false);
 
     /// <summary>
-    /// Whether this value's <paramref name="field"/> holds against <paramref name="value"/> under
-    /// <paramref name="op"/> — the one predicate <c>where</c> and <c>any</c> ask. The field is read through the
-    /// value's own navigation; a value without it (a scalar, a list) answers it as missing, like a dict without
-    /// the key. A field or an operator that didn't resolve is its own answer.
+    /// What this value's <paramref name="name"/> field holds, read through its own navigation — or null when it
+    /// has no such field. What <c>where</c> and <c>any</c> compare.
     /// </summary>
-    public virtual System.Threading.Tasks.Task<global::app.data.@this> Holds(
-        global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
-        global::app.data.@this value, global::app.actor.context.@this context)
-        => field.Use(name => op.Use(async compare => (global::app.data.@this)await ((global::app.data.Operator)compare)
-            .Evaluate(await Get(new global::app.data.@this("", this, context: context), name.ToString()), value, context)));
+    public virtual async System.Threading.Tasks.Task<global::app.data.@this?> Field(string name, global::app.actor.context.@this context)
+    {
+        var held = await Get(new global::app.data.@this("", this, context: context), name);
+        return held is { IsInitialized: true, Success: true } ? held : null;
+    }
+
+    /// <summary>The names of this value's fields, to tell a programmer which there are — none known by default.</summary>
+    public virtual System.Collections.Generic.IEnumerable<string> Fields => [];
+
+    /// <summary>The answer when a <c>where</c> or <c>any</c> names a field no item has — a misspelling, an error
+    /// naming it and the fields the items do have (<paramref name="known"/>).</summary>
+    protected global::app.data.@this NoField(string name, System.Collections.Generic.IEnumerable<string> known,
+        global::app.actor.context.@this context)
+    {
+        var names = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Distinct(known, System.StringComparer.OrdinalIgnoreCase));
+        return context.Error(new global::app.error.ValidationError(
+            $"No item has a field '{name}'" + (names.Count > 0 ? $" — the items have: {string.Join(", ", names)}" : ""), "FieldNotFound"));
+    }
 
     /// <summary>
     /// What of this value holds when its <paramref name="field"/> is compared to <paramref name="value"/>

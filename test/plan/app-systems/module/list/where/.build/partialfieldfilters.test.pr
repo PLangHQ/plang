@@ -1,0 +1,474 @@
+{
+  "name": "Start",
+  "comment": "A field only some items have is optional data: an order keeps the items that have it and hold, and\n\"is null\" keeps the items without it.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %users% = [{\"name\": \"a\", \"age\": 30}, {\"name\": \"b\"}]",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","age":30},{"name":"b"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.where %users% where age > 20, write to %old%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "where",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Field",
+              "type": {
+                "name": "text"
+              },
+              "value": "age"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%old%",
+              "variable": [
+                {
+                  "text": "%old%",
+                  "code": [
+                    {
+                      "variable": "old"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %old.Count% equals 1, \"only the item with an age over 20\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%old.Count%",
+              "variable": [
+                {
+                  "text": "%old.Count%",
+                  "code": [
+                    {
+                      "variable": "old"
+                    },
+                    {
+                      "property": "Count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "only the item with an age over 20"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %old[0].name% equals \"a\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%old[0].name%",
+              "variable": [
+                {
+                  "text": "%old[0].name%",
+                  "code": [
+                    {
+                      "variable": "old"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "list.where %users% where age is null, write to %ageless%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "where",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Field",
+              "type": {
+                "name": "text"
+              },
+              "value": "age"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%ageless%",
+              "variable": [
+                {
+                  "text": "%ageless%",
+                  "code": [
+                    {
+                      "variable": "ageless"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %ageless.Count% equals 1, \"the item without an age\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%ageless.Count%",
+              "variable": [
+                {
+                  "text": "%ageless.Count%",
+                  "code": [
+                    {
+                      "variable": "ageless"
+                    },
+                    {
+                      "property": "Count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the item without an age"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %ageless[0].name% equals \"b\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "b"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%ageless[0].name%",
+              "variable": [
+                {
+                  "text": "%ageless[0].name%",
+                  "code": [
+                    {
+                      "variable": "ageless"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/list/where/PartialFieldFilters.test.goal",
+  "prPath": "/plan/app-systems/module/list/where/.build/partialfieldfilters.test.pr",
+  "hash": "8e446e20ea5c4ac9e7acf6d070cf71a03f677293485820a15d3d7788b1afcb86",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

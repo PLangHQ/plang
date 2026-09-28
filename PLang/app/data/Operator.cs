@@ -88,6 +88,17 @@ public sealed class Operator
     /// <summary>The operator asks of Left alone: emptiness takes no Right.</summary>
     public bool IsUnary => Value is "isempty" or "isnotempty";
 
+    /// <summary>The operator asks for an order between Left and Right.</summary>
+    public bool IsOrdering => Value is ">" or "<" or ">=" or "<=";
+
+    /// <summary>Whether this operator holds of a filtered item's field (<c>where</c>, <c>any</c>) —
+    /// <paramref name="held"/> null when the item has no such field. An order doesn't hold of an item without
+    /// the field; any other question compares it as null, so it matches <c>is null</c>. (Outside a filter,
+    /// a missing operand to an order is refused.)</summary>
+    public Task<Answer> Holds(data.@this? held, data.@this? right, actor.context.@this context)
+        => held == null && IsOrdering ? Task.FromResult(Answer(context, false))
+            : Evaluate(held ?? data.@this.Null(), right, context);
+
     /// <summary>What's wrong with this operator's operands as written, or null: emptiness asks of Left
     /// alone; every other operator compares Left with a Right (<c>Right=null</c> written is a Right).</summary>
     public global::app.error.Error? Operands(bool right) =>

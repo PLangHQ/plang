@@ -786,19 +786,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return (Data)context.Ok<global::app.type.item.text.@this>(string.Join(between.ToString(), parts));
         });
 
-    /// <summary>Whether any element's field holds (<see cref="global::app.type.item.@this.Holds"/>, each element's
-    /// own): true at the first that does, false when none does; an error is the answer.</summary>
+    /// <summary>Whether any element's field holds — whether <see cref="Where"/> keeps any; an error is the answer.</summary>
     public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
     {
-        foreach (var element in Items(context))
-        {
-            var holds = await (await element.Value()).Holds(field, op, value, context);
-            if (!holds.Success) return holds;
-            if (holds.ToBoolean()) return context.Ok<global::app.type.item.@bool.@this>(true);
-        }
-        return context.Ok<global::app.type.item.@bool.@this>(false);
+        var kept = await Where(field, op, value, context);
+        if (!kept.Success) return kept;
+        return context.Ok<global::app.type.item.@bool.@this>(await kept.Value() is @this { CountRaw: > 0 });
     }
 
     /// <summary>Adds <paramref name="value"/> at <paramref name="at"/> when that is a position in this list,
@@ -922,30 +917,36 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return await context.App.type.list["list"].Create(groups, context);
         });
 
-    /// <summary>A list has no field of its own to hold (navigating it by a name reaches its elements'), so as a
-    /// subject its field is missing — NotFound through the operator, like a dict without the key.</summary>
-    public override System.Threading.Tasks.Task<Data> Holds(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
-        Data value, actor.context.@this context)
-        => field.Use(name => op.Use(async compare => (Data)await ((global::app.data.Operator)compare)
-            .Evaluate(Data.NotFound(name.ToString()), value, context)));
+    /// <summary>A list has no field of its own (navigating it by a name reaches its elements').</summary>
+    public override System.Threading.Tasks.Task<Data?> Field(string name, actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult<Data?>(null);
 
-    /// <summary>The elements whose field holds (<see cref="global::app.type.item.@this.Holds"/>, each element's
-    /// own — an element without the field doesn't hold). An error is the answer. A new list, born through its
-    /// type.</summary>
-    public override async System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
+    /// <summary>The elements whose field holds under the operator (<see cref="global::app.data.Operator.Holds"/>:
+    /// what an element without the field means is the operator's). A field no element has is a misspelling, an
+    /// error naming it; an empty list keeps nothing. An error is the answer. A new list, born through its type.</summary>
+    public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
-    {
-        var kept = new @this();
-        foreach (var element in Items(context))
+        => field.Use(name => op.Use(async compare =>
         {
-            var holds = await (await element.Value()).Holds(field, op, value, context);
-            if (!holds.Success) return holds;
-            if (holds.ToBoolean()) kept.Add(element);
-        }
-        return await context.App.type.list["list"].Create(kept, context);
-    }
+            var held = new List<(Data element, global::app.type.item.@this? item, Data? field)>();
+            foreach (var element in Items(context))
+            {
+                var item = await element.Value();
+                held.Add((element, item, item == null ? null : await item.Field(name.ToString(), context)));
+            }
+            if (held.Count > 0 && held.All(h => h.field == null))
+                return NoField(name.ToString(), held.SelectMany(h => h.item?.Fields ?? []), context);
+
+            var kept = new @this();
+            foreach (var (element, _, at) in held)
+            {
+                var holds = await ((global::app.data.Operator)compare).Holds(at, value, context);
+                if (!holds.Success) return holds;
+                if (holds.ToBoolean()) kept.Add(element);
+            }
+            return await context.App.type.list["list"].Create(kept, context);
+        }));
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
