@@ -22,11 +22,6 @@ public partial class Where : IContext
 
     // The value compared to is what the step gave: a %variable% that holds nothing is the answer, never
     // compared as its own text.
-    public async Task<data.@this> Start()
-    {
-        var value = await Value.Given() ?? Value;
-        if (!value.Success) return value;
-        return await ListName.Use(name => name.Use<app.type.item.@this>(Context,
-            subject => subject.Where(Field, Operator, value, Context)));
-    }
+    public Task<data.@this> Start() => Value.Given(value => ListName.Use(name => name.Use<app.type.item.@this>(Context,
+        subject => subject.Where(Field, Operator, value, Context))));
 }

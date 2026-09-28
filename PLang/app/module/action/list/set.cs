@@ -8,6 +8,6 @@ public partial class Set : IContext
     public partial data.@this Value { get; init; }
 
     public async Task<data.@this<app.type.item.list.@this>> Start() => data.@this<app.type.item.list.@this>.From(
-        await ListName.Use(name => name.Change<app.type.item.list.@this>(Context,
-            list => list.SetAt(Index, Value ?? Context.Null(), Context))));
+        await (Value ?? Context.Null()).Given(value => ListName.Use(name => name.Change<app.type.item.list.@this>(Context,
+            list => list.SetAt(Index, value, Context)))));
 }

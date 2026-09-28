@@ -313,6 +313,15 @@ public partial class @this
             : Context.Error(new global::app.error.Error($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
     }
 
+    /// <summary>This carrier as the step gave it (<see cref="Given()"/>; itself when absent), handed to
+    /// <paramref name="then"/> — or, when it didn't resolve (a %variable% that holds nothing), its failure is
+    /// the answer, never compared or stored as its own text.</summary>
+    public async System.Threading.Tasks.Task<@this> Given(System.Func<@this, System.Threading.Tasks.Task<@this>> then)
+    {
+        var given = await Given() ?? this;
+        return given.Success ? await then(given) : given;
+    }
+
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
     /// or, when it failed or exits the goal (an ask the gate suspends on), this carrier itself; when what it
     /// holds isn't one, a NotA error. Taken as held, never materialized: a reference hands itself, not its

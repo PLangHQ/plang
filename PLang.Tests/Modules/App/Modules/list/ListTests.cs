@@ -492,6 +492,15 @@ public class ListTests
         await Assert.That(await Names(await WhereOf(context, "users", "age", "==", null))).IsEquivalentTo(new[] { "b" });
     }
 
+    // A one-step goal's .pr as the builder writes it: a list action with these property rows.
+    private static string BuiltStep(string text, string action, params string[] rows)
+        => $$"""{"name": "G", "step": [{"index": 0, "text": {{System.Text.Json.JsonSerializer.Serialize(text)}}, "line": {"number": 1}, "code": [{"module": "list", "name": "{{action}}", "property": [{{string.Join(", ", rows)}}]}]}]}""";
+
+    // A row whose value is a whole %variable% — a "variable" slot names it; any other type is the builder's
+    // template (template: plang), the variable's value when read.
+    private static string Reference(string name, string type, string variable)
+        => $$"""{"name": "{{name}}", "type": {"name": "{{type}}"{{(type == "variable" ? "" : ", \"template\": \"plang\"")}}}, "value": "%{{variable}}%", "variable": [{"text": "%{{variable}}%", "code": [{"variable": "{{variable}}"}]}]}""";
+
     // Only an item's own missing field is no match; the value it's compared to is the developer's own variable,
     // and ordering by one that holds nothing is an error — never a quietly empty list.
     [Test]
@@ -504,15 +513,32 @@ public class ListTests
             new Dictionary<string, object?> { ["name"] = "b" },
         });
 
-        var goal = await RealGoalLoad.ViaChannel(context.App, Make.Goal("WhereUnset",
-            Make.Step("list.where %users% where age > %limit%",
-                Make.Action("list", "where", Make.Param("ListName", "users", "variable"), ("Field", "age"),
-                    ("Operator", ">"), Make.Param("Value", "%limit%", "variable")))));
+        var goal = await RealGoalLoad.Read(context.App, BuiltStep("list.where %users% where age > %limit%", "where",
+            Reference("ListName", "variable", "users"),
+            """{"name": "Field", "type": {"name": "text"}, "value": "age"}""",
+            """{"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": ">"}""",
+            Reference("Value", "item", "limit")));
         var result = await goal.Step[0].Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
         await Assert.That(result.Error.Message).Contains("limit");
+    }
+
+    // `contains %unset%`: a variable that holds nothing is the answer, never looked for as its own text.
+    [Test]
+    public async Task Contains_AnUnsetVariable_IsAnError()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("items", new List<object?> { "%needle%", "b" });
+
+        var goal = await RealGoalLoad.Read(context.App, BuiltStep("list.contains %items% %needle%", "contains",
+            Reference("ListName", "variable", "items"), Reference("Value", "item", "needle")));
+        var result = await goal.Step[0].Start(context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(result.Error.Message).Contains("needle");
     }
 
     [Test]

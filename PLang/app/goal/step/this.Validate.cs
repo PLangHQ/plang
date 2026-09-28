@@ -8,8 +8,8 @@ public sealed partial class @this
     /// <summary>What is wrong with this step's code, or null when nothing is. The verdict keeps its
     /// cause's key — an `on error key "ElseWithoutIf"` sees what went wrong, not only that a step did.
     /// Whether an answer holds what the step's words say is the answer's check (<see cref="Cover"/>,
-    /// asked where the answer is read): a build may change the code after that (goal.call drops a
-    /// redundant `x=%x%`), and the code still holds.</summary>
+    /// asked where the answer is read): a build may change the code after that (goal.call writes a
+    /// callee's name as its address), and the code still holds.</summary>
     public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
         global::app.actor.context.@this context)
     {
@@ -43,8 +43,13 @@ public sealed partial class @this
         // system variable (%!data%, %!error%) excepted
         foreach (var v in new global::app.type.item.variable.parser.@this(written).Variable.Select(x => x.Text).Distinct())
             if (!v.StartsWith("%!") && !Text.Contains(v)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
+        // an answer that doubles a literal's backslashes (\\n for the step's \n) holds a backslash, not what the
+        // step says — told so, so the retry writes it as the step does
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
-            if (l.Length > 0 && !written.Contains(l)) problems.Add($"step {Index}: \"{l}\" is in the step but not in your answer");
+            if (l.Length > 0 && !written.Contains(l))
+                problems.Add(l.Contains('\\') && written.Contains(l.Replace("\\", "\\\\"))
+                    ? $"step {Index}: \"{l}\" is in the step, and your answer doubles its backslashes — write each escape as the step does"
+                    : $"step {Index}: \"{l}\" is in the step but not in your answer");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
         // step that names no X) — a choice's option, a number and a dict's keys are not texts
         foreach (var t in (await Texts(Code.Items(), context)).Distinct())

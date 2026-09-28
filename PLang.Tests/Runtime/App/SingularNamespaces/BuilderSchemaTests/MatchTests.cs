@@ -126,6 +126,36 @@ public class MatchTests
         await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
     }
 
+    // A quoted text carrying \n (BuildGoal/Start's SourceError message): the answer that writes it holds
+    // what the step's words say.
+    [Test]
+    public async Task AQuotedTextWithEscapes_IsHeldByTheAnswerThatWritesIt()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("G", Make.Step("""set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]"""));
+        await Picked(goal, app.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, """[0] variable.set(Name=%sourceFixMessages%, Value=[{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}])""", app.System.Context);
+
+        await result.IsSuccess();
+        await Assert.That(goal.Step[0].Code.Count).IsEqualTo(1);
+    }
+
+    // An answer that escapes the escape (\\n: a backslash and an n, not a line break) doesn't hold what the
+    // step's words say — refused, and the refusal shows what the answer wrote instead.
+    [Test]
+    public async Task AQuotedTextWithEscapes_WrittenDoublyEscaped_IsRefused()
+    {
+        await using var app = TestApp.Create("/test");
+        var goal = Make.Goal("G", Make.Step("""set %messages% = [{"Role":"user", "Content":"%why%\n\nThe goal:\n%goal%"}]"""));
+        await Picked(goal, app.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, """[0] variable.set(Name=%messages%, Value=[{"Role":"user", "Content":"%why%\\n\\nThe goal:\\n%goal%"}])""", app.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("your answer doubles its backslashes");
+    }
+
     [Test]
     public async Task OneLinePerStep_EachStepTakesItsCode()
     {
